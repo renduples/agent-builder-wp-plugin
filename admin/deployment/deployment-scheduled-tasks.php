@@ -317,7 +317,8 @@ $agentic_ajax_url    = admin_url( 'admin-ajax.php' );
 		<p><?php esc_html_e( 'No scheduled tasks yet. Add one above, or activate agents that define built-in scheduled tasks (for example Site Auditor or AI Radar).', 'agent-builder' ); ?></p>
 	</div>
 <?php else : ?>
-	<table class="widefat striped">
+	<div class="agentic-table-scroll">
+	<table class="widefat striped agentic-table-min-900">
 		<thead>
 			<tr>
 				<th><?php esc_html_e( 'Agent', 'agent-builder' ); ?></th>
@@ -453,6 +454,7 @@ $agentic_ajax_url    = admin_url( 'admin-ajax.php' );
 			<?php endforeach; ?>
 		</tbody>
 	</table>
+	</div>
 <?php endif; ?>
 
 	<div class="agentic-embed-note">

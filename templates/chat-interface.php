@@ -129,7 +129,7 @@ if ( $agentic_default_agent_id && isset( $agentic_agents[ $agentic_default_agent
 
 	<div id="agentic-history-panel" class="agentic-history-panel" style="display: none;">
 		<div class="agentic-history-header">
-			<h3>Chat History</h3>
+			<h2>Chat History</h2>
 			<button id="agentic-history-close" class="agentic-history-close" title="Close">&times;</button>
 		</div>
 		<div id="agentic-history-list" class="agentic-history-list">
@@ -242,11 +242,12 @@ if ( $agentic_default_agent_id && isset( $agentic_agents[ $agentic_default_agent
 			<button type="button" id="agentic-tts-btn" class="agentic-tts-btn" title="<?php esc_attr_e( 'Read aloud', 'agent-builder' ); ?>" style="display:none;">
 				<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
 			</button>
-			<button type="submit" class="agentic-send-btn" id="agentic-send">
-				<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+			<button type="submit" class="agentic-send-btn" id="agentic-send" title="<?php esc_attr_e( 'Send message', 'agent-builder' ); ?>">
+				<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 					<line x1="22" x2="11" y1="2" y2="13"/>
 					<polygon points="22 2 15 22 11 13 2 9 22 2"/>
 				</svg>
+				<span class="screen-reader-text"><?php esc_html_e( 'Send message', 'agent-builder' ); ?></span>
 			</button>
 		</form>
 	</div>

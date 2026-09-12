@@ -260,6 +260,7 @@ unset( $agentic_all_post_types['attachment'] );
 										<input type="radio"
 											name="agentic_sidebar_default_agent"
 											value="<?php echo esc_attr( $agentic_slug ); ?>"
+											aria-label="<?php echo esc_attr( sprintf( /* translators: %s: agent name */ __( 'Pre-select %s', 'agent-builder' ), $agentic_agent->get_name() ) ); ?>"
 											<?php checked( $agentic_slug, $agentic_sidebar_settings['agent_slug'] ); ?>>
 									</td>
 								</tr>
@@ -299,7 +300,7 @@ unset( $agentic_all_post_types['attachment'] );
 				<td>
 					<select id="agentic_sidebar_agent_mode" name="agentic_sidebar_agent_mode">
 						<option value="autonomous" <?php selected( 'autonomous', $agentic_sidebar_settings['agent_mode'] ); ?>>
-							<?php esc_html_e( 'Autonomous — execute actions immediately (recommended for editor sidebar)', 'agent-builder' ); ?>
+							<?php esc_html_e( 'Autonomous — execute actions immediately (recommended)', 'agent-builder' ); ?>
 						</option>
 						<option value="supervised" <?php selected( 'supervised', $agentic_sidebar_settings['agent_mode'] ); ?>>
 							<?php esc_html_e( 'Supervised — medium-risk actions create a proposal before executing', 'agent-builder' ); ?>

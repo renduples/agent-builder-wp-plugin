@@ -79,7 +79,15 @@ class Agentic_Relay_Connect {
 	}
 
 	/**
-	 * Answer the relay's detection probe with plugin version + agent slugs.
+	 * Answer the relay's detection probe.
+	 *
+	 * Deliberately minimal: the route's existence (agentic/relay/ping) is
+	 * itself the detection signal the relay needs, so the body carries only
+	 * the boolean it actually reads — no plugin version, no other
+	 * fingerprintable detail an unauthenticated caller shouldn't get for
+	 * free. Nothing in this codebase's relay-connect flow reads a version
+	 * back from this endpoint; if the relay ever needs one, it can request
+	 * it through the authenticated connect flow instead.
 	 *
 	 * @return WP_REST_Response
 	 */
@@ -87,7 +95,6 @@ class Agentic_Relay_Connect {
 		return new WP_REST_Response(
 			array(
 				'relay_ready' => true,
-				'version'     => defined( 'AGENT_BUILDER_VERSION' ) ? AGENT_BUILDER_VERSION : '1.0.0',
 			),
 			200
 		);
@@ -111,16 +118,19 @@ class Agentic_Relay_Connect {
 	}
 
 	/**
-	 * MCP route permission: any authenticated WordPress user. Free and
-	 * unconditional on every WP version this plugin supports — per-agent
-	 * scoping (agent_is_declared()) and per-tool risk filtering
-	 * (is_tool_mcp_safe(), required_capability_for_tool()) are what actually
-	 * bound what a given credential can list or call.
+	 * MCP route permission: any authenticated WordPress user who is at least
+	 * a real staff member (edit_posts) — the same floor Webmcp_Bridge uses
+	 * for its lowest-privilege (readonly) tools. Per-agent scoping
+	 * (agent_is_declared()) and per-tool risk filtering (is_tool_mcp_safe(),
+	 * required_capability_for_tool()) are what actually bound what a given
+	 * credential can list or call; this floor only keeps any-account-at-all
+	 * (e.g. a subscriber with no site role) from enumerating an agent's tool
+	 * catalog and schemas via initialize/tools/list.
 	 *
 	 * @return bool|\WP_Error
 	 */
 	public static function check_mcp_permission(): bool|\WP_Error {
-		if ( ! is_user_logged_in() ) {
+		if ( ! is_user_logged_in() || ! current_user_can( 'edit_posts' ) ) {
 			return new \WP_Error(
 				'rest_forbidden',
 				__( 'Authentication required.', 'agent-builder' ),

@@ -66,12 +66,22 @@ export function Panel( {
 	footer,
 	className = '',
 	isLoading = false,
+	actions,
 } ) {
 	return (
 		<Card className={ `agentic-react-panel ${ className }`.trim() }>
-			{ title && (
+			{ ( title || actions ) && (
 				<CardHeader>
-					<h2 className="agentic-react-panel__title">{ title }</h2>
+					{ title && (
+						<h2 className="agentic-react-panel__title">
+							{ title }
+						</h2>
+					) }
+					{ actions && (
+						<div className="agentic-react-panel__actions">
+							{ actions }
+						</div>
+					) }
 				</CardHeader>
 			) }
 			<CardBody>

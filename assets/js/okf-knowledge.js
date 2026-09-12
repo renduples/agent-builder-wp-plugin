@@ -27,6 +27,8 @@
 	const $list = $('#agentic-okf-list');
 	const $count = $('#agentic-okf-count');
 	const $empty = $('#agentic-okf-empty');
+	const $emptyFiltered = $('#agentic-okf-empty-filtered');
+	const $title = $('#agentic-okf-title');
 	const $editor = $('#agentic-okf-editor');
 	const $placeholder = $('#agentic-okf-placeholder');
 	const $status = $('#agentic-okf-status-msg');
@@ -94,6 +96,7 @@
 		});
 		$count.text(String(concepts.length));
 		$empty.prop('hidden', concepts.length > 0);
+		$emptyFiltered.prop('hidden', concepts.length === 0 || visible.length > 0);
 
 		visible.forEach(function (c) {
 			const $type = $('<span/>').addClass('agentic-kn-list-type').text(c.type || 'Concept');
@@ -216,8 +219,10 @@
 		};
 		if (!payload.title) {
 			setStatus('Title is required.', true);
+			$title.addClass('agentic-kn-field-invalid').trigger('focus');
 			return;
 		}
+		$title.removeClass('agentic-kn-field-invalid');
 		if (!payload.id) {
 			payload.id = slugify(payload.title);
 			$('#agentic-okf-id').val(payload.id);
@@ -300,6 +305,10 @@
 		loadConcept($(this).data('id'));
 	});
 	$typeSelect.on('change', syncTypeCustomVisibility);
+
+	$title.on('input', function () {
+		$title.removeClass('agentic-kn-field-invalid');
+	});
 
 	// Fill ID from Title when the user leaves the Title field (new concepts only).
 	$('#agentic-okf-title').on('blur', function () {

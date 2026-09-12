@@ -321,6 +321,18 @@ class Risk_Level {
 	);
 
 	/**
+	 * Irreducible minimum risk map (tool slug => risk).
+	 *
+	 * Safety Center uses this for representative examples per tier so the
+	 * screen never duplicates the floor list.
+	 *
+	 * @return array<string, string>
+	 */
+	public static function get_baseline_risks(): array {
+		return self::BASELINE_RISKS;
+	}
+
+	/**
 	 * Get the authoritative default risk level for a tool.
 	 *
 	 * Reads the wp_agentic_tools registry, floored by BASELINE_RISKS so a

@@ -145,14 +145,18 @@ class REST_API {
 			)
 		);
 
-		// List chat sessions for current user.
+		// List chat sessions for current user. Anonymous chat (when enabled) has
+		// no per-visitor identity — every anonymous session is stored under the
+		// same user_id (0) — so listing "my sessions" for an anonymous caller
+		// would hand back every anonymous visitor's session list. Requires a
+		// real logged-in user regardless of agentic_allow_anonymous_chat.
 		register_rest_route(
 			'agentic/v1',
 			'/sessions',
 			array(
 				'methods'             => 'GET',
 				'callback'            => array( $this, 'get_sessions' ),
-				'permission_callback' => array( $this, 'check_logged_in' ),
+				'permission_callback' => array( $this, 'check_real_user' ),
 				'args'                => array(
 					'agent_id' => array(
 						'type'              => 'string',
@@ -1516,6 +1520,25 @@ class REST_API {
 	public function check_logged_in(): bool {
 		if ( ! is_user_logged_in() ) {
 			return (bool) get_option( 'agentic_allow_anonymous_chat', false );
+		}
+		return \Agentic\User_Roles::current_user_can( 'chat_frontend' )
+			|| \Agentic\User_Roles::current_user_can( 'chat_admin_bar' );
+	}
+
+	/**
+	 * Same as check_logged_in(), but never allows the anonymous-chat carve-out.
+	 *
+	 * For any route that identifies "my" data by the current user_id — e.g.
+	 * listing a user's own session history — anonymous access is unsafe:
+	 * get_current_user_id() is 0 for every anonymous visitor, so "my sessions"
+	 * would mean "every anonymous visitor's sessions" with no real per-visitor
+	 * identity to scope by.
+	 *
+	 * @return bool
+	 */
+	public function check_real_user(): bool {
+		if ( ! is_user_logged_in() ) {
+			return false;
 		}
 		return \Agentic\User_Roles::current_user_can( 'chat_frontend' )
 			|| \Agentic\User_Roles::current_user_can( 'chat_admin_bar' );

@@ -206,7 +206,25 @@ class Admin_Menu_Handler {
 			fn() => $this->render_page( 'approvals' )
 		);
 
-		// Usage / Costs page is registered by Agent Builder Pro.
+		// Safety Center — owner-facing overview of existing safety controls.
+		// Always in the nav (Basic/Advanced only changes page content, never
+		// whether the page exists). Placed after Approvals and before Passport
+		// per reports/m2-safety-center-design.md §4. Intentionally not added
+		// to the M1 Phase 8a secondary-nav rail (that list is the eight M1
+		// target sections).
+		add_submenu_page(
+			'agent-builder',
+			__( 'Agent Builder — Safety Center', 'agent-builder' ),
+			__( 'Safety Center', 'agent-builder' ),
+			'agentic_manage_settings',
+			'agentic-safety-center',
+			fn() => $this->render_page( 'safety-center' )
+		);
+
+		// Usage / Costs is a Pro screen. Free registers a locked Advanced-only
+		// nav entry (not Basic — upsell is a power-user concern). Skip when Pro
+		// already owns the real page (same slug agentic-costs).
+		$this->register_locked_usage_costs();
 
 		// Passport (page title "Site Passport") — always shown in the menu,
 		// same as every other page here; Basic/Advanced only ever affects
@@ -398,6 +416,12 @@ class Admin_Menu_Handler {
 				'group'    => 'secondary',
 				'advanced' => true,
 			),
+			'safety-center' => array(
+				'label'   => __( 'Safety Center', 'agent-builder' ),
+				'url'     => admin_url( 'admin.php?page=agentic-safety-center' ),
+				'default' => true,
+				'group'   => 'secondary',
+			),
 			'tools'     => array(
 				'label'    => __( 'Tools', 'agent-builder' ),
 				'url'      => admin_url( 'admin.php?page=agentic-tools' ),
@@ -434,6 +458,45 @@ class Admin_Menu_Handler {
 		 * @param array $catalog Catalog keyed by action slug.
 		 */
 		return apply_filters( 'agentic_dashboard_quick_actions_catalog', $catalog );
+	}
+
+	/**
+	 * Locked "Usage & Costs" nav entry for the free plugin.
+	 *
+	 * Visible only in Advanced mode, with a small Pro badge. The page is an
+	 * honest explanation plus the same pricing link used in page footers —
+	 * not a fake costs UI. Hidden (empty parent) in Basic so a bookmark still
+	 * resolves. No-op when Pro already registered `agentic-costs`.
+	 *
+	 * @return void
+	 */
+	private function register_locked_usage_costs(): void {
+		global $submenu;
+
+		if ( isset( $submenu['agent-builder'] ) && is_array( $submenu['agent-builder'] ) ) {
+			foreach ( $submenu['agent-builder'] as $item ) {
+				if ( isset( $item[2] ) && 'agentic-costs' === $item[2] ) {
+					return;
+				}
+			}
+		}
+
+		$parent = self::is_advanced_mode() ? 'agent-builder' : '';
+		$title  = sprintf(
+			/* translators: 1: page name, 2: "Pro" badge */
+			'%1$s <span class="agentic-badge-pill-grey">%2$s</span>',
+			esc_html__( 'Usage & Costs', 'agent-builder' ),
+			esc_html__( 'Pro', 'agent-builder' )
+		);
+
+		add_submenu_page(
+			$parent,
+			__( 'Agent Builder — Usage & Costs', 'agent-builder' ),
+			$title,
+			'agentic_view_dashboard',
+			'agentic-costs',
+			fn() => $this->render_page( 'costs-locked' )
+		);
 	}
 
 	/**
@@ -660,43 +723,6 @@ class Admin_Menu_Handler {
 	}
 
 	/**
-	 * Handle the Basic/Advanced UI mode toggle (admin-post).
-	 *
-	 * @return void
-	 */
-	public function handle_set_ui_mode(): void {
-		if ( ! current_user_can( 'agentic_manage_settings' ) && ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You do not have permission to change the interface mode.', 'agent-builder' ) );
-		}
-		check_admin_referer( 'agentic_set_ui_mode' );
-
-		$mode = isset( $_POST['agentic_ui_mode'] ) ? sanitize_key( wp_unslash( $_POST['agentic_ui_mode'] ) ) : 'basic';
-		if ( ! in_array( $mode, array( 'basic', 'advanced' ), true ) ) {
-			$mode = 'basic';
-		}
-		$prev = (string) get_option( 'agentic_ui_mode', 'basic' );
-		update_option( 'agentic_ui_mode', $mode, false );
-		if ( $prev !== $mode && class_exists( Audit_Log::class ) ) {
-			Audit_Log::log_admin(
-				'ui_mode_changed',
-				'settings',
-				array(
-					'id'   => $mode,
-					'from' => $prev,
-					'to'   => $mode,
-				)
-			);
-		}
-
-		$redirect = wp_get_referer();
-		if ( ! $redirect ) {
-			$redirect = admin_url( 'admin.php?page=agent-builder' );
-		}
-		wp_safe_redirect( $redirect );
-		exit;
-	}
-
-	/**
 	 * Handle the Automatic Agent Updates opt-in/opt-out toggle (admin-post).
 	 *
 	 * @return void
@@ -810,10 +836,358 @@ class Admin_Menu_Handler {
 	}
 
 	/**
-	 * Inject contextual help bar (after h1) and footer legal links (end of .wrap)
-	 * on all Agentic admin pages via JavaScript.
+	 * Catalog for the Advanced-mode secondary nav rail (M1 Phase 8a).
 	 *
-	 * Runs on admin_footer so the full page DOM is already in place.
+	 * Eight target sections from reports/m1-modes-design.md §3. Each entry
+	 * maps 1:1 onto an existing add_submenu_page() slug — no new URLs.
+	 * Tools and Skills are one grouped entry with two child links, the same
+	 * grouped-nav pattern Settings already uses (label + rows), not a merge
+	 * of the underlying pages.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	public function get_secondary_nav_items(): array {
+		return array(
+			array(
+				'id'    => 'dashboard',
+				'label' => __( 'Dashboard', 'agent-builder' ),
+				'url'   => admin_url( 'admin.php?page=agent-builder' ),
+				'pages' => array( 'agent-builder' ),
+				'cap'   => 'agentic_view_dashboard',
+			),
+			array(
+				'id'    => 'agents',
+				'label' => __( 'Agents', 'agent-builder' ),
+				'url'   => admin_url( 'admin.php?page=agentic-agents' ),
+				'pages' => array( 'agentic-agents' ),
+				'cap'   => 'agentic_manage_agents',
+			),
+			array(
+				'id'       => 'tools-skills',
+				'label'    => __( 'Tools & Skills', 'agent-builder' ),
+				'url'      => admin_url( 'admin.php?page=agentic-tools' ),
+				'pages'    => array( 'agentic-tools', 'agentic-skills' ),
+				'cap'      => 'agentic_manage_tools',
+				'children' => array(
+					array(
+						'id'    => 'tools',
+						'label' => __( 'Tools', 'agent-builder' ),
+						'url'   => admin_url( 'admin.php?page=agentic-tools' ),
+						'pages' => array( 'agentic-tools' ),
+					),
+					array(
+						'id'    => 'skills',
+						'label' => __( 'Skills', 'agent-builder' ),
+						'url'   => admin_url( 'admin.php?page=agentic-skills' ),
+						'pages' => array( 'agentic-skills' ),
+					),
+				),
+			),
+			array(
+				'id'    => 'knowledge',
+				'label' => __( 'Knowledge', 'agent-builder' ),
+				'url'   => admin_url( 'admin.php?page=agentic-train-data' ),
+				'pages' => array( 'agentic-train-data' ),
+				'cap'   => 'agentic_manage_settings',
+			),
+			array(
+				'id'    => 'logs',
+				'label' => __( 'Logs', 'agent-builder' ),
+				'url'   => admin_url( 'admin.php?page=agentic-audit-log' ),
+				'pages' => array( 'agentic-audit-log' ),
+				'cap'   => 'agentic_view_audit_log',
+			),
+			array(
+				'id'    => 'usage-costs',
+				'label' => __( 'Usage & Costs', 'agent-builder' ),
+				'url'   => admin_url( 'admin.php?page=agentic-costs' ),
+				'pages' => array( 'agentic-costs' ),
+				'cap'   => 'agentic_view_dashboard',
+				'pro'   => true,
+			),
+			array(
+				'id'    => 'providers',
+				'label' => __( 'Providers & Keys', 'agent-builder' ),
+				'url'   => admin_url( 'admin.php?page=agentic-settings&tab=providers' ),
+				'pages' => array( 'agentic-settings' ),
+				'tabs'  => array( 'providers' ),
+				'cap'   => 'agentic_manage_settings',
+			),
+			array(
+				'id'           => 'settings',
+				'label'        => __( 'Settings', 'agent-builder' ),
+				'url'          => admin_url( 'admin.php?page=agentic-settings' ),
+				'pages'        => array( 'agentic-settings' ),
+				'exclude_tabs' => array( 'providers' ),
+				'cap'          => 'agentic_manage_settings',
+			),
+		);
+	}
+
+	/**
+	 * Whether a secondary-nav item (or child) matches the current admin page.
+	 *
+	 * @param array<string, mixed> $item Item from get_secondary_nav_items().
+	 * @param string               $page Current ?page= slug.
+	 * @param string               $tab  Current ?tab= / ?section= value.
+	 * @return bool
+	 */
+	private function is_secondary_nav_item_current( array $item, string $page, string $tab ): bool {
+		$pages = $item['pages'] ?? array();
+		if ( ! in_array( $page, $pages, true ) ) {
+			return false;
+		}
+		if ( ! empty( $item['tabs'] ) ) {
+			return in_array( $tab, $item['tabs'], true );
+		}
+		if ( ! empty( $item['exclude_tabs'] ) ) {
+			return ! in_array( $tab, $item['exclude_tabs'], true );
+		}
+		return true;
+	}
+
+	/**
+	 * Print one secondary-nav link (label, optional Pro badge, current state).
+	 *
+	 * @param array<string, mixed> $item Item or child item.
+	 * @param string               $page Current ?page= slug.
+	 * @param string               $tab  Current ?tab= / ?section= value.
+	 * @return void
+	 */
+	private function render_secondary_nav_link( array $item, string $page, string $tab ): void {
+		$is_current = $this->is_secondary_nav_item_current( $item, $page, $tab );
+		$classes    = 'agentic-secondary-nav__item';
+		if ( $is_current ) {
+			$classes .= ' is-active';
+		}
+		?>
+		<a href="<?php echo esc_url( (string) ( $item['url'] ?? '#' ) ); ?>"
+			class="<?php echo esc_attr( $classes ); ?>"
+			data-section="<?php echo esc_attr( (string) ( $item['id'] ?? '' ) ); ?>"
+			<?php echo $is_current ? 'aria-current="page"' : ''; ?>>
+			<?php echo esc_html( (string) ( $item['label'] ?? '' ) ); ?>
+			<?php if ( ! empty( $item['pro'] ) ) : ?>
+				<span class="agentic-badge-pill-grey"><?php esc_html_e( 'Pro', 'agent-builder' ); ?></span>
+			<?php endif; ?>
+		</a>
+		<?php
+	}
+
+	/**
+	 * Advanced-mode secondary nav rail. Echoed from admin_footer (same hook
+	 * as the shared page footer) and moved to the top of `.wrap` by a small
+	 * inline script — the existing shared-chrome pattern, not a new one.
+	 *
+	 * Gated on the site-wide default (`is_advanced_mode()` with no $screen).
+	 * The rail spans every Agentic screen, so a per-screen content override
+	 * must not hide or show it.
+	 *
+	 * @param string $page Current ?page= slug.
+	 * @param string $tab  Current ?tab= / ?section= value.
+	 * @return void
+	 */
+	private function render_secondary_nav( string $page, string $tab ): void {
+		if ( ! self::is_advanced_mode() ) {
+			return;
+		}
+
+		// Full-page onboarding overlays — no in-page chrome.
+		if ( in_array( $page, array( 'agentic-setup', 'agentic-signup' ), true ) ) {
+			return;
+		}
+
+		$items = array_values(
+			array_filter(
+				$this->get_secondary_nav_items(),
+				static function ( array $item ): bool {
+					$cap = (string) ( $item['cap'] ?? '' );
+					return '' === $cap || current_user_can( $cap );
+				}
+			)
+		);
+		if ( empty( $items ) ) {
+			return;
+		}
+		?>
+		<nav id="agentic-secondary-nav" class="agentic-secondary-nav" aria-label="<?php esc_attr_e( 'Agent Builder sections', 'agent-builder' ); ?>">
+			<ul class="agentic-secondary-nav__list">
+				<?php foreach ( $items as $item ) : ?>
+					<?php
+					$children = $item['children'] ?? array();
+					$group_on = false;
+					if ( ! empty( $children ) ) {
+						foreach ( $children as $child ) {
+							if ( $this->is_secondary_nav_item_current( $child, $page, $tab ) ) {
+								$group_on = true;
+								break;
+							}
+						}
+					}
+					?>
+					<li class="agentic-secondary-nav__entry<?php echo $group_on ? ' is-current' : ''; ?>">
+						<?php if ( ! empty( $children ) ) : ?>
+							<div class="agentic-secondary-nav__group">
+								<span class="agentic-secondary-nav__group-label"><?php echo esc_html( (string) $item['label'] ); ?></span>
+								<ul class="agentic-secondary-nav__group-items">
+									<?php foreach ( $children as $child ) : ?>
+										<li><?php $this->render_secondary_nav_link( $child, $page, $tab ); ?></li>
+									<?php endforeach; ?>
+								</ul>
+							</div>
+						<?php else : ?>
+							<?php $this->render_secondary_nav_link( $item, $page, $tab ); ?>
+						<?php endif; ?>
+					</li>
+				<?php endforeach; ?>
+			</ul>
+		</nav>
+		<script>
+		(function() {
+			function agenticPlaceSecondaryNav() {
+				var nav = document.getElementById( 'agentic-secondary-nav' );
+				if ( ! nav || nav.classList.contains( 'is-placed' ) ) {
+					return true;
+				}
+				var wrap = document.querySelector( '#wpbody-content .wrap' );
+				if ( ! wrap ) {
+					var root = document.getElementById( 'agentic-dashboard-app-root' );
+					if ( ! root || ! root.parentNode ) {
+						return false;
+					}
+					wrap = document.createElement( 'div' );
+					wrap.className = 'wrap agentic-admin';
+					root.parentNode.insertBefore( wrap, root );
+					wrap.appendChild( root );
+				}
+				wrap.insertBefore( nav, wrap.firstChild );
+				wrap.classList.add( 'agentic-has-secondary-nav' );
+				nav.classList.add( 'is-placed' );
+				return true;
+			}
+			if ( ! agenticPlaceSecondaryNav() ) {
+				document.addEventListener( 'DOMContentLoaded', agenticPlaceSecondaryNav );
+				window.setTimeout( agenticPlaceSecondaryNav, 0 );
+				window.setTimeout( agenticPlaceSecondaryNav, 400 );
+			}
+		})();
+		</script>
+		<?php
+	}
+
+	/**
+	 * Site-wide Basic/Advanced switch. Echoed from admin_footer (same hook
+	 * as the secondary nav and page footer) and moved to the top of `.wrap`
+	 * by a small inline script — shared chrome, not a per-template include.
+	 *
+	 * Reflects the site-wide `agentic_ui_mode` default (`is_advanced_mode()`
+	 * with no $screen), not a per-screen override. Writes through
+	 * Admin_Settings_REST::set_ui_mode() via the admin-page REST action.
+	 *
+	 * @param string $page Current ?page= slug.
+	 * @return void
+	 */
+	private function render_global_mode_switch( string $page ): void {
+		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'agentic_manage_settings' ) ) {
+			return;
+		}
+
+		// Full-page onboarding overlays — no in-page chrome.
+		if ( in_array( $page, array( 'agentic-setup', 'agentic-signup' ), true ) ) {
+			return;
+		}
+
+		$is_advanced = self::is_advanced_mode();
+		?>
+		<div id="agentic-global-mode-switch" class="agentic-global-mode" role="group" aria-label="<?php esc_attr_e( 'Site-wide interface mode', 'agent-builder' ); ?>">
+			<span class="agentic-global-mode__label"><?php esc_html_e( 'Site-wide', 'agent-builder' ); ?></span>
+			<span class="agentic-screen-mode-toggle">
+				<button type="button" class="button button-small<?php echo $is_advanced ? '' : ' button-primary'; ?>" data-mode="basic">
+					<?php esc_html_e( 'Basic', 'agent-builder' ); ?>
+				</button>
+				<button type="button" class="button button-small<?php echo $is_advanced ? ' button-primary' : ''; ?>" data-mode="advanced">
+					<?php esc_html_e( 'Advanced', 'agent-builder' ); ?>
+				</button>
+			</span>
+		</div>
+		<script>
+		(function() {
+			function agenticPlaceGlobalModeSwitch() {
+				var el = document.getElementById( 'agentic-global-mode-switch' );
+				if ( ! el || el.classList.contains( 'is-placed' ) ) {
+					return true;
+				}
+				var wrap = document.querySelector( '#wpbody-content .wrap' );
+				if ( ! wrap ) {
+					var root = document.getElementById( 'agentic-dashboard-app-root' );
+					if ( ! root || ! root.parentNode ) {
+						return false;
+					}
+					wrap = document.createElement( 'div' );
+					wrap.className = 'wrap agentic-admin';
+					root.parentNode.insertBefore( wrap, root );
+					wrap.appendChild( root );
+				}
+				wrap.insertBefore( el, wrap.firstChild );
+				wrap.classList.add( 'agentic-has-global-mode' );
+				el.classList.add( 'is-placed' );
+				return true;
+			}
+			if ( ! agenticPlaceGlobalModeSwitch() ) {
+				document.addEventListener( 'DOMContentLoaded', agenticPlaceGlobalModeSwitch );
+				window.setTimeout( agenticPlaceGlobalModeSwitch, 0 );
+				window.setTimeout( agenticPlaceGlobalModeSwitch, 400 );
+			}
+
+			var toggle = document.getElementById( 'agentic-global-mode-switch' );
+			if ( ! toggle ) {
+				return;
+			}
+			Array.prototype.forEach.call( toggle.querySelectorAll( 'button[data-mode]' ), function ( btn ) {
+				btn.addEventListener( 'click', function () {
+					if ( btn.disabled || btn.classList.contains( 'button-primary' ) ) {
+						return;
+					}
+					Array.prototype.forEach.call( toggle.querySelectorAll( 'button[data-mode]' ), function ( b ) {
+						b.disabled = true;
+					} );
+					fetch( <?php echo wp_json_encode( esc_url_raw( rest_url( 'agentic/v1/admin-page' ) ) ); ?>, {
+						method: 'POST',
+						credentials: 'same-origin',
+						headers: {
+							'Content-Type': 'application/json',
+							'X-WP-Nonce': <?php echo wp_json_encode( wp_create_nonce( 'wp_rest' ) ); ?>
+						},
+						body: JSON.stringify( {
+							action_name: 'set_ui_mode',
+							mode: btn.getAttribute( 'data-mode' )
+						} )
+					} ).then( function ( res ) {
+						if ( ! res.ok ) {
+							Array.prototype.forEach.call( toggle.querySelectorAll( 'button[data-mode]' ), function ( b ) {
+								b.disabled = false;
+							} );
+							return;
+						}
+						window.location.reload();
+					} ).catch( function () {
+						Array.prototype.forEach.call( toggle.querySelectorAll( 'button[data-mode]' ), function ( b ) {
+							b.disabled = false;
+						} );
+					} );
+				} );
+			} );
+		})();
+		</script>
+		<?php
+	}
+
+	/**
+	 * Inject the site-wide mode switch (top of .wrap), Advanced-mode
+	 * secondary nav rail, and footer legal links on all Agentic admin
+	 * pages via JavaScript.
+	 *
+	 * Runs on admin_footer so the full page DOM is already in place. Same
+	 * shared-chrome hook for every piece — not a per-template include.
 	 *
 	 * @return void
 	 */
@@ -838,6 +1212,10 @@ class Admin_Menu_Handler {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only.
 			$tab = isset( $_GET['section'] ) ? sanitize_text_field( wp_unslash( $_GET['section'] ) ) : '';
 		}
+
+		$this->render_secondary_nav( $page, $tab );
+		// After the rail so this insertBefore(firstChild) lands above it.
+		$this->render_global_mode_switch( $page );
 
 		// Footer markup (promo URL is channel-aware: external on WPorg free).
 		$footer_html = $this->build_admin_footer_html( $page, $tab );
@@ -905,8 +1283,12 @@ class Admin_Menu_Handler {
 			}
 		} elseif ( 'agentic-approvals' === $page ) {
 			$policy = __( 'Approvals keep high-risk tool calls under human control before they change your site.', 'agent-builder' );
+		} elseif ( 'agentic-safety-center' === $page ) {
+			$policy = __( 'Safety Center summarizes existing operator controls. It does not change how tools, approvals, or Emergency Stop work.', 'agent-builder' );
 		} elseif ( 'agentic-audit-log' === $page || 'agentic-logs' === $page ) {
 			$policy = __( 'Activity helps you understand what agents did. Logs are local; retention follows your Security settings.', 'agent-builder' );
+		} elseif ( 'agentic-costs' === $page ) {
+			$policy = __( 'Usage & Costs is part of Agent Builder Pro. The free plugin does not meter spend.', 'agent-builder' );
 		} elseif ( 'agentic-settings' === $page ) {
 			$policy = match ( $tab ) {
 				'interface' => __( 'Interface settings change how chat looks and how agents address people. Theme applies to admin and frontend chat.', 'agent-builder' ),
@@ -997,8 +1379,12 @@ class Admin_Menu_Handler {
 				'page' => 'upgrade-pro',
 				'tab'  => '',
 			),
-			'agent-ready' => array(
+			'agent-ready'   => array(
 				'page' => 'agent-ready',
+				'tab'  => '',
+			),
+			'safety-center' => array(
+				'page' => 'safety-center',
 				'tab'  => '',
 			),
 		);
@@ -1047,13 +1433,14 @@ class Admin_Menu_Handler {
 			}
 			// Map react file keys to real menu page slugs for doc lookup.
 			$menu_page = match ( $file ) {
-				'tools'      => 'agentic-tools',
-				'skills'     => 'agentic-skills',
-				'approvals'  => 'agentic-approvals',
-				'logs'       => 'agentic-audit-log',
-				'upgrade'    => 'agentic-upgrade-pro',
-				'train-data' => 'agentic-train-data',
-				default      => 'agentic-' . $file,
+				'tools'          => 'agentic-tools',
+				'skills'         => 'agentic-skills',
+				'approvals'      => 'agentic-approvals',
+				'logs'           => 'agentic-audit-log',
+				'upgrade'        => 'agentic-upgrade-pro',
+				'train-data'     => 'agentic-train-data',
+				'safety-center'  => 'agentic-safety-center',
+				default          => 'agentic-' . $file,
 			};
 			wp_localize_script(
 				'agentic-admin-pages',
@@ -1067,7 +1454,9 @@ class Admin_Menu_Handler {
 				)
 			);
 			// Outer .wrap so admin_footer can attach the policy/docs bar.
-			echo '<div class="wrap agentic-admin">';
+			// The per-page class lets CSS target one React admin screen
+			// without affecting the others that share this same markup.
+			printf( '<div class="wrap agentic-admin agentic-admin-page-%s">', esc_attr( $file ) );
 			React_Admin::mount( 'agentic-admin-pages-root' );
 			echo '</div>';
 			return;
@@ -1144,11 +1533,91 @@ class Admin_Menu_Handler {
 			)
 		);
 
+		// Playground is Chat-only Advanced chrome. Gated on is_advanced_mode('chat')
+		// so it follows the site-wide default (Phase 8b header switch) and would
+		// honour a Chat per-screen override if one is ever set. No toggle is
+		// added on this page — Basic mode stays pixel-identical, including
+		// Skills/Publish embeds of chat-interface.php, which never reach here.
+		$agentic_playground = self::is_advanced_mode( 'chat' );
+		if ( $agentic_playground ) {
+			wp_enqueue_script(
+				'agentic-chat-playground',
+				AGENT_BUILDER_URL . 'assets/js/chat-playground.js',
+				array( 'agentic-chat' ),
+				AGENT_BUILDER_VERSION,
+				true
+			);
+		}
+
 		echo '<div class="wrap">';
 		echo '<h1>' . esc_html__( 'Agent Chat', 'agent-builder' ) . ' <span class="agentic-status" style="font-size: 14px; font-weight: normal; vertical-align: middle;"><span class="agentic-status-dot"></span>' . esc_html__( 'Online', 'agent-builder' ) . '</span></h1>';
+		if ( $agentic_playground ) {
+			echo '<div class="agentic-playground">';
+			echo '<div class="agentic-playground__thread">';
+		}
 		include AGENT_BUILDER_DIR . 'templates/chat-interface.php';
+		if ( $agentic_playground ) {
+			echo '</div>';
+			$this->render_chat_playground_panel(
+				isset( $agentic_current_agent_id ) ? (string) $agentic_current_agent_id : '',
+				( isset( $agentic_current_agent ) && $agentic_current_agent instanceof Agent_Base ) ? $agentic_current_agent : null
+			);
+			echo '</div>';
+		}
 		echo '<p style="margin-top:12px;"><a href="' . esc_url( admin_url( 'admin.php?page=agentic-deployment' ) ) . '">' . esc_html__( 'Manage Agent Deployments', 'agent-builder' ) . '</a></p>';
 		echo '</div>';
+	}
+
+	/**
+	 * Advanced-mode Playground side panel for Agent Chat.
+	 *
+	 * Read-only: handle_chat() does not accept per-request model/temperature
+	 * overrides (temperature is hardcoded in Llm_Client for OpenAI-compatible
+	 * providers). Agent-level override_provider/override_model are persisted
+	 * settings, not playground controls — shown as the effective model, not
+	 * as interactive widgets.
+	 *
+	 * @param string          $agent_id Current agent slug.
+	 * @param Agent_Base|null $agent    Current agent instance, if resolved.
+	 * @return void
+	 */
+	private function render_chat_playground_panel( string $agent_id, ?Agent_Base $agent ): void {
+		$effective        = function_exists( 'agentic_get_effective_provider_model' )
+			? agentic_get_effective_provider_model( $agent_id )
+			: array(
+				'provider'       => '',
+				'model'          => '',
+				'vision_model'   => '',
+				'provider_label' => '',
+			);
+		$ov_provider      = Agent_Settings::get( $agent_id, 'override_provider' );
+		$ov_model         = Agent_Settings::get( $agent_id, 'override_model' );
+		$model_source     = ( ! empty( $ov_provider ) || ! empty( $ov_model ) )
+			? __( 'Per-agent override (Settings → Agents)', 'agent-builder' )
+			: __( 'Site default (Settings → Providers)', 'agent-builder' );
+		$system_prompt    = ( $agent instanceof Agent_Base ) ? $agent->get_system_prompt() : '';
+		$persona_notes    = Agent_Settings::get( $agent_id, 'persona_notes' );
+		$style            = Agent_Settings::get( $agent_id, 'persona_response_style' );
+		$tools            = class_exists( Inventory_REST::class )
+			? Inventory_REST::get_agent_tools( $agent_id )
+			: array();
+		$instructions_url = admin_url( 'admin.php?page=agentic-train-data&tab=instructions' );
+		if ( $agent_id ) {
+			$instructions_url = add_query_arg( 'edit_persona', $agent_id, $instructions_url );
+		}
+
+		$agentic_pg = array(
+			'agent_id'         => $agent_id,
+			'agent_name'       => ( $agent instanceof Agent_Base ) ? $agent->get_name() : '',
+			'effective'        => $effective,
+			'model_source'     => $model_source,
+			'system_prompt'    => $system_prompt,
+			'persona_notes'    => $persona_notes,
+			'response_style'   => $style,
+			'tools'            => $tools,
+			'instructions_url' => $instructions_url,
+		);
+		include AGENT_BUILDER_DIR . 'admin/partials/chat-playground-panel.php';
 	}
 
 	/**
@@ -1241,27 +1710,31 @@ class Admin_Menu_Handler {
 	 * @return void
 	 */
 	public function render_train_data_page(): void {
+		// Classic PHP page — reuse react-admin.css for the shared
+		// .agentic-screen-mode-toggle styling, same pattern as admin/agents.php.
+		// wp-components stays on the dependency list so Advanced
+		// Instructions/Memory (settings-app) keep their previous enqueue.
+		wp_enqueue_style(
+			'agentic-react-admin',
+			AGENT_BUILDER_URL . 'assets/css/react-admin.css',
+			array( 'wp-components' ),
+			AGENT_BUILDER_VERSION
+		);
+
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only tab params.
 		$active_tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'wiki';
 
-		// Wiki editor assets.
-		if ( 'wiki' === $active_tab || ! in_array( $active_tab, array( 'instructions', 'memory', 'vector' ), true ) ) {
+		// Wiki editor assets are Advanced-only (M1 Phase 5). Basic mode is
+		// a landing into knowledge-wizard and does not load the editor JS.
+		if ( self::is_advanced_mode( 'knowledge' )
+			&& ( 'wiki' === $active_tab || ! in_array( $active_tab, array( 'instructions', 'memory', 'vector' ), true ) )
+		) {
 			wp_enqueue_script(
 				'agentic-okf-knowledge',
 				AGENT_BUILDER_URL . 'assets/js/okf-knowledge.js',
 				array( 'jquery' ),
 				AGENT_BUILDER_VERSION,
 				true
-			);
-		}
-
-		// Instructions + Memory panels use settings-app (localized in train-data.php).
-		if ( in_array( $active_tab, array( 'instructions', 'memory' ), true ) ) {
-			wp_enqueue_style(
-				'agentic-react-admin',
-				AGENT_BUILDER_URL . 'assets/css/react-admin.css',
-				array( 'wp-components' ),
-				AGENT_BUILDER_VERSION
 			);
 		}
 

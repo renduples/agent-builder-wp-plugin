@@ -35,6 +35,26 @@ More on [Community Agents](https://agentic-plugin.com/community-agents/).
    Pre-built assets already ship in `build/`.
 4. Activate **Agent Builder** in WordPress.
 
+## Baseline admin screenshots
+
+Full-page (1440px) captures of every Agent Builder wp-admin screen, written to `screenshots/baseline/`:
+
+```
+WP_ADMIN_USER=... WP_ADMIN_PASS=... npm run screenshot:baseline
+```
+
+Optional `SCREEN=slug,slug` captures a subset. Safety Center is stored as `safety-center.png` (Basic) and `safety-center-advanced.png`. The Approvals risk-gate preferences (readme caption 6) are `approvals-risk-gate.png`.
+
+Uses system Google Chrome when Playwright’s bundled Chromium is unavailable (override with `PLAYWRIGHT_CHROME_PATH`). Safe to re-run; existing PNGs are overwritten.
+
+WordPress.org listing shots (`.wordpress-org/screenshot-N.png`, readme.txt order) are recaptured the same way:
+
+```
+WP_ADMIN_USER=... WP_ADMIN_PASS=... npm run screenshot:wporg
+```
+
+Safety Center and the Advanced Tools list are viewport-height (1440×900) so they stay reviewable; other screens are full-page. Optional `SCREEN=2,9` recaptures a subset.
+
 ## Releases
 
 GitHub tags match plugin versions (`v3.3.0`, etc.). Downloadable ZIPs for production installs are published from the product site and WordPress.org once listed.

@@ -233,7 +233,7 @@
     border-bottom: 1px solid var(--ac-border);
 }
 
-.agentic-history-header h3 {
+.agentic-history-header h2 {
     margin: 0;
     font-size: 0.875rem;
     font-weight: 600;
@@ -1130,6 +1130,20 @@
 
     .agentic-chat-header {
         padding: 0.75rem 1rem;
+        flex-wrap: wrap;
+        row-gap: 0.5rem;
+    }
+
+    /* The agent selector's fixed min-width otherwise squeezes the version/author
+       meta text into a near-single-word-per-line column, and pushes the History/
+       New Chat buttons past the container's clipped (overflow:hidden) edge. */
+    .agentic-agent-info {
+        flex: 1 1 100%;
+        min-width: 0;
+    }
+
+    .agentic-chat-actions {
+        margin-left: auto;
     }
 
     .agentic-chat-messages {
@@ -1451,6 +1465,13 @@
 }
 
 
+/* Generic send/stream error (chat.js adds this class; it had no styling of its
+   own, so a failed reply looked identical to a normal agent message). */
+.agentic-message-error .agentic-message-content {
+    border-left: 3px solid #d63638;
+    padding-left: 0.75rem;
+}
+
 /* Quota / credit limit error highlight */
 .agentic-quota-error .agentic-message-content {
     border-left: 3px solid #f59e0b;
@@ -1558,9 +1579,12 @@
 	}
 }
 
-/* Accessibility: stronger focus visible for keyboard users */
+/* Accessibility: stronger focus visible for keyboard users.
+   .agentic-chat-input-container is the form's wrapper div; .agentic-chat-input
+   is the textarea itself and has no button descendants, so a selector of
+   ".agentic-chat-input button" here never matched anything. */
 .agentic-btn-secondary:focus-visible,
-.agentic-chat-input button:focus-visible,
+.agentic-chat-input-container button:focus-visible,
 .agentic-message-actions button:focus-visible {
 	outline: 2px solid var(--ac-accent, #8b5cf6);
 	outline-offset: 2px;

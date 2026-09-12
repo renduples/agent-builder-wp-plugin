@@ -78,22 +78,35 @@ class Jobs_API {
 	}
 
 	/**
-	 * Check permission
+	 * Check permission.
+	 *
+	 * Nothing in this plugin's own UI currently calls this REST surface — the
+	 * only real Job_Processor_Interface implementation (Agent_Builder_Job_Processor)
+	 * backs the HIGH-risk create_agent_files tool — so this is gated the same
+	 * as other admin-only, credential/risk-adjacent routes rather than the
+	 * bare is_user_logged_in() it previously used.
 	 *
 	 * @return bool
 	 */
 	public static function check_permission(): bool {
-		return is_user_logged_in();
+		return current_user_can( 'manage_options' );
 	}
 
 	/**
-	 * Create a new job
+	 * Create a new job.
+	 *
+	 * user_id is always the current user, never caller-supplied — a request
+	 * parameter of the same name must not let one user attribute a job to
+	 * another. Job_Manager::create_job() also validates the processor class
+	 * against Job_Processor_Interface before ever instantiating it.
 	 *
 	 * @param \WP_REST_Request $request Request object.
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public static function create_job( \WP_REST_Request $request ) {
-		$job_id = Job_Manager::create_job( $request->get_params() );
+		$args            = $request->get_params();
+		$args['user_id'] = get_current_user_id();
+		$job_id          = Job_Manager::create_job( $args );
 
 		return new \WP_REST_Response(
 			array(

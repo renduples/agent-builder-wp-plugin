@@ -282,10 +282,15 @@ class Job_Manager {
 		self::update_job( $job_id, array( 'status' => self::STATUS_PROCESSING ) );
 
 		try {
-			// Get processor class from request data.
+			// Get processor class from request data. Only a class that actually
+			// implements Job_Processor_Interface may be instantiated here — this
+			// value ultimately traces back to a REST request parameter, so a
+			// bare class_exists() would let a caller name ANY loaded class
+			// (WordPress core, any other active plugin) as the "processor".
 			$processor_class = $job->request_data['_processor'] ?? null;
 
-			if ( ! $processor_class || ! class_exists( $processor_class ) ) {
+			if ( ! $processor_class || ! class_exists( $processor_class )
+				|| ! in_array( __NAMESPACE__ . '\\Job_Processor_Interface', class_implements( $processor_class ), true ) ) {
 				throw new \Exception( 'Invalid or missing job processor' );
 			}
 

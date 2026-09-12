@@ -314,6 +314,21 @@ class Agentic_Native_Forms {
 			return new WP_Error( 'invalid_form', 'Form has no fields.', array( 'status' => 400 ) );
 		}
 
+		// Mandatory baseline anti-abuse control: the shortcode renders a
+		// `wp_rest` nonce into the form (data-nonce), sent back as the
+		// X-WP-Nonce header — verify it rather than merely rendering it.
+		// Honeypot/Turnstile stay separate, per-form opt-in checks below;
+		// this is the one check every submission must pass regardless of
+		// per-form configuration.
+		$submitted_nonce = $request->get_header( 'x_wp_nonce' );
+		if ( empty( $submitted_nonce ) || ! wp_verify_nonce( $submitted_nonce, 'wp_rest' ) ) {
+			return new WP_Error(
+				'invalid_nonce',
+				__( 'Security check failed. Please refresh the page and try again.', 'agent-builder' ),
+				array( 'status' => 403 )
+			);
+		}
+
 		// Collect and sanitise submitted values.
 		$payload = array();
 		$errors  = array();

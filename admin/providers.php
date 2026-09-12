@@ -18,6 +18,18 @@ $agentic_all_providers   = \Agentic\Provider_Registry::get_all();
 $agentic_current_default = get_option( 'agentic_llm_provider', 'agentic' );
 $agentic_prov_saved      = isset( $_GET['saved'] ) && '1' === $_GET['saved']; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
+// Basic/Advanced split (M1 Phase 6). Basic narrows the add/edit form to
+// name + API key (plus endpoint/slug when adding, since a brand-new custom
+// provider has no sensible inferred value for either); every other field
+// is still submitted on save via a hidden input carrying either the
+// existing value (editing) or a recommended default (adding), so no field
+// is ever silently dropped — see the hidden-field blocks below.
+$agentic_providers_advanced = \Agentic\Admin_Menu_Handler::is_advanced_mode( 'providers' );
+
+// Classic PHP page — reuse react-admin.css purely for the shared
+// .agentic-screen-mode-toggle styling, same pattern as admin/deployment.php.
+wp_enqueue_style( 'agentic-react-admin', AGENT_BUILDER_URL . 'assets/css/react-admin.css', array(), AGENT_BUILDER_VERSION );
+
 // Edit mode: load the provider being edited.
 $agentic_edit_slug = isset( $_GET['edit_provider'] ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	? sanitize_key( wp_unslash( $_GET['edit_provider'] ) ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -67,12 +79,24 @@ if ( $agentic_edit_slug ) {
 }
 ?>
 
-<?php if ( ! $agentic_show_form ) : ?>
-<p class="agentic-settings-lead"><?php esc_html_e( 'Configure the AI providers available on this site.', 'agent-builder' ); ?></p>
-<p class="agentic-settings-actions">
-	<a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-settings&tab=providers&add_provider=1' ) ); ?>" class="button button-primary"><?php esc_html_e( 'Add Provider', 'agent-builder' ); ?></a>
-</p>
-<?php endif; ?>
+<div class="agentic-react-admin__page-head">
+	<div>
+	<?php if ( ! $agentic_show_form ) : ?>
+		<p class="agentic-settings-lead"><?php esc_html_e( 'Configure the AI providers available on this site.', 'agent-builder' ); ?></p>
+		<p class="agentic-settings-actions">
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-settings&tab=providers&add_provider=1' ) ); ?>" class="button button-primary"><?php esc_html_e( 'Add Provider', 'agent-builder' ); ?></a>
+		</p>
+	<?php endif; ?>
+	</div>
+	<span class="agentic-screen-mode-toggle" id="agentic-providers-mode-toggle">
+		<button type="button" class="button button-small<?php echo ! $agentic_providers_advanced ? ' button-primary' : ''; ?>" data-mode="basic">
+			<?php esc_html_e( 'Basic', 'agent-builder' ); ?>
+		</button>
+		<button type="button" class="button button-small<?php echo $agentic_providers_advanced ? ' button-primary' : ''; ?>" data-mode="advanced">
+			<?php esc_html_e( 'Advanced', 'agent-builder' ); ?>
+		</button>
+	</span>
+</div>
 
 <?php if ( $agentic_prov_saved ) : ?>
 <div class="notice notice-success is-dismissible agentic-mt-12"><p>Provider saved successfully.</p></div>
@@ -95,6 +119,15 @@ if ( $agentic_edit_slug ) {
 		<?php wp_nonce_field( 'agentic_provider_nonce' ); ?>
 		<input type="hidden" name="agentic_provider_action" value="save">
 		<input type="hidden" name="provider_sort_order" value="<?php echo esc_attr( $agentic_edit_prov['sort_order'] ?? 99 ); ?>">
+		<?php
+		// Basic mode hides the fields below; a new provider still needs a
+		// slug + endpoint to be functional (no sensible default exists for
+		// either), so those two stay visible when adding even in Basic --
+		// everything else falls back to a hidden input carrying either the
+		// existing value (editing) or a recommended default (adding), so
+		// no field's value is ever silently dropped.
+		$agentic_show_identity_fields = $agentic_providers_advanced || ! $agentic_edit_prov;
+		?>
 
 		<table class="form-table agentic-table-mt-0">
 			<tr>
@@ -104,6 +137,7 @@ if ( $agentic_edit_slug ) {
 						value="<?php echo esc_attr( $agentic_edit_prov['name'] ?? '' ); ?>" required>
 				</td>
 			</tr>
+			<?php if ( $agentic_providers_advanced ) : ?>
 			<tr>
 				<th scope="row"><label for="provider_icon">Icon URL</label></th>
 				<td>
@@ -119,6 +153,10 @@ if ( $agentic_edit_slug ) {
 					<p class="description">Full URL to the provider's icon image (PNG, SVG, JPG). For built-in providers leave this as-is — it maps to a bundled SVG.</p>
 				</td>
 			</tr>
+			<?php else : ?>
+			<input type="hidden" name="provider_icon" value="<?php echo esc_attr( $agentic_edit_prov['icon'] ?? '' ); ?>">
+			<?php endif; ?>
+			<?php if ( $agentic_show_identity_fields ) : ?>
 			<tr>
 				<th scope="row"><label for="provider_slug">Slug</label></th>
 				<td>
@@ -137,6 +175,10 @@ if ( $agentic_edit_slug ) {
 					<?php endif; ?>
 				</td>
 			</tr>
+			<?php else : ?>
+			<input type="hidden" name="provider_slug" value="<?php echo esc_attr( $agentic_edit_prov['slug'] ?? '' ); ?>">
+			<?php endif; ?>
+			<?php if ( $agentic_show_identity_fields ) : ?>
 			<tr>
 				<th scope="row"><label for="provider_endpoint">Endpoint URL</label></th>
 				<td>
@@ -148,6 +190,10 @@ if ( $agentic_edit_slug ) {
 					</p>
 				</td>
 			</tr>
+			<?php else : ?>
+			<input type="hidden" name="provider_endpoint" value="<?php echo esc_attr( $agentic_edit_prov['endpoint'] ?? '' ); ?>">
+			<?php endif; ?>
+			<?php if ( $agentic_providers_advanced ) : ?>
 			<tr>
 				<th scope="row"><label for="provider_default_model">Default Model</label></th>
 				<td>
@@ -182,6 +228,10 @@ if ( $agentic_edit_slug ) {
 					<p class="description">Model string sent to the API when no specific model is chosen.</p>
 				</td>
 			</tr>
+			<?php else : ?>
+			<input type="hidden" name="provider_default_model" value="<?php echo esc_attr( $agentic_edit_prov['default_model'] ?? '' ); ?>">
+			<?php endif; ?>
+			<?php if ( $agentic_providers_advanced ) : ?>
 			<tr>
 				<th scope="row"><label for="provider_models">Available Models</label></th>
 				<td>
@@ -193,6 +243,10 @@ if ( $agentic_edit_slug ) {
 					<p class="description">One model identifier per line. Populates the Default Model dropdown above. Use &#8635;&nbsp;Refresh to fill from the provider&#8217;s live API, then save to persist.</p>
 				</td>
 			</tr>
+			<?php else : ?>
+			<input type="hidden" name="provider_models" value="<?php echo esc_attr( implode( "\n", $agentic_edit_prov['models'] ?? array() ) ); ?>">
+			<?php endif; ?>
+			<?php if ( $agentic_providers_advanced ) : ?>
 			<tr>
 				<th scope="row"><label for="provider_vision_model">Vision Model</label></th>
 				<td>
@@ -202,6 +256,10 @@ if ( $agentic_edit_slug ) {
 					<p class="description">Model used when a user attaches an image. Leave blank to fall back to the Default Model.</p>
 				</td>
 			</tr>
+			<?php else : ?>
+			<input type="hidden" name="provider_vision_model" value="<?php echo esc_attr( $agentic_edit_prov['vision_model'] ?? '' ); ?>">
+			<?php endif; ?>
+			<?php if ( $agentic_providers_advanced ) : ?>
 			<tr>
 				<th scope="row"><label for="provider_auth_type">Auth Type</label></th>
 				<td>
@@ -214,6 +272,10 @@ if ( $agentic_edit_slug ) {
 					</select>
 				</td>
 			</tr>
+			<?php else : ?>
+			<input type="hidden" name="provider_auth_type" value="<?php echo esc_attr( $agentic_edit_prov['auth_type'] ?? 'bearer' ); ?>">
+			<?php endif; ?>
+			<?php if ( $agentic_providers_advanced ) : ?>
 			<tr>
 				<th scope="row"><label for="provider_req_format">Request Format</label></th>
 				<td>
@@ -227,6 +289,10 @@ if ( $agentic_edit_slug ) {
 					<p class="description">How to structure the request body sent to the API.</p>
 				</td>
 			</tr>
+			<?php else : ?>
+			<input type="hidden" name="provider_req_format" value="<?php echo esc_attr( $agentic_edit_prov['req_format'] ?? 'openai' ); ?>">
+			<?php endif; ?>
+			<?php if ( $agentic_providers_advanced ) : ?>
 			<tr>
 				<th scope="row"><label for="provider_resp_format">Response Format</label></th>
 				<td>
@@ -240,6 +306,10 @@ if ( $agentic_edit_slug ) {
 					<p class="description">Choose if the API response needs normalisation before use.</p>
 				</td>
 			</tr>
+			<?php else : ?>
+			<input type="hidden" name="provider_resp_format" value="<?php echo esc_attr( $agentic_edit_prov['resp_format'] ?? 'openai' ); ?>">
+			<?php endif; ?>
+			<?php if ( $agentic_providers_advanced ) : ?>
 			<tr>
 				<th scope="row"><label for="provider_key_url">Get Key URL</label></th>
 				<td>
@@ -249,6 +319,9 @@ if ( $agentic_edit_slug ) {
 					<p class="description">Optional. Link shown to users to help them obtain an API key.</p>
 				</td>
 			</tr>
+			<?php else : ?>
+			<input type="hidden" name="provider_key_url" value="<?php echo esc_attr( $agentic_edit_prov['key_url'] ?? '' ); ?>">
+			<?php endif; ?>
 			<?php
 			$agentic_needs_key = 'none' !== ( $agentic_edit_prov['auth_type'] ?? 'bearer' );
 			if ( $agentic_needs_key || ! $agentic_edit_prov ) :
@@ -420,7 +493,7 @@ if ( $agentic_edit_slug ) {
 </table>
 <?php endif; ?>
 
-<?php if ( $agentic_show_form && $agentic_edit_slug ) : ?>
+<?php if ( $agentic_show_form && $agentic_edit_slug && $agentic_providers_advanced ) : ?>
 <script>
 (function () {
 	var slug      = <?php echo wp_json_encode( $agentic_edit_slug ); ?>;
@@ -499,3 +572,38 @@ if ( $agentic_edit_slug ) {
 }());
 </script>
 <?php endif; ?>
+
+<script>
+( function () {
+	'use strict';
+	var toggle = document.getElementById( 'agentic-providers-mode-toggle' );
+	if ( ! toggle ) {
+		return;
+	}
+	Array.prototype.forEach.call( toggle.querySelectorAll( 'button' ), function ( btn ) {
+		btn.addEventListener( 'click', function () {
+			if ( btn.disabled ) {
+				return;
+			}
+			Array.prototype.forEach.call( toggle.querySelectorAll( 'button' ), function ( b ) {
+				b.disabled = true;
+			} );
+			fetch( <?php echo wp_json_encode( esc_url_raw( rest_url( 'agentic/v1/admin-page' ) ) ); ?>, {
+				method: 'POST',
+				credentials: 'same-origin',
+				headers: {
+					'Content-Type': 'application/json',
+					'X-WP-Nonce': <?php echo wp_json_encode( wp_create_nonce( 'wp_rest' ) ); ?>
+				},
+				body: JSON.stringify( {
+					action_name: 'set_screen_mode',
+					screen: 'providers',
+					mode: btn.getAttribute( 'data-mode' )
+				} )
+			} ).then( function () {
+				window.location.reload();
+			} );
+		} );
+	} );
+} )();
+</script>

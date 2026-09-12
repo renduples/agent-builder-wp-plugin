@@ -510,7 +510,7 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 				</p>
 				<div class="provider-grid">
 					<?php foreach ( $agentic_providers as $agentic_slug => $agentic_p ) : ?>
-					<div class="provider-card" id="card-<?php echo esc_attr( $agentic_slug ); ?>" onclick="selectProvider('<?php echo esc_js( $agentic_slug ); ?>')">
+					<div class="provider-card" id="card-<?php echo esc_attr( $agentic_slug ); ?>" role="button" tabindex="0" aria-pressed="false" onclick="selectProvider('<?php echo esc_js( $agentic_slug ); ?>')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectProvider('<?php echo esc_js( $agentic_slug ); ?>');}">
 						<div class="provider-icon">
 							<?php
 							echo wp_kses(
@@ -765,7 +765,7 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 					</div>
 					<?php endif; ?>
 
-					<div class="test-status" id="test-status-<?php echo esc_attr( $agentic_slug ); ?>">
+					<div class="test-status" id="test-status-<?php echo esc_attr( $agentic_slug ); ?>" role="status" aria-live="polite">
 						<span class="test-icon"></span>
 						<span class="test-msg"></span>
 					</div>
@@ -805,6 +805,7 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 									alt="<?php echo esc_attr( $agentic_step['alt'] ); ?>"
 									class="step-screenshot"
 									loading="lazy"
+									onerror="this.closest('.screenshot-wrap').style.display='none'"
 								>
 								<span class="screenshot-zoom-icon" aria-hidden="true">
 									<svg viewBox="0 0 20 20"><circle cx="8" cy="8" r="5"/><line x1="13" y1="13" x2="18" y2="18"/><line x1="6" y1="8" x2="10" y2="8"/><line x1="8" y1="6" x2="8" y2="10"/></svg>
@@ -835,14 +836,14 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 
 				<!-- Model Selection -->
 				<div class="wizard-pref-section">
-					<h3><?php esc_html_e( 'Choose a model', 'agent-builder' ); ?></h3>
+					<h2><?php esc_html_e( 'Choose a model', 'agent-builder' ); ?></h2>
 					<p class="wizard-pref-hint"><?php esc_html_e( 'Each model has different strengths. You can change this any time in Settings.', 'agent-builder' ); ?></p>
 					<div id="wizard-model-grid" class="wizard-model-grid"></div>
 				</div>
 
 				<!-- Agent Mode -->
 				<div class="wizard-pref-section">
-					<h3><?php esc_html_e( 'Choose an agent mode', 'agent-builder' ); ?></h3>
+					<h2><?php esc_html_e( 'Choose an agent mode', 'agent-builder' ); ?></h2>
 					<p class="wizard-pref-hint"><?php esc_html_e( 'Controls how much authority your AI agents have. You can change this any time in Settings.', 'agent-builder' ); ?></p>
 					<div class="wizard-mode-grid">
 						<label class="wizard-mode-card" data-mode="supervised">
@@ -879,7 +880,7 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 					<button type="button" class="btn-primary" id="btn-test-connection" onclick="runWizardTest()">
 						<?php esc_html_e( 'Test Connection', 'agent-builder' ); ?>
 					</button>
-					<div class="test-status" id="test-status-wizard">
+					<div class="test-status" id="test-status-wizard" role="status" aria-live="polite">
 						<span class="test-icon"></span>
 						<span class="test-msg"></span>
 					</div>
@@ -1116,8 +1117,11 @@ function selectProvider(slug) {
 	// Deselect all cards.
 	document.querySelectorAll('.provider-card').forEach(function(c) {
 		c.classList.remove('selected');
+		c.setAttribute('aria-pressed', 'false');
 	});
-	document.getElementById('card-' + slug).classList.add('selected');
+	var selectedCard = document.getElementById('card-' + slug);
+	selectedCard.classList.add('selected');
+	selectedCard.setAttribute('aria-pressed', 'true');
 
 	selectedProvider = slug;
 

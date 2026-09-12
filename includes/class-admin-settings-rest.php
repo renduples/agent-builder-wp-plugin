@@ -200,6 +200,17 @@ class Admin_Settings_REST {
 		);
 		$tabs = apply_filters( 'agentic_settings_tabs', $tabs );
 
+		// APIs / Endpoints / MCP stay in $tabs (deep links, search, and the
+		// "same capabilities" rule) but the React nav hides that group in
+		// Basic unless the user has opened the Settings-page escape hatch.
+		// Screen key is 'settings' — independent of site-wide ui_mode, of
+		// per-tab keys like 'settings-users' / 'settings-interface' /
+		// 'settings-security', and of Phase 6's 'providers' key.
+		$advanced_only_tabs = array( 'apis', 'endpoints', 'mcp' );
+		$settings_advanced  = class_exists( Admin_Menu_Handler::class )
+			? Admin_Menu_Handler::is_advanced_mode( 'settings' )
+			: ( 'advanced' === get_option( 'agentic_ui_mode', 'basic' ) );
+
 		$groups = array(
 			array(
 				'id'    => 'basic',
@@ -209,7 +220,7 @@ class Admin_Settings_REST {
 			array(
 				'id'    => 'advanced',
 				'label' => __( 'Advanced', 'agent-builder' ),
-				'slugs' => array( 'apis', 'endpoints', 'mcp' ),
+				'slugs' => $advanced_only_tabs,
 			),
 		);
 
@@ -231,13 +242,15 @@ class Admin_Settings_REST {
 
 		return new \WP_REST_Response(
 			array(
-				'tabs'         => $tabs,
-				'groups'       => $groups,
-				'is_pro'       => false,
-				'classic_tabs' => $classic_tabs,
-				'admin_url'    => admin_url(),
-				'rest_url'     => rest_url( 'agentic/v1/' ),
-				'data'         => array(
+				'tabs'                 => $tabs,
+				'groups'               => $groups,
+				'is_pro'               => false,
+				'classic_tabs'         => $classic_tabs,
+				'admin_url'            => admin_url(),
+				'rest_url'             => rest_url( 'agentic/v1/' ),
+				'is_settings_advanced' => $settings_advanced,
+				'advanced_only_tabs'   => $advanced_only_tabs,
+				'data'                 => array(
 					'interface'    => self::data_interface(),
 					'providers'    => self::data_providers(),
 					'agents'       => self::data_agents(),
@@ -639,6 +652,10 @@ class Admin_Settings_REST {
 	 * @return array<string,mixed>
 	 */
 	private static function data_interface(): array {
+		$is_advanced = class_exists( Admin_Menu_Handler::class )
+			? Admin_Menu_Handler::is_advanced_mode( 'settings-interface' )
+			: ( 'advanced' === get_option( 'agentic_ui_mode', 'basic' ) );
+
 		return array(
 			'ui_mode'          => 'advanced' === get_option( 'agentic_ui_mode', 'basic' ) ? 'advanced' : 'basic',
 			'show_onboarding'  => '0' !== get_option( 'agentic_show_onboarding', '1' ),
@@ -648,6 +665,7 @@ class Admin_Settings_REST {
 			'global_accent'    => (string) get_option( 'agentic_global_accent', '' ),
 			'chat_theme'       => (string) get_option( 'agentic_chat_theme', 'light' ),
 			'chat_themes'      => self::chat_theme_presets(),
+			'is_advanced'      => $is_advanced,
 			'font_options'     => array(
 				array(
 					'label' => __( 'Theme default', 'agent-builder' ),
@@ -834,6 +852,10 @@ class Admin_Settings_REST {
 	 * @return array<string,mixed>
 	 */
 	private static function data_security(): array {
+		$is_advanced = class_exists( Admin_Menu_Handler::class )
+			? Admin_Menu_Handler::is_advanced_mode( 'settings-security' )
+			: ( 'advanced' === get_option( 'agentic_ui_mode', 'basic' ) );
+
 		return array(
 			'default_agent_mode'       => (string) get_option( 'agentic_default_agent_mode', 'supervised' ),
 			'message_scanning'         => (bool) get_option( 'agentic_message_scanning', true ),
@@ -844,6 +866,7 @@ class Admin_Settings_REST {
 			'rate_limit_authenticated' => (int) get_option( 'agentic_rate_limit_authenticated', 30 ),
 			'rate_limit_anonymous'     => (int) get_option( 'agentic_rate_limit_anonymous', 10 ),
 			'allow_platform_sync'      => '1' === (string) get_option( 'agentic_allow_platform_sync', '0' ),
+			'is_advanced'              => $is_advanced,
 		);
 	}
 
@@ -1140,8 +1163,50 @@ class Admin_Settings_REST {
 	// ── Savers ────────────────────────────────────────────────────────────
 
 	/**
-	 * @param array<string,mixed> $data Data.
+	 * Persist the site-wide Basic/Advanced default.
+	 *
+	 * Single writer for the `agentic_ui_mode` option. Dashboard REST
+	 * (`set_ui_mode` action), Settings → Interface (`save_interface()`),
+	 * the classic-PHP fallback (`UI_Settings_REST`), and the global header
+	 * switch (`Admin_Pages_REST` `set_ui_mode` action) all call through
+	 * here so there is exactly one `update_option( 'agentic_ui_mode', ... )`
+	 * in the codebase. Option name and values (`basic` / `advanced`) are
+	 * part of the Agent Builder Pro contract and must not change.
+	 *
+	 * Invalid values are rejected (no write), matching `save_interface()`
+	 * and `/ui-settings`. Callers that historically coerced invalid input
+	 * to `'basic'` (Dashboard) must do that before calling this method.
+	 *
+	 * @param string $mode 'basic' or 'advanced'.
+	 * @param string $via  Optional audit-log source tag. Empty keeps the
+	 *                     historical payload (Dashboard / Settings app);
+	 *                     `'ui_settings_rest'` preserves the classic
+	 *                     fallback's extra `via` field; `'global_header'`
+	 *                     marks the shared-chrome switch.
+	 * @return bool True if the value was accepted and written.
 	 */
+	public static function set_ui_mode( string $mode, string $via = '' ): bool {
+		if ( ! in_array( $mode, array( 'basic', 'advanced' ), true ) ) {
+			return false;
+		}
+
+		$prev = (string) get_option( 'agentic_ui_mode', 'basic' );
+		update_option( 'agentic_ui_mode', $mode, false );
+		if ( $prev !== $mode && class_exists( Audit_Log::class ) ) {
+			$details = array(
+				'id'   => $mode,
+				'from' => $prev,
+				'to'   => $mode,
+			);
+			if ( '' !== $via ) {
+				$details['via'] = $via;
+			}
+			Audit_Log::log_admin( 'ui_mode_changed', 'settings', $details );
+		}
+
+		return true;
+	}
+
 	/**
 	 * @param array<string,mixed> $data Data.
 	 */
@@ -1156,21 +1221,8 @@ class Admin_Settings_REST {
 			$address_changed = true;
 		}
 
-		if ( isset( $data['ui_mode'] ) && in_array( $data['ui_mode'], array( 'basic', 'advanced' ), true ) ) {
-			$prev = (string) get_option( 'agentic_ui_mode', 'basic' );
-			$mode = (string) $data['ui_mode'];
-			update_option( 'agentic_ui_mode', $mode, false );
-			if ( $prev !== $mode && class_exists( Audit_Log::class ) ) {
-				Audit_Log::log_admin(
-					'ui_mode_changed',
-					'settings',
-					array(
-						'id'   => $mode,
-						'from' => $prev,
-						'to'   => $mode,
-					)
-				);
-			}
+		if ( isset( $data['ui_mode'] ) ) {
+			self::set_ui_mode( (string) $data['ui_mode'] );
 		}
 		if ( array_key_exists( 'show_onboarding', $data ) ) {
 			update_option( 'agentic_show_onboarding', ! empty( $data['show_onboarding'] ) ? '1' : '0', false );

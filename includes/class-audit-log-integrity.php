@@ -177,7 +177,7 @@ class Audit_Log_Integrity {
 			tokens_used, cost, user_id, created_at, agent_author, agent_version, integrity_hash
 			FROM %i {$where_sql} ORDER BY id ASC";
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Read-only integrity walk, not a hot path.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Read-only integrity walk, not a hot path. $query is prepared right here via %i/%d placeholders; the ignore two lines up (on the $query assignment) doesn't reach this separate statement.
 		$rows = $wpdb->get_results( $wpdb->prepare( $query, $params ), ARRAY_A );
 
 		$previous_hash  = null;

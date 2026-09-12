@@ -186,7 +186,7 @@ Add / Edit Trigger Form
 					</optgroup>
 				</select>
 				<div id="agentic-trigger-custom" class="agentic-mt-6" style="display:none;">
-					<input type="text" id="agentic-trigger-custom-hook" class="regular-text" placeholder="my_plugin_action" class="agentic-input-mono">
+					<input type="text" id="agentic-trigger-custom-hook" class="regular-text agentic-input-mono" placeholder="my_plugin_action">
 					<p class="description"><?php esc_html_e( 'Enter any WordPress action hook name.', 'agent-builder' ); ?></p>
 				</div>
 			</td>
@@ -233,7 +233,8 @@ Add / Edit Trigger Form
 	<p><?php esc_html_e( 'No event listeners active. Add a trigger above or activate agents that define built-in listeners.', 'agent-builder' ); ?></p>
 </div>
 <?php else : ?>
-<table class="widefat striped">
+<div class="agentic-table-scroll">
+<table class="widefat striped agentic-table-min-720">
 	<thead>
 		<tr>
 			<th><?php esc_html_e( 'Agent', 'agent-builder' ); ?></th>
@@ -242,7 +243,7 @@ Add / Edit Trigger Form
 			<th class="agentic-col-60"><?php esc_html_e( 'Priority', 'agent-builder' ); ?></th>
 			<th class="agentic-col-110"><?php esc_html_e( 'Mode', 'agent-builder' ); ?></th>
 			<th class="agentic-col-90"><?php esc_html_e( 'Source', 'agent-builder' ); ?></th>
-			<th class="agentic-col-80"></th>
+			<th class="agentic-col-80"><span class="screen-reader-text"><?php esc_html_e( 'Actions', 'agent-builder' ); ?></span></th>
 		</tr>
 	</thead>
 	<tbody>
@@ -277,9 +278,8 @@ Add / Edit Trigger Form
 			<td>
 				<?php if ( 'user' === $agentic_event_row['source'] ) : ?>
 				<button type="button"
-					class="button button-small agentic-trigger-delete"
-					data-id="<?php echo esc_attr( $agentic_event_row['trigger_id'] ); ?>"
-					class="agentic-btn-danger-outline">
+					class="button button-small agentic-trigger-delete agentic-btn-danger-outline"
+					data-id="<?php echo esc_attr( $agentic_event_row['trigger_id'] ); ?>">
 					<?php esc_html_e( 'Remove', 'agent-builder' ); ?>
 				</button>
 				<?php endif; ?>
@@ -288,6 +288,7 @@ Add / Edit Trigger Form
 		<?php endforeach; ?>
 	</tbody>
 </table>
+</div>
 <?php endif; ?>
 
 <div class="agentic-info-note">

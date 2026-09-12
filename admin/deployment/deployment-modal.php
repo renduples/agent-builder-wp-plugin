@@ -145,7 +145,6 @@ if ( empty( $agentic_modal_rows ) ) {
 
 <div class="agentic-tab-section">
 
-	<h2><?php esc_html_e( 'Modal', 'agent-builder' ); ?></h2>
 	<p>
 		<?php esc_html_e( 'Deploy a floating chat button on your public website. Visitors click the button to open a chat modal powered by the selected agent.', 'agent-builder' ); ?>
 		<?php
@@ -167,7 +166,8 @@ if ( empty( $agentic_modal_rows ) ) {
 		<form method="post" action="">
 			<?php wp_nonce_field( 'agentic_modal_settings' ); ?>
 
-			<table class="widefat striped">
+			<div class="agentic-table-scroll">
+			<table class="widefat striped agentic-table-min-700">
 				<thead>
 					<tr>
 						<th class="agentic-col-40"><?php esc_html_e( 'Enable', 'agent-builder' ); ?></th>
@@ -192,6 +192,7 @@ if ( empty( $agentic_modal_rows ) ) {
 								<input type="checkbox"
 									name="agentic_modal[<?php echo esc_attr( $agentic_slug ); ?>][enabled]"
 									value="1"
+									aria-label="<?php echo esc_attr( sprintf( /* translators: %s: agent name */ __( 'Enable frontend modal for %s', 'agent-builder' ), $agentic_agent->get_name() ) ); ?>"
 									<?php checked( $agentic_m_is_enabled ); ?>>
 							</td>
 							<td>
@@ -228,12 +229,14 @@ if ( empty( $agentic_modal_rows ) ) {
 								<input type="checkbox"
 									name="agentic_modal[<?php echo esc_attr( $agentic_slug ); ?>][require_login]"
 									value="1"
+									aria-label="<?php echo esc_attr( sprintf( /* translators: %s: agent name */ __( 'Require login for %s', 'agent-builder' ), $agentic_agent->get_name() ) ); ?>"
 									<?php checked( $agentic_m_login, '1' ); ?>>
 							</td>
 						</tr>
 					<?php endforeach; ?>
 				</tbody>
 			</table>
+			</div>
 
 			<?php submit_button( __( 'Save Settings', 'agent-builder' ), 'primary', 'agentic_save_modal' ); ?>
 		</form>
@@ -249,10 +252,10 @@ if ( empty( $agentic_modal_rows ) ) {
 			<li>
 				<?php
 				printf(
-					/* translators: %s: link to Styles settings */
+					/* translators: %s: link to Interface settings */
 					esc_html__( 'The chat theme is controlled by %s.', 'agent-builder' ),
-					'<a href="' . esc_url( admin_url( 'admin.php?page=agentic-settings&tab=global' ) ) . '">'
-						. esc_html__( 'Settings → Styles', 'agent-builder' )
+					'<a href="' . esc_url( admin_url( 'admin.php?page=agentic-settings&tab=interface' ) ) . '">'
+						. esc_html__( 'Settings → Interface', 'agent-builder' )
 					. '</a>'
 				);
 				?>

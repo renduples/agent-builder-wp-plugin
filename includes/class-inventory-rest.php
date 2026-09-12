@@ -139,6 +139,18 @@ class Inventory_REST {
 	}
 
 	/**
+	 * Public wrapper for describe_tools() so other admin surfaces (Chat
+	 * Playground) can reuse the same per-agent tool list the inventory
+	 * endpoint already exposes, instead of assembling a second copy.
+	 *
+	 * @param string $agent_slug Agent slug.
+	 * @return array<int, array{name:string, risk:string}>
+	 */
+	public static function get_agent_tools( string $agent_slug ): array {
+		return self::describe_tools( $agent_slug );
+	}
+
+	/**
 	 * Every tool an agent's manifest declares (abilities.json's own
 	 * `abilities` map, plus any wp_abilities entries), each with its
 	 * effective risk tier — the same value Tool_Executor::execute() actually

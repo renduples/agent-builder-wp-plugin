@@ -114,7 +114,7 @@ class Knowledge_Wizard_REST {
 				'id'      => $post->ID,
 				'title'   => $post->post_title ?: __( '(no title)', 'agent-builder' ),
 				'type'    => $post->post_type,
-				'excerpt' => wp_trim_words( wp_strip_all_tags( $post->post_content ), 20, '…' ),
+				'excerpt' => wp_trim_words( wp_strip_all_tags( html_entity_decode( $post->post_content, ENT_QUOTES, 'UTF-8' ) ), 20, '…' ),
 			);
 		}
 

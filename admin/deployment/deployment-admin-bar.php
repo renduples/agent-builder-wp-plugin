@@ -191,7 +191,8 @@ if ( ! isset( $agentic_agent_choices[ $agentic_launcher_agent ] ) ) {
 				<p><?php esc_html_e( 'No active agents found. Activate at least one agent first.', 'agent-builder' ); ?></p>
 			</div>
 		<?php else : ?>
-			<table class="widefat striped">
+			<div class="agentic-table-scroll">
+			<table class="widefat striped agentic-table-min-560">
 				<thead>
 					<tr>
 						<th class="agentic-col-40"><?php esc_html_e( 'Enable', 'agent-builder' ); ?></th>
@@ -214,6 +215,7 @@ if ( ! isset( $agentic_agent_choices[ $agentic_launcher_agent ] ) ) {
 								<input type="checkbox"
 									name="agentic_ab[<?php echo esc_attr( $agentic_slug ); ?>][enabled]"
 									value="1"
+									aria-label="<?php echo esc_attr( sprintf( /* translators: %s: agent name */ __( 'Enable admin bar chat for %s', 'agent-builder' ), $agentic_agent->get_name() ) ); ?>"
 									<?php checked( $agentic_ab_is_enabled ); ?>>
 							</td>
 							<td>
@@ -247,6 +249,7 @@ if ( ! isset( $agentic_agent_choices[ $agentic_launcher_agent ] ) ) {
 					<?php endforeach; ?>
 				</tbody>
 			</table>
+			</div>
 		<?php endif; ?>
 
 		<hr class="agentic-section-divider" style="margin:24px 0;border:0;border-top:1px solid #e0e0e0;" />

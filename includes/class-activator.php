@@ -1018,9 +1018,9 @@ final class Activator {
 		// Agent library — one row per agent, whatever its origin. Declarative
 		// agents (kind=manifest) are interpreted from the manifest column by
 		// Manifest_Agent; reviewed PHP agents (kind=php) keep running from their
-		// file and the row is a version/record anchor. The table is deliberately
-		// NOT dropped on uninstall (see uninstall.php) so purchased and
-		// user-created agents survive a reinstall.
+		// file and the row is a version/record anchor. Dropped on uninstall when
+		// the admin opted into full data deletion (see uninstall.php); otherwise
+		// left in place so a reinstall finds existing purchased/user rows.
 		$sql_agent_library = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agentic_agent_library (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
             slug varchar(128) NOT NULL,
@@ -1720,7 +1720,7 @@ final class Activator {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) === $table ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$rows = $wpdb->get_results( "SELECT id, agent_slug FROM {$table} WHERE agent_slug != ''", ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
+			$rows = $wpdb->get_results( "SELECT id, agent_slug FROM {$table} WHERE agent_slug != ''", ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $table is $wpdb->prefix . 'agentic_skills', not user input.
 
 			foreach ( (array) $rows as $row ) {
 				$raw = (string) $row['agent_slug'];

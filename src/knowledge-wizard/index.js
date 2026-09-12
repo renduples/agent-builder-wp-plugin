@@ -42,7 +42,10 @@ const STEPS = [
 
 function Stepper( { current } ) {
 	return (
-		<ol className="agentic-wizard-steps">
+		<ol
+			className="agentic-wizard-steps"
+			aria-label={ __( 'Wizard steps', 'agent-builder' ) }
+		>
 			{ STEPS.map( ( stepItem, index ) => (
 				<li
 					key={ stepItem.key }
@@ -51,6 +54,7 @@ function Stepper( { current } ) {
 						( index === current ? ' is-active' : '' ) +
 						( index < current ? ' is-done' : '' )
 					}
+					aria-current={ index === current ? 'step' : undefined }
 				>
 					<span className="agentic-wizard-step__num">
 						{ index + 1 }
@@ -268,7 +272,7 @@ function App() {
 						<p className="agentic-wizard-sublabel">
 							{ __( 'Where is this knowledge coming from?', 'agent-builder' ) }
 						</p>
-						<Flex gap={ 2 } wrap className="agentic-mb-12">
+						<Flex gap={ 2 } wrap justify="flex-start" className="agentic-mb-12">
 							{ SOURCES.map( ( s ) => (
 								<FlexItem key={ s.key }>
 									<Button
@@ -300,10 +304,14 @@ function App() {
 
 						{ source === 'upload' && (
 							<Fragment>
-								<p className="agentic-wizard-sublabel">
+								<label
+									className="agentic-wizard-sublabel"
+									htmlFor="agentic-knowledge-wizard-file"
+								>
 									{ __( 'Upload a text or Markdown file', 'agent-builder' ) }
-								</p>
+								</label>
 								<input
+									id="agentic-knowledge-wizard-file"
 									type="file"
 									accept=".txt,.md,.markdown,text/plain,text/markdown"
 									onChange={ ( e ) =>
@@ -326,6 +334,7 @@ function App() {
 								) }
 								{ text && (
 									<TextareaControl
+										label={ __( 'File contents', 'agent-builder' ) }
 										value={ text }
 										onChange={ setText }
 										rows={ 8 }

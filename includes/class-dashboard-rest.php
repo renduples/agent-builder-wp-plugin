@@ -315,8 +315,9 @@ class Dashboard_REST {
 					'providers' => admin_url( 'admin.php?page=agentic-settings&tab=providers' ),
 					'interface' => admin_url( 'admin.php?page=agentic-settings&tab=interface' ),
 					'activity'  => admin_url( 'admin.php?page=agentic-audit-log' ),
-					'approvals' => admin_url( 'admin.php?page=agentic-approvals' ),
-					'agent_ready' => admin_url( 'admin.php?page=agentic-agent-ready' ),
+					'approvals'      => admin_url( 'admin.php?page=agentic-approvals' ),
+					'safety_center'  => admin_url( 'admin.php?page=agentic-safety-center' ),
+					'agent_ready'    => admin_url( 'admin.php?page=agentic-agent-ready' ),
 					'backups'   => admin_url( 'admin.php?page=agentic-approvals&tab=backups' ),
 					'pricing'   => 'https://agentic-plugin.com/pricing/',
 					'community' => class_exists( Agent_Updates::class )
@@ -375,19 +376,7 @@ class Dashboard_REST {
 				if ( ! in_array( $mode, array( 'basic', 'advanced' ), true ) ) {
 					$mode = 'basic';
 				}
-				$prev = (string) get_option( 'agentic_ui_mode', 'basic' );
-				update_option( 'agentic_ui_mode', $mode, false );
-				if ( class_exists( Audit_Log::class ) && $prev !== $mode ) {
-					Audit_Log::log_admin(
-						'ui_mode_changed',
-						'settings',
-						array(
-							'id'   => $mode,
-							'from' => $prev,
-							'to'   => $mode,
-						)
-					);
-				}
+				Admin_Settings_REST::set_ui_mode( $mode );
 				break;
 
 			case 'set_emergency_stop':

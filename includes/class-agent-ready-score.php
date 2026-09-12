@@ -481,6 +481,11 @@ class Agent_Ready_Score {
 		// external scanner (sitepassport.org) can only ever see this one.
 		$commerce_abilities = array();
 		if ( function_exists( 'wp_get_abilities' ) ) {
+			// Plugin Check's wp_function_not_compatible_with_requires_wp check does not
+			// recognise this function_exists() guard and still flags the call below as
+			// incompatible with "Requires at least: 6.4" — false positive, documented as
+			// a justified exception in SUBMISSION-NOTES.md (this branch never executes
+			// on WP < 6.9).
 			foreach ( wp_get_abilities() as $ability ) {
 				$name = method_exists( $ability, 'get_name' ) ? $ability->get_name() : '';
 				if ( false !== stripos( $name, 'woocommerce' ) || false !== stripos( $name, 'commerce' ) ) {

@@ -21,6 +21,15 @@ if ( ! current_user_can( 'agentic_manage_settings' ) && ! current_user_can( 'man
 	wp_die( esc_html__( 'You do not have permission to access this page.', 'agent-builder' ) );
 }
 
+// Basic/Advanced split (M1 Phase 5). Basic is a landing into the existing
+// knowledge-wizard guided flow — no duplicated wizard logic. Advanced keeps
+// today's wiki editor + Instructions/Memory/Vector tabs unchanged. Screen
+// key 'knowledge' uses the unmapped set_screen_mode fallback
+// (agentic_manage_settings), which matches this page's capability — same
+// as Phase 6 'providers', unlike Phase 4 'agents' which had to be mapped
+// because that screen requires agentic_manage_agents.
+$agentic_knowledge_advanced = \Agentic\Admin_Menu_Handler::is_advanced_mode( 'knowledge' );
+
 // Agent Builder Pro (which owns the Vector Store admin UI) can never be
 // installed alongside this standalone free build.
 $agentic_is_pro = false;
@@ -59,9 +68,42 @@ if ( class_exists( '\Agentic_Agent_Registry' ) ) {
 	}
 }
 
-\Agentic\Okf_Store::ensure_bundle( 'site' );
+if ( $agentic_knowledge_advanced ) {
+	\Agentic\Okf_Store::ensure_bundle( 'site' );
+}
 ?>
 <div class="wrap agentic-admin agentic-knowledge">
+<?php if ( ! $agentic_knowledge_advanced ) : ?>
+
+	<div class="agentic-react-admin__page-head">
+		<div>
+			<h1 class="wp-heading-inline"><?php esc_html_e( 'Knowledge', 'agent-builder' ); ?></h1>
+		</div>
+		<span class="agentic-screen-mode-toggle" id="agentic-knowledge-mode-toggle">
+			<button type="button" class="button button-small button-primary" data-mode="basic">
+				<?php esc_html_e( 'Basic', 'agent-builder' ); ?>
+			</button>
+			<button type="button" class="button button-small" data-mode="advanced">
+				<?php esc_html_e( 'Advanced', 'agent-builder' ); ?>
+			</button>
+		</span>
+	</div>
+	<hr class="wp-header-end">
+
+	<div class="agentic-knowledge-basic">
+		<div class="agentic-knowledge-basic__card">
+			<h2><?php esc_html_e( 'What do you want your agents to know?', 'agent-builder' ); ?></h2>
+			<p><?php esc_html_e( 'Teach them a fact, policy, or FAQ in a few steps. Paste text, upload a file, or pick pages that already exist on this site.', 'agent-builder' ); ?></p>
+			<p class="agentic-knowledge-basic__actions">
+				<a class="button button-primary button-hero" href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-knowledge-wizard' ) ); ?>">
+					<?php esc_html_e( 'Add knowledge', 'agent-builder' ); ?>
+				</a>
+			</p>
+		</div>
+	</div>
+
+<?php else : ?>
+
 	<header class="agentic-kn-hero">
 		<div class="agentic-kn-hero-text">
 			<p class="agentic-kn-eyebrow"><?php esc_html_e( 'Knowledge', 'agent-builder' ); ?></p>
@@ -71,6 +113,14 @@ if ( class_exists( '\Agentic_Agent_Registry' ) ) {
 			</p>
 		</div>
 		<div class="agentic-kn-hero-aside">
+			<span class="agentic-screen-mode-toggle" id="agentic-knowledge-mode-toggle">
+				<button type="button" class="button button-small" data-mode="basic">
+					<?php esc_html_e( 'Basic', 'agent-builder' ); ?>
+				</button>
+				<button type="button" class="button button-small button-primary" data-mode="advanced">
+					<?php esc_html_e( 'Advanced', 'agent-builder' ); ?>
+				</button>
+			</span>
 			<div class="agentic-kn-pill">OKF v<?php echo esc_html( \Agentic\Okf_Store::OKF_VERSION ); ?></div>
 			<a class="agentic-kn-docs" href="https://agentic-plugin.com/knowledge-wiki-okf/" target="_blank" rel="noopener">
 				<?php esc_html_e( 'Docs →', 'agent-builder' ); ?>
@@ -166,6 +216,9 @@ if ( class_exists( '\Agentic_Agent_Registry' ) ) {
 				<ul id="agentic-okf-list" class="agentic-kn-list" aria-label="<?php esc_attr_e( 'Concepts', 'agent-builder' ); ?>"></ul>
 				<p class="agentic-kn-empty" id="agentic-okf-empty" hidden>
 					<?php esc_html_e( 'No concepts yet. Create a FAQ, policy, or product fact to get started.', 'agent-builder' ); ?>
+				</p>
+				<p class="agentic-kn-empty" id="agentic-okf-empty-filtered" hidden>
+					<?php esc_html_e( 'No concepts match your search. Try a different keyword or clear the search.', 'agent-builder' ); ?>
 				</p>
 			</aside>
 
@@ -373,4 +426,41 @@ if ( class_exists( '\Agentic_Agent_Registry' ) ) {
 	<?php endif; ?>
 
 	<?php \Agentic\Admin_Vnav::close(); ?>
+
+<?php endif; ?>
 </div>
+
+<script>
+( function () {
+	'use strict';
+	var toggle = document.getElementById( 'agentic-knowledge-mode-toggle' );
+	if ( ! toggle ) {
+		return;
+	}
+	Array.prototype.forEach.call( toggle.querySelectorAll( 'button' ), function ( btn ) {
+		btn.addEventListener( 'click', function () {
+			if ( btn.disabled ) {
+				return;
+			}
+			Array.prototype.forEach.call( toggle.querySelectorAll( 'button' ), function ( b ) {
+				b.disabled = true;
+			} );
+			fetch( <?php echo wp_json_encode( esc_url_raw( rest_url( 'agentic/v1/admin-page' ) ) ); ?>, {
+				method: 'POST',
+				credentials: 'same-origin',
+				headers: {
+					'Content-Type': 'application/json',
+					'X-WP-Nonce': <?php echo wp_json_encode( wp_create_nonce( 'wp_rest' ) ); ?>
+				},
+				body: JSON.stringify( {
+					action_name: 'set_screen_mode',
+					screen: 'knowledge',
+					mode: btn.getAttribute( 'data-mode' )
+				} )
+			} ).then( function () {
+				window.location.reload();
+			} );
+		} );
+	} );
+} )();
+</script>

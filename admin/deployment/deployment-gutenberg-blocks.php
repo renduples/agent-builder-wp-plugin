@@ -125,7 +125,6 @@ $agentic_gb_providers = \Agentic\Provider_Registry::get_slug_name_map();
 
 <div class="agentic-tab-section">
 
-	<h2><?php esc_html_e( 'Gutenberg Blocks', 'agent-builder' ); ?></h2>
 	<p>
 		<?php esc_html_e( 'Select which agents should appear as blocks in the Gutenberg Block Inserter. Enabled agents can be placed into any post, page, or template — including the Site Editor.', 'agent-builder' ); ?>
 	</p>
@@ -138,7 +137,8 @@ $agentic_gb_providers = \Agentic\Provider_Registry::get_slug_name_map();
 		<form method="post" action="">
 			<?php wp_nonce_field( 'agentic_gutenberg_blocks_settings' ); ?>
 
-			<table class="widefat striped agentic-table-700">
+			<div class="agentic-table-scroll">
+			<table class="widefat striped agentic-table-700 agentic-table-min-560">
 				<thead>
 					<tr>
 						<th class="agentic-col-40"><?php esc_html_e( 'Enable', 'agent-builder' ); ?></th>
@@ -156,6 +156,7 @@ $agentic_gb_providers = \Agentic\Provider_Registry::get_slug_name_map();
 								<input type="checkbox"
 									name="agentic_gb_agents[]"
 									value="<?php echo esc_attr( $agentic_slug ); ?>"
+									aria-label="<?php echo esc_attr( sprintf( /* translators: %s: agent name */ __( 'Enable Gutenberg block for %s', 'agent-builder' ), $agentic_agent->get_name() ) ); ?>"
 									<?php checked( $agentic_gb_is_enabled ); ?>>
 							</td>
 							<td>
@@ -169,6 +170,7 @@ $agentic_gb_providers = \Agentic\Provider_Registry::get_slug_name_map();
 					<?php endforeach; ?>
 				</tbody>
 			</table>
+			</div>
 
 			<?php submit_button( __( 'Save Settings', 'agent-builder' ), 'primary', 'agentic_save_gutenberg_blocks' ); ?>
 		</form>

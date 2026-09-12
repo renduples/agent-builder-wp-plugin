@@ -2,6 +2,8 @@
 # Build a WordPress.org submission tree from this checkout.
 # Usage: bin/export-wporg-tree.sh [destination-dir]
 # Default destination: /tmp/agent-builder
+# Also writes a sibling zip (e.g. /tmp/agent-builder.zip). That zip is a
+# build artifact — gitignored, never commit it.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -59,4 +61,14 @@ php -r '
 ( cd "$DEST" && composer update --no-dev --optimize-autoloader --no-interaction )
 rm -f "$DEST/composer.lock"
 
+# Zip sits beside the tree as a build artifact (gitignored — never commit it).
+PARENT="$(dirname "$DEST")"
+BASE="$(basename "$DEST")"
+ZIP="$PARENT/${BASE}.zip"
+rm -f "$ZIP"
+( cd "$PARENT" && zip -r -q -X "$ZIP" "$BASE" )
+
+FILE_COUNT="$(find "$DEST" -type f | wc -l | tr -d ' ')"
+ZIP_SIZE="$(du -h "$ZIP" | cut -f1)"
 echo "Exported WP.org tree to $DEST"
+echo "Built zip $ZIP ($ZIP_SIZE, $FILE_COUNT files)"

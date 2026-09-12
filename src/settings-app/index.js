@@ -3,7 +3,7 @@
  */
 import { createRoot, useEffect, useMemo, useState } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import {
 	Button,
 	TextControl,
@@ -161,6 +161,31 @@ function SettingsNav( { bootstrap, active, onChange, filter } ) {
 	const q = ( filter || '' ).toLowerCase();
 	const tabs = bootstrap.tabs || {};
 	const groups = bootstrap.groups || [];
+	const settingsAdvanced = !! bootstrap.is_settings_advanced;
+	const advancedOnly = Array.isArray( bootstrap.advanced_only_tabs )
+		? bootstrap.advanced_only_tabs
+		: [ 'apis', 'endpoints', 'mcp' ];
+	const onAdvancedTab = advancedOnly.includes( active );
+	const [ hatchBusy, setHatchBusy ] = useState( false );
+
+	const setSettingsMode = ( mode ) => {
+		if ( hatchBusy ) {
+			return;
+		}
+		setHatchBusy( true );
+		apiFetch( {
+			path: 'agentic/v1/admin-page',
+			method: 'POST',
+			data: { action_name: 'set_screen_mode', screen: 'settings', mode },
+		} )
+			.then( () =>
+				onChange( {
+					type: 'settings-mode',
+					value: mode,
+				} )
+			)
+			.finally( () => setHatchBusy( false ) );
+	};
 
 	return (
 		<aside className="agentic-settings-app__nav">
@@ -172,6 +197,17 @@ function SettingsNav( { bootstrap, active, onChange, filter } ) {
 				onChange={ ( e ) => onChange( { type: 'filter', value: e.target.value } ) }
 			/>
 			{ groups.map( ( group ) => {
+				// Hide the developer-facing group in Basic unless the user
+				// is searching, already on one of those tabs (deep link),
+				// or has used the Settings-page escape hatch.
+				if (
+					group.id === 'advanced' &&
+					! settingsAdvanced &&
+					! q &&
+					! onAdvancedTab
+				) {
+					return null;
+				}
 				const items = ( group.slugs || [] )
 					.filter( ( slug ) => tabs[ slug ] )
 					.filter(
@@ -219,13 +255,49 @@ function SettingsNav( { bootstrap, active, onChange, filter } ) {
 					</div>
 				);
 			} ) }
+			{ ! settingsAdvanced ? (
+				<button
+					type="button"
+					className="agentic-settings-app__advanced-hatch"
+					disabled={ hatchBusy }
+					onClick={ () => setSettingsMode( 'advanced' ) }
+				>
+					{ __( 'Advanced settings', 'agent-builder' ) }
+				</button>
+			) : (
+				<button
+					type="button"
+					className="agentic-settings-app__advanced-hatch"
+					disabled={ hatchBusy }
+					onClick={ () => setSettingsMode( 'basic' ) }
+				>
+					{ __( 'Hide advanced settings', 'agent-builder' ) }
+				</button>
+			) }
 		</aside>
 	);
 }
 
-function InterfaceTab( { data, setData, onSave, saving, error, saved, clearSaved } ) {
+function InterfaceTab( {
+	data,
+	setData,
+	onSave,
+	saving,
+	error,
+	saved,
+	clearSaved,
+	reloadBootstrap,
+} ) {
+	const isAdvanced = !! data.is_advanced;
 	const useThemeAccent = ! data.global_accent;
 	const [ resetting, setResetting ] = useState( false );
+	const modeToggle = (
+		<ScreenModeToggle
+			screen="settings-interface"
+			isAdvanced={ isAdvanced }
+			onChanged={ reloadBootstrap }
+		/>
+	);
 	const resetScreens = () => {
 		if (
 			! window.confirm(
@@ -247,6 +319,7 @@ function InterfaceTab( { data, setData, onSave, saving, error, saved, clearSaved
 	return (
 		<Panel
 			title={ __( 'Interface', 'agent-builder' ) }
+			actions={ modeToggle }
 			footer={ <SaveBar onSave={ onSave } saving={ saving } /> }
 		>
 			<StatusNotice
@@ -266,7 +339,7 @@ function InterfaceTab( { data, setData, onSave, saving, error, saved, clearSaved
 				] }
 				onChange={ ( v ) => setData( { ...data, ui_mode: v } ) }
 				help={ __(
-					'Used by any screen you have not set individually. Tools, Approvals, and Activity each have their own Basic/Advanced switch now — this is just the starting point for screens you have not touched.',
+					'Starting point for screens you have not switched individually. Basic is guided and uses plain language; Advanced shows every control.',
 					'agent-builder'
 				) }
 			/>
@@ -286,6 +359,7 @@ function InterfaceTab( { data, setData, onSave, saving, error, saved, clearSaved
 					borderTop: '1px solid #dcdcde',
 				} }
 			/>
+			{ isAdvanced && (
 			<Section title={ __( 'How agents address people', 'agent-builder' ) }>
 				<p className="agentic-react-muted" style={ { marginTop: 0 } }>
 					{ __(
@@ -331,6 +405,7 @@ function InterfaceTab( { data, setData, onSave, saving, error, saved, clearSaved
 					__next40pxDefaultSize
 				/>
 			</Section>
+			) }
 			<Section title={ __( 'Chat theme', 'agent-builder' ) }>
 				<p className="agentic-react-muted" style={ { marginTop: 0 } }>
 					{ __(
@@ -460,6 +535,8 @@ function InterfaceTab( { data, setData, onSave, saving, error, saved, clearSaved
 						);
 					} ) }
 				</div>
+				{ isAdvanced && (
+					<>
 				<div style={ { marginTop: 16 } }>
 					<SelectControl
 						label={ __( 'Chat font', 'agent-builder' ) }
@@ -519,7 +596,10 @@ function InterfaceTab( { data, setData, onSave, saving, error, saved, clearSaved
 						</BaseControl>
 					</div>
 				) }
+					</>
+				) }
 			</Section>
+			{ isAdvanced && (
 			<div style={ { marginTop: 24 } }>
 				<ToggleControl
 					label={ __(
@@ -533,11 +613,15 @@ function InterfaceTab( { data, setData, onSave, saving, error, saved, clearSaved
 					__nextHasNoMarginBottom
 				/>
 			</div>
+			) }
 		</Panel>
 	);
 }
 
 function ProvidersTab( { data } ) {
+	// Phase 6 Basic/Advanced lives on the classic add/edit form (screen
+	// key 'providers'). This list only links into that form — no second
+	// Settings-tab toggle here, so the two modes cannot conflict.
 	const rows = data.providers || [];
 	const formAction =
 		data.form_action ||
@@ -577,18 +661,13 @@ function ProvidersTab( { data } ) {
 											'agentic-react-led' +
 											( row.connected ? ' is-on' : '' )
 										}
-										title={
-											row.connected
-												? __(
-														'Connected',
-														'agent-builder'
-												  )
-												: __(
-														'Not connected',
-														'agent-builder'
-												  )
-										}
-									/>
+									/>{ ' ' }
+									{ row.connected
+										? __( 'Connected', 'agent-builder' )
+										: __(
+												'Not connected',
+												'agent-builder'
+										  ) }
 								</td>
 								<td>
 									<strong>{ row.name }</strong>
@@ -676,10 +755,44 @@ function ProvidersTab( { data } ) {
 	);
 }
 
-function SecurityTab( { data, setData, onSave, saving, error, saved, clearSaved } ) {
+function SecurityTab( {
+	data,
+	setData,
+	onSave,
+	saving,
+	error,
+	saved,
+	clearSaved,
+	reloadBootstrap,
+} ) {
+	const isAdvanced = !! data.is_advanced;
+	const agentMode = data.default_agent_mode || 'supervised';
+	let agentModeHelp = __(
+		'Agents propose actions for you to approve before anything changes. Recommended for most sites.',
+		'agent-builder'
+	);
+	if ( agentMode === 'autonomous' ) {
+		agentModeHelp = __(
+			'Agents act immediately without waiting for your OK. Use only if you trust them on this site.',
+			'agent-builder'
+		);
+	} else if ( agentMode === 'readonly' ) {
+		agentModeHelp = __(
+			'Agents can chat but cannot change anything on the site.',
+			'agent-builder'
+		);
+	}
+	const modeToggle = (
+		<ScreenModeToggle
+			screen="settings-security"
+			isAdvanced={ isAdvanced }
+			onChanged={ reloadBootstrap }
+		/>
+	);
 	return (
 		<Panel
 			title={ __( 'Security', 'agent-builder' ) }
+			actions={ modeToggle }
 			footer={ <SaveBar onSave={ onSave } saving={ saving } /> }
 		>
 			<StatusNotice
@@ -689,7 +802,7 @@ function SecurityTab( { data, setData, onSave, saving, error, saved, clearSaved 
 			/>
 			<SelectControl
 				label={ __( 'Default agent mode', 'agent-builder' ) }
-				value={ data.default_agent_mode || 'supervised' }
+				value={ agentMode }
 				options={ [
 					{
 						label: __( 'Supervised', 'agent-builder' ),
@@ -707,12 +820,17 @@ function SecurityTab( { data, setData, onSave, saving, error, saved, clearSaved 
 				onChange={ ( v ) =>
 					setData( { ...data, default_agent_mode: v } )
 				}
+				help={ agentModeHelp }
 				__nextHasNoMarginBottom
 				__next40pxDefaultSize
 			/>
 			<div style={ { height: 16 } } />
 			<ToggleControl
 				label={ __( 'Message scanning', 'agent-builder' ) }
+				help={ __(
+					'Blocks common injection patterns and flags personal data in chat messages.',
+					'agent-builder'
+				) }
 				checked={ !! data.message_scanning }
 				onChange={ ( v ) =>
 					setData( { ...data, message_scanning: v } )
@@ -722,6 +840,10 @@ function SecurityTab( { data, setData, onSave, saving, error, saved, clearSaved 
 			<div style={ { height: 8 } } />
 			<ToggleControl
 				label={ __( 'Require chat consent', 'agent-builder' ) }
+				help={ __(
+					'Ask visitors to agree before chatting. Required in some regions.',
+					'agent-builder'
+				) }
 				checked={ !! data.chat_consent_enabled }
 				onChange={ ( v ) =>
 					setData( { ...data, chat_consent_enabled: v } )
@@ -747,6 +869,10 @@ function SecurityTab( { data, setData, onSave, saving, error, saved, clearSaved 
 					'Conversation retention (days)',
 					'agent-builder'
 				) }
+				help={ __(
+					'How long to keep chat history. 0 means keep forever.',
+					'agent-builder'
+				) }
 				type="number"
 				value={ String( data.retention_conversations ?? 30 ) }
 				onChange={ ( v ) =>
@@ -758,6 +884,8 @@ function SecurityTab( { data, setData, onSave, saving, error, saved, clearSaved 
 				__nextHasNoMarginBottom
 				__next40pxDefaultSize
 			/>
+			{ isAdvanced && (
+				<>
 			<div style={ { height: 12 } } />
 			<TextControl
 				label={ __( 'Audit log retention (days)', 'agent-builder' ) }
@@ -827,6 +955,8 @@ function SecurityTab( { data, setData, onSave, saving, error, saved, clearSaved 
 					__next40pxDefaultSize
 				/>
 			</Section>
+				</>
+			) }
 		</Panel>
 	);
 }
@@ -2304,6 +2434,18 @@ function MCPTab( { data } ) {
 										<td>
 											<ToggleControl
 												__nextHasNoMarginBottom
+												label={
+													<span className="screen-reader-text">
+														{ sprintf(
+															/* translators: %s: agent name */
+															__(
+																'Enable MCP: %s',
+																'agent-builder'
+															),
+															a.name
+														) }
+													</span>
+												}
 												checked={ !! a.enabled }
 												disabled={ !! toggling[ a.slug ] }
 												onChange={ ( enabled ) =>
@@ -2783,10 +2925,10 @@ function SettingsApp() {
 		);
 	}
 
-	// Full bootstrap refetch — used after a per-tab Basic/Advanced mode change
-	// (e.g. Users) so that tab's data.is_advanced/assistant reflect the new
-	// mode immediately, the same refresh onSave already does when the
-	// Interface tab changes site-wide nav.
+	// Full bootstrap refetch — used after a per-tab Basic/Advanced mode
+	// change (Users, Interface, Security) or the Settings-page Advanced
+	// settings hatch, so is_advanced / is_settings_advanced / assistant
+	// reflect the new mode immediately.
 	const reloadBootstrap = () =>
 		apiFetch( { path: REST } ).then( ( bootstrap ) => {
 			setBoot( { loading: false, error: '', bootstrap } );
@@ -2891,6 +3033,29 @@ function SettingsApp() {
 							}
 							if ( action.type === 'filter' ) {
 								setFilter( action.value );
+							}
+							if ( action.type === 'settings-mode' ) {
+								const advancedOnly = Array.isArray(
+									boot.bootstrap?.advanced_only_tabs
+								)
+									? boot.bootstrap.advanced_only_tabs
+									: [ 'apis', 'endpoints', 'mcp' ];
+								reloadBootstrap().then( () => {
+									if (
+										action.value === 'advanced' &&
+										! advancedOnly.includes( tab )
+									) {
+										setTab( 'apis' );
+									}
+									if (
+										action.value === 'basic' &&
+										advancedOnly.includes( tab )
+									) {
+										setTab( 'interface' );
+									}
+									setError( '' );
+									setSaved( false );
+								} );
 							}
 						} }
 					/>

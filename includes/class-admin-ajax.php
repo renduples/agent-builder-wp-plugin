@@ -221,6 +221,16 @@ class Admin_Ajax {
 			wp_send_json_error( __( 'Missing tool name.', 'agent-builder' ) );
 		}
 
+		if ( $enabled && class_exists( Risk_Level::class ) ) {
+			$risk = Risk_Level::max(
+				Tools_Registry::get_risk_level( $tool_name ),
+				Risk_Level::get_tool_default( $tool_name )
+			);
+			if ( Risk_Level::EXTREME === $risk ) {
+				wp_send_json_error( __( 'This tool cannot be enabled', 'agent-builder' ) );
+			}
+		}
+
 		Tools_Registry::set_enabled( $tool_name, $enabled );
 
 		// Log the change.
@@ -1125,6 +1135,7 @@ class Admin_Ajax {
 		$site_url       = esc_url_raw( wp_unslash( $_POST['site_url'] ?? home_url() ) );
 		$plugin_version = sanitize_text_field( wp_unslash( $_POST['plugin_version'] ?? '' ) );
 		$agent_mode     = sanitize_key( wp_unslash( $_POST['agent_mode'] ?? 'supervised' ) );
+		$ui_mode        = sanitize_key( wp_unslash( $_POST['ui_mode'] ?? '' ) );
 		$chat_model     = sanitize_text_field( wp_unslash( $_POST['chat_model'] ?? 'gemini-2.5-flash' ) );
 		$vision_model   = sanitize_text_field( wp_unslash( $_POST['vision_model'] ?? '' ) );
 		$tts_voice      = sanitize_text_field( wp_unslash( $_POST['tts_voice'] ?? 'journey-f' ) );
@@ -1132,6 +1143,9 @@ class Admin_Ajax {
 
 		if ( ! in_array( $agent_mode, array( 'disabled', 'supervised', 'autonomous' ), true ) ) {
 			$agent_mode = 'supervised';
+		}
+		if ( '' !== $ui_mode && ! in_array( $ui_mode, array( 'basic', 'advanced' ), true ) ) {
+			$ui_mode = 'basic';
 		}
 		if ( ! in_array( $video_model, array( 'veo-2', 'veo-3' ), true ) ) {
 			$video_model = 'veo-2';
@@ -1193,6 +1207,9 @@ class Admin_Ajax {
 		update_option( 'agentic_tts_voice', $tts_voice );
 		update_option( 'agentic_agent_mode', $agent_mode );
 		update_option( 'agentic_video_model', $video_model );
+		if ( '' !== $ui_mode ) {
+			Admin_Settings_REST::set_ui_mode( $ui_mode, 'signup' );
+		}
 		update_option( 'agentic_onboarding_complete', true );
 		update_option( 'agentic_service_consent', true );
 

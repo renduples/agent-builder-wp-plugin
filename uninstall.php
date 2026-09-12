@@ -84,18 +84,16 @@ $agentic_tables = $wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQue
 );
 
 /*
- * Preserve owner-owned definition tables even when the admin opted into
- * "delete all data". These hold agents the owner purchased or created, and
- * custom skills — destroying them would lose paid and user work that a
- * reinstall is meant to find already present (§8.7). Bundled rows they may
- * also contain are simply re-seeded on the next activation, so keeping the
- * tables is safe. Everything else agentic_* is dropped as before.
+ * Include agentic_agent_library and agentic_skills. They mix bundled seed
+ * rows with user-created content: custom and imported skills
+ * (Skills_Registry::create() / import_from_hub()), customized core skills
+ * (source_hash / is_customized()), and user-created or purchased library
+ * agents (source = user|purchased). The deactivation modal's "Delete all
+ * plugin data" choice promises every table is removed. Bundled rows are
+ * re-seeded on the next activation (Activator::seed_skills() /
+ * seed_bundled_agents()). The "Keep my data" early return above already
+ * covers a reinstall that should find existing work intact.
  */
-$agentic_preserve_tables = array(
-	$wpdb->prefix . 'agentic_agent_library',
-	$wpdb->prefix . 'agentic_skills',
-);
-$agentic_tables          = array_diff( (array) $agentic_tables, $agentic_preserve_tables );
 
 if ( $agentic_tables ) {
 	$agentic_table_list = implode( ', ', array_map( 'esc_sql', $agentic_tables ) );

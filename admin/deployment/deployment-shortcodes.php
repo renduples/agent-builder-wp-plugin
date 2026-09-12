@@ -217,7 +217,8 @@ $agentic_source_labels = array(
 	<p><?php esc_html_e( 'No shortcode deployments yet. Use the form below to create one, or place [agentic_chat] in a page — it will be auto-detected here on first load.', 'agent-builder' ); ?></p>
 </div>
 <?php else : ?>
-<table class="widefat striped">
+<div class="agentic-table-scroll">
+<table class="widefat striped agentic-table-min-900">
 	<thead>
 		<tr>
 			<th><?php esc_html_e( 'Label', 'agent-builder' ); ?></th>
@@ -313,6 +314,7 @@ $agentic_source_labels = array(
 		<?php endforeach; ?>
 	</tbody>
 </table>
+</div>
 <?php endif; ?>
 
 <?php if ( $agentic_edit_sc && $agentic_editing_dep ) : ?>

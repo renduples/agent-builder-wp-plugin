@@ -95,6 +95,30 @@ body {
 	flex-shrink: 0;
 }
 
+/* Below ~600px the four step labels + connectors no longer fit in one row
+   (measured overflow: 483px content in a 400px viewport). Keep the numbered
+   circles and connectors, and move labels off-screen (not display:none, so
+   screen readers still get them) — the per-phase heading already names the
+   current step for sighted users. */
+@media (max-width: 600px) {
+	.step-connector {
+		width: 16px;
+		margin: 0 4px;
+	}
+
+	.setup-step-item .step-label {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
+	}
+}
+
 /* ── Card ────────────────────────────────────── */
 .setup-card {
 	background: #fff;
@@ -204,6 +228,12 @@ body {
 .provider-card:hover {
 	border-color: #2271b1;
 	box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.provider-card:focus-visible {
+	border-color: #2271b1;
+	outline: 2px solid rgba(34,113,177,0.5);
+	outline-offset: 2px;
 }
 
 .provider-card.selected {
@@ -465,6 +495,21 @@ body {
 .key-input-row input:focus {
 	border-color: #2271b1;
 	outline: 2px solid rgba(34,113,177,0.2);
+}
+
+/* At narrow widths the input + Save + Continue buttons don't fit on one row
+   and squeeze the input down to an unusable sliver (~30px). Wrap and give
+   the input its own full-width row instead. */
+@media (max-width: 600px) {
+	.key-input-row {
+		flex-wrap: wrap;
+	}
+
+	.key-input-row input[type="password"],
+	.key-input-row input[type="text"],
+	.key-input-row input[type="email"] {
+		flex: 1 1 100%;
+	}
 }
 
 .ollama-url-row {
@@ -974,7 +1019,7 @@ code {
 	border-radius: 10px;
 }
 
-.wizard-pref-section h3 {
+.wizard-pref-section h2 {
 	margin: 0 0 4px;
 	font-size: 15px;
 	font-weight: 600;

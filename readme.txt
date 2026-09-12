@@ -1,21 +1,39 @@
 === Agent Builder ===
 Contributors: agenticplugin
-Tags: ai, chatbot, automation, llm, mcp
+Tags: ai, chatbot, agents, safety, webmcp
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 3.3.97
+Stable tag: 3.4.0
 Donate link: https://agentic-plugin.com/donate/
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Create, train, and orchestrate autonomous AI agents, chatbots, and scheduled automations. 11 free agents, multi-LLM support, and MCP ready.
+Create, train, and orchestrate AI agents with built-in safety. 11 free agents, approval gates, risk audits, tamper-proof logs, and WebMCP.
 
 == Description ==
 
-**Agent Builder** turns your WordPress site into an autonomous AI workspace. Unlike standard chatbots that only answer questions with text, Agent Builder deploys specialized AI agents with controlled tools to draft articles, audit SEO, triage comments, monitor site health, and automate repetitive tasks.
+**Agent Builder** turns your WordPress site into an AI workspace where agents work under your control. Unlike generic chatbots that only answer questions, Agent Builder lets specialized AI agents take actions on your site — drafting articles, auditing SEO, triaging comments, monitoring health — all supervised by safety controls you can see and trust.
 
-Equipped with a **Basic / Advanced interface switch**, Agent Builder is designed to be effortless for beginners while providing complete control, custom agent tooling, and Model Context Protocol (MCP) support for developers.
+This plugin is built from the ground up for **AI agent safety**. Every tool an agent can use is flagged with a risk level. Sensitive actions pause in an approval queue for your review. Every agent action is logged and tamper-evident. You can audit what happened, roll back harmful changes, or hit a kill switch to disable all agents instantly.
+
+Equipped with a **Basic / Advanced interface switch**, Agent Builder is effortless for site owners while providing complete control, custom tooling, and Model Context Protocol (MCP) and WebMCP integration for developers.
+
+---
+
+## 🛡️ Agent Safety: The Cornerstone
+
+Unlike plugins that add AI without safety guardrails, **Agent Builder puts safety at the center**. You get:
+
+* **Risk Inventory:** Every tool an agent can use is classified by risk level (Low, Medium, High, Extreme). See exactly what each agent can do at a glance.
+* **Approval Gate:** Medium-risk actions need confirmation; High-risk actions queue for your review. Nothing happens until you decide.
+* **Approval Queue:** Review and approve (or reject) every sensitive action before it touches your site — publishing posts, updating settings, creating accounts.
+* **Kill Switch / Emergency Stop:** One click disables all agents, cancels pending jobs, and disconnects providers.
+* **Tool Risk Floors:** Require confirmation for sensitive tools like password resets, plugin updates, or payment refunds — no exceptions.
+* **Tamper-Proof Activity Log:** Full audit trail of what agents did and when. Hash-chained integrity prevents tampering — edited or deleted entries become detectable.
+* **Per-Agent Tool Scopes:** See exactly which tools each agent has access to, and their current risk tier.
+
+This is one of the first WordPress plugins actively built for AI-agent safety.
 
 ---
 
@@ -33,18 +51,21 @@ Equipped with a **Basic / Advanced interface switch**, Agent Builder is designed
   * 👤 **User Assistant:** Manages member outreach, onboarding, and role-based permissions.
   * 🧩 **Skills Assistant:** Discovers and imports community skills to teach agents new capabilities.
   * 🛍️ **Storefront Assistant:** Helps visitors browse your WooCommerce catalog and build a cart — including directly in the browser via WebMCP.
-* **Human-in-the-Loop Safety:** Sensitive actions (publishing content, updating settings, deleting data) pause in an **Approvals Queue** for one-click review before anything touches your live site.
+* **Basic and Advanced Modes:** Switch modes anytime from Settings → Interface:
+  * **Basic Mode:** Simplified, guided flows for non-technical site owners. Drag-and-drop agent setup, plain-language approvals, and one-click safety controls.
+  * **Advanced Mode:** Full developer console. Raw tool manifests, detailed risk audits, REST API endpoints, MCP credentials, and technical audit logs.
 * **Embed Everywhere:** Drop responsive chat widgets on any page using native **Gutenberg blocks**, shortcodes, or wp-admin launchers.
-* **100% Free Core Knowledge Wiki:** Train agents on your company guidelines, docs, or site content using the local Open Knowledge Framework (OKF) wiki.
+* **100% Free Local Knowledge:** Train agents on your company guidelines, docs, or site content using the local Open Knowledge Framework (OKF) wiki — no cloud storage needed.
 
 ---
 
 ### ⚡ Built for Developers & Power Users
 
-* **Model Context Protocol (MCP) Ready:** Connect external clients like **Claude Desktop**, **Cursor**, and **VS Code** directly to your WordPress site.
+* **WebMCP Bridge:** Enable low-risk tools for AI browser agents visiting your site. Visitors' own AI agents can search your content, browse WooCommerce catalogs, and build carts — with the same risk gates and per-visitor scoping that protect your backend. All the safety controls that guard agents inside wp-admin also protect your storefront.
+* **Model Context Protocol (MCP) Ready:** Connect external clients like **Claude Desktop**, **Cursor**, and **VS Code** directly to your WordPress site using secure MCP credentials. Each client connection registers separately so you know exactly who has what access.
 * **Bidirectional WordPress Abilities API (WP 6.9+):**
-  * *Outbound:* Exposes all agent tools as native WordPress abilities (`agent-builder/` and `wp-extended/` namespaces).
-  * *Inbound:* Automatically transforms abilities declared by other plugins into callable agent tools.
+  * *Outbound:* Exposes all agent tools as native WordPress abilities (`agent-builder/` and `wp-extended/` namespaces) with risk tiers intact.
+  * *Inbound:* Automatically transforms abilities declared by other plugins into callable agent tools with the same approval gate.
 * **Multi-LLM & BYOK (Bring Your Own Key):** Connect OpenAI, Anthropic (Claude), Google Gemini, DeepSeek, xAI (Grok), Kimi (Moonshot), Mistral, Cohere, or run 100% private local models via **Ollama**.
 * **Open Skill Architecture:** Full support for the `agentskills.io` open standard, WordPress.org Community Skills, and Anthropic Skills repositories.
 * **Developer Controls:** Programmatic orchestration via REST API, automated cron triggers, and detailed JSON activity audit logs. React admin sources live in `src/`; production bundles in `build/` (`npm run build` with `@wordpress/scripts`).
@@ -84,44 +105,63 @@ Documentation & Guides: [agentic-plugin.com/documentation](https://agentic-plugi
 == Frequently Asked Questions ==
 
 = What is Agent Builder? =
-Agent Builder allows you to create, train, and orchestrate autonomous AI agents and teams inside WordPress. Agents use modular tools and skills (guarded by risk levels and human approvals) to perform real administrative and editorial tasks.
+Agent Builder allows you to create, train, and orchestrate autonomous AI agents inside WordPress. Agents use modular, risk-rated tools and skills to perform real administrative and editorial tasks — all under your control, with full visibility into what they do.
 
 = How is this different from generic WordPress chatbot plugins? =
-Standard chatbot plugins simply stream text from an API endpoint. Agent Builder gives agents permission-controlled tools to interact directly with your site—such as querying posts, drafting content, and checking performance—backed by an audit log and supervised approval queue.
+Standard chatbot plugins stream text from an API. Agent Builder gives agents permission-controlled tools to interact directly with your site—drafting posts, auditing SEO, checking health—backed by risk classification, approval gates, and a tamper-proof audit log. You stay in control.
+
+= Is Agent Builder safe? =
+Yes. Agent Builder is built around safety controls: (1) every tool is classified by risk level, (2) medium-risk actions need confirmation, high-risk actions queue for your review, (3) you have a one-click Emergency Stop to disable all agents, (4) a tamper-proof audit log records everything, (5) per-agent tool scopes show exactly what each agent can do. Read the “Agent Safety” section above for the full picture.
+
+= What if an agent tries to do something dangerous? =
+It depends on the risk level. Low-risk actions happen immediately. Medium-risk actions pause and ask for confirmation. High-risk actions (like publishing a post, deleting data, or updating settings) queue in the Approvals screen where you review them one by one before they execute. Extreme-risk tools (like arbitrary shell execution) are blocked by default.
 
 = Do I need coding skills to use Agent Builder? =
-No. The plugin includes a Basic interface mode and 11 pre-configured agents. You can assign tasks, adjust settings, and train custom assistants using natural language.
+No. The plugin includes a **Basic interface mode** designed for non-technical site owners, with guided workflows, plain-language approvals, and one-click controls. Experienced users can switch to **Advanced mode** for developer tools and raw configuration.
+
+= What is WebMCP? =
+WebMCP (Web-based Model Context Protocol) lets your visitors' own AI browser agents interact with your site safely. For example, if a visitor has Claude in their browser, their Claude can search your content, browse your WooCommerce store, and add items to their cart—all protected by the same risk gates and per-visitor scoping that guard your backend. It's agent-to-agent communication, not user-to-user.
+
+= What is MCP? =
+MCP (Model Context Protocol) is an open standard that lets external AI clients like Claude Desktop, Cursor, and VS Code connect directly to your WordPress site as a tool provider. You create a secure MCP credential in Settings → MCP, and external clients can then access safe tools on your site under your approval gate, with full audit logging.
 
 = Is Agent Builder free? =
 Yes. The free core plugin includes all 11 bundled agents, the complete tools/skills hub, the Approvals queue, the local OKF Knowledge wiki, and multi-provider BYOK support. Advanced hosted vector embeddings and cloud media generation are available via optional Agent Builder Pro add-ons.
+
+= What modes are there? =
+**Basic Mode:** Simplified interface with guided workflows, fewer options, and one-click safety controls. Best for site owners who want to use agents without configuration. **Advanced Mode:** Full developer console showing tool manifests, REST API docs, risk audits, MCP credentials, and technical audit logs. Switch anytime from Settings → Interface.
+
+= Can I run agents on a schedule? =
+Yes. The Agent Orchestrator agent can deploy other agents as background cron jobs or triggered by site events. You can also use the REST API to orchestrate agents programmatically.
 
 = Where is my data sent? =
 When using cloud LLM providers, conversation context and tool parameters are sent directly to your chosen provider via their official API (see External Services below). If you use Ollama or a local endpoint, 100% of your data stays on your local server.
 
 = What is the WordPress Abilities API integration? =
-On WordPress 6.9+, Agent Builder provides bidirectional integration:
-1. **Outbound:** Registers agent actions as abilities under `agent-builder/` and `wp-extended/` for external MCP and core discovery.
-2. **Inbound:** Automatically imports abilities exposed by other WordPress plugins so your agents can use them as tools.
+On WordPress 6.9+, Agent Builder provides bidirectional integration: (1) **Outbound:** Registers agent tools as abilities under `agent-builder/` and `wp-extended/` namespaces for external MCP discovery. (2) **Inbound:** Automatically imports abilities exposed by other WordPress plugins so your agents can use them as tools, all protected by the same risk gate.
 
 = What is the difference between Tools and Skills? =
-* **Tools:** Single, permission-controlled actions an agent can execute (e.g., `create_draft_post`, `get_site_health`).
-* **Skills:** Pre-packaged instruction sets and tool workflows following the open `agentskills.io` standard that teach agents multi-step capabilities without writing code.
+**Tools:** Single, permission-controlled actions an agent can execute (e.g., `create_draft_post`, `get_site_health`). **Skills:** Pre-packaged instruction sets and tool workflows following the open `agentskills.io` standard that teach agents multi-step capabilities without writing code.
 
 = What happens to my data if I delete the plugin? =
-Uninstall keeps your data unless you check “Delete data” on the deactivation dialog. If you do choose to delete, conversation history, options, and most custom tables are removed. Custom agents you created and skills you imported are kept so a reinstall can find them.
+Uninstall keeps your data unless you check “Delete all plugin data” on the deactivation dialog. If you do choose to delete, conversation history, options, custom tables, and the agents and skills you created or imported are all removed.
 
 = Where is the React admin source? =
 React admin sources live in `src/`; production bundles are in `build/`. Rebuild with `npm run build` (`@wordpress/scripts`).
 
 == Screenshots ==
 
-1. Dashboard — Overview of active agents, connected providers, and quick actions.
-2. Interactive Chat — Chat with specialized agents with full tool transparency.
-3. Agents Hub — Activate, configure, and assign roles to bundled or custom agents.
-4. Approvals Queue — Review, approve, or reject agent actions before execution.
-5. Tools & Skills Hub — Manage risk levels, ability profiles, and community skill imports.
-6. Settings — Manage LLM providers, UI modes (Basic/Advanced), and security policies.
-7. Activity Log — Full audit trail of all agent conversations, tool calls, and executions.
+1. Dashboard — Overview of active agents, connected providers, safety status, and quick actions.
+2. Interactive Chat — Chat with specialized agents; see every tool the agent calls and its result.
+3. Agents Hub — Activate/deactivate bundled agents, see their tools, and assign MCP exposure.
+4. Approvals Queue — Review, approve, or reject sensitive actions before agents execute them.
+5. Tools Hub — See every tool an agent can use, its risk level, and enable/disable by category.
+6. Approvals Preferences — Configure which risk levels need approval, confirmation, or immediate blocking.
+7. Site Passport / Agent-Ready Score — Verify your site is discoverable by AI agents and your commerce stack is ready.
+8. Activity Log — Full audit trail showing what agents did, when, and whether they succeeded.
+9. Safety Center — Risk inventory, kill switch, per-agent tool scopes, and audit-log integrity check.
+10. Quick Start Wizard — Connect your LLM provider and choose Basic or Advanced mode in under two minutes.
+11. Settings & Providers — Connect and manage LLM providers. Interface (UI modes) and Security are in the same Settings nav.
 
 == External Services ==
 
@@ -268,7 +308,7 @@ This plugin connects to external AI APIs to process prompts and tool executions 
 * **Data sent:** Whatever data that form collects, sent only to the URL you configured — never to Agentic or any other third party.
 
 = Site Passport Directory (Optional) =
-* **Endpoint:** `https://sitepassport.org/api/v1/submissions`
+* **Endpoint:** `https://sitepassport.org/api/submit.php`
 * **When used:** Only when an administrator explicitly clicks "Submit to Directory" on the Agent-Ready page. Never automatic, never triggered by a cron job, and never sent as part of computing your score.
 * **Data sent:** Your site's URL, the URL of this plugin's own `/.well-known/webmcp.json` manifest, and a minimal score summary (overall score, letter grade, and the date it was last checked — not the full per-check breakdown).
 * **Terms of Service:** [https://sitepassport.org/terms](https://sitepassport.org/terms)
@@ -278,6 +318,9 @@ This plugin connects to external AI APIs to process prompts and tool executions 
 The Site Passport score itself (Agent Builder → Passport) makes **zero external requests**. All eight checks — MCP reachability, WebMCP tool registration, approval-gate configuration, the `/.well-known/webmcp.json` manifest, the presence of `llms.txt`, AI-crawler directives in `robots.txt`, Organization/WebSite schema markup, and commerce readiness (whether an active WooCommerce store has a payment gateway configured and a commerce ability registered for agents) — are computed entirely from this site's own local files, database, and active-plugin state. Nothing is sent anywhere unless you separately choose "Submit to Directory" above.
 
 == Changelog ==
+
+= 3.4.0 - 2026-09-10 =
+* WordPress.org plugin directory release. Major update: (1) Rewritten plugin description emphasizing AI agent safety as the core differentiator — Agent Builder is built with tamper-proof audit logs, approval gates, tool risk tiers, and a kill switch by default; (2) New "Safety Center" admin screen (agentic-safety-center) providing a unified risk dashboard — risk inventory, approval-gate configuration, per-agent tool scopes, tamper-detection status, and emergency stop; (3) Updated readme.txt with comprehensive FAQ covering safety, WebMCP, modes, and Features sections; (4) WebMCP Bridge documentation in Features section with plain-language explanation of how visitor AI agents interact with storefronts safely; (5) Stable tag and Tested-up-to now reflect WordPress 7.1.
 
 = 3.3.97 - 2026-09-09 =
 * Follow-up to 3.3.94/3.3.96: Storefront Assistant's four tools no longer ship with WebMCP exposure pre-enabled — the two read-only tools are still one click away via the existing "Turn on WebMCP defaults" fix, and the two cart-mutating tools now require the same deliberate per-tool toggle every other write-capable tool already needs, instead of riding along the moment the WebMCP Bridge master switch is on for an unrelated reason. Also added a visible "Log integrity: Verified / Tampering detected" indicator to Activity → Timeline for 3.3.96's hash-chained audit log, which previously had no UI at all — only a REST endpoint.

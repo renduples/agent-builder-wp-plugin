@@ -5,7 +5,7 @@
  * Plugin Name:       Agent Builder
  * Plugin URI:        https://agentic-plugin.com
  * Description:       Orchestrate role-based AI agents and teams with simple job descriptions.
- * Version:           3.3.97
+ * Version:           3.4.0
  * Requires at least: 6.4
  * Requires PHP:      8.1
  * Author:            Agent Builder Team
@@ -58,7 +58,7 @@ spl_autoload_register(
 // Plugin constants.
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound
 define( 'AGENT_BUILDER_FILE', __FILE__ );
-define( 'AGENT_BUILDER_VERSION', '3.3.97' );
+define( 'AGENT_BUILDER_VERSION', '3.4.0' );
 define( 'AGENT_BUILDER_DB_VERSION', '2.13.8' );
 define( 'AGENT_BUILDER_DIR', plugin_dir_path( __FILE__ ) );
 define( 'AGENT_BUILDER_URL', plugin_dir_url( __FILE__ ) );
@@ -241,7 +241,6 @@ final class Plugin {
 		add_action( 'admin_menu', array( $menu, 'register' ) );
 		add_action( 'admin_page_access_denied', array( $menu, 'maybe_show_access_notice' ) );
 		add_action( 'admin_footer', array( $menu, 'render_admin_page_links' ) );
-		add_action( 'admin_post_agentic_set_ui_mode', array( $menu, 'handle_set_ui_mode' ) );
 		add_action( 'admin_post_agentic_set_agent_updates', array( $menu, 'handle_set_agent_updates' ) );
 		add_action( 'admin_post_agentic_save_quick_actions', array( $menu, 'handle_save_quick_actions' ) );
 		add_action( 'admin_post_agentic_set_emergency_stop', array( $menu, 'handle_set_emergency_stop' ) );

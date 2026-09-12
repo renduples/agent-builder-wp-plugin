@@ -5,6 +5,7 @@ import { createRoot, useCallback, useEffect, useState } from '@wordpress/element
 import apiFetch from '@wordpress/api-fetch';
 import { __ } from '@wordpress/i18n';
 import { Spinner, Notice } from '@wordpress/components';
+import { InfoTip } from '../shared/components';
 
 const DASH_PATH = 'agentic/v1/dashboard';
 const STATS_PATH = 'agentic/v1/dashboard-stats?period=week';
@@ -171,10 +172,13 @@ function Card( {
 	);
 }
 
-function StatusTile( { label, children } ) {
+function StatusTile( { label, tip, children } ) {
 	return (
 		<div className="agentic-status-item">
-			<div className="agentic-status-label">{ label }</div>
+			<div className="agentic-status-label">
+				{ label }
+				{ tip && <InfoTip text={ tip } /> }
+			</div>
 			<div className="agentic-status-value">{ children }</div>
 		</div>
 	);
@@ -248,7 +252,13 @@ function StatusCard( { data, dnd } ) {
 				<StatusTile label={ __( 'Version', 'agent-builder' ) }>
 					{ data.version }
 				</StatusTile>
-				<StatusTile label={ __( 'Schema', 'agent-builder' ) }>
+				<StatusTile
+					label={ __( 'Schema', 'agent-builder' ) }
+					tip={ __(
+						'The version of Agent Builder’s database structure. Updates automatically when needed — you don’t need to do anything here.',
+						'agent-builder'
+					) }
+				>
 					<span className="agentic-status-active">●</span>{ ' ' }
 					{ data.schema_version }
 				</StatusTile>
@@ -341,6 +351,11 @@ function SafetyCard( { data, dnd } ) {
 					) }
 				</p>
 			) }
+			<p className="agentic-text-muted">
+				<a href={ data.urls?.safety_center || '#' }>
+					{ __( 'Open Safety Center →', 'agent-builder' ) }
+				</a>
+			</p>
 		</Card>
 	);
 }

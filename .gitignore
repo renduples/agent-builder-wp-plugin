@@ -1,5 +1,6 @@
 /node_modules/
 /vendor/
+.env.local
 /.phpunit.result.cache
 /.DS_Store
 ._*
@@ -24,3 +25,7 @@
 # Planning/strategy docs — local only by default, matches convention in agent-builder and agent-builder-pro
 /docs/*
 !/docs/agent-ready-score-brief.md
+
+# WP.org submission zips — build artifacts from bin/export-wporg-tree.sh, never commit
+*.zip
+/dist/

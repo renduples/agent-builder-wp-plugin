@@ -36,7 +36,7 @@ $agentic_agent_mode = get_option( 'agentic_agent_mode', 'supervised' );
 <div class="wrap agentic-admin">
 	<h1>
 		<span class="dashicons dashicons-yes-alt agentic-di-xl agentic-di-mr10"></span>
-		<?php esc_html_e( 'Approval Queue', 'agent-builder' ); ?>
+		<?php esc_html_e( 'Approvals', 'agent-builder' ); ?>
 	</h1>
 
 	<?php

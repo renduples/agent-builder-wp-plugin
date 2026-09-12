@@ -41,7 +41,7 @@ if ( ! in_array( $agentic_active_tab, $agentic_deploy_allowed, true ) ) {
 <div class="wrap">
 	<div class="agentic-react-admin__page-head">
 		<div>
-			<h1><?php esc_html_e( 'Agent Deployment', 'agent-builder' ); ?></h1>
+			<h1><?php esc_html_e( 'Publish', 'agent-builder' ); ?></h1>
 			<p><?php esc_html_e( 'Manage how agents are invoked: embed them on your site with shortcodes, schedule recurring tasks, or react to WordPress events.', 'agent-builder' ); ?></p>
 		</div>
 		<span class="agentic-screen-mode-toggle" id="agentic-deployment-mode-toggle">

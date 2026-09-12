@@ -4,8 +4,10 @@
  *
  * Backs the React "Interface" settings panel. Exposes a small, self-contained
  * set of UI preferences (interface mode + dashboard onboarding visibility)
- * via the agentic/v1/ui-settings route. Intentionally does not touch the
- * options managed by the PHP settings form, so there is no shared save path.
+ * via the agentic/v1/ui-settings route. The site-wide mode write goes
+ * through Admin_Settings_REST::set_ui_mode() so this fallback stays
+ * reachable when the settings-app build is missing, without a second
+ * update_option() path.
  *
  * @package    Agent_Builder
  * @subpackage Includes
@@ -86,21 +88,8 @@ class UI_Settings_REST {
 	 */
 	public static function update_settings( \WP_REST_Request $request ): \WP_REST_Response {
 		$mode = $request->get_param( 'ui_mode' );
-		if ( in_array( $mode, array( 'basic', 'advanced' ), true ) ) {
-			$prev = (string) get_option( 'agentic_ui_mode', 'basic' );
-			update_option( 'agentic_ui_mode', $mode, false );
-			if ( $prev !== $mode && class_exists( Audit_Log::class ) ) {
-				Audit_Log::log_admin(
-					'ui_mode_changed',
-					'settings',
-					array(
-						'id'   => $mode,
-						'from' => $prev,
-						'to'   => $mode,
-						'via'  => 'ui_settings_rest',
-					)
-				);
-			}
+		if ( is_string( $mode ) ) {
+			Admin_Settings_REST::set_ui_mode( $mode, 'ui_settings_rest' );
 		}
 
 		$show_onboarding = $request->get_param( 'show_onboarding' );
