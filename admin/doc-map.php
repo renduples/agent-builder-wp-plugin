@@ -23,7 +23,7 @@ return array(
 	// Used when no tab match is found.
 	// -------------------------------------------------------------------------
 	'pages' => array(
-		'agent-builder'        => 'https://agentic-plugin.com/the-dashboard/',
+		'agent-builder'        => 'https://agentic-plugin.com/documentation/dashboard/',
 		'agentic-chat'         => 'https://agentic-plugin.com/chat-interface/',
 		'agentic-agents'       => 'https://agentic-plugin.com/installed-agents/',
 		'agentic-deployment'   => 'https://agentic-plugin.com/agent-deployment/',
@@ -32,7 +32,7 @@ return array(
 		'agentic-integrations' => 'https://agentic-plugin.com/channels/',
 		'agentic-audit-log'    => 'https://agentic-plugin.com/audit-log/',
 		'agentic-approvals'      => 'https://agentic-plugin.com/approval-queue/',
-		'agentic-safety-center'  => 'https://agentic-plugin.com/permissions-and-safety/',
+		'agentic-safety-center'  => 'https://agentic-plugin.com/documentation/safety-center/',
 		'agentic-costs'          => 'https://agentic-plugin.com/api-credits/',
 		'agentic-settings'       => 'https://agentic-plugin.com/settings/',
 		'agentic-train-data'   => 'https://agentic-plugin.com/knowledge-wiki-okf/',

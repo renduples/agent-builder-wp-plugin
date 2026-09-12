@@ -2418,7 +2418,7 @@ class Admin_Pages_REST {
 					. '&_wpnonce=' . wp_create_nonce( 'agentic_export_logs' )
 				),
 			),
-			'docs_url'       => 'https://agentic-plugin.com/permissions-and-safety/',
+			'docs_url'       => 'https://agentic-plugin.com/documentation/safety-center/',
 			'footer_policy'  => __(
 				'Safety Center summarizes existing operator controls. It does not change how tools, approvals, or Emergency Stop work.',
 				'agent-builder'
