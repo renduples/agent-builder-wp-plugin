@@ -850,7 +850,7 @@ class Admin_Pages_REST {
 			'enabled_max_risk' => class_exists( Tools_Registry::class )
 				? Tools_Registry::enabled_max_risk_level()
 				: 'none',
-			'docs_url'         => 'https://agentic-plugin.com/agent-tools/',
+			'docs_url'         => 'https://agentic-plugin.com/documentation/tools/',
 			'footer_policy'    => __(
 				'Agents only use the tools you allow. Higher-risk actions still follow Approvals and your safety settings. Provider processing of chat content is covered by our Privacy Policy.',
 				'agent-builder'
@@ -1089,7 +1089,7 @@ class Admin_Pages_REST {
 			'interface_url'    => admin_url( 'admin.php?page=agentic-settings&tab=interface' ),
 			'prefs'            => $prefs,
 			'comfort_profiles' => self::approval_comfort_profiles(),
-			'docs_url'         => 'https://agentic-plugin.com/approval-queue/',
+			'docs_url'         => 'https://agentic-plugin.com/documentation/approvals/',
 			'footer_policy'    => __(
 				'Approvals keep high-risk agent actions under human control. Email alerts use your admin address and never include passwords. See Privacy Policy for how providers process chat.',
 				'agent-builder'
@@ -1713,7 +1713,7 @@ class Admin_Pages_REST {
 				. '&period=' . rawurlencode( $period )
 				. '&_wpnonce=' . wp_create_nonce( 'agentic_export_logs' )
 			),
-			'docs_url'       => 'https://agentic-plugin.com/audit-log/',
+			'docs_url'       => 'https://agentic-plugin.com/documentation/activity/',
 			'footer_policy'  => __(
 				'Activity helps you understand what agents did on your site. Logs are stored locally and purged according to your retention settings. Chat content lives under Conversations.',
 				'agent-builder'
