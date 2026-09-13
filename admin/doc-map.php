@@ -24,20 +24,22 @@ return array(
 	// -------------------------------------------------------------------------
 	'pages' => array(
 		'agent-builder'        => 'https://agentic-plugin.com/documentation/dashboard/',
-		'agentic-chat'         => 'https://agentic-plugin.com/chat-interface/',
-		'agentic-agents'       => 'https://agentic-plugin.com/installed-agents/',
-		'agentic-deployment'   => 'https://agentic-plugin.com/agent-deployment/',
-		'agentic-tools'        => 'https://agentic-plugin.com/agent-tools/',
-		'agentic-skills'       => 'https://agentic-plugin.com/skills/',
+		'agentic-chat'         => 'https://agentic-plugin.com/documentation/chat/',
+		'agentic-agents'       => 'https://agentic-plugin.com/documentation/agents/',
+		'agentic-deployment'   => 'https://agentic-plugin.com/documentation/publish/',
+		'agentic-tools'        => 'https://agentic-plugin.com/documentation/tools/',
+		'agentic-skills'       => 'https://agentic-plugin.com/documentation/skills/',
 		'agentic-integrations' => 'https://agentic-plugin.com/channels/',
-		'agentic-audit-log'    => 'https://agentic-plugin.com/audit-log/',
-		'agentic-approvals'      => 'https://agentic-plugin.com/approval-queue/',
+		'agentic-audit-log'    => 'https://agentic-plugin.com/documentation/activity/',
+		'agentic-approvals'      => 'https://agentic-plugin.com/documentation/approvals/',
 		'agentic-safety-center'  => 'https://agentic-plugin.com/documentation/safety-center/',
 		'agentic-costs'          => 'https://agentic-plugin.com/api-credits/',
-		'agentic-settings'       => 'https://agentic-plugin.com/settings/',
-		'agentic-train-data'   => 'https://agentic-plugin.com/knowledge-wiki-okf/',
+		'agentic-settings'       => 'https://agentic-plugin.com/documentation/settings/',
+		'agentic-train-data'   => 'https://agentic-plugin.com/documentation/knowledge/',
 		'agentic-run-task'     => 'https://agentic-plugin.com/scheduled-tasks/',
 		'agentic-upgrade-pro'  => 'https://agentic-plugin.com/licensing-and-pricing/',
+		'agentic-agent-ready'  => 'https://agentic-plugin.com/documentation/passport/',
+		'agentic-agent-wizard' => 'https://agentic-plugin.com/documentation/agent-wizard/',
 		// Pro admin surfaces.
 		'agentic-connectors'   => 'https://agentic-plugin.com/channels/',
 		'agentic-governance'   => 'https://agentic-plugin.com/permissions-and-safety/',
@@ -55,7 +57,7 @@ return array(
 	'tabs'  => array(
 
 		// Settings tabs (current IA).
-		'agentic-settings:interface'          => 'https://agentic-plugin.com/chat-styles-and-themes/',
+		'agentic-settings:interface'          => 'https://agentic-plugin.com/documentation/settings/',
 		'agentic-settings:agents'             => 'https://agentic-plugin.com/installed-agents/',
 		'agentic-settings:providers'          => 'https://agentic-plugin.com/manage-llm-providers/',
 		'agentic-settings:users'              => 'https://agentic-plugin.com/user-roles-and-privileges/',
