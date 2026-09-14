@@ -324,6 +324,157 @@ class Risk_Level {
 		'manage_skill'                         => self::HIGH,
 		'manage_user_privileges'               => self::HIGH,
 		'browse_community_skills'              => self::MEDIUM,
+
+		// ------------------------------------------------------------------
+		// Dormant-library floors (#116). None of these currently override
+		// get_risk_level(); without a floor they seed the registry as NONE
+		// and would run ungated the moment a custom agent declared them.
+		// Audited against each tool's execute(), not the first-pass names.
+		// ------------------------------------------------------------------
+
+		// Generic option writer. siteurl/home/active_plugins/admin_email are
+		// blocked, but everything else (permalinks, discussion, third-party
+		// plugin options, remaining agentic_* keys) is still writable.
+		'db_update_option'                     => self::HIGH,
+		// Rewrites a security control (DISALLOW_FILE_EDIT via an agentic_*
+		// option Agent Builder defines at plugins_loaded).
+		'toggle_file_editing'                  => self::HIGH,
+		// Rewrites a security control (xmlrpc_enabled filter).
+		'toggle_xml_rpc'                       => self::HIGH,
+
+		// Moves money or inventory, or mutates orders in ways that email
+		// customers / complete or cancel payment. Same family as
+		// wc_create_refund. wc_create_product defaults to draft but execute()
+		// accepts status=publish with a price, so it is not draft-only.
+		'wc_create_coupon'                     => self::HIGH,
+		'wc_update_stock'                      => self::HIGH,
+		'wc_bulk_update_products'              => self::HIGH,
+		'wc_update_product'                    => self::HIGH,
+		'wc_create_product'                    => self::HIGH,
+		'wc_manage_category'                   => self::HIGH,
+		'wc_update_order_status'               => self::HIGH,
+		'wc_add_order_note'                    => self::HIGH,
+
+		// Bulk or site-wide content mutation (dry_run defaults to false),
+		// or a single-post write that rewrites type/history/existence.
+		'bulk_reassign_term'                   => self::HIGH,
+		'fix_all_internal_links'               => self::HIGH,
+		'fix_orphan_pages'                     => self::HIGH,
+		'switch_post_type'                     => self::HIGH,
+		'restore_revision'                     => self::HIGH,
+		'db_delete_post'                       => self::HIGH,
+
+		// Data-exfil / open-redirect / defacement shape.
+		// form_set_webhook POSTs native-form submissions to any URL.
+		'form_set_webhook'                     => self::HIGH,
+		// Persistent /go/{slug} 301 on this site's own domain to any URL.
+		'create_short_link'                    => self::HIGH,
+		// Downloads an arbitrary HTTPS URL and retargets an existing
+		// attachment ID, so every in-content reference changes in place.
+		'replace_media_file'                   => self::HIGH,
+
+		// Account lock: strips all caps and destroys sessions. Bundled
+		// user-assistant already declares high; floor is defense-in-depth.
+		'lock_user_account'                    => self::HIGH,
+		// Force-deletes a form entry (wp_delete_post( $id, true )), not trash.
+		'form_manage_entries'                  => self::HIGH,
+
+		// Routine single-post / taxonomy writes. Several already match a
+		// bundled agent's abilities.json medium (create_post_content,
+		// update_post_content, manage_categories, manage_tags,
+		// set_featured_image, update_attachment_alt_text, optimize_post_title,
+		// update_post_seo). db_create_post clamps status to draft|pending;
+		// db_update_post can publish — same shape as update_post_content.
+		'create_post_content'                  => self::MEDIUM,
+		'db_create_post'                       => self::MEDIUM,
+		'db_update_post'                       => self::MEDIUM,
+		'update_post_content'                  => self::MEDIUM,
+		'duplicate_post'                       => self::MEDIUM,
+		'schedule_post'                        => self::MEDIUM,
+		'insert_contextual_link'               => self::MEDIUM,
+		'add_related_links_section'            => self::MEDIUM,
+		'add_faq_schema'                       => self::MEDIUM,
+		'optimize_post_title'                  => self::MEDIUM,
+		'update_post_seo'                      => self::MEDIUM,
+		'manage_categories'                    => self::MEDIUM,
+		'manage_tags'                          => self::MEDIUM,
+		'set_featured_image'                   => self::MEDIUM,
+		'set_auto_featured_image'              => self::MEDIUM,
+		'update_attachment_alt_text'           => self::MEDIUM,
+
+		// Form definition / notification writes. form_add_confirmation can
+		// redirect after submit, but only on that one form — not a site-wide
+		// open redirect like create_short_link.
+		'create_form'                          => self::MEDIUM,
+		'update_form'                          => self::MEDIUM,
+		'form_duplicate'                       => self::MEDIUM,
+		'form_add_conditional_logic'           => self::MEDIUM,
+		'form_add_confirmation'                => self::MEDIUM,
+		'form_set_notifications'               => self::MEDIUM,
+		'form_set_spam_protection'             => self::MEDIUM,
+		'save_native_form'                     => self::MEDIUM,
+
+		// Media generation and transforms. Writes a new uploads attachment
+		// or a CDN URL; convert_image_to_webp can opt-in-delete the original
+		// of one file. save_video_to_media sideloads a URL as a *new*
+		// attachment (unlike replace_media_file).
+		'generate_image'                       => self::MEDIUM,
+		'generate_video'                       => self::MEDIUM,
+		'generate_video_from_image'            => self::MEDIUM,
+		'generate_captions'                    => self::MEDIUM,
+		'add_audio_track'                      => self::MEDIUM,
+		'stitch_videos'                        => self::MEDIUM,
+		'trim_video'                           => self::MEDIUM,
+		'upscale_image'                        => self::MEDIUM,
+		'resize_image'                         => self::MEDIUM,
+		'convert_image'                        => self::MEDIUM,
+		'convert_image_to_webp'                => self::MEDIUM,
+		'compress_image'                       => self::MEDIUM,
+		'edit_image'                           => self::MEDIUM,
+		'save_video_to_media'                  => self::MEDIUM,
+
+		// Document generation inside uploads — new files, no site config.
+		'create_docx'                          => self::MEDIUM,
+		'create_pdf'                           => self::MEDIUM,
+		'create_spreadsheet'                   => self::MEDIUM,
+		'edit_spreadsheet'                     => self::MEDIUM,
+		'convert_spreadsheet'                  => self::MEDIUM,
+		'html_to_docx'                         => self::MEDIUM,
+		'merge_pdfs'                           => self::MEDIUM,
+
+		// Writes under ABSPATH. update_robots_txt only prepends Allow rules
+		// for named AI bots (never Disallow) and takes a backup first.
+		'generate_llms_txt'                    => self::MEDIUM,
+		'update_robots_txt'                    => self::MEDIUM,
+
+		// Public comment writes. Bundled wordpress-assistant / support-triage
+		// already declare medium; floor is defense-in-depth.
+		'moderate_comment'                     => self::MEDIUM,
+		'reply_to_comment'                     => self::MEDIUM,
+
+		// Contained option writes (one dashboard notice; last-12 audit history).
+		'post_admin_notice'                    => self::LOW,
+		'save_audit_result'                    => self::LOW,
+		// Globally injected into every agent. send=false is diagnose-only;
+		// send=true POSTs diagnostics + license key to agentic-plugin.com.
+		// Same band as request_human_help (outbound, not arbitrary addressee).
+		'report_issue'                         => self::LOW,
+		// Form reads that can expose personal data (payloads, upload URLs,
+		// or aggregates built by scanning payloads).
+		'get_native_form_submissions'          => self::LOW,
+		'form_get_file_uploads'                => self::LOW,
+		'form_get_analytics'                   => self::LOW,
+
+		// Genuine reads. Mis-annotated with read_only (underscore) rather than
+		// readonly, which is why the scan flagged them — execute() has no
+		// writes. Floor NONE so bundled agents that already declare none
+		// (OKF wiki, list_native_forms) are not escalated.
+		'list_okf_concepts'                    => self::NONE,
+		'read_okf_concept'                     => self::NONE,
+		'search_okf'                           => self::NONE,
+		'list_native_forms'                    => self::NONE,
+		'load_skill'                           => self::NONE,
+		'search_free_music'                    => self::NONE,
 	);
 
 	/**
