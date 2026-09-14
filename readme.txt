@@ -158,10 +158,10 @@ React admin sources live in `src/`; production bundles are in `build/`. Rebuild 
 1. Dashboard — Overview of active agents, connected providers, safety status, and quick actions.
 2. Interactive Chat — Chat with specialized agents; see every tool the agent calls and its result.
 3. Agents Hub — Activate/deactivate bundled agents, see their tools, and assign MCP exposure.
-4. Approvals Queue — Review, approve, or reject sensitive actions before agents execute them.
-5. Tools Hub — See every tool an agent can use, its risk level, and enable/disable by category.
-6. Approvals Preferences — Configure which risk levels need approval, confirmation, or immediate blocking.
-7. Site Passport / Agent-Ready Score — Verify your site is discoverable by AI agents and your commerce stack is ready.
+4. Site Passport / Agent-Ready Score — Verify your site is discoverable by AI agents and your commerce stack is ready.
+5. Approvals Queue — Review, approve, or reject sensitive actions before agents execute them.
+6. Tools Hub — See every tool an agent can use, its risk level, and enable/disable by category.
+7. Approvals Preferences — Configure which risk levels need approval, confirmation, or immediate blocking.
 8. Activity Log — Full audit trail showing what agents did, when, and whether they succeeded.
 9. Safety Center — Risk inventory, kill switch, per-agent tool scopes, and audit-log integrity check.
 10. Quick Start Wizard — Connect your LLM provider and choose Basic or Advanced mode in under two minutes.

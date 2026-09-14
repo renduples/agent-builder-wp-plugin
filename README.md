@@ -46,7 +46,7 @@ Full-page (1440px) captures of every Agent Builder wp-admin screen, written to `
 WP_ADMIN_USER=... WP_ADMIN_PASS=... npm run screenshot:baseline
 ```
 
-Optional `SCREEN=slug,slug` captures a subset. Safety Center is stored as `safety-center.png` (Basic) and `safety-center-advanced.png`. The Approvals risk-gate preferences (readme caption 6) are `approvals-risk-gate.png`.
+Optional `SCREEN=slug,slug` captures a subset. Safety Center is stored as `safety-center.png` (Basic) and `safety-center-advanced.png`. The Approvals risk-gate preferences (readme caption 7) are `approvals-risk-gate.png`.
 
 Uses system Google Chrome when Playwright’s bundled Chromium is unavailable (override with `PLAYWRIGHT_CHROME_PATH`). Safe to re-run; existing PNGs are overwritten.
 

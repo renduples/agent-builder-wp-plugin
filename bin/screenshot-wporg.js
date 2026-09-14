@@ -59,28 +59,28 @@ const SHOTS = [
 	},
 	{
 		n: 4,
+		page: 'agentic-agent-ready',
+		mode: 'advanced',
+	},
+	{
+		n: 5,
 		page: 'agentic-approvals',
 		mode: 'advanced',
-		// Same underlying screen as #6 (Preferences); scroll past the
+		// Same underlying screen as #7 (Preferences); scroll past the
 		// preferences cards so the actual pending-approvals queue —
 		// what this caption is about — is what ends up in frame.
 		scrollTo: '.agentic-react-approval-list',
 	},
 	{
-		n: 5,
+		n: 6,
 		page: 'agentic-tools',
 		mode: 'advanced',
 		wait: '.agentic-react-table',
 	},
 	{
-		n: 6,
+		n: 7,
 		page: 'agentic-approvals',
 		wait: '.agentic-react-approvals-prefs',
-	},
-	{
-		n: 7,
-		page: 'agentic-agent-ready',
-		mode: 'advanced',
 	},
 	{
 		n: 8,
