@@ -366,6 +366,7 @@ class Agent_Ready_Score {
 		$output  .= "Disallow: {$path}/wp-admin/\n";
 		$output  .= "Allow: {$path}/wp-admin/admin-ajax.php\n";
 
+		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- 'robots_txt' is a WordPress core filter this method hooks into, not a custom hook this plugin declares.
 		return (string) apply_filters( 'robots_txt', $output, $public );
 	}
 
