@@ -30,6 +30,7 @@ Unlike plugins that add AI without safety guardrails, **Agent Builder puts safet
 * **Approval Queue:** Review and approve (or reject) every sensitive action before it touches your site — publishing posts, updating settings, creating accounts.
 * **Kill Switch / Emergency Stop:** One click disables all agents, cancels pending jobs, and disconnects providers.
 * **Tool Risk Floors:** Require confirmation for sensitive tools like password resets, plugin updates, or payment refunds — no exceptions.
+* **Automatic Backups:** Before an agent modifies a file or a database table, Agent Builder saves a timestamped backup first — on by default, nothing to configure. Restore any file or table backup with one click from the Approvals screen.
 * **Tamper-Proof Activity Log:** Full audit trail of what agents did and when. Hash-chained integrity prevents tampering — edited or deleted entries become detectable.
 * **Per-Agent Tool Scopes:** See exactly which tools each agent has access to, and their current risk tier.
 
@@ -115,6 +116,9 @@ Yes. Agent Builder is built around safety controls: (1) every tool is classified
 
 = What if an agent tries to do something dangerous? =
 It depends on the risk level. Low-risk actions happen immediately. Medium-risk actions pause and ask for confirmation. High-risk actions (like publishing a post, deleting data, or updating settings) queue in the Approvals screen where you review them one by one before they execute. Extreme-risk tools (like arbitrary shell execution) are blocked by default.
+
+= Can I undo a change an agent made? =
+Yes. Before an agent modifies a tracked file or database table, Agent Builder automatically creates a timestamped backup — this is on by default and needs no setup. Every backup shows up in the Approvals screen, where you can restore it with one click.
 
 = Do I need coding skills to use Agent Builder? =
 No. The plugin includes a **Basic interface mode** designed for non-technical site owners, with guided workflows, plain-language approvals, and one-click controls. Experienced users can switch to **Advanced mode** for developer tools and raw configuration.
