@@ -209,7 +209,7 @@ class Admin_Menu_Handler {
 		// Safety Center — owner-facing overview of existing safety controls.
 		// Always in the nav (Basic/Advanced only changes page content, never
 		// whether the page exists). Placed after Approvals and before Passport
-		// per reports/m2-safety-center-design.md §4. Intentionally not added
+		// per docs/m2-safety-center-design.md §4. Intentionally not added
 		// to the M1 Phase 8a secondary-nav rail (that list is the eight M1
 		// target sections).
 		add_submenu_page(
@@ -838,7 +838,7 @@ class Admin_Menu_Handler {
 	/**
 	 * Catalog for the Advanced-mode secondary nav rail (M1 Phase 8a).
 	 *
-	 * Eight target sections from reports/m1-modes-design.md §3. Each entry
+	 * Eight target sections from docs/m1-modes-design.md §3. Each entry
 	 * maps 1:1 onto an existing add_submenu_page() slug — no new URLs.
 	 * Tools and Skills are one grouped entry with two child links, the same
 	 * grouped-nav pattern Settings already uses (label + rows), not a merge

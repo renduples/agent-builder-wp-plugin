@@ -27,7 +27,7 @@ const RISK_EXPLANATIONS = {
 	extreme: __( 'Too risky to allow at all — hidden from agents entirely, cannot be enabled.', 'agent-builder' ),
 };
 
-// Per-tool HIGH reasons from reports/m2-safety-center-design.md §3.5.
+// Per-tool HIGH reasons from docs/m2-safety-center-design.md §3.5.
 // Everything else falls back to the HIGH tier sentence in RISK_EXPLANATIONS
 // rather than inventing copy for every HIGH tool.
 const HIGH_RISK_REASONS = {
