@@ -1,7 +1,16 @@
 // WP_ADMIN_USER=... WP_ADMIN_PASS=... node bin/screenshot-wporg.js
 // Recapture .wordpress-org/screenshot-N.png from the live experiment.test admin
-// in readme.txt Screenshots order. Viewport 1440×900; most shots are full-page,
-// Safety Center and Tools (Advanced) are viewport-height so they stay reviewable.
+// in readme.txt Screenshots order.
+//
+// Capture convention: every shot is a plain 1440×900 viewport screenshot (no
+// fullPage capture, no per-shot element clip). WP.org's directory gallery
+// renders every screenshot inside the same bounded frame, so a uniform
+// viewport keeps all 11 images at identical dimensions/aspect ratio instead
+// of the previous mix of full-page captures (some several screens tall) and
+// one tight single-card crop at a different width. List-heavy screens (e.g.
+// Agents Hub, Activity Log) show a representative top slice rather than
+// their full scrollable content — that's a deliberate trade for visual
+// consistency across the set, not an oversight.
 
 'use strict';
 
@@ -30,75 +39,69 @@ const REACT_ROOTS = [
 	'#agentic-deploy-wizard-root',
 ];
 
-// readme.txt == Screenshots == order.
+// readme.txt == Screenshots == order. Every shot is a 1440×900 viewport
+// capture (fullPage is never set) — see the file header comment.
 const SHOTS = [
 	{
 		n: 1,
 		page: 'agent-builder',
 		mode: 'advanced',
-		fullPage: true,
 	},
 	{
 		n: 2,
 		page: 'agentic-chat',
-		fullPage: true,
 		chat: true,
 	},
 	{
 		n: 3,
 		page: 'agentic-agents',
 		mode: 'advanced',
-		fullPage: true,
 	},
 	{
 		n: 4,
 		page: 'agentic-approvals',
 		mode: 'advanced',
-		fullPage: true,
+		// Same underlying screen as #6 (Preferences); scroll past the
+		// preferences cards so the actual pending-approvals queue —
+		// what this caption is about — is what ends up in frame.
+		scrollTo: '.agentic-react-approval-list',
 	},
 	{
 		n: 5,
 		page: 'agentic-tools',
 		mode: 'advanced',
-		fullPage: false,
 		wait: '.agentic-react-table',
 	},
 	{
 		n: 6,
 		page: 'agentic-approvals',
-		clip: '.agentic-react-approvals-prefs',
 		wait: '.agentic-react-approvals-prefs',
 	},
 	{
 		n: 7,
 		page: 'agentic-agent-ready',
 		mode: 'advanced',
-		fullPage: true,
 	},
 	{
 		n: 8,
 		page: 'agentic-audit-log',
 		mode: 'advanced',
-		fullPage: false,
 	},
 	{
 		n: 9,
 		page: 'agentic-safety-center',
 		mode: 'basic',
-		fullPage: false,
 		wait: '.agentic-safety-overview',
 	},
 	{
 		n: 10,
 		page: 'agentic-signup',
-		fullPage: true,
 		wait: '#agentic-signup-ui-mode',
 	},
 	{
 		n: 11,
 		page: 'agentic-settings',
 		query: 'tab=providers',
-		fullPage: true,
 	},
 ];
 
@@ -324,13 +327,15 @@ async function captureShot( page, shot ) {
 		);
 	}
 
-	if ( shot.clip ) {
-		const loc = page.locator( shot.clip ).first();
-		await loc.waitFor( { timeout: 20000 } );
-		await loc.screenshot( { path: dest } );
-	} else {
-		await page.screenshot( { path: dest, fullPage: !! shot.fullPage } );
+	if ( shot.scrollTo ) {
+		const loc = page.locator( shot.scrollTo ).first();
+		if ( ( await loc.count() ) > 0 ) {
+			await loc.scrollIntoViewIfNeeded();
+			await sleep( 300 );
+		}
 	}
+
+	await page.screenshot( { path: dest } );
 
 	console.log(
 		`ok    screenshot-${ shot.n }.png  →  ${ path.relative( process.cwd(), dest ) }`
