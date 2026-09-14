@@ -56,7 +56,7 @@ WordPress.org listing shots (`.wordpress-org/screenshot-N.png`, readme.txt order
 WP_ADMIN_USER=... WP_ADMIN_PASS=... npm run screenshot:wporg
 ```
 
-Safety Center and the Advanced Tools list are viewport-height (1440×900) so they stay reviewable; other screens are full-page. Optional `SCREEN=2,9` recaptures a subset.
+Every shot is a plain 1440×900 viewport capture — no full-page captures, no per-shot crops — so all 11 images share the same dimensions for the WP.org gallery. Optional `SCREEN=2,9` recaptures a subset.
 
 ## Releases
 
