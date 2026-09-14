@@ -66,9 +66,9 @@ const SHOTS = [
 		n: 5,
 		page: 'agentic-approvals',
 		mode: 'advanced',
-		// Same underlying screen as #7 (Preferences); scroll past the
-		// preferences cards so the actual pending-approvals queue —
-		// what this caption is about — is what ends up in frame.
+		// This page's top section is Approvals Preferences (comfort-level
+		// cards) — scroll past those so the actual pending-approvals queue,
+		// what this caption is about, is what ends up in frame.
 		scrollTo: '.agentic-react-approval-list',
 	},
 	{
@@ -79,8 +79,9 @@ const SHOTS = [
 	},
 	{
 		n: 7,
-		page: 'agentic-approvals',
-		wait: '.agentic-react-approvals-prefs',
+		page: 'agentic-train-data',
+		mode: 'advanced',
+		wait: '#agentic-okf-search',
 	},
 	{
 		n: 8,

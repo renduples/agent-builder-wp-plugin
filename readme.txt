@@ -161,7 +161,7 @@ React admin sources live in `src/`; production bundles are in `build/`. Rebuild 
 4. Site Passport / Agent-Ready Score — Verify your site is discoverable by AI agents and your commerce stack is ready.
 5. Approvals Queue — Review, approve, or reject sensitive actions before agents execute them.
 6. Tools Hub — See every tool an agent can use, its risk level, and enable/disable by category.
-7. Approvals Preferences — Configure which risk levels need approval, confirmation, or immediate blocking.
+7. Knowledge — Train agents on your own docs and guidelines with the local Open Knowledge Framework wiki, no cloud storage needed.
 8. Activity Log — Full audit trail showing what agents did, when, and whether they succeeded.
 9. Safety Center — Risk inventory, kill switch, per-agent tool scopes, and audit-log integrity check.
 10. Quick Start Wizard — Connect your LLM provider and choose Basic or Advanced mode in under two minutes.
