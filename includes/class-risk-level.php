@@ -261,6 +261,12 @@ class Risk_Level {
 		// future agent ever declares it.
 		'github_api'                           => self::HIGH,
 
+		// Fetches any URL an agent is told to (or tricked into) requesting —
+		// its own description admits robots.txt isn't enforced. SSRF surface
+		// (internal network addresses, cloud metadata endpoints) with no
+		// risk_level override of its own; same reasoning as github_api above.
+		'fetch_url'                            => self::HIGH,
+
 		// Account takeover surface.
 		'force_password_reset'                 => self::HIGH,
 

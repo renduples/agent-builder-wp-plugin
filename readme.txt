@@ -294,6 +294,13 @@ This plugin connects to external AI APIs to process prompts and tool executions 
 * **Data sent:** Unauthenticated GET requests for public skills; search queries when using ClawHub.
 * **Terms of Service:** [GitHub Terms](https://docs.github.com/site-policy/github-terms/github-terms-of-service) | [GitHub Privacy](https://docs.github.com/site-policy/privacy-policies/github-privacy-statement) | [Convex Terms](https://www.convex.dev/legal/tos) | [Convex Privacy](https://www.convex.dev/legal/privacy) | [OpenClaw Docs](https://docs.openclaw.ai/)
 
+= GitHub API (Optional) =
+* **Endpoint:** `https://api.github.com` — any endpoint under it (repos, issues, pull requests, commits, releases, actions, and more), any of GET/POST/PATCH/PUT/DELETE.
+* **When used:** Only if an agent is given the `github_api` tool and you've set your own GitHub personal access token via WP-CLI (`wp option update agentic_github_token "<token>"`) — there is no settings-screen field for this yet. No bundled agent has this tool by default; it's available for a custom agent you build yourself. Always requires your approval before running (High risk).
+* **Data sent:** Whatever the request needs — your personal access token for authentication, plus any endpoint path, query parameters, or request body the agent sends. Scope of access is whatever your token allows.
+* **Terms of Service:** [GitHub Terms](https://docs.github.com/site-policy/github-terms/github-terms-of-service)
+* **Privacy Policy:** [GitHub Privacy](https://docs.github.com/site-policy/privacy-policies/github-privacy-statement)
+
 = Google PageSpeed Insights (Optional) =
 * **Endpoint:** `https://www.googleapis.com/pagespeedonline/v5/runPagespeed`
 * **When used:** Only when the Core Web Vitals check tool is used, and only if you've added your own free Google PageSpeed Insights API key in Settings → APIs. This plugin does not ship or use a shared API key — without your own key, this tool returns setup instructions instead of making a request. (Agent Builder Pro provides managed PageSpeed access through a separate mechanism, without requiring your own key.)
