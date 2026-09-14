@@ -71,7 +71,7 @@ class Delete_Agent extends Tool_Base {
 			return array( 'error' => 'Deletion must be confirmed by setting confirm=true' );
 		}
 
-		// All 8 bundled agents ship inside the plugin itself (library/agents/),
+		// All 11 bundled agents ship inside the plugin itself (library/agents/),
 		// never inside AGENTIC_AGENTS_DIR below — so this list is a defense-in-
 		// depth guard, not the only thing standing between this tool and the
 		// plugin's own files.
@@ -84,6 +84,9 @@ class Delete_Agent extends Tool_Base {
 			'site-health-sentinel',
 			'support-triage',
 			'user-assistant',
+			'agent-orchestrator',
+			'skills-assistant',
+			'storefront-assistant',
 		);
 
 		if ( in_array( $slug, $protected, true ) ) {
