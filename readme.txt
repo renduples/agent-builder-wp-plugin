@@ -247,15 +247,16 @@ This plugin connects to external AI APIs to process prompts and tool executions 
 * **Data sent:** All data remains strictly on your local infrastructure.
 
 = Agentic AI Services (Optional) =
-* **Endpoints:** 
+* **Endpoints:**
   * Chat: `https://chat.agentic-plugin.com:11435`
   * Vector Store / RAG: `https://rag.agentic-plugin.com`
   * Image Generation: `https://imagegen.agentic-plugin.com`
   * Text-to-Speech: `https://tts.agentic-plugin.com`
   * Video Generation: `https://videogen.agentic-plugin.com`
+  * Music Search (Jamendo): the Video Generation endpoint above proxies royalty-free background-music searches to [Jamendo](https://www.jamendo.com/) — your search terms are relayed to Jamendo's catalog, not sent to Jamendo directly from your site.
 * **When used:** Only when using Agentic managed AI credits or Pro cloud features.
 * **Data sent:** Site URL, license key, prompt text, and task-specific media/document payloads.
-* **Terms of Service:** [https://agentic-plugin.com/terms-of-service/](https://agentic-plugin.com/terms-of-service/)
+* **Terms of Service:** [https://agentic-plugin.com/terms-of-service/](https://agentic-plugin.com/terms-of-service/) | [Jamendo Terms](https://www.jamendo.com/legal/terms-of-use) | [Jamendo Privacy](https://www.jamendo.com/legal/privacy)
 * **Privacy Policy:** [https://agentic-plugin.com/privacy-policy/](https://agentic-plugin.com/privacy-policy/)
 
 = Agentic Account & Platform Services (Optional) =
