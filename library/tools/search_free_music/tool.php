@@ -2,7 +2,7 @@
 /**
  * Tool: search_free_music
  *
- * Search Freesound.org for royalty-free audio tracks via the Agentic Video
+ * Search Jamendo for royalty-free audio tracks via the Agentic Video
  * Generation service. Returns direct preview MP3 URLs ready for add_audio_track.
  *
  * @package    Agent_Builder
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Search Freesound.org for royalty-free background music or SFX.
+ * Search Jamendo for royalty-free background music or SFX.
  * Returns preview_url values ready to pass to add_audio_track.
  * Free — no credits charged.
  */

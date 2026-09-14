@@ -474,7 +474,12 @@ class Risk_Level {
 		'search_okf'                           => self::NONE,
 		'list_native_forms'                    => self::NONE,
 		'load_skill'                           => self::NONE,
-		'search_free_music'                    => self::NONE,
+
+		// Sends an agent-supplied search string to Agentic's videogen backend
+		// with no confirmation ever (NONE has zero friction even in supervised
+		// mode) — same exfiltration-channel reasoning as report_issue above,
+		// just a narrower payload (a search query, not diagnostics/license key).
+		'search_free_music'                    => self::LOW,
 	);
 
 	/**
