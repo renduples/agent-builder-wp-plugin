@@ -1,6 +1,6 @@
 # Agent Builder
 
-**Version:** 3.3.46
+**Version:** 3.4.0
 
 Free [Agent Builder](https://agentic-plugin.com/) WordPress plugin.
 
@@ -10,20 +10,23 @@ Free [Agent Builder](https://agentic-plugin.com/) WordPress plugin.
 - **Docs / product site:** https://agentic-plugin.com/documentation/
 - **Community agents:** https://agentic-plugin.com/community-agents/
 
-Deploy AI agents and teams in WordPress. Create role-based agents with simple job descriptions.
+Create, train, and orchestrate AI agents in WordPress with built-in safety — approval gates, risk audits, tamper-proof logs, a Basic/Advanced interface split, and WebMCP.
 
-## Eight agents included free
+## 11 agents included free
 
 | Agent | Role |
 |-------|------|
-| **Assistant Trainer** | Train new assistants from plain job descriptions |
-| **Content Writer** | Create, edit, and publish posts and pages |
-| **Editorial Director** | Plan content work and coordinate specialists |
-| **SEO Optimizer** | Audit on-page SEO and propose improvements |
-| **Site Health Sentinel** | Site health, performance, and security signals |
-| **Support Triage** | Triage comments/forms; draft replies |
-| **User Assistant** | Registrations, accounts, and member outreach |
-| **WordPress Assistant** | Guide to WordPress and Agent Builder |
+| **Content Writer** | Researches, writes, edits, and formats blog posts and pages |
+| **SEO Optimizer** | Audits on-page content and proposes keyword and meta improvements |
+| **Site Health Sentinel** | Continuously checks performance, database health, and security alerts |
+| **Support Triage** | Summarizes customer comments, reviews form submissions, and drafts replies |
+| **WordPress Assistant** | Onboards new users and helps troubleshoot core settings |
+| **Assistant Trainer** | Builds new specialized AI agents from a plain-English job description |
+| **Agent Orchestrator** | Deploys assistants as frontend chat widgets, admin launchers, or background jobs |
+| **Editorial Director** | Plans editorial calendars and coordinates publishing workflows |
+| **User Assistant** | Manages member outreach, onboarding, and role-based permissions |
+| **Skills Assistant** | Discovers and imports community skills to teach agents new capabilities |
+| **Storefront Assistant** | Helps visitors browse your WooCommerce catalog and build a cart, including via WebMCP |
 
 More on [Community Agents](https://agentic-plugin.com/community-agents/).
 
