@@ -10,7 +10,7 @@ Free [Agent Builder](https://agentic-plugin.com/) WordPress plugin.
 - **Docs / product site:** https://agentic-plugin.com/documentation/
 - **Community agents:** https://agentic-plugin.com/community-agents/
 
-Create, train, and orchestrate AI agents in WordPress with built-in safety — approval gates, risk audits, tamper-proof logs, a Basic/Advanced interface split, and WebMCP.
+Create, train, and orchestrate AI agents in WordPress with built-in safety using simple job descriptions — approval gates, risk audits, tamper-proof logs, a Basic/Advanced interface split, MCP and WebMCP.
 
 ## 11 agents included free
 
@@ -28,7 +28,7 @@ Create, train, and orchestrate AI agents in WordPress with built-in safety — a
 | **Skills Assistant** | Discovers and imports community skills to teach agents new capabilities |
 | **Storefront Assistant** | Helps visitors browse your WooCommerce catalog and build a cart, including via WebMCP |
 
-More on [Community Agents](https://agentic-plugin.com/community-agents/).
+More at [Community Agents](https://agentic-plugin.com/community-agents/).
 
 ## Install from source
 
@@ -79,15 +79,6 @@ To run a single test file or method:
 Coverage priorities live under `tests/unit/`: `Risk_Level` (enforcement matrix + `BASELINE_RISKS` floor), `Audit_Log_Integrity` (hash-chain tamper detection), `Approval_Queue` (create/approve/reject/expire), `Tool_Executor` (the full risk-gate flow — allow/confirm/queue/block, plus that a non-readonly tool triggers a table backup before it runs), and `Abilities_Manifest` (effective-risk resolution). `tests/unit/test-tool-risk-floor-coverage.php` is a standing regression test: it fails the moment a new non-readonly tool ships under `library/tools/` without either a `get_risk_level()` override or a `Risk_Level::BASELINE_RISKS` entry.
 
 No test makes a real outbound HTTP call — `tests/helpers/MockWPFunctions.php` intercepts `wp_remote_*()` via the `pre_http_request` filter for any test that needs one.
-
-## Screenshots
-
-Two Playwright-driven capture scripts exist for contributors doing visual work:
-
-- `WP_ADMIN_USER=... WP_ADMIN_PASS=... npm run screenshot:baseline` — full-page captures of every admin screen, for before/after comparison during UI work. Not committed to the repo (regenerate on demand).
-- `WP_ADMIN_USER=... WP_ADMIN_PASS=... npm run screenshot:wporg` — the 11 curated 1440×900 shots that ship in `.wordpress-org/` for the actual WordPress.org listing, in `readme.txt`'s caption order.
-
-Both accept `SCREEN=slug,slug` to capture a subset. See each script's own header comment for details.
 
 ## Releases
 
