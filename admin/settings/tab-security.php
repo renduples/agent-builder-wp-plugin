@@ -110,6 +110,7 @@ global $wpdb;
 </h3>
 <p class="agentic-text-muted agentic-mt-n4">
 	Cloudflare Turnstile provides invisible bot verification without traditional CAPTCHAs.
+	<?php // phpcs:ignore PluginCheck.CodeAnalysis.Offloading.OffloadedContent -- Plain link to Cloudflare's own dashboard, not resource loading. ?>
 	<a href="https://dash.cloudflare.com/?to=/:account/turnstile" target="_blank">Get your keys →</a>
 </p>
 <table class="form-table">
@@ -186,6 +187,7 @@ global $wpdb;
 		<span class="agentic-text-success-dk">Bot verification is active for <?php echo esc_html( $agentic_turnstile_require_all ? 'all users' : 'anonymous users' ); ?>.</span>
 	<?php else : ?>
 		<strong class="agentic-text-amber-warn">⚠ Turnstile is not configured.</strong>
+		<?php // phpcs:ignore PluginCheck.CodeAnalysis.Offloading.OffloadedContent -- Plain link to Cloudflare's own dashboard, not resource loading. ?>
 		<span class="agentic-text-amber-warn">Public-facing chats are not protected against bots. <a href="https://dash.cloudflare.com/?to=/:account/turnstile" target="_blank">Set up Turnstile</a></span>
 	<?php endif; ?>
 </div>

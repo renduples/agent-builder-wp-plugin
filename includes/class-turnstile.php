@@ -23,8 +23,15 @@ class Turnstile {
 
 	/**
 	 * Cloudflare's script + verification endpoints.
+	 *
+	 * The challenge script must be loaded live from Cloudflare by design —
+	 * it can't be self-hosted/bundled, since the whole point is a live,
+	 * server-verified bot challenge. Same accepted pattern as any
+	 * reCAPTCHA/hCaptcha integration.
 	 */
+	// phpcs:ignore PluginCheck.CodeAnalysis.Offloading.OffloadedContent -- Required live third-party bot-verification script; cannot be self-hosted without defeating its purpose.
 	const SCRIPT_URL = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+	// phpcs:ignore PluginCheck.CodeAnalysis.Offloading.OffloadedContent -- Server-side verification endpoint for the same Turnstile service, not resource loading.
 	const VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 
 	/**

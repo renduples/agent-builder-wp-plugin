@@ -615,6 +615,7 @@ $agentic_sk_instances = $agentic_sk_registry->get_all_instances();
 				var ownerHandle = (detail && detail.owner) ? (detail.owner.handle || '') : '';
 				var canonicalSlug = (detail && detail.skill) ? (detail.skill.slug || slug) : slug;
 				if (ownerHandle) {
+					<?php // phpcs:ignore PluginCheck.CodeAnalysis.Offloading.OffloadedContent -- Browser-side text fetch (a Markdown doc, not a script/asset) for the explicit, user-initiated "import a community skill" action. ?>
 					return fetch('https://raw.githubusercontent.com/openclaw/skills/main/skills/' + encodeURIComponent(ownerHandle) + '/' + encodeURIComponent(canonicalSlug) + '/SKILL.md')
 					.then(function(r) { return r.ok ? r.text() : ''; })
 					.then(function(md) { skillData.content = md || ''; })
@@ -681,6 +682,7 @@ $agentic_sk_instances = $agentic_sk_registry->get_all_instances();
 					.map(function(p) { return p.split('/')[1]; });
 
 				return Promise.all(slugs.map(function(slug) {
+					<?php // phpcs:ignore PluginCheck.CodeAnalysis.Offloading.OffloadedContent -- Browser-side text fetch (a Markdown doc, not a script/asset) for the explicit, user-initiated "browse community skills" action. ?>
 					var rawUrl = 'https://raw.githubusercontent.com/' + src.owner + '/' + src.repo + '/' + src.branch + '/skills/' + slug + '/SKILL.md';
 					return fetch(rawUrl)
 						.then(function(r) { return r.ok ? r.text() : ''; })

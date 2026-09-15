@@ -174,6 +174,7 @@ class Browse_Community_Skills extends \Agentic\Tool_Base {
 		$skills = array();
 		foreach ( $slugs as $slug ) {
 			$raw_url = sprintf(
+				// phpcs:ignore PluginCheck.CodeAnalysis.Offloading.OffloadedContent -- Server-side text fetch (a Markdown doc, not a script/asset) for the explicit, user-initiated "browse community skills" action; nothing runs until the site owner opens this screen.
 				'https://raw.githubusercontent.com/%s/%s/%s/skills/%s/SKILL.md',
 				self::WORDPRESS_OWNER,
 				self::WORDPRESS_REPO,
@@ -251,6 +252,7 @@ class Browse_Community_Skills extends \Agentic\Tool_Base {
 	 */
 	private function import_wordpress( string $slug ): array {
 		$raw_url = sprintf(
+			// phpcs:ignore PluginCheck.CodeAnalysis.Offloading.OffloadedContent -- Server-side text fetch (a Markdown doc, not a script/asset) for the explicit, user-initiated "import a community skill" action; nothing runs until the site owner opens this screen.
 			'https://raw.githubusercontent.com/%s/%s/%s/skills/%s/SKILL.md',
 			self::WORDPRESS_OWNER,
 			self::WORDPRESS_REPO,
