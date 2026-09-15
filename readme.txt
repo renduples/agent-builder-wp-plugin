@@ -13,65 +13,43 @@ Create, train, and orchestrate AI agents with built-in safety. 11 free agents, a
 
 == Description ==
 
-**Agent Builder** turns your WordPress site into an AI workspace where agents work under your control. Unlike generic chatbots that only answer questions, Agent Builder lets specialized AI agents take actions on your site — drafting articles, auditing SEO, triaging comments, monitoring health — all supervised by safety controls you can see and trust.
+**Agent Builder** turns your WordPress site into an AI workspace where agents work under your control. Unlike generic chatbots that only answer questions, agents here take real actions — drafting articles, auditing SEO, triaging comments, monitoring health — all supervised by safety controls you can see and trust.
 
-This plugin is built from the ground up for **AI agent safety**. Every tool an agent can use is flagged with a risk level. Sensitive actions pause in an approval queue for your review. Every agent action is logged and tamper-evident. You can audit what happened, roll back harmful changes, or hit a kill switch to disable all agents instantly.
-
-Equipped with a **Basic / Advanced interface switch**, Agent Builder is effortless for site owners while providing complete control, custom tooling, and Model Context Protocol (MCP) and WebMCP integration for developers.
+Every tool is risk-classified. Sensitive actions pause in an approval queue, logged and tamper-evident. Roll back changes or use the kill switch to stop all agents.
 
 ---
 
 ## 🛡️ Agent Safety: The Cornerstone
 
-Unlike plugins that add AI without safety guardrails, **Agent Builder puts safety at the center**. You get:
+Unlike plugins that add AI without guardrails, **Agent Builder puts safety at the center**:
 
-* **Risk Inventory:** Every tool an agent can use is classified by risk level (Low, Medium, High, Extreme). See exactly what each agent can do at a glance.
-* **Approval Gate:** Medium-risk actions need confirmation; High-risk actions queue for your review. Nothing happens until you decide.
-* **Approval Queue:** Review and approve (or reject) every sensitive action before it touches your site — publishing posts, updating settings, creating accounts.
-* **Kill Switch / Emergency Stop:** One click disables all agents, cancels pending jobs, and disconnects providers.
-* **Tool Risk Floors:** Require confirmation for sensitive tools like password resets, plugin updates, or payment refunds — no exceptions.
-* **Automatic Backups:** Before an agent modifies a file or a database table, Agent Builder saves a timestamped backup first — on by default, nothing to configure. Restore any file or table backup with one click from the Approvals screen.
-* **Tamper-Proof Activity Log:** Full audit trail of what agents did and when. Hash-chained integrity prevents tampering — edited or deleted entries become detectable.
-* **Per-Agent Tool Scopes:** See exactly which tools each agent has access to, and their current risk tier.
+* **Risk Inventory:** Every tool classified Low/Medium/High/Extreme.
+* **Approval Gate & Queue:** Medium-risk actions confirm; High-risk actions queue for your review first.
+* **Kill Switch:** One click disables all agents and disconnects providers.
+* **Tool Risk Floors:** Sensitive tools like password resets or refunds require confirmation.
+* **Automatic Backups:** A timestamped backup is saved before any file or database change — on by default, restore with one click.
+* **Tamper-Proof Activity Log:** Hash-chained audit trail; tampering becomes detectable.
 
-This is one of the first WordPress plugins actively built for AI-agent safety.
+One of the first WordPress plugins actively built for AI-agent safety.
 
 ---
 
-### 🚀 Zero-Code Simplicity for Site Owners
+### 🚀 Zero-Code Simplicity
 
-* **11 Free Built-In Agents:**
-  * ✍️ **Content Writer:** Researches, writes, edits, and formats blog posts and pages.
-  * 🔍 **SEO Optimizer:** Audits on-page content and proposes keyword and meta improvements.
-  * 🛡️ **Site Health Sentinel:** Continuously checks performance, database health, and security alerts.
-  * 💬 **Support Triage:** Summarizes customer comments, reviews form submissions, and drafts replies.
-  * 🧭 **WordPress Assistant:** Onboards new users and helps troubleshoot core settings.
-  * 🎓 **Assistant Trainer:** Build new specialized AI agents simply by describing their job in plain English.
-  * ⚙️ **Agent Orchestrator:** Deploys assistants as frontend chat widgets, admin launchers, or background jobs.
-  * 📰 **Editorial Director:** Plans editorial calendars and coordinates publishing workflows.
-  * 👤 **User Assistant:** Manages member outreach, onboarding, and role-based permissions.
-  * 🧩 **Skills Assistant:** Discovers and imports community skills to teach agents new capabilities.
-  * 🛍️ **Storefront Assistant:** Helps visitors browse your WooCommerce catalog and build a cart — including directly in the browser via WebMCP.
-* **Basic and Advanced Modes:** Switch modes anytime from Settings → Interface:
-  * **Basic Mode:** Simplified, guided flows for non-technical site owners. Drag-and-drop agent setup, plain-language approvals, and one-click safety controls.
-  * **Advanced Mode:** Full developer console. Raw tool manifests, detailed risk audits, REST API endpoints, MCP credentials, and technical audit logs.
-* **Embed Everywhere:** Drop responsive chat widgets on any page using native **Gutenberg blocks**, shortcodes, or wp-admin launchers.
-* **100% Free Local Knowledge:** Train agents on your company guidelines, docs, or site content using the local Open Knowledge Framework (OKF) wiki — no cloud storage needed.
+**11 free built-in agents**: Content Writer, SEO Optimizer, Site Health Sentinel, Support Triage, WordPress Assistant, Assistant Trainer, Agent Orchestrator, Editorial Director, User Assistant, Skills Assistant, Storefront Assistant.
+
+* **Basic / Advanced Modes:** Guided flows for owners; a full developer console (manifests, risk audits, REST API, MCP) for power users.
+* **Embed Everywhere:** Gutenberg blocks, shortcodes, or wp-admin launchers.
+* **100% Free Local Knowledge:** Train agents on your own docs via the local Open Knowledge Format (OKF) wiki — no cloud storage needed.
 
 ---
 
-### ⚡ Built for Developers & Power Users
+### ⚡ Built for Developers
 
-* **WebMCP Bridge:** Enable low-risk tools for AI browser agents visiting your site. Visitors' own AI agents can search your content, browse WooCommerce catalogs, and build carts — with the same risk gates and per-visitor scoping that protect your backend. All the safety controls that guard agents inside wp-admin also protect your storefront.
-* **Model Context Protocol (MCP) Ready:** Connect external clients like **Claude Desktop**, **Cursor**, and **VS Code** directly to your WordPress site using secure MCP credentials. Each client connection registers separately so you know exactly who has what access.
-* **Bidirectional WordPress Abilities API (WP 6.9+):**
-  * *Outbound:* Exposes all agent tools as native WordPress abilities (`agent-builder/` and `wp-extended/` namespaces) with risk tiers intact.
-  * *Inbound:* Automatically transforms abilities declared by other plugins into callable agent tools with the same approval gate.
-* **Multi-LLM & BYOK (Bring Your Own Key):** Connect OpenAI, Anthropic (Claude), Google Gemini, DeepSeek, xAI (Grok), Kimi (Moonshot), Mistral, Cohere, or run 100% private local models via **Ollama**.
-* **Open Skill Architecture:** Full support for the `agentskills.io` open standard, WordPress.org Community Skills, and Anthropic Skills repositories.
-* **Developer Controls:** Programmatic orchestration via REST API, automated cron triggers, and detailed JSON activity audit logs. React admin sources live in `src/`; production bundles in `build/` (`npm run build` with `@wordpress/scripts`).
-
-Documentation & Guides: [agentic-plugin.com/documentation](https://agentic-plugin.com/documentation/)
+* **WebMCP Bridge:** Expose low-risk tools to visitors' own AI browser agents, same risk gates as the backend.
+* **MCP Ready:** Connect Claude Desktop, Cursor, and VS Code via secure credentials.
+* **WordPress Abilities API (WP 6.9+):** Exposes tools as native abilities; imports other plugins' abilities.
+* **Multi-LLM BYOK:** OpenAI, Anthropic, Google Gemini, DeepSeek, xAI, Kimi, Mistral, Cohere, or local Ollama.
 
 == Installation ==
 
