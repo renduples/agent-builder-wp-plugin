@@ -38,10 +38,6 @@ composer.lock
 composer.phar
 package-lock.json
 
-# Unused Chart.js copy (never enqueued).
-assets/js/chart.js
-assets/js/chart.min.js
-
 # WP.org edition is English-only. Keep the POT (translate.wordpress.org
 # source template) and language-neutral files (e.g. index.php); drop
 # bundled locales. Source .po/.mo/.json stay in git for Pro.
