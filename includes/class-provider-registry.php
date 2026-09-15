@@ -1125,6 +1125,7 @@ class Provider_Registry {
 				array(
 					'slug'          => 'xai',
 					'name'          => 'xAI (Grok)',
+					// phpcs:ignore PluginCheck.CodeAnalysis.AIProvider.DirectIntegration -- Multi-provider agent tool-calling is this plugin's core feature; the WP AI Client SDK explicitly excludes agent/tool orchestration from its scope (php-ai-client REQUIREMENTS.md: "no agents"), and no official connector exists for this provider yet.
 					'endpoint'      => 'https://api.x.ai/v1/chat/completions',
 					'default_model' => 'grok-3',
 					'auth_type'     => 'bearer',
@@ -1162,6 +1163,7 @@ class Provider_Registry {
 				array(
 					'slug'          => 'openai',
 					'name'          => 'OpenAI',
+					// phpcs:ignore PluginCheck.CodeAnalysis.AIProvider.DirectIntegration -- Multi-provider agent tool-calling is this plugin's core feature; the WP AI Client SDK explicitly excludes agent/tool orchestration from its scope (php-ai-client REQUIREMENTS.md: "no agents"), and no official connector exists for this provider yet.
 					'endpoint'      => 'https://api.openai.com/v1/chat/completions',
 					'default_model' => 'gpt-4.1-mini',
 					'auth_type'     => 'bearer',
@@ -1220,6 +1222,7 @@ class Provider_Registry {
 				array(
 					'slug'          => 'anthropic',
 					'name'          => 'Anthropic (Claude)',
+					// phpcs:ignore PluginCheck.CodeAnalysis.AIProvider.DirectIntegration -- Multi-provider agent tool-calling is this plugin's core feature; the WP AI Client SDK explicitly excludes agent/tool orchestration from its scope (php-ai-client REQUIREMENTS.md: "no agents"), and no official connector exists for this provider yet.
 					'endpoint'      => 'https://api.anthropic.com/v1/messages',
 					'default_model' => 'claude-sonnet-4-6',
 					'auth_type'     => 'anthropic',
@@ -1257,6 +1260,7 @@ class Provider_Registry {
 				array(
 					'slug'          => 'google',
 					'name'          => 'Google (Gemini)',
+					// phpcs:ignore PluginCheck.CodeAnalysis.AIProvider.DirectIntegration -- Multi-provider agent tool-calling is this plugin's core feature; the WP AI Client SDK explicitly excludes agent/tool orchestration from its scope (php-ai-client REQUIREMENTS.md: "no agents"), and no official connector exists for this provider yet.
 					'endpoint'      => 'https://generativelanguage.googleapis.com/v1beta/models/%MODEL%:generateContent?key=%KEY%',
 					'default_model' => 'gemini-2.5-flash',
 					'auth_type'     => 'url_key',
@@ -1313,6 +1317,7 @@ class Provider_Registry {
 				array(
 					'slug'          => 'mistral',
 					'name'          => 'Mistral AI',
+					// phpcs:ignore PluginCheck.CodeAnalysis.AIProvider.DirectIntegration -- Multi-provider agent tool-calling is this plugin's core feature; the WP AI Client SDK explicitly excludes agent/tool orchestration from its scope (php-ai-client REQUIREMENTS.md: "no agents"), and no official connector exists for this provider yet.
 					'endpoint'      => 'https://api.mistral.ai/v1/chat/completions',
 					'default_model' => 'mistral-large-latest',
 					'auth_type'     => 'bearer',
@@ -1383,6 +1388,7 @@ class Provider_Registry {
 				array(
 					'slug'          => 'cohere',
 					'name'          => 'Cohere',
+					// phpcs:ignore PluginCheck.CodeAnalysis.AIProvider.DirectIntegration -- Multi-provider agent tool-calling is this plugin's core feature; the WP AI Client SDK explicitly excludes agent/tool orchestration from its scope (php-ai-client REQUIREMENTS.md: "no agents"), and no official connector exists for this provider yet.
 					'endpoint'      => 'https://api.cohere.com/v2/chat',
 					'default_model' => 'command-r-plus-08-2024',
 					'auth_type'     => 'bearer',
@@ -1420,6 +1426,7 @@ class Provider_Registry {
 				array(
 					'slug'          => 'deepseek',
 					'name'          => 'DeepSeek',
+					// phpcs:ignore PluginCheck.CodeAnalysis.AIProvider.DirectIntegration -- Multi-provider agent tool-calling is this plugin's core feature; the WP AI Client SDK explicitly excludes agent/tool orchestration from its scope (php-ai-client REQUIREMENTS.md: "no agents"), and no official connector exists for this provider yet.
 					'endpoint'      => 'https://api.deepseek.com/chat/completions',
 					'default_model' => 'deepseek-v4-flash',
 					'auth_type'     => 'bearer',

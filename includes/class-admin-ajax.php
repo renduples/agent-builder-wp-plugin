@@ -716,6 +716,7 @@ class Admin_Ajax {
 		// Build a minimal test request for each provider.
 		$endpoints = array(
 			'openai'    => array(
+				// phpcs:ignore PluginCheck.CodeAnalysis.AIProvider.DirectIntegration -- BYOK key-validation ping for a provider this plugin supports natively; the WP AI Client SDK excludes agent/tool orchestration from scope (php-ai-client REQUIREMENTS.md: "no agents") and has no official connector for this provider yet.
 				'url'     => 'https://api.openai.com/v1/chat/completions',
 				'headers' => array(
 					'Authorization' => 'Bearer ' . $api_key,
@@ -735,6 +736,7 @@ class Admin_Ajax {
 				),
 			),
 			'anthropic' => array(
+				// phpcs:ignore PluginCheck.CodeAnalysis.AIProvider.DirectIntegration -- BYOK key-validation ping for a provider this plugin supports natively; the WP AI Client SDK excludes agent/tool orchestration from scope (php-ai-client REQUIREMENTS.md: "no agents") and has no official connector for this provider yet.
 				'url'     => 'https://api.anthropic.com/v1/messages',
 				'headers' => array(
 					'x-api-key'         => $api_key,
@@ -755,6 +757,7 @@ class Admin_Ajax {
 				),
 			),
 			'xai'       => array(
+				// phpcs:ignore PluginCheck.CodeAnalysis.AIProvider.DirectIntegration -- BYOK key-validation ping for a provider this plugin supports natively; the WP AI Client SDK excludes agent/tool orchestration from scope (php-ai-client REQUIREMENTS.md: "no agents") and has no official connector for this provider yet.
 				'url'     => 'https://api.x.ai/v1/chat/completions',
 				'headers' => array(
 					'Authorization' => 'Bearer ' . $api_key,
@@ -774,6 +777,7 @@ class Admin_Ajax {
 				),
 			),
 			'google'    => array(
+				// phpcs:ignore PluginCheck.CodeAnalysis.AIProvider.DirectIntegration -- BYOK key-validation ping for a provider this plugin supports natively; the WP AI Client SDK excludes agent/tool orchestration from scope (php-ai-client REQUIREMENTS.md: "no agents") and has no official connector for this provider yet.
 				'url'     => 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=' . rawurlencode( $api_key ),
 				'headers' => array( 'Content-Type' => 'application/json' ),
 				'body'    => wp_json_encode( array( 'contents' => array( array( 'parts' => array( array( 'text' => 'Reply with: ready' ) ) ) ) ) ),
@@ -798,6 +802,7 @@ class Admin_Ajax {
 				),
 			),
 			'deepseek'  => array(
+				// phpcs:ignore PluginCheck.CodeAnalysis.AIProvider.DirectIntegration -- BYOK key-validation ping for a provider this plugin supports natively; the WP AI Client SDK excludes agent/tool orchestration from scope (php-ai-client REQUIREMENTS.md: "no agents") and has no official connector for this provider yet.
 				'url'     => 'https://api.deepseek.com/chat/completions',
 				'headers' => array(
 					'Authorization' => 'Bearer ' . $api_key,
@@ -817,6 +822,7 @@ class Admin_Ajax {
 				),
 			),
 			'mistral'   => array(
+				// phpcs:ignore PluginCheck.CodeAnalysis.AIProvider.DirectIntegration -- BYOK key-validation ping for a provider this plugin supports natively; the WP AI Client SDK excludes agent/tool orchestration from scope (php-ai-client REQUIREMENTS.md: "no agents") and has no official connector for this provider yet.
 				'url'     => 'https://api.mistral.ai/v1/chat/completions',
 				'headers' => array(
 					'Authorization' => 'Bearer ' . $api_key,
@@ -855,6 +861,7 @@ class Admin_Ajax {
 				),
 			),
 			'cohere'    => array(
+				// phpcs:ignore PluginCheck.CodeAnalysis.AIProvider.DirectIntegration -- BYOK key-validation ping for a provider this plugin supports natively; the WP AI Client SDK excludes agent/tool orchestration from scope (php-ai-client REQUIREMENTS.md: "no agents") and has no official connector for this provider yet.
 				'url'     => 'https://api.cohere.com/v2/chat',
 				'headers' => array(
 					'Authorization' => 'Bearer ' . $api_key,

@@ -1759,6 +1759,7 @@ class REST_API {
 	 */
 	private function fetch_anthropic_models( string $api_key ): \WP_REST_Response {
 		$response = wp_remote_get(
+			// phpcs:ignore PluginCheck.CodeAnalysis.AIProvider.DirectIntegration -- Model-catalog discovery for a provider this plugin supports natively; the WP AI Client SDK excludes agent/tool orchestration from scope (php-ai-client REQUIREMENTS.md: "no agents") and has no official connector for this provider yet.
 			'https://api.anthropic.com/v1/models',
 			array(
 				'timeout' => 15,
@@ -1812,6 +1813,7 @@ class REST_API {
 	 */
 	private function fetch_openai_models( string $api_key ): \WP_REST_Response {
 		$response = wp_remote_get(
+			// phpcs:ignore PluginCheck.CodeAnalysis.AIProvider.DirectIntegration -- Model-catalog discovery for a provider this plugin supports natively; the WP AI Client SDK excludes agent/tool orchestration from scope (php-ai-client REQUIREMENTS.md: "no agents") and has no official connector for this provider yet.
 			'https://api.openai.com/v1/models',
 			array(
 				'timeout' => 15,
@@ -1888,6 +1890,7 @@ class REST_API {
 	 */
 	private function fetch_xai_models( string $api_key ): \WP_REST_Response {
 		$response = wp_remote_get(
+			// phpcs:ignore PluginCheck.CodeAnalysis.AIProvider.DirectIntegration -- Model-catalog discovery for a provider this plugin supports natively; the WP AI Client SDK excludes agent/tool orchestration from scope (php-ai-client REQUIREMENTS.md: "no agents") and has no official connector for this provider yet.
 			'https://api.x.ai/v1/models',
 			array(
 				'timeout' => 15,
@@ -1942,6 +1945,7 @@ class REST_API {
 	 */
 	private function fetch_mistral_models( string $api_key ): \WP_REST_Response {
 		$response = wp_remote_get(
+			// phpcs:ignore PluginCheck.CodeAnalysis.AIProvider.DirectIntegration -- Model-catalog discovery for a provider this plugin supports natively; the WP AI Client SDK excludes agent/tool orchestration from scope (php-ai-client REQUIREMENTS.md: "no agents") and has no official connector for this provider yet.
 			'https://api.mistral.ai/v1/models',
 			array(
 				'timeout' => 15,
@@ -1996,6 +2000,7 @@ class REST_API {
 	 */
 	private function fetch_google_models( string $api_key ): \WP_REST_Response {
 		$response = wp_remote_get(
+			// phpcs:ignore PluginCheck.CodeAnalysis.AIProvider.DirectIntegration -- Model-catalog discovery for a provider this plugin supports natively; the WP AI Client SDK excludes agent/tool orchestration from scope (php-ai-client REQUIREMENTS.md: "no agents") and has no official connector for this provider yet.
 			'https://generativelanguage.googleapis.com/v1beta/models?key=' . rawurlencode( $api_key ),
 			array( 'timeout' => 15 )
 		);
@@ -2151,6 +2156,7 @@ class REST_API {
 	 */
 	private function fetch_cohere_models( string $api_key ): \WP_REST_Response {
 		$response = wp_remote_get(
+			// phpcs:ignore PluginCheck.CodeAnalysis.AIProvider.DirectIntegration -- Model-catalog discovery for a provider this plugin supports natively; the WP AI Client SDK excludes agent/tool orchestration from scope (php-ai-client REQUIREMENTS.md: "no agents") and has no official connector for this provider yet.
 			'https://api.cohere.com/v1/models',
 			array(
 				'timeout' => 15,
