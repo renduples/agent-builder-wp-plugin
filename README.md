@@ -57,7 +57,28 @@ Adding a new tool means creating a directory under `library/tools/`, declaring i
 - `npm run build` — production build into `build/`
 - `npm run lint:js` / `npm run format:js` — `@wordpress/scripts` lint/format for `src/`
 
-There's no PHP test suite or lint config wired up yet — `composer.json` pulls in PHPCS/WPCS and PHPUnit as dev dependencies, but nothing runs them today. If you're picking that up, start there.
+### PHP tests
+
+A real PHPUnit suite runs against a live WordPress core test install (`WP_UnitTestCase`), not a mocked sandbox:
+
+```
+composer install
+bin/install-wp-tests.sh <db-name> <db-user> <db-pass> [db-host] [wp-version]
+composer test
+```
+
+`bin/install-wp-tests.sh` needs a local MySQL to provision a test database against, and `svn` to pull the WordPress core test library — it's the standard WP-CLI plugin-scaffold installer, so any WordPress plugin dev environment already has both. It downloads WordPress core + the `wordpress-develop` test library into `$WP_CORE_DIR`/`$WP_TESTS_DIR` (default: `/tmp/wordpress`, `/tmp/wordpress-tests-lib`) and creates the test database — safe to re-run.
+
+To run a single test file or method:
+
+```
+./vendor/bin/phpunit tests/unit/test-risk-level.php
+./vendor/bin/phpunit --filter test_dangerous_tools_are_never_silently_allowed
+```
+
+Coverage priorities live under `tests/unit/`: `Risk_Level` (enforcement matrix + `BASELINE_RISKS` floor), `Audit_Log_Integrity` (hash-chain tamper detection), `Approval_Queue` (create/approve/reject/expire), `Tool_Executor` (the full risk-gate flow — allow/confirm/queue/block, plus that a non-readonly tool triggers a table backup before it runs), and `Abilities_Manifest` (effective-risk resolution). `tests/unit/test-tool-risk-floor-coverage.php` is a standing regression test: it fails the moment a new non-readonly tool ships under `library/tools/` without either a `get_risk_level()` override or a `Risk_Level::BASELINE_RISKS` entry.
+
+No test makes a real outbound HTTP call — `tests/helpers/MockWPFunctions.php` intercepts `wp_remote_*()` via the `pre_http_request` filter for any test that needs one.
 
 ## Screenshots
 

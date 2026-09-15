@@ -97,21 +97,33 @@ class Audit_Log_Integrity {
 	}
 
 	/**
-	 * The most recent row's integrity_hash, i.e. the tip of the chain.
+	 * The most recent row's integrity_hash *before* a given row id, i.e. the
+	 * tip of the chain that row should link onto.
 	 *
-	 * A NULL result means either the table is empty, or the most recent row
-	 * predates this feature (no integrity_hash was ever computed for it) —
-	 * either way, the next row correctly starts a new chain from empty.
+	 * A NULL result means either no earlier row exists, or the most recent
+	 * earlier row predates this feature (no integrity_hash was ever computed
+	 * for it) — either way, the next row correctly starts a new chain from
+	 * empty.
 	 *
+	 * Excludes $before_id itself: record() calls this *after* the row it is
+	 * hashing has already been inserted (with integrity_hash still NULL), so
+	 * without this exclusion "ORDER BY id DESC LIMIT 1" would pick up that
+	 * same just-inserted row — the highest id in the table at that moment —
+	 * and always read back a NULL hash. Every row would then chain onto
+	 * nothing, and verify_chain() (which walks strictly by id, unaware of
+	 * insert order) would report a break as soon as two real rows existed.
+	 *
+	 * @param int $before_id Only consider rows with id strictly less than this.
 	 * @return string|null
 	 */
-	private static function get_chain_tip(): ?string {
+	private static function get_chain_tip( int $before_id ): ?string {
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Single-row lookup, no caching benefit.
 		$hash = $wpdb->get_var(
 			$wpdb->prepare(
-				'SELECT integrity_hash FROM %i ORDER BY id DESC LIMIT 1',
-				$wpdb->prefix . 'agentic_audit_log'
+				'SELECT integrity_hash FROM %i WHERE id < %d ORDER BY id DESC LIMIT 1',
+				$wpdb->prefix . 'agentic_audit_log',
+				$before_id
 			)
 		);
 		return ( null === $hash || '' === $hash ) ? null : (string) $hash;
@@ -134,7 +146,7 @@ class Audit_Log_Integrity {
 	public static function record( int $id, array $data ): void {
 		global $wpdb;
 
-		$previous_hash = self::get_chain_tip();
+		$previous_hash = self::get_chain_tip( $id );
 		$hash          = self::compute_hash( $id, $data, $previous_hash );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Single-row update immediately after insert.
@@ -180,7 +192,14 @@ class Audit_Log_Integrity {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Read-only integrity walk, not a hot path. $query is prepared right here via %i/%d placeholders; the ignore two lines up (on the $query assignment) doesn't reach this separate statement.
 		$rows = $wpdb->get_results( $wpdb->prepare( $query, $params ), ARRAY_A );
 
-		$previous_hash  = null;
+		// A scoped walk (id >= $from_id) must seed $previous_hash from the row
+		// immediately before $from_id, not null — otherwise the first row in
+		// range would be compared against "no previous row" even though it was
+		// originally chained onto a real predecessor, and every scoped call
+		// would report a false break. $from_id is currently unused by any
+		// caller (verify_chain() is always called with no arguments), but the
+		// parameter is public API, so it must not lie about what it verifies.
+		$previous_hash  = ( null !== $from_id ) ? self::get_chain_tip( $from_id ) : null;
 		$checked        = 0;
 		$chain_start_id = null;
 
