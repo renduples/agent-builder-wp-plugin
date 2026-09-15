@@ -34,29 +34,39 @@ More on [Community Agents](https://agentic-plugin.com/community-agents/).
 
 1. Clone into `wp-content/plugins/agent-builder` (or symlink).
 2. Optional document tools: `composer install --no-dev`
-3. Optional rebuild admin React: `npm ci && npm run build`  
+3. Optional rebuild admin React: `npm ci && npm run build`
    Pre-built assets already ship in `build/`.
 4. Activate **Agent Builder** in WordPress.
 
-## Baseline admin screenshots
+## Project structure
 
-Full-page (1440px) captures of every Agent Builder wp-admin screen, written to `screenshots/baseline/`:
+| Path | What's there |
+|------|--------------|
+| `includes/` | Core PHP: agent registry, tool executor, risk levels, audit log, REST API, admin menu |
+| `library/tools/` | Every tool an agent can call — one self-contained class per directory (`get_description()`, `get_parameters()`, `execute()`) |
+| `library/agents/` | The 11 bundled agents — see [`library/README.md`](library/README.md) for the four-file format and how to build your own |
+| `admin/` | Classic PHP admin screens (non-React) |
+| `src/` | React admin surfaces (Dashboard, Safety Center, Settings, etc.), built via `@wordpress/scripts` into `build/` |
+| `templates/` | Frontend chat widget and modal markup |
 
-```
-WP_ADMIN_USER=... WP_ADMIN_PASS=... npm run screenshot:baseline
-```
+Adding a new tool means creating a directory under `library/tools/`, declaring its risk level (`includes/class-risk-level.php` documents the tiers and the reasoning behind each floor), and registering it in the relevant agent's `abilities.json`.
 
-Optional `SCREEN=slug,slug` captures a subset. Safety Center is stored as `safety-center.png` (Basic) and `safety-center-advanced.png`. The Approvals risk-gate preferences (no longer its own WP.org listing caption — see `bin/screenshot-wporg.js`'s shot #5 comment) are `approvals-risk-gate.png`.
+## Development
 
-Uses system Google Chrome when Playwright’s bundled Chromium is unavailable (override with `PLAYWRIGHT_CHROME_PATH`). Safe to re-run; existing PNGs are overwritten.
+- `npm run start` — watch mode for the React admin (`src/`)
+- `npm run build` — production build into `build/`
+- `npm run lint:js` / `npm run format:js` — `@wordpress/scripts` lint/format for `src/`
 
-WordPress.org listing shots (`.wordpress-org/screenshot-N.png`, readme.txt order) are recaptured the same way:
+There's no PHP test suite or lint config wired up yet — `composer.json` pulls in PHPCS/WPCS and PHPUnit as dev dependencies, but nothing runs them today. If you're picking that up, start there.
 
-```
-WP_ADMIN_USER=... WP_ADMIN_PASS=... npm run screenshot:wporg
-```
+## Screenshots
 
-Every shot is a plain 1440×900 viewport capture — no full-page captures, no per-shot crops — so all 11 images share the same dimensions for the WP.org gallery. Optional `SCREEN=2,9` recaptures a subset.
+Two Playwright-driven capture scripts exist for contributors doing visual work:
+
+- `WP_ADMIN_USER=... WP_ADMIN_PASS=... npm run screenshot:baseline` — full-page captures of every admin screen, for before/after comparison during UI work. Not committed to the repo (regenerate on demand).
+- `WP_ADMIN_USER=... WP_ADMIN_PASS=... npm run screenshot:wporg` — the 11 curated 1440×900 shots that ship in `.wordpress-org/` for the actual WordPress.org listing, in `readme.txt`'s caption order.
+
+Both accept `SCREEN=slug,slug` to capture a subset. See each script's own header comment for details.
 
 ## Releases
 
