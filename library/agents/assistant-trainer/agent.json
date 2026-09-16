@@ -16,7 +16,6 @@
         "report_issue",
         "search_capabilities",
         "analyze_requirements",
-        "validate_agent_code",
         "list_library_agents",
         "read_agent_source",
         "get_agent_template",

@@ -85,7 +85,7 @@ class Configure_Approval_Gate extends \Agentic\Tool_Base {
 				}
 			}
 
-			$written = file_put_contents( // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Editing this agent's own bundled manifest file; WP_Filesystem is unavailable in this runtime tool-execution context.
+			$written = \Agentic\File_Manager::put_contents(
 				$path,
 				wp_json_encode( $manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES )
 			);

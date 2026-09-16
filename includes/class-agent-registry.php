@@ -119,12 +119,13 @@ class Agentic_Agent_Registry {
 	 * Ensure required directories exist
 	 */
 	private function ensure_directories(): void {
-		if ( ! file_exists( $this->agents_dir ) ) {
-			wp_mkdir_p( $this->agents_dir );
-
-			// Create index.php for security.
-			\Agentic\File_Manager::put_contents( $this->agents_dir . '/index.php', "<?php\n/**\n * Silence is golden.\n *\n * @package Agent_Builder\n */\n" );
-		}
+		// Not guarded by file_exists( $this->agents_dir ): ensure_protected_dir()
+		// already no-ops cheaply once the directory and its protection files
+		// exist, and calling it unconditionally means a site upgrading from
+		// before these protections existed gets them added on its very next
+		// request, not only on a fresh install where the directory doesn't
+		// exist yet at all.
+		\Agentic\File_Manager::ensure_protected_dir( $this->agents_dir );
 
 		if ( ! file_exists( $this->library_dir ) ) {
 			wp_mkdir_p( $this->library_dir );

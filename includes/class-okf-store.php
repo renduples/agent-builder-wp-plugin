@@ -62,6 +62,11 @@ class Okf_Store {
 	 * @return true|\WP_Error
 	 */
 	public static function ensure_bundle( string $agent_slug = '' ) {
+		// Protects the whole AGENTIC_KNOWLEDGE_DIR tree (Apache/IIS config
+		// applies to subdirectories automatically), not just this one bundle
+		// — idempotent, so calling it again on every request is cheap.
+		File_Manager::ensure_protected_dir( AGENTIC_KNOWLEDGE_DIR );
+
 		$dir = self::bundle_dir( $agent_slug );
 		if ( ! wp_mkdir_p( $dir ) ) {
 			return new \WP_Error( 'okf_mkdir', __( 'Could not create knowledge wiki directory.', 'agent-builder' ) );

@@ -1205,6 +1205,14 @@ class REST_API {
 				);
 			}
 
+			if ( File_Manager::has_denylisted_extension( $target_subpath ) ) {
+				return array(
+					'ran'     => false,
+					'success' => false,
+					'message' => __( 'Could not write file — this file type is not allowed.', 'agent-builder' ),
+				);
+			}
+
 			$full_path = realpath( $repo_path . '/' . $target_subpath );
 
 			if ( ! $full_path || ! str_starts_with( $full_path, trailingslashit( realpath( $repo_path ) ) ) ) {

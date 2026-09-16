@@ -418,7 +418,7 @@ if ( isset( $_POST['agentic_save_settings'] ) && check_admin_referer( 'agentic_s
 			$agentic_p_kn_file   = $agentic_p_kn_dir . $agentic_p_slug . '-knowledge.txt';
 			$agentic_p_kn_rel    = $agentic_p_slug . '-knowledge.txt';
 
-			\Agentic\File_Manager::mkdir( $agentic_p_kn_dir );
+			\Agentic\File_Manager::ensure_protected_dir( $agentic_p_kn_dir );
 
 			// Load the agent's abilities.json manifest.
 			$agentic_p_manifest_path = \Agentic\Abilities_Manifest::resolve_path( $agentic_p_slug );

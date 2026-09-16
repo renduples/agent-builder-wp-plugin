@@ -16,9 +16,6 @@
     "analyze_requirements": {
       "risk": "none"
     },
-    "validate_agent_code": {
-      "risk": "none"
-    },
     "list_library_agents": {
       "risk": "none"
     },

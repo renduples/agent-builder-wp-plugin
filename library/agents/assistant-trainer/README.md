@@ -15,9 +15,8 @@
 | Tool | Description |
 |------|-------------|
 | `analyze_requirements` | Analyze a natural language description and return a structured agent design specification |
-| `generate_agent` | Generate complete agent PHP code from a specification |
-| `validate_agent_code` | Validate agent PHP code for syntax and compliance |
-| `create_agent_files` | Create agent files in the library directory |
+| `generate_agent` | Generate a declarative agent spec (identity, tools, system prompt) from an analyzed specification — JSON in memory, no disk write |
+| `create_agent_files` | Write the agent spec to disk as agent.json, abilities.json, and templates/system-prompt.txt under wp-content/agentic-agents/ |
 | `list_library_agents` | List all agents in the library for reference |
 | `read_agent_source` | Read the source code of an existing agent for reference |
 | `get_agent_template` | Get a blank agent template with all required components |
@@ -40,7 +39,7 @@ Analyze a natural language description and return a structured agent design spec
 
 #### `generate_agent`
 
-Generate complete agent PHP code from a specification
+Generate a declarative agent spec (identity, tools, system prompt) from an analyzed specification — returned as JSON in memory, no disk write
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -51,26 +50,25 @@ Generate complete agent PHP code from a specification
 | `icon` | string | No | Emoji icon for the agent |
 | `capabilities` | array | No | Required WordPress capabilities |
 | `tools` | array | Yes | Array of tool definitions |
-| `system_prompt_focus` | string | No | Key areas of expertise for the system prompt |
 | `suggested_prompts` | array | No | Example prompts for users (4 max) |
-
-#### `validate_agent_code`
-
-Validate agent PHP code for syntax and compliance
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `code` | string | Yes | PHP code to validate |
 
 #### `create_agent_files`
 
-Create agent files in the library directory
+Write the agent spec to disk as a declarative manifest — agent.json, abilities.json (with integrity signature), and templates/system-prompt.txt — under wp-content/agentic-agents/. Never generates or writes PHP.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `slug` | string | Yes | Agent slug (directory name) |
-| `agent_code` | string | Yes | Complete agent.php content |
-| `readme_content` | string | No | README.md content (optional) |
+| `name` | string | Yes | Human-readable agent name |
+| `description` | string | Yes | Short description of what the agent does |
+| `category` | string | Yes | Agent category |
+| `icon` | string | No | Emoji or dashicons-* icon |
+| `capabilities` | array | No | Required WordPress capabilities |
+| `system_prompt` | string | No | Text to write to templates/system-prompt.txt |
+| `tools` | array | No | Tool definitions used to generate abilities.json: `{name, risk?, reason?}` |
+| `knowledge_files` | array | No | Knowledge filenames from wp-content/agentic-knowledge/ to inject into the system prompt |
+| `suggested_prompts` | array | No | Example prompts for users |
+| `readme_content` | string | No | Content for README.md |
 | `overwrite` | boolean | No | Overwrite if exists (default: false) |
 
 #### `list_library_agents`

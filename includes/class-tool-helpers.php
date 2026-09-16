@@ -603,7 +603,16 @@ class Tool_Helpers {
 	}
 
 	/**
-	 * Check if a relative path stays inside plugins/, themes/, or uploads/.
+	 * Check if a relative path stays inside uploads/.
+	 *
+	 * Previously also allowed plugins/ and themes/, but nothing in this
+	 * repo ever creates a code_change proposal targeting those, and a
+	 * write into another plugin's or the active theme's directory is
+	 * exactly the "generates code intended to run on the site" pattern
+	 * the WordPress.org Plugin Developer FAQ prohibits — narrowed to the
+	 * one scope (uploads) File_Manager::is_allowed_path() actually permits
+	 * a code_change write to reach anyway, rather than leaving a broader
+	 * allowlist here that depends on File_Manager's roots never changing.
 	 *
 	 * @param string $path Relative path.
 	 * @return bool
@@ -611,14 +620,7 @@ class Tool_Helpers {
 	public static function is_allowed_subpath( string $path ): bool {
 		$clean = ltrim( str_replace( '..', '', $path ), '/\\' );
 
-		return (
-			'plugins' === $clean ||
-			'themes' === $clean ||
-			'uploads' === $clean ||
-			str_starts_with( $clean, 'plugins/' ) ||
-			str_starts_with( $clean, 'themes/' ) ||
-			str_starts_with( $clean, 'uploads/' )
-		);
+		return 'uploads' === $clean || str_starts_with( $clean, 'uploads/' );
 	}
 
 	/**
@@ -677,7 +679,7 @@ class Tool_Helpers {
 
 		$backup_dir = AGENTIC_BACKUPS_DIR;
 
-		File_Manager::mkdir( $backup_dir );
+		File_Manager::ensure_protected_dir( $backup_dir );
 
 		$relative    = str_replace( array( ABSPATH, WP_CONTENT_DIR . '/' ), '', $full_path );
 		$safe_name   = str_replace( '/', '__', $relative );
@@ -1020,6 +1022,10 @@ class Tool_Helpers {
 		if ( ! $exists ) {
 			return null;
 		}
+
+		// Protects the shared AGENTIC_BACKUPS_DIR root even if this runs
+		// before backup_file() ever has — idempotent, cheap to call again.
+		File_Manager::ensure_protected_dir( AGENTIC_BACKUPS_DIR );
 
 		$backup_dir = AGENTIC_BACKUPS_DIR . '/' . self::DB_BACKUP_SUBDIR;
 		wp_mkdir_p( $backup_dir );

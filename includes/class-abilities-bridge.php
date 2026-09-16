@@ -231,7 +231,6 @@ class Abilities_Bridge {
 					'run_wp_cli',
 					'create_agent_files',
 					'add_custom_js',
-					'validate_agent_code',
 				),
 				true
 			) || in_array( $risk, array( Risk_Level::HIGH, Risk_Level::EXTREME ), true )

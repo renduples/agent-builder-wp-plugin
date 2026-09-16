@@ -251,7 +251,12 @@ class Risk_Level {
 		// queues for a human either way — while restoring the local,
 		// intentional chat flow this tool exists for.
 		'create_agent_files'                   => self::HIGH,
-		'validate_agent_code'                  => self::HIGH,
+		// validate_agent_code was removed outright: it never wrote or
+		// executed anything (pure token_get_all() syntax lint on a string),
+		// but its description ("validate agent PHP code... must extend
+		// Agent_Base") was exactly the stale, misleading signal the
+		// WordPress.org FAQ note reacted to, and it wasn't used by
+		// Assistant Trainer's actual documented workflow.
 
 		// Mutates the deployed codebase (Pro-only tools when free is stripped).
 		'git_pull'                             => self::HIGH,
