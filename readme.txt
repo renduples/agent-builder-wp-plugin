@@ -9,7 +9,7 @@ Donate link: https://agentic-plugin.com/donate/
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Create, train, and orchestrate AI agents with built-in safety using simple job descriptions. 11 free agents, approval gates, risk audits, tamper-proof logs with both MCP and WebMCP.
+Create, train, and orchestrate AI agents with built-in safety using simple job descriptions. Approval gates, tamper-proof logs, MCP and WebMCP.
 
 == Description ==
 
