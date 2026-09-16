@@ -43,6 +43,14 @@ class Wc_Get_Order extends \Agentic\Tool_Base {
 	}
 
 	public function execute( array $arguments ): array {
+		// Discloses one order's billing/shipping address, line items, and
+		// notes for any order ID, not just the caller's own — see
+		// wc_get_customer's identical guard for why the tool-generic
+		// edit_posts floor is not remotely enough here.
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+			return array( 'error' => 'You do not have permission to view order data.' );
+		}
+
 		if ( ! class_exists( 'WooCommerce' ) ) {
 			return array( 'error' => 'WooCommerce is not active.' );
 		}

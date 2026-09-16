@@ -72,6 +72,15 @@ class Get_Failed_Logins extends \Agentic\Tool_Base {
 	 * @return array
 	 */
 	public function execute( array $arguments ): array {
+		// Discloses IP addresses tied to login attempts — the tool-generic
+		// edit_posts floor a caller might otherwise only need (e.g. a
+		// Contributor over WebMCP) is nowhere near enough; see
+		// get_security_overview's identical guard, which already calls this
+		// tool internally only after passing the same check.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return array( 'error' => 'You do not have permission to view the security log.' );
+		}
+
 		global $wpdb;
 
 		$hours = max( 1, (int) ( $arguments['hours'] ?? 24 ) );

@@ -54,6 +54,15 @@ class Wc_Get_Customer extends \Agentic\Tool_Base {
 	}
 
 	public function execute( array $arguments ): array {
+		// Discloses a customer's full profile, billing/shipping address, and
+		// order history — the tool-generic edit_posts floor a caller might
+		// otherwise only need (e.g. a Contributor over WebMCP) is nowhere
+		// near enough; this needs WooCommerce's own store-management
+		// capability, the same bar wc-admin's own customer screens require.
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+			return array( 'error' => 'You do not have permission to view customer data.' );
+		}
+
 		if ( ! class_exists( 'WooCommerce' ) ) {
 			return array( 'error' => 'WooCommerce is not active.' );
 		}
