@@ -546,7 +546,6 @@ class Agentic_Relay_Connect {
 	public static function is_tool_mcp_safe( string $tool_name, string $agent_slug = '', ?Tool_Base $tool = null ): bool {
 		$always_blocked = array(
 			'run_wp_cli',
-			'install_plugin_from_url',
 			'create_agent_files',
 			'add_custom_js',
 			'validate_agent_code',

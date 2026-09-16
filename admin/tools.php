@@ -558,7 +558,6 @@ data-ability="<?php echo esc_attr( $agentic_ab_orig ); ?>"
 	var HIGH_REASONS = <?php
 	echo wp_json_encode(
 		array(
-			'install_plugin_from_url' => __( 'installs code on your site', 'agent-builder' ),
 			'force_password_reset'    => __( 'can affect account access', 'agent-builder' ),
 			'wc_create_refund'        => __( 'moves money', 'agent-builder' ),
 			'delete_form'             => __( 'can permanently remove data', 'agent-builder' ),

@@ -24,7 +24,7 @@ class Test_Approval_Queue extends TestCase {
 	public function test_add_creates_a_pending_item(): void {
 		$queue = new Approval_Queue();
 
-		$id = $queue->add( 'test-agent', 'install_plugin_from_url', array( 'url' => 'https://example.com/plugin.zip' ), 'Needs a plugin', 7, 'high' );
+		$id = $queue->add( 'test-agent', 'create_agent_files', array( 'slug' => 'new-agent' ), 'Needs a new agent', 7, 'high' );
 
 		$this->assertIsInt( $id );
 		$this->assertGreaterThan( 0, $id );
@@ -32,10 +32,10 @@ class Test_Approval_Queue extends TestCase {
 
 		$pending = $queue->get_pending();
 		$this->assertCount( 1, $pending );
-		$this->assertSame( 'install_plugin_from_url', $pending[0]['action'] );
+		$this->assertSame( 'create_agent_files', $pending[0]['action'] );
 		$this->assertSame( 'pending', $pending[0]['status'] );
 		// params round-trips through wp_json_encode/json_decode.
-		$this->assertSame( 'https://example.com/plugin.zip', $pending[0]['params']['url'] );
+		$this->assertSame( 'new-agent', $pending[0]['params']['slug'] );
 	}
 
 	/**

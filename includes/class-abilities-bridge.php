@@ -229,7 +229,6 @@ class Abilities_Bridge {
 				$tool_name,
 				array(
 					'run_wp_cli',
-					'install_plugin_from_url',
 					'create_agent_files',
 					'add_custom_js',
 					'validate_agent_code',

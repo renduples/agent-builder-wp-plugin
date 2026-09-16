@@ -232,10 +232,13 @@ class Risk_Level {
 	 * @var array<string, string>
 	 */
 	private const BASELINE_RISKS = array(
-		// Executes or installs code. WP MCP / Abilities guidance: shell and
-		// remote-install style tools are not "normal" content abilities — keep
-		// floors high/extreme so free agents + MCP cannot silently run them.
-		'install_plugin_from_url'              => self::HIGH,
+		// Executes code. WP MCP / Abilities guidance: shell-style tools are
+		// not "normal" content abilities — keep floors high/extreme so free
+		// agents + MCP cannot silently run them. (install_plugin_from_url
+		// was removed outright, not floored — see its own deletion commit:
+		// the WordPress.org Plugin Developer FAQ and Guideline 8 both treat
+		// a plugin that can install other plugins as remote code
+		// installation regardless of risk-gating or who approves it.)
 		'add_custom_js'                        => self::HIGH,
 		'run_wp_cli'                           => self::EXTREME,
 		// EXTREME hides a tool from the LLM entirely and always blocks it — no

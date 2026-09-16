@@ -162,7 +162,6 @@ class Test_Risk_Level extends TestCase {
 	 */
 	public static function high_risk_tools(): array {
 		return array(
-			'installs a plugin from a URL'  => array( 'install_plugin_from_url' ),
 			'injects front-end JS'          => array( 'add_custom_js' ),
 			'resets user credentials'       => array( 'force_password_reset' ),
 			'issues a refund'               => array( 'wc_create_refund' ),
@@ -260,11 +259,11 @@ class Test_Risk_Level extends TestCase {
 	 */
 	public function test_get_baseline_risks_matches_get_tool_default(): void {
 		$baseline = Risk_Level::get_baseline_risks();
-		$this->assertArrayHasKey( 'install_plugin_from_url', $baseline );
-		$this->assertSame( Risk_Level::HIGH, $baseline['install_plugin_from_url'] );
+		$this->assertArrayHasKey( 'force_password_reset', $baseline );
+		$this->assertSame( Risk_Level::HIGH, $baseline['force_password_reset'] );
 		$this->assertSame(
-			Risk_Level::get_tool_default( 'install_plugin_from_url' ),
-			Risk_Level::max( Risk_Level::NONE, $baseline['install_plugin_from_url'] )
+			Risk_Level::get_tool_default( 'force_password_reset' ),
+			Risk_Level::max( Risk_Level::NONE, $baseline['force_password_reset'] )
 		);
 	}
 }

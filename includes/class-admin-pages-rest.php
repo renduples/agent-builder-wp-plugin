@@ -2561,7 +2561,7 @@ class Admin_Pages_REST {
 			'none'    => array(),
 			'low'     => array( 'request_human_help', 'wc_add_to_cart', 'manage_agent_shortcode' ),
 			'medium'  => array( 'send_email', 'add_custom_css', 'cleanup_auto_drafts' ),
-			'high'    => array( 'install_plugin_from_url', 'force_password_reset', 'wc_create_refund' ),
+			'high'    => array( 'add_custom_js', 'force_password_reset', 'wc_create_refund' ),
 			'extreme' => array( 'run_wp_cli' ),
 		);
 

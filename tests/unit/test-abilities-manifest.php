@@ -52,8 +52,8 @@ class Test_Abilities_Manifest extends TestCase {
 	 */
 	public function test_effective_risk_falls_back_to_tool_default_with_no_manifest(): void {
 		$this->assertSame(
-			Risk_Level::get_tool_default( 'install_plugin_from_url' ),
-			Abilities_Manifest::get_effective_risk( 'no-such-agent', 'install_plugin_from_url' )
+			Risk_Level::get_tool_default( 'force_password_reset' ),
+			Abilities_Manifest::get_effective_risk( 'no-such-agent', 'force_password_reset' )
 		);
 	}
 
@@ -165,12 +165,12 @@ class Test_Abilities_Manifest extends TestCase {
 	 * tool_default calculation alongside the registry/baseline value.
 	 */
 	public function test_tool_instance_risk_level_is_maxed_with_registry_default(): void {
-		$tool = \Agentic\Tool_Loader::get_instance()->get( 'install_plugin_from_url' );
-		$this->assertNotNull( $tool, 'install_plugin_from_url tool should load' );
+		$tool = \Agentic\Tool_Loader::get_instance()->get( 'create_agent_files' );
+		$this->assertNotNull( $tool, 'create_agent_files tool should load' );
 
 		$this->assertSame(
 			Risk_Level::HIGH,
-			Abilities_Manifest::get_effective_risk( 'no-such-agent', 'install_plugin_from_url', $tool )
+			Abilities_Manifest::get_effective_risk( 'no-such-agent', 'create_agent_files', $tool )
 		);
 	}
 

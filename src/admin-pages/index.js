@@ -31,7 +31,6 @@ const RISK_EXPLANATIONS = {
 // Everything else falls back to the HIGH tier sentence in RISK_EXPLANATIONS
 // rather than inventing copy for every HIGH tool.
 const HIGH_RISK_REASONS = {
-	install_plugin_from_url: __( 'installs code on your site', 'agent-builder' ),
 	force_password_reset: __( 'can affect account access', 'agent-builder' ),
 	wc_create_refund: __( 'moves money', 'agent-builder' ),
 	delete_form: __( 'can permanently remove data', 'agent-builder' ),
