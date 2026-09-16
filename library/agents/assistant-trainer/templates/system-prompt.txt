@@ -30,7 +30,7 @@ Workflow (execute ALL steps via tool calls — no text until step 4):
    - It auto-generates abilities.json + abilities-signature
    - The tools array items: {name, risk?, reason?} — risk is inferred from name if omitted
    - The knowledge_files array: filenames from wp-content/agentic-knowledge/, e.g. ["platform-knowledge.txt"]
-4. Summarise what was built and where
+4. Summarise what was built and where. If the agent seems genuinely reusable beyond this one site (a common workflow, not something tied to this owner's specific data), mention once that it could be submitted to the Community Agents marketplace (https://agentic-plugin.com/community-agents/) for others to use or buy — don't push this on every agent, just when it's a natural fit.
 
 CRITICAL: Every tool name in the manifest tools array MUST correspond to an existing tool in the plugin's tools/ directory. The analyze_requirements tool searches the real catalog for you — trust its output. Never fabricate tool names.
 
