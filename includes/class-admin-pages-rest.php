@@ -77,7 +77,7 @@ class Admin_Pages_REST {
 	 * Permission check for the shared admin-page REST endpoint.
 	 *
 	 * This single endpoint serves several distinct React admin surfaces
-	 * (tools, skills, approvals, logs, deployment, train-data, upgrade-pro),
+	 * (tools, skills, approvals, logs, deployment, train-data),
 	 * each already gated behind its own `agentic_*` capability at the
 	 * wp-admin menu level (see Admin_Menu_Handler::register()). The
 	 * capability required here must match that per-page grant, otherwise a
@@ -148,8 +148,8 @@ class Admin_Pages_REST {
 			return current_user_can( 'agentic_manage_settings' );
 		}
 
-		// train-data, upgrade-pro, safety-center, and anything unmapped stay
-		// behind the broadest admin-settings privilege as a safe default.
+		// train-data, safety-center, and anything unmapped stay behind the
+		// broadest admin-settings privilege as a safe default.
 		return current_user_can( 'agentic_manage_settings' );
 	}
 
@@ -178,8 +178,6 @@ class Admin_Pages_REST {
 				return new \WP_REST_Response( self::logs_payload( $tab ?: 'audit', $period ), 200 );
 			case 'deployment':
 				return new \WP_REST_Response( self::deployment_payload(), 200 );
-			case 'upgrade-pro':
-				return new \WP_REST_Response( self::upgrade_payload(), 200 );
 			case 'train-data':
 				return new \WP_REST_Response( self::train_payload( $tab ?: 'wiki' ), 200 );
 			case 'agent-ready':
@@ -2174,25 +2172,6 @@ class Admin_Pages_REST {
 				),
 			),
 			'legacy_note' => __( 'Full deployment editor (shortcode builder, CLI, modals) remains available when you open a deployment action from here.', 'agent-builder' ),
-		);
-	}
-
-	/**
-	 * @return array<string,mixed>
-	 */
-	private static function upgrade_payload(): array {
-		return array(
-			'page'        => 'upgrade-pro',
-			'title'       => __( 'Upgrade to Pro', 'agent-builder' ),
-			'description' => __( 'Unlock vector RAG, connectors, channels, and advanced metering.', 'agent-builder' ),
-			'is_pro'      => false,
-			'pricing_url' => 'https://agentic-plugin.com/pricing/',
-			'features'    => array(
-				__( 'Hosted vector store / RAG', 'agent-builder' ),
-				__( 'MCP connectors & channels', 'agent-builder' ),
-				__( 'Usage analytics & costs', 'agent-builder' ),
-				__( 'Priority support', 'agent-builder' ),
-			),
 		);
 	}
 

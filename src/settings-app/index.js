@@ -63,7 +63,7 @@ function saveTab( tab, data ) {
 }
 
 /**
- * Standard admin footer: policy blurb + Support / Documentation / promo + legal.
+ * Standard admin footer: policy blurb + Support / Documentation + legal.
  * Docs URL follows the active tab via agenticSettingsBoot.footerByTab.
  */
 function SettingsPageFooter( { tab } ) {
@@ -73,15 +73,6 @@ function SettingsPageFooter( { tab } ) {
 	const f = ( tab && byTab[ tab ] ) || boot.footer || {};
 	const docUrl = f.doc_url || 'https://agentic-plugin.com/settings/';
 	const supportUrl = f.support_url || 'https://agentic-plugin.com/support/';
-	// Default off-site pricing — never a missing admin.php?page=agentic-upgrade-pro.
-	const promoUrl =
-		f.promo_url || 'https://agentic-plugin.com/pricing/';
-	const promoLabel =
-		f.promo_label || __( 'Upgrade to Pro', 'agent-builder' );
-	const promoExternal =
-		typeof f.promo_external === 'boolean'
-			? f.promo_external
-			: /^https?:\/\//i.test( promoUrl );
 	const policy =
 		f.policy ||
 		__(
@@ -104,20 +95,6 @@ function SettingsPageFooter( { tab } ) {
 				{ ' | ' }
 				<a href={ docUrl } target="_blank" rel="noopener noreferrer">
 					{ __( 'Documentation', 'agent-builder' ) }
-				</a>
-				{ ' | ' }
-				<a
-					href={ promoUrl }
-					target={
-						promoExternal || f.is_pro ? '_blank' : undefined
-					}
-					rel={
-						promoExternal || f.is_pro
-							? 'noopener noreferrer'
-							: undefined
-					}
-				>
-					{ promoLabel }
 				</a>
 			</span>
 			<span className="agentic-page-footer-right">

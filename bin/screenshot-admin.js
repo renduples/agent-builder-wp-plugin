@@ -52,7 +52,6 @@ const SCREENS = [
 	{ slug: 'settings-providers', page: 'agentic-settings', query: 'tab=providers' },
 	{ slug: 'setup', page: 'agentic-setup' },
 	{ slug: 'signup', page: 'agentic-signup' },
-	{ slug: 'usage-costs', page: 'agentic-costs' },
 ];
 
 const REACT_ROOTS = [

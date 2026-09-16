@@ -397,30 +397,15 @@ if ( $agentic_knowledge_advanced ) {
 			}
 			?>
 		<?php else : ?>
-			<div class="agentic-kn-pro-upgrade">
-				<div class="agentic-kn-pro-card">
-					<p class="agentic-kn-eyebrow agentic-kn-eyebrow-pro"><?php esc_html_e( 'Agent Builder Pro', 'agent-builder' ); ?></p>
-					<h2><?php esc_html_e( 'Vector Store &amp; RAG', 'agent-builder' ); ?></h2>
-					<p><?php esc_html_e( 'Train agents on large document sets and whole-site content with hosted embeddings. Semantic search retrieves the right passages at chat time — ideal for PDFs, long manuals, and fuzzy customer questions.', 'agent-builder' ); ?></p>
-					<ul class="agentic-kn-pro-list">
-						<li><?php esc_html_e( 'Scan posts & pages into a private vector namespace', 'agent-builder' ); ?></li>
-						<li><?php esc_html_e( 'Upload PDF / TXT / MD with automatic chunking', 'agent-builder' ); ?></li>
-						<li><?php esc_html_e( 'Automatic retrieval into agent context (with citations)', 'agent-builder' ); ?></li>
-						<li><?php esc_html_e( 'WP-CLI: wp agent rag status|train|upload|search', 'agent-builder' ); ?></li>
-					</ul>
-					<p class="agentic-kn-pro-note">
-						<?php esc_html_e( 'The free Knowledge Wiki above stays fully available without Pro — no features are locked behind a paywall for curated markdown knowledge.', 'agent-builder' ); ?>
-					</p>
-					<p class="agentic-kn-pro-actions">
-						<a class="button button-primary button-hero" href="https://agentic-plugin.com/pricing/" target="_blank" rel="noopener">
-							<?php esc_html_e( 'See Pro plans', 'agent-builder' ); ?>
-						</a>
-						<a class="button button-secondary" href="https://agentic-plugin.com/ai-data-training/" target="_blank" rel="noopener">
-							<?php esc_html_e( 'How Vector Store works', 'agent-builder' ); ?>
-						</a>
-					</p>
-				</div>
-			</div>
+			<p class="agentic-kn-pro-note">
+				<?php
+				printf(
+					/* translators: %s: link to Agent Builder Pro pricing. */
+					esc_html__( 'The free Knowledge Wiki stays fully available without Pro. Need large-scale semantic search across big document sets instead? See %s for hosted vector RAG.', 'agent-builder' ),
+					'<a href="https://agentic-plugin.com/pricing/" target="_blank" rel="noopener">' . esc_html__( 'Agent Builder Pro', 'agent-builder' ) . '</a>'
+				);
+				?>
+			</p>
 		<?php endif; ?>
 
 	<?php endif; ?>

@@ -33,12 +33,11 @@ return array(
 		'agentic-audit-log'    => 'https://agentic-plugin.com/audit-log/',
 		'agentic-approvals'      => 'https://agentic-plugin.com/approval-queue/',
 		'agentic-safety-center'  => 'https://agentic-plugin.com/permissions-and-safety/',
-		'agentic-costs'          => 'https://agentic-plugin.com/api-credits/',
 		'agentic-settings'       => 'https://agentic-plugin.com/settings/',
 		'agentic-train-data'   => 'https://agentic-plugin.com/knowledge-wiki-okf/',
 		'agentic-run-task'     => 'https://agentic-plugin.com/scheduled-tasks/',
-		'agentic-upgrade-pro'  => 'https://agentic-plugin.com/licensing-and-pricing/',
 		// Pro admin surfaces.
+		'agentic-costs'        => 'https://agentic-plugin.com/api-credits/',
 		'agentic-connectors'   => 'https://agentic-plugin.com/channels/',
 		'agentic-governance'   => 'https://agentic-plugin.com/permissions-and-safety/',
 		'agentic-marketplace'  => 'https://agentic-plugin.com/community-agents/',

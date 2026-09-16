@@ -108,7 +108,7 @@ WebMCP (Web-based Model Context Protocol) lets your visitors' own AI browser age
 MCP (Model Context Protocol) is an open standard that lets external AI clients like Claude Desktop, Cursor, and VS Code connect directly to your WordPress site as a tool provider. You create a secure MCP credential in Settings → MCP, and external clients can then access safe tools on your site under your approval gate, with full audit logging.
 
 = Is Agent Builder free? =
-Yes. The free core plugin includes all 11 bundled agents, the complete tools/skills hub, the Approvals queue, the local OKF Knowledge wiki, and multi-provider BYOK support. Advanced hosted vector embeddings and cloud media generation are available via optional Agent Builder Pro add-ons.
+Yes. The free core plugin includes all 11 bundled agents, the complete tools/skills hub, the Approvals queue, the local OKF Knowledge wiki, multi-provider BYOK support, and cloud AI image/video generation (via the optional Agentic AI connection, which includes daily free credits — no purchase required). Advanced hosted vector embeddings and semantic search across large document sets are available via optional Agent Builder Pro add-ons.
 
 = What modes are there? =
 **Basic Mode:** Simplified interface with guided workflows, fewer options, and one-click safety controls. Best for site owners who want to use agents without configuration. **Advanced Mode:** Full developer console showing tool manifests, REST API docs, risk audits, MCP credentials, and technical audit logs. Switch anytime from Settings → Interface.

@@ -221,10 +221,9 @@ class Admin_Menu_Handler {
 			fn() => $this->render_page( 'safety-center' )
 		);
 
-		// Usage / Costs is a Pro screen. Free registers a locked Advanced-only
-		// nav entry (not Basic — upsell is a power-user concern). Skip when Pro
-		// already owns the real page (same slug agentic-costs).
-		$this->register_locked_usage_costs();
+		// Usage / Costs is a Pro-only screen (real metering isn't shipped in
+		// this free plugin) — no nav entry, no page, in this build at all.
+		// A Pro install registers its own real `agentic-costs` page separately.
 
 		// Passport (page title "Site Passport") — always shown in the menu,
 		// same as every other page here; Basic/Advanced only ever affects
@@ -460,44 +459,6 @@ class Admin_Menu_Handler {
 		return apply_filters( 'agentic_dashboard_quick_actions_catalog', $catalog );
 	}
 
-	/**
-	 * Locked "Usage & Costs" nav entry for the free plugin.
-	 *
-	 * Visible only in Advanced mode, with a small Pro badge. The page is an
-	 * honest explanation plus the same pricing link used in page footers —
-	 * not a fake costs UI. Hidden (empty parent) in Basic so a bookmark still
-	 * resolves. No-op when Pro already registered `agentic-costs`.
-	 *
-	 * @return void
-	 */
-	private function register_locked_usage_costs(): void {
-		global $submenu;
-
-		if ( isset( $submenu['agent-builder'] ) && is_array( $submenu['agent-builder'] ) ) {
-			foreach ( $submenu['agent-builder'] as $item ) {
-				if ( isset( $item[2] ) && 'agentic-costs' === $item[2] ) {
-					return;
-				}
-			}
-		}
-
-		$parent = self::is_advanced_mode() ? 'agent-builder' : '';
-		$title  = sprintf(
-			/* translators: 1: page name, 2: "Pro" badge */
-			'%1$s <span class="agentic-badge-pill-grey">%2$s</span>',
-			esc_html__( 'Usage & Costs', 'agent-builder' ),
-			esc_html__( 'Pro', 'agent-builder' )
-		);
-
-		add_submenu_page(
-			$parent,
-			__( 'Agent Builder — Usage & Costs', 'agent-builder' ),
-			$title,
-			'agentic_view_dashboard',
-			'agentic-costs',
-			fn() => $this->render_page( 'costs-locked' )
-		);
-	}
 
 	/**
 	 * Enabled Quick Action slugs for the current user (Setup always included).
@@ -898,14 +859,6 @@ class Admin_Menu_Handler {
 				'cap'   => 'agentic_view_audit_log',
 			),
 			array(
-				'id'    => 'usage-costs',
-				'label' => __( 'Usage & Costs', 'agent-builder' ),
-				'url'   => admin_url( 'admin.php?page=agentic-costs' ),
-				'pages' => array( 'agentic-costs' ),
-				'cap'   => 'agentic_view_dashboard',
-				'pro'   => true,
-			),
-			array(
 				'id'    => 'providers',
 				'label' => __( 'Providers & Keys', 'agent-builder' ),
 				'url'   => admin_url( 'admin.php?page=agentic-settings&tab=providers' ),
@@ -947,7 +900,7 @@ class Admin_Menu_Handler {
 	}
 
 	/**
-	 * Print one secondary-nav link (label, optional Pro badge, current state).
+	 * Print one secondary-nav link (label, current state).
 	 *
 	 * @param array<string, mixed> $item Item or child item.
 	 * @param string               $page Current ?page= slug.
@@ -966,9 +919,6 @@ class Admin_Menu_Handler {
 			data-section="<?php echo esc_attr( (string) ( $item['id'] ?? '' ) ); ?>"
 			<?php echo $is_current ? 'aria-current="page"' : ''; ?>>
 			<?php echo esc_html( (string) ( $item['label'] ?? '' ) ); ?>
-			<?php if ( ! empty( $item['pro'] ) ) : ?>
-				<span class="agentic-badge-pill-grey"><?php esc_html_e( 'Pro', 'agent-builder' ); ?></span>
-			<?php endif; ?>
 		</a>
 		<?php
 	}
@@ -1262,11 +1212,8 @@ class Admin_Menu_Handler {
 	 * @return array<string, mixed>
 	 */
 	public function get_admin_footer_data( string $page, string $tab = '' ): array {
-		$doc_url        = $this->get_page_doc_url( $page, $tab );
-		$support_url    = 'https://agentic-plugin.com/support/';
-		$promo_url      = 'https://agentic-plugin.com/pricing/';
-		$promo_label    = __( 'Upgrade to Pro', 'agent-builder' );
-		$promo_external = true;
+		$doc_url     = $this->get_page_doc_url( $page, $tab );
+		$support_url = 'https://agentic-plugin.com/support/';
 
 		// Short policy blurb — contextual by page/tab.
 		$policy = __( 'Settings control how agents behave on this site. Changes are stored locally and take effect for new conversations.', 'agent-builder' );
@@ -1287,8 +1234,6 @@ class Admin_Menu_Handler {
 			$policy = __( 'Safety Center summarizes existing operator controls. It does not change how tools, approvals, or Emergency Stop work.', 'agent-builder' );
 		} elseif ( 'agentic-audit-log' === $page || 'agentic-logs' === $page ) {
 			$policy = __( 'Activity helps you understand what agents did. Logs are local; retention follows your Security settings.', 'agent-builder' );
-		} elseif ( 'agentic-costs' === $page ) {
-			$policy = __( 'Usage & Costs is part of Agent Builder Pro. The free plugin does not meter spend.', 'agent-builder' );
 		} elseif ( 'agentic-settings' === $page ) {
 			$policy = match ( $tab ) {
 				'interface' => __( 'Interface settings change how chat looks and how agents address people. Theme applies to admin and frontend chat.', 'agent-builder' ),
@@ -1375,10 +1320,6 @@ class Admin_Menu_Handler {
 				'page' => 'logs',
 				'tab'  => '',
 			),
-			'upgrade-pro' => array(
-				'page' => 'upgrade-pro',
-				'tab'  => '',
-			),
 			'agent-ready'   => array(
 				'page' => 'agent-ready',
 				'tab'  => '',
@@ -1437,7 +1378,6 @@ class Admin_Menu_Handler {
 				'skills'         => 'agentic-skills',
 				'approvals'      => 'agentic-approvals',
 				'logs'           => 'agentic-audit-log',
-				'upgrade'        => 'agentic-upgrade-pro',
 				'train-data'     => 'agentic-train-data',
 				'safety-center'  => 'agentic-safety-center',
 				default          => 'agentic-' . $file,

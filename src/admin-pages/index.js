@@ -167,15 +167,6 @@ function AdminPageFooter( { footer } ) {
 	const f = footer || bootConfig().footer || {};
 	const docUrl = f.doc_url || 'https://agentic-plugin.com/agent-tools/';
 	const supportUrl = f.support_url || 'https://agentic-plugin.com/support/';
-	// Default off-site pricing — never a missing admin.php?page=agentic-upgrade-pro.
-	const promoUrl =
-		f.promo_url || 'https://agentic-plugin.com/pricing/';
-	const promoLabel =
-		f.promo_label || __( 'Upgrade to Pro', 'agent-builder' );
-	const promoExternal =
-		typeof f.promo_external === 'boolean'
-			? f.promo_external
-			: /^https?:\/\//i.test( promoUrl );
 	const policy =
 		f.policy ||
 		__(
@@ -198,20 +189,6 @@ function AdminPageFooter( { footer } ) {
 				{ ' | ' }
 				<a href={ docUrl } target="_blank" rel="noopener noreferrer">
 					{ __( 'Documentation', 'agent-builder' ) }
-				</a>
-				{ ' | ' }
-				<a
-					href={ promoUrl }
-					target={
-						promoExternal || f.is_pro ? '_blank' : undefined
-					}
-					rel={
-						promoExternal || f.is_pro
-							? 'noopener noreferrer'
-							: undefined
-					}
-				>
-					{ promoLabel }
 				</a>
 			</span>
 			<span className="agentic-page-footer-right">
@@ -2159,32 +2136,6 @@ function DeploymentView( { data } ) {
 	);
 }
 
-function UpgradeView( { data } ) {
-	return (
-		<>
-			<p className="agentic-react-lead">{ data.description }</p>
-			<ul style={ { marginTop: 0 } }>
-				{ ( data.features || [] ).map( ( f ) => (
-					<li key={ f }>{ f }</li>
-				) ) }
-			</ul>
-			{ data.is_pro ? (
-				<p>
-					<span className="agentic-react-badge">
-						{ __( 'Pro active', 'agent-builder' ) }
-					</span>
-				</p>
-			) : (
-				<p>
-					<Button variant="primary" href={ data.pricing_url }>
-						{ __( 'View pricing', 'agent-builder' ) }
-					</Button>
-				</p>
-			) }
-		</>
-	);
-}
-
 function TrainView( { data } ) {
 	const concepts = data.concepts || [];
 	return (
@@ -3357,9 +3308,6 @@ function AdminPagesApp() {
 			break;
 		case 'deployment':
 			body = <DeploymentView data={ data } />;
-			break;
-		case 'upgrade-pro':
-			body = <UpgradeView data={ data } />;
 			break;
 		case 'train-data':
 			body = <TrainView data={ data } />;
