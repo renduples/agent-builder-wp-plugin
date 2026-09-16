@@ -22,9 +22,8 @@
 # WP.org review notes — keep local/SVN-only, not the public GitHub tree
 /SUBMISSION-NOTES.md
 
-# Planning/strategy docs — local only by default, matches convention in agent-builder and agent-builder-pro
-/docs/*
-!/docs/agent-ready-score-brief.md
+# Internal docs/design notes — local only, never published to the public repo
+/docs/
 
 # WP.org submission zips — build artifacts from bin/export-wporg-tree.sh, never commit
 *.zip
