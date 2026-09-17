@@ -333,7 +333,7 @@ final class Activator {
 	 * even when the directory is not writable during CLI activation, and so an
 	 * agent the user later deletes from the library is not re-imported.
 	 *
-	 * @param string|null $dir Directory to import from. Defaults to AGENTIC_AGENTS_DIR.
+	 * @param string|null $dir Directory to import from. Defaults to AGENT_BUILDER_AGENTS_DIR.
 	 * @return void
 	 */
 	private static function import_agents_dir( ?string $dir = null ): void {
@@ -342,7 +342,7 @@ final class Activator {
 		}
 
 		if ( null === $dir ) {
-			$dir = defined( 'AGENTIC_AGENTS_DIR' ) ? AGENTIC_AGENTS_DIR : WP_CONTENT_DIR . '/agentic-agents';
+			$dir = defined( 'AGENT_BUILDER_AGENTS_DIR' ) ? AGENT_BUILDER_AGENTS_DIR : WP_CONTENT_DIR . '/agentic-agents';
 		}
 
 		if ( ! is_dir( $dir ) ) {

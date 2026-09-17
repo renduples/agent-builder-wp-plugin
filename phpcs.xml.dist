@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<ruleset name="Agent Builder">
+	<description>Coding standards for the Agent Builder WordPress plugin.</description>
+
+	<file>.</file>
+
+	<exclude-pattern>*/vendor/*</exclude-pattern>
+	<exclude-pattern>*/node_modules/*</exclude-pattern>
+	<exclude-pattern>*/build/*</exclude-pattern>
+	<exclude-pattern>*/tests/*</exclude-pattern>
+	<exclude-pattern>*/languages/*</exclude-pattern>
+
+	<arg value="sp"/>
+	<arg name="basepath" value="."/>
+	<arg name="colors"/>
+	<arg name="extensions" value="php"/>
+
+	<rule ref="WordPress-Extra">
+		<!-- Namespaced code (Agentic\...) doesn't need file-based class naming. -->
+		<exclude name="WordPress.Files.FileName"/>
+	</rule>
+
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<properties>
+			<!--
+				This plugin's public prefix is agent_builder_ / AGENT_BUILDER_,
+				matching the agent-builder slug/text domain. The Agentic_ prefix
+				is also registered: it's used only by the small set of classes
+				that must live in the global namespace (loaded before the
+				autoloader) rather than under the Agentic\ PHP namespace — those
+				are still consistently prefixed, just not namespaced, so they
+				don't "leak" unprefixed globals either.
+			-->
+			<property name="prefixes" type="array">
+				<element value="agent_builder"/>
+				<element value="Agentic"/>
+			</property>
+		</properties>
+	</rule>
+
+	<rule ref="WordPress.Security.EscapeOutput"/>
+	<rule ref="WordPress.Security.NonceVerification"/>
+</ruleset>

@@ -314,7 +314,7 @@ unset( $agentic_wizard_meta, $agentic_reg_p, $agentic_pslug, $agentic_wmeta );
  * @param string $slug Provider slug.
  * @return array<int, array{name: string, tags: string[], recommended?: bool}>
  */
-function agentic_setup_provider_models( string $slug ): array {
+function agent_builder_setup_provider_models( string $slug ): array {
 	$provider = \Agentic\Provider_Registry::get( $slug );
 	if ( ! $provider || empty( $provider['models'] ) ) {
 		$default = $provider['default_model'] ?? '';
@@ -344,77 +344,77 @@ $agentic_provider_info = array(
 		'pricing_detail' => 'Free credits to start · then ~$3 / 1M input tokens',
 		'rate_limits'    => '60 req/min (free tier)',
 		'best_for'       => 'Getting started · coding · fast responses',
-		'models'         => agentic_setup_provider_models( 'xai' ),
+		'models'         => agent_builder_setup_provider_models( 'xai' ),
 	),
 	'openai'    => array(
 		'tagline'        => 'Industry standard with the broadest ecosystem',
 		'pricing_detail' => 'GPT-4o: $2.50 / 1M input · $10 / 1M output',
 		'rate_limits'    => '500 req/min (Tier 1)',
 		'best_for'       => 'Code generation · function calling · broad tooling',
-		'models'         => agentic_setup_provider_models( 'openai' ),
+		'models'         => agent_builder_setup_provider_models( 'openai' ),
 	),
 	'google'    => array(
 		'tagline'        => 'Generous free tier with up to 2M token context window',
 		'pricing_detail' => 'Free: 15 req/min · Flash: $0.075 / 1M tokens',
 		'rate_limits'    => '15 req/min (free) · 1,000+ req/min (paid)',
 		'best_for'       => 'Long documents · image analysis · low cost',
-		'models'         => agentic_setup_provider_models( 'google' ),
+		'models'         => agent_builder_setup_provider_models( 'google' ),
 	),
 	'anthropic' => array(
 		'tagline'        => 'Best for nuanced writing, analysis and complex reasoning',
 		'pricing_detail' => 'Sonnet 3.5: $3 / 1M input · $15 / 1M output',
 		'rate_limits'    => '50 req/min (Tier 1)',
 		'best_for'       => 'Writing · analysis · complex reasoning',
-		'models'         => agentic_setup_provider_models( 'anthropic' ),
+		'models'         => agent_builder_setup_provider_models( 'anthropic' ),
 	),
 	'mistral'   => array(
 		'tagline'        => 'Strong multilingual support, hosted in Europe',
 		'pricing_detail' => 'Large: $2 / 1M input · $6 / 1M output',
 		'rate_limits'    => '500 req/min',
 		'best_for'       => 'Multilingual · EU data residency · cost-efficient',
-		'models'         => agentic_setup_provider_models( 'mistral' ),
+		'models'         => agent_builder_setup_provider_models( 'mistral' ),
 	),
 	'llama'     => array(
 		'tagline'        => 'Access Meta\'s open-source Llama models via API',
 		'pricing_detail' => 'Usage-based · pay only for what you use',
 		'rate_limits'    => 'Varies by plan',
 		'best_for'       => 'Open-source · research · privacy-conscious devs',
-		'models'         => agentic_setup_provider_models( 'llama' ),
+		'models'         => agent_builder_setup_provider_models( 'llama' ),
 	),
 	'cohere'    => array(
 		'tagline'        => 'Enterprise-ready AI with strong multilingual capabilities',
 		'pricing_detail' => 'Free trial: 20 req/min · then usage-based',
 		'rate_limits'    => '20 req/min (trial) · 10,000 req/min (production)',
 		'best_for'       => 'Enterprise · multilingual · RAG pipelines',
-		'models'         => agentic_setup_provider_models( 'cohere' ),
+		'models'         => agent_builder_setup_provider_models( 'cohere' ),
 	),
 	'kimi'      => array(
 		'tagline'        => 'Moonshot AI — long context, strong coding & bilingual models',
 		'pricing_detail' => 'K2.5 ~$0.60 / 1M input · K3 $3 / 1M input',
 		'rate_limits'    => 'Varies by top-up tier',
 		'best_for'       => 'Long context · coding · Chinese/English · agents',
-		'models'         => agentic_setup_provider_models( 'kimi' ),
+		'models'         => agent_builder_setup_provider_models( 'kimi' ),
 	),
 	'deepseek'  => array(
 		'tagline'        => 'Strong coding & reasoning models at aggressive prices',
 		'pricing_detail' => 'Flash from ~$0.14 / 1M input · Pro for deeper reasoning',
 		'rate_limits'    => 'Varies by account tier',
 		'best_for'       => 'Coding · reasoning · cost-efficient agents',
-		'models'         => agentic_setup_provider_models( 'deepseek' ),
+		'models'         => agent_builder_setup_provider_models( 'deepseek' ),
 	),
 	'agentic'   => array(
 		'tagline'        => 'A WordPress-optimised AI model hosted by agent-builder.com',
 		'pricing_detail' => 'Free daily credits included',
 		'rate_limits'    => 'Shared pool · requests can be slow at times',
 		'best_for'       => 'Best for WordPress backend and development tasks',
-		'models'         => agentic_setup_provider_models( 'agentic' ),
+		'models'         => agent_builder_setup_provider_models( 'agentic' ),
 	),
 	'ollama'    => array(
 		'tagline'        => 'Run open-source models privately on your own server',
 		'pricing_detail' => 'Completely free — you pay only for hardware',
 		'rate_limits'    => 'Limited only by your hardware',
 		'best_for'       => 'Privacy · offline use · custom models',
-		'models'         => agentic_setup_provider_models( 'ollama' ),
+		'models'         => agent_builder_setup_provider_models( 'ollama' ),
 	),
 );
 
@@ -514,7 +514,7 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 						<div class="provider-icon">
 							<?php
 							echo wp_kses(
-								agentic_setup_provider_icon( $agentic_slug ),
+								agent_builder_setup_provider_icon( $agentic_slug ),
 								array(
 									'svg'     => array(
 										'xmlns'      => array(),
@@ -624,7 +624,7 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 					<h2>
 						<?php
 						echo wp_kses(
-							agentic_setup_provider_icon( $agentic_slug, 24 ),
+							agent_builder_setup_provider_icon( $agentic_slug, 24 ),
 							array(
 								'svg'     => array(
 									'xmlns'      => array(),
@@ -1569,5 +1569,5 @@ document.addEventListener('keydown', function(e) {
  * Returns an inline SVG icon (or img tag) for the given provider icon value.
  * Defined in agentbuilder.php (always loaded).
  *
- * @see agentic_setup_provider_icon()
+ * @see agent_builder_setup_provider_icon()
  */

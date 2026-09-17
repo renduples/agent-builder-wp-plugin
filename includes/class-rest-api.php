@@ -2393,7 +2393,7 @@ class REST_API {
 	 */
 	public function handle_backup_delete( \WP_REST_Request $request ): \WP_REST_Response {
 		$file       = sanitize_file_name( $request->get_param( 'file' ) );
-		$backup_dir = AGENTIC_BACKUPS_DIR;
+		$backup_dir = AGENT_BUILDER_BACKUPS_DIR;
 		$path       = $backup_dir . '/' . $file;
 
 		if ( basename( $file ) !== $file || ! file_exists( $path ) ) {
@@ -2451,7 +2451,7 @@ class REST_API {
 	 */
 	public function handle_table_backup_delete( \WP_REST_Request $request ): \WP_REST_Response {
 		$file       = sanitize_file_name( $request->get_param( 'file' ) );
-		$backup_dir = AGENTIC_BACKUPS_DIR . '/' . Tool_Helpers::DB_BACKUP_SUBDIR;
+		$backup_dir = AGENT_BUILDER_BACKUPS_DIR . '/' . Tool_Helpers::DB_BACKUP_SUBDIR;
 		$path       = $backup_dir . '/' . $file;
 
 		if ( basename( $file ) !== $file || ! file_exists( $path ) ) {

@@ -54,7 +54,7 @@ wp_enqueue_script(
 	true
 );
 
-$agentic_skills_chat_features = agentic_get_effective_chat_features( $agentic_skills_assistant_slug );
+$agentic_skills_chat_features = agent_builder_get_effective_chat_features( $agentic_skills_assistant_slug );
 
 wp_localize_script(
 	'agentic-chat',
@@ -78,7 +78,7 @@ wp_localize_script(
 		'handoffFrom'    => '',
 		'handoffContext' => '',
 		'slashCommands'  => \Agentic\Chat_Assets::get_slash_commands_for_js(),
-		'i18n'           => agentic_chat_i18n(),
+		'i18n'           => agent_builder_chat_i18n(),
 	)
 );
 

@@ -307,7 +307,7 @@ class Analyze_Requirements extends Tool_Base {
 	 * @return array List of relative paths to knowledge files.
 	 */
 	private function suggest_knowledge_files( string $description, string $category ): array {
-		$knowledge_dir = AGENTIC_KNOWLEDGE_DIR . '/';
+		$knowledge_dir = AGENT_BUILDER_KNOWLEDGE_DIR . '/';
 		if ( ! is_dir( $knowledge_dir ) ) {
 			return array();
 		}

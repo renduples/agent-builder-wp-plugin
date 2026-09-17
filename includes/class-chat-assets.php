@@ -179,7 +179,7 @@ class Chat_Assets {
 				'provider'        => $agentic_provider_labels[ $agentic_overlay_provider ] ?? ucfirst( $agentic_overlay_provider ),
 				'model'           => get_option( 'agentic_model', '' ),
 				'slashCommands'   => self::get_slash_commands_for_js(),
-				'i18n'            => agentic_chat_i18n(),
+				'i18n'            => agent_builder_chat_i18n(),
 			)
 		);
 	}
@@ -385,7 +385,7 @@ class Chat_Assets {
 
 		$eligible   = self::get_modal_agents_for_page();
 		$first_slug = $eligible[0] ?? '';
-		$features   = \agentic_get_effective_chat_features( $first_slug );
+		$features   = \agent_builder_get_effective_chat_features( $first_slug );
 
 		// Only localize once — shortcode may also localize agenticChat.
 		$existing = wp_scripts()->get_data( 'agentic-chat-frontend', 'data' );
@@ -412,7 +412,7 @@ class Chat_Assets {
 				'handoffContext' => isset( $_GET['handoff_context'] ) ? sanitize_textarea_field( wp_unslash( $_GET['handoff_context'] ) ) : '',
 				// phpcs:enable WordPress.Security.NonceVerification.Recommended
 				'slashCommands'  => self::get_slash_commands_for_js(),
-				'i18n'           => agentic_chat_i18n(),
+				'i18n'           => agent_builder_chat_i18n(),
 			);
 
 			if ( Turnstile::is_required() ) {

@@ -188,7 +188,7 @@ class Agent_Wizard_REST {
 		// also guards this, but here we can return a precise 409).
 		$registry = \Agentic_Agent_Registry::get_instance();
 		$existing = $registry->get_installed_agents();
-		if ( isset( $existing[ $slug ] ) || is_dir( AGENTIC_AGENTS_DIR . '/' . $slug ) ) {
+		if ( isset( $existing[ $slug ] ) || is_dir( AGENT_BUILDER_AGENTS_DIR . '/' . $slug ) ) {
 			return new \WP_Error(
 				'slug_exists',
 				/* translators: %s: agent slug. */

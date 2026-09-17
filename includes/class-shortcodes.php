@@ -86,7 +86,7 @@ class Shortcodes {
 		// Apply the selected chat theme CSS variable overrides to the frontend chat.
 		\Agentic\Chat_Assets::apply_frontend_chat_theme();
 
-		$features      = \agentic_get_effective_chat_features( $agent_slug );
+		$features      = \agent_builder_get_effective_chat_features( $agent_slug );
 		$localize_data = array(
 			'restUrl'        => esc_url_raw( rest_url( 'agentic/v1/' ) ),
 			'nonce'          => wp_create_nonce( 'wp_rest' ),
@@ -100,7 +100,7 @@ class Shortcodes {
 			'isAdmin'        => current_user_can( 'manage_options' ) ? '1' : '0',
 			'adminAgentsUrl' => admin_url( 'admin.php?page=agentic-agents' ),
 			'slashCommands'  => \Agentic\Chat_Assets::get_slash_commands_for_js(),
-			'i18n'           => agentic_chat_i18n(),
+			'i18n'           => agent_builder_chat_i18n(),
 		);
 
 		// Turnstile configuration for frontend, when configured and required.

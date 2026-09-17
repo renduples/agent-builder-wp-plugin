@@ -1440,7 +1440,7 @@ class Admin_Menu_Handler {
 				$agentic_chat_slug = 'wordpress-assistant';
 			}
 		}
-		$agentic_chat_features = agentic_get_effective_chat_features( $agentic_chat_slug );
+		$agentic_chat_features = agent_builder_get_effective_chat_features( $agentic_chat_slug );
 
 		wp_localize_script(
 			'agentic-chat',
@@ -1469,7 +1469,7 @@ class Admin_Menu_Handler {
 				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				'handoffContext' => isset( $_GET['handoff_context'] ) ? sanitize_textarea_field( wp_unslash( $_GET['handoff_context'] ) ) : '',
 				'slashCommands'  => \Agentic\Chat_Assets::get_slash_commands_for_js(),
-				'i18n'           => agentic_chat_i18n(),
+				'i18n'           => agent_builder_chat_i18n(),
 			)
 		);
 
@@ -1522,8 +1522,8 @@ class Admin_Menu_Handler {
 	 * @return void
 	 */
 	private function render_chat_playground_panel( string $agent_id, ?Agent_Base $agent ): void {
-		$effective        = function_exists( 'agentic_get_effective_provider_model' )
-			? agentic_get_effective_provider_model( $agent_id )
+		$effective        = function_exists( 'agent_builder_get_effective_provider_model' )
+			? agent_builder_get_effective_provider_model( $agent_id )
 			: array(
 				'provider'       => '',
 				'model'          => '',

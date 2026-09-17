@@ -195,14 +195,14 @@ class Test_File_Manager extends TestCase {
 	// ─── Other allowed roots ─────────────────────────────────────────────────
 
 	/**
-	 * AGENTIC_BACKUPS_DIR was missing from the allowed roots entirely before
+	 * AGENT_BUILDER_BACKUPS_DIR was missing from the allowed roots entirely before
 	 * this pass — Tool_Helpers::backup_file() writes there, so it must be
 	 * allowed (still subject to the same extension denylist as everywhere
 	 * else).
 	 */
 	public function test_agentic_backups_dir_is_an_allowed_root(): void {
 		$this->assertTrue(
-			File_Manager::is_allowed_path( AGENTIC_BACKUPS_DIR . '/20260101-000000_agentic-agents__test-agent__abilities.json' )
+			File_Manager::is_allowed_path( AGENT_BUILDER_BACKUPS_DIR . '/20260101-000000_agentic-agents__test-agent__abilities.json' )
 		);
 	}
 

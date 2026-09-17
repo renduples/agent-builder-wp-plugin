@@ -65,7 +65,7 @@ class Abilities_Manifest {
 	public static function resolve_path( string $agent_slug ): ?string {
 		$library_dirs = apply_filters( 'agentic_library_dirs', array( AGENT_BUILDER_DIR . 'library/agents' ) );
 
-		$paths = array( AGENTIC_AGENTS_DIR . '/' . $agent_slug . '/abilities.json' );
+		$paths = array( AGENT_BUILDER_AGENTS_DIR . '/' . $agent_slug . '/abilities.json' );
 		foreach ( $library_dirs as $dir ) {
 			$paths[] = trailingslashit( $dir ) . $agent_slug . '/abilities.json';
 		}
@@ -251,8 +251,8 @@ class Abilities_Manifest {
 	 */
 	private static function is_listed_in_agent_json( string $agent_slug, string $tool_name ): bool {
 		$paths = array();
-		if ( defined( 'AGENTIC_AGENTS_DIR' ) ) {
-			$paths[] = trailingslashit( AGENTIC_AGENTS_DIR ) . $agent_slug . '/agent.json';
+		if ( defined( 'AGENT_BUILDER_AGENTS_DIR' ) ) {
+			$paths[] = trailingslashit( AGENT_BUILDER_AGENTS_DIR ) . $agent_slug . '/agent.json';
 		}
 		if ( defined( 'AGENT_BUILDER_DIR' ) ) {
 			$paths[] = trailingslashit( AGENT_BUILDER_DIR ) . 'library/agents/' . $agent_slug . '/agent.json';

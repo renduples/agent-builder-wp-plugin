@@ -394,7 +394,7 @@ if ( $agentic_edit_slug ) {
 			<td>
 				<span class="agentic-flex-gap-6">
 				<?php
-				$agentic_icon_html = agentic_setup_provider_icon( $agentic_prov['icon'] ?? '', 20 );
+				$agentic_icon_html = agent_builder_setup_provider_icon( $agentic_prov['icon'] ?? '', 20 );
 				if ( $agentic_icon_html ) {
 					echo wp_kses(
 						$agentic_icon_html,

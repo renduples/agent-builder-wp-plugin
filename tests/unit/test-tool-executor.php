@@ -59,7 +59,7 @@ class Test_Tool_Executor extends TestCase {
 	 * a later test in this run.
 	 */
 	private function clear_backup_dir(): void {
-		$dir = AGENTIC_BACKUPS_DIR . '/db';
+		$dir = AGENT_BUILDER_BACKUPS_DIR . '/db';
 		if ( ! is_dir( $dir ) ) {
 			return;
 		}
@@ -182,7 +182,7 @@ class Test_Tool_Executor extends TestCase {
 	public function test_allow_path_backs_up_table_before_executing_non_readonly_tool(): void {
 		update_option( 'agentic_approval_auto_max_risk', Risk_Level::HIGH );
 
-		$before = glob( AGENTIC_BACKUPS_DIR . '/db/*_options.json' ) ?: array();
+		$before = glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*_options.json' ) ?: array();
 		$this->assertCount( 0, $before, 'precondition: no stale options backup from a prior test' );
 
 		$result = $this->make_executor()->execute(
@@ -196,7 +196,7 @@ class Test_Tool_Executor extends TestCase {
 		$this->assertSame( 'written-value', get_option( 'agentic_test_allow_opt' ) );
 		$this->assertTrue( $result['updated'] ?? false );
 
-		$after = glob( AGENTIC_BACKUPS_DIR . '/db/*_options.json' ) ?: array();
+		$after = glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*_options.json' ) ?: array();
 		$this->assertCount( 1, $after, 'backup_tables_for_tool() should have written one options backup' );
 
 		// The write must have been logged to the operations ledger too
@@ -212,7 +212,7 @@ class Test_Tool_Executor extends TestCase {
 	 * A read-only tool never triggers a table backup, even under 'allow'.
 	 */
 	public function test_readonly_tool_never_triggers_a_backup(): void {
-		$before = glob( AGENTIC_BACKUPS_DIR . '/db/*_options.json' ) ?: array();
+		$before = glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*_options.json' ) ?: array();
 
 		$this->make_executor()->execute(
 			'list_posts',
@@ -222,7 +222,7 @@ class Test_Tool_Executor extends TestCase {
 			'chat'
 		);
 
-		$after = glob( AGENTIC_BACKUPS_DIR . '/db/*_options.json' ) ?: array();
+		$after = glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*_options.json' ) ?: array();
 		$this->assertSame( count( $before ), count( $after ) );
 	}
 

@@ -107,7 +107,7 @@ class TestCase extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Create a minimal agent with an abilities.json under AGENTIC_AGENTS_DIR
+	 * Create a minimal agent with an abilities.json under AGENT_BUILDER_AGENTS_DIR
 	 * (wp-content/agentic-agents/<slug>/), for tests exercising
 	 * Abilities_Manifest resolution against a real manifest file.
 	 *
@@ -116,7 +116,7 @@ class TestCase extends WP_UnitTestCase {
 	 * @return string Path to the created abilities.json.
 	 */
 	protected function create_test_agent_manifest( string $agent_id, array $abilities = array() ): string {
-		$agents_dir = AGENTIC_AGENTS_DIR;
+		$agents_dir = AGENT_BUILDER_AGENTS_DIR;
 		if ( ! file_exists( $agents_dir ) ) {
 			mkdir( $agents_dir, 0755, true );
 		}
@@ -156,7 +156,7 @@ class TestCase extends WP_UnitTestCase {
 	 * @param string $agent_id Agent slug.
 	 */
 	protected function delete_test_agent( string $agent_id ): void {
-		$agent_dir = AGENTIC_AGENTS_DIR . '/' . $agent_id;
+		$agent_dir = AGENT_BUILDER_AGENTS_DIR . '/' . $agent_id;
 		if ( file_exists( $agent_dir ) ) {
 			$this->delete_directory( $agent_dir );
 		}

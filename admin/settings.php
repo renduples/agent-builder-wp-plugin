@@ -414,7 +414,7 @@ if ( isset( $_POST['agentic_save_settings'] ) && check_admin_referer( 'agentic_s
 
 			// Save knowledge file and update abilities.json.
 			$agentic_p_knowledge = sanitize_textarea_field( $agentic_p_data['knowledge'] ?? '' );
-			$agentic_p_kn_dir    = AGENTIC_KNOWLEDGE_DIR . '/';
+			$agentic_p_kn_dir    = AGENT_BUILDER_KNOWLEDGE_DIR . '/';
 			$agentic_p_kn_file   = $agentic_p_kn_dir . $agentic_p_slug . '-knowledge.txt';
 			$agentic_p_kn_rel    = $agentic_p_slug . '-knowledge.txt';
 

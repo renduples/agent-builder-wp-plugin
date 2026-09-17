@@ -646,7 +646,7 @@ class Agent_Controller {
 			// Use the user-configured vision model (per-agent override or global agentic_vision_model).
 			// When both models are identical, no switch is needed.
 			$chat_model        = $this->llm->get_model();
-			$effective         = agentic_get_effective_provider_model( $current_agent_id );
+			$effective         = agent_builder_get_effective_provider_model( $current_agent_id );
 			$configured_vision = $effective['vision_model'];
 
 			$switched_to_vision = false;

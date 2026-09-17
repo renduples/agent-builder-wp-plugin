@@ -677,7 +677,7 @@ class Tool_Helpers {
 			return null;
 		}
 
-		$backup_dir = AGENTIC_BACKUPS_DIR;
+		$backup_dir = AGENT_BUILDER_BACKUPS_DIR;
 
 		File_Manager::ensure_protected_dir( $backup_dir );
 
@@ -702,7 +702,7 @@ class Tool_Helpers {
 	 * @return array<int, array{file: string, path: string, original: string, original_exists: bool, size: int, created: string}>
 	 */
 	public static function get_backups(): array {
-		$backup_dir = AGENTIC_BACKUPS_DIR;
+		$backup_dir = AGENT_BUILDER_BACKUPS_DIR;
 
 		if ( ! is_dir( $backup_dir ) ) {
 			return array();
@@ -773,7 +773,7 @@ class Tool_Helpers {
 	 * @return array{success: bool, message: string, original?: string}
 	 */
 	public static function restore_backup( string $backup_filename ): array {
-		$backup_dir  = AGENTIC_BACKUPS_DIR;
+		$backup_dir  = AGENT_BUILDER_BACKUPS_DIR;
 		$backup_path = $backup_dir . '/' . $backup_filename;
 
 		// Prevent directory traversal.
@@ -1023,11 +1023,11 @@ class Tool_Helpers {
 			return null;
 		}
 
-		// Protects the shared AGENTIC_BACKUPS_DIR root even if this runs
+		// Protects the shared AGENT_BUILDER_BACKUPS_DIR root even if this runs
 		// before backup_file() ever has — idempotent, cheap to call again.
-		File_Manager::ensure_protected_dir( AGENTIC_BACKUPS_DIR );
+		File_Manager::ensure_protected_dir( AGENT_BUILDER_BACKUPS_DIR );
 
-		$backup_dir = AGENTIC_BACKUPS_DIR . '/' . self::DB_BACKUP_SUBDIR;
+		$backup_dir = AGENT_BUILDER_BACKUPS_DIR . '/' . self::DB_BACKUP_SUBDIR;
 		wp_mkdir_p( $backup_dir );
 
 		// Throttle: skip if a backup for this table was created in the last 60s.
@@ -1154,7 +1154,7 @@ class Tool_Helpers {
 	 * @param string $table Unprefixed table name.
 	 */
 	private static function prune_table_backups( string $table ): void {
-		$backup_dir = AGENTIC_BACKUPS_DIR . '/' . self::DB_BACKUP_SUBDIR;
+		$backup_dir = AGENT_BUILDER_BACKUPS_DIR . '/' . self::DB_BACKUP_SUBDIR;
 		$files      = glob( $backup_dir . '/*_' . $table . '.json' );
 
 		if ( ! is_array( $files ) || count( $files ) <= self::DB_BACKUP_KEEP ) {
@@ -1175,7 +1175,7 @@ class Tool_Helpers {
 	 * @return array<int, array{file: string, path: string, table: string, type: string, row_count: int, size: int, created: string}>
 	 */
 	public static function get_table_backups(): array {
-		$backup_dir = AGENTIC_BACKUPS_DIR . '/' . self::DB_BACKUP_SUBDIR;
+		$backup_dir = AGENT_BUILDER_BACKUPS_DIR . '/' . self::DB_BACKUP_SUBDIR;
 
 		if ( ! is_dir( $backup_dir ) ) {
 			return array();
@@ -1244,7 +1244,7 @@ class Tool_Helpers {
 	 * @return array{success: bool, message: string, table?: string, rows_restored?: int}
 	 */
 	public static function restore_table_backup( string $backup_filename ): array {
-		$backup_dir  = AGENTIC_BACKUPS_DIR . '/' . self::DB_BACKUP_SUBDIR;
+		$backup_dir  = AGENT_BUILDER_BACKUPS_DIR . '/' . self::DB_BACKUP_SUBDIR;
 		$backup_path = $backup_dir . '/' . $backup_filename;
 
 		if ( basename( $backup_filename ) !== $backup_filename || ! file_exists( $backup_path ) ) {
@@ -1295,13 +1295,13 @@ class Tool_Helpers {
 				$full_table,
 				$data['key_column'],
 				$data['key_value'],
-				AGENTIC_BACKUPS_DIR . '/' . self::DB_BACKUP_SUBDIR
+				AGENT_BUILDER_BACKUPS_DIR . '/' . self::DB_BACKUP_SUBDIR
 			);
 		} else {
 			self::dump_full_table(
 				$table_short,
 				$full_table,
-				AGENTIC_BACKUPS_DIR . '/' . self::DB_BACKUP_SUBDIR
+				AGENT_BUILDER_BACKUPS_DIR . '/' . self::DB_BACKUP_SUBDIR
 			);
 		}
 

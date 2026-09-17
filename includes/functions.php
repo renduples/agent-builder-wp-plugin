@@ -25,7 +25,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @return array<string, string>
  */
-function agentic_chat_i18n(): array {
+function agent_builder_chat_i18n(): array {
 	return array(
 		'thinking'            => __( 'Agent is thinking...', 'agent-builder' ),
 		'warmingUp'           => __( 'Warming up the AI model, please wait\u2026', 'agent-builder' ),
@@ -67,7 +67,7 @@ function agentic_chat_i18n(): array {
  * @param string $agent_slug Agent slug, or empty string for global defaults.
  * @return array{provider: string, model: string, vision_model: string, provider_label: string}
  */
-function agentic_get_effective_provider_model( string $agent_slug = '' ): array {
+function agent_builder_get_effective_provider_model( string $agent_slug = '' ): array {
 	$provider_labels = array(
 		'openai'    => 'OpenAI',
 		'anthropic' => 'Anthropic',
@@ -124,7 +124,7 @@ function agentic_get_effective_provider_model( string $agent_slug = '' ): array 
  * @param string $agent_slug Agent slug, or empty string for global defaults.
  * @return array{audio: string, tts: string, vision: string, costs: string}
  */
-function agentic_get_effective_chat_features( string $agent_slug = '' ): array {
+function agent_builder_get_effective_chat_features( string $agent_slug = '' ): array {
 	$audio   = get_option( 'agentic_chat_audio', '1' );
 	$rag_key = get_option( 'agentic_rag_api_secret', '' );
 	$rag_key = ! empty( $rag_key ) ? $rag_key : ( \Agentic\Provider_Registry::get( 'agentic' )['api_key'] ?? '' );
@@ -166,7 +166,7 @@ function agentic_get_effective_chat_features( string $agent_slug = '' ): array {
  * @param int    $size          Icon size in px.
  * @return string
  */
-function agentic_setup_provider_icon( string $agentic_slug, int $size = 36 ): string {
+function agent_builder_setup_provider_icon( string $agentic_slug, int $size = 36 ): string {
 	$s = (string) $size;
 
 	// Full URL — render as an img element instead of looking up a built-in SVG.

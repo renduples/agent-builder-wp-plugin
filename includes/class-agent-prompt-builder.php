@@ -220,7 +220,7 @@ class Agent_Prompt_Builder {
 		$dirs = apply_filters(
 			'agentic_knowledge_dirs',
 			array(
-				AGENTIC_KNOWLEDGE_DIR,
+				AGENT_BUILDER_KNOWLEDGE_DIR,
 				AGENT_BUILDER_DIR . 'library/knowledge',
 			)
 		);

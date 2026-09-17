@@ -83,7 +83,7 @@ class Get_File_Structure_Summary extends \Agentic\Tool_Base {
 			'themes'  => WP_CONTENT_DIR . '/themes',
 			'plugins' => WP_CONTENT_DIR . '/plugins',
 			'uploads' => WP_CONTENT_DIR . '/uploads',
-			'agents'  => AGENTIC_AGENTS_DIR,
+			'agents'  => AGENT_BUILDER_AGENTS_DIR,
 		);
 
 		$summary = array();

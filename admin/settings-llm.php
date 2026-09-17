@@ -145,7 +145,7 @@ $agentic_pricing_version = get_option( 'agentic_pricing_version', '' );
 					if ( empty( $agentic_prov_models ) ) {
 						continue;
 					}
-					$agentic_prov_icon = agentic_setup_provider_icon( $agentic_prov['icon'] ?? $agentic_prov_slug, 16 );
+					$agentic_prov_icon = agent_builder_setup_provider_icon( $agentic_prov['icon'] ?? $agentic_prov_slug, 16 );
 					?>
 					<tr class="provider-header">
 						<td colspan="4">

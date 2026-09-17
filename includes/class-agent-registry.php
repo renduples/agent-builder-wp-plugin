@@ -108,7 +108,7 @@ class Agentic_Agent_Registry {
 	 * Constructor
 	 */
 	private function __construct() {
-		$this->agents_dir  = AGENTIC_AGENTS_DIR;
+		$this->agents_dir  = AGENT_BUILDER_AGENTS_DIR;
 		$this->library_dir = AGENT_BUILDER_DIR . 'library/agents';
 
 		// Ensure directories exist.
@@ -239,7 +239,7 @@ class Agentic_Agent_Registry {
 			}
 		}
 
-		// Finally, load agents stored in the agentic_agent_library table.
+		// Finally, load agents stored in the agent_builder_agent_library table.
 		// These are the canonical records for bundled, purchased, and
 		// user-created agents. Only manifest-kind rows are interpreted here;
 		// php-kind rows are records whose executable code is loaded from the
@@ -411,7 +411,7 @@ class Agentic_Agent_Registry {
 	 * Build the installed-agent data array from a validated manifest.
 	 *
 	 * Shared by file-backed manifest agents (agent.json) and database-backed
-	 * agents (agentic_agent_library rows) so both present identically to the UI.
+	 * agents (agent_builder_agent_library rows) so both present identically to the UI.
 	 *
 	 * @param array<string, mixed> $manifest A validated manifest.
 	 * @return array<string, mixed>
@@ -603,7 +603,7 @@ class Agentic_Agent_Registry {
 		}
 
 		// Call activation hook if exists.
-		$activation_hook = 'agentic_agent_' . $slug . '_activate';
+		$activation_hook = 'agent_builder_agent_' . $slug . '_activate';
 		if ( has_action( $activation_hook ) ) {
 		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- Dynamic hook name by design.
 			do_action( $activation_hook );
@@ -628,7 +628,7 @@ class Agentic_Agent_Registry {
 			);
 		}
 
-		do_action( 'agentic_agent_activated', $slug, $agent );
+		do_action( 'agent_builder_agent_activated', $slug, $agent );
 
 		return true;
 	}
@@ -650,7 +650,7 @@ class Agentic_Agent_Registry {
 		$agent  = $agents[ $slug ] ?? null;
 
 		// Call deactivation hook if exists.
-		$deactivation_hook = 'agentic_agent_' . $slug . '_deactivate';
+		$deactivation_hook = 'agent_builder_agent_' . $slug . '_deactivate';
 		if ( has_action( $deactivation_hook ) ) {
 		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- Dynamic hook name by design.
 			do_action( $deactivation_hook );
@@ -673,7 +673,7 @@ class Agentic_Agent_Registry {
 			);
 		}
 
-		do_action( 'agentic_agent_deactivated', $slug, $agent );
+		do_action( 'agent_builder_agent_deactivated', $slug, $agent );
 
 		return true;
 	}
@@ -1052,7 +1052,7 @@ class Agentic_Agent_Registry {
 		}
 
 		// Call uninstall hook if exists.
-		$uninstall_hook = 'agentic_agent_' . $slug . '_uninstall';
+		$uninstall_hook = 'agent_builder_agent_' . $slug . '_uninstall';
 		if ( has_action( $uninstall_hook ) ) {
 		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- Dynamic hook name by design.
 			do_action( $uninstall_hook );
@@ -1085,7 +1085,7 @@ class Agentic_Agent_Registry {
 			);
 		}
 
-		do_action( 'agentic_agent_deleted', $slug );
+		do_action( 'agent_builder_agent_deleted', $slug );
 
 		return true;
 	}
@@ -1224,7 +1224,7 @@ class Agentic_Agent_Registry {
 
 		$this->agent_instances[ $id ] = $agent;
 
-		do_action( 'agentic_agent_instance_registered', $id, $agent );
+		do_action( 'agent_builder_agent_instance_registered', $id, $agent );
 
 		return true;
 	}

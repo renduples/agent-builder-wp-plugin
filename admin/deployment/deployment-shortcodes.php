@@ -30,7 +30,7 @@ $agentic_valid_sc_styles = array( 'inline', 'popup', 'sidebar' );
  * @param array $row Deployment row from Deployments::get() or all().
  * @return array
  */
-function agentic_sc_form_data( array $row ): array {
+function agent_builder_sc_form_data( array $row ): array {
 	$cfg = $row['config'] ?? array();
 	return array(
 		'label'       => $row['label'],
@@ -343,7 +343,7 @@ $agentic_source_labels = array(
 <form method="post">
 		<?php wp_nonce_field( 'agentic_manage_shortcodes' ); ?>
 	<input type="hidden" name="agentic_shortcode_id" value="<?php echo esc_attr( $agentic_editing_dep['id'] ); ?>">
-		<?php $agentic_form_data = agentic_sc_form_data( $agentic_editing_dep ); ?>
+		<?php $agentic_form_data = agent_builder_sc_form_data( $agentic_editing_dep ); ?>
 		<?php include __DIR__ . '/deployment-shortcodes-form.php'; ?>
 		<?php submit_button( __( 'Save Changes', 'agent-builder' ), 'primary', 'agentic_update_shortcode' ); ?>
 </form>

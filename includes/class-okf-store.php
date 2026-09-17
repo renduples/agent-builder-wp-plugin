@@ -39,7 +39,7 @@ class Okf_Store {
 	 * Absolute path to the site-wide OKF root.
 	 */
 	public static function root_dir(): string {
-		return trailingslashit( AGENTIC_KNOWLEDGE_DIR ) . 'okf';
+		return trailingslashit( AGENT_BUILDER_KNOWLEDGE_DIR ) . 'okf';
 	}
 
 	/**
@@ -62,10 +62,10 @@ class Okf_Store {
 	 * @return true|\WP_Error
 	 */
 	public static function ensure_bundle( string $agent_slug = '' ) {
-		// Protects the whole AGENTIC_KNOWLEDGE_DIR tree (Apache/IIS config
+		// Protects the whole AGENT_BUILDER_KNOWLEDGE_DIR tree (Apache/IIS config
 		// applies to subdirectories automatically), not just this one bundle
 		// — idempotent, so calling it again on every request is cheap.
-		File_Manager::ensure_protected_dir( AGENTIC_KNOWLEDGE_DIR );
+		File_Manager::ensure_protected_dir( AGENT_BUILDER_KNOWLEDGE_DIR );
 
 		$dir = self::bundle_dir( $agent_slug );
 		if ( ! wp_mkdir_p( $dir ) ) {

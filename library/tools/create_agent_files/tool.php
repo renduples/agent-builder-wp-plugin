@@ -222,7 +222,7 @@ class Create_Agent_Files extends Tool_Base {
 			);
 		}
 
-		$agent_dir = AGENTIC_AGENTS_DIR . '/' . $slug;
+		$agent_dir = AGENT_BUILDER_AGENTS_DIR . '/' . $slug;
 
 		if ( is_dir( $agent_dir ) && ! $overwrite ) {
 			return array( 'error' => "Agent directory '{$slug}' already exists. Set overwrite=true to replace." );

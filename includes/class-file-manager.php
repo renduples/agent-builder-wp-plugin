@@ -430,9 +430,9 @@ WEBCONFIG;
 	 *
 	 * Write operations are restricted to:
 	 *   - The uploads directory (wp_upload_dir basedir)
-	 *   - The agentic-agents user directory (AGENTIC_AGENTS_DIR)
-	 *   - The agentic-knowledge directory (AGENTIC_KNOWLEDGE_DIR)
-	 *   - The agentic-backups directory (AGENTIC_BACKUPS_DIR)
+	 *   - The agentic-agents user directory (AGENT_BUILDER_AGENTS_DIR)
+	 *   - The agentic-knowledge directory (AGENT_BUILDER_KNOWLEDGE_DIR)
+	 *   - The agentic-backups directory (AGENT_BUILDER_BACKUPS_DIR)
 	 *   - `abilities.json` specifically, under the plugin's own bundled
 	 *     library/agents/ tree (AGENT_BUILDER_DIR) — see the narrow
 	 *     exception below; nothing else in the plugin directory is writable.
@@ -454,17 +454,17 @@ WEBCONFIG;
 	public static function is_allowed_path( string $path ): bool {
 		$allowed_roots = array();
 
-		if ( defined( 'AGENTIC_AGENTS_DIR' ) ) {
-			$allowed_roots[] = trailingslashit( AGENTIC_AGENTS_DIR );
+		if ( defined( 'AGENT_BUILDER_AGENTS_DIR' ) ) {
+			$allowed_roots[] = trailingslashit( AGENT_BUILDER_AGENTS_DIR );
 		}
 
 		// Knowledge Wiki (OKF) and persona knowledge files.
-		if ( defined( 'AGENTIC_KNOWLEDGE_DIR' ) ) {
-			$allowed_roots[] = trailingslashit( AGENTIC_KNOWLEDGE_DIR );
+		if ( defined( 'AGENT_BUILDER_KNOWLEDGE_DIR' ) ) {
+			$allowed_roots[] = trailingslashit( AGENT_BUILDER_KNOWLEDGE_DIR );
 		}
 
-		if ( defined( 'AGENTIC_BACKUPS_DIR' ) ) {
-			$allowed_roots[] = trailingslashit( AGENTIC_BACKUPS_DIR );
+		if ( defined( 'AGENT_BUILDER_BACKUPS_DIR' ) ) {
+			$allowed_roots[] = trailingslashit( AGENT_BUILDER_BACKUPS_DIR );
 		}
 
 		$upload_dir = wp_upload_dir( null, false );

@@ -55,18 +55,24 @@ spl_autoload_register(
 	}
 );
 
-// Plugin constants.
-// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound
+// Plugin constants. All consistently AGENT_BUILDER_-prefixed (matching the
+// agent_builder_/AGENT_BUILDER_ public prefix registered in phpcs.xml.dist) —
+// no phpcs:disable needed now that the prefix is registered there instead of
+// suppressed inline.
+//
+// The underlying directory paths are unchanged (still literally
+// "agentic-agents" etc. on disk) — only the PHP constant *names* pointing at
+// them were renamed from the old AGENTIC_* names, so no site's existing
+// wp-content/agentic-agents/ (or -knowledge/, -backups/) needs to move.
 define( 'AGENT_BUILDER_FILE', __FILE__ );
 define( 'AGENT_BUILDER_VERSION', '3.4.0' );
-define( 'AGENT_BUILDER_DB_VERSION', '2.13.8' );
+define( 'AGENT_BUILDER_DB_VERSION', '2.14.0' );
 define( 'AGENT_BUILDER_DIR', plugin_dir_path( __FILE__ ) );
 define( 'AGENT_BUILDER_URL', plugin_dir_url( __FILE__ ) );
 define( 'AGENT_BUILDER_BASENAME', plugin_basename( __FILE__ ) );
-define( 'AGENTIC_AGENTS_DIR', WP_CONTENT_DIR . '/agentic-agents' );
-define( 'AGENTIC_KNOWLEDGE_DIR', WP_CONTENT_DIR . '/agentic-knowledge' );
-define( 'AGENTIC_BACKUPS_DIR', WP_CONTENT_DIR . '/agentic-backups' );
-// phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound
+define( 'AGENT_BUILDER_AGENTS_DIR', WP_CONTENT_DIR . '/agentic-agents' );
+define( 'AGENT_BUILDER_KNOWLEDGE_DIR', WP_CONTENT_DIR . '/agentic-knowledge' );
+define( 'AGENT_BUILDER_BACKUPS_DIR', WP_CONTENT_DIR . '/agentic-backups' );
 
 // Composer runtime dependencies.
 if ( file_exists( AGENT_BUILDER_DIR . 'vendor/autoload.php' ) ) {
@@ -148,10 +154,10 @@ final class Plugin {
 
 		// Agent lifecycle hooks — fire from admin when agents are activated/deactivated
 		// to register or clear their scheduled tasks.
-		add_action( 'agentic_agent_activated', array( '\Agentic\Agent_Lifecycle', 'on_agent_activated' ), 10, 2 );
-		add_action( 'agentic_agent_deactivated', array( '\Agentic\Agent_Lifecycle', 'on_agent_deactivated' ), 10, 2 );
-		add_action( 'agentic_agent_installed', array( '\Agentic\Agent_Lifecycle', 'on_agent_installed' ), 10, 2 );
-		add_action( 'agentic_agent_deleted', array( '\Agentic\Agent_Lifecycle', 'on_agent_deleted' ), 10, 1 );
+		add_action( 'agent_builder_agent_activated', array( '\Agentic\Agent_Lifecycle', 'on_agent_activated' ), 10, 2 );
+		add_action( 'agent_builder_agent_deactivated', array( '\Agentic\Agent_Lifecycle', 'on_agent_deactivated' ), 10, 2 );
+		add_action( 'agent_builder_agent_installed', array( '\Agentic\Agent_Lifecycle', 'on_agent_installed' ), 10, 2 );
+		add_action( 'agent_builder_agent_deleted', array( '\Agentic\Agent_Lifecycle', 'on_agent_deleted' ), 10, 1 );
 
 		// Cron callbacks — only needed during an actual cron run. wp-cron.php defines
 		// DOING_CRON = true before firing events, regardless of how it is invoked:
