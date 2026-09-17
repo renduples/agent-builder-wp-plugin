@@ -2,7 +2,7 @@
 /**
  * Deployment Tab: Shortcodes
  *
- * Reads and writes from wp_agentic_deployments (type=shortcode).
+ * Reads and writes from wp_agent_builder_deployments (type=shortcode).
  * Auto-detected (source=auto/code) rows are shown read-only with an
  * enable/disable toggle — they cannot be deleted from here since they
  * live in theme or plugin files.
@@ -166,7 +166,7 @@ if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_uns
 
 $agentic_registry    = \Agentic_Agent_Registry::get_instance();
 $agentic_all_agents  = $agentic_registry->get_all_instances();
-$agentic_deployments = Deployments::all( Deployments::TYPE_SHORTCODE );
+$agent_builder_deployments = Deployments::all( Deployments::TYPE_SHORTCODE );
 
 // ── Edit mode ─────────────────────────────────────────────────────────────────
 
@@ -212,7 +212,7 @@ $agentic_source_labels = array(
 <!-- Existing Deployments -->
 <h2><?php esc_html_e( 'Shortcode Deployments', 'agent-builder' ); ?></h2>
 
-<?php if ( empty( $agentic_deployments ) ) : ?>
+<?php if ( empty( $agent_builder_deployments ) ) : ?>
 <div class="notice notice-info agentic-table-mt-0">
 	<p><?php esc_html_e( 'No shortcode deployments yet. Use the form below to create one, or place [agentic_chat] in a page — it will be auto-detected here on first load.', 'agent-builder' ); ?></p>
 </div>
@@ -233,7 +233,7 @@ $agentic_source_labels = array(
 	</thead>
 	<tbody>
 		<?php
-		foreach ( $agentic_deployments as $agentic_dep ) :
+		foreach ( $agent_builder_deployments as $agentic_dep ) :
 			$agentic_sc_string    = Deployments::build_shortcode_string( $agentic_dep );
 			$agentic_cfg          = $agentic_dep['config'];
 			$agentic_style_str    = $agentic_cfg['style'] ?? 'inline';

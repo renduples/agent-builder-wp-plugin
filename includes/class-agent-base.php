@@ -407,7 +407,7 @@ abstract class Agent_Base {
 	}
 
 	/**
-	 * Return the default settings to seed into agentic_agent_settings on first activation.
+	 * Return the default settings to seed into agent_builder_agent_settings on first activation.
 	 *
 	 * These values are written once by Agent_Settings::seed_defaults() and are
 	 * never overwritten — admin changes persist across activations. Subclasses
@@ -437,7 +437,7 @@ abstract class Agent_Base {
 		// Anonymous users have no WP capabilities. If the site allows anonymous chat,
 		// the REST API permission callback already validated that; skip cap checks here.
 		if ( ! is_user_logged_in() ) {
-			return (bool) get_option( 'agentic_allow_anonymous_chat', false );
+			return (bool) get_option( 'agent_builder_allow_anonymous_chat', false );
 		}
 		foreach ( $this->get_required_capabilities() as $cap ) {
 			if ( ! current_user_can( $cap ) ) {

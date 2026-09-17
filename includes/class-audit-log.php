@@ -95,7 +95,7 @@ class Audit_Log {
 		);
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table insert.
-		$result = $wpdb->insert( $wpdb->prefix . 'agentic_audit_log', $data );
+		$result = $wpdb->insert( $wpdb->prefix . 'agent_builder_audit_log', $data );
 
 		if ( $result ) {
 			$insert_id = $wpdb->insert_id;
@@ -232,7 +232,7 @@ class Audit_Log {
 		$where_clause = 'WHERE ' . implode( ' AND ', $where );
 		$params[]     = $limit;
 
-		$query = 'SELECT * FROM ' . $wpdb->prefix . 'agentic_audit_log ' . $where_clause . ' ORDER BY created_at DESC LIMIT %d';
+		$query = 'SELECT * FROM ' . $wpdb->prefix . 'agent_builder_audit_log ' . $where_clause . ' ORDER BY created_at DESC LIMIT %d';
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Custom table query, where clause built from known safe values.
 		$results = $wpdb->get_results( $wpdb->prepare( $query, $params ), ARRAY_A );
@@ -255,7 +255,7 @@ class Audit_Log {
 		}
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Cached immediately below. %i placeholder safely quotes the table name.
-		$rows = $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT agent_id FROM %i ORDER BY agent_id ASC', $wpdb->prefix . 'agentic_audit_log' ) );
+		$rows = $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT agent_id FROM %i ORDER BY agent_id ASC', $wpdb->prefix . 'agent_builder_audit_log' ) );
 		set_transient( 'agentic_audit_agent_ids', $rows, 300 );
 		return $rows;
 	}
@@ -272,7 +272,7 @@ class Audit_Log {
 		}
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Cached immediately below.
-		$rows = $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT action FROM %i ORDER BY action ASC', $wpdb->prefix . 'agentic_audit_log' ) );
+		$rows = $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT action FROM %i ORDER BY action ASC', $wpdb->prefix . 'agent_builder_audit_log' ) );
 		set_transient( 'agentic_audit_action_types', $rows, 300 );
 		return $rows;
 	}
@@ -300,7 +300,7 @@ class Audit_Log {
                     SUM(tokens_used) as total_tokens,
                     SUM(cost) as total_cost,
                     COUNT(DISTINCT agent_id) as active_agents
-                FROM {$wpdb->prefix}agentic_audit_log 
+                FROM {$wpdb->prefix}agent_builder_audit_log 
                 WHERE created_at >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL %d DAY)",
 				$days
 			),
@@ -327,7 +327,7 @@ class Audit_Log {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table cleanup.
 		return $wpdb->query(
 			$wpdb->prepare(
-				"DELETE FROM {$wpdb->prefix}agentic_audit_log WHERE created_at < DATE_SUB(UTC_TIMESTAMP(), INTERVAL %d DAY)",
+				"DELETE FROM {$wpdb->prefix}agent_builder_audit_log WHERE created_at < DATE_SUB(UTC_TIMESTAMP(), INTERVAL %d DAY)",
 				$days
 			)
 		);
@@ -336,7 +336,7 @@ class Audit_Log {
 	/**
 	 * Run the scheduled retention cleanup.
 	 *
-	 * Reads the same 'agentic_retention_audit_log' option the Settings →
+	 * Reads the same 'agent_builder_retention_audit_log' option the Settings →
 	 * Security tab writes (Admin_Settings_REST::update_tab()) and GDPR::
 	 * run_cleanup() already reads for its own, separate audit/security-log
 	 * sweep. Previously this method read an unrelated
@@ -344,7 +344,7 @@ class Audit_Log {
 	 * ever hooked — so a site owner's configured retention was silently
 	 * ignored by this cron path, which always fell back to its own 30-day
 	 * default regardless of what Settings showed. That meant the daily
-	 * 'agentic_cleanup_audit_log' cron (this method) and GDPR::run_cleanup()'s
+	 * 'agent_builder_cleanup_audit_log' cron (this method) and GDPR::run_cleanup()'s
 	 * daily sweep could disagree about how long to keep the exact same rows.
 	 * Reading the real option makes both paths agree, and honors "0 = keep
 	 * indefinitely" the same way GDPR::run_cleanup() already does.
@@ -352,7 +352,7 @@ class Audit_Log {
 	 * @return int Number of deleted entries.
 	 */
 	public function cleanup_expired(): int {
-		$days = (int) get_option( 'agentic_retention_audit_log', 30 );
+		$days = (int) get_option( 'agent_builder_retention_audit_log', 30 );
 
 		if ( $days < 1 ) {
 			// 0 (or an invalid negative value) means keep indefinitely.

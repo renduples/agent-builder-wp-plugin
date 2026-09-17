@@ -644,7 +644,7 @@ class Tool_Helpers {
 	/**
 	 * Check if a scoped operation is allowed.
 	 *
-	 * Uses the agentic_tool_scopes option which stores an associative array
+	 * Uses the agent_builder_tool_scopes option which stores an associative array
 	 * of 'scope:operation' => bool entries (e.g. 'plugins:read' => true).
 	 * When a scope entry is missing it defaults to allowed (true).
 	 *
@@ -653,7 +653,7 @@ class Tool_Helpers {
 	 * @return bool Whether the operation is permitted.
 	 */
 	public static function is_scope_allowed( string $scope, string $operation ): bool {
-		$scopes = get_option( 'agentic_tool_scopes', array() );
+		$scopes = get_option( 'agent_builder_tool_scopes', array() );
 		if ( ! is_array( $scopes ) ) {
 			return true;
 		}

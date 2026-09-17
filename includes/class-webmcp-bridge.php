@@ -37,7 +37,7 @@ class Webmcp_Bridge {
 	/**
 	 * Option gating the entire bridge (master switch).
 	 */
-	public const OPTION_ENABLED = 'agentic_webmcp_enabled';
+	public const OPTION_ENABLED = 'agent_builder_webmcp_enabled';
 
 	/**
 	 * Tool names a not-logged-in visitor may ever call, regardless of what
@@ -239,7 +239,7 @@ class Webmcp_Bridge {
 		$risk          = Abilities_Manifest::get_effective_risk( $agent_slug, $tool_name, $tool_instance, $call_action );
 
 		// WebMCP never honors the site's chat auto-approve preference
-		// (agentic_approval_auto_max_risk) — that setting is a UX convenience
+		// (agent_builder_approval_auto_max_risk) — that setting is a UX convenience
 		// for the site owner's own trusted wp-admin chat sessions, and must
 		// not silently let a MEDIUM-risk tool execute without this visitor's
 		// own explicit in-page confirmation just because an admin picked

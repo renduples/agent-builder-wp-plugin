@@ -242,7 +242,7 @@ class Manage_Editor_Sidebar_Agent extends \Agentic\Tool_Base {
 		}
 
 		update_option(
-			'agentic_editor_sidebar_settings',
+			'agent_builder_editor_sidebar_settings',
 			array(
 				'enabled'         => $enabled ? '1' : '0',
 				'agent_slug'      => $default_agent,

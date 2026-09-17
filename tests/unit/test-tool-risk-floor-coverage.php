@@ -7,7 +7,7 @@
  * which is registry-value-or-NONE, floored by Risk_Level::BASELINE_RISKS.
  * A tool that neither overrides get_risk_level() itself NOR has a
  * BASELINE_RISKS entry seeds itself as risk 'none' the moment it exists with
- * no row in wp_agentic_tools — which is exactly what runs with zero
+ * no row in wp_agent_builder_tools — which is exactly what runs with zero
  * confirmation, even in supervised mode (Risk_Level::enforcement()).
  *
  * This is the regression net for the ~70-tool gap the #116/#117 risk-gate

@@ -188,7 +188,7 @@ if ( 'all' !== $agentic_active_cat && $agentic_inbound_cat !== $agentic_active_c
 global $wpdb;
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table aggregate.
 $agentic_usage_rows   = $wpdb->get_results(
-	"SELECT target_type AS tool_name, COUNT(*) AS call_count FROM {$wpdb->prefix}agentic_audit_log WHERE action = 'tool_call' GROUP BY target_type",
+	"SELECT target_type AS tool_name, COUNT(*) AS call_count FROM {$wpdb->prefix}agent_builder_audit_log WHERE action = 'tool_call' GROUP BY target_type",
 	ARRAY_A
 );
 $agentic_usage_counts = array();

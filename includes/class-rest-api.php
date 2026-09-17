@@ -149,7 +149,7 @@ class REST_API {
 		// no per-visitor identity — every anonymous session is stored under the
 		// same user_id (0) — so listing "my sessions" for an anonymous caller
 		// would hand back every anonymous visitor's session list. Requires a
-		// real logged-in user regardless of agentic_allow_anonymous_chat.
+		// real logged-in user regardless of agent_builder_allow_anonymous_chat.
 		register_rest_route(
 			'agentic/v1',
 			'/sessions',
@@ -700,7 +700,7 @@ class REST_API {
 
 		$history_days_limit = null;
 
-		$conv_table = $wpdb->prefix . 'agentic_conversations';
+		$conv_table = $wpdb->prefix . 'agent_builder_conversations';
 
 		// Use the dedicated conversations table when available.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table, checked per-request.
@@ -752,7 +752,7 @@ class REST_API {
 		}
 
 		// Legacy fallback: read from audit log (pre-conversations-table sessions).
-		$audit_table = $wpdb->prefix . 'agentic_audit_log';
+		$audit_table = $wpdb->prefix . 'agent_builder_audit_log';
 		$where       = $wpdb->prepare( 'WHERE user_id = %d AND action = %s', $user_id, 'chat_start' );
 		if ( $agent_id ) {
 			$where .= $wpdb->prepare( ' AND agent_id = %s', $agent_id );
@@ -799,7 +799,7 @@ class REST_API {
 		$session_id = sanitize_text_field( $request->get_param( 'session_id' ) );
 		$user_id    = get_current_user_id();
 		$is_admin   = current_user_can( 'manage_options' );
-		$conv_table = $wpdb->prefix . 'agentic_conversations';
+		$conv_table = $wpdb->prefix . 'agent_builder_conversations';
 
 		// Use dedicated conversations table when results exist for this session.
 		$history = array();
@@ -847,7 +847,7 @@ class REST_API {
 
 		if ( empty( $history ) ) {
 			// Legacy fallback: reconstruct history from audit log entries.
-			$audit_table = $wpdb->prefix . 'agentic_audit_log';
+			$audit_table = $wpdb->prefix . 'agent_builder_audit_log';
 			if ( $is_admin ) {
 				// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table query.
 				$rows = $wpdb->get_results(
@@ -892,7 +892,7 @@ class REST_API {
 
 		// Rich trace for impressive Conversations UI (P0 observability).
 		$trace       = array();
-		$audit_table = $wpdb->prefix . 'agentic_audit_log';
+		$audit_table = $wpdb->prefix . 'agent_builder_audit_log';
 
 		// Pull decision + completion events that carry reasoning and tool choices for this session.
 		// These power the beautiful per-turn reasoning trace in the admin Conversations drawer.
@@ -956,7 +956,7 @@ class REST_API {
 	public function get_status( \WP_REST_Request $_request ): \WP_REST_Response { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		$llm = new LLM_Client();
 
-		$active_slugs = get_option( 'agentic_active_agents', array() );
+		$active_slugs = get_option( 'agent_builder_active_agents', array() );
 		if ( ! is_array( $active_slugs ) ) {
 			$active_slugs = array();
 		}
@@ -967,7 +967,7 @@ class REST_API {
 				'configured'    => $llm->is_configured(),
 				'provider'      => $llm->get_provider(),
 				'model'         => $llm->get_model(),
-				'mode'          => get_option( 'agentic_agent_mode', 'supervised' ),
+				'mode'          => get_option( 'agent_builder_agent_mode', 'supervised' ),
 				'active_agents' => array_values( $active_slugs ),
 				'capabilities'  => array(
 					'chat'         => true,
@@ -992,7 +992,7 @@ class REST_API {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table query.
 		$approvals = $wpdb->get_results(
-			"SELECT * FROM {$wpdb->prefix}agentic_approval_queue WHERE status = 'pending' ORDER BY created_at DESC LIMIT 50",
+			"SELECT * FROM {$wpdb->prefix}agent_builder_approval_queue WHERE status = 'pending' ORDER BY created_at DESC LIMIT 50",
 			ARRAY_A
 		);
 
@@ -1017,7 +1017,7 @@ class REST_API {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table query.
 		$approval = $wpdb->get_row(
-			$wpdb->prepare( "SELECT * FROM {$wpdb->prefix}agentic_approval_queue WHERE id = %d", $id ),
+			$wpdb->prepare( "SELECT * FROM {$wpdb->prefix}agent_builder_approval_queue WHERE id = %d", $id ),
 			ARRAY_A
 		);
 
@@ -1035,7 +1035,7 @@ class REST_API {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table update.
 		$wpdb->update(
-			$wpdb->prefix . 'agentic_approval_queue',
+			$wpdb->prefix . 'agent_builder_approval_queue',
 			array(
 				'status'      => $new_status,
 				'approved_by' => get_current_user_id(),
@@ -1401,7 +1401,7 @@ class REST_API {
 
 		// For Ollama, temporarily override the stored URL if a URL was passed.
 		if ( 'ollama' === $provider && ! empty( $ollama_url ) ) {
-			update_option( 'agentic_ollama_url', $ollama_url );
+			update_option( 'agent_builder_ollama_url', $ollama_url );
 		}
 
 		// Create a temporary LLM_Client with the test values.
@@ -1423,7 +1423,7 @@ class REST_API {
 				if ( 'agentic' === $provider ) {
 					$tags_url = Service_Registry::url( 'agentic-chat', '/health' );
 				} else {
-					$tags_url = rtrim( get_option( 'agentic_ollama_url', 'http://localhost:11434' ), '/' ) . '/api/tags';
+					$tags_url = rtrim( get_option( 'agent_builder_ollama_url', 'http://localhost:11434' ), '/' ) . '/api/tags';
 				}
 				$headers  = array( 'Content-Type' => 'application/json' );
 				$response = wp_remote_get(
@@ -1527,7 +1527,7 @@ class REST_API {
 	 */
 	public function check_logged_in(): bool {
 		if ( ! is_user_logged_in() ) {
-			return (bool) get_option( 'agentic_allow_anonymous_chat', false );
+			return (bool) get_option( 'agent_builder_allow_anonymous_chat', false );
 		}
 		return \Agentic\User_Roles::current_user_can( 'chat_frontend' )
 			|| \Agentic\User_Roles::current_user_can( 'chat_admin_bar' );
@@ -1640,7 +1640,7 @@ class REST_API {
 	 */
 	private function log_conversation_turn( string $session_id, int $user_id, string $agent_id, string $role, string $content, array $tools_used = array() ): void {
 		global $wpdb;
-		$table = $wpdb->prefix . 'agentic_conversations';
+		$table = $wpdb->prefix . 'agent_builder_conversations';
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table insert.
 		$wpdb->insert(
 			$table,
@@ -2257,7 +2257,7 @@ class REST_API {
 	 * @return void
 	 */
 	public function handle_tts( \WP_REST_Request $request ): void {
-		$stored_key = (string) get_option( 'agentic_rag_api_secret', '' );
+		$stored_key = (string) get_option( 'agent_builder_rag_api_secret', '' );
 		$api_key    = $stored_key ? $stored_key : (string) ( \Agentic\Provider_Registry::get( 'agentic' )['api_key'] ?? '' );
 		$user_id    = $api_key;
 
@@ -2495,7 +2495,7 @@ class REST_API {
 		$feedback   = 'up' === $thumb ? 1 : -1;
 		$user_id    = get_current_user_id();
 
-		$conv_table = $wpdb->prefix . 'agentic_conversations';
+		$conv_table = $wpdb->prefix . 'agent_builder_conversations';
 
 		// Find the most recent assistant row for this session owned by this user.
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching

@@ -31,12 +31,12 @@ class Job_Manager {
 	/**
 	 * Table name
 	 */
-	private const TABLE_NAME = 'agentic_jobs';
+	private const TABLE_NAME = 'agent_builder_jobs';
 
 	/**
 	 * Cache group
 	 */
-	private const CACHE_GROUP = 'agentic_jobs';
+	private const CACHE_GROUP = 'agent_builder_jobs';
 
 	/**
 	 * Cache expiration (5 minutes)
@@ -62,18 +62,18 @@ class Job_Manager {
 	 * Initialize
 	 */
 	public static function init(): void {
-		add_action( 'agentic_process_job', array( __CLASS__, 'process_job' ) );
-		add_action( 'agentic_cleanup_jobs', array( __CLASS__, 'cleanup_old_jobs' ) );
-		add_action( 'agentic_job_health_check', array( __CLASS__, 'run_health_check' ) );
+		add_action( 'agent_builder_process_job', array( __CLASS__, 'process_job' ) );
+		add_action( 'agent_builder_cleanup_jobs', array( __CLASS__, 'cleanup_old_jobs' ) );
+		add_action( 'agent_builder_job_health_check', array( __CLASS__, 'run_health_check' ) );
 
 		// Schedule hourly cleanup if not already scheduled.
-		if ( ! wp_next_scheduled( 'agentic_cleanup_jobs' ) ) {
-			wp_schedule_event( time(), 'hourly', 'agentic_cleanup_jobs' );
+		if ( ! wp_next_scheduled( 'agent_builder_cleanup_jobs' ) ) {
+			wp_schedule_event( time(), 'hourly', 'agent_builder_cleanup_jobs' );
 		}
 
 		// Schedule hourly job health/stuck detection (P0 stabilization).
-		if ( ! wp_next_scheduled( 'agentic_job_health_check' ) ) {
-			wp_schedule_event( time(), 'hourly', 'agentic_job_health_check' );
+		if ( ! wp_next_scheduled( 'agent_builder_job_health_check' ) ) {
+			wp_schedule_event( time(), 'hourly', 'agent_builder_job_health_check' );
 		}
 	}
 
@@ -168,7 +168,7 @@ class Job_Manager {
 		);
 
 		// Schedule async processing.
-		wp_schedule_single_event( time(), 'agentic_process_job', array( $job_id ) );
+		wp_schedule_single_event( time(), 'agent_builder_process_job', array( $job_id ) );
 
 		// Invalidate list cache.
 		self::invalidate_list_cache();

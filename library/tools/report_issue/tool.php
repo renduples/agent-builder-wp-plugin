@@ -134,7 +134,7 @@ class Report_Issue extends \Agentic\Tool_Base {
 		$errors = array();
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- fixed prefix table name.
 		$rows = $wpdb->get_results(
-			"SELECT agent_id, action, details, created_at FROM {$wpdb->prefix}agentic_audit_log
+			"SELECT agent_id, action, details, created_at FROM {$wpdb->prefix}agent_builder_audit_log
 			 WHERE action IN ( 'chat_error', 'tool_error_feedback', 'tool_blocked' )
 			 ORDER BY id DESC LIMIT 10",
 			ARRAY_A
@@ -181,7 +181,7 @@ class Report_Issue extends \Agentic\Tool_Base {
 				: 'unreachable';
 		}
 
-		$provider = get_option( 'agentic_llm_provider', 'agentic' );
+		$provider = get_option( 'agent_builder_llm_provider', 'agentic' );
 
 		$summary = $this->summarize( $error_type, $last, $connectivity, (string) $provider );
 
@@ -247,7 +247,7 @@ class Report_Issue extends \Agentic\Tool_Base {
 
 		// The site is identified by its URL (and license key if present). We do NOT
 		// transmit the provider API key.
-		$license = (string) get_option( 'agentic_license_key', '' );
+		$license = (string) get_option( 'agent_builder_license_key', '' );
 
 		$response = wp_remote_post(
 			$endpoint,

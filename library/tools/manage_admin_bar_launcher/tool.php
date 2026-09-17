@@ -203,14 +203,14 @@ class Manage_Admin_Bar_Launcher extends \Agentic\Tool_Base {
 	 * @return array
 	 */
 	private function get_contextual_launcher(): array {
-		$screens = get_option( 'agentic_admin_launcher_screens', null );
+		$screens = get_option( 'agent_builder_admin_launcher_screens', null );
 		if ( ! is_array( $screens ) ) {
 			$screens = class_exists( Admin_Surfaces::class ) ? array_keys( Admin_Surfaces::available_screens() ) : array();
 		}
 
 		return array(
-			'enabled'          => '1' === (string) get_option( 'agentic_admin_launchers_enabled', '1' ),
-			'agent_slug'       => (string) get_option( 'agentic_admin_launcher_agent', 'wordpress-assistant' ),
+			'enabled'          => '1' === (string) get_option( 'agent_builder_admin_launchers_enabled', '1' ),
+			'agent_slug'       => (string) get_option( 'agent_builder_admin_launcher_agent', 'wordpress-assistant' ),
 			'screens'          => $screens,
 			'available_screens' => class_exists( Admin_Surfaces::class ) ? array_keys( Admin_Surfaces::available_screens() ) : array(),
 		);
@@ -227,7 +227,7 @@ class Manage_Admin_Bar_Launcher extends \Agentic\Tool_Base {
 			return array( 'error' => 'enabled is required to update the contextual launcher.' );
 		}
 
-		update_option( 'agentic_admin_launchers_enabled', ! empty( $args['enabled'] ) ? '1' : '0' );
+		update_option( 'agent_builder_admin_launchers_enabled', ! empty( $args['enabled'] ) ? '1' : '0' );
 
 		if ( isset( $args['agent_slug'] ) ) {
 			$slug     = sanitize_key( (string) $args['agent_slug'] );
@@ -236,7 +236,7 @@ class Manage_Admin_Bar_Launcher extends \Agentic\Tool_Base {
 				return array( 'error' => "Agent \"{$slug}\" was not found or is not active." );
 			}
 			if ( '' !== $slug ) {
-				update_option( 'agentic_admin_launcher_agent', $slug, false );
+				update_option( 'agent_builder_admin_launcher_agent', $slug, false );
 			}
 		}
 
@@ -248,7 +248,7 @@ class Manage_Admin_Bar_Launcher extends \Agentic\Tool_Base {
 					$allowed
 				)
 			);
-			update_option( 'agentic_admin_launcher_screens', $screens, false );
+			update_option( 'agent_builder_admin_launcher_screens', $screens, false );
 		}
 
 		return array( 'ok' => true ) + $this->get_contextual_launcher();

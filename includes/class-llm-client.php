@@ -55,11 +55,11 @@ class LLM_Client {
 	 * Constructor
 	 */
 	public function __construct() {
-		$this->provider = get_option( 'agentic_llm_provider', 'agentic' );
+		$this->provider = get_option( 'agent_builder_llm_provider', 'agentic' );
 
 		// Resolve API key and default model from DB-backed provider registry.
 		$p             = Provider_Registry::get( $this->provider );
-		$this->model   = get_option( 'agentic_model', $p['default_model'] ?? 'gemini-2.5-flash' );
+		$this->model   = get_option( 'agent_builder_model', $p['default_model'] ?? 'gemini-2.5-flash' );
 		$this->api_key = ( ! $p || 'none' === ( $p['auth_type'] ?? 'bearer' ) )
 			? ''
 			: ( $p['api_key'] ?? '' );
@@ -922,7 +922,7 @@ class LLM_Client {
 		if ( ! $p ) {
 			return '';
 		}
-		$model = get_option( 'agentic_model', '' );
+		$model = get_option( 'agent_builder_model', '' );
 		$key   = $p['api_key'] ?? '';
 		return Provider_Registry::resolve_endpoint( $p['endpoint'], $model, $key );
 	}
@@ -984,7 +984,7 @@ class LLM_Client {
 					}
 				}
 				$default_model      = $p['default_model'] ?? 'claude-3-5-sonnet-20241022';
-				$body['model']      = ! empty( $model_override ) ? $model_override : get_option( 'agentic_model', $default_model );
+				$body['model']      = ! empty( $model_override ) ? $model_override : get_option( 'agent_builder_model', $default_model );
 				$body['messages']   = $msgs;
 				$body['max_tokens'] = 4096;
 				if ( ! empty( $system ) ) {
@@ -1014,7 +1014,7 @@ class LLM_Client {
 			default:
 				// OpenAI-compatible format (openai, xai, mistral, llama, cohere, agentic, ollama, custom).
 				$default_model       = $p['default_model'] ?? 'gpt-4o';
-				$body['model']       = ! empty( $model_override ) ? $model_override : get_option( 'agentic_model', $default_model );
+				$body['model']       = ! empty( $model_override ) ? $model_override : get_option( 'agent_builder_model', $default_model );
 				$body['messages']    = $messages;
 				$body['max_tokens']  = 4096;
 				$body['temperature'] = 0.7;

@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 // ── Handle form submission ────────────────────────────────────────────────────
 
 if ( isset( $_POST['agentic_setup_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['agentic_setup_nonce'] ) ), 'agentic_setup' ) ) {
-	$agentic_provider = sanitize_text_field( wp_unslash( $_POST['agentic_llm_provider'] ?? '' ) );
+	$agentic_provider = sanitize_text_field( wp_unslash( $_POST['agent_builder_llm_provider'] ?? '' ) );
 	$agentic_api_key  = sanitize_text_field( wp_unslash( $_POST['agentic_llm_api_key'] ?? '' ) );
 
 	$agentic_allowed_providers = \Agentic\Provider_Registry::get_slugs();
@@ -26,9 +26,9 @@ if ( isset( $_POST['agentic_setup_nonce'] ) && wp_verify_nonce( sanitize_text_fi
 		$agentic_provider_default = $agentic_reg_entry['default_model'] ?? 'gpt-4o';
 
 		\Agentic\Provider_Registry::save_api_key( $agentic_provider, $agentic_api_key );
-		update_option( 'agentic_llm_provider', $agentic_provider );
-		update_option( 'agentic_model', $agentic_provider_default );
-		update_option( 'agentic_onboarding_complete', true );
+		update_option( 'agent_builder_llm_provider', $agentic_provider );
+		update_option( 'agent_builder_model', $agentic_provider_default );
+		update_option( 'agent_builder_onboarding_complete', true );
 
 		$agentic_setup_audit = new \Agentic\Audit_Log();
 		$agentic_setup_audit->log(
@@ -48,7 +48,7 @@ if ( isset( $_POST['agentic_setup_nonce'] ) && wp_verify_nonce( sanitize_text_fi
 }
 
 if ( isset( $_GET['skip_setup'] ) && check_admin_referer( 'agentic_skip_setup' ) ) {
-	update_option( 'agentic_onboarding_complete', true );
+	update_option( 'agent_builder_onboarding_complete', true );
 	$agentic_redirect_url = admin_url( 'admin.php?page=agent-builder' );
 	echo '<script>window.location.href=' . wp_json_encode( $agentic_redirect_url ) . ';</script>';
 	exit;
@@ -290,12 +290,12 @@ $agentic_wizard_meta = array(
 	),
 );
 
-// Build $agentic_providers by merging registry data (name, icon, key_url) with wizard-only metadata.
-$agentic_providers = array();
+// Build $agent_builder_providers by merging registry data (name, icon, key_url) with wizard-only metadata.
+$agent_builder_providers = array();
 foreach ( \Agentic\Provider_Registry::get_all() as $agentic_reg_p ) {
 	$agentic_pslug                       = $agentic_reg_p['slug'];
 	$agentic_wmeta                       = $agentic_wizard_meta[ $agentic_pslug ] ?? array();
-	$agentic_providers[ $agentic_pslug ] = array_merge(
+	$agent_builder_providers[ $agentic_pslug ] = array_merge(
 		array(
 			'name'    => $agentic_reg_p['name'],
 			'icon'    => $agentic_reg_p['icon'],
@@ -467,7 +467,7 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 
 	<form method="post" action="" id="setup-form">
 		<?php wp_nonce_field( 'agentic_setup', 'agentic_setup_nonce' ); ?>
-		<input type="hidden" name="agentic_llm_provider" id="hidden_provider" value="">
+		<input type="hidden" name="agent_builder_llm_provider" id="hidden_provider" value="">
 		<input type="hidden" name="agentic_llm_api_key" id="hidden_api_key" value="">
 
 		<div class="setup-card">
@@ -479,7 +479,7 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 					<p><?php esc_html_e( 'At least one AI Provider is needed in order for your AI Agents to respond to requests.', 'agent-builder' ); ?></p>
 					<p><strong><?php esc_html_e( 'Popular AI Providers:', 'agent-builder' ); ?></strong></p>
 					<ul class="provider-list">
-						<?php foreach ( $agentic_providers as $agentic_p_slug => $agentic_p ) : ?>
+						<?php foreach ( $agent_builder_providers as $agentic_p_slug => $agentic_p ) : ?>
 						<li><?php echo esc_html( $agentic_p['name'] ); ?>
 							<?php
 							if ( ! empty( $agentic_p['badge'] ) ) :
@@ -509,7 +509,7 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 					<?php esc_html_e( 'Select the provider you want to connect.', 'agent-builder' ); ?>
 				</p>
 				<div class="provider-grid">
-					<?php foreach ( $agentic_providers as $agentic_slug => $agentic_p ) : ?>
+					<?php foreach ( $agent_builder_providers as $agentic_slug => $agentic_p ) : ?>
 					<div class="provider-card" id="card-<?php echo esc_attr( $agentic_slug ); ?>" role="button" tabindex="0" aria-pressed="false" onclick="selectProvider('<?php echo esc_js( $agentic_slug ); ?>')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectProvider('<?php echo esc_js( $agentic_slug ); ?>');}">
 						<div class="provider-icon">
 							<?php
@@ -618,7 +618,7 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 			</div>
 
 			<!-- ── Phase 3: Per-provider instructions + key entry ─────── -->
-			<?php foreach ( $agentic_providers as $agentic_slug => $agentic_p ) : ?>
+			<?php foreach ( $agent_builder_providers as $agentic_slug => $agentic_p ) : ?>
 			<div class="setup-card-inner provider-steps-section" id="phase-steps-<?php echo esc_attr( $agentic_slug ); ?>">
 				<div class="provider-steps-header">
 					<h2>
@@ -965,8 +965,8 @@ var wizardRestUrl    = <?php echo wp_json_encode( rest_url( 'agentic/v1/' ) ); ?
 var ajaxUrl = <?php echo wp_json_encode( admin_url( 'admin-ajax.php' ) ); ?>;
 var ajaxNonce = <?php echo wp_json_encode( wp_create_nonce( 'agentic_test_connection' ) ); ?>;
 var signupNonce = <?php echo wp_json_encode( wp_create_nonce( 'agentic_signup' ) ); ?>;
-var providerSignupUrls = <?php echo wp_json_encode( array_map( fn( $agentic_p ) => $agentic_p['signup_url'], $agentic_providers ) ); ?>;
-var providerNames      = <?php echo wp_json_encode( array_map( fn( $agentic_p ) => $agentic_p['name'], $agentic_providers ) ); ?>;
+var providerSignupUrls = <?php echo wp_json_encode( array_map( fn( $agentic_p ) => $agentic_p['signup_url'], $agent_builder_providers ) ); ?>;
+var providerNames      = <?php echo wp_json_encode( array_map( fn( $agentic_p ) => $agentic_p['name'], $agent_builder_providers ) ); ?>;
 var providerInfoData       = <?php echo wp_json_encode( $agentic_provider_info ); ?>;
 var wizardSuggestedPrompts = <?php echo wp_json_encode( array_values( $agentic_wizard_prompts ) ); ?>;
 var wizardAgentShortcuts   = <?php echo wp_json_encode( array_values( $agentic_wizard_shortcuts ) ); ?>;
@@ -990,7 +990,7 @@ function showPhase(phase, userHasAccount) {
 
 	// Hide all phases.
 	var phases = ['phase-account', 'phase-provider-pick', 'phase-test'];
-	<?php foreach ( array_keys( $agentic_providers ) as $agentic_slug ) : ?>
+	<?php foreach ( array_keys( $agent_builder_providers ) as $agentic_slug ) : ?>
 	phases.push('phase-steps-<?php echo esc_attr( $agentic_slug ); ?>');
 	<?php endforeach; ?>
 
@@ -1054,7 +1054,7 @@ function showPhase(phase, userHasAccount) {
 
 function goBack() {
 	var phases = ['phase-account', 'phase-provider-pick', 'phase-test'];
-	<?php foreach ( array_keys( $agentic_providers ) as $agentic_slug ) : ?>
+	<?php foreach ( array_keys( $agent_builder_providers ) as $agentic_slug ) : ?>
 	phases.push('phase-steps-<?php echo esc_attr( $agentic_slug ); ?>');
 	<?php endforeach; ?>
 
@@ -1076,7 +1076,7 @@ function goBack() {
 
 function goNext() {
 	var phases = ['phase-account', 'phase-provider-pick', 'phase-test'];
-	<?php foreach ( array_keys( $agentic_providers ) as $agentic_slug ) : ?>
+	<?php foreach ( array_keys( $agent_builder_providers ) as $agentic_slug ) : ?>
 	phases.push('phase-steps-<?php echo esc_attr( $agentic_slug ); ?>');
 	<?php endforeach; ?>
 
@@ -1099,7 +1099,7 @@ function goNext() {
 	if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-var providerKeyUrls = <?php echo wp_json_encode( array_map( fn( $agentic_p ) => $agentic_p['key_url'] ?? '', $agentic_providers ) ); ?>;
+var providerKeyUrls = <?php echo wp_json_encode( array_map( fn( $agentic_p ) => $agentic_p['key_url'] ?? '', $agent_builder_providers ) ); ?>;
 
 function openProviderKey(slug) {
 	var url = providerKeyUrls[slug] || providerSignupUrls[slug];

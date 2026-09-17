@@ -106,8 +106,8 @@ class Db_Update_Option extends \Agentic\Tool_Base {
 			'initial_db_version',
 			'wp_user_roles',
 			'agentic_disabled_tools',
-			'agentic_tool_scopes',
-			'agentic_active_agents',
+			'agent_builder_tool_scopes',
+			'agent_builder_active_agents',
 		);
 
 		if ( in_array( $name, $protected_options, true ) ) {

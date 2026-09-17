@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 $agentic_all_providers   = \Agentic\Provider_Registry::get_all();
-$agentic_current_default = get_option( 'agentic_llm_provider', 'agentic' );
+$agentic_current_default = get_option( 'agent_builder_llm_provider', 'agentic' );
 $agentic_prov_saved      = isset( $_GET['saved'] ) && '1' === $_GET['saved']; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 // Basic/Advanced split (M1 Phase 6). Basic narrows the add/edit form to
@@ -68,7 +68,7 @@ if ( $agentic_edit_slug ) {
 	$agentic_current_api_key = $agentic_edit_prov['api_key'] ?? ''; // From DB.
 	// Legacy fallback for installs not yet re-saved.
 	if ( empty( $agentic_current_api_key ) ) {
-		$agentic_api_keys        = get_option( 'agentic_llm_api_keys', array() );
+		$agentic_api_keys        = get_option( 'agent_builder_llm_api_keys', array() );
 		$agentic_current_api_key = $agentic_api_keys[ $agentic_edit_slug ] ?? '';
 	}
 	if ( 'none' === $agentic_at ) {

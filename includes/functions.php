@@ -79,9 +79,9 @@ function agent_builder_get_effective_provider_model( string $agent_slug = '' ): 
 		'ollama'    => 'Ollama',
 	);
 
-	$provider     = get_option( 'agentic_llm_provider', 'agentic' );
-	$model        = get_option( 'agentic_model', '' );
-	$vision_model = get_option( 'agentic_vision_model', '' );
+	$provider     = get_option( 'agent_builder_llm_provider', 'agentic' );
+	$model        = get_option( 'agent_builder_model', '' );
+	$vision_model = get_option( 'agent_builder_vision_model', '' );
 
 	if ( $agent_slug ) {
 		$ov_provider     = \Agentic\Agent_Settings::get( $agent_slug, 'override_provider' );
@@ -125,11 +125,11 @@ function agent_builder_get_effective_provider_model( string $agent_slug = '' ): 
  * @return array{audio: string, tts: string, vision: string, costs: string}
  */
 function agent_builder_get_effective_chat_features( string $agent_slug = '' ): array {
-	$audio   = get_option( 'agentic_chat_audio', '1' );
-	$rag_key = get_option( 'agentic_rag_api_secret', '' );
+	$audio   = get_option( 'agent_builder_chat_audio', '1' );
+	$rag_key = get_option( 'agent_builder_rag_api_secret', '' );
 	$rag_key = ! empty( $rag_key ) ? $rag_key : ( \Agentic\Provider_Registry::get( 'agentic' )['api_key'] ?? '' );
-	$tts     = ( '1' === get_option( 'agentic_chat_tts', '1' ) && ! empty( $rag_key ) ) ? '1' : '0';
-	$vision  = get_option( 'agentic_chat_vision', '1' );
+	$tts     = ( '1' === get_option( 'agent_builder_chat_tts', '1' ) && ! empty( $rag_key ) ) ? '1' : '0';
+	$vision  = get_option( 'agent_builder_chat_vision', '1' );
 	$costs   = '0'; // This build has no license path — cost display stays off.
 
 	if ( $agent_slug ) {

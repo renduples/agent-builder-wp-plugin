@@ -180,7 +180,7 @@ class Add_Audio_Track extends \Agentic\Tool_Base {
 	 * @return array Config with api_key + user_id, or array with 'error' key.
 	 */
 	private function get_videogen_config(): array {
-		$api_key = (string) get_option( 'agentic_rag_api_secret', '' );
+		$api_key = (string) get_option( 'agent_builder_rag_api_secret', '' );
 		if ( empty( $api_key ) && defined( 'AGENTIC_RAG_API_KEY' ) ) {
 			$api_key = AGENTIC_RAG_API_KEY;
 		}

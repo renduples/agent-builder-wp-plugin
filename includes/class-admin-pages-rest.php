@@ -219,7 +219,7 @@ class Admin_Pages_REST {
 			}
 			$ok = Tools_Registry::set_enabled( $name, $enabled );
 			// Manual toggle leaves basic profile as custom.
-			update_option( 'agentic_tools_ability_profile', 'custom', false );
+			update_option( 'agent_builder_tools_ability_profile', 'custom', false );
 			if ( $ok && class_exists( Audit_Log::class ) ) {
 				Audit_Log::log_admin(
 					$enabled ? 'tool_enabled' : 'tool_disabled',
@@ -255,7 +255,7 @@ class Admin_Pages_REST {
 			}
 			$max    = (string) $profiles[ $profile_id ]['max_risk'];
 			$result = Tools_Registry::apply_max_risk_level( $max );
-			update_option( 'agentic_tools_ability_profile', $profile_id, false );
+			update_option( 'agent_builder_tools_ability_profile', $profile_id, false );
 			if ( class_exists( Audit_Log::class ) ) {
 				Audit_Log::log_admin(
 					'tools_profile_applied',
@@ -515,8 +515,8 @@ class Admin_Pages_REST {
 		}
 
 		$model = (string) ( $p['default_model'] ?? '' );
-		if ( $slug === get_option( 'agentic_llm_provider', '' ) ) {
-			$site_model = (string) get_option( 'agentic_model', '' );
+		if ( $slug === get_option( 'agent_builder_llm_provider', '' ) ) {
+			$site_model = (string) get_option( 'agent_builder_model', '' );
 			if ( '' !== $site_model ) {
 				$model = $site_model;
 			}
@@ -524,7 +524,7 @@ class Admin_Pages_REST {
 
 		if ( $is_keyless ) {
 			$url = 'ollama' === $slug
-				? rtrim( get_option( 'agentic_ollama_url', 'http://localhost:11434' ), '/' ) . '/api/tags'
+				? rtrim( get_option( 'agent_builder_ollama_url', 'http://localhost:11434' ), '/' ) . '/api/tags'
 				: Service_Registry::url( 'agentic-chat', '/health' );
 			$response = wp_remote_get( $url, array( 'timeout' => 10 ) );
 		} else {
@@ -796,7 +796,7 @@ class Admin_Pages_REST {
 
 		$is_advanced = class_exists( Admin_Menu_Handler::class )
 			? Admin_Menu_Handler::is_advanced_mode( 'tools' )
-			: ( 'advanced' === get_option( 'agentic_ui_mode', 'basic' ) );
+			: ( 'advanced' === get_option( 'agent_builder_ui_mode', 'basic' ) );
 
 		$enabled_count  = 0;
 		$disabled_count = 0;
@@ -900,7 +900,7 @@ class Admin_Pages_REST {
 	 * @return string
 	 */
 	private static function resolve_active_tools_profile(): string {
-		$stored   = sanitize_key( (string) get_option( 'agentic_tools_ability_profile', '' ) );
+		$stored   = sanitize_key( (string) get_option( 'agent_builder_tools_ability_profile', '' ) );
 		$profiles = self::tools_ability_profiles();
 		if ( $stored && isset( $profiles[ $stored ] ) && 'custom' !== $stored ) {
 			return $stored;
@@ -929,7 +929,7 @@ class Admin_Pages_REST {
 	private static function skills_payload(): array {
 		$is_advanced = class_exists( Admin_Menu_Handler::class )
 			? Admin_Menu_Handler::is_advanced_mode( 'skills' )
-			: ( 'advanced' === get_option( 'agentic_ui_mode', 'basic' ) );
+			: ( 'advanced' === get_option( 'agent_builder_ui_mode', 'basic' ) );
 
 		$source_labels = array(
 			'core'      => __( 'Core', 'agent-builder' ),
@@ -1057,7 +1057,7 @@ class Admin_Pages_REST {
 
 		$is_advanced = class_exists( Admin_Menu_Handler::class )
 			? Admin_Menu_Handler::is_advanced_mode( 'approvals' )
-			: ( 'advanced' === get_option( 'agentic_ui_mode', 'basic' ) );
+			: ( 'advanced' === get_option( 'agent_builder_ui_mode', 'basic' ) );
 
 		$prefs = self::get_approval_prefs();
 
@@ -1082,7 +1082,7 @@ class Admin_Pages_REST {
 					'url'   => admin_url( 'admin.php?page=agentic-approvals&tab=backups' ),
 				),
 			),
-			'agent_mode'       => (string) get_option( 'agentic_agent_mode', 'supervised' ),
+			'agent_mode'       => (string) get_option( 'agent_builder_agent_mode', 'supervised' ),
 			'is_advanced'      => $is_advanced,
 			'interface_url'    => admin_url( 'admin.php?page=agentic-settings&tab=interface' ),
 			'prefs'            => $prefs,
@@ -1101,7 +1101,7 @@ class Admin_Pages_REST {
 	 * @return array<int, array<string, mixed>>
 	 */
 	private static function approval_comfort_profiles(): array {
-		$active = sanitize_key( (string) get_option( 'agentic_approval_comfort', 'careful' ) );
+		$active = sanitize_key( (string) get_option( 'agent_builder_approval_comfort', 'careful' ) );
 		$cards  = array(
 			array(
 				'id'        => 'careful',
@@ -1150,17 +1150,17 @@ class Admin_Pages_REST {
 	 * @return array<string, mixed>
 	 */
 	private static function get_approval_prefs(): array {
-		$email = sanitize_email( (string) get_option( 'agentic_approval_email_to', '' ) );
+		$email = sanitize_email( (string) get_option( 'agent_builder_approval_email_to', '' ) );
 		if ( ! is_email( $email ) ) {
 			$email = (string) get_option( 'admin_email' );
 		}
 		return array(
-			'email_notify'  => (bool) get_option( 'agentic_approval_email_notify', false ),
+			'email_notify'  => (bool) get_option( 'agent_builder_approval_email_notify', false ),
 			'email_to'      => $email,
-			'comfort'       => sanitize_key( (string) get_option( 'agentic_approval_comfort', 'careful' ) ),
-			'auto_max_risk' => sanitize_key( (string) get_option( 'agentic_approval_auto_max_risk', 'none' ) ),
-			'risk_ack'      => (bool) get_option( 'agentic_approval_risk_ack', false ),
-			'agent_mode'    => (string) get_option( 'agentic_agent_mode', 'supervised' ),
+			'comfort'       => sanitize_key( (string) get_option( 'agent_builder_approval_comfort', 'careful' ) ),
+			'auto_max_risk' => sanitize_key( (string) get_option( 'agent_builder_approval_auto_max_risk', 'none' ) ),
+			'risk_ack'      => (bool) get_option( 'agent_builder_approval_risk_ack', false ),
+			'agent_mode'    => (string) get_option( 'agent_builder_agent_mode', 'supervised' ),
 		);
 	}
 
@@ -1202,18 +1202,18 @@ class Admin_Pages_REST {
 
 		$prev = self::get_approval_prefs();
 
-		update_option( 'agentic_approval_email_notify', $email_notify ? 1 : 0, false );
+		update_option( 'agent_builder_approval_email_notify', $email_notify ? 1 : 0, false );
 		if ( is_email( $email_to ) ) {
-			update_option( 'agentic_approval_email_to', $email_to, false );
+			update_option( 'agent_builder_approval_email_to', $email_to, false );
 		}
 
 		$auto_max = (string) ( $profiles[ $comfort ]['auto_max'] ?? 'none' );
 		$mode     = (string) ( $profiles[ $comfort ]['mode'] ?? 'supervised' );
 
-		update_option( 'agentic_approval_comfort', $comfort, false );
-		update_option( 'agentic_approval_auto_max_risk', $auto_max, false );
-		update_option( 'agentic_agent_mode', $mode, false );
-		update_option( 'agentic_approval_risk_ack', ( ! empty( $profiles[ $comfort ]['needs_ack'] ) && $risk_ack ) ? 1 : 0, false );
+		update_option( 'agent_builder_approval_comfort', $comfort, false );
+		update_option( 'agent_builder_approval_auto_max_risk', $auto_max, false );
+		update_option( 'agent_builder_agent_mode', $mode, false );
+		update_option( 'agent_builder_approval_risk_ack', ( ! empty( $profiles[ $comfort ]['needs_ack'] ) && $risk_ack ) ? 1 : 0, false );
 
 		if ( class_exists( Audit_Log::class ) ) {
 			Audit_Log::log_admin(
@@ -1507,7 +1507,7 @@ class Admin_Pages_REST {
 		);
 		$is_advanced   = class_exists( Admin_Menu_Handler::class )
 			? Admin_Menu_Handler::is_advanced_mode( 'logs' )
-			: ( 'advanced' === get_option( 'agentic_ui_mode', 'basic' ) );
+			: ( 'advanced' === get_option( 'agent_builder_ui_mode', 'basic' ) );
 		$period_limits = array(
 			'day'   => 200,
 			'week'  => 500,
@@ -1546,7 +1546,7 @@ class Admin_Pages_REST {
 			}
 		} elseif ( 'conversations' === $tab ) {
 			global $wpdb;
-			$table = $wpdb->prefix . 'agentic_conversations';
+			$table = $wpdb->prefix . 'agent_builder_conversations';
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
 			if ( $exists ) {
@@ -1594,7 +1594,7 @@ class Admin_Pages_REST {
 			}
 		} elseif ( 'security' === $tab && class_exists( Security_Log::class ) ) {
 			global $wpdb;
-			$table = $wpdb->prefix . 'agentic_security_log';
+			$table = $wpdb->prefix . 'agent_builder_security_log';
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
 			if ( $exists ) {
@@ -2229,7 +2229,7 @@ class Admin_Pages_REST {
 	private static function agent_ready_payload(): array {
 		$is_advanced = class_exists( Admin_Menu_Handler::class )
 			? Admin_Menu_Handler::is_advanced_mode( 'agent-ready' )
-			: ( 'advanced' === get_option( 'agentic_ui_mode', 'basic' ) );
+			: ( 'advanced' === get_option( 'agent_builder_ui_mode', 'basic' ) );
 
 		$payload = array(
 			'page'           => 'agent-ready',
@@ -2243,7 +2243,7 @@ class Admin_Pages_REST {
 
 		if ( $is_advanced ) {
 			$payload['webmcp_matrix']    = class_exists( Abilities_Manifest::class ) ? Abilities_Manifest::get_webmcp_exposed() : array();
-			$payload['directory_status'] = get_option( 'agentic_directory_submission', array() );
+			$payload['directory_status'] = get_option( 'agent_builder_directory_submission', array() );
 		}
 
 		return $payload;
@@ -2294,11 +2294,11 @@ class Admin_Pages_REST {
 		if ( class_exists( Approval_Queue::class ) ) {
 			$pending_count = ( new Approval_Queue() )->get_pending_count();
 		}
-		$agent_mode = (string) get_option( 'agentic_agent_mode', 'supervised' );
+		$agent_mode = (string) get_option( 'agent_builder_agent_mode', 'supervised' );
 		if ( ! in_array( $agent_mode, array( 'disabled', 'supervised', 'autonomous' ), true ) ) {
 			$agent_mode = 'supervised';
 		}
-		$comfort = sanitize_key( (string) get_option( 'agentic_approval_comfort', 'careful' ) );
+		$comfort = sanitize_key( (string) get_option( 'agent_builder_approval_comfort', 'careful' ) );
 
 		$integrity = array(
 			'valid'          => true,
@@ -2352,7 +2352,7 @@ class Admin_Pages_REST {
 			'description'    => __( 'Is this site set up safely for AI agents right now? These cards summarize the controls you already have — they do not change how those controls work.', 'agent-builder' ),
 			'is_advanced'    => class_exists( Admin_Menu_Handler::class )
 				? Admin_Menu_Handler::is_advanced_mode( 'safety-center' )
-				: ( 'advanced' === get_option( 'agentic_ui_mode', 'basic' ) ),
+				: ( 'advanced' === get_option( 'agent_builder_ui_mode', 'basic' ) ),
 			'tools'          => array(
 				'enabled_count'    => $enabled_count,
 				'disabled_count'   => $disabled_count,

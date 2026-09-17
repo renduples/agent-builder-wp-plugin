@@ -62,7 +62,7 @@ class Create_Short_Link extends Tool_Base {
 			return array( 'error' => 'target_url is required.' );
 		}
 
-		$links = (array) get_option( 'agentic_short_links', array() );
+		$links = (array) get_option( 'agent_builder_short_links', array() );
 
 		// Generate unique slug if not provided.
 		if ( ! $slug ) {
@@ -105,7 +105,7 @@ class Create_Short_Link extends Tool_Base {
 			$links = array_slice( $links, count( $links ) - $max_links, null, true );
 		}
 
-		update_option( 'agentic_short_links', $links, false );
+		update_option( 'agent_builder_short_links', $links, false );
 
 		return array(
 			'slug'        => $slug,

@@ -72,26 +72,26 @@ if (
 
 	// Contextual Ask AI launchers.
 	update_option(
-		'agentic_admin_launchers_enabled',
-		! empty( $_POST['agentic_admin_launchers_enabled'] ) ? '1' : '0'
+		'agent_builder_admin_launchers_enabled',
+		! empty( $_POST['agent_builder_admin_launchers_enabled'] ) ? '1' : '0'
 	);
 
-	$agentic_launcher_screens_raw = isset( $_POST['agentic_admin_launcher_screens'] ) && is_array( $_POST['agentic_admin_launcher_screens'] )
-		? array_map( 'sanitize_key', wp_unslash( $_POST['agentic_admin_launcher_screens'] ) )
+	$agentic_launcher_screens_raw = isset( $_POST['agent_builder_admin_launcher_screens'] ) && is_array( $_POST['agent_builder_admin_launcher_screens'] )
+		? array_map( 'sanitize_key', wp_unslash( $_POST['agent_builder_admin_launcher_screens'] ) )
 		: array();
 	$agentic_allowed_screens      = array_keys( \Agentic\Admin_Surfaces::available_screens() );
 	$agentic_launcher_screens     = array_values(
 		array_intersect( $agentic_launcher_screens_raw, $agentic_allowed_screens )
 	);
 	// Empty selection with feature ON is allowed (shows nowhere until screens ticked).
-	update_option( 'agentic_admin_launcher_screens', $agentic_launcher_screens, false );
+	update_option( 'agent_builder_admin_launcher_screens', $agentic_launcher_screens, false );
 
-	$agentic_launcher_agent = sanitize_key( wp_unslash( $_POST['agentic_admin_launcher_agent'] ?? 'wordpress-assistant' ) );
+	$agentic_launcher_agent = sanitize_key( wp_unslash( $_POST['agent_builder_admin_launcher_agent'] ?? 'wordpress-assistant' ) );
 	// Must be an active agent when possible; still store slug so inactive preference is remembered.
 	if ( '' === $agentic_launcher_agent ) {
 		$agentic_launcher_agent = 'wordpress-assistant';
 	}
-	update_option( 'agentic_admin_launcher_agent', $agentic_launcher_agent, false );
+	update_option( 'agent_builder_admin_launcher_agent', $agentic_launcher_agent, false );
 
 	$agentic_ab_audit = new \Agentic\Audit_Log();
 	$agentic_ab_audit->log(
@@ -102,7 +102,7 @@ if (
 			'setting' => 'admin_surfaces',
 			'changes' => array(
 				'admin_bar_agents'  => $agentic_ab_config_log,
-				'launchers_enabled' => get_option( 'agentic_admin_launchers_enabled', '1' ),
+				'launchers_enabled' => get_option( 'agent_builder_admin_launchers_enabled', '1' ),
 				'launcher_screens'  => $agentic_launcher_screens,
 				'launcher_agent'    => $agentic_launcher_agent,
 			),
@@ -141,13 +141,13 @@ foreach ( $agentic_all_agents as $agentic_ab_slug => $agentic_ab_inst ) {
 }
 
 // Launcher settings (defaults: enabled, all screens, wordpress-assistant).
-$agentic_launchers_enabled = get_option( 'agentic_admin_launchers_enabled', '1' );
-$agentic_launcher_screens  = get_option( 'agentic_admin_launcher_screens', null );
+$agentic_launchers_enabled = get_option( 'agent_builder_admin_launchers_enabled', '1' );
+$agentic_launcher_screens  = get_option( 'agent_builder_admin_launcher_screens', null );
 if ( ! is_array( $agentic_launcher_screens ) ) {
 	// First visit / unset → all available screens (backwards compatible).
 	$agentic_launcher_screens = array_keys( \Agentic\Admin_Surfaces::available_screens() );
 }
-$agentic_launcher_agent = (string) get_option( 'agentic_admin_launcher_agent', 'wordpress-assistant' );
+$agentic_launcher_agent = (string) get_option( 'agent_builder_admin_launcher_agent', 'wordpress-assistant' );
 if ( '' === $agentic_launcher_agent ) {
 	$agentic_launcher_agent = 'wordpress-assistant';
 }
@@ -264,7 +264,7 @@ if ( ! isset( $agentic_agent_choices[ $agentic_launcher_agent ] ) ) {
 				<th scope="row"><?php esc_html_e( 'Enable launchers', 'agent-builder' ); ?></th>
 				<td>
 					<label>
-						<input type="checkbox" name="agentic_admin_launchers_enabled" value="1"
+						<input type="checkbox" name="agent_builder_admin_launchers_enabled" value="1"
 							<?php checked( '1', $agentic_launchers_enabled ); ?>>
 						<?php esc_html_e( 'Show contextual Ask AI launchers on selected admin screens', 'agent-builder' ); ?>
 					</label>
@@ -278,7 +278,7 @@ if ( ! isset( $agentic_agent_choices[ $agentic_launcher_agent ] ) ) {
 						<?php foreach ( \Agentic\Admin_Surfaces::available_screens() as $agentic_screen_key => $agentic_screen_meta ) : ?>
 							<label style="display:block;margin:0 0 6px;">
 								<input type="checkbox"
-									name="agentic_admin_launcher_screens[]"
+									name="agent_builder_admin_launcher_screens[]"
 									value="<?php echo esc_attr( $agentic_screen_key ); ?>"
 									<?php checked( in_array( $agentic_screen_key, $agentic_launcher_screens, true ) ); ?>>
 								<?php echo esc_html( $agentic_screen_meta['label'] ); ?>
@@ -293,10 +293,10 @@ if ( ! isset( $agentic_agent_choices[ $agentic_launcher_agent ] ) ) {
 			</tr>
 			<tr>
 				<th scope="row">
-					<label for="agentic_admin_launcher_agent"><?php esc_html_e( 'Default agent', 'agent-builder' ); ?></label>
+					<label for="agent_builder_admin_launcher_agent"><?php esc_html_e( 'Default agent', 'agent-builder' ); ?></label>
 				</th>
 				<td>
-					<select name="agentic_admin_launcher_agent" id="agentic_admin_launcher_agent">
+					<select name="agent_builder_admin_launcher_agent" id="agent_builder_admin_launcher_agent">
 						<?php foreach ( $agentic_agent_choices as $agentic_choice_slug => $agentic_choice_name ) : ?>
 							<option value="<?php echo esc_attr( $agentic_choice_slug ); ?>" <?php selected( $agentic_launcher_agent, $agentic_choice_slug ); ?>>
 								<?php echo esc_html( $agentic_choice_name ); ?>

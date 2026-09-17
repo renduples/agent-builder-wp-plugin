@@ -299,14 +299,14 @@ class Abilities_Bridge {
 	 * Inbound abilities an administrator has disabled (block-list).
 	 *
 	 * Maintained by Admin_Ajax::toggle_inbound_ability() under the
-	 * `agentic_disabled_inbound_abilities` option. A disabled inbound ability is
+	 * `agent_builder_disabled_inbound_abilities` option. A disabled inbound ability is
 	 * hidden from agents (see get_third_party_abilities_as_tools()) but still
 	 * listed on the Tools screen with an off toggle.
 	 *
 	 * @return array List of original WP ability names that are disabled.
 	 */
 	public function get_disabled_inbound_abilities(): array {
-		$disabled = get_option( 'agentic_disabled_inbound_abilities', array() );
+		$disabled = get_option( 'agent_builder_disabled_inbound_abilities', array() );
 		return is_array( $disabled ) ? array_values( $disabled ) : array();
 	}
 

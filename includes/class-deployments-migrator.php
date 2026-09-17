@@ -1,6 +1,6 @@
 <?php
 /**
- * One-run migration: ingests legacy WP option deployments into wp_agentic_deployments.
+ * One-run migration: ingests legacy WP option deployments into wp_agent_builder_deployments.
  *
  * Idempotent — checks MIGRATED_OPTION before running and marks it complete
  * afterwards. Safe to call on every activation.
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * One-run migration from legacy option-based deployments to the unified
- * wp_agentic_deployments table.
+ * wp_agent_builder_deployments table.
  *
  * @package Agent_Builder
  */
@@ -43,7 +43,7 @@ class Deployments_Migrator {
 	}
 
 	// -------------------------------------------------------------------------
-	// Shortcodes — agentic_shortcode_deployments
+	// Shortcodes — agent_builder_shortcode_deployments
 	// -------------------------------------------------------------------------
 
 	/**
@@ -52,7 +52,7 @@ class Deployments_Migrator {
 	 * @return void
 	 */
 	private static function migrate_shortcodes(): void {
-		$rows = get_option( 'agentic_shortcode_deployments', array() );
+		$rows = get_option( 'agent_builder_shortcode_deployments', array() );
 		if ( ! is_array( $rows ) ) {
 			return;
 		}
@@ -83,7 +83,7 @@ class Deployments_Migrator {
 	}
 
 	// -------------------------------------------------------------------------
-	// Modal — agentic_modal_agents + agentic_modal_config
+	// Modal — agent_builder_modal_agents + agent_builder_modal_config
 	// -------------------------------------------------------------------------
 
 	/**
@@ -92,8 +92,8 @@ class Deployments_Migrator {
 	 * @return void
 	 */
 	private static function migrate_modal(): void {
-		$enabled = get_option( 'agentic_modal_agents', array() );
-		$configs = get_option( 'agentic_modal_config', array() );
+		$enabled = get_option( 'agent_builder_modal_agents', array() );
+		$configs = get_option( 'agent_builder_modal_config', array() );
 
 		if ( ! is_array( $enabled ) ) {
 			return;
@@ -125,7 +125,7 @@ class Deployments_Migrator {
 	}
 
 	// -------------------------------------------------------------------------
-	// Admin bar — agentic_admin_bar_agents + agentic_admin_bar_config
+	// Admin bar — agent_builder_admin_bar_agents + agent_builder_admin_bar_config
 	// -------------------------------------------------------------------------
 
 	/**
@@ -134,8 +134,8 @@ class Deployments_Migrator {
 	 * @return void
 	 */
 	private static function migrate_admin_bar(): void {
-		$enabled = get_option( 'agentic_admin_bar_agents', array() );
-		$configs = get_option( 'agentic_admin_bar_config', array() );
+		$enabled = get_option( 'agent_builder_admin_bar_agents', array() );
+		$configs = get_option( 'agent_builder_admin_bar_config', array() );
 
 		if ( ! is_array( $enabled ) ) {
 			return;
@@ -166,7 +166,7 @@ class Deployments_Migrator {
 	}
 
 	// -------------------------------------------------------------------------
-	// Gutenberg — agentic_gutenberg_block_agents
+	// Gutenberg — agent_builder_gutenberg_block_agents
 	// -------------------------------------------------------------------------
 
 	/**
@@ -175,7 +175,7 @@ class Deployments_Migrator {
 	 * @return void
 	 */
 	private static function migrate_gutenberg(): void {
-		$slugs = get_option( 'agentic_gutenberg_block_agents', array() );
+		$slugs = get_option( 'agent_builder_gutenberg_block_agents', array() );
 
 		if ( ! is_array( $slugs ) ) {
 			return;
@@ -201,7 +201,7 @@ class Deployments_Migrator {
 	}
 
 	// -------------------------------------------------------------------------
-	// Admin UI — agentic_editor_sidebar_settings
+	// Admin UI — agent_builder_editor_sidebar_settings
 	// -------------------------------------------------------------------------
 
 	/**
@@ -210,7 +210,7 @@ class Deployments_Migrator {
 	 * @return void
 	 */
 	private static function migrate_admin_ui(): void {
-		$settings = get_option( 'agentic_editor_sidebar_settings', array() );
+		$settings = get_option( 'agent_builder_editor_sidebar_settings', array() );
 
 		if ( ! is_array( $settings ) || empty( $settings['agent_slugs'] ) ) {
 			return;
@@ -245,7 +245,7 @@ class Deployments_Migrator {
 	}
 
 	// -------------------------------------------------------------------------
-	// Event listeners — agentic_user_event_triggers
+	// Event listeners — agent_builder_user_event_triggers
 	// -------------------------------------------------------------------------
 
 	/**
@@ -254,7 +254,7 @@ class Deployments_Migrator {
 	 * @return void
 	 */
 	private static function migrate_event_listeners(): void {
-		$triggers = get_option( 'agentic_user_event_triggers', array() );
+		$triggers = get_option( 'agent_builder_user_event_triggers', array() );
 
 		if ( ! is_array( $triggers ) ) {
 			return;
@@ -344,7 +344,7 @@ class Deployments_Migrator {
 	}
 
 	// -------------------------------------------------------------------------
-	// CLI whitelist — wp_agentic_tools run_wp_cli _allowed_commands
+	// CLI whitelist — wp_agent_builder_tools run_wp_cli _allowed_commands
 	// -------------------------------------------------------------------------
 
 	/**

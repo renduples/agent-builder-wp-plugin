@@ -39,7 +39,7 @@ class Directory_Submission {
 	/**
 	 * Option storing the last submission's outcome.
 	 */
-	public const OPTION = 'agentic_directory_submission';
+	public const OPTION = 'agent_builder_directory_submission';
 
 	/**
 	 * Submit this site to the directory.

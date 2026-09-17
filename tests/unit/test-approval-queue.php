@@ -3,7 +3,7 @@
  * Unit Tests for Approval_Queue.
  *
  * Covers the create → approve/reject/expire state transitions in
- * wp_agentic_approval_queue, and the params-aware find_approved() matching
+ * wp_agent_builder_approval_queue, and the params-aware find_approved() matching
  * that Tool_Executor relies on to consume a prior approval.
  *
  * @package Agentic\Tests
@@ -94,7 +94,7 @@ class Test_Approval_Queue extends TestCase {
 
 		// Backdate expires_at into the past, as if 7 days had elapsed.
 		$wpdb->update(
-			$wpdb->prefix . 'agentic_approval_queue',
+			$wpdb->prefix . 'agent_builder_approval_queue',
 			array( 'expires_at' => gmdate( 'Y-m-d H:i:s', time() - DAY_IN_SECONDS ) ),
 			array( 'id' => $id )
 		);
@@ -196,7 +196,7 @@ class Test_Approval_Queue extends TestCase {
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		return $wpdb->get_row(
-			$wpdb->prepare( "SELECT * FROM {$wpdb->prefix}agentic_approval_queue WHERE id = %d", $id ),
+			$wpdb->prepare( "SELECT * FROM {$wpdb->prefix}agent_builder_approval_queue WHERE id = %d", $id ),
 			ARRAY_A
 		);
 	}

@@ -2,7 +2,7 @@
 /**
  * Local Memory — no-cloud conversational memory.
  *
- * Stores short per-user/per-agent memories in the local {prefix}agentic_memory
+ * Stores short per-user/per-agent memories in the local {prefix}agent_builder_memory
  * table and recalls the most relevant ones with a dependency-free keyword
  * overlap score. This gives agents lightweight continuity across turns without
  * sending any data to an external service.
@@ -60,8 +60,8 @@ class Local_Memory {
 	 * @return bool
 	 */
 	public static function is_enabled(): bool {
-		$enabled = '1' === get_option( 'agentic_local_memory_enabled', '0' );
-		return (bool) apply_filters( 'agentic_local_memory_enabled', $enabled );
+		$enabled = '1' === get_option( 'agent_builder_local_memory_enabled', '0' );
+		return (bool) apply_filters( 'agent_builder_local_memory_enabled', $enabled );
 	}
 
 	/**
@@ -107,7 +107,7 @@ class Local_Memory {
 		$value = self::truncate( $value, self::MAX_VALUE_LENGTH );
 
 		global $wpdb;
-		$table     = $wpdb->prefix . 'agentic_memory';
+		$table     = $wpdb->prefix . 'agent_builder_memory';
 		$entity_id = self::entity_id( $agent_id, $user_id );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
@@ -148,7 +148,7 @@ class Local_Memory {
 		}
 
 		global $wpdb;
-		$table     = $wpdb->prefix . 'agentic_memory';
+		$table     = $wpdb->prefix . 'agent_builder_memory';
 		$entity_id = self::entity_id( $agent_id, $user_id );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
@@ -236,7 +236,7 @@ class Local_Memory {
 	 */
 	public static function forget_user( int $user_id ): int {
 		global $wpdb;
-		$table = $wpdb->prefix . 'agentic_memory';
+		$table = $wpdb->prefix . 'agent_builder_memory';
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		return (int) $wpdb->query(
 			$wpdb->prepare(
@@ -256,7 +256,7 @@ class Local_Memory {
 	 */
 	private static function prune( string $entity_id ): void {
 		global $wpdb;
-		$table = $wpdb->prefix . 'agentic_memory';
+		$table = $wpdb->prefix . 'agent_builder_memory';
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$count = (int) $wpdb->get_var(

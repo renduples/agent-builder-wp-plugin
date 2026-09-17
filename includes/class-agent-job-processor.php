@@ -188,7 +188,7 @@ class Agent_Builder_Job_Processor implements Job_Processor_Interface {
 		$user_id    = (int) ( $request_data['user_id'] ?? 0 );
 		if ( $session_id ) {
 			global $wpdb;
-			$table = $wpdb->prefix . 'agentic_conversations';
+			$table = $wpdb->prefix . 'agent_builder_conversations';
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table insert.
 			$wpdb->insert(
 				$table,

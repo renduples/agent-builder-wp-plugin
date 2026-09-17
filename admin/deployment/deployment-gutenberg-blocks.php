@@ -67,7 +67,7 @@ if (
 	}
 
 	// Keep WP option in sync for feature backends.
-	update_option( 'agentic_gutenberg_block_agents', $agentic_gb_agents );
+	update_option( 'agent_builder_gutenberg_block_agents', $agentic_gb_agents );
 
 	$agentic_gb_audit = new \Agentic\Audit_Log();
 	$agentic_gb_audit->log(
@@ -96,7 +96,7 @@ if ( class_exists( '\Agentic\Deployments' ) ) {
 
 if ( empty( $agentic_gb_rows ) ) {
 	// Fall back to WP option if table not yet populated (pre-migration).
-	foreach ( (array) get_option( 'agentic_gutenberg_block_agents', array() ) as $agentic_fb_slug ) {
+	foreach ( (array) get_option( 'agent_builder_gutenberg_block_agents', array() ) as $agentic_fb_slug ) {
 		$agentic_gb_rows[ $agentic_fb_slug ] = array(
 			'enabled' => true,
 			'config'  => array(),

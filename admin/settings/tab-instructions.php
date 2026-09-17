@@ -82,7 +82,7 @@ document.getElementById('agentic-persona-agent-select').addEventListener('change
 			</th>
 			<td>
 				<textarea
-					name="agentic_agent_personas[<?php echo esc_attr( $agentic_pa_selected ); ?>][welcome_message]"
+					name="agent_builder_agent_personas[<?php echo esc_attr( $agentic_pa_selected ); ?>][welcome_message]"
 					id="agentic_persona_welcome_<?php echo esc_attr( $agentic_pa_selected ); ?>"
 					rows="3"
 					class="large-text"
@@ -97,7 +97,7 @@ document.getElementById('agentic-persona-agent-select').addEventListener('change
 			</th>
 			<td>
 				<?php $agentic_pa_style = \Agentic\Agent_Settings::get( $agentic_pa_selected, 'persona_response_style' ); ?>
-				<select name="agentic_agent_personas[<?php echo esc_attr( $agentic_pa_selected ); ?>][response_style]" id="agentic_persona_style_<?php echo esc_attr( $agentic_pa_selected ); ?>">
+				<select name="agent_builder_agent_personas[<?php echo esc_attr( $agentic_pa_selected ); ?>][response_style]" id="agentic_persona_style_<?php echo esc_attr( $agentic_pa_selected ); ?>">
 					<option value="" <?php selected( $agentic_pa_style, '' ); ?>>Balanced (default)</option>
 					<option value="concise" <?php selected( $agentic_pa_style, 'concise' ); ?>>Concise</option>
 					<option value="detailed" <?php selected( $agentic_pa_style, 'detailed' ); ?>>Detailed</option>
@@ -128,7 +128,7 @@ document.getElementById('agentic-persona-agent-select').addEventListener('change
 				?>
 				<?php foreach ( $agentic_pa_prompts_saved as $agentic_pi => $agentic_pv ) : ?>
 					<div class="agentic-mb-6">
-						<input type="text" name="agentic_agent_personas[<?php echo esc_attr( $agentic_pa_selected ); ?>][suggested_prompts][]" value="<?php echo esc_attr( $agentic_pv ); ?>" class="large-text" placeholder="<?php echo esc_attr( $agentic_pa_placeholders[ $agentic_pi ] ?? ( 'Prompt ' . ( $agentic_pi + 1 ) ) ); ?>" />
+						<input type="text" name="agent_builder_agent_personas[<?php echo esc_attr( $agentic_pa_selected ); ?>][suggested_prompts][]" value="<?php echo esc_attr( $agentic_pv ); ?>" class="large-text" placeholder="<?php echo esc_attr( $agentic_pa_placeholders[ $agentic_pi ] ?? ( 'Prompt ' . ( $agentic_pi + 1 ) ) ); ?>" />
 					</div>
 				<?php endforeach; ?>
 				<p class="description">Up to 4 clickable prompt pills shown below the welcome message. Leave blank to hide.</p>
@@ -140,7 +140,7 @@ document.getElementById('agentic-persona-agent-select').addEventListener('change
 			</th>
 			<td>
 				<textarea
-					name="agentic_agent_personas[<?php echo esc_attr( $agentic_pa_selected ); ?>][persona_notes]"
+					name="agent_builder_agent_personas[<?php echo esc_attr( $agentic_pa_selected ); ?>][persona_notes]"
 					id="agentic_persona_notes_<?php echo esc_attr( $agentic_pa_selected ); ?>"
 					rows="5"
 					class="large-text"
@@ -162,7 +162,7 @@ document.getElementById('agentic-persona-agent-select').addEventListener('change
 					: '';
 				?>
 				<textarea
-					name="agentic_agent_personas[<?php echo esc_attr( $agentic_pa_selected ); ?>][knowledge]"
+					name="agent_builder_agent_personas[<?php echo esc_attr( $agentic_pa_selected ); ?>][knowledge]"
 					id="agentic_persona_knowledge_<?php echo esc_attr( $agentic_pa_selected ); ?>"
 					rows="10"
 					class="large-text code"

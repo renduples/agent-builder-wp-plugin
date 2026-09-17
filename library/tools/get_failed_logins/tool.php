@@ -86,7 +86,7 @@ class Get_Failed_Logins extends \Agentic\Tool_Base {
 		$hours = max( 1, (int) ( $arguments['hours'] ?? 24 ) );
 		$limit = min( max( (int) ( $arguments['limit'] ?? 50 ), 1 ), 100 );
 		$since = gmdate( 'Y-m-d H:i:s', time() - ( $hours * HOUR_IN_SECONDS ) );
-		$table = $wpdb->prefix . 'agentic_security_log';
+		$table = $wpdb->prefix . 'agent_builder_security_log';
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Custom plugin table.
 		$table_exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
@@ -120,7 +120,7 @@ class Get_Failed_Logins extends \Agentic\Tool_Base {
 			}
 
 			return array(
-				'source' => 'agentic_security_log',
+				'source' => 'agent_builder_security_log',
 				'period' => "last {$hours} hours",
 				'total'  => count( $rows ),
 				'by_ip'  => $top_ips,

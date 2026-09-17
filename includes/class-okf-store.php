@@ -148,7 +148,7 @@ class Okf_Store {
 	 * @return int Number of files written.
 	 */
 	public static function seed_examples( bool $force = false ): int {
-		if ( ! $force && get_option( 'agentic_okf_examples_seeded', '' ) === self::OKF_VERSION ) {
+		if ( ! $force && get_option( 'agent_builder_okf_examples_seeded', '' ) === self::OKF_VERSION ) {
 			// Still fill any missing example-*.md files so upgrades can add new samples.
 			$force_missing = true;
 		} else {
@@ -180,8 +180,8 @@ class Okf_Store {
 			}
 		}
 
-		if ( $wrote > 0 || ! get_option( 'agentic_okf_examples_seeded', '' ) ) {
-			update_option( 'agentic_okf_examples_seeded', self::OKF_VERSION, false );
+		if ( $wrote > 0 || ! get_option( 'agent_builder_okf_examples_seeded', '' ) ) {
+			update_option( 'agent_builder_okf_examples_seeded', self::OKF_VERSION, false );
 			if ( $wrote > 0 ) {
 				self::rebuild_index( 'site' );
 			}
@@ -200,7 +200,7 @@ class Okf_Store {
 	public static function has_active_knowledge(): bool {
 		// Live OKF wiki: non-example concepts only.
 		if ( count( self::list_concepts( '', false ) ) > 0 ) {
-			update_option( 'agentic_has_knowledge', '1', false );
+			update_option( 'agent_builder_has_knowledge', '1', false );
 			return true;
 		}
 
@@ -214,12 +214,12 @@ class Okf_Store {
 		 */
 		$has_vector = (bool) apply_filters( 'agentic_has_vector_knowledge', false );
 		if ( $has_vector ) {
-			update_option( 'agentic_has_knowledge', '1', false );
+			update_option( 'agent_builder_has_knowledge', '1', false );
 			return true;
 		}
 
 		// Keep option in sync so older readers stay accurate.
-		update_option( 'agentic_has_knowledge', '0', false );
+		update_option( 'agent_builder_has_knowledge', '0', false );
 		return false;
 	}
 
@@ -377,7 +377,7 @@ class Okf_Store {
 
 		// Getting Started "Add knowledge" step.
 		if ( ! self::is_example( $frontmatter ) ) {
-			update_option( 'agentic_has_knowledge', '1', false );
+			update_option( 'agent_builder_has_knowledge', '1', false );
 		} else {
 			self::has_active_knowledge();
 		}
@@ -526,11 +526,11 @@ class Okf_Store {
 	 * @return bool True when a concept was created or updated from the option.
 	 */
 	public static function migrate_global_instructions_to_okf(): bool {
-		if ( get_option( 'agentic_okf_global_instructions_migrated', '' ) === '1' ) {
+		if ( get_option( 'agent_builder_okf_global_instructions_migrated', '' ) === '1' ) {
 			return false;
 		}
 
-		$legacy = trim( (string) get_option( 'agentic_global_instructions', '' ) );
+		$legacy = trim( (string) get_option( 'agent_builder_global_instructions', '' ) );
 		self::ensure_bundle( 'site' );
 
 		$existing = self::get_concept( self::SITE_OVERVIEW_ID, 'site', true );
@@ -569,7 +569,7 @@ class Okf_Store {
 			}
 		}
 
-		update_option( 'agentic_okf_global_instructions_migrated', '1', false );
+		update_option( 'agent_builder_okf_global_instructions_migrated', '1', false );
 		return $wrote;
 	}
 

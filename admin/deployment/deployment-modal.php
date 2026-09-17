@@ -29,7 +29,7 @@ if (
 		? wp_unslash( $_POST['agentic_modal'] ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized per-field below.
 		: array();
 
-	$agentic_modal_config  = array();
+	$agent_builder_modal_config  = array();
 	$agentic_modal_enabled = array();
 
 	foreach ( $agentic_modal_raw as $agentic_m_slug => $agentic_m_data ) {
@@ -51,7 +51,7 @@ if (
 		$agentic_m_login = ! empty( $agentic_m_data['require_login'] ) ? '1' : '0';
 
 		$agentic_modal_enabled[]                 = $agentic_m_slug;
-		$agentic_modal_config[ $agentic_m_slug ] = array(
+		$agent_builder_modal_config[ $agentic_m_slug ] = array(
 			'position'      => $agentic_m_position,
 			'pages'         => $agentic_m_pages,
 			'require_login' => $agentic_m_login,
@@ -70,7 +70,7 @@ if (
 		foreach ( $agentic_m_all_slugs as $agentic_m_s ) {
 			$agentic_m_s     = sanitize_key( $agentic_m_s );
 			$agentic_m_on    = in_array( $agentic_m_s, $agentic_modal_enabled, true );
-			$agentic_m_cfg_d = $agentic_modal_config[ $agentic_m_s ] ?? array();
+			$agentic_m_cfg_d = $agent_builder_modal_config[ $agentic_m_s ] ?? array();
 
 			$agentic_m_save = array(
 				'type'       => \Agentic\Deployments::TYPE_MODAL,
@@ -92,8 +92,8 @@ if (
 	}
 
 	// Keep WP options in sync for feature backends.
-	update_option( 'agentic_modal_agents', $agentic_modal_enabled );
-	update_option( 'agentic_modal_config', $agentic_modal_config );
+	update_option( 'agent_builder_modal_agents', $agentic_modal_enabled );
+	update_option( 'agent_builder_modal_config', $agent_builder_modal_config );
 
 	$agentic_modal_audit = new \Agentic\Audit_Log();
 	$agentic_modal_audit->log(
@@ -104,7 +104,7 @@ if (
 			'setting' => 'modal_agents',
 			'changes' => array(
 				'agents' => $agentic_modal_enabled,
-				'config' => $agentic_modal_config,
+				'config' => $agent_builder_modal_config,
 			),
 		)
 	);
@@ -115,7 +115,7 @@ if (
 // Load data from Deployments with fallback to WP options.
 $agentic_registry   = \Agentic_Agent_Registry::get_instance();
 $agentic_all_agents = $agentic_registry->get_all_instances();
-$agentic_chat_theme = get_option( 'agentic_chat_theme', 'light' );
+$agent_builder_chat_theme = get_option( 'agent_builder_chat_theme', 'light' );
 
 $agentic_modal_rows = array();
 if ( class_exists( '\Agentic\Deployments' ) ) {
@@ -126,8 +126,8 @@ if ( class_exists( '\Agentic\Deployments' ) ) {
 
 if ( empty( $agentic_modal_rows ) ) {
 	// Fall back to WP options if table not yet populated (pre-migration).
-	foreach ( (array) get_option( 'agentic_modal_agents', array() ) as $agentic_fb_slug ) {
-		$agentic_fb_cfg                         = (array) get_option( 'agentic_modal_config', array() );
+	foreach ( (array) get_option( 'agent_builder_modal_agents', array() ) as $agentic_fb_slug ) {
+		$agentic_fb_cfg                         = (array) get_option( 'agent_builder_modal_config', array() );
 		$agentic_modal_rows[ $agentic_fb_slug ] = array(
 			'enabled' => true,
 			'source'  => \Agentic\Deployments::SOURCE_ADMIN,
@@ -151,7 +151,7 @@ if ( empty( $agentic_modal_rows ) ) {
 		printf(
 			/* translators: %s: link to Styles settings */
 			esc_html__( 'Theme: %s.', 'agent-builder' ),
-			'<strong>' . esc_html( ucfirst( $agentic_chat_theme ) ) . '</strong> — <a href="' . esc_url( admin_url( 'admin.php?page=agentic-settings&tab=interface' ) ) . '">'
+			'<strong>' . esc_html( ucfirst( $agent_builder_chat_theme ) ) . '</strong> — <a href="' . esc_url( admin_url( 'admin.php?page=agentic-settings&tab=interface' ) ) . '">'
 				. esc_html__( 'change', 'agent-builder' )
 			. '</a>'
 		);

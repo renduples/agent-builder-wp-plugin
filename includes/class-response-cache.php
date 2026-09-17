@@ -104,7 +104,7 @@ class Response_Cache {
 	 * @return bool
 	 */
 	public static function is_enabled( string $agent_id = '' ): bool {
-		$global = (bool) get_option( 'agentic_response_cache_enabled', true );
+		$global = (bool) get_option( 'agent_builder_response_cache_enabled', true );
 
 		if ( $agent_id ) {
 			$ov_cache = Agent_Settings::get( $agent_id, 'override_cache' );
@@ -122,7 +122,7 @@ class Response_Cache {
 	 * @return int TTL in seconds.
 	 */
 	public static function get_ttl(): int {
-		$ttl = (int) get_option( 'agentic_response_cache_ttl', self::DEFAULT_TTL );
+		$ttl = (int) get_option( 'agent_builder_response_cache_ttl', self::DEFAULT_TTL );
 		return min( max( $ttl, 60 ), self::MAX_TTL ); // Between 1 min and 24 hours.
 	}
 

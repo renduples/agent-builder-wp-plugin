@@ -15,8 +15,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$agentic_admin_address    = (string) get_option( 'agentic_admin_address', '' );
-$agentic_frontend_address = (string) get_option( 'agentic_frontend_address', '' );
+$agent_builder_admin_address    = (string) get_option( 'agent_builder_admin_address', '' );
+$agent_builder_frontend_address = (string) get_option( 'agent_builder_frontend_address', '' );
 $agentic_wiki_url         = admin_url( 'admin.php?page=agentic-train-data&tab=wiki' );
 ?>
 
@@ -26,19 +26,19 @@ $agentic_wiki_url         = admin_url( 'admin.php?page=agentic-train-data&tab=wi
 <table class="form-table" role="presentation">
 	<tr>
 		<th scope="row">
-			<label for="agentic_admin_address"><?php esc_html_e( 'What should agents call administrators?', 'agent-builder' ); ?></label>
+			<label for="agent_builder_admin_address"><?php esc_html_e( 'What should agents call administrators?', 'agent-builder' ); ?></label>
 		</th>
 		<td>
-			<input type="text" id="agentic_admin_address" name="agentic_admin_address" class="regular-text" maxlength="60" value="<?php echo esc_attr( $agentic_admin_address ); ?>" placeholder="<?php esc_attr_e( 'e.g. Sam, or “the site owner”', 'agent-builder' ); ?>" />
+			<input type="text" id="agent_builder_admin_address" name="agent_builder_admin_address" class="regular-text" maxlength="60" value="<?php echo esc_attr( $agent_builder_admin_address ); ?>" placeholder="<?php esc_attr_e( 'e.g. Sam, or “the site owner”', 'agent-builder' ); ?>" />
 			<p class="description"><?php esc_html_e( 'How agents address signed-in administrators in conversation. Leave blank to use the WordPress display name.', 'agent-builder' ); ?></p>
 		</td>
 	</tr>
 	<tr>
 		<th scope="row">
-			<label for="agentic_frontend_address"><?php esc_html_e( 'What should agents call frontend visitors?', 'agent-builder' ); ?></label>
+			<label for="agent_builder_frontend_address"><?php esc_html_e( 'What should agents call frontend visitors?', 'agent-builder' ); ?></label>
 		</th>
 		<td>
-			<input type="text" id="agentic_frontend_address" name="agentic_frontend_address" class="regular-text" maxlength="60" value="<?php echo esc_attr( $agentic_frontend_address ); ?>" placeholder="<?php esc_attr_e( 'e.g. there, or “valued customer”', 'agent-builder' ); ?>" />
+			<input type="text" id="agent_builder_frontend_address" name="agent_builder_frontend_address" class="regular-text" maxlength="60" value="<?php echo esc_attr( $agent_builder_frontend_address ); ?>" placeholder="<?php esc_attr_e( 'e.g. there, or “valued customer”', 'agent-builder' ); ?>" />
 			<p class="description"><?php esc_html_e( 'How agents address visitors using a chat shortcode or block on the public site. Leave blank for a neutral greeting.', 'agent-builder' ); ?></p>
 		</td>
 	</tr>

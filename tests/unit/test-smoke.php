@@ -27,7 +27,7 @@ class Test_Smoke extends TestCase {
 	 */
 	public function test_custom_tables_exist(): void {
 		global $wpdb;
-		foreach ( array( 'agentic_audit_log', 'agentic_approval_queue', 'agentic_tools' ) as $suffix ) {
+		foreach ( array( 'agent_builder_audit_log', 'agent_builder_approval_queue', 'agent_builder_tools' ) as $suffix ) {
 			$table = $wpdb->prefix . $suffix;
 			$this->assertSame( $table, $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" ) );
 		}

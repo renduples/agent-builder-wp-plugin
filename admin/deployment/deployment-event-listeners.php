@@ -63,7 +63,7 @@ if ( class_exists( '\Agentic\Deployments' ) ) {
 
 if ( empty( $agentic_user_triggers ) ) {
 	// Fall back to WP option if table not yet populated (pre-migration).
-	$agentic_user_triggers = (array) get_option( 'agentic_user_event_triggers', array() );
+	$agentic_user_triggers = (array) get_option( 'agent_builder_user_event_triggers', array() );
 }
 
 foreach ( $agentic_user_triggers as $agentic_ut ) {

@@ -62,7 +62,7 @@ class Test_Audit_Log_Integrity extends TestCase {
 		// not through Audit_Log::log(), so integrity_hash is left stale.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$wpdb->update(
-			$wpdb->prefix . 'agentic_audit_log',
+			$wpdb->prefix . 'agent_builder_audit_log',
 			array( 'action' => 'tampered_action' ),
 			array( 'id' => $id2 )
 		);
@@ -86,7 +86,7 @@ class Test_Audit_Log_Integrity extends TestCase {
 		$id3   = $audit->log( 'test-agent', 'tool_call', 'db_update_option', array( 'id' => 3 ) );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->delete( $wpdb->prefix . 'agentic_audit_log', array( 'id' => $id2 ) );
+		$wpdb->delete( $wpdb->prefix . 'agent_builder_audit_log', array( 'id' => $id2 ) );
 
 		$result = Audit_Log_Integrity::verify_chain();
 

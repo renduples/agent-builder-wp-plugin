@@ -31,7 +31,7 @@ if ( ! in_array( $agentic_active_tab, array( 'approvals', 'backups' ), true ) ) 
 }
 
 $agentic_queue      = new Approval_Queue();
-$agentic_agent_mode = get_option( 'agentic_agent_mode', 'supervised' );
+$agent_builder_agent_mode = get_option( 'agent_builder_agent_mode', 'supervised' );
 ?>
 <div class="wrap agentic-admin">
 	<h1>
@@ -120,9 +120,9 @@ $agentic_agent_mode = get_option( 'agentic_agent_mode', 'supervised' );
 
 		<p class="description agentic-mt-16">
 			<?php esc_html_e( 'Review and approve actions requested by AI agents before they are executed.', 'agent-builder' ); ?>
-			<?php if ( 'supervised' === $agentic_agent_mode ) : ?>
+			<?php if ( 'supervised' === $agent_builder_agent_mode ) : ?>
 				<strong><?php esc_html_e( 'Mode:', 'agent-builder' ); ?></strong> <?php esc_html_e( 'Supervised — high-risk actions require approval.', 'agent-builder' ); ?>
-			<?php elseif ( 'autonomous' === $agentic_agent_mode ) : ?>
+			<?php elseif ( 'autonomous' === $agent_builder_agent_mode ) : ?>
 				<strong><?php esc_html_e( 'Mode:', 'agent-builder' ); ?></strong> <?php esc_html_e( 'Autonomous — all actions execute automatically.', 'agent-builder' ); ?>
 			<?php else : ?>
 				<strong><?php esc_html_e( 'Mode:', 'agent-builder' ); ?></strong> <?php esc_html_e( 'Disabled — agents cannot make file changes.', 'agent-builder' ); ?>
@@ -130,7 +130,7 @@ $agentic_agent_mode = get_option( 'agentic_agent_mode', 'supervised' );
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-settings' ) ); ?>"><?php esc_html_e( 'Change mode', 'agent-builder' ); ?></a>
 		</p>
 
-		<?php if ( 'autonomous' === $agentic_agent_mode ) : ?>
+		<?php if ( 'autonomous' === $agent_builder_agent_mode ) : ?>
 			<div class="notice notice-warning">
 				<p>
 					<strong><?php esc_html_e( 'Warning:', 'agent-builder' ); ?></strong>

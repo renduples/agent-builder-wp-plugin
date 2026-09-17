@@ -2,7 +2,7 @@
 /**
  * Deployments data-access layer.
  *
- * Single table (wp_agentic_deployments) replaces the eight separate WP options
+ * Single table (wp_agent_builder_deployments) replaces the eight separate WP options
  * that previously tracked where agents are deployed.
  *
  * @package Agentic
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Deployments data-access layer.
  *
  * Manages storage and retrieval of agent deployment records in the
- * custom wp_agentic_deployments table.
+ * custom wp_agent_builder_deployments table.
  *
  * @package Agent_Builder
  */
@@ -53,7 +53,7 @@ class Deployments {
 	 */
 	public static function table(): string {
 		global $wpdb;
-		return $wpdb->prefix . 'agentic_deployments';
+		return $wpdb->prefix . 'agent_builder_deployments';
 	}
 
 	/**

@@ -286,7 +286,7 @@ class Admin_Menu_Handler {
 	 *
 	 * Stores an associative array of screen key => 'basic'|'advanced', e.g.
 	 * { "tools": "advanced", "logs": "basic" }. A screen with no entry here
-	 * falls back to the site-wide agentic_ui_mode default (see
+	 * falls back to the site-wide agent_builder_ui_mode default (see
 	 * is_advanced_mode()). Same array-in-user-meta shape as
 	 * QUICK_ACTIONS_META above.
 	 */
@@ -297,7 +297,7 @@ class Admin_Menu_Handler {
 	 *
 	 * When $screen is given, a per-user override for that specific screen
 	 * (stored in SCREEN_MODE_META) takes precedence. With no override, or no
-	 * $screen argument at all, falls back to the site-wide agentic_ui_mode
+	 * $screen argument at all, falls back to the site-wide agent_builder_ui_mode
 	 * option — this is also the only behavior a caller with no $screen ever
 	 * sees, so existing callers (including Agent Builder Pro, which reads
 	 * this same option) are unaffected.
@@ -319,7 +319,7 @@ class Admin_Menu_Handler {
 			}
 		}
 
-		return 'advanced' === get_option( 'agentic_ui_mode', 'basic' );
+		return 'advanced' === get_option( 'agent_builder_ui_mode', 'basic' );
 	}
 
 	/**
@@ -616,8 +616,8 @@ class Admin_Menu_Handler {
 			// Only allow setting a connected provider as default.
 			$entry = Provider_Registry::get( $slug );
 			if ( $entry && self::provider_is_connected( $entry ) ) {
-				update_option( 'agentic_llm_provider', $slug );
-				update_option( 'agentic_model', (string) ( $entry['default_model'] ?? '' ) );
+				update_option( 'agent_builder_llm_provider', $slug );
+				update_option( 'agent_builder_model', (string) ( $entry['default_model'] ?? '' ) );
 			}
 		} else {
 			return;
@@ -648,7 +648,7 @@ class Admin_Menu_Handler {
 		$auth = (string) ( $provider['auth_type'] ?? 'bearer' );
 		if ( 'none' === $auth ) {
 			// Ollama / local: only connected when a base URL is configured.
-			return '' !== (string) get_option( 'agentic_ollama_url', '' );
+			return '' !== (string) get_option( 'agent_builder_ollama_url', '' );
 		}
 		if ( empty( $provider['requires_key'] ) ) {
 			return true;
@@ -747,7 +747,7 @@ class Admin_Menu_Handler {
 
 		// No usable provider — revert onboarding so the setup wizard reappears
 		// (a plugin with zero configured providers is non-functional).
-		update_option( 'agentic_onboarding_complete', false );
+		update_option( 'agent_builder_onboarding_complete', false );
 
 		wp_safe_redirect( admin_url( 'admin.php?page=agentic-signup' ) );
 		exit;
@@ -1029,7 +1029,7 @@ class Admin_Menu_Handler {
 	 * as the secondary nav and page footer) and moved to the top of `.wrap`
 	 * by a small inline script — shared chrome, not a per-template include.
 	 *
-	 * Reflects the site-wide `agentic_ui_mode` default (`is_advanced_mode()`
+	 * Reflects the site-wide `agent_builder_ui_mode` default (`is_advanced_mode()`
 	 * with no $screen), not a per-screen override. Writes through
 	 * Admin_Settings_REST::set_ui_mode() via the admin-page REST action.
 	 *
@@ -1454,8 +1454,8 @@ class Admin_Menu_Handler {
 				'vision'         => $agentic_chat_features['vision'],
 				'costs'          => $agentic_chat_features['costs'],
 				'tts'            => $agentic_chat_features['tts'],
-				'ttsVoice'       => get_option( 'agentic_tts_voice', 'journey-f' ),
-				'consentEnabled' => get_option( 'agentic_chat_consent_enabled', false ) ? '1' : '0',
+				'ttsVoice'       => get_option( 'agent_builder_tts_voice', 'journey-f' ),
+				'consentEnabled' => get_option( 'agent_builder_chat_consent_enabled', false ) ? '1' : '0',
 				'consentText'    => \Agentic\GDPR::get_consent_text(),
 				'isAdmin'        => current_user_can( 'manage_options' ) ? '1' : '0',
 				'adminUrl'       => admin_url(),

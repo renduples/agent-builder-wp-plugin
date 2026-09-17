@@ -3,12 +3,12 @@
  * Settings — Security Tab
  *
  * Variables from parent settings.php scope:
- *   $agentic_agent_mode_val, $agentic_security_enabled,
- *   $agentic_turnstile_site_key, $agentic_turnstile_secret_key,
- *   $agentic_turnstile_require_anon, $agentic_turnstile_require_all,
- *   $agentic_ip_anonymize, $agentic_retention_conversations,
- *   $agentic_retention_audit_log, $agentic_chat_consent_enabled,
- *   $agentic_chat_consent_text
+ *   $agentic_agent_mode_val, $agent_builder_security_enabled,
+ *   $agent_builder_turnstile_site_key, $agent_builder_turnstile_secret_key,
+ *   $agentic_turnstile_require_anon, $agent_builder_turnstile_require_all,
+ *   $agent_builder_ip_anonymize, $agent_builder_retention_conversations,
+ *   $agent_builder_retention_audit_log, $agent_builder_chat_consent_enabled,
+ *   $agent_builder_chat_consent_text
  *
  * @package    Agent_Builder
  * @subpackage Admin/Settings
@@ -26,9 +26,9 @@ global $wpdb;
 <p>Controls whether AI agents can execute actions autonomously and whether they have access to tools and abilities.</p>
 <table class="form-table">
 	<tr>
-		<th scope="row"><label for="agentic_agent_mode">Security Mode</label></th>
+		<th scope="row"><label for="agent_builder_agent_mode">Security Mode</label></th>
 		<td>
-			<select name="agentic_agent_mode" id="agentic_agent_mode">
+			<select name="agent_builder_agent_mode" id="agent_builder_agent_mode">
 				<option value="disabled" <?php selected( $agentic_agent_mode_val, 'disabled' ); ?>>Disabled</option>
 				<option value="supervised" <?php selected( $agentic_agent_mode_val, 'supervised' ); ?>>Supervised</option>
 				<option value="autonomous" <?php selected( $agentic_agent_mode_val, 'autonomous' ); ?>>Autonomous</option>
@@ -37,7 +37,7 @@ global $wpdb;
 			<p class="description" id="agentic-mode-description"></p>
 			<script>
 			(function(){
-				var sel = document.getElementById('agentic_agent_mode');
+				var sel = document.getElementById('agent_builder_agent_mode');
 				var status = document.getElementById('agentic-mode-status');
 				var desc = document.getElementById('agentic-mode-description');
 				var descriptions = {
@@ -83,16 +83,16 @@ global $wpdb;
 <table class="form-table">
 	<tr>
 		<th scope="row">
-			<label for="agentic_security_enabled">Enable Security Filter</label>
+			<label for="agent_builder_security_enabled">Enable Security Filter</label>
 		</th>
 		<td>
 			<label>
 				<input 
 					type="checkbox" 
-					name="agentic_security_enabled" 
-					id="agentic_security_enabled" 
+					name="agent_builder_security_enabled" 
+					id="agent_builder_security_enabled" 
 					value="1"
-					<?php checked( $agentic_security_enabled ); ?>
+					<?php checked( $agent_builder_security_enabled ); ?>
 				/>
 				Scan messages for prompt injection and malicious content
 			</label>
@@ -116,14 +116,14 @@ global $wpdb;
 <table class="form-table">
 	<tr>
 		<th scope="row">
-			<label for="agentic_turnstile_site_key">Site Key</label>
+			<label for="agent_builder_turnstile_site_key">Site Key</label>
 		</th>
 		<td>
 			<input 
 				type="text" 
-				name="agentic_turnstile_site_key" 
-				id="agentic_turnstile_site_key" 
-				value="<?php echo esc_attr( $agentic_turnstile_site_key ); ?>" 
+				name="agent_builder_turnstile_site_key" 
+				id="agent_builder_turnstile_site_key" 
+				value="<?php echo esc_attr( $agent_builder_turnstile_site_key ); ?>" 
 				class="regular-text"
 				placeholder="0x4AAAAAAA..."
 			/>
@@ -132,14 +132,14 @@ global $wpdb;
 
 	<tr>
 		<th scope="row">
-			<label for="agentic_turnstile_secret_key">Secret Key</label>
+			<label for="agent_builder_turnstile_secret_key">Secret Key</label>
 		</th>
 		<td>
 			<input 
 				type="password" 
-				name="agentic_turnstile_secret_key" 
-				id="agentic_turnstile_secret_key" 
-				value="<?php echo esc_attr( $agentic_turnstile_secret_key ); ?>" 
+				name="agent_builder_turnstile_secret_key" 
+				id="agent_builder_turnstile_secret_key" 
+				value="<?php echo esc_attr( $agent_builder_turnstile_secret_key ); ?>" 
 				class="regular-text"
 				placeholder="0x4AAAAAAA..."
 				autocomplete="off"
@@ -154,7 +154,7 @@ global $wpdb;
 				<label class="agentic-label-block agentic-mb-6">
 					<input 
 						type="checkbox" 
-						name="agentic_turnstile_require_anonymous" 
+						name="agent_builder_turnstile_require_anonymous" 
 						value="1"
 						<?php checked( $agentic_turnstile_require_anon ); ?>
 					/>
@@ -163,9 +163,9 @@ global $wpdb;
 				<label class="agentic-label-block">
 					<input 
 						type="checkbox" 
-						name="agentic_turnstile_require_all" 
+						name="agent_builder_turnstile_require_all" 
 						value="1"
-						<?php checked( $agentic_turnstile_require_all ); ?>
+						<?php checked( $agent_builder_turnstile_require_all ); ?>
 					/>
 					All users (including logged-in)
 				</label>
@@ -178,13 +178,13 @@ global $wpdb;
 </table>
 
 	<?php
-	$agentic_turnstile_configured = ! empty( $agentic_turnstile_site_key ) && ! empty( $agentic_turnstile_secret_key );
+	$agentic_turnstile_configured = ! empty( $agent_builder_turnstile_site_key ) && ! empty( $agent_builder_turnstile_secret_key );
 	?>
 
 <div style="margin-top: 12px; padding: 12px 16px; border-radius: 4px; <?php echo esc_attr( $agentic_turnstile_configured ? 'background: #edf7ed; border-left: 4px solid #22c55e;' : 'background: #fef3cd; border-left: 4px solid #f0ad4e;' ); ?>">
 	<?php if ( $agentic_turnstile_configured ) : ?>
 		<strong class="agentic-text-success">✓ Turnstile is configured.</strong>
-		<span class="agentic-text-success-dk">Bot verification is active for <?php echo esc_html( $agentic_turnstile_require_all ? 'all users' : 'anonymous users' ); ?>.</span>
+		<span class="agentic-text-success-dk">Bot verification is active for <?php echo esc_html( $agent_builder_turnstile_require_all ? 'all users' : 'anonymous users' ); ?>.</span>
 	<?php else : ?>
 		<strong class="agentic-text-amber-warn">⚠ Turnstile is not configured.</strong>
 		<?php // phpcs:ignore PluginCheck.CodeAnalysis.Offloading.OffloadedContent -- Plain link to Cloudflare's own dashboard, not resource loading. ?>
@@ -217,10 +217,10 @@ global $wpdb;
 
 <table class="form-table">
 	<tr>
-		<th scope="row"><label for="agentic_ip_anonymize">IP Anonymisation</label></th>
+		<th scope="row"><label for="agent_builder_ip_anonymize">IP Anonymisation</label></th>
 		<td>
 			<label>
-				<input type="checkbox" name="agentic_ip_anonymize" id="agentic_ip_anonymize" value="1" <?php checked( $agentic_ip_anonymize ); ?> />
+				<input type="checkbox" name="agent_builder_ip_anonymize" id="agent_builder_ip_anonymize" value="1" <?php checked( $agent_builder_ip_anonymize ); ?> />
 				Hash IP addresses before storing in the security log
 			</label>
 			<p class="description">
@@ -230,35 +230,35 @@ global $wpdb;
 	</tr>
 
 	<tr>
-		<th scope="row"><label for="agentic_retention_conversations">Chat History Retention</label></th>
+		<th scope="row"><label for="agent_builder_retention_conversations">Chat History Retention</label></th>
 		<td>
-			<input type="number" name="agentic_retention_conversations" id="agentic_retention_conversations"
-				value="<?php echo esc_attr( $agentic_retention_conversations ); ?>" min="0" step="1" class="small-text" />
+			<input type="number" name="agent_builder_retention_conversations" id="agent_builder_retention_conversations"
+				value="<?php echo esc_attr( $agent_builder_retention_conversations ); ?>" min="0" step="1" class="small-text" />
 			days &nbsp;<span class="agentic-text-muted">(0 = keep indefinitely)</span>
 			<p class="description">
-				Conversation records older than this many days are deleted automatically. Includes all messages stored in the <code><?php echo esc_html( $wpdb->prefix ); ?>agentic_conversations</code> table.
+				Conversation records older than this many days are deleted automatically. Includes all messages stored in the <code><?php echo esc_html( $wpdb->prefix ); ?>agent_builder_conversations</code> table.
 			</p>
 		</td>
 	</tr>
 
 	<tr>
-		<th scope="row"><label for="agentic_local_memory_enabled">Local Memory</label></th>
+		<th scope="row"><label for="agent_builder_local_memory_enabled">Local Memory</label></th>
 		<td>
 			<label>
-				<input type="checkbox" name="agentic_local_memory_enabled" id="agentic_local_memory_enabled" value="1" <?php checked( $agentic_local_memory_enabled ); ?> />
+				<input type="checkbox" name="agent_builder_local_memory_enabled" id="agent_builder_local_memory_enabled" value="1" <?php checked( $agent_builder_local_memory_enabled ); ?> />
 				Let agents remember recent conversations with each user
 			</label>
 			<p class="description">
-				When enabled, a short, relevant excerpt of each user's previous messages is stored locally in the <code><?php echo esc_html( $wpdb->prefix ); ?>agentic_memory</code> table and added to the agent's context on later turns, so it can recall prior details. This data never leaves your server. Disabled by default; cleared by the Chat History Retention setting and on user-data erasure.
+				When enabled, a short, relevant excerpt of each user's previous messages is stored locally in the <code><?php echo esc_html( $wpdb->prefix ); ?>agent_builder_memory</code> table and added to the agent's context on later turns, so it can recall prior details. This data never leaves your server. Disabled by default; cleared by the Chat History Retention setting and on user-data erasure.
 			</p>
 		</td>
 	</tr>
 
 	<tr>
-		<th scope="row"><label for="agentic_retention_audit_log">Audit Log Retention</label></th>
+		<th scope="row"><label for="agent_builder_retention_audit_log">Audit Log Retention</label></th>
 		<td>
-			<input type="number" name="agentic_retention_audit_log" id="agentic_retention_audit_log"
-				value="<?php echo esc_attr( $agentic_retention_audit_log ); ?>" min="0" step="1" class="small-text" />
+			<input type="number" name="agent_builder_retention_audit_log" id="agent_builder_retention_audit_log"
+				value="<?php echo esc_attr( $agent_builder_retention_audit_log ); ?>" min="0" step="1" class="small-text" />
 			days &nbsp;<span class="agentic-text-muted">(0 = keep indefinitely)</span>
 			<p class="description">
 				Audit and security log entries older than this are deleted automatically. Shorter retention reduces personal-data exposure; 90 days is a common GDPR-friendly value.
@@ -267,10 +267,10 @@ global $wpdb;
 	</tr>
 
 	<tr>
-		<th scope="row"><label for="agentic_chat_consent_enabled">Consent Notice</label></th>
+		<th scope="row"><label for="agent_builder_chat_consent_enabled">Consent Notice</label></th>
 		<td>
 			<label>
-				<input type="checkbox" name="agentic_chat_consent_enabled" id="agentic_chat_consent_enabled" value="1" <?php checked( $agentic_chat_consent_enabled ); ?> />
+				<input type="checkbox" name="agent_builder_chat_consent_enabled" id="agent_builder_chat_consent_enabled" value="1" <?php checked( $agent_builder_chat_consent_enabled ); ?> />
 				Show a consent notice above the chat input on first load
 			</label>
 			<p class="description">
@@ -280,10 +280,10 @@ global $wpdb;
 	</tr>
 
 	<tr>
-		<th scope="row"><label for="agentic_allow_platform_sync"><?php esc_html_e( 'Model catalog sync', 'agent-builder' ); ?></label></th>
+		<th scope="row"><label for="agent_builder_allow_platform_sync"><?php esc_html_e( 'Model catalog sync', 'agent-builder' ); ?></label></th>
 		<td>
 			<label>
-				<input type="checkbox" name="agentic_allow_platform_sync" id="agentic_allow_platform_sync" value="1" <?php checked( $agentic_allow_platform_sync ); ?> />
+				<input type="checkbox" name="agent_builder_allow_platform_sync" id="agent_builder_allow_platform_sync" value="1" <?php checked( $agent_builder_allow_platform_sync ); ?> />
 				<?php esc_html_e( 'Refresh the LLM model catalog from agentic-plugin.com once a day', 'agent-builder' ); ?>
 			</label>
 			<p class="description">
@@ -292,10 +292,10 @@ global $wpdb;
 		</td>
 	</tr>
 
-	<tr id="agentic_consent_text_row" <?php echo $agentic_chat_consent_enabled ? '' : 'style="display:none;"'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static HTML attribute. ?>>
-		<th scope="row"><label for="agentic_chat_consent_text">Consent Notice Text</label></th>
+	<tr id="agentic_consent_text_row" <?php echo $agent_builder_chat_consent_enabled ? '' : 'style="display:none;"'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static HTML attribute. ?>>
+		<th scope="row"><label for="agent_builder_chat_consent_text">Consent Notice Text</label></th>
 		<td>
-			<textarea name="agentic_chat_consent_text" id="agentic_chat_consent_text" rows="3" class="large-text"><?php echo esc_textarea( $agentic_chat_consent_text ); ?></textarea>
+			<textarea name="agent_builder_chat_consent_text" id="agent_builder_chat_consent_text" rows="3" class="large-text"><?php echo esc_textarea( $agent_builder_chat_consent_text ); ?></textarea>
 			<p class="description">
 				Plain text only. Shown as a small banner above the message input. Keep it brief — one or two sentences.
 			</p>
@@ -305,7 +305,7 @@ global $wpdb;
 
 <script>
 (function() {
-	var cb   = document.getElementById('agentic_chat_consent_enabled');
+	var cb   = document.getElementById('agent_builder_chat_consent_enabled');
 	var row  = document.getElementById('agentic_consent_text_row');
 	if (!cb || !row) return;
 	cb.addEventListener('change', function() { row.style.display = this.checked ? '' : 'none'; });

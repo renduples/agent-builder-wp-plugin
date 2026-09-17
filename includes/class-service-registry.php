@@ -5,7 +5,7 @@
  * Thin wrapper around Provider_Registry for the service-type entries
  * (non-LLM endpoints: Agentic API, Chat, RAG, TTS, Image Gen, Video Gen).
  *
- * Service rows live in the same `agentic_providers` table as LLM providers,
+ * Service rows live in the same `agent_builder_providers` table as LLM providers,
  * distinguished by provider_type = 'service'. This means:
  *   - One table, one place to manage all endpoints.
  *   - Admins can override any base URL from Settings → Endpoints.

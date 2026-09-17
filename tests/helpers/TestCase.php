@@ -51,31 +51,31 @@ class TestCase extends WP_UnitTestCase {
 			WHERE option_name LIKE 'agentic_test_%'"
 		);
 
-		$audit_table = $wpdb->prefix . 'agentic_audit_log';
+		$audit_table = $wpdb->prefix . 'agent_builder_audit_log';
 		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$audit_table}'" ) === $audit_table ) {
 			$wpdb->query( "DELETE FROM {$audit_table}" );
 		}
 
-		$queue_table = $wpdb->prefix . 'agentic_approval_queue';
+		$queue_table = $wpdb->prefix . 'agent_builder_approval_queue';
 		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$queue_table}'" ) === $queue_table ) {
 			$wpdb->query( "DELETE FROM {$queue_table}" );
 		}
 
-		$security_table = $wpdb->prefix . 'agentic_security_log';
+		$security_table = $wpdb->prefix . 'agent_builder_security_log';
 		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$security_table}'" ) === $security_table ) {
 			$wpdb->query( "DELETE FROM {$security_table}" );
 		}
 	}
 
 	/**
-	 * Seed a handful of real, currently-shipping tools into wp_agentic_tools,
+	 * Seed a handful of real, currently-shipping tools into wp_agent_builder_tools,
 	 * all enabled, so Tools_Registry::get_all() / is_enabled() have rows to
 	 * read from during a test. Tests that need a specific tool disabled
 	 * should call Tools_Registry::set_enabled() directly.
 	 */
 	protected function seed_tools_table(): void {
 		global $wpdb;
-		$table = $wpdb->prefix . 'agentic_tools';
+		$table = $wpdb->prefix . 'agent_builder_tools';
 		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" ) !== $table ) {
 			return;
 		}

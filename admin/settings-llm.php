@@ -45,7 +45,7 @@ if ( class_exists( '\Agentic\Costs_Manager' ) && isset( $_POST['agentic_save_ale
 $agentic_alerts          = class_exists( '\Agentic\Costs_Manager' ) ? \Agentic\Costs_Manager::get_alerts() : array();
 $agentic_all_providers   = Provider_Registry::get_all();
 $agentic_active_slugs    = array_map( static fn( $p ) => $p['slug'], Provider_Registry::get_active() );
-$agentic_pricing_version = get_option( 'agentic_pricing_version', '' );
+$agent_builder_pricing_version = get_option( 'agent_builder_pricing_version', '' );
 
 ?>
 
@@ -114,8 +114,8 @@ $agentic_pricing_version = get_option( 'agentic_pricing_version', '' );
 		<h2><?php esc_html_e( 'LLM Model Pricing', 'agent-builder' ); ?></h2>
 		<p class="description">
 			<?php esc_html_e( 'Token rates (USD per 1,000,000 tokens) used to estimate costs. Rates are per model.', 'agent-builder' ); ?>
-			<?php if ( ! empty( $agentic_pricing_version ) ) : ?>
-				<br><?php /* translators: %s: date when pricing was last updated */ printf( esc_html__( 'Pricing last updated: %s', 'agent-builder' ), esc_html( $agentic_pricing_version ) ); ?>
+			<?php if ( ! empty( $agent_builder_pricing_version ) ) : ?>
+				<br><?php /* translators: %s: date when pricing was last updated */ printf( esc_html__( 'Pricing last updated: %s', 'agent-builder' ), esc_html( $agent_builder_pricing_version ) ); ?>
 			<?php endif; ?>
 		</p>
 
@@ -210,14 +210,14 @@ $agentic_pricing_version = get_option( 'agentic_pricing_version', '' );
 							&nbsp;<?php echo esc_html( $agentic_prov['name'] ); ?>
 						</td>
 					</tr>
-					<?php foreach ( $agentic_prov_models as $agentic_model ) : ?>
+					<?php foreach ( $agentic_prov_models as $agent_builder_model ) : ?>
 						<?php
-						$agentic_m_in       = (float) ( $agentic_prov_pricing[ $agentic_model ]['in'] ?? 0 );
-						$agentic_m_out      = (float) ( $agentic_prov_pricing[ $agentic_model ]['out'] ?? 0 );
+						$agentic_m_in       = (float) ( $agentic_prov_pricing[ $agent_builder_model ]['in'] ?? 0 );
+						$agentic_m_out      = (float) ( $agentic_prov_pricing[ $agent_builder_model ]['out'] ?? 0 );
 						$agentic_no_pricing = empty( $agentic_prov_pricing );
 						?>
 						<tr class="model-row">
-							<td><?php echo esc_html( $agentic_model ); ?></td>
+							<td><?php echo esc_html( $agent_builder_model ); ?></td>
 							<td class="col-right"><?php echo $agentic_no_pricing ? '<span class="agentic-text-dim">—</span>' : '$' . esc_html( number_format( $agentic_m_in, 4 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></td>
 							<td class="col-right"><?php echo $agentic_no_pricing ? '<span class="agentic-text-dim">—</span>' : '$' . esc_html( number_format( $agentic_m_out, 4 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></td>
 							<td class="agentic-td-center">

@@ -58,7 +58,7 @@ class Toggle_File_Editing extends Tool_Base {
 		$allow_editing = (bool) $args['allow_editing'];
 
 		// Store: 1 = disallowed, 0 = allowed.
-		update_option( 'agentic_disallow_file_edit', $allow_editing ? 0 : 1 );
+		update_option( 'agent_builder_disallow_file_edit', $allow_editing ? 0 : 1 );
 
 		return array(
 			'file_editing_allowed' => $allow_editing,

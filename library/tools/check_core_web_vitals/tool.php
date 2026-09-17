@@ -60,7 +60,7 @@ class Check_Core_Web_Vitals extends Tool_Base {
 		// Free plugin: PageSpeed Insights requires the site's own Google API
 		// key — no bundled/shared key ships here. (Agent Builder Pro has its
 		// own separate, managed PageSpeed channel; this tool doesn't call it.)
-		$api_key = (string) get_option( 'agentic_psi_api_key', '' );
+		$api_key = (string) get_option( 'agent_builder_psi_api_key', '' );
 		if ( empty( $api_key ) ) {
 			return array(
 				'error'     => 'Core Web Vitals checks need a free Google PageSpeed Insights API key — add yours in Settings > APIs (takes about 2 minutes, no cost). See: https://agentic-plugin.com/pagespeed-insights-api-key/. Agent Builder Pro includes managed PageSpeed access with no key required.',

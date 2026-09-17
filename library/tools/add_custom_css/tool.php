@@ -67,7 +67,7 @@ class Add_Custom_Css extends Tool_Base {
 			return array( 'error' => 'css is required and cannot be empty.' );
 		}
 
-		$snippets    = (array) get_option( 'agentic_custom_css', array() );
+		$snippets    = (array) get_option( 'agent_builder_custom_css', array() );
 		$snippet_id  = 'css_' . time() . '_' . wp_rand( 1000, 9999 );
 
 		$snippets[ $snippet_id ] = array(
@@ -77,7 +77,7 @@ class Add_Custom_Css extends Tool_Base {
 			'created_at' => gmdate( 'c' ),
 		);
 
-		update_option( 'agentic_custom_css', $snippets );
+		update_option( 'agent_builder_custom_css', $snippets );
 
 		return array(
 			'snippet_id'  => $snippet_id,

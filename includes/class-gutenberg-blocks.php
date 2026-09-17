@@ -66,7 +66,7 @@ class Gutenberg_Blocks {
 	 * Register dynamic blocks for each enabled agent.
 	 */
 	public function register_blocks(): void {
-		$enabled_slugs = (array) get_option( 'agentic_gutenberg_block_agents', array() );
+		$enabled_slugs = (array) get_option( 'agent_builder_gutenberg_block_agents', array() );
 		if ( empty( $enabled_slugs ) ) {
 			return;
 		}
@@ -155,7 +155,7 @@ class Gutenberg_Blocks {
 		// Apply per-block theme if set — temporarily override the option for this render.
 		if ( ! empty( $attributes['theme'] ) ) {
 			add_filter(
-				'pre_option_agentic_chat_theme',
+				'pre_option_agent_builder_chat_theme',
 				function () use ( $attributes ) {
 					return $attributes['theme'];
 				},
@@ -221,7 +221,7 @@ class Gutenberg_Blocks {
 	 * Enqueue editor assets (block registration JS + configuration data).
 	 */
 	public function enqueue_editor_assets(): void {
-		$enabled_slugs = (array) get_option( 'agentic_gutenberg_block_agents', array() );
+		$enabled_slugs = (array) get_option( 'agent_builder_gutenberg_block_agents', array() );
 		if ( empty( $enabled_slugs ) ) {
 			return;
 		}

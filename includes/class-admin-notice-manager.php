@@ -66,7 +66,7 @@ class Admin_Notice_Manager {
 			return;
 		}
 
-		if ( get_option( 'agentic_onboarding_complete' ) ) {
+		if ( get_option( 'agent_builder_onboarding_complete' ) ) {
 			return;
 		}
 

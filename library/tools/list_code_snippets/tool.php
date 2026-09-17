@@ -46,8 +46,8 @@ class List_Code_Snippets extends Tool_Base {
 	}
 
 	public function execute( array $args ): array {
-		$css_snippets = (array) get_option( 'agentic_custom_css', array() );
-		$js_snippets  = (array) get_option( 'agentic_custom_js', array() );
+		$css_snippets = (array) get_option( 'agent_builder_custom_css', array() );
+		$js_snippets  = (array) get_option( 'agent_builder_custom_js', array() );
 
 		$all = array();
 

@@ -94,8 +94,8 @@ class Shortcodes {
 			'vision'         => $features['vision'],
 			'costs'          => '0',
 			'tts'            => $features['tts'],
-			'ttsVoice'       => get_option( 'agentic_tts_voice', 'journey-f' ),
-			'consentEnabled' => get_option( 'agentic_chat_consent_enabled', false ) ? '1' : '0',
+			'ttsVoice'       => get_option( 'agent_builder_tts_voice', 'journey-f' ),
+			'consentEnabled' => get_option( 'agent_builder_chat_consent_enabled', false ) ? '1' : '0',
 			'consentText'    => \Agentic\GDPR::get_consent_text(),
 			'isAdmin'        => current_user_can( 'manage_options' ) ? '1' : '0',
 			'adminAgentsUrl' => admin_url( 'admin.php?page=agentic-agents' ),
@@ -135,10 +135,10 @@ class Shortcodes {
 		$atts = shortcode_atts(
 			array(
 				'agent'       => '',           // Agent slug (empty = first available).
-				'style'       => get_option( 'agentic_sc_default_style', 'inline' ),
-				'height'      => get_option( 'agentic_sc_default_height', '500px' ),
+				'style'       => get_option( 'agent_builder_sc_default_style', 'inline' ),
+				'height'      => get_option( 'agent_builder_sc_default_height', '500px' ),
 				'placeholder' => 'Type your message...',
-				'show_header' => get_option( 'agentic_sc_default_show_header', '1' ) ? 'true' : 'false',
+				'show_header' => get_option( 'agent_builder_sc_default_show_header', '1' ) ? 'true' : 'false',
 				'context'     => '',           // Optional context (e.g., product_id:123).
 			),
 			$atts,
@@ -445,7 +445,7 @@ class Shortcodes {
 		}
 
 		// Check if anonymous access is allowed.
-		return (bool) get_option( 'agentic_allow_anonymous_chat', false );
+		return (bool) get_option( 'agent_builder_allow_anonymous_chat', false );
 	}
 
 	/**

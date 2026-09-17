@@ -189,7 +189,7 @@ class Abilities_Manifest {
 			: $tool_default;
 
 		// 3. Admin override (stored in options, can only escalate).
-		$overrides = get_option( 'agentic_risk_overrides', array() );
+		$overrides = get_option( 'agent_builder_risk_overrides', array() );
 		$key       = $agent_slug . ':' . $tool_name;
 		if ( isset( $overrides[ $key ] ) && Risk_Level::is_valid( $overrides[ $key ] ) ) {
 			$effective = Risk_Level::max( $effective, $overrides[ $key ] );

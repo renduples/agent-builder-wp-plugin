@@ -37,7 +37,7 @@ class Security_Log {
 	/**
 	 * Table name constant
 	 */
-	private const TABLE_NAME = 'agentic_security_log';
+	private const TABLE_NAME = 'agent_builder_security_log';
 
 	/**
 	 * Get singleton instance
@@ -115,7 +115,7 @@ class Security_Log {
 		$message_truncated = substr( $message, 0, 200 );
 
 		// Anonymise IP if the GDPR setting is enabled.
-		$stored_ip = get_option( 'agentic_ip_anonymize', true )
+		$stored_ip = get_option( 'agent_builder_ip_anonymize', true )
 			? hash( 'sha256', $ip_address . wp_salt() )
 			: $ip_address;
 

@@ -15,12 +15,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$agentic_ui_audio      = get_option( 'agentic_chat_audio', '1' );
-$agentic_ui_tts        = get_option( 'agentic_chat_tts', '1' );
-$agentic_ui_vision     = get_option( 'agentic_chat_vision', '1' );
-$agentic_ui_costs      = get_option( 'agentic_chat_costs', '1' );
-$agentic_ui_whitelabel = get_option( 'agentic_chat_whitelabel', '1' );
-$agentic_ui_whatsapp   = get_option( 'agentic_show_whatsapp_cta', '0' );
+$agentic_ui_audio      = get_option( 'agent_builder_chat_audio', '1' );
+$agentic_ui_tts        = get_option( 'agent_builder_chat_tts', '1' );
+$agentic_ui_vision     = get_option( 'agent_builder_chat_vision', '1' );
+$agentic_ui_costs      = get_option( 'agent_builder_chat_costs', '1' );
+$agentic_ui_whitelabel = get_option( 'agent_builder_chat_whitelabel', '1' );
+$agentic_ui_whatsapp   = get_option( 'agent_builder_show_whatsapp_cta', '0' );
 ?>
 <p class="description">
 	<?php
@@ -46,7 +46,7 @@ $agentic_ui_whatsapp   = get_option( 'agentic_show_whatsapp_cta', '0' );
 		<th scope="row">Voice Input</th>
 		<td>
 			<label>
-				<input type="checkbox" name="agentic_chat_audio" value="1" <?php checked( $agentic_ui_audio, '1' ); ?> />
+				<input type="checkbox" name="agent_builder_chat_audio" value="1" <?php checked( $agentic_ui_audio, '1' ); ?> />
 				Enable audio input (microphone button)
 			</label>
 			<p class="description">Allow users to send messages using their microphone. Uses compatible browsers built-in speech recognition.</p>
@@ -56,7 +56,7 @@ $agentic_ui_whatsapp   = get_option( 'agentic_show_whatsapp_cta', '0' );
 		<th scope="row">Text-to-Speech</th>
 		<td>
 			<label>
-				<input type="checkbox" name="agentic_chat_tts" value="1" <?php checked( $agentic_ui_tts, '1' ); ?> />
+				<input type="checkbox" name="agent_builder_chat_tts" value="1" <?php checked( $agentic_ui_tts, '1' ); ?> />
 				Enable audio output (speaker button)
 			</label>
 			<p class="description">Allow user to listen to agent responses using neural TTS voices. Requires prepaid credits.</p>
@@ -66,7 +66,7 @@ $agentic_ui_whatsapp   = get_option( 'agentic_show_whatsapp_cta', '0' );
 		<th scope="row">Vision</th>
 		<td>
 			<label>
-				<input type="checkbox" name="agentic_chat_vision" value="1" <?php checked( $agentic_ui_vision, '1' ); ?> />
+				<input type="checkbox" name="agent_builder_chat_vision" value="1" <?php checked( $agentic_ui_vision, '1' ); ?> />
 				Enable image uploads (paperclip button)
 			</label>
 			<p class="description">Allow users to attach images for the agent to analyze.</p>
@@ -76,7 +76,7 @@ $agentic_ui_whatsapp   = get_option( 'agentic_show_whatsapp_cta', '0' );
 		<th scope="row">Response Cache</th>
 		<td>
 			<label>
-				<input type="checkbox" name="agentic_response_cache_enabled" value="1" <?php checked( $agentic_cache_enabled ); ?> />
+				<input type="checkbox" name="agent_builder_response_cache_enabled" value="1" <?php checked( $agentic_cache_enabled ); ?> />
 				Cache identical messages to avoid repeated LLM calls
 			</label>
 			<p class="description">Exact-match queries return cached responses. Saves tokens and improves response time.</p>
@@ -85,7 +85,7 @@ $agentic_ui_whatsapp   = get_option( 'agentic_show_whatsapp_cta', '0' );
 	<tr>
 		<th scope="row">Cache TTL</th>
 		<td>
-			<select name="agentic_response_cache_ttl" id="agentic_response_cache_ttl">
+			<select name="agent_builder_response_cache_ttl" id="agent_builder_response_cache_ttl">
 				<option value="900" <?php selected( $agentic_cache_ttl, 900 ); ?>>15 minutes</option>
 				<option value="1800" <?php selected( $agentic_cache_ttl, 1800 ); ?>>30 minutes</option>
 				<option value="3600" <?php selected( $agentic_cache_ttl, 3600 ); ?>>1 hour (Recommended)</option>
@@ -120,12 +120,12 @@ $agentic_ui_whatsapp   = get_option( 'agentic_show_whatsapp_cta', '0' );
 		<th scope="row">Branding</th>
 		<td>
 			<label>
-				<input type="checkbox" name="agentic_chat_whitelabel" id="agentic_chat_whitelabel" value="1" <?php checked( $agentic_ui_whitelabel, '1' ); ?> />
+				<input type="checkbox" name="agent_builder_chat_whitelabel" id="agent_builder_chat_whitelabel" value="1" <?php checked( $agentic_ui_whitelabel, '1' ); ?> />
 				<?php esc_html_e( 'Hide “Powered by Agent Builder” branding (default on — credits stay off the site unless you uncheck this)', 'agent-builder' ); ?>
 			</label>
 			<p class="description"><?php esc_html_e( 'When unchecked, a small credit line appears in the chat footer. WordPress.org requires this to stay hidden unless you opt in.', 'agent-builder' ); ?></p>
 			<label class="agentic-mt-8" style="display:block;">
-				<input type="checkbox" name="agentic_show_whatsapp_cta" id="agentic_show_whatsapp_cta" value="1" <?php checked( $agentic_ui_whatsapp, '1' ); ?> />
+				<input type="checkbox" name="agent_builder_show_whatsapp_cta" id="agent_builder_show_whatsapp_cta" value="1" <?php checked( $agentic_ui_whatsapp, '1' ); ?> />
 				<?php esc_html_e( 'Show the WhatsApp Pro promo in admin chat', 'agent-builder' ); ?>
 			</label>
 		</td>
@@ -144,7 +144,7 @@ $agentic_ui_whatsapp   = get_option( 'agentic_show_whatsapp_cta', '0' );
 			<th scope="row">Enhanced Tool Guidance</th>
 			<td>
 				<label>
-					<input type="checkbox" name="agentic_enable_weak_model_tool_guidance" value="1" <?php checked( $agentic_weak_guidance, '1' ); ?> />
+					<input type="checkbox" name="agent_builder_enable_weak_model_tool_guidance" value="1" <?php checked( $agentic_weak_guidance, '1' ); ?> />
 					Enable extra guidance + examples for weaker models
 				</label>
 				<p class="description">When enabled, agents using smaller models receive additional instructions to improve tool call accuracy and error recovery.</p>
@@ -153,7 +153,7 @@ $agentic_ui_whatsapp   = get_option( 'agentic_show_whatsapp_cta', '0' );
 		<tr>
 			<th scope="row">Maximum Tool Retries</th>
 			<td>
-				<input type="number" name="agentic_max_tool_retries" min="1" max="10" step="1" value="<?php echo esc_attr( $agentic_max_retries ); ?>" style="width: 80px;" />
+				<input type="number" name="agent_builder_max_tool_retries" min="1" max="10" step="1" value="<?php echo esc_attr( $agentic_max_retries ); ?>" style="width: 80px;" />
 				<p class="description">How many times the system will automatically ask a weaker model to retry a failed tool call with corrected arguments.</p>
 			</td>
 		</tr>

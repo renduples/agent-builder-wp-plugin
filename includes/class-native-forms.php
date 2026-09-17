@@ -870,7 +870,7 @@ class Agentic_Native_Forms {
 			<?php
 			// Turnstile widget.
 			if ( $spam_config['turnstile'] ) :
-				$turnstile_site_key = get_option( 'agentic_turnstile_site_key', '' );
+				$turnstile_site_key = get_option( 'agent_builder_turnstile_site_key', '' );
 				if ( '' !== $turnstile_site_key ) :
 					?>
 				<div class="cf-turnstile" data-sitekey="<?php echo esc_attr( $turnstile_site_key ); ?>"></div>

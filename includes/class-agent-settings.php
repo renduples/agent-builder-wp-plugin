@@ -1,6 +1,6 @@
 <?php
 /**
- * Agent Settings — per-agent key/value store backed by wp_agentic_agent_settings.
+ * Agent Settings — per-agent key/value store backed by wp_agent_builder_agent_settings.
  *
  * This is the single source of truth for all per-agent configuration that is not
  * baked into the agent's PHP file (system prompt, tools, etc.). Examples:
@@ -31,7 +31,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Class Agent_Settings
  *
- * Static CRUD wrapper for the wp_agentic_agent_settings table.
+ * Static CRUD wrapper for the wp_agent_builder_agent_settings table.
  */
 class Agent_Settings {
 
@@ -78,7 +78,7 @@ class Agent_Settings {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$rows = $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT meta_key, meta_value FROM {$wpdb->prefix}agentic_agent_settings WHERE agent_slug = %s",
+					"SELECT meta_key, meta_value FROM {$wpdb->prefix}agent_builder_agent_settings WHERE agent_slug = %s",
 					$slug
 				),
 				ARRAY_A
@@ -115,7 +115,7 @@ class Agent_Settings {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT agent_slug, meta_value FROM {$wpdb->prefix}agentic_agent_settings WHERE meta_key = %s",
+				"SELECT agent_slug, meta_value FROM {$wpdb->prefix}agent_builder_agent_settings WHERE meta_key = %s",
 				$key
 			),
 			ARRAY_A
@@ -143,7 +143,7 @@ class Agent_Settings {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$result = $wpdb->query(
 			$wpdb->prepare(
-				"INSERT INTO {$wpdb->prefix}agentic_agent_settings (agent_slug, meta_key, meta_value)
+				"INSERT INTO {$wpdb->prefix}agent_builder_agent_settings (agent_slug, meta_key, meta_value)
 				 VALUES (%s, %s, %s)
 				 ON DUPLICATE KEY UPDATE meta_value = VALUES(meta_value), updated_at = NOW()",
 				$slug,
@@ -187,7 +187,7 @@ class Agent_Settings {
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$result = $wpdb->delete(
-			"{$wpdb->prefix}agentic_agent_settings",
+			"{$wpdb->prefix}agent_builder_agent_settings",
 			array( 'agent_slug' => $slug ),
 			array( '%s' )
 		);
@@ -236,7 +236,7 @@ class Agent_Settings {
 			$rows = $wpdb->get_results(
 				// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- placeholders are %s tokens from array_fill; PHPCS can't see runtime count.
 				$wpdb->prepare(
-					"SELECT agent_slug, meta_key, meta_value FROM {$wpdb->prefix}agentic_agent_settings WHERE agent_slug IN ({$placeholders})", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- $placeholders is only %s tokens; safe.
+					"SELECT agent_slug, meta_key, meta_value FROM {$wpdb->prefix}agent_builder_agent_settings WHERE agent_slug IN ({$placeholders})", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- $placeholders is only %s tokens; safe.
 					...$slugs
 				),
 				ARRAY_A
@@ -244,7 +244,7 @@ class Agent_Settings {
 		} else {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
 			$rows = $wpdb->get_results(
-				"SELECT agent_slug, meta_key, meta_value FROM {$wpdb->prefix}agentic_agent_settings",
+				"SELECT agent_slug, meta_key, meta_value FROM {$wpdb->prefix}agent_builder_agent_settings",
 				ARRAY_A
 			);
 		}
@@ -315,7 +315,7 @@ class Agent_Settings {
 	 */
 	private static function table_exists(): bool {
 		global $wpdb;
-		$table = $wpdb->prefix . 'agentic_agent_settings';
+		$table = $wpdb->prefix . 'agent_builder_agent_settings';
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- One-off existence check.
 		return (bool) $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
 	}

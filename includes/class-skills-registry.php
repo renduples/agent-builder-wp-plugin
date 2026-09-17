@@ -115,7 +115,7 @@ final class Skills_Registry {
 		}
 
 		global $wpdb;
-		$table = $wpdb->prefix . 'agentic_skills';
+		$table = $wpdb->prefix . 'agent_builder_skills';
 
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Custom table, manual cache.
 		$rows = $wpdb->get_results( "SELECT * FROM {$table} ORDER BY name ASC", ARRAY_A );
@@ -135,7 +135,7 @@ final class Skills_Registry {
 	 */
 	public static function get( int $id ): ?array {
 		global $wpdb;
-		$table = $wpdb->prefix . 'agentic_skills';
+		$table = $wpdb->prefix . 'agent_builder_skills';
 
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Custom table.
 		$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $id ), ARRAY_A );
@@ -242,7 +242,7 @@ final class Skills_Registry {
 	 */
 	public static function create( array $data ) {
 		global $wpdb;
-		$table = $wpdb->prefix . 'agentic_skills';
+		$table = $wpdb->prefix . 'agent_builder_skills';
 		$now   = current_time( 'mysql', true );
 
 		$slug = sanitize_title( $data['name'] ?? 'skill' );
@@ -291,7 +291,7 @@ final class Skills_Registry {
 	 */
 	public static function update( int $id, array $data ): bool {
 		global $wpdb;
-		$table = $wpdb->prefix . 'agentic_skills';
+		$table = $wpdb->prefix . 'agent_builder_skills';
 
 		$fields = array();
 		$format = array();
@@ -345,7 +345,7 @@ final class Skills_Registry {
 	 */
 	public static function delete( int $id ): bool {
 		global $wpdb;
-		$table = $wpdb->prefix . 'agentic_skills';
+		$table = $wpdb->prefix . 'agent_builder_skills';
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table delete.
 		$result = $wpdb->delete( $table, array( 'id' => $id ), array( '%d' ) );

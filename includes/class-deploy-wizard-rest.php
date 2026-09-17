@@ -207,19 +207,19 @@ class Deploy_Wizard_REST {
 			$pages = 'all';
 		}
 
-		$agents = (array) get_option( 'agentic_modal_agents', array() );
+		$agents = (array) get_option( 'agent_builder_modal_agents', array() );
 		if ( ! in_array( $slug, $agents, true ) ) {
 			$agents[] = $slug;
 		}
-		update_option( 'agentic_modal_agents', array_values( array_unique( $agents ) ), false );
+		update_option( 'agent_builder_modal_agents', array_values( array_unique( $agents ) ), false );
 
-		$all_config          = (array) get_option( 'agentic_modal_config', array() );
+		$all_config          = (array) get_option( 'agent_builder_modal_config', array() );
 		$all_config[ $slug ] = array(
 			'position'      => $position,
 			'pages'         => $pages,
 			'require_login' => $require_login,
 		);
-		update_option( 'agentic_modal_config', $all_config, false );
+		update_option( 'agent_builder_modal_config', $all_config, false );
 
 		if ( class_exists( Deployments::class ) ) {
 			$id = Deployments::auto_register( Deployments::TYPE_MODAL, $slug, $all_config[ $slug ] );
@@ -315,11 +315,11 @@ class Deploy_Wizard_REST {
 	 * @return void
 	 */
 	private static function enable_gutenberg( string $slug ): void {
-		$agents = (array) get_option( 'agentic_gutenberg_block_agents', array() );
+		$agents = (array) get_option( 'agent_builder_gutenberg_block_agents', array() );
 		if ( ! in_array( $slug, $agents, true ) ) {
 			$agents[] = $slug;
 		}
-		update_option( 'agentic_gutenberg_block_agents', array_values( array_unique( $agents ) ) );
+		update_option( 'agent_builder_gutenberg_block_agents', array_values( array_unique( $agents ) ) );
 
 		if ( class_exists( Deployments::class ) ) {
 			$id = Deployments::auto_register( Deployments::TYPE_GUTENBERG, $slug, array() );

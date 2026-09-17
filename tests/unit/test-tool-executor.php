@@ -39,7 +39,7 @@ class Test_Tool_Executor extends TestCase {
 	public function setUp(): void {
 		parent::setUp();
 		Risk_Level::bust_cache();
-		delete_option( 'agentic_approval_auto_max_risk' );
+		delete_option( 'agent_builder_approval_auto_max_risk' );
 		$this->clear_backup_dir();
 	}
 
@@ -48,7 +48,7 @@ class Test_Tool_Executor extends TestCase {
 	 * WP test transaction rollback never touches them).
 	 */
 	public function tearDown(): void {
-		delete_option( 'agentic_approval_auto_max_risk' );
+		delete_option( 'agent_builder_approval_auto_max_risk' );
 		$this->clear_backup_dir();
 		parent::tearDown();
 	}
@@ -77,7 +77,7 @@ class Test_Tool_Executor extends TestCase {
 
 		$result = $this->make_executor()->execute(
 			'db_update_option',
-			array( 'name' => 'agentic_test_disabled_opt', 'value' => 'x' ),
+			array( 'name' => 'agent_builder_test_disabled_opt', 'value' => 'x' ),
 			'test-agent',
 			'autonomous',
 			'chat'
@@ -85,7 +85,7 @@ class Test_Tool_Executor extends TestCase {
 
 		$this->assertArrayHasKey( 'error', $result );
 		$this->assertStringContainsString( 'disabled', $result['error'] );
-		$this->assertFalse( get_option( 'agentic_test_disabled_opt' ) );
+		$this->assertFalse( get_option( 'agent_builder_test_disabled_opt' ) );
 	}
 
 	/**
@@ -94,7 +94,7 @@ class Test_Tool_Executor extends TestCase {
 	 */
 	public function test_extreme_risk_is_always_blocked(): void {
 		update_option(
-			'agentic_risk_overrides',
+			'agent_builder_risk_overrides',
 			array( 'test-agent:add_custom_css' => Risk_Level::EXTREME )
 		);
 
@@ -109,7 +109,7 @@ class Test_Tool_Executor extends TestCase {
 		$this->assertArrayHasKey( 'error', $result );
 		$this->assertStringContainsString( 'extreme risk', $result['error'] );
 
-		delete_option( 'agentic_risk_overrides' );
+		delete_option( 'agent_builder_risk_overrides' );
 	}
 
 	/**
@@ -120,7 +120,7 @@ class Test_Tool_Executor extends TestCase {
 		$queue  = new Approval_Queue();
 		$result = $this->make_executor()->execute(
 			'db_update_option',
-			array( 'name' => 'agentic_test_queued_opt', 'value' => 'should-not-be-set' ),
+			array( 'name' => 'agent_builder_test_queued_opt', 'value' => 'should-not-be-set' ),
 			'test-agent',
 			'autonomous',
 			'chat'
@@ -129,7 +129,7 @@ class Test_Tool_Executor extends TestCase {
 		$this->assertSame( 'queued_for_approval', $result['status'] );
 		$this->assertArrayHasKey( 'approval_id', $result );
 		$this->assertSame( 1, $queue->get_pending_count() );
-		$this->assertFalse( get_option( 'agentic_test_queued_opt' ), 'queued tool must not have executed yet' );
+		$this->assertFalse( get_option( 'agent_builder_test_queued_opt' ), 'queued tool must not have executed yet' );
 	}
 
 	/**
@@ -139,7 +139,7 @@ class Test_Tool_Executor extends TestCase {
 	public function test_approved_queue_item_is_consumed_on_next_call(): void {
 		$queue     = new Approval_Queue();
 		$executor  = $this->make_executor();
-		$arguments = array( 'name' => 'agentic_test_approved_opt', 'value' => 'approved-value' );
+		$arguments = array( 'name' => 'agent_builder_test_approved_opt', 'value' => 'approved-value' );
 
 		$first = $executor->execute( 'db_update_option', $arguments, 'test-agent', 'autonomous', 'chat' );
 		$this->assertSame( 'queued_for_approval', $first['status'] );
@@ -149,7 +149,7 @@ class Test_Tool_Executor extends TestCase {
 		$second = $executor->execute( 'db_update_option', $arguments, 'test-agent', 'autonomous', 'chat' );
 
 		$this->assertArrayNotHasKey( 'status', $second, 'approved call should fall through to real execution, not queue again' );
-		$this->assertSame( 'approved-value', get_option( 'agentic_test_approved_opt' ) );
+		$this->assertSame( 'approved-value', get_option( 'agent_builder_test_approved_opt' ) );
 
 		$row = $this->get_queue_row( (int) $first['approval_id'] );
 		$this->assertSame( 'executed', $row['status'] );
@@ -180,20 +180,20 @@ class Test_Tool_Executor extends TestCase {
 	 * table appearing before the option's new value is confirmed written.
 	 */
 	public function test_allow_path_backs_up_table_before_executing_non_readonly_tool(): void {
-		update_option( 'agentic_approval_auto_max_risk', Risk_Level::HIGH );
+		update_option( 'agent_builder_approval_auto_max_risk', Risk_Level::HIGH );
 
 		$before = glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*_options.json' ) ?: array();
 		$this->assertCount( 0, $before, 'precondition: no stale options backup from a prior test' );
 
 		$result = $this->make_executor()->execute(
 			'db_update_option',
-			array( 'name' => 'agentic_test_allow_opt', 'value' => 'written-value' ),
+			array( 'name' => 'agent_builder_test_allow_opt', 'value' => 'written-value' ),
 			'test-agent',
 			'supervised',
 			'chat'
 		);
 
-		$this->assertSame( 'written-value', get_option( 'agentic_test_allow_opt' ) );
+		$this->assertSame( 'written-value', get_option( 'agent_builder_test_allow_opt' ) );
 		$this->assertTrue( $result['updated'] ?? false );
 
 		$after = glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*_options.json' ) ?: array();
@@ -236,7 +236,7 @@ class Test_Tool_Executor extends TestCase {
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		return $wpdb->get_row(
-			$wpdb->prepare( "SELECT * FROM {$wpdb->prefix}agentic_approval_queue WHERE id = %d", $id ),
+			$wpdb->prepare( "SELECT * FROM {$wpdb->prefix}agent_builder_approval_queue WHERE id = %d", $id ),
 			ARRAY_A
 		);
 	}

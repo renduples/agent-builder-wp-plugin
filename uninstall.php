@@ -19,28 +19,28 @@ global $wpdb;
 /*
  * -----------------------------------------------------------------–––––––––––––--------
  * Notify Agentic AI that this site is being removed — only when the admin has
- * explicitly opted in (agentic_allow_deregister_on_uninstall) AND an API key is
+ * explicitly opted in (agent_builder_allow_deregister_on_uninstall) AND an API key is
  * configured. The endpoint is disclosed under "== External Services ==" in
  * readme.txt.
  * ----------------------------------------------------------------------–––––––––––––---
  */
 $agentic_api_svc     = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 	$wpdb->prepare(
-		"SELECT endpoint FROM {$wpdb->prefix}agentic_providers WHERE slug = %s LIMIT 1",
+		"SELECT endpoint FROM {$wpdb->prefix}agent_builder_providers WHERE slug = %s LIMIT 1",
 		'agentic-api'
 	)
 );
 $agentic_api_base    = $agentic_api_svc ? (string) $agentic_api_svc->endpoint : 'https://agentic-plugin.com';
 $agentic_api_key_row = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 	$wpdb->prepare(
-		"SELECT api_key FROM {$wpdb->prefix}agentic_providers WHERE slug = %s LIMIT 1",
+		"SELECT api_key FROM {$wpdb->prefix}agent_builder_providers WHERE slug = %s LIMIT 1",
 		'agentic'
 	)
 );
-$agentic_api_key     = $agentic_api_key_row ? $agentic_api_key_row->api_key : get_option( 'agentic_ai_api_key_builtin', '' );
+$agentic_api_key     = $agentic_api_key_row ? $agentic_api_key_row->api_key : get_option( 'agent_builder_ai_api_key_builtin', '' );
 
 if ( ! empty( $agentic_api_key )
-	&& '1' === get_option( 'agentic_allow_deregister_on_uninstall', '0' )
+	&& '1' === get_option( 'agent_builder_allow_deregister_on_uninstall', '0' )
 ) {
 	wp_remote_post(
 		$agentic_api_base . '/wp-json/agentic/v1/deregister',
@@ -63,7 +63,7 @@ if ( ! empty( $agentic_api_key )
  * options are preserved so they survive a reinstall.
  * -------------------------------------------------------------------------
  */
-$agentic_delete_data = get_option( 'agentic_deactivate_delete_data', '0' );
+$agentic_delete_data = get_option( 'agent_builder_deactivate_delete_data', '0' );
 if ( '1' !== $agentic_delete_data ) {
 	return; // User chose to keep data — nothing more to do.
 }
@@ -72,19 +72,22 @@ if ( '1' !== $agentic_delete_data ) {
  * -------------------------------------------------------------------------
  * 1. Drop custom database tables.
  *
- * Query information_schema for every agentic_* table so future tables are
+ * Query information_schema for every agent_builder_* table (plus the
+ * pre-2.14.0 agentic_* name, for a site that deletes the plugin before ever
+ * loading a page that runs the rename migration) so future tables are
  * caught automatically without maintaining a manual list.
  * -------------------------------------------------------------------------
  */
 $agentic_tables = $wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 	$wpdb->prepare(
-		'SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name LIKE %s',
+		'SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE() AND ( table_name LIKE %s OR table_name LIKE %s )',
+		$wpdb->esc_like( $wpdb->prefix . 'agent_builder_' ) . '%',
 		$wpdb->esc_like( $wpdb->prefix . 'agentic_' ) . '%'
 	)
 );
 
 /*
- * Include agentic_agent_library and agentic_skills. They mix bundled seed
+ * Include agent_builder_agent_library and agent_builder_skills. They mix bundled seed
  * rows with user-created content: custom and imported skills
  * (Skills_Registry::create() / import_from_hub()), customized core skills
  * (source_hash / is_customized()), and user-created or purchased library
@@ -105,14 +108,17 @@ if ( $agentic_tables ) {
  * -------------------------------------------------------------------------
  * 2. Delete plugin options.
  *
- * Use a single wildcard DELETE to catch every agentic_* option — including
- * any added in future versions — without maintaining a manual list.
+ * Use a single wildcard DELETE to catch every agent_builder_* option
+ * (plus the pre-2.14.0 agentic_* name — see the table query above) —
+ * including any added in future versions — without maintaining a manual
+ * list.
  * -------------------------------------------------------------------------
  */
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Targeted plugin option cleanup.
 $wpdb->query(
 	$wpdb->prepare(
-		"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
+		"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
+		'agent_builder\_%',
 		'agentic\_%'
 	)
 );
@@ -125,7 +131,9 @@ $wpdb->query(
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Targeted transient cleanup.
 $wpdb->query(
 	$wpdb->prepare(
-		"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
+		"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s OR option_name LIKE %s OR option_name LIKE %s",
+		'_transient_agent_builder_%',
+		'_transient_timeout_agent_builder_%',
 		'_transient_agentic_%',
 		'_transient_timeout_agentic_%'
 	)
@@ -139,7 +147,8 @@ $wpdb->query(
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Uninstall cleanup of this plugin's usermeta only.
 $wpdb->query(
 	$wpdb->prepare(
-		"DELETE FROM {$wpdb->usermeta} WHERE meta_key LIKE %s",
+		"DELETE FROM {$wpdb->usermeta} WHERE meta_key LIKE %s OR meta_key LIKE %s",
+		$wpdb->esc_like( 'agent_builder_' ) . '%',
 		$wpdb->esc_like( 'agentic_' ) . '%'
 	)
 );
@@ -153,7 +162,7 @@ $agentic_cron_events = _get_cron_array();
 if ( is_array( $agentic_cron_events ) ) {
 	foreach ( $agentic_cron_events as $agentic_cron_timestamp => $agentic_cron_hooks ) {
 		foreach ( array_keys( $agentic_cron_hooks ) as $agentic_hook ) {
-			if ( str_starts_with( $agentic_hook, 'agentic_' ) ) {
+			if ( str_starts_with( $agentic_hook, 'agent_builder_' ) || str_starts_with( $agentic_hook, 'agentic_' ) ) {
 				wp_clear_scheduled_hook( $agentic_hook );
 			}
 		}

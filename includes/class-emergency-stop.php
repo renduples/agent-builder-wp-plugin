@@ -132,7 +132,7 @@ class Emergency_Stop {
 		self::disconnect_providers( $snapshot );
 
 		// Clear default LLM provider selection so nothing residual is selected.
-		update_option( 'agentic_llm_provider', 'none', false );
+		update_option( 'agent_builder_llm_provider', 'none', false );
 
 		update_option( self::OPTION_ENABLED, '1', false );
 
@@ -178,10 +178,10 @@ class Emergency_Stop {
 		$warnings = array_merge( $warnings, self::restore_providers( $snapshot ) );
 
 		if ( ! empty( $snapshot['default_provider'] ) ) {
-			update_option( 'agentic_llm_provider', sanitize_key( (string) $snapshot['default_provider'] ), false );
+			update_option( 'agent_builder_llm_provider', sanitize_key( (string) $snapshot['default_provider'] ), false );
 		}
 		if ( ! empty( $snapshot['default_model'] ) ) {
-			update_option( 'agentic_model', sanitize_text_field( (string) $snapshot['default_model'] ), false );
+			update_option( 'agent_builder_model', sanitize_text_field( (string) $snapshot['default_model'] ), false );
 		}
 
 		// Re-activate agents that were active at stop time.
@@ -294,9 +294,9 @@ class Emergency_Stop {
 			'active_agents'    => $active_agents,
 			'agents'           => $agents_state,
 			'providers'        => $providers,
-			'ollama_url'       => (string) get_option( 'agentic_ollama_url', '' ),
-			'default_provider' => (string) get_option( 'agentic_llm_provider', '' ),
-			'default_model'    => (string) get_option( 'agentic_model', '' ),
+			'ollama_url'       => (string) get_option( 'agent_builder_ollama_url', '' ),
+			'default_provider' => (string) get_option( 'agent_builder_llm_provider', '' ),
+			'default_model'    => (string) get_option( 'agent_builder_model', '' ),
 			'jobs_pending'     => $jobs_pending,
 			'jobs_processing'  => $jobs_processing,
 		);
@@ -327,7 +327,7 @@ class Emergency_Stop {
 		}
 
 		if ( ! empty( $snapshot['ollama_url'] ) ) {
-			update_option( 'agentic_ollama_url', '', false );
+			update_option( 'agent_builder_ollama_url', '', false );
 			Security_Log::log_system(
 				'emergency_stop_ollama_disconnected',
 				'emergency_stop',
@@ -374,7 +374,7 @@ class Emergency_Stop {
 		}
 
 		if ( ! empty( $snapshot['ollama_url'] ) ) {
-			update_option( 'agentic_ollama_url', esc_url_raw( (string) $snapshot['ollama_url'] ), false );
+			update_option( 'agent_builder_ollama_url', esc_url_raw( (string) $snapshot['ollama_url'] ), false );
 		}
 
 		return $warnings;
@@ -390,7 +390,7 @@ class Emergency_Stop {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$val = $wpdb->get_var(
 			$wpdb->prepare(
-				'SELECT api_key FROM ' . $wpdb->prefix . 'agentic_providers WHERE slug = %s',
+				'SELECT api_key FROM ' . $wpdb->prefix . 'agent_builder_providers WHERE slug = %s',
 				$slug
 			)
 		);

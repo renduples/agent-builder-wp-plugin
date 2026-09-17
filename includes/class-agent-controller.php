@@ -84,7 +84,7 @@ class Agent_Controller {
 	private string $invocation_context = 'chat';
 
 	/**
-	 * Per-request cache for 'agentic_agent_mode' option.
+	 * Per-request cache for 'agent_builder_agent_mode' option.
 	 *
 	 * @var string|null
 	 */
@@ -233,7 +233,7 @@ class Agent_Controller {
 	 */
 	private function apply_agent_overrides(): string {
 		if ( null === $this->global_mode_cache ) {
-			$this->global_mode_cache = (string) get_option( 'agentic_agent_mode', 'supervised' );
+			$this->global_mode_cache = (string) get_option( 'agent_builder_agent_mode', 'supervised' );
 		}
 		$global_mode = $this->global_mode_cache;
 
@@ -643,7 +643,7 @@ class Agent_Controller {
 
 		// Add current message (multimodal if image attached).
 		if ( $image_data ) {
-			// Use the user-configured vision model (per-agent override or global agentic_vision_model).
+			// Use the user-configured vision model (per-agent override or global agent_builder_vision_model).
 			// When both models are identical, no switch is needed.
 			$chat_model        = $this->llm->get_model();
 			$effective         = agent_builder_get_effective_provider_model( $current_agent_id );
@@ -735,12 +735,12 @@ class Agent_Controller {
 				$default_retries = max( 1, (int) $per_agent_retries );
 			}
 		}
-		$global_retries = get_option( 'agentic_max_tool_retries', '' );
+		$global_retries = get_option( 'agent_builder_max_tool_retries', '' );
 		if ( $global_retries !== '' ) {
 			$default_retries = max( 1, (int) $global_retries );
 		}
 
-		$max_tool_retries = (int) apply_filters( 'agentic_max_tool_retries', $default_retries, $agent_id ); // For weak model error recovery.
+		$max_tool_retries = (int) apply_filters( 'agent_builder_max_tool_retries', $default_retries, $agent_id ); // For weak model error recovery.
 
 		while ( $iterations < $max_iterations ) {
 			++$iterations;
@@ -1162,12 +1162,12 @@ class Agent_Controller {
 				$default_retries = max( 1, (int) $per_agent_retries );
 			}
 		}
-		$global_retries = get_option( 'agentic_max_tool_retries', '' );
+		$global_retries = get_option( 'agent_builder_max_tool_retries', '' );
 		if ( $global_retries !== '' ) {
 			$default_retries = max( 1, (int) $global_retries );
 		}
 
-		$max_tool_retries = (int) apply_filters( 'agentic_max_tool_retries', $default_retries, $agent_id );
+		$max_tool_retries = (int) apply_filters( 'agent_builder_max_tool_retries', $default_retries, $agent_id );
 
 		while ( $iterations < $max_iterations ) {
 			++$iterations;
@@ -1365,7 +1365,7 @@ class Agent_Controller {
 		}
 
 		// Global option
-		$global = get_option( 'agentic_enable_weak_model_tool_guidance', '' );
+		$global = get_option( 'agent_builder_enable_weak_model_tool_guidance', '' );
 		if ( $global !== '' ) {
 			return $global === '1';
 		}

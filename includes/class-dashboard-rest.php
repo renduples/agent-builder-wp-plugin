@@ -189,7 +189,7 @@ class Dashboard_REST {
 		$is_pro      = false;
 		$is_advanced = Admin_Menu_Handler::is_advanced_mode( 'dashboard' );
 		$provider    = $llm->get_provider();
-		$site_model  = (string) get_option( 'agentic_model', '' );
+		$site_model  = (string) get_option( 'agent_builder_model', '' );
 
 		// Providers connected list.
 		$providers = array();
@@ -258,7 +258,7 @@ class Dashboard_REST {
 		$agent_counts  = self::agent_counts();
 		$has_knowledge = class_exists( Okf_Store::class )
 			? Okf_Store::has_active_knowledge()
-			: (bool) get_option( 'agentic_has_knowledge', false );
+			: (bool) get_option( 'agent_builder_has_knowledge', false );
 		$is_configured = $llm->is_configured() && ! Emergency_Stop::is_active();
 		// Chat comes first: WordPress Assistant works out of the box on the
 		// bundled default provider, so a brand-new user can start talking to it
@@ -299,31 +299,32 @@ class Dashboard_REST {
 		return new \WP_REST_Response(
 			array(
 				'version'                 => AGENT_BUILDER_VERSION,
-				'schema_version'          => (string) get_option( 'agentic_db_schema_version', AGENT_BUILDER_DB_VERSION ),
+				// agentic_db_schema_version is the pre-2.14.0 option name, read here only as a fallback for sites that haven't run migrate_schema_2_14_0() yet.
+				'schema_version'          => (string) get_option( 'agent_builder_db_schema_version', get_option( 'agentic_db_schema_version', AGENT_BUILDER_DB_VERSION ) ),
 				'is_pro'                  => $is_pro,
 				'is_advanced'             => $is_advanced,
 				'is_configured'           => $is_configured,
 				'emergency_stop'          => Emergency_Stop::is_active(),
-				'show_onboarding'         => '0' !== get_option( 'agentic_show_onboarding', '1' ),
+				'show_onboarding'         => '0' !== get_option( 'agent_builder_show_onboarding', '1' ),
 				'agent_updates'           => class_exists( Agent_Updates::class ) && Agent_Updates::is_opted_in(),
 				// Pro-only: free / WPorg never expose the opt-in toggle (marketplace link instead).
 				'has_agent_updates_class' => class_exists( Agent_Updates::class ) && Agent_Updates::is_remote_check_available(),
 				'urls'                    => array(
-					'admin'     => admin_url(),
-					'icon'      => AGENT_BUILDER_URL . 'assets/icon.svg',
-					'license'   => admin_url( 'admin.php?page=agentic-settings&tab=license' ),
-					'providers' => admin_url( 'admin.php?page=agentic-settings&tab=providers' ),
-					'interface' => admin_url( 'admin.php?page=agentic-settings&tab=interface' ),
-					'activity'  => admin_url( 'admin.php?page=agentic-audit-log' ),
-					'approvals'      => admin_url( 'admin.php?page=agentic-approvals' ),
-					'safety_center'  => admin_url( 'admin.php?page=agentic-safety-center' ),
-					'agent_ready'    => admin_url( 'admin.php?page=agentic-agent-ready' ),
-					'backups'   => admin_url( 'admin.php?page=agentic-approvals&tab=backups' ),
-					'pricing'   => 'https://agentic-plugin.com/pricing/',
-					'community' => class_exists( Agent_Updates::class )
+					'admin'         => admin_url(),
+					'icon'          => AGENT_BUILDER_URL . 'assets/icon.svg',
+					'license'       => admin_url( 'admin.php?page=agentic-settings&tab=license' ),
+					'providers'     => admin_url( 'admin.php?page=agentic-settings&tab=providers' ),
+					'interface'     => admin_url( 'admin.php?page=agentic-settings&tab=interface' ),
+					'activity'      => admin_url( 'admin.php?page=agentic-audit-log' ),
+					'approvals'     => admin_url( 'admin.php?page=agentic-approvals' ),
+					'safety_center' => admin_url( 'admin.php?page=agentic-safety-center' ),
+					'agent_ready'   => admin_url( 'admin.php?page=agentic-agent-ready' ),
+					'backups'       => admin_url( 'admin.php?page=agentic-approvals&tab=backups' ),
+					'pricing'       => 'https://agentic-plugin.com/pricing/',
+					'community'     => class_exists( Agent_Updates::class )
 						? Agent_Updates::MARKETPLACE_URL
 						: 'https://agentic-plugin.com/community-agents/',
-					'settings'  => admin_url( 'admin.php?page=agentic-settings' ),
+					'settings'      => admin_url( 'admin.php?page=agentic-settings' ),
 				),
 				'license'                 => $license,
 				'jobs'                    => array(

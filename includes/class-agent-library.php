@@ -66,7 +66,7 @@ final class Agent_Library {
 	 */
 	private static function table(): string {
 		global $wpdb;
-		return $wpdb->prefix . 'agentic_agent_library';
+		return $wpdb->prefix . 'agent_builder_agent_library';
 	}
 
 	/**

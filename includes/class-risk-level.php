@@ -27,7 +27,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Risk_Level {
 
 	/**
-	 * Cached registry data from the wp_agentic_tools database table.
+	 * Cached registry data from the wp_agent_builder_tools database table.
 	 *
 	 * @var array|null
 	 */
@@ -165,7 +165,7 @@ class Risk_Level {
 
 		// Site preference: auto-approve tools up to a chosen risk (never extreme).
 		// Stored by Approvals preferences UI (careful / balanced / hands-off).
-		$auto_max = sanitize_key( (string) get_option( 'agentic_approval_auto_max_risk', self::NONE ) );
+		$auto_max = sanitize_key( (string) get_option( 'agent_builder_approval_auto_max_risk', self::NONE ) );
 		if ( ! self::is_valid( $auto_max ) || self::EXTREME === $auto_max ) {
 			$auto_max = self::NONE;
 		}
@@ -187,7 +187,7 @@ class Risk_Level {
 	}
 
 	/**
-	 * Load the master risk registry from the wp_agentic_tools database table.
+	 * Load the master risk registry from the wp_agent_builder_tools database table.
 	 *
 	 * @return array Flat map of tool_name => entry array with at least 'risk'.
 	 */
@@ -212,7 +212,7 @@ class Risk_Level {
 	/**
 	 * Irreducible minimum risk for tools that can cause real harm.
 	 *
-	 * The wp_agentic_tools registry cannot be trusted to hold a sane value for
+	 * The wp_agent_builder_tools registry cannot be trusted to hold a sane value for
 	 * these. It is seeded from Tool_Base::get_risk_level(), which reads the
 	 * registry back — a tool with no row seeds as 'none', and 'none' runs
 	 * silently even in supervised mode. Every tool below therefore sat at
@@ -505,7 +505,7 @@ class Risk_Level {
 	/**
 	 * Get the authoritative default risk level for a tool.
 	 *
-	 * Reads the wp_agentic_tools registry, floored by BASELINE_RISKS so a
+	 * Reads the wp_agent_builder_tools registry, floored by BASELINE_RISKS so a
 	 * dangerous tool can never resolve below its minimum. Returns NONE for a
 	 * tool that is neither listed nor in the baseline.
 	 *

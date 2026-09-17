@@ -33,7 +33,7 @@ class Test_Abilities_Manifest extends TestCase {
 	public function setUp(): void {
 		parent::setUp();
 		Risk_Level::bust_cache();
-		delete_option( 'agentic_risk_overrides' );
+		delete_option( 'agent_builder_risk_overrides' );
 		$this->delete_test_agent( $this->agent_id );
 	}
 
@@ -42,7 +42,7 @@ class Test_Abilities_Manifest extends TestCase {
 	 */
 	public function tearDown(): void {
 		$this->delete_test_agent( $this->agent_id );
-		delete_option( 'agentic_risk_overrides' );
+		delete_option( 'agent_builder_risk_overrides' );
 		parent::tearDown();
 	}
 
@@ -99,12 +99,12 @@ class Test_Abilities_Manifest extends TestCase {
 	}
 
 	/**
-	 * An admin override (agentic_risk_overrides option) can also only
+	 * An admin override (agent_builder_risk_overrides option) can also only
 	 * escalate — same guarantee, different source.
 	 */
 	public function test_admin_override_cannot_downgrade_below_tool_default(): void {
 		update_option(
-			'agentic_risk_overrides',
+			'agent_builder_risk_overrides',
 			array( 'no-such-agent:add_custom_js' => Risk_Level::NONE )
 		);
 
@@ -124,7 +124,7 @@ class Test_Abilities_Manifest extends TestCase {
 			array( 'add_custom_css' => array( 'risk' => Risk_Level::MEDIUM, 'reason' => 'test' ) )
 		);
 		update_option(
-			'agentic_risk_overrides',
+			'agent_builder_risk_overrides',
 			array( "{$this->agent_id}:add_custom_css" => Risk_Level::EXTREME )
 		);
 

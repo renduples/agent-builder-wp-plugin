@@ -2,7 +2,7 @@
 /**
  * Tools Registry — database-backed tool management
  *
- * Maintains the wp_agentic_tools table as the single source of truth for
+ * Maintains the wp_agent_builder_tools table as the single source of truth for
  * tool enabled/disabled state, categories, and metadata.
  *
  * @package    Agent_Builder
@@ -95,7 +95,7 @@ class Tools_Registry {
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table, runtime and object cached.
 		$rows = $wpdb->get_results(
-			"SELECT * FROM {$wpdb->prefix}agentic_tools ORDER BY category ASC, name ASC",
+			"SELECT * FROM {$wpdb->prefix}agent_builder_tools ORDER BY category ASC, name ASC",
 			ARRAY_A
 		);
 
@@ -166,7 +166,7 @@ class Tools_Registry {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table update.
 		$result = $wpdb->update(
-			$wpdb->prefix . 'agentic_tools',
+			$wpdb->prefix . 'agent_builder_tools',
 			array(
 				'enabled'    => $enabled ? 1 : 0,
 				'updated_at' => gmdate( 'Y-m-d H:i:s' ),
@@ -200,7 +200,7 @@ class Tools_Registry {
 		$now      = gmdate( 'Y-m-d H:i:s' );
 		$enabled  = 0;
 		$disabled = 0;
-		$table    = $wpdb->prefix . 'agentic_tools';
+		$table    = $wpdb->prefix . 'agent_builder_tools';
 
 		foreach ( self::get_all() as $name => $tool ) {
 			$risk = (string) ( $tool['risk_level'] ?? Risk_Level::NONE );
@@ -276,9 +276,9 @@ class Tools_Registry {
 		}
 
 		$now   = gmdate( 'Y-m-d H:i:s' );
-		$table = $wpdb->prefix . 'agentic_tools';
+		$table = $wpdb->prefix . 'agent_builder_tools';
 
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is $wpdb->prefix . 'agentic_tools', safe. // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is $wpdb->prefix . 'agent_builder_tools', safe. // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$result = $wpdb->query( // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
 			$wpdb->prepare(
 				"INSERT INTO {$table} (name, description, category, source, enabled, risk_level, parameters, created_at, updated_at)
@@ -313,7 +313,7 @@ class Tools_Registry {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table delete.
 		$result = $wpdb->delete(
-			$wpdb->prefix . 'agentic_tools',
+			$wpdb->prefix . 'agent_builder_tools',
 			array( 'name' => $name ),
 			array( '%s' )
 		);

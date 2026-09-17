@@ -55,6 +55,40 @@ final class Activator {
 	}
 
 	/**
+	 * Read the site's current schema version, tolerating sites that migrated
+	 * to the 2.14.0 option rename (agentic_db_schema_version ->
+	 * agent_builder_db_schema_version) as well as sites that have not yet.
+	 *
+	 * Reads the new name first: once migrate_schema_2_14_0() has renamed the
+	 * option, that is authoritative and the old name no longer exists. Only
+	 * a site that has never run that migration falls back to the pre-2.14.0
+	 * literal, so its true current version is still detected correctly
+	 * instead of misreading it as '0.0.0' (which would replay every
+	 * migration and misreport fresh_install for an upgrade).
+	 *
+	 * @return string
+	 */
+	private static function get_db_schema_version(): string {
+		$version = get_option( 'agent_builder_db_schema_version', null );
+		if ( null !== $version ) {
+			return $version;
+		}
+
+		$legacy = get_option( 'agentic_db_schema_version', false );
+		return ( false === $legacy ) ? '0.0.0' : $legacy;
+	}
+
+	/**
+	 * Persist the site's schema version under the current option name.
+	 *
+	 * @param string $version Schema version to record.
+	 * @return void
+	 */
+	private static function set_db_schema_version( string $version ): void {
+		update_option( 'agent_builder_db_schema_version', $version );
+	}
+
+	/**
 	 * Run all activation tasks.
 	 *
 	 * @param string $schema_version Current DB_SCHEMA_VERSION from Plugin class.
@@ -71,11 +105,11 @@ final class Activator {
 				'schema_version' => $schema_version,
 				'wp_version'     => get_bloginfo( 'version' ),
 				'php_version'    => PHP_VERSION,
-				'fresh_install'  => ( false === get_option( 'agentic_db_schema_version' ) ),
+				'fresh_install'  => ( '0.0.0' === self::get_db_schema_version() ),
 			)
 		);
 
-		$fresh_install = ( false === get_option( 'agentic_db_schema_version' ) );
+		$fresh_install = ( '0.0.0' === self::get_db_schema_version() );
 
 		self::set_flags();
 		self::create_tables();  // Security-log table is created here — safe to log after this point.
@@ -96,7 +130,7 @@ final class Activator {
 		flush_rewrite_rules();
 
 		// Mark schema as current so migrations don't run redundantly.
-		update_option( 'agentic_db_schema_version', $schema_version );
+		self::set_db_schema_version( $schema_version );
 
 		// Persist the full activation log to an option (readable even if tables failed).
 		update_option(
@@ -132,7 +166,7 @@ final class Activator {
 	 * @return void
 	 */
 	public static function maybe_upgrade( string $schema_version ): void {
-		$current = get_option( 'agentic_db_schema_version', '0.0.0' );
+		$current = self::get_db_schema_version();
 
 		if ( version_compare( $current, $schema_version, '>=' ) ) {
 			return;
@@ -175,13 +209,13 @@ final class Activator {
 	 */
 	private static function set_flags(): void {
 		// Welcome admin notice.
-		add_option( 'agentic_show_welcome_notice', true );
+		add_option( 'agent_builder_show_welcome_notice', true );
 
 		self::record(
 			'set_flags',
 			'ok',
 			array(
-				'agentic_show_welcome_notice' => 'added',
+				'agent_builder_show_welcome_notice' => 'added',
 			)
 		);
 	}
@@ -199,22 +233,22 @@ final class Activator {
 		$default_model    = $agentic_provider['default_model'] ?? 'gemini-2.5-flash';
 
 		$defaults = array(
-			'agentic_agent_mode'              => 'supervised',
-			'agentic_audit_enabled'           => true,
-			'agentic_llm_provider'            => 'agentic',
-			'agentic_model'                   => $default_model,
+			'agent_builder_agent_mode'              => 'supervised',
+			'agent_builder_audit_enabled'           => true,
+			'agent_builder_llm_provider'            => 'agentic',
+			'agent_builder_model'                   => $default_model,
 			// Default chat chrome for new installs (admin + frontend shortcode).
-			'agentic_chat_theme'              => 'light',
+			'agent_builder_chat_theme'              => 'light',
 			// GDPR: default retention to 30 days so data is not kept indefinitely on fresh installs.
-			'agentic_chat_tts'                => '1',
-			'agentic_chat_whitelabel'         => '1',
-			'agentic_show_whatsapp_cta'       => '0',
-			'agentic_allow_platform_sync'     => '0',
-			'agentic_retention_conversations' => 30,
-			'agentic_retention_audit_log'     => 30,
-			\Agentic\Usage_Limits::OPTION_KEY => \Agentic\Usage_Limits::get_install_defaults(),
+			'agent_builder_chat_tts'                => '1',
+			'agent_builder_chat_whitelabel'         => '1',
+			'agent_builder_show_whatsapp_cta'       => '0',
+			'agent_builder_allow_platform_sync'     => '0',
+			'agent_builder_retention_conversations' => 30,
+			'agent_builder_retention_audit_log'     => 30,
+			\Agentic\Usage_Limits::OPTION_KEY       => \Agentic\Usage_Limits::get_install_defaults(),
 			// Gutenberg sidebar: enabled by default so new installs have it working out of the box.
-			'agentic_editor_sidebar_settings' => array(
+			'agent_builder_editor_sidebar_settings' => array(
 				'enabled'         => '1',
 				'agent_slug'      => 'content-writer',
 				'agent_slugs'     => array( 'content-writer', 'seo-optimizer', 'wordpress-assistant' ),
@@ -228,9 +262,9 @@ final class Activator {
 		// Options that are large or only read on specific admin/editor screens
 		// are not autoloaded on every request (performance).
 		$no_autoload = array(
-			'agentic_editor_sidebar_settings',
-			'agentic_retention_conversations',
-			'agentic_retention_audit_log',
+			'agent_builder_editor_sidebar_settings',
+			'agent_builder_retention_conversations',
+			'agent_builder_retention_audit_log',
 			\Agentic\Usage_Limits::OPTION_KEY,
 		);
 
@@ -246,7 +280,7 @@ final class Activator {
 	 * Activate all bundled library agents.
 	 *
 	 * Scans the library directory and ensures every bundled agent
-	 * is present in the agentic_active_agents option.
+	 * is present in the agent_builder_active_agents option.
 	 *
 	 * @return void
 	 */
@@ -288,11 +322,11 @@ final class Activator {
 			return;
 		}
 
-		$active_agents = get_option( 'agentic_active_agents', array() );
+		$active_agents = get_option( 'agent_builder_active_agents', array() );
 		$merged        = array_unique( array_merge( $active_agents, $bundled_slugs ) );
 		$newly_added   = array_diff( $bundled_slugs, $active_agents );
 
-		update_option( 'agentic_active_agents', array_values( $merged ) );
+		update_option( 'agent_builder_active_agents', array_values( $merged ) );
 
 		// Generate abilities.json integrity hashes for bundled agents.
 		include_once AGENT_BUILDER_DIR . 'includes/class-abilities-manifest.php';
@@ -354,12 +388,12 @@ final class Activator {
 			return;
 		}
 
-		$imported_ledger = get_option( 'agentic_agents_dir_imported', array() );
+		$imported_ledger = get_option( 'agent_builder_agents_dir_imported', array() );
 		if ( ! is_array( $imported_ledger ) ) {
 			$imported_ledger = array();
 		}
 
-		$needs_migration = get_option( 'agentic_agents_needing_migration', array() );
+		$needs_migration = get_option( 'agent_builder_agents_needing_migration', array() );
 		if ( ! is_array( $needs_migration ) ) {
 			$needs_migration = array();
 		}
@@ -436,8 +470,8 @@ final class Activator {
 			$flagged[]                  = $folder;
 		}
 
-		update_option( 'agentic_agents_dir_imported', array_values( array_unique( $imported_ledger ) ) );
-		update_option( 'agentic_agents_needing_migration', $needs_migration );
+		update_option( 'agent_builder_agents_dir_imported', array_values( array_unique( $imported_ledger ) ) );
+		update_option( 'agent_builder_agents_needing_migration', $needs_migration );
 
 		self::record(
 			'import_agents_dir',
@@ -617,10 +651,10 @@ final class Activator {
 
 		$library_dirs = $dirs ?? apply_filters( 'agentic_library_dirs', array( AGENT_BUILDER_DIR . 'library/agents' ) );
 
-		$seed_hashes = get_option( 'agentic_bundled_seed_hashes', array() );
+		$seed_hashes = get_option( 'agent_builder_bundled_seed_hashes', array() );
 		$seed_hashes = is_array( $seed_hashes ) ? $seed_hashes : array();
 
-		$updates = get_option( 'agentic_bundled_updates_available', array() );
+		$updates = get_option( 'agent_builder_bundled_updates_available', array() );
 		$updates = is_array( $updates ) ? $updates : array();
 
 		$seeded  = array();
@@ -715,8 +749,8 @@ final class Activator {
 			}
 		}
 
-		update_option( 'agentic_bundled_seed_hashes', $seed_hashes );
-		update_option( 'agentic_bundled_updates_available', $updates );
+		update_option( 'agent_builder_bundled_seed_hashes', $seed_hashes );
+		update_option( 'agent_builder_bundled_updates_available', $updates );
 
 		self::record(
 			'seed_bundled_agents',
@@ -785,7 +819,7 @@ final class Activator {
 		$charset_collate = $wpdb->get_charset_collate();
 
 		// Audit log table.
-		$sql_audit = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agentic_audit_log (
+		$sql_audit = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agent_builder_audit_log (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
             agent_id varchar(64) NOT NULL,
             action varchar(128) NOT NULL,
@@ -811,7 +845,7 @@ final class Activator {
         ) $charset_collate;";
 
 		// Approval queue table.
-		$sql_queue = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agentic_approval_queue (
+		$sql_queue = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agent_builder_approval_queue (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
             agent_id varchar(64) NOT NULL,
             action varchar(128) NOT NULL,
@@ -834,7 +868,7 @@ final class Activator {
         ) $charset_collate;";
 
 		// Memory table.
-		$sql_memory = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agentic_memory (
+		$sql_memory = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agent_builder_memory (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
             memory_type varchar(50) NOT NULL,
             entity_id varchar(100) NOT NULL,
@@ -851,7 +885,7 @@ final class Activator {
         ) $charset_collate;";
 
 		// Tools registry table.
-		$sql_tools = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agentic_tools (
+		$sql_tools = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agent_builder_tools (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
             name varchar(128) NOT NULL,
             description text NOT NULL,
@@ -897,13 +931,13 @@ final class Activator {
 			}
 		};
 
-		$run_delta( 'agentic_audit_log', $sql_audit );
-		$run_delta( 'agentic_approval_queue', $sql_queue );
-		$run_delta( 'agentic_memory', $sql_memory );
-		$run_delta( 'agentic_tools', $sql_tools );
+		$run_delta( 'agent_builder_audit_log', $sql_audit );
+		$run_delta( 'agent_builder_approval_queue', $sql_queue );
+		$run_delta( 'agent_builder_memory', $sql_memory );
+		$run_delta( 'agent_builder_tools', $sql_tools );
 
 		// Conversations table — stores each chat turn for efficient session browsing.
-		$sql_conversations = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agentic_conversations (
+		$sql_conversations = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agent_builder_conversations (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
             session_id varchar(36) NOT NULL,
             user_id bigint(20) unsigned NOT NULL DEFAULT 0,
@@ -918,10 +952,10 @@ final class Activator {
             KEY user_agent (user_id, agent_id),
             KEY created_at (created_at)
         ) $charset_collate;";
-		$run_delta( 'agentic_conversations', $sql_conversations );
+		$run_delta( 'agent_builder_conversations', $sql_conversations );
 
 		// Agent settings table.
-		$sql_agent_settings = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agentic_agent_settings (
+		$sql_agent_settings = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agent_builder_agent_settings (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
             agent_slug varchar(128) NOT NULL,
             meta_key varchar(128) NOT NULL,
@@ -933,10 +967,10 @@ final class Activator {
             KEY agent_slug (agent_slug),
             KEY meta_key (meta_key)
         ) $charset_collate;";
-		$run_delta( 'agentic_agent_settings', $sql_agent_settings );
+		$run_delta( 'agent_builder_agent_settings', $sql_agent_settings );
 
 		// Providers table — stores LLM provider configuration and Agentic service endpoints.
-		$sql_providers = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agentic_providers (
+		$sql_providers = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agent_builder_providers (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
             slug varchar(100) NOT NULL,
             name varchar(255) NOT NULL DEFAULT '',
@@ -962,13 +996,13 @@ final class Activator {
             KEY sort_order (sort_order),
             KEY provider_type (provider_type)
         ) $charset_collate;";
-		$run_delta( 'agentic_providers', $sql_providers );
+		$run_delta( 'agent_builder_providers', $sql_providers );
 
 		// Skills table. agent_slug holds a JSON array of agent slugs (e.g.
 		// '["content-writer","seo-optimizer"]'), or '' to mean every agent —
 		// see Skills_Registry::normalize_agent_slugs()/decode_agent_slugs().
 		// Widened from varchar(128) in 3.3.90 to fit multiple slugs.
-		$sql_skills = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agentic_skills (
+		$sql_skills = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agent_builder_skills (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
             name varchar(255) NOT NULL,
             slug varchar(255) NOT NULL,
@@ -989,12 +1023,12 @@ final class Activator {
             KEY source (source),
             KEY enabled (enabled)
         ) $charset_collate;";
-		$run_delta( 'agentic_skills', $sql_skills );
+		$run_delta( 'agent_builder_skills', $sql_skills );
 
 		// Orchestration runs table — one row per top-level multi-agent (team) run.
 		// Tracks delegation depth, fan-out, accumulated tokens/cost, and a small
 		// JSON scratchpad shared across delegated agents within the run.
-		$sql_runs = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agentic_runs (
+		$sql_runs = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agent_builder_runs (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
             run_id varchar(36) NOT NULL,
             root_agent varchar(64) NOT NULL DEFAULT '',
@@ -1013,7 +1047,7 @@ final class Activator {
             KEY status (status),
             KEY started_at (started_at)
         ) $charset_collate;";
-		$run_delta( 'agentic_runs', $sql_runs );
+		$run_delta( 'agent_builder_runs', $sql_runs );
 
 		// Agent library — one row per agent, whatever its origin. Declarative
 		// agents (kind=manifest) are interpreted from the manifest column by
@@ -1021,7 +1055,7 @@ final class Activator {
 		// file and the row is a version/record anchor. Dropped on uninstall when
 		// the admin opted into full data deletion (see uninstall.php); otherwise
 		// left in place so a reinstall finds existing purchased/user rows.
-		$sql_agent_library = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agentic_agent_library (
+		$sql_agent_library = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agent_builder_agent_library (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
             slug varchar(128) NOT NULL,
             name varchar(255) NOT NULL,
@@ -1044,7 +1078,7 @@ final class Activator {
             KEY origin (origin),
             KEY enabled (enabled)
         ) $charset_collate;";
-		$run_delta( 'agentic_agent_library', $sql_agent_library );
+		$run_delta( 'agent_builder_agent_library', $sql_agent_library );
 
 		// Ensure Job_Manager, Security_Log, and Deployments are available (activation fires early).
 		include_once AGENT_BUILDER_DIR . 'includes/class-job-manager.php';
@@ -1055,27 +1089,27 @@ final class Activator {
 		$wpdb->last_error = '';
 		Job_Manager::create_table();
 		if ( $wpdb->last_error ) {
-			$table_errors['agentic_jobs'] = $wpdb->last_error;
+			$table_errors['agent_builder_jobs'] = $wpdb->last_error;
 		} else {
-			$table_results['agentic_jobs'] = 'ok';
+			$table_results['agent_builder_jobs'] = 'ok';
 		}
 
 		// Create security log table.
 		$wpdb->last_error = '';
 		Security_Log::create_table();
 		if ( $wpdb->last_error ) {
-			$table_errors['agentic_security_log'] = $wpdb->last_error;
+			$table_errors['agent_builder_security_log'] = $wpdb->last_error;
 		} else {
-			$table_results['agentic_security_log'] = 'ok';
+			$table_results['agent_builder_security_log'] = 'ok';
 		}
 
 		// Create deployments table.
 		$wpdb->last_error = '';
 		Deployments::create_table();
 		if ( $wpdb->last_error ) {
-			$table_errors['agentic_deployments'] = $wpdb->last_error;
+			$table_errors['agent_builder_deployments'] = $wpdb->last_error;
 		} else {
-			$table_results['agentic_deployments'] = 'ok';
+			$table_results['agent_builder_deployments'] = 'ok';
 		}
 
 		$status = empty( $table_errors ) ? 'ok' : 'warning';
@@ -1112,7 +1146,7 @@ final class Activator {
 	 * This is the new recommended way to evolve the database schema.
 	 */
 	private static function run_schema_migrations(): void {
-		$current = get_option( 'agentic_db_schema_version', '0.0.0' );
+		$current = self::get_db_schema_version();
 		$target  = AGENT_BUILDER_DB_VERSION;
 
 		if ( version_compare( $current, $target, '>=' ) ) {
@@ -1127,6 +1161,7 @@ final class Activator {
 			'2.12.1' => array( self::class, 'migrate_schema_2_12_1' ),
 			'2.13.0' => array( self::class, 'migrate_schema_2_13_0' ),
 			'2.13.6' => array( self::class, 'migrate_schema_2_13_6' ),
+			'2.14.0' => array( self::class, 'migrate_schema_2_14_0' ),
 			// Add new version => method pairs here when schema changes are needed.
 			// Future changes must go through this system (no more ad-hoc ALTERs in bootstrap/tests).
 		);
@@ -1138,7 +1173,7 @@ final class Activator {
 				$success = call_user_func( $callback );
 
 				if ( $success ) {
-					update_option( 'agentic_db_schema_version', $version );
+					self::set_db_schema_version( $version );
 					$current = $version;
 					self::record( 'schema_migration_complete', 'ok', "Migrated to {$version}" );
 				} else {
@@ -1158,34 +1193,34 @@ final class Activator {
 
 		$success = true;
 
-		// agentic_approval_queue columns.
+		// agent_builder_approval_queue columns.
 		$success = $success && self::add_column_if_missing(
-			$wpdb->prefix . 'agentic_approval_queue',
+			$wpdb->prefix . 'agent_builder_approval_queue',
 			'executed_at',
 			'datetime DEFAULT NULL'
 		);
 
 		$success = $success && self::add_column_if_missing(
-			$wpdb->prefix . 'agentic_approval_queue',
+			$wpdb->prefix . 'agent_builder_approval_queue',
 			'mode',
 			"varchar(32) DEFAULT ''"
 		);
 
 		$success = $success && self::add_column_if_missing(
-			$wpdb->prefix . 'agentic_approval_queue',
+			$wpdb->prefix . 'agent_builder_approval_queue',
 			'invocation',
 			"varchar(32) DEFAULT ''"
 		);
 
-		// agentic_providers columns.
+		// agent_builder_providers columns.
 		$success = $success && self::add_column_if_missing(
-			$wpdb->prefix . 'agentic_providers',
+			$wpdb->prefix . 'agent_builder_providers',
 			'vision_model',
 			"varchar(255) NOT NULL DEFAULT ''"
 		);
 
 		$success = $success && self::add_column_if_missing(
-			$wpdb->prefix . 'agentic_providers',
+			$wpdb->prefix . 'agent_builder_providers',
 			'model_pricing',
 			// NB: TEXT/BLOB/JSON columns cannot have a literal DEFAULT on MySQL
 			// (error 1101); MariaDB allows it. Keep nullable, no default — reads
@@ -1218,32 +1253,32 @@ final class Activator {
 
 		// Providers: ensure provider_type column for service/llm distinction (used by Provider_Registry).
 		$success = $success && self::add_column_if_missing(
-			$wpdb->prefix . 'agentic_providers',
+			$wpdb->prefix . 'agent_builder_providers',
 			'provider_type',
 			"varchar(32) NOT NULL DEFAULT 'llm'"
 		);
 
 		// Composite indexes for query performance and consistency with test expectations.
 		$success = $success && self::add_index_if_missing(
-			$wpdb->prefix . 'agentic_audit_log',
+			$wpdb->prefix . 'agent_builder_audit_log',
 			'idx_agent_created',
 			'agent_id, created_at'
 		);
 
 		$success = $success && self::add_index_if_missing(
-			$wpdb->prefix . 'agentic_approval_queue',
+			$wpdb->prefix . 'agent_builder_approval_queue',
 			'idx_status_created',
 			'status, created_at'
 		);
 
 		$success = $success && self::add_index_if_missing(
-			$wpdb->prefix . 'agentic_approval_queue',
+			$wpdb->prefix . 'agent_builder_approval_queue',
 			'idx_expires',
 			'expires_at'
 		);
 
 		$success = $success && self::add_index_if_missing(
-			$wpdb->prefix . 'agentic_memory',
+			$wpdb->prefix . 'agent_builder_memory',
 			'idx_expires',
 			'expires_at'
 		);
@@ -1255,7 +1290,7 @@ final class Activator {
 	 * Schema repair for 2.12.1 — re-ensure the providers.provider_type column.
 	 *
 	 * Sites that installed the 3.0.0 line jumped straight to DB version 2.12.0 and
-	 * never ran migrate_schema_2_10_3, so their agentic_providers table can be
+	 * never ran migrate_schema_2_10_3, so their agent_builder_providers table can be
 	 * missing the provider_type column. Without it every provider-row INSERT fails,
 	 * so the built-in providers (including 'agentic') never seed. That breaks the
 	 * free-API signup (save_api_key returns false) and, because no LLM ends up
@@ -1269,7 +1304,7 @@ final class Activator {
 		global $wpdb;
 
 		$ok = self::add_column_if_missing(
-			$wpdb->prefix . 'agentic_providers',
+			$wpdb->prefix . 'agent_builder_providers',
 			'provider_type',
 			"varchar(32) NOT NULL DEFAULT 'llm'"
 		);
@@ -1284,7 +1319,7 @@ final class Activator {
 	}
 
 	/**
-	 * Migration to 2.13.0 — add source_hash to agentic_skills.
+	 * Migration to 2.13.0 — add source_hash to agent_builder_skills.
 	 *
 	 * Tracks the hash of a core-sourced skill's content at the time it was
 	 * last seeded/refreshed from its bundled library/skills/ file, so a
@@ -1298,7 +1333,7 @@ final class Activator {
 		global $wpdb;
 
 		return self::add_column_if_missing(
-			$wpdb->prefix . 'agentic_skills',
+			$wpdb->prefix . 'agent_builder_skills',
 			'source_hash',
 			"varchar(64) NOT NULL DEFAULT ''"
 		);
@@ -1307,31 +1342,160 @@ final class Activator {
 	/**
 	 * Migration to 2.13.6 — seed the Agent-Ready Score / WebMCP Bridge options.
 	 *
-	 * No new tables: agentic_score_latest and agentic_directory_submission are
+	 * No new tables: agent_builder_score_latest and agent_builder_directory_submission are
 	 * single-row JSON options (no queryable/per-row need in free tier — score
-	 * history is Pro-only), and agentic_webmcp_enabled is a plain boolean flag
+	 * history is Pro-only), and agent_builder_webmcp_enabled is a plain boolean flag
 	 * read on every front-end request, so it is autoloaded. Idempotent: only
 	 * seeds options that don't already exist, so re-running is always safe.
 	 *
 	 * @return bool
 	 */
 	private static function migrate_schema_2_13_6(): bool {
-		if ( false === get_option( 'agentic_score_latest' ) ) {
-			add_option( 'agentic_score_latest', array(), '', 'no' );
+		if ( false === get_option( 'agent_builder_score_latest' ) ) {
+			add_option( 'agent_builder_score_latest', array(), '', 'no' );
 		}
-		if ( false === get_option( 'agentic_webmcp_enabled' ) ) {
-			add_option( 'agentic_webmcp_enabled', '', '', 'yes' );
+		if ( false === get_option( 'agent_builder_webmcp_enabled' ) ) {
+			add_option( 'agent_builder_webmcp_enabled', '', '', 'yes' );
 		}
-		if ( false === get_option( 'agentic_directory_submission' ) ) {
-			add_option( 'agentic_directory_submission', array(), '', 'no' );
+		if ( false === get_option( 'agent_builder_directory_submission' ) ) {
+			add_option( 'agent_builder_directory_submission', array(), '', 'no' );
 		}
 		return true;
 	}
 
 	/**
-	 * Migration to 2.10.4 — create the missing agentic_runs table.
+	 * Migration to 2.14.0 — unify the agentic_ / agent_builder_ prefix.
 	 *
-	 * Agent_Run has always queried wp_agentic_runs, but no CREATE TABLE for it
+	 * A reviewer flagged inconsistent global-symbol prefixing: this plugin's
+	 * slug/text-domain is agent-builder, but its tables, options, and cron
+	 * hooks were all agentic_*. This migration renames every one of them to
+	 * agent_builder_* to match:
+	 *
+	 * - The 13 custom tables, via RENAME TABLE (a metadata-only operation —
+	 *   no data is copied or lost, and it is near-instant even on a large
+	 *   table).
+	 * - Every agentic_* wp_options row (~110 keys, including the schema
+	 *   version option itself — see get_db_schema_version() /
+	 *   set_db_schema_version() above), via one blanket UPDATE instead of
+	 *   100+ individual reads/writes.
+	 * - The old-named scheduled cron events. The hook callbacks themselves
+	 *   already switched to listening on the agent_builder_* names in this
+	 *   same release, and each owning class re-schedules its own cron under
+	 *   the new name on its next idempotent init check — so this step only
+	 *   needs to clear the stale old-named entries left in the cron array,
+	 *   not schedule the new ones itself.
+	 *
+	 * Explicitly NOT touched: the 6 agentic_manage_ and agentic_view_
+	 * capability strings (WordPress user-role capabilities live in usermeta, never in
+	 * wp_options, so the blanket UPDATE below cannot reach them regardless),
+	 * the Agentic\ namespace and the small set of global Agentic_* classes,
+	 * and the agentic/v1 REST namespace — none of those were part of the
+	 * reviewer's finding, and renaming the REST namespace would break every
+	 * existing client, including this plugin's own JS bundles.
+	 *
+	 * Safe to run against either state, so this works whether the site is
+	 * upgrading (old-named tables/options/cron still exist) or a brand-new
+	 * install replaying this migration against schema create_tables() /
+	 * set_default_options() already created under the new names (each step
+	 * below checks existence first and no-ops if there is nothing to rename).
+	 *
+	 * @return bool True if every table rename and the options rename
+	 *              succeeded (cron cleanup failures are logged but do not
+	 *              fail the migration — a leftover scheduled event under the
+	 *              old name is inert once nothing listens for it).
+	 */
+	private static function migrate_schema_2_14_0(): bool {
+		global $wpdb;
+
+		$success = true;
+
+		$table_renames = array(
+			'agentic_audit_log'      => 'agent_builder_audit_log',
+			'agentic_approval_queue' => 'agent_builder_approval_queue',
+			'agentic_memory'         => 'agent_builder_memory',
+			'agentic_tools'          => 'agent_builder_tools',
+			'agentic_conversations'  => 'agent_builder_conversations',
+			'agentic_agent_settings' => 'agent_builder_agent_settings',
+			'agentic_providers'      => 'agent_builder_providers',
+			'agentic_skills'         => 'agent_builder_skills',
+			'agentic_runs'           => 'agent_builder_runs',
+			'agentic_agent_library'  => 'agent_builder_agent_library',
+			'agentic_jobs'           => 'agent_builder_jobs',
+			'agentic_security_log'   => 'agent_builder_security_log',
+			'agentic_deployments'    => 'agent_builder_deployments',
+		);
+
+		foreach ( $table_renames as $old_name => $new_name ) {
+			$old_table = $wpdb->prefix . $old_name;
+			$new_table = $wpdb->prefix . $new_name;
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema introspection (information_schema) is the correct and only way to check table existence portably.
+			$old_exists = (bool) $wpdb->get_var(
+				$wpdb->prepare(
+					'SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s',
+					$old_table
+				)
+			);
+
+			if ( ! $old_exists ) {
+				// Already renamed by a previous run, or a fresh install that
+				// only ever created the table under the new name.
+				continue;
+			}
+
+			// $old_table/$new_table are $wpdb->prefix + a fixed identifier from the array above, never user input; table identifiers cannot be placeholder-bound.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+			$result = $wpdb->query( "RENAME TABLE {$old_table} TO {$new_table}" );
+
+			if ( false === $result ) {
+				self::record( 'rename_table_failed', 'error', "Failed to rename {$old_table} to {$new_table}: " . $wpdb->last_error );
+				$success = false;
+			}
+		}
+
+		// One statement catches every agentic_* option row (~110 keys,
+		// including agentic_db_schema_version itself) instead of 100+
+		// individual reads/writes. option_name is matched with a fixed LIKE
+		// pattern and rewritten with a fixed REPLACE() — no user input.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+		$options_result = $wpdb->query(
+			"UPDATE {$wpdb->options} SET option_name = REPLACE(option_name, 'agentic_', 'agent_builder_') WHERE option_name LIKE 'agentic\\_%' ESCAPE '\\\\'"
+		);
+
+		if ( false === $options_result ) {
+			self::record( 'rename_options_failed', 'error', $wpdb->last_error );
+			$success = false;
+		}
+
+		// Clear scheduled events left under the old hook names. The new
+		// names are re-scheduled automatically by each owning class's own
+		// idempotent wp_next_scheduled() check on its next init — see
+		// Job_Manager::init(), Provider_Registry::init(), GDPR::init(), and
+		// Activator::schedule_cron_events() (called earlier in this same
+		// activate() pass, before run_migrations()).
+		foreach (
+			array(
+				'agentic_cleanup_audit_log',
+				'agentic_cleanup_jobs',
+				'agentic_costs_check_alerts',
+				'agentic_gdpr_cleanup',
+				'agentic_job_health_check',
+				'agentic_process_job',
+				'agentic_refresh_provider_models',
+			) as $old_hook
+		) {
+			if ( false !== wp_next_scheduled( $old_hook ) ) {
+				wp_clear_scheduled_hook( $old_hook );
+			}
+		}
+
+		return $success;
+	}
+
+	/**
+	 * Migration to 2.10.4 — create the missing agent_builder_runs table.
+	 *
+	 * Agent_Run has always queried wp_agent_builder_runs, but no CREATE TABLE for it
 	 * existed anywhere in the plugin. Every delegate_to_agent call ran a SELECT
 	 * and an INSERT against a table that was not there: persist() returned
 	 * false, so no run was ever recorded for audit, cost or resume.
@@ -1349,7 +1513,7 @@ final class Activator {
 	private static function migrate_schema_2_10_4(): bool {
 		global $wpdb;
 
-		$table = $wpdb->prefix . 'agentic_runs';
+		$table = $wpdb->prefix . 'agent_builder_runs';
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) === $table ) {
@@ -1446,22 +1610,22 @@ final class Activator {
 	}
 
 	/**
-	 * Migrate legacy agentic_agent_personas wp_options data into the agent_settings table.
+	 * Migrate legacy agent_builder_agent_personas wp_options data into the agent_settings table.
 	 *
-	 * Runs once; idempotency is guarded by the agentic_personas_migrated_v1 option.
+	 * Runs once; idempotency is guarded by the agent_builder_personas_migrated_v1 option.
 	 *
 	 * @return void
 	 */
 	private static function migrate_agent_personas(): void {
-		if ( get_option( 'agentic_personas_migrated_v1' ) ) {
+		if ( get_option( 'agent_builder_personas_migrated_v1' ) ) {
 			self::record( 'migrate_agent_personas', 'skipped', 'already migrated' );
 			return;
 		}
 
-		$personas = get_option( 'agentic_agent_personas', null );
+		$personas = get_option( 'agent_builder_agent_personas', null );
 
 		if ( ! is_array( $personas ) || empty( $personas ) ) {
-			update_option( 'agentic_personas_migrated_v1', true );
+			update_option( 'agent_builder_personas_migrated_v1', true );
 			self::record( 'migrate_agent_personas', 'ok', 'no persona data to migrate' );
 			return;
 		}
@@ -1500,7 +1664,7 @@ final class Activator {
 			}
 		}
 
-		update_option( 'agentic_personas_migrated_v1', true );
+		update_option( 'agent_builder_personas_migrated_v1', true );
 
 		self::record(
 			'migrate_agent_personas',
@@ -1513,7 +1677,7 @@ final class Activator {
 	}
 
 	/**
-	 * Migrate legacy agentic_agent_overrides wp_options data into the agent_settings table.
+	 * Migrate legacy agent_builder_agent_overrides wp_options data into the agent_settings table.
 	 *
 	 * Keys migrated per agent slug:
 	 *   provider → override_provider, model → override_model,
@@ -1523,15 +1687,15 @@ final class Activator {
 	 * @return void
 	 */
 	private static function migrate_agent_overrides(): void {
-		if ( get_option( 'agentic_overrides_migrated_v1' ) ) {
+		if ( get_option( 'agent_builder_overrides_migrated_v1' ) ) {
 			self::record( 'migrate_agent_overrides', 'skipped', 'already migrated' );
 			return;
 		}
 
-		$overrides = get_option( 'agentic_agent_overrides', null );
+		$overrides = get_option( 'agent_builder_agent_overrides', null );
 
 		if ( ! is_array( $overrides ) || empty( $overrides ) ) {
-			update_option( 'agentic_overrides_migrated_v1', true );
+			update_option( 'agent_builder_overrides_migrated_v1', true );
 			self::record( 'migrate_agent_overrides', 'ok', 'no override data to migrate' );
 			return;
 		}
@@ -1569,7 +1733,7 @@ final class Activator {
 			}
 		}
 
-		update_option( 'agentic_overrides_migrated_v1', true );
+		update_option( 'agent_builder_overrides_migrated_v1', true );
 
 		self::record(
 			'migrate_agent_overrides',
@@ -1591,9 +1755,9 @@ final class Activator {
 	 * Editor tab despite being listed as enabled by anything that reads the
 	 * raw data (e.g. tool output):
 	 *
-	 * 1. The `agentic_editor_sidebar_settings` option itself (fresh-install
+	 * 1. The `agent_builder_editor_sidebar_settings` option itself (fresh-install
 	 *    default, or fallback source when no Deployments rows exist yet).
-	 * 2. A `wp_agentic_deployments` row (type admin_ui) with this same slug,
+	 * 2. A `wp_agent_builder_deployments` row (type admin_ui) with this same slug,
 	 *    which Deployments_Migrator copied verbatim from the option the
 	 *    first time it ran — the *primary* source the classic Editor tab
 	 *    and manage_editor_sidebar_agent tool actually read once rows exist.
@@ -1601,13 +1765,13 @@ final class Activator {
 	 * @return void
 	 */
 	private static function migrate_editor_sidebar_seo_slug(): void {
-		if ( get_option( 'agentic_editor_sidebar_seo_slug_fixed_v1' ) ) {
+		if ( get_option( 'agent_builder_editor_sidebar_seo_slug_fixed_v1' ) ) {
 			self::record( 'migrate_editor_sidebar_seo_slug', 'skipped', 'already migrated' );
 			return;
 		}
 
 		$option_changed = false;
-		$settings       = get_option( 'agentic_editor_sidebar_settings', null );
+		$settings       = get_option( 'agent_builder_editor_sidebar_settings', null );
 
 		if ( is_array( $settings ) && ! empty( $settings['agent_slugs'] ) && is_array( $settings['agent_slugs'] ) ) {
 			$fixed = array_values(
@@ -1622,7 +1786,7 @@ final class Activator {
 			$option_changed = $fixed !== array_values( $settings['agent_slugs'] );
 			if ( $option_changed ) {
 				$settings['agent_slugs'] = $fixed;
-				update_option( 'agentic_editor_sidebar_settings', $settings );
+				update_option( 'agent_builder_editor_sidebar_settings', $settings );
 			}
 		}
 
@@ -1650,7 +1814,7 @@ final class Activator {
 			}
 		}
 
-		update_option( 'agentic_editor_sidebar_seo_slug_fixed_v1', true );
+		update_option( 'agent_builder_editor_sidebar_seo_slug_fixed_v1', true );
 
 		self::record(
 			'migrate_editor_sidebar_seo_slug',
@@ -1663,7 +1827,7 @@ final class Activator {
 	}
 
 	/**
-	 * Remove the orphaned 'agentic-rag' service row from wp_agentic_providers.
+	 * Remove the orphaned 'agentic-rag' service row from wp_agent_builder_providers.
 	 *
 	 * The RAG/Vector Store feature's own admin UI and calling code
 	 * (class-rag-manager.php) were removed from this free build in an earlier
@@ -1677,14 +1841,14 @@ final class Activator {
 	 * @return void
 	 */
 	private static function migrate_remove_agentic_rag_service(): void {
-		if ( get_option( 'agentic_rag_service_removed_v1' ) ) {
+		if ( get_option( 'agent_builder_rag_service_removed_v1' ) ) {
 			self::record( 'migrate_remove_agentic_rag_service', 'skipped', 'already migrated' );
 			return;
 		}
 
 		global $wpdb;
 		$deleted = 0;
-		$table   = $wpdb->prefix . 'agentic_providers';
+		$table   = $wpdb->prefix . 'agent_builder_providers';
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) === $table ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -1695,32 +1859,32 @@ final class Activator {
 			\Agentic\Provider_Registry::invalidate();
 		}
 
-		update_option( 'agentic_rag_service_removed_v1', true );
+		update_option( 'agent_builder_rag_service_removed_v1', true );
 
 		self::record( 'migrate_remove_agentic_rag_service', 'ok', array( 'deleted' => $deleted ) );
 	}
 
 	/**
-	 * Wrap existing single-slug wp_agentic_skills.agent_slug values into the
+	 * Wrap existing single-slug wp_agent_builder_skills.agent_slug values into the
 	 * JSON-array format Skills_Registry now uses, so a skill can be scoped to
 	 * more than one agent. Empty values (meaning "every agent") are untouched.
 	 *
 	 * @return void
 	 */
 	private static function migrate_skills_agent_slug_to_array(): void {
-		if ( get_option( 'agentic_skills_agent_slug_array_v1' ) ) {
+		if ( get_option( 'agent_builder_skills_agent_slug_array_v1' ) ) {
 			self::record( 'migrate_skills_agent_slug_to_array', 'skipped', 'already migrated' );
 			return;
 		}
 
 		global $wpdb;
-		$table   = $wpdb->prefix . 'agentic_skills';
+		$table   = $wpdb->prefix . 'agent_builder_skills';
 		$updated = 0;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) === $table ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$rows = $wpdb->get_results( "SELECT id, agent_slug FROM {$table} WHERE agent_slug != ''", ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $table is $wpdb->prefix . 'agentic_skills', not user input.
+			$rows = $wpdb->get_results( "SELECT id, agent_slug FROM {$table} WHERE agent_slug != ''", ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $table is $wpdb->prefix . 'agent_builder_skills', not user input.
 
 			foreach ( (array) $rows as $row ) {
 				$raw = (string) $row['agent_slug'];
@@ -1745,7 +1909,7 @@ final class Activator {
 			\Agentic\Skills_Registry::bust_cache();
 		}
 
-		update_option( 'agentic_skills_agent_slug_array_v1', true );
+		update_option( 'agent_builder_skills_agent_slug_array_v1', true );
 
 		self::record( 'migrate_skills_agent_slug_to_array', 'ok', array( 'updated' => $updated ) );
 	}
@@ -1760,7 +1924,7 @@ final class Activator {
 		global $wpdb;
 
 		// Skip if already seeded for this version.
-		$seeded_version = get_option( 'agentic_tools_seeded_version', '' );
+		$seeded_version = get_option( 'agent_builder_tools_seeded_version', '' );
 		if ( $seeded_version === $schema_version ) {
 			self::record(
 				'seed_tools',
@@ -1774,7 +1938,7 @@ final class Activator {
 		}
 
 		// Safety: skip if the tools table doesn't exist yet.
-		$table = $wpdb->prefix . 'agentic_tools';
+		$table = $wpdb->prefix . 'agent_builder_tools';
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) !== $table ) {
 			self::record( 'seed_tools', 'error', 'tools table does not exist — skipping seed' );
@@ -1797,7 +1961,7 @@ final class Activator {
 
 		$seeded = Tools_Registry::seed_core_tools( $category_map );
 
-		update_option( 'agentic_tools_seeded_version', $schema_version );
+		update_option( 'agent_builder_tools_seeded_version', $schema_version );
 
 		// Sync agent-contributed tools.
 		Tool_Loader::get_instance()->sync_to_registry();
@@ -1837,8 +2001,8 @@ final class Activator {
 		// SKILL.md content can change in a content-only release with no
 		// schema bump, and seed_core_skills() needs to run then too so
 		// unedited core skills pick up the improved wording.
-		$seeded_version = get_option( 'agentic_skills_seeded_version', '' );
-		$seeded_plugin  = get_option( 'agentic_skills_seeded_plugin_version', '' );
+		$seeded_version = get_option( 'agent_builder_skills_seeded_version', '' );
+		$seeded_plugin  = get_option( 'agent_builder_skills_seeded_plugin_version', '' );
 		$plugin_version = defined( 'AGENT_BUILDER_VERSION' ) ? AGENT_BUILDER_VERSION : '';
 
 		if ( $seeded_version === $schema_version && $seeded_plugin === $plugin_version ) {
@@ -1854,7 +2018,7 @@ final class Activator {
 			return;
 		}
 
-		$table = $wpdb->prefix . 'agentic_skills';
+		$table = $wpdb->prefix . 'agent_builder_skills';
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) !== $table ) {
 			self::record( 'seed_skills', 'error', 'skills table does not exist — skipping seed' );
@@ -1865,8 +2029,8 @@ final class Activator {
 
 		$result = Skills_Registry::seed_core_skills();
 
-		update_option( 'agentic_skills_seeded_version', $schema_version );
-		update_option( 'agentic_skills_seeded_plugin_version', $plugin_version );
+		update_option( 'agent_builder_skills_seeded_version', $schema_version );
+		update_option( 'agent_builder_skills_seeded_plugin_version', $plugin_version );
 
 		self::record(
 			'seed_skills',
@@ -1888,18 +2052,18 @@ final class Activator {
 	private static function schedule_cron_events(): void {
 		$results = array();
 
-		if ( ! wp_next_scheduled( 'agentic_cleanup_audit_log' ) ) {
-			wp_schedule_event( time(), 'daily', 'agentic_cleanup_audit_log' );
-			$results['agentic_cleanup_audit_log'] = 'scheduled';
+		if ( ! wp_next_scheduled( 'agent_builder_cleanup_audit_log' ) ) {
+			wp_schedule_event( time(), 'daily', 'agent_builder_cleanup_audit_log' );
+			$results['agent_builder_cleanup_audit_log'] = 'scheduled';
 		} else {
-			$results['agentic_cleanup_audit_log'] = 'already_scheduled';
+			$results['agent_builder_cleanup_audit_log'] = 'already_scheduled';
 		}
 
-		if ( ! wp_next_scheduled( 'agentic_costs_check_alerts' ) ) {
-			wp_schedule_event( time(), 'daily', 'agentic_costs_check_alerts' );
-			$results['agentic_costs_check_alerts'] = 'scheduled';
+		if ( ! wp_next_scheduled( 'agent_builder_costs_check_alerts' ) ) {
+			wp_schedule_event( time(), 'daily', 'agent_builder_costs_check_alerts' );
+			$results['agent_builder_costs_check_alerts'] = 'scheduled';
 		} else {
-			$results['agentic_costs_check_alerts'] = 'already_scheduled';
+			$results['agent_builder_costs_check_alerts'] = 'already_scheduled';
 		}
 
 		self::record( 'schedule_cron_events', 'ok', $results );

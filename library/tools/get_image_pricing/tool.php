@@ -85,7 +85,7 @@ class Get_Image_Pricing extends \Agentic\Tool_Base {
 	 * @return array Result data.
 	 */
 	public function execute( array $arguments ): array { // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
-		$api_key = (string) get_option( 'agentic_rag_api_secret', '' );
+		$api_key = (string) get_option( 'agent_builder_rag_api_secret', '' );
 		if ( empty( $api_key ) && defined( 'AGENTIC_RAG_API_KEY' ) ) {
 			$api_key = AGENTIC_RAG_API_KEY;
 		}

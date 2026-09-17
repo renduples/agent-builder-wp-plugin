@@ -240,7 +240,7 @@ class Manage_User_Privileges extends \Agentic\Tool_Base {
 		if ( ! isset( $args['enabled'] ) ) {
 			return array( 'error' => 'enabled (true/false) is required.' );
 		}
-		update_option( 'agentic_allow_anonymous_chat', ! empty( $args['enabled'] ) ? 1 : 0 );
+		update_option( 'agent_builder_allow_anonymous_chat', ! empty( $args['enabled'] ) ? 1 : 0 );
 
 		return array( 'ok' => true ) + $this->snapshot();
 	}
@@ -284,7 +284,7 @@ class Manage_User_Privileges extends \Agentic\Tool_Base {
 			'plugin_privileges'    => $plugin_privs,
 			'agent_privileges'     => $agent_privs,
 			'usage_limits'         => Usage_Limits::get_limits(),
-			'allow_anonymous_chat' => (bool) get_option( 'agentic_allow_anonymous_chat', false ),
+			'allow_anonymous_chat' => (bool) get_option( 'agent_builder_allow_anonymous_chat', false ),
 		);
 	}
 

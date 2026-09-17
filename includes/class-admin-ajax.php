@@ -25,7 +25,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Admin_Ajax {
 
 	/**
-	 * Allowed values for the agentic_agent_mode option.
+	 * Allowed values for the agent_builder_agent_mode option.
 	 *
 	 * @var array<string>
 	 */
@@ -42,7 +42,7 @@ class Admin_Ajax {
 	public static function register_settings(): void {
 		register_setting(
 			'agentic_core_settings',
-			'agentic_agent_mode',
+			'agent_builder_agent_mode',
 			array(
 				'type'              => 'string',
 				'default'           => 'supervised',
@@ -81,7 +81,7 @@ class Admin_Ajax {
 			wp_send_json_error( 'Permission denied.' );
 		}
 
-		delete_option( 'agentic_show_welcome_notice' );
+		delete_option( 'agent_builder_show_welcome_notice' );
 		wp_send_json_success();
 	}
 
@@ -120,12 +120,12 @@ class Admin_Ajax {
 		$delete_data = ! empty( $_POST['delete_data'] ) && '1' === $_POST['delete_data'];
 
 		// Store data-retention preference so uninstall.php can respect it.
-		update_option( 'agentic_deactivate_delete_data', $delete_data ? '1' : '0' );
+		update_option( 'agent_builder_deactivate_delete_data', $delete_data ? '1' : '0' );
 
 		// Forward cancellation feedback when the user has opted in (disclosed in
 		// readme.txt's External Services section — a consent-gated survey, not a
 		// license-holder perk).
-		$has_consent = get_option( 'agentic_service_consent' );
+		$has_consent = get_option( 'agent_builder_service_consent' );
 		if ( $has_consent ) {
 			$reason = sanitize_key( wp_unslash( $_POST['reason'] ?? '' ) );
 			$detail = sanitize_textarea_field( wp_unslash( $_POST['detail'] ?? '' ) );
@@ -165,7 +165,7 @@ class Admin_Ajax {
 		if ( ! in_array( $mode, $valid, true ) ) {
 			wp_send_json_error( 'Invalid mode.' );
 		}
-		update_option( 'agentic_agent_mode', $mode );
+		update_option( 'agent_builder_agent_mode', $mode );
 		wp_send_json_success( array( 'mode' => $mode ) );
 	}
 
@@ -182,7 +182,7 @@ class Admin_Ajax {
 		}
 
 		$level = sanitize_key( $_POST['level'] ?? 'daily' ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above.
-		update_option( 'agentic_psi_notice_dismissed', $level );
+		update_option( 'agent_builder_psi_notice_dismissed', $level );
 		wp_send_json_success();
 	}
 
@@ -247,7 +247,7 @@ class Admin_Ajax {
 	/**
 	 * Enable or disable an inbound third-party WordPress ability.
 	 *
-	 * Maintains the `agentic_disabled_inbound_abilities` block-list. A disabled
+	 * Maintains the `agent_builder_disabled_inbound_abilities` block-list. A disabled
 	 * ability is no longer auto-ingested as an agent tool and cannot be executed
 	 * through the inbound ability bridge.
 	 *
@@ -278,7 +278,7 @@ class Admin_Ajax {
 			wp_send_json_error( __( 'Unknown ability.', 'agent-builder' ) );
 		}
 
-		$disabled = get_option( 'agentic_disabled_inbound_abilities', array() );
+		$disabled = get_option( 'agent_builder_disabled_inbound_abilities', array() );
 		if ( ! is_array( $disabled ) ) {
 			$disabled = array();
 		}
@@ -289,7 +289,7 @@ class Admin_Ajax {
 			$disabled[] = $ability_name;
 		}
 
-		update_option( 'agentic_disabled_inbound_abilities', array_values( array_unique( $disabled ) ), false );
+		update_option( 'agent_builder_disabled_inbound_abilities', array_values( array_unique( $disabled ) ), false );
 
 		Security_Log::log_system( $enabled ? 'inbound_ability_enabled' : 'inbound_ability_disabled', $ability_name );
 
@@ -650,7 +650,7 @@ class Admin_Ajax {
 		}
 
 		$version = sanitize_text_field( $body['version'] ?? gmdate( 'Y-m-d' ) );
-		update_option( 'agentic_pricing_version', $version, false );
+		update_option( 'agent_builder_pricing_version', $version, false );
 		wp_cache_delete( 'model_pricing', 'agentic_marketplace_api' );
 
 		wp_send_json_success(
@@ -949,15 +949,15 @@ class Admin_Ajax {
 		$default_model = $provider_record['default_model'] ?? '';
 
 		Provider_Registry::save_api_key( $provider, $api_key );
-		update_option( 'agentic_llm_provider', $provider );
-		update_option( 'agentic_model', $default_model );
-		update_option( 'agentic_onboarding_complete', true );
+		update_option( 'agent_builder_llm_provider', $provider );
+		update_option( 'agent_builder_model', $default_model );
+		update_option( 'agent_builder_onboarding_complete', true );
 
 		// Activate the WordPress Assistant so it's available immediately in the wizard chat.
-		$active_agents = get_option( 'agentic_active_agents', array() );
+		$active_agents = get_option( 'agent_builder_active_agents', array() );
 		if ( ! in_array( 'wordpress-assistant', $active_agents, true ) ) {
 			$active_agents[] = 'wordpress-assistant';
-			update_option( 'agentic_active_agents', array_unique( $active_agents ) );
+			update_option( 'agent_builder_active_agents', array_unique( $active_agents ) );
 		}
 
 		wp_send_json_success( array( 'message' => __( 'Settings saved.', 'agent-builder' ) ) );
@@ -983,9 +983,9 @@ class Admin_Ajax {
 		}
 
 		if ( $model ) {
-			update_option( 'agentic_model', $model );
+			update_option( 'agent_builder_model', $model );
 		}
-		update_option( 'agentic_agent_mode', $mode );
+		update_option( 'agent_builder_agent_mode', $mode );
 
 		wp_send_json_success();
 	}
@@ -1012,13 +1012,13 @@ class Admin_Ajax {
 		Provider_Registry::save_api_key( $provider, '' );
 
 		// Remove model preference.
-		$all_models = get_option( 'agentic_model_preferences', array() );
+		$all_models = get_option( 'agent_builder_model_preferences', array() );
 		unset( $all_models[ $provider ] );
-		update_option( 'agentic_model_preferences', $all_models );
+		update_option( 'agent_builder_model_preferences', $all_models );
 
 		// Clear Ollama URL if removing Ollama.
 		if ( 'ollama' === $provider ) {
-			delete_option( 'agentic_ollama_url' );
+			delete_option( 'agent_builder_ollama_url' );
 		}
 
 		// Clean up per-agent overrides that reference this provider.
@@ -1031,7 +1031,7 @@ class Admin_Ajax {
 		}
 
 		// If the removed provider is the active one, switch to the first remaining.
-		$current_provider = get_option( 'agentic_llm_provider', 'agentic' );
+		$current_provider = get_option( 'agent_builder_llm_provider', 'agentic' );
 		if ( $current_provider === $provider ) {
 			$agentic_active = Provider_Registry::get_active();
 			$next_provider  = ! empty( $agentic_active ) ? $agentic_active[0]['slug'] : 'agentic';
@@ -1039,8 +1039,8 @@ class Admin_Ajax {
 			// Read the default model from the provider table (single source of truth).
 			$next_record = Provider_Registry::get( $next_provider );
 
-			update_option( 'agentic_llm_provider', $next_provider );
-			update_option( 'agentic_model', $all_models[ $next_provider ] ?? $next_record['default_model'] ?? '' );
+			update_option( 'agent_builder_llm_provider', $next_provider );
+			update_option( 'agent_builder_model', $all_models[ $next_provider ] ?? $next_record['default_model'] ?? '' );
 		}
 
 		wp_send_json_success( array( 'message' => __( 'Provider removed.', 'agent-builder' ) ) );
@@ -1091,7 +1091,7 @@ class Admin_Ajax {
 			}
 		}
 
-		// Shared with the daily agentic_refresh_provider_models cron (see
+		// Shared with the daily agent_builder_refresh_provider_models cron (see
 		// Provider_Registry::fetch_live_models_from_api()) so there is exactly
 		// one place that knows how to list models for each provider's API.
 		// $explicit=true: this is an admin clicking "Refresh," not the cron,
@@ -1208,17 +1208,17 @@ class Admin_Ajax {
 		}
 
 		// Set Agentic AI as the default provider with user-chosen configuration.
-		update_option( 'agentic_llm_provider', 'agentic' );
-		update_option( 'agentic_model', $chat_model );
-		update_option( 'agentic_vision_model', $vision_model ? $vision_model : $chat_model );
-		update_option( 'agentic_tts_voice', $tts_voice );
-		update_option( 'agentic_agent_mode', $agent_mode );
-		update_option( 'agentic_video_model', $video_model );
+		update_option( 'agent_builder_llm_provider', 'agentic' );
+		update_option( 'agent_builder_model', $chat_model );
+		update_option( 'agent_builder_vision_model', $vision_model ? $vision_model : $chat_model );
+		update_option( 'agent_builder_tts_voice', $tts_voice );
+		update_option( 'agent_builder_agent_mode', $agent_mode );
+		update_option( 'agent_builder_video_model', $video_model );
 		if ( '' !== $ui_mode ) {
 			Admin_Settings_REST::set_ui_mode( $ui_mode, 'signup' );
 		}
-		update_option( 'agentic_onboarding_complete', true );
-		update_option( 'agentic_service_consent', true );
+		update_option( 'agent_builder_onboarding_complete', true );
+		update_option( 'agent_builder_service_consent', true );
 
 		wp_send_json_success(
 			array(
@@ -1268,7 +1268,7 @@ class Admin_Ajax {
 
 		// Fetch result from audit log.
 		global $wpdb;
-		$audit_table = $wpdb->prefix . 'agentic_audit_log';
+		$audit_table = $wpdb->prefix . 'agent_builder_audit_log';
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- One-time admin read.
 		$result_json = $wpdb->get_var(
 			$wpdb->prepare(

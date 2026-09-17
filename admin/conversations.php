@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 global $wpdb;
-$agentic_conv_table = $wpdb->prefix . 'agentic_conversations';
+$agentic_conv_table = $wpdb->prefix . 'agent_builder_conversations';
 
 // ── Handle delete ────────────────────────────────────────────────────────────
 $agentic_conv_notice = '';
@@ -319,7 +319,7 @@ $agentic_cv_instances = $agentic_cv_registry->get_all_instances();
 	<?php endif; ?>
 
 	<?php
-	$agentic_cv_retention = (int) get_option( 'agentic_retention_conversations', 30 );
+	$agentic_cv_retention = (int) get_option( 'agent_builder_retention_conversations', 30 );
 	?>
 	<p class="agentic-text-muted agentic-text-sm" style="margin-top:12px;">
 		<?php if ( $agentic_cv_retention > 0 ) : ?>

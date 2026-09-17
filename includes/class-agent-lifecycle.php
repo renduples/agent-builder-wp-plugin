@@ -33,7 +33,7 @@ class Agent_Lifecycle {
 	/**
 	 * Option key for admin-created event triggers (Deployment → Event Listeners).
 	 */
-	const USER_EVENT_TRIGGERS_OPTION = 'agentic_user_event_triggers';
+	const USER_EVENT_TRIGGERS_OPTION = 'agent_builder_user_event_triggers';
 
 	/**
 	 * Allowed WP-Cron recurrence keys for user-defined scheduled tasks.
@@ -1022,7 +1022,7 @@ class Agent_Lifecycle {
 			$mode = (string) $agent->get_default_mode();
 		}
 		if ( '' === $mode ) {
-			$mode = (string) get_option( 'agentic_agent_mode', 'supervised' );
+			$mode = (string) get_option( 'agent_builder_agent_mode', 'supervised' );
 		}
 		return in_array( $mode, array( 'disabled', 'supervised', 'autonomous' ), true ) ? $mode : 'supervised';
 	}

@@ -1,6 +1,6 @@
 <?php
 /**
- * Audit Log Integrity — hash-chains wp_agentic_audit_log so that editing or
+ * Audit Log Integrity — hash-chains wp_agent_builder_audit_log so that editing or
  * deleting a historical row is detectable, not just editing one in place.
  *
  * Mirrors Abilities_Manifest's HMAC-signing precedent (same key source, via
@@ -122,7 +122,7 @@ class Audit_Log_Integrity {
 		$hash = $wpdb->get_var(
 			$wpdb->prepare(
 				'SELECT integrity_hash FROM %i WHERE id < %d ORDER BY id DESC LIMIT 1',
-				$wpdb->prefix . 'agentic_audit_log',
+				$wpdb->prefix . 'agent_builder_audit_log',
 				$before_id
 			)
 		);
@@ -151,7 +151,7 @@ class Audit_Log_Integrity {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Single-row update immediately after insert.
 		$wpdb->update(
-			$wpdb->prefix . 'agentic_audit_log',
+			$wpdb->prefix . 'agent_builder_audit_log',
 			array( 'integrity_hash' => $hash ),
 			array( 'id' => $id ),
 			array( '%s' ),
@@ -177,7 +177,7 @@ class Audit_Log_Integrity {
 		global $wpdb;
 
 		$where  = array();
-		$params = array( $wpdb->prefix . 'agentic_audit_log' );
+		$params = array( $wpdb->prefix . 'agent_builder_audit_log' );
 		if ( null !== $from_id ) {
 			$where[]  = 'id >= %d';
 			$params[] = $from_id;

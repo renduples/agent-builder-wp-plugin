@@ -33,7 +33,7 @@ if ( isset( $_POST['agentic_api_action'] ) && check_admin_referer( 'agentic_api_
 
 	// Map slug → option key (whitelist approach).
 	$agentic_api_option_map = array(
-		'google_psi' => 'agentic_psi_api_key',
+		'google_psi' => 'agent_builder_psi_api_key',
 	);
 
 	if ( isset( $agentic_api_option_map[ $agentic_api_slug ] ) ) {
@@ -43,7 +43,7 @@ if ( isset( $_POST['agentic_api_action'] ) && check_admin_referer( 'agentic_api_
 			$agentic_api_key_val_raw = sanitize_text_field( wp_unslash( $_POST['agentic_api_key_value'] ?? '' ) );
 			if ( ! empty( $agentic_api_key_val_raw ) ) {
 				update_option( $agentic_api_option, $agentic_api_key_val_raw );
-				delete_option( 'agentic_psi_notice_dismissed' );
+				delete_option( 'agent_builder_psi_notice_dismissed' );
 				$agentic_api_audit_acted = true;
 			}
 		} elseif ( 'delete' === $agentic_api_action ) {
@@ -86,14 +86,14 @@ if ( isset( $_POST['agentic_save_settings'] ) && check_admin_referer( 'agentic_s
 					// Reset global provider to Agentic AI (fresh-install default).
 					$agentic_prov  = \Agentic\Provider_Registry::get( 'agentic' );
 					$default_model = $agentic_prov['default_model'] ?? 'gemini-2.5-flash';
-					update_option( 'agentic_llm_provider', 'agentic' );
-					update_option( 'agentic_model', $default_model );
-					delete_option( 'agentic_vision_model' );
+					update_option( 'agent_builder_llm_provider', 'agentic' );
+					update_option( 'agent_builder_model', $default_model );
+					delete_option( 'agent_builder_vision_model' );
 					// Clear per-agent provider/model/mode overrides from agent_settings table.
 					$agentic_llm_keys = array( 'override_provider', 'override_model', 'override_vision_model', 'override_mode', 'weak_model_tool_guidance', 'max_tool_retries' );
 					foreach ( $agentic_llm_keys as $agentic_ok ) {
 						// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- custom indexed table
-						$wpdb->delete( $wpdb->prefix . 'agentic_agent_settings', array( 'meta_key' => $agentic_ok ), array( '%s' ) );
+						$wpdb->delete( $wpdb->prefix . 'agent_builder_agent_settings', array( 'meta_key' => $agentic_ok ), array( '%s' ) );
 					}
 					\Agentic\Agent_Settings::bust_cache();
 				},
@@ -104,48 +104,48 @@ if ( isset( $_POST['agentic_save_settings'] ) && check_admin_referer( 'agentic_s
 					$agentic_feat_keys = array( 'override_audio', 'override_tts', 'override_vision', 'override_costs', 'override_cache' );
 					foreach ( $agentic_feat_keys as $agentic_ok ) {
 						// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- custom indexed table
-						$wpdb->delete( $wpdb->prefix . 'agentic_agent_settings', array( 'meta_key' => $agentic_ok ), array( '%s' ) );
+						$wpdb->delete( $wpdb->prefix . 'agent_builder_agent_settings', array( 'meta_key' => $agentic_ok ), array( '%s' ) );
 					}
 					\Agentic\Agent_Settings::bust_cache();
 				},
 			),
 			'styles_chat'     => array( // Global chat settings defaults.
 				'handler' => static function () {
-					update_option( 'agentic_chat_audio', '1' );
-					update_option( 'agentic_chat_tts', '1' );
-					update_option( 'agentic_chat_vision', '1' );
-					update_option( 'agentic_chat_whitelabel', '1' );
-					update_option( 'agentic_show_whatsapp_cta', '0' );
-					update_option( 'agentic_response_cache_enabled', true );
-					update_option( 'agentic_response_cache_ttl', 3600 );
+					update_option( 'agent_builder_chat_audio', '1' );
+					update_option( 'agent_builder_chat_tts', '1' );
+					update_option( 'agent_builder_chat_vision', '1' );
+					update_option( 'agent_builder_chat_whitelabel', '1' );
+					update_option( 'agent_builder_show_whatsapp_cta', '0' );
+					update_option( 'agent_builder_response_cache_enabled', true );
+					update_option( 'agent_builder_response_cache_ttl', 3600 );
 				},
 			),
 			'styles_theme'    => array( // Theme default.
 				'handler' => static function () {
-					update_option( 'agentic_chat_theme', 'light' );
+					update_option( 'agent_builder_chat_theme', 'light' );
 				},
 			),
 			'security'        => array( // Security tab defaults.
 				'handler' => static function () {
-					update_option( 'agentic_agent_mode', 'supervised' );
-					update_option( 'agentic_security_enabled', true );
-					update_option( 'agentic_turnstile_site_key', '' );
-					update_option( 'agentic_turnstile_secret_key', '' );
-					update_option( 'agentic_turnstile_require_anonymous', true );
-					update_option( 'agentic_turnstile_require_all', false );
-					update_option( 'agentic_ip_anonymize', true );
-					update_option( 'agentic_retention_conversations', 30 );
-					update_option( 'agentic_retention_audit_log', 30 );
-					update_option( 'agentic_chat_consent_enabled', false );
-					update_option( 'agentic_chat_consent_text', 'By chatting you agree to your messages being processed by an AI. We do not share your data with third parties.' );
-					update_option( 'agentic_allow_platform_sync', '0' );
+					update_option( 'agent_builder_agent_mode', 'supervised' );
+					update_option( 'agent_builder_security_enabled', true );
+					update_option( 'agent_builder_turnstile_site_key', '' );
+					update_option( 'agent_builder_turnstile_secret_key', '' );
+					update_option( 'agent_builder_turnstile_require_anonymous', true );
+					update_option( 'agent_builder_turnstile_require_all', false );
+					update_option( 'agent_builder_ip_anonymize', true );
+					update_option( 'agent_builder_retention_conversations', 30 );
+					update_option( 'agent_builder_retention_audit_log', 30 );
+					update_option( 'agent_builder_chat_consent_enabled', false );
+					update_option( 'agent_builder_chat_consent_text', 'By chatting you agree to your messages being processed by an AI. We do not share your data with third parties.' );
+					update_option( 'agent_builder_allow_platform_sync', '0' );
 				},
 			),
 			'users'           => array( // Users tab defaults.
 				'handler' => static function () {
-					update_option( 'agentic_allow_anonymous_chat', false );
-					update_option( 'agentic_rate_limit_authenticated', 30 );
-					update_option( 'agentic_rate_limit_anonymous', 10 );
+					update_option( 'agent_builder_allow_anonymous_chat', false );
+					update_option( 'agent_builder_rate_limit_authenticated', 30 );
+					update_option( 'agent_builder_rate_limit_anonymous', 10 );
 					update_option( \Agentic\Usage_Limits::OPTION_KEY, \Agentic\Usage_Limits::get_install_defaults() );
 					delete_option( \Agentic\User_Roles::OPTION_KEY ); // Reverts to computed defaults.
 				},
@@ -156,7 +156,7 @@ if ( isset( $_POST['agentic_save_settings'] ) && check_admin_referer( 'agentic_s
 					$agentic_persona_keys = array( 'persona_welcome_message', 'persona_notes', 'persona_response_style', 'persona_suggested_prompts' );
 					foreach ( $agentic_persona_keys as $agentic_pk ) {
 						// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- custom indexed table
-						$wpdb->delete( $wpdb->prefix . 'agentic_agent_settings', array( 'meta_key' => $agentic_pk ), array( '%s' ) );
+						$wpdb->delete( $wpdb->prefix . 'agent_builder_agent_settings', array( 'meta_key' => $agentic_pk ), array( '%s' ) );
 					}
 					\Agentic\Agent_Settings::bust_cache();
 				},
@@ -174,8 +174,8 @@ if ( isset( $_POST['agentic_save_settings'] ) && check_admin_referer( 'agentic_s
 	if ( '' === $agentic_reset_section && 'agents' === $agentic_save_tab ) {
 		// Save per-agent overrides (provider, model, mode per agent slug).
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Each field is sanitized individually in the foreach loop below.
-		$agentic_raw_overrides   = isset( $_POST['agentic_agent_overrides'] ) && is_array( $_POST['agentic_agent_overrides'] )
-			? wp_unslash( $_POST['agentic_agent_overrides'] ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$agentic_raw_overrides   = isset( $_POST['agent_builder_agent_overrides'] ) && is_array( $_POST['agent_builder_agent_overrides'] )
+			? wp_unslash( $_POST['agent_builder_agent_overrides'] ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			: array();
 		$agentic_valid_modes     = array( '', 'disabled', 'supervised', 'autonomous' );
 		$agentic_valid_providers = array_merge( array( '' ), \Agentic\Provider_Registry::get_slugs() );
@@ -217,12 +217,12 @@ if ( isset( $_POST['agentic_save_settings'] ) && check_admin_referer( 'agentic_s
 
 	if ( '' === $agentic_reset_section && ( 'global' === $agentic_save_tab || 'cache' === $agentic_save_tab ) ) {
 		$agentic_cache_bef = array(
-			'response_cache_enabled' => (bool) get_option( 'agentic_response_cache_enabled', true ),
-			'response_cache_ttl'     => (int) get_option( 'agentic_response_cache_ttl', 3600 ),
+			'response_cache_enabled' => (bool) get_option( 'agent_builder_response_cache_enabled', true ),
+			'response_cache_ttl'     => (int) get_option( 'agent_builder_response_cache_ttl', 3600 ),
 		);
 
-		update_option( 'agentic_response_cache_enabled', isset( $_POST['agentic_response_cache_enabled'] ) );
-		update_option( 'agentic_response_cache_ttl', absint( $_POST['agentic_response_cache_ttl'] ?? 3600 ) );
+		update_option( 'agent_builder_response_cache_enabled', isset( $_POST['agent_builder_response_cache_enabled'] ) );
+		update_option( 'agent_builder_response_cache_ttl', absint( $_POST['agent_builder_response_cache_ttl'] ?? 3600 ) );
 
 		// Handle cache clear.
 		if ( isset( $_POST['agentic_clear_cache'] ) ) {
@@ -231,8 +231,8 @@ if ( isset( $_POST['agentic_save_settings'] ) && check_admin_referer( 'agentic_s
 		}
 
 		$agentic_cache_aft  = array(
-			'response_cache_enabled' => (bool) get_option( 'agentic_response_cache_enabled' ),
-			'response_cache_ttl'     => (int) get_option( 'agentic_response_cache_ttl' ),
+			'response_cache_enabled' => (bool) get_option( 'agent_builder_response_cache_enabled' ),
+			'response_cache_ttl'     => (int) get_option( 'agent_builder_response_cache_ttl' ),
 		);
 		$agentic_cache_diff = array();
 		foreach ( $agentic_cache_aft as $agentic_ck => $agentic_cv ) {
@@ -258,51 +258,51 @@ if ( isset( $_POST['agentic_save_settings'] ) && check_admin_referer( 'agentic_s
 	if ( '' === $agentic_reset_section && 'security' === $agentic_save_tab ) {
 		// Capture previous values before saving so we can log what changed.
 		$agentic_sec_before = array(
-			'agent_mode'                  => (string) get_option( 'agentic_agent_mode', 'supervised' ),
-			'security_enabled'            => (bool) get_option( 'agentic_security_enabled', false ),
-			'turnstile_require_anonymous' => (bool) get_option( 'agentic_turnstile_require_anonymous', false ),
-			'turnstile_require_all'       => (bool) get_option( 'agentic_turnstile_require_all', false ),
-			'ip_anonymize'                => (bool) get_option( 'agentic_ip_anonymize', true ),
-			'retention_conversations'     => (int) get_option( 'agentic_retention_conversations', 30 ),
-			'retention_audit_log'         => (int) get_option( 'agentic_retention_audit_log', 30 ),
-			'chat_consent_enabled'        => (bool) get_option( 'agentic_chat_consent_enabled', false ),
-			'chat_consent_text'           => (string) get_option( 'agentic_chat_consent_text', '' ),
-			'local_memory_enabled'        => (bool) ( '1' === get_option( 'agentic_local_memory_enabled', '0' ) ),
-			'allow_platform_sync'         => (string) get_option( 'agentic_allow_platform_sync', '0' ),
+			'agent_mode'                  => (string) get_option( 'agent_builder_agent_mode', 'supervised' ),
+			'security_enabled'            => (bool) get_option( 'agent_builder_security_enabled', false ),
+			'turnstile_require_anonymous' => (bool) get_option( 'agent_builder_turnstile_require_anonymous', false ),
+			'turnstile_require_all'       => (bool) get_option( 'agent_builder_turnstile_require_all', false ),
+			'ip_anonymize'                => (bool) get_option( 'agent_builder_ip_anonymize', true ),
+			'retention_conversations'     => (int) get_option( 'agent_builder_retention_conversations', 30 ),
+			'retention_audit_log'         => (int) get_option( 'agent_builder_retention_audit_log', 30 ),
+			'chat_consent_enabled'        => (bool) get_option( 'agent_builder_chat_consent_enabled', false ),
+			'chat_consent_text'           => (string) get_option( 'agent_builder_chat_consent_text', '' ),
+			'local_memory_enabled'        => (bool) ( '1' === get_option( 'agent_builder_local_memory_enabled', '0' ) ),
+			'allow_platform_sync'         => (string) get_option( 'agent_builder_allow_platform_sync', '0' ),
 		);
 
 		$agentic_valid_modes = array( 'disabled', 'supervised', 'autonomous' );
-		$agentic_new_mode    = sanitize_key( wp_unslash( $_POST['agentic_agent_mode'] ?? 'supervised' ) );
+		$agentic_new_mode    = sanitize_key( wp_unslash( $_POST['agent_builder_agent_mode'] ?? 'supervised' ) );
 		if ( in_array( $agentic_new_mode, $agentic_valid_modes, true ) ) {
-			update_option( 'agentic_agent_mode', $agentic_new_mode );
+			update_option( 'agent_builder_agent_mode', $agentic_new_mode );
 		}
-		update_option( 'agentic_security_enabled', isset( $_POST['agentic_security_enabled'] ) );
-		update_option( 'agentic_turnstile_site_key', sanitize_text_field( wp_unslash( $_POST['agentic_turnstile_site_key'] ?? '' ) ) );
-		update_option( 'agentic_turnstile_secret_key', sanitize_text_field( wp_unslash( $_POST['agentic_turnstile_secret_key'] ?? '' ) ) );
-		update_option( 'agentic_turnstile_require_anonymous', isset( $_POST['agentic_turnstile_require_anonymous'] ) );
-		update_option( 'agentic_turnstile_require_all', isset( $_POST['agentic_turnstile_require_all'] ) );
+		update_option( 'agent_builder_security_enabled', isset( $_POST['agent_builder_security_enabled'] ) );
+		update_option( 'agent_builder_turnstile_site_key', sanitize_text_field( wp_unslash( $_POST['agent_builder_turnstile_site_key'] ?? '' ) ) );
+		update_option( 'agent_builder_turnstile_secret_key', sanitize_text_field( wp_unslash( $_POST['agent_builder_turnstile_secret_key'] ?? '' ) ) );
+		update_option( 'agent_builder_turnstile_require_anonymous', isset( $_POST['agent_builder_turnstile_require_anonymous'] ) );
+		update_option( 'agent_builder_turnstile_require_all', isset( $_POST['agent_builder_turnstile_require_all'] ) );
 		// GDPR settings.
-		update_option( 'agentic_ip_anonymize', isset( $_POST['agentic_ip_anonymize'] ) );
-		update_option( 'agentic_retention_conversations', absint( $_POST['agentic_retention_conversations'] ?? 0 ) );
-		update_option( 'agentic_retention_audit_log', absint( $_POST['agentic_retention_audit_log'] ?? 0 ) );
-		update_option( 'agentic_chat_consent_enabled', isset( $_POST['agentic_chat_consent_enabled'] ) );
-		update_option( 'agentic_chat_consent_text', sanitize_textarea_field( wp_unslash( $_POST['agentic_chat_consent_text'] ?? '' ) ) );
-		update_option( 'agentic_local_memory_enabled', isset( $_POST['agentic_local_memory_enabled'] ) ? '1' : '0' );
-		update_option( 'agentic_allow_platform_sync', isset( $_POST['agentic_allow_platform_sync'] ) ? '1' : '0' );
+		update_option( 'agent_builder_ip_anonymize', isset( $_POST['agent_builder_ip_anonymize'] ) );
+		update_option( 'agent_builder_retention_conversations', absint( $_POST['agent_builder_retention_conversations'] ?? 0 ) );
+		update_option( 'agent_builder_retention_audit_log', absint( $_POST['agent_builder_retention_audit_log'] ?? 0 ) );
+		update_option( 'agent_builder_chat_consent_enabled', isset( $_POST['agent_builder_chat_consent_enabled'] ) );
+		update_option( 'agent_builder_chat_consent_text', sanitize_textarea_field( wp_unslash( $_POST['agent_builder_chat_consent_text'] ?? '' ) ) );
+		update_option( 'agent_builder_local_memory_enabled', isset( $_POST['agent_builder_local_memory_enabled'] ) ? '1' : '0' );
+		update_option( 'agent_builder_allow_platform_sync', isset( $_POST['agent_builder_allow_platform_sync'] ) ? '1' : '0' );
 
 		// Log any changes to the audit log.
 		$agentic_sec_after = array(
-			'agent_mode'                  => (string) get_option( 'agentic_agent_mode' ),
-			'security_enabled'            => (bool) get_option( 'agentic_security_enabled' ),
-			'turnstile_require_anonymous' => (bool) get_option( 'agentic_turnstile_require_anonymous' ),
-			'turnstile_require_all'       => (bool) get_option( 'agentic_turnstile_require_all' ),
-			'ip_anonymize'                => (bool) get_option( 'agentic_ip_anonymize' ),
-			'retention_conversations'     => (int) get_option( 'agentic_retention_conversations' ),
-			'retention_audit_log'         => (int) get_option( 'agentic_retention_audit_log' ),
-			'chat_consent_enabled'        => (bool) get_option( 'agentic_chat_consent_enabled' ),
-			'chat_consent_text'           => (string) get_option( 'agentic_chat_consent_text' ),
-			'local_memory_enabled'        => (bool) ( '1' === get_option( 'agentic_local_memory_enabled', '0' ) ),
-			'allow_platform_sync'         => (string) get_option( 'agentic_allow_platform_sync', '0' ),
+			'agent_mode'                  => (string) get_option( 'agent_builder_agent_mode' ),
+			'security_enabled'            => (bool) get_option( 'agent_builder_security_enabled' ),
+			'turnstile_require_anonymous' => (bool) get_option( 'agent_builder_turnstile_require_anonymous' ),
+			'turnstile_require_all'       => (bool) get_option( 'agent_builder_turnstile_require_all' ),
+			'ip_anonymize'                => (bool) get_option( 'agent_builder_ip_anonymize' ),
+			'retention_conversations'     => (int) get_option( 'agent_builder_retention_conversations' ),
+			'retention_audit_log'         => (int) get_option( 'agent_builder_retention_audit_log' ),
+			'chat_consent_enabled'        => (bool) get_option( 'agent_builder_chat_consent_enabled' ),
+			'chat_consent_text'           => (string) get_option( 'agent_builder_chat_consent_text' ),
+			'local_memory_enabled'        => (bool) ( '1' === get_option( 'agent_builder_local_memory_enabled', '0' ) ),
+			'allow_platform_sync'         => (string) get_option( 'agent_builder_allow_platform_sync', '0' ),
 		);
 		$agentic_sec_diff  = array();
 		foreach ( $agentic_sec_after as $agentic_sec_key => $agentic_sec_val ) {
@@ -340,20 +340,20 @@ if ( isset( $_POST['agentic_save_settings'] ) && check_admin_referer( 'agentic_s
 
 		// Anonymous frontend chat access (checkbox lives in the AI Agents merged table).
 		$agentic_users_bef = array(
-			'allow_anonymous_chat'     => (bool) get_option( 'agentic_allow_anonymous_chat', false ),
-			'rate_limit_authenticated' => (int) get_option( 'agentic_rate_limit_authenticated', 30 ),
-			'rate_limit_anonymous'     => (int) get_option( 'agentic_rate_limit_anonymous', 10 ),
+			'allow_anonymous_chat'     => (bool) get_option( 'agent_builder_allow_anonymous_chat', false ),
+			'rate_limit_authenticated' => (int) get_option( 'agent_builder_rate_limit_authenticated', 30 ),
+			'rate_limit_anonymous'     => (int) get_option( 'agent_builder_rate_limit_anonymous', 10 ),
 		);
-		update_option( 'agentic_allow_anonymous_chat', isset( $_POST['agentic_allow_anonymous_chat'] ) );
+		update_option( 'agent_builder_allow_anonymous_chat', isset( $_POST['agent_builder_allow_anonymous_chat'] ) );
 
 		// Per-minute rate limits (IP-based, applied before role-based daily limits).
-		update_option( 'agentic_rate_limit_authenticated', absint( $_POST['agentic_rate_limit_authenticated'] ?? 30 ) );
-		update_option( 'agentic_rate_limit_anonymous', absint( $_POST['agentic_rate_limit_anonymous'] ?? 10 ) );
+		update_option( 'agent_builder_rate_limit_authenticated', absint( $_POST['agent_builder_rate_limit_authenticated'] ?? 30 ) );
+		update_option( 'agent_builder_rate_limit_anonymous', absint( $_POST['agent_builder_rate_limit_anonymous'] ?? 10 ) );
 
 		$agentic_users_aft  = array(
-			'allow_anonymous_chat'     => (bool) get_option( 'agentic_allow_anonymous_chat' ),
-			'rate_limit_authenticated' => (int) get_option( 'agentic_rate_limit_authenticated' ),
-			'rate_limit_anonymous'     => (int) get_option( 'agentic_rate_limit_anonymous' ),
+			'allow_anonymous_chat'     => (bool) get_option( 'agent_builder_allow_anonymous_chat' ),
+			'rate_limit_authenticated' => (int) get_option( 'agent_builder_rate_limit_authenticated' ),
+			'rate_limit_anonymous'     => (int) get_option( 'agent_builder_rate_limit_anonymous' ),
 		);
 		$agentic_users_diff = array();
 		foreach ( $agentic_users_aft as $agentic_uk => $agentic_uv ) {
@@ -378,8 +378,8 @@ if ( isset( $_POST['agentic_save_settings'] ) && check_admin_referer( 'agentic_s
 
 	if ( '' === $agentic_reset_section && in_array( $agentic_save_tab, array( 'personas', 'instructions' ), true ) ) {
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitised per-field below
-		$agentic_personas_raw     = isset( $_POST['agentic_agent_personas'] ) && is_array( $_POST['agentic_agent_personas'] )
-			? wp_unslash( $_POST['agentic_agent_personas'] ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$agentic_personas_raw     = isset( $_POST['agent_builder_agent_personas'] ) && is_array( $_POST['agent_builder_agent_personas'] )
+			? wp_unslash( $_POST['agent_builder_agent_personas'] ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			: array();
 		$agentic_personas_changed = false;
 		foreach ( $agentic_personas_raw as $agentic_p_slug => $agentic_p_data ) {
@@ -485,35 +485,35 @@ if ( isset( $_POST['agentic_save_settings'] ) && check_admin_referer( 'agentic_s
 
 	if ( '' === $agentic_reset_section && 'global' === $agentic_save_tab ) {
 		$agentic_styles_bef = array(
-			'chat_theme'      => (string) get_option( 'agentic_chat_theme', 'light' ),
-			'chat_audio'      => (string) get_option( 'agentic_chat_audio', '0' ),
-			'chat_tts'        => (string) get_option( 'agentic_chat_tts', '1' ),
-			'chat_vision'     => (string) get_option( 'agentic_chat_vision', '0' ),
-			'chat_whitelabel' => (string) get_option( 'agentic_chat_whitelabel', '1' ),
+			'chat_theme'      => (string) get_option( 'agent_builder_chat_theme', 'light' ),
+			'chat_audio'      => (string) get_option( 'agent_builder_chat_audio', '0' ),
+			'chat_tts'        => (string) get_option( 'agent_builder_chat_tts', '1' ),
+			'chat_vision'     => (string) get_option( 'agent_builder_chat_vision', '0' ),
+			'chat_whitelabel' => (string) get_option( 'agent_builder_chat_whitelabel', '1' ),
 		);
 
 		$agentic_valid_themes = array( 'dark', 'light', 'midnight', 'ocean' );
-		$agentic_chosen_theme = sanitize_key( wp_unslash( $_POST['agentic_chat_theme'] ?? 'light' ) );
+		$agentic_chosen_theme = sanitize_key( wp_unslash( $_POST['agent_builder_chat_theme'] ?? 'light' ) );
 		if ( in_array( $agentic_chosen_theme, $agentic_valid_themes, true ) ) {
-			update_option( 'agentic_chat_theme', $agentic_chosen_theme );
+			update_option( 'agent_builder_chat_theme', $agentic_chosen_theme );
 		}
 
-		update_option( 'agentic_chat_audio', isset( $_POST['agentic_chat_audio'] ) ? '1' : '0' );
-		update_option( 'agentic_chat_tts', isset( $_POST['agentic_chat_tts'] ) ? '1' : '0' );
-		update_option( 'agentic_chat_vision', isset( $_POST['agentic_chat_vision'] ) ? '1' : '0' );
-		update_option( 'agentic_chat_whitelabel', isset( $_POST['agentic_chat_whitelabel'] ) ? '1' : '0' );
-		update_option( 'agentic_show_whatsapp_cta', isset( $_POST['agentic_show_whatsapp_cta'] ) ? '1' : '0' );
+		update_option( 'agent_builder_chat_audio', isset( $_POST['agent_builder_chat_audio'] ) ? '1' : '0' );
+		update_option( 'agent_builder_chat_tts', isset( $_POST['agent_builder_chat_tts'] ) ? '1' : '0' );
+		update_option( 'agent_builder_chat_vision', isset( $_POST['agent_builder_chat_vision'] ) ? '1' : '0' );
+		update_option( 'agent_builder_chat_whitelabel', isset( $_POST['agent_builder_chat_whitelabel'] ) ? '1' : '0' );
+		update_option( 'agent_builder_show_whatsapp_cta', isset( $_POST['agent_builder_show_whatsapp_cta'] ) ? '1' : '0' );
 
 		// Item 3: Tool reliability for weaker models (global)
-		update_option( 'agentic_enable_weak_model_tool_guidance', isset( $_POST['agentic_enable_weak_model_tool_guidance'] ) ? '1' : '0' );
-		update_option( 'agentic_max_tool_retries', max( 1, absint( $_POST['agentic_max_tool_retries'] ?? 3 ) ) );
+		update_option( 'agent_builder_enable_weak_model_tool_guidance', isset( $_POST['agent_builder_enable_weak_model_tool_guidance'] ) ? '1' : '0' );
+		update_option( 'agent_builder_max_tool_retries', max( 1, absint( $_POST['agent_builder_max_tool_retries'] ?? 3 ) ) );
 
 		$agentic_styles_aft = array(
-			'chat_theme'      => (string) get_option( 'agentic_chat_theme', 'light' ),
-			'chat_audio'      => (string) get_option( 'agentic_chat_audio', '0' ),
-			'chat_tts'        => (string) get_option( 'agentic_chat_tts', '1' ),
-			'chat_vision'     => (string) get_option( 'agentic_chat_vision', '0' ),
-			'chat_whitelabel' => (string) get_option( 'agentic_chat_whitelabel', '1' ),
+			'chat_theme'      => (string) get_option( 'agent_builder_chat_theme', 'light' ),
+			'chat_audio'      => (string) get_option( 'agent_builder_chat_audio', '0' ),
+			'chat_tts'        => (string) get_option( 'agent_builder_chat_tts', '1' ),
+			'chat_vision'     => (string) get_option( 'agent_builder_chat_vision', '0' ),
+			'chat_whitelabel' => (string) get_option( 'agent_builder_chat_whitelabel', '1' ),
 		);
 		$agentic_styles_diff = array();
 		foreach ( $agentic_styles_aft as $agentic_sk => $agentic_sv ) {
@@ -537,13 +537,13 @@ if ( isset( $_POST['agentic_save_settings'] ) && check_admin_referer( 'agentic_s
 	}
 
 	// Handle system check completion flag.
-	if ( isset( $_POST['agentic_system_check_done'] ) ) {
-		update_option( 'agentic_system_check_done', true );
+	if ( isset( $_POST['agent_builder_system_check_done'] ) ) {
+		update_option( 'agent_builder_system_check_done', true );
 	}
 
 	if ( '' === $agentic_reset_section ) {
 		if ( 'agents' === $agentic_save_tab ) {
-			$agentic_global_provider      = get_option( 'agentic_llm_provider', 'agentic' );
+			$agentic_global_provider      = get_option( 'agent_builder_llm_provider', 'agentic' );
 			$agentic_global_prov_reg      = \Agentic\Provider_Registry::get( $agentic_global_provider );
 			$agentic_global_provider_name = $agentic_global_prov_reg['name'] ?? ucfirst( $agentic_global_provider );
 			/* translators: %s is the name of the LLM provider set as global default. */
@@ -555,40 +555,40 @@ if ( isset( $_POST['agentic_save_settings'] ) && check_admin_referer( 'agentic_s
 }
 
 // Get current values.
-$agentic_llm_provider_val = get_option( 'agentic_llm_provider', 'agentic' );
+$agentic_llm_provider_val = get_option( 'agent_builder_llm_provider', 'agentic' );
 $agentic_api_key_val      = \Agentic\Provider_Registry::get( $agentic_llm_provider_val )['api_key'] ?? '';
-$agentic_model_val        = get_option( 'agentic_model', 'gpt-4o' );
-$agentic_vision_model_val = get_option( 'agentic_vision_model', $agentic_model_val );
-$agentic_agent_mode_val   = get_option( 'agentic_agent_mode', 'supervised' );
-$agentic_ollama_url_val   = get_option( 'agentic_ollama_url', 'http://localhost:11434' );
+$agentic_model_val        = get_option( 'agent_builder_model', 'gpt-4o' );
+$agentic_vision_model_val = get_option( 'agent_builder_vision_model', $agentic_model_val );
+$agentic_agent_mode_val   = get_option( 'agent_builder_agent_mode', 'supervised' );
+$agentic_ollama_url_val   = get_option( 'agent_builder_ollama_url', 'http://localhost:11434' );
 
 // Cache settings.
-$agentic_cache_enabled = get_option( 'agentic_response_cache_enabled', true );
-$agentic_cache_ttl     = get_option( 'agentic_response_cache_ttl', 3600 );
+$agentic_cache_enabled = get_option( 'agent_builder_response_cache_enabled', true );
+$agentic_cache_ttl     = get_option( 'agent_builder_response_cache_ttl', 3600 );
 $agentic_cache_stats   = \Agentic\Response_Cache::get_stats();
 
 // Security settings.
-$agentic_security_enabled       = get_option( 'agentic_security_enabled', true );
-$agentic_allow_anon_chat        = get_option( 'agentic_allow_anonymous_chat', false );
-$agentic_turnstile_site_key     = get_option( 'agentic_turnstile_site_key', '' );
-$agentic_turnstile_secret_key   = get_option( 'agentic_turnstile_secret_key', '' );
-$agentic_turnstile_require_anon = get_option( 'agentic_turnstile_require_anonymous', true );
-$agentic_turnstile_require_all  = get_option( 'agentic_turnstile_require_all', false );
+$agent_builder_security_enabled       = get_option( 'agent_builder_security_enabled', true );
+$agentic_allow_anon_chat        = get_option( 'agent_builder_allow_anonymous_chat', false );
+$agent_builder_turnstile_site_key     = get_option( 'agent_builder_turnstile_site_key', '' );
+$agent_builder_turnstile_secret_key   = get_option( 'agent_builder_turnstile_secret_key', '' );
+$agentic_turnstile_require_anon = get_option( 'agent_builder_turnstile_require_anonymous', true );
+$agent_builder_turnstile_require_all  = get_option( 'agent_builder_turnstile_require_all', false );
 // GDPR settings.
-$agentic_ip_anonymize = get_option( 'agentic_ip_anonymize', true );
+$agent_builder_ip_anonymize = get_option( 'agent_builder_ip_anonymize', true );
 
 // Item 3: Tool reliability for weaker models (global defaults)
-$agentic_weak_guidance_global    = get_option( 'agentic_enable_weak_model_tool_guidance', '1' );
-$agentic_max_retries_global      = get_option( 'agentic_max_tool_retries', '3' );
-$agentic_retention_conversations = get_option( 'agentic_retention_conversations', 30 );
-$agentic_retention_audit_log     = get_option( 'agentic_retention_audit_log', 30 );
-$agentic_chat_consent_enabled    = get_option( 'agentic_chat_consent_enabled', false );
-$agentic_chat_consent_text       = get_option( 'agentic_chat_consent_text', 'By chatting you agree to your messages being processed by an AI. We do not share your data with third parties.' );
-$agentic_local_memory_enabled    = '1' === get_option( 'agentic_local_memory_enabled', '0' );
-$agentic_allow_platform_sync     = '1' === get_option( 'agentic_allow_platform_sync', '0' );
+$agentic_weak_guidance_global    = get_option( 'agent_builder_enable_weak_model_tool_guidance', '1' );
+$agentic_max_retries_global      = get_option( 'agent_builder_max_tool_retries', '3' );
+$agent_builder_retention_conversations = get_option( 'agent_builder_retention_conversations', 30 );
+$agent_builder_retention_audit_log     = get_option( 'agent_builder_retention_audit_log', 30 );
+$agent_builder_chat_consent_enabled    = get_option( 'agent_builder_chat_consent_enabled', false );
+$agent_builder_chat_consent_text       = get_option( 'agent_builder_chat_consent_text', 'By chatting you agree to your messages being processed by an AI. We do not share your data with third parties.' );
+$agent_builder_local_memory_enabled    = '1' === get_option( 'agent_builder_local_memory_enabled', '0' );
+$agent_builder_allow_platform_sync     = '1' === get_option( 'agent_builder_allow_platform_sync', '0' );
 // Rate limit settings (read near Users tab).
-$agentic_rate_limit_auth = get_option( 'agentic_rate_limit_authenticated', 30 );
-$agentic_rate_limit_anon = get_option( 'agentic_rate_limit_anonymous', 10 );
+$agentic_rate_limit_auth = get_option( 'agent_builder_rate_limit_authenticated', 30 );
+$agentic_rate_limit_anon = get_option( 'agent_builder_rate_limit_anonymous', 10 );
 ?>
 <div class="wrap agentic-admin agentic-settings-wrap">
 	<h1><?php esc_html_e( 'Settings', 'agent-builder' ); ?></h1>

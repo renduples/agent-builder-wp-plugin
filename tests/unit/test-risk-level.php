@@ -74,14 +74,14 @@ class Test_Risk_Level extends TestCase {
 	 * whatever the mode already grants.
 	 */
 	public function test_site_auto_max_preference_raises_ceiling(): void {
-		update_option( 'agentic_approval_auto_max_risk', Risk_Level::MEDIUM );
+		update_option( 'agent_builder_approval_auto_max_risk', Risk_Level::MEDIUM );
 
 		// Supervised normally confirms MEDIUM; the site preference now allows it.
 		$this->assertSame( 'allow', Risk_Level::enforcement( Risk_Level::MEDIUM, 'supervised' ) );
 		// HIGH is still queued regardless of the preference.
 		$this->assertSame( 'queue', Risk_Level::enforcement( Risk_Level::HIGH, 'supervised' ) );
 
-		delete_option( 'agentic_approval_auto_max_risk' );
+		delete_option( 'agent_builder_approval_auto_max_risk' );
 	}
 
 	/**
@@ -89,13 +89,13 @@ class Test_Risk_Level extends TestCase {
 	 * blanket auto-allow.
 	 */
 	public function test_invalid_auto_max_preference_is_ignored(): void {
-		update_option( 'agentic_approval_auto_max_risk', Risk_Level::EXTREME );
+		update_option( 'agent_builder_approval_auto_max_risk', Risk_Level::EXTREME );
 		$this->assertSame( 'confirm', Risk_Level::enforcement( Risk_Level::MEDIUM, 'supervised' ) );
 
-		update_option( 'agentic_approval_auto_max_risk', 'not-a-real-risk-level' );
+		update_option( 'agent_builder_approval_auto_max_risk', 'not-a-real-risk-level' );
 		$this->assertSame( 'confirm', Risk_Level::enforcement( Risk_Level::MEDIUM, 'supervised' ) );
 
-		delete_option( 'agentic_approval_auto_max_risk' );
+		delete_option( 'agent_builder_approval_auto_max_risk' );
 	}
 
 	// ─── max() / weight() ────────────────────────────────────────────────────
@@ -206,7 +206,7 @@ class Test_Risk_Level extends TestCase {
 	public function test_baseline_is_a_floor_not_a_ceiling(): void {
 		global $wpdb;
 
-		$table = $wpdb->prefix . 'agentic_tools';
+		$table = $wpdb->prefix . 'agent_builder_tools';
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$wpdb->query(
 			$wpdb->prepare(

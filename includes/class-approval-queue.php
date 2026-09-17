@@ -75,7 +75,7 @@ class Approval_Queue {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table query.
 		return (int) $wpdb->get_var(
-			"SELECT COUNT(*) FROM {$wpdb->prefix}agentic_approval_queue WHERE status = 'pending'"
+			"SELECT COUNT(*) FROM {$wpdb->prefix}agent_builder_approval_queue WHERE status = 'pending'"
 		);
 	}
 
@@ -98,7 +98,7 @@ class Approval_Queue {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table query.
 		return (int) $wpdb->get_var(
-			"SELECT COUNT(*) FROM {$wpdb->prefix}agentic_approval_queue WHERE approved_by IS NOT NULL"
+			"SELECT COUNT(*) FROM {$wpdb->prefix}agent_builder_approval_queue WHERE approved_by IS NOT NULL"
 		);
 	}
 
@@ -112,7 +112,7 @@ class Approval_Queue {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table query.
 		$results = $wpdb->get_results(
-			"SELECT * FROM {$wpdb->prefix}agentic_approval_queue WHERE status = 'pending' ORDER BY created_at DESC",
+			"SELECT * FROM {$wpdb->prefix}agent_builder_approval_queue WHERE status = 'pending' ORDER BY created_at DESC",
 			ARRAY_A
 		);
 
@@ -141,7 +141,7 @@ class Approval_Queue {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table insert.
 		$result = $wpdb->insert(
-			$wpdb->prefix . 'agentic_approval_queue',
+			$wpdb->prefix . 'agent_builder_approval_queue',
 			array(
 				'agent_id'   => $agent_id,
 				'action'     => $action,
@@ -202,7 +202,7 @@ class Approval_Queue {
 	 * @return void
 	 */
 	public static function maybe_email_pending_notice( int $id, string $agent_id, string $action, string $risk_level, string $reasoning = '' ): void {
-		if ( ! get_option( 'agentic_approval_email_notify', false ) ) {
+		if ( ! get_option( 'agent_builder_approval_email_notify', false ) ) {
 			return;
 		}
 
@@ -214,7 +214,7 @@ class Approval_Queue {
 			return;
 		}
 
-		$to = sanitize_email( (string) get_option( 'agentic_approval_email_to', '' ) );
+		$to = sanitize_email( (string) get_option( 'agent_builder_approval_email_to', '' ) );
 		if ( ! is_email( $to ) ) {
 			$to = (string) get_option( 'admin_email' );
 		}
@@ -300,7 +300,7 @@ class Approval_Queue {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table insert.
 		$result = $wpdb->insert(
-			$wpdb->prefix . 'agentic_approval_queue',
+			$wpdb->prefix . 'agent_builder_approval_queue',
 			array(
 				'agent_id'    => $agent_id,
 				'action'      => $action,
@@ -329,11 +329,11 @@ class Approval_Queue {
 
 		// Fetch the row before updating so we can log meaningful context.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Single-row lookup before update.
-		$row = $wpdb->get_row( $wpdb->prepare( "SELECT agent_id, action, risk_level FROM {$wpdb->prefix}agentic_approval_queue WHERE id = %d", $id ), ARRAY_A );
+		$row = $wpdb->get_row( $wpdb->prepare( "SELECT agent_id, action, risk_level FROM {$wpdb->prefix}agent_builder_approval_queue WHERE id = %d", $id ), ARRAY_A );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table update.
 		$result = (bool) $wpdb->update(
-			$wpdb->prefix . 'agentic_approval_queue',
+			$wpdb->prefix . 'agent_builder_approval_queue',
 			array(
 				'status'      => 'approved',
 				'approved_by' => get_current_user_id(),
@@ -380,11 +380,11 @@ class Approval_Queue {
 
 		// Fetch the row before updating so we can log meaningful context.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Single-row lookup before update.
-		$row = $wpdb->get_row( $wpdb->prepare( "SELECT agent_id, action, risk_level FROM {$wpdb->prefix}agentic_approval_queue WHERE id = %d", $id ), ARRAY_A );
+		$row = $wpdb->get_row( $wpdb->prepare( "SELECT agent_id, action, risk_level FROM {$wpdb->prefix}agent_builder_approval_queue WHERE id = %d", $id ), ARRAY_A );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table update.
 		$result = (bool) $wpdb->update(
-			$wpdb->prefix . 'agentic_approval_queue',
+			$wpdb->prefix . 'agent_builder_approval_queue',
 			array(
 				'status'      => 'rejected',
 				'approved_by' => get_current_user_id(),
@@ -442,7 +442,7 @@ class Approval_Queue {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table query.
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM {$wpdb->prefix}agentic_approval_queue
+				"SELECT * FROM {$wpdb->prefix}agent_builder_approval_queue
 				 WHERE agent_id = %s AND action = %s AND status = 'approved'
 				 AND expires_at > NOW()
 				 ORDER BY approved_at DESC LIMIT 20",
@@ -540,7 +540,7 @@ class Approval_Queue {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table update.
 		return (bool) $wpdb->update(
-			$wpdb->prefix . 'agentic_approval_queue',
+			$wpdb->prefix . 'agent_builder_approval_queue',
 			array(
 				'status'      => 'executed',
 				'executed_at' => gmdate( 'Y-m-d H:i:s' ),
@@ -581,7 +581,7 @@ class Approval_Queue {
 		$offset = (int) ( $args['offset'] ?? 0 );
 
 		$where_sql = implode( ' AND ', $where );
-		$query     = "SELECT * FROM {$wpdb->prefix}agentic_approval_queue WHERE {$where_sql} ORDER BY created_at DESC LIMIT %d OFFSET %d";
+		$query     = "SELECT * FROM {$wpdb->prefix}agent_builder_approval_queue WHERE {$where_sql} ORDER BY created_at DESC LIMIT %d OFFSET %d";
 		$values[]  = $limit;
 		$values[]  = $offset;
 
@@ -607,7 +607,7 @@ class Approval_Queue {
 	public function cleanup_expired(): int {
 		global $wpdb;
 
-		$table = $wpdb->prefix . 'agentic_approval_queue';
+		$table = $wpdb->prefix . 'agent_builder_approval_queue';
 
 		// Mark pending items past their expiry as expired (preserve the record).
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Custom table update.

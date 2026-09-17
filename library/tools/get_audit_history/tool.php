@@ -45,7 +45,7 @@ class Get_Audit_History extends \Agentic\Tool_Base {
 	}
 
 	public function execute( array $args ): array {
-		$history = get_option( 'agentic_site_auditor_history', array() );
+		$history = get_option( 'agent_builder_site_auditor_history', array() );
 		if ( ! is_array( $history ) ) {
 			$history = array();
 		}

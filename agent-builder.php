@@ -167,9 +167,9 @@ final class Plugin {
 		if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
 			add_action( 'agentic_agents_loaded', array( '\Agentic\Agent_Lifecycle', 'bind_cron_hooks' ) );
 			add_action( 'agentic_async_event', array( '\Agentic\Agent_Lifecycle', 'handle_async_event' ), 10, 4 );
-			add_action( 'agentic_cleanup_audit_log', array( $this, 'run_audit_cleanup' ) );
+			add_action( 'agent_builder_cleanup_audit_log', array( $this, 'run_audit_cleanup' ) );
 			if ( class_exists( '\Agentic\Costs_Manager' ) ) {
-				add_action( 'agentic_costs_check_alerts', array( '\Agentic\Costs_Manager', 'check_and_send_alerts' ) );
+				add_action( 'agent_builder_costs_check_alerts', array( '\Agentic\Costs_Manager', 'check_and_send_alerts' ) );
 			}
 		}
 
@@ -177,28 +177,28 @@ final class Plugin {
 		add_action( 'save_post', array( '\Agentic\Page_Renderer', 'invalidate_post' ) );
 
 		// --- Tool: toggle_xml_rpc ---
-		// Controlled by the `agentic_disable_xmlrpc` option (set via the toggle_xml_rpc tool).
+		// Controlled by the `agent_builder_disable_xmlrpc` option (set via the toggle_xml_rpc tool).
 		// When the option is truthy, the xmlrpc_enabled filter returns false, blocking all
 		// XML-RPC requests at the protocol level before any handler runs.
 		add_filter(
 			'xmlrpc_enabled',
 			function ( $enabled ) {
-				return get_option( 'agentic_disable_xmlrpc' ) ? false : $enabled;
+				return get_option( 'agent_builder_disable_xmlrpc' ) ? false : $enabled;
 			}
 		);
 
 		// --- Tool: toggle_file_editing ---
-		// Controlled by the `agentic_disallow_file_edit` option (set via the toggle_file_editing tool).
+		// Controlled by the `agent_builder_disallow_file_edit` option (set via the toggle_file_editing tool).
 		// Defines DISALLOW_FILE_EDIT at plugins_loaded priority 1 — early enough for WordPress
 		// to pick it up before the theme/plugin editor screens check for the constant.
 		// Note: this only prevents editing via wp-admin. Server-side file access is unaffected.
-		if ( get_option( 'agentic_disallow_file_edit' ) && ! defined( 'DISALLOW_FILE_EDIT' ) ) {
+		if ( get_option( 'agent_builder_disallow_file_edit' ) && ! defined( 'DISALLOW_FILE_EDIT' ) ) {
 			define( 'DISALLOW_FILE_EDIT', true ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound
 		}
 
 		// --- Tool: create_short_link ---
 		// Handles /go/{slug} redirects for short links created by the create_short_link tool.
-		// Links are stored in the `agentic_short_links` option as slug → {target_url, clicks, created_at}.
+		// Links are stored in the `agent_builder_short_links` option as slug → {target_url, clicks, created_at}.
 		// Each hit increments the click counter before redirecting, enabling get_short_link_stats.
 		add_action(
 			'template_redirect',
@@ -212,12 +212,12 @@ final class Plugin {
 				if ( '' === $slug ) {
 					return;
 				}
-				$links = get_option( 'agentic_short_links', array() );
+				$links = get_option( 'agent_builder_short_links', array() );
 				if ( ! isset( $links[ $slug ] ) ) {
 					return;
 				}
 				$links[ $slug ]['clicks'] = ( (int) ( $links[ $slug ]['clicks'] ?? 0 ) ) + 1;
-				update_option( 'agentic_short_links', $links, false );
+				update_option( 'agent_builder_short_links', $links, false );
 				wp_safe_redirect( $links[ $slug ]['target_url'], 301 );
 				exit;
 			}
@@ -326,7 +326,7 @@ final class Plugin {
 		// After a plugin update the activation hook does not re-fire, so
 		// bundled abilities.json signatures can go stale if the file changed.
 		// Re-sign whenever the stored signing version differs from the current one.
-		$signed_version = get_option( 'agentic_abilities_signed_version', '' );
+		$signed_version = get_option( 'agent_builder_abilities_signed_version', '' );
 		if ( AGENT_BUILDER_VERSION !== $signed_version ) {
 			$library_dir = AGENT_BUILDER_DIR . 'library/agents';
 			if ( is_dir( $library_dir ) ) {
@@ -337,7 +337,7 @@ final class Plugin {
 					Abilities_Manifest::save_integrity_hash( $slug );
 				}
 			}
-			update_option( 'agentic_abilities_signed_version', AGENT_BUILDER_VERSION );
+			update_option( 'agent_builder_abilities_signed_version', AGENT_BUILDER_VERSION );
 		}
 	}
 
@@ -378,7 +378,7 @@ final class Plugin {
 			array(
 				'ajaxUrl'         => admin_url( 'admin-ajax.php' ),
 				'nonce'           => wp_create_nonce( 'agentic_plugin_deactivate' ),
-				'canSendFeedback' => (bool) get_option( 'agentic_service_consent' ),
+				'canSendFeedback' => (bool) get_option( 'agent_builder_service_consent' ),
 			)
 		);
 	}
@@ -613,7 +613,7 @@ final class Plugin {
 	/**
 	 * Run the daily audit log retention cleanup.
 	 *
-	 * Hooked to the 'agentic_cleanup_audit_log' cron event.
+	 * Hooked to the 'agent_builder_cleanup_audit_log' cron event.
 	 *
 	 * @return void
 	 */

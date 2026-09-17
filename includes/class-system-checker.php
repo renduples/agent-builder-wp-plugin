@@ -146,7 +146,7 @@ class System_Checker {
 
 				// Save results.
 				update_option(
-					'agentic_last_system_check',
+					'agent_builder_last_system_check',
 					array(
 						'timestamp' => time(),
 						'results'   => $checks,
@@ -193,7 +193,7 @@ class System_Checker {
 	 * @return array|null
 	 */
 	public static function get_last_check(): ?array {
-		return get_option( 'agentic_last_system_check', null );
+		return get_option( 'agent_builder_last_system_check', null );
 	}
 
 	/**

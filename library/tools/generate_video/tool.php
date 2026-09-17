@@ -108,8 +108,8 @@ class Generate_Video extends \Agentic\Tool_Base {
 			return $config;
 		}
 
-		$default_video_model = in_array( get_option( 'agentic_video_model', 'veo-2' ), array( 'veo-2', 'veo-3' ), true )
-			? get_option( 'agentic_video_model', 'veo-2' )
+		$default_video_model = in_array( get_option( 'agent_builder_video_model', 'veo-2' ), array( 'veo-2', 'veo-3' ), true )
+			? get_option( 'agent_builder_video_model', 'veo-2' )
 			: 'veo-2';
 		$model           = in_array( $arguments['model'] ?? $default_video_model, array( 'veo-2', 'veo-3' ), true )
 			? ( $arguments['model'] ?? $default_video_model )
@@ -172,7 +172,7 @@ class Generate_Video extends \Agentic\Tool_Base {
 	 * @return array Config with api_key + user_id, or array with 'error' key.
 	 */
 	private function get_videogen_config(): array {
-		$api_key = (string) get_option( 'agentic_rag_api_secret', '' );
+		$api_key = (string) get_option( 'agent_builder_rag_api_secret', '' );
 		if ( empty( $api_key ) && defined( 'AGENTIC_RAG_API_KEY' ) ) {
 			$api_key = AGENTIC_RAG_API_KEY;
 		}

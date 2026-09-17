@@ -116,8 +116,8 @@ class Form_Set_Spam_Protection extends \Agentic\Tool_Base {
 		update_post_meta( $form_id, \Agentic_Native_Forms::META_SPAM, wp_json_encode( $config ) );
 
 		// Check whether Turnstile keys are configured in site options.
-		$turnstile_site_key   = get_option( 'agentic_turnstile_site_key', '' );
-		$turnstile_secret_key = get_option( 'agentic_turnstile_secret_key', '' );
+		$turnstile_site_key   = get_option( 'agent_builder_turnstile_site_key', '' );
+		$turnstile_secret_key = get_option( 'agent_builder_turnstile_secret_key', '' );
 		$turnstile_keys_set   = '' !== $turnstile_site_key && '' !== $turnstile_secret_key;
 
 		$result = array(
@@ -129,7 +129,7 @@ class Form_Set_Spam_Protection extends \Agentic\Tool_Base {
 
 		if ( $config['turnstile'] && ! $turnstile_keys_set ) {
 			$result['warning'] = 'Turnstile is enabled but site key and/or secret key are not configured. ' .
-				'Set them under Agentic > Settings > Security or via the agentic_turnstile_site_key and agentic_turnstile_secret_key options.';
+				'Set them under Agentic > Settings > Security or via the agent_builder_turnstile_site_key and agent_builder_turnstile_secret_key options.';
 		}
 
 		$result['turnstile_keys_configured'] = $turnstile_keys_set;

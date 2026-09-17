@@ -93,7 +93,7 @@ if (
 	}
 
 	// Keep WP option in sync for feature backends.
-	update_option( 'agentic_editor_sidebar_settings', $agentic_new_settings );
+	update_option( 'agent_builder_editor_sidebar_settings', $agentic_new_settings );
 
 	// Push the mode into agent_settings for every sidebar agent.
 	if ( ! empty( $agentic_agents_raw ) ) {
@@ -166,7 +166,7 @@ if ( ! empty( $agentic_ui_rows ) ) {
 } else {
 	// Fall back to WP options (pre-migration).
 	$agentic_sidebar_settings = wp_parse_args(
-		(array) get_option( 'agentic_editor_sidebar_settings', array() ),
+		(array) get_option( 'agent_builder_editor_sidebar_settings', array() ),
 		array(
 			'enabled'         => '0',
 			'agent_slug'      => '',

@@ -52,7 +52,7 @@ class Get_Short_Link_Stats extends Tool_Base {
 
 	public function execute( array $args ): array {
 		$slug  = sanitize_key( $args['slug'] ?? '' );
-		$links = (array) get_option( 'agentic_short_links', array() );
+		$links = (array) get_option( 'agent_builder_short_links', array() );
 
 		if ( $slug ) {
 			if ( ! isset( $links[ $slug ] ) ) {

@@ -117,7 +117,7 @@ $agentic_ul_limits       = \Agentic\Usage_Limits::get_limits();
 					<span class="description agentic-text-xs"><?php echo esc_html( $agentic_ag_priv_info['description'] ); ?></span></td>
 				<td class="agentic-td-center">
 					<?php if ( $agentic_ag_is_chat ) : ?>
-						<input type="checkbox" name="agentic_allow_anonymous_chat" value="1"<?php checked( $agentic_allow_anon_chat ); ?> title="Allow non-logged-in visitors to use frontend chat" />
+						<input type="checkbox" name="agent_builder_allow_anonymous_chat" value="1"<?php checked( $agentic_allow_anon_chat ); ?> title="Allow non-logged-in visitors to use frontend chat" />
 					<?php else : ?>
 						<span title="Not applicable for anonymous visitors" class="agentic-na-dash">—</span>
 					<?php endif; ?>
@@ -211,18 +211,18 @@ endforeach;
 </p>
 <table class="form-table">
 	<tr>
-		<th scope="row"><label for="agentic_rate_limit_authenticated">Authenticated Users</label></th>
+		<th scope="row"><label for="agent_builder_rate_limit_authenticated">Authenticated Users</label></th>
 		<td>
-			<input type="number" name="agentic_rate_limit_authenticated" id="agentic_rate_limit_authenticated"
+			<input type="number" name="agent_builder_rate_limit_authenticated" id="agent_builder_rate_limit_authenticated"
 				value="<?php echo esc_attr( $agentic_rate_limit_auth ); ?>" min="5" max="300" class="small-text" />
 			requests per minute
 			<p class="description">Maximum chat requests per minute for logged-in users (tracked per user ID).</p>
 		</td>
 	</tr>
 	<tr>
-		<th scope="row"><label for="agentic_rate_limit_anonymous">Anonymous Visitors</label></th>
+		<th scope="row"><label for="agent_builder_rate_limit_anonymous">Anonymous Visitors</label></th>
 		<td>
-			<input type="number" name="agentic_rate_limit_anonymous" id="agentic_rate_limit_anonymous"
+			<input type="number" name="agent_builder_rate_limit_anonymous" id="agent_builder_rate_limit_anonymous"
 				value="<?php echo esc_attr( $agentic_rate_limit_anon ); ?>" min="1" max="60" class="small-text" />
 			requests per minute
 			<p class="description">Maximum chat requests per minute for non-logged-in visitors (tracked per hashed IP).</p>

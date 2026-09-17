@@ -2,7 +2,7 @@
 /**
  * Settings — Memory Tab
  *
- * View, filter, and manage persistent agent memories stored in wp_agentic_memory.
+ * View, filter, and manage persistent agent memories stored in wp_agent_builder_memory.
  *
  * @package    Agent_Builder
  * @subpackage Admin
@@ -18,7 +18,7 @@ if ( ! current_user_can( 'manage_options' ) ) {
 }
 
 global $wpdb;
-$agentic_mem_table = $wpdb->prefix . 'agentic_memory';
+$agentic_mem_table = $wpdb->prefix . 'agent_builder_memory';
 
 // ── Handle actions ───────────────────────────────────────────────────────────
 
@@ -62,8 +62,8 @@ if ( isset( $_POST['agentic_mem_clear_nonce'] ) && wp_verify_nonce( sanitize_tex
 
 // Save TTL setting.
 if ( isset( $_POST['agentic_mem_ttl_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['agentic_mem_ttl_nonce'] ) ), 'agentic_mem_ttl_save' ) ) {
-	$agentic_ttl = absint( $_POST['agentic_memory_ttl_days'] ?? 0 );
-	update_option( 'agentic_memory_ttl_days', $agentic_ttl );
+	$agentic_ttl = absint( $_POST['agent_builder_memory_ttl_days'] ?? 0 );
+	update_option( 'agent_builder_memory_ttl_days', $agentic_ttl );
 	$agentic_mem_notice = __( 'Memory settings saved.', 'agent-builder' );
 }
 
@@ -108,7 +108,7 @@ $agentic_types = $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT memory_type FR
 $agentic_entities = $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT entity_id FROM %i ORDER BY entity_id', $agentic_mem_table ) );
 
 $agentic_total_pages = max( 1, (int) ceil( $agentic_total / $agentic_per_page ) );
-$agentic_ttl_days    = (int) get_option( 'agentic_memory_ttl_days', 0 );
+$agentic_ttl_days    = (int) get_option( 'agent_builder_memory_ttl_days', 0 );
 ?>
 
 <?php if ( $agentic_mem_notice ) : ?>
@@ -121,9 +121,9 @@ $agentic_ttl_days    = (int) get_option( 'agentic_memory_ttl_days', 0 );
 <div class="agentic-memory-box">
 	<form method="post">
 		<?php wp_nonce_field( 'agentic_mem_ttl_save', 'agentic_mem_ttl_nonce' ); ?>
-		<label for="agentic_memory_ttl_days"><strong>Default Memory TTL</strong></label>
+		<label for="agent_builder_memory_ttl_days"><strong>Default Memory TTL</strong></label>
 		<div class="agentic-flex-gap-8 agentic-mt-6">
-			<input type="number" name="agentic_memory_ttl_days" id="agentic_memory_ttl_days" value="<?php echo esc_attr( $agentic_ttl_days ); ?>" min="0" style="width:80px;" />
+			<input type="number" name="agent_builder_memory_ttl_days" id="agent_builder_memory_ttl_days" value="<?php echo esc_attr( $agentic_ttl_days ); ?>" min="0" style="width:80px;" />
 			<span>days (0 = never expires)</span>
 			<input type="submit" class="button" value="<?php esc_attr_e( 'Save', 'agent-builder' ); ?>" />
 		</div>

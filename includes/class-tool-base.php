@@ -307,7 +307,7 @@ abstract class Tool_Base {
 	/**
 	 * Get the default risk level for this tool.
 	 *
-	 * Reads from the wp_agentic_tools database table via Risk_Level.
+	 * Reads from the wp_agent_builder_tools database table via Risk_Level.
 	 * Subclasses can override.
 	 * Agent abilities.json can escalate but never downgrade this value.
 	 *

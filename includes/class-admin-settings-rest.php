@@ -208,7 +208,7 @@ class Admin_Settings_REST {
 		$advanced_only_tabs = array( 'apis', 'endpoints', 'mcp' );
 		$settings_advanced  = class_exists( Admin_Menu_Handler::class )
 			? Admin_Menu_Handler::is_advanced_mode( 'settings' )
-			: ( 'advanced' === get_option( 'agentic_ui_mode', 'basic' ) );
+			: ( 'advanced' === get_option( 'agent_builder_ui_mode', 'basic' ) );
 
 		$groups = array(
 			array(
@@ -640,16 +640,16 @@ class Admin_Settings_REST {
 	private static function data_interface(): array {
 		$is_advanced = class_exists( Admin_Menu_Handler::class )
 			? Admin_Menu_Handler::is_advanced_mode( 'settings-interface' )
-			: ( 'advanced' === get_option( 'agentic_ui_mode', 'basic' ) );
+			: ( 'advanced' === get_option( 'agent_builder_ui_mode', 'basic' ) );
 
 		return array(
-			'ui_mode'          => 'advanced' === get_option( 'agentic_ui_mode', 'basic' ) ? 'advanced' : 'basic',
-			'show_onboarding'  => '0' !== get_option( 'agentic_show_onboarding', '1' ),
-			'admin_address'    => (string) get_option( 'agentic_admin_address', '' ),
-			'frontend_address' => (string) get_option( 'agentic_frontend_address', '' ),
-			'global_font'      => (string) get_option( 'agentic_global_font', '' ),
-			'global_accent'    => (string) get_option( 'agentic_global_accent', '' ),
-			'chat_theme'       => (string) get_option( 'agentic_chat_theme', 'light' ),
+			'ui_mode'          => 'advanced' === get_option( 'agent_builder_ui_mode', 'basic' ) ? 'advanced' : 'basic',
+			'show_onboarding'  => '0' !== get_option( 'agent_builder_show_onboarding', '1' ),
+			'admin_address'    => (string) get_option( 'agent_builder_admin_address', '' ),
+			'frontend_address' => (string) get_option( 'agent_builder_frontend_address', '' ),
+			'global_font'      => (string) get_option( 'agent_builder_global_font', '' ),
+			'global_accent'    => (string) get_option( 'agent_builder_global_accent', '' ),
+			'chat_theme'       => (string) get_option( 'agent_builder_chat_theme', 'light' ),
 			'chat_themes'      => self::chat_theme_presets(),
 			'is_advanced'      => $is_advanced,
 			'font_options'     => array(
@@ -735,7 +735,7 @@ class Admin_Settings_REST {
 	 * @return array<string,mixed>
 	 */
 	private static function data_providers(): array {
-		$default = (string) get_option( 'agentic_llm_provider', 'agentic' );
+		$default = (string) get_option( 'agent_builder_llm_provider', 'agentic' );
 		$rows    = array();
 		foreach ( Provider_Registry::get_all() as $p ) {
 			$connected = Admin_Menu_Handler::provider_is_connected( $p );
@@ -801,17 +801,17 @@ class Admin_Settings_REST {
 		}
 
 		return array(
-			'global_provider'    => (string) get_option( 'agentic_llm_provider', 'agentic' ),
-			'global_model'       => (string) get_option( 'agentic_model', '' ),
+			'global_provider'    => (string) get_option( 'agent_builder_llm_provider', 'agentic' ),
+			'global_model'       => (string) get_option( 'agent_builder_model', '' ),
 			'providers'          => $providers,
 			'agents'             => $agents,
 			'disable_all_agents' => Emergency_Stop::is_active(),
 			// Chat capabilities (moved from Global tab).
-			'chat_audio'         => '1' === (string) get_option( 'agentic_chat_audio', '0' ) || true === get_option( 'agentic_chat_audio', false ),
-			'chat_tts'           => '0' !== (string) get_option( 'agentic_chat_tts', '1' ),
-			'chat_vision'        => '1' === (string) get_option( 'agentic_chat_vision', '0' ) || true === get_option( 'agentic_chat_vision', false ),
-			'chat_whitelabel'    => '1' === (string) get_option( 'agentic_chat_whitelabel', '1' ),
-			'show_whatsapp_cta'  => '1' === (string) get_option( 'agentic_show_whatsapp_cta', '0' ),
+			'chat_audio'         => '1' === (string) get_option( 'agent_builder_chat_audio', '0' ) || true === get_option( 'agent_builder_chat_audio', false ),
+			'chat_tts'           => '0' !== (string) get_option( 'agent_builder_chat_tts', '1' ),
+			'chat_vision'        => '1' === (string) get_option( 'agent_builder_chat_vision', '0' ) || true === get_option( 'agent_builder_chat_vision', false ),
+			'chat_whitelabel'    => '1' === (string) get_option( 'agent_builder_chat_whitelabel', '1' ),
+			'show_whatsapp_cta'  => '1' === (string) get_option( 'agent_builder_show_whatsapp_cta', '0' ),
 		);
 	}
 
@@ -840,18 +840,18 @@ class Admin_Settings_REST {
 	private static function data_security(): array {
 		$is_advanced = class_exists( Admin_Menu_Handler::class )
 			? Admin_Menu_Handler::is_advanced_mode( 'settings-security' )
-			: ( 'advanced' === get_option( 'agentic_ui_mode', 'basic' ) );
+			: ( 'advanced' === get_option( 'agent_builder_ui_mode', 'basic' ) );
 
 		return array(
-			'default_agent_mode'       => (string) get_option( 'agentic_default_agent_mode', 'supervised' ),
-			'message_scanning'         => (bool) get_option( 'agentic_message_scanning', true ),
-			'chat_consent_enabled'     => (bool) get_option( 'agentic_chat_consent_enabled', false ),
-			'chat_consent_text'        => (string) get_option( 'agentic_chat_consent_text', '' ),
-			'retention_conversations'  => (int) get_option( 'agentic_retention_conversations', 30 ),
-			'retention_audit_log'      => (int) get_option( 'agentic_retention_audit_log', 30 ),
-			'rate_limit_authenticated' => (int) get_option( 'agentic_rate_limit_authenticated', 30 ),
-			'rate_limit_anonymous'     => (int) get_option( 'agentic_rate_limit_anonymous', 10 ),
-			'allow_platform_sync'      => '1' === (string) get_option( 'agentic_allow_platform_sync', '0' ),
+			'default_agent_mode'       => (string) get_option( 'agent_builder_default_agent_mode', 'supervised' ),
+			'message_scanning'         => (bool) get_option( 'agent_builder_message_scanning', true ),
+			'chat_consent_enabled'     => (bool) get_option( 'agent_builder_chat_consent_enabled', false ),
+			'chat_consent_text'        => (string) get_option( 'agent_builder_chat_consent_text', '' ),
+			'retention_conversations'  => (int) get_option( 'agent_builder_retention_conversations', 30 ),
+			'retention_audit_log'      => (int) get_option( 'agent_builder_retention_audit_log', 30 ),
+			'rate_limit_authenticated' => (int) get_option( 'agent_builder_rate_limit_authenticated', 30 ),
+			'rate_limit_anonymous'     => (int) get_option( 'agent_builder_rate_limit_anonymous', 10 ),
+			'allow_platform_sync'      => '1' === (string) get_option( 'agent_builder_allow_platform_sync', '0' ),
 			'is_advanced'              => $is_advanced,
 		);
 	}
@@ -907,7 +907,7 @@ class Admin_Settings_REST {
 		// tab-visibility grouping above.
 		$is_advanced = class_exists( Admin_Menu_Handler::class )
 			? Admin_Menu_Handler::is_advanced_mode( 'settings-users' )
-			: ( 'advanced' === get_option( 'agentic_ui_mode', 'basic' ) );
+			: ( 'advanced' === get_option( 'agent_builder_ui_mode', 'basic' ) );
 
 		$assistant = null;
 		if ( ! $is_advanced ) {
@@ -925,7 +925,7 @@ class Admin_Settings_REST {
 		}
 
 		return array(
-			'allow_anonymous_chat' => (bool) get_option( 'agentic_allow_anonymous_chat', false ),
+			'allow_anonymous_chat' => (bool) get_option( 'agent_builder_allow_anonymous_chat', false ),
 			'roles'                => $roles_out,
 			'plugin_privileges'    => $plugin_privs,
 			'agent_privileges'     => $agent_privs,
@@ -940,8 +940,8 @@ class Admin_Settings_REST {
 	 */
 	private static function data_memory(): array {
 		return array(
-			'ttl_days'             => (int) get_option( 'agentic_memory_ttl_days', 30 ),
-			'local_memory_enabled' => '1' === (string) get_option( 'agentic_local_memory_enabled', '0' ),
+			'ttl_days'             => (int) get_option( 'agent_builder_memory_ttl_days', 30 ),
+			'local_memory_enabled' => '1' === (string) get_option( 'agent_builder_local_memory_enabled', '0' ),
 		);
 	}
 
@@ -949,7 +949,7 @@ class Admin_Settings_REST {
 	 * @return array<string,mixed>
 	 */
 	private static function data_apis(): array {
-		$psi = (string) get_option( 'agentic_psi_api_key', '' );
+		$psi = (string) get_option( 'agent_builder_psi_api_key', '' );
 		return array(
 			'services' => array(
 				array(
@@ -1127,11 +1127,11 @@ class Admin_Settings_REST {
 	/**
 	 * Persist the site-wide Basic/Advanced default.
 	 *
-	 * Single writer for the `agentic_ui_mode` option. Dashboard REST
+	 * Single writer for the `agent_builder_ui_mode` option. Dashboard REST
 	 * (`set_ui_mode` action), Settings → Interface (`save_interface()`),
 	 * the classic-PHP fallback (`UI_Settings_REST`), and the global header
 	 * switch (`Admin_Pages_REST` `set_ui_mode` action) all call through
-	 * here so there is exactly one `update_option( 'agentic_ui_mode', ... )`
+	 * here so there is exactly one `update_option( 'agent_builder_ui_mode', ... )`
 	 * in the codebase. Option name and values (`basic` / `advanced`) are
 	 * part of the Agent Builder Pro contract and must not change.
 	 *
@@ -1152,8 +1152,8 @@ class Admin_Settings_REST {
 			return false;
 		}
 
-		$prev = (string) get_option( 'agentic_ui_mode', 'basic' );
-		update_option( 'agentic_ui_mode', $mode, false );
+		$prev = (string) get_option( 'agent_builder_ui_mode', 'basic' );
+		update_option( 'agent_builder_ui_mode', $mode, false );
 		if ( $prev !== $mode && class_exists( Audit_Log::class ) ) {
 			$details = array(
 				'id'   => $mode,
@@ -1175,11 +1175,11 @@ class Admin_Settings_REST {
 	private static function save_interface( array $data ): void {
 		$address_changed = false;
 		if ( isset( $data['admin_address'] ) ) {
-			update_option( 'agentic_admin_address', mb_substr( sanitize_text_field( (string) $data['admin_address'] ), 0, 60 ) );
+			update_option( 'agent_builder_admin_address', mb_substr( sanitize_text_field( (string) $data['admin_address'] ), 0, 60 ) );
 			$address_changed = true;
 		}
 		if ( isset( $data['frontend_address'] ) ) {
-			update_option( 'agentic_frontend_address', mb_substr( sanitize_text_field( (string) $data['frontend_address'] ), 0, 60 ) );
+			update_option( 'agent_builder_frontend_address', mb_substr( sanitize_text_field( (string) $data['frontend_address'] ), 0, 60 ) );
 			$address_changed = true;
 		}
 
@@ -1187,21 +1187,21 @@ class Admin_Settings_REST {
 			self::set_ui_mode( (string) $data['ui_mode'] );
 		}
 		if ( array_key_exists( 'show_onboarding', $data ) ) {
-			update_option( 'agentic_show_onboarding', ! empty( $data['show_onboarding'] ) ? '1' : '0', false );
+			update_option( 'agent_builder_show_onboarding', ! empty( $data['show_onboarding'] ) ? '1' : '0', false );
 		}
 		if ( isset( $data['global_font'] ) ) {
 			$allow = Chat_Assets::global_font_allowlist();
 			$font  = sanitize_text_field( (string) $data['global_font'] );
 			if ( in_array( $font, $allow, true ) ) {
-				update_option( 'agentic_global_font', $font, false );
+				update_option( 'agent_builder_global_font', $font, false );
 			}
 		}
 		if ( ! empty( $data['use_theme_accent'] ) || ( isset( $data['global_accent'] ) && '' === $data['global_accent'] ) ) {
-			update_option( 'agentic_global_accent', '', false );
+			update_option( 'agent_builder_global_accent', '', false );
 		} elseif ( isset( $data['global_accent'] ) ) {
 			$accent = sanitize_hex_color( (string) $data['global_accent'] );
 			if ( $accent ) {
-				update_option( 'agentic_global_accent', $accent, false );
+				update_option( 'agent_builder_global_accent', $accent, false );
 			}
 		}
 
@@ -1209,7 +1209,7 @@ class Admin_Settings_REST {
 			$theme   = sanitize_key( (string) $data['chat_theme'] );
 			$allowed = array( 'dark', 'light', 'midnight', 'ocean', 'auto' );
 			if ( in_array( $theme, $allowed, true ) ) {
-				update_option( 'agentic_chat_theme', $theme );
+				update_option( 'agent_builder_chat_theme', $theme );
 			}
 		}
 
@@ -1229,8 +1229,8 @@ class Admin_Settings_REST {
 		if ( isset( $data['default_agent_mode'] ) ) {
 			$mode = sanitize_key( (string) $data['default_agent_mode'] );
 			if ( in_array( $mode, array( 'autonomous', 'supervised', 'readonly' ), true ) ) {
-				$prev = (string) get_option( 'agentic_default_agent_mode', 'supervised' );
-				update_option( 'agentic_default_agent_mode', $mode );
+				$prev = (string) get_option( 'agent_builder_default_agent_mode', 'supervised' );
+				update_option( 'agent_builder_default_agent_mode', $mode );
 				if ( $prev !== $mode && class_exists( Audit_Log::class ) ) {
 					Audit_Log::log_admin(
 						'default_agent_mode_changed',
@@ -1245,28 +1245,28 @@ class Admin_Settings_REST {
 			}
 		}
 		if ( array_key_exists( 'message_scanning', $data ) ) {
-			update_option( 'agentic_message_scanning', ! empty( $data['message_scanning'] ) );
+			update_option( 'agent_builder_message_scanning', ! empty( $data['message_scanning'] ) );
 		}
 		if ( array_key_exists( 'chat_consent_enabled', $data ) ) {
-			update_option( 'agentic_chat_consent_enabled', ! empty( $data['chat_consent_enabled'] ) );
+			update_option( 'agent_builder_chat_consent_enabled', ! empty( $data['chat_consent_enabled'] ) );
 		}
 		if ( isset( $data['chat_consent_text'] ) ) {
-			update_option( 'agentic_chat_consent_text', sanitize_textarea_field( (string) $data['chat_consent_text'] ) );
+			update_option( 'agent_builder_chat_consent_text', sanitize_textarea_field( (string) $data['chat_consent_text'] ) );
 		}
 		if ( isset( $data['retention_conversations'] ) ) {
-			update_option( 'agentic_retention_conversations', max( 0, absint( $data['retention_conversations'] ) ) );
+			update_option( 'agent_builder_retention_conversations', max( 0, absint( $data['retention_conversations'] ) ) );
 		}
 		if ( isset( $data['retention_audit_log'] ) ) {
-			update_option( 'agentic_retention_audit_log', max( 0, absint( $data['retention_audit_log'] ) ) );
+			update_option( 'agent_builder_retention_audit_log', max( 0, absint( $data['retention_audit_log'] ) ) );
 		}
 		if ( isset( $data['rate_limit_authenticated'] ) ) {
-			update_option( 'agentic_rate_limit_authenticated', max( 1, absint( $data['rate_limit_authenticated'] ) ) );
+			update_option( 'agent_builder_rate_limit_authenticated', max( 1, absint( $data['rate_limit_authenticated'] ) ) );
 		}
 		if ( isset( $data['rate_limit_anonymous'] ) ) {
-			update_option( 'agentic_rate_limit_anonymous', max( 1, absint( $data['rate_limit_anonymous'] ) ) );
+			update_option( 'agent_builder_rate_limit_anonymous', max( 1, absint( $data['rate_limit_anonymous'] ) ) );
 		}
 		if ( array_key_exists( 'allow_platform_sync', $data ) ) {
-			update_option( 'agentic_allow_platform_sync', ! empty( $data['allow_platform_sync'] ) ? '1' : '0' );
+			update_option( 'agent_builder_allow_platform_sync', ! empty( $data['allow_platform_sync'] ) ? '1' : '0' );
 		}
 	}
 
@@ -1275,7 +1275,7 @@ class Admin_Settings_REST {
 	 */
 	private static function save_users( array $data ): void {
 		if ( array_key_exists( 'allow_anonymous_chat', $data ) ) {
-			update_option( 'agentic_allow_anonymous_chat', ! empty( $data['allow_anonymous_chat'] ) ? 1 : 0 );
+			update_option( 'agent_builder_allow_anonymous_chat', ! empty( $data['allow_anonymous_chat'] ) ? 1 : 0 );
 		}
 		if ( ! empty( $data['role_settings'] ) && is_array( $data['role_settings'] ) && class_exists( User_Roles::class ) ) {
 			User_Roles::save_settings( $data['role_settings'] );
@@ -1290,10 +1290,10 @@ class Admin_Settings_REST {
 	 */
 	private static function save_memory( array $data ): void {
 		if ( isset( $data['ttl_days'] ) ) {
-			update_option( 'agentic_memory_ttl_days', max( 0, absint( $data['ttl_days'] ) ) );
+			update_option( 'agent_builder_memory_ttl_days', max( 0, absint( $data['ttl_days'] ) ) );
 		}
 		if ( array_key_exists( 'local_memory_enabled', $data ) ) {
-			update_option( 'agentic_local_memory_enabled', ! empty( $data['local_memory_enabled'] ) ? '1' : '0' );
+			update_option( 'agent_builder_local_memory_enabled', ! empty( $data['local_memory_enabled'] ) ? '1' : '0' );
 		}
 	}
 
@@ -1349,11 +1349,11 @@ class Admin_Settings_REST {
 		if ( isset( $data['global_provider'] ) ) {
 			$slug = sanitize_key( (string) $data['global_provider'] );
 			if ( Provider_Registry::is_valid( $slug ) ) {
-				update_option( 'agentic_llm_provider', $slug );
+				update_option( 'agent_builder_llm_provider', $slug );
 			}
 		}
 		if ( isset( $data['global_model'] ) ) {
-			update_option( 'agentic_model', sanitize_text_field( (string) $data['global_model'] ) );
+			update_option( 'agent_builder_model', sanitize_text_field( (string) $data['global_model'] ) );
 		}
 		if ( ! empty( $data['agents'] ) && is_array( $data['agents'] ) ) {
 			foreach ( $data['agents'] as $row ) {
@@ -1378,11 +1378,11 @@ class Admin_Settings_REST {
 		}
 		foreach ( array( 'chat_audio', 'chat_tts', 'chat_vision', 'chat_whitelabel' ) as $key ) {
 			if ( array_key_exists( $key, $data ) ) {
-				update_option( 'agentic_' . $key, ! empty( $data[ $key ] ) ? '1' : '0' );
+				update_option( 'agent_builder_' . $key, ! empty( $data[ $key ] ) ? '1' : '0' );
 			}
 		}
 		if ( array_key_exists( 'show_whatsapp_cta', $data ) ) {
-			update_option( 'agentic_show_whatsapp_cta', ! empty( $data['show_whatsapp_cta'] ) ? '1' : '0' );
+			update_option( 'agent_builder_show_whatsapp_cta', ! empty( $data['show_whatsapp_cta'] ) ? '1' : '0' );
 		}
 
 		return $warnings;

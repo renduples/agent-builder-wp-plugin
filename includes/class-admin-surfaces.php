@@ -37,17 +37,17 @@ class Admin_Surfaces {
 	/**
 	 * Option key for the global on/off toggle.
 	 */
-	const OPTION_ENABLED = 'agentic_admin_launchers_enabled';
+	const OPTION_ENABLED = 'agent_builder_admin_launchers_enabled';
 
 	/**
 	 * Option: which screens may show launchers (string[] of screen keys).
 	 */
-	const OPTION_SCREENS = 'agentic_admin_launcher_screens';
+	const OPTION_SCREENS = 'agent_builder_admin_launcher_screens';
 
 	/**
 	 * Option: preferred agent slug for launchers (default wordpress-assistant).
 	 */
-	const OPTION_AGENT = 'agentic_admin_launcher_agent';
+	const OPTION_AGENT = 'agent_builder_admin_launcher_agent';
 
 	/**
 	 * User-meta key storing the list of dismissed launcher keys.

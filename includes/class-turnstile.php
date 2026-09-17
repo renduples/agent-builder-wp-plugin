@@ -44,11 +44,11 @@ class Turnstile {
 			return false;
 		}
 
-		if ( get_option( 'agentic_turnstile_require_all', false ) ) {
+		if ( get_option( 'agent_builder_turnstile_require_all', false ) ) {
 			return true;
 		}
 
-		if ( get_option( 'agentic_turnstile_require_anonymous', true ) ) {
+		if ( get_option( 'agent_builder_turnstile_require_anonymous', true ) ) {
 			return ! is_user_logged_in();
 		}
 
@@ -61,7 +61,7 @@ class Turnstile {
 	 * @return string
 	 */
 	public static function get_site_key(): string {
-		return (string) get_option( 'agentic_turnstile_site_key', '' );
+		return (string) get_option( 'agent_builder_turnstile_site_key', '' );
 	}
 
 	/**
@@ -70,7 +70,7 @@ class Turnstile {
 	 * @return string
 	 */
 	private static function get_secret_key(): string {
-		return (string) get_option( 'agentic_turnstile_secret_key', '' );
+		return (string) get_option( 'agent_builder_turnstile_secret_key', '' );
 	}
 
 	/**

@@ -6,11 +6,11 @@
  * automatic data-retention cleanup, and chat consent gate enforcement.
  *
  * Registered options:
- *  - agentic_ip_anonymize            bool   Hash IPs in security log (default true)
- *  - agentic_retention_conversations int    Days to keep chat history (0 = indefinitely)
- *  - agentic_retention_audit_log     int    Days to keep audit/security log (0 = indefinitely)
- *  - agentic_chat_consent_enabled    bool   Show consent notice before first chat message
- *  - agentic_chat_consent_text       string Text of consent notice
+ *  - agent_builder_ip_anonymize            bool   Hash IPs in security log (default true)
+ *  - agent_builder_retention_conversations int    Days to keep chat history (0 = indefinitely)
+ *  - agent_builder_retention_audit_log     int    Days to keep audit/security log (0 = indefinitely)
+ *  - agent_builder_chat_consent_enabled    bool   Show consent notice before first chat message
+ *  - agent_builder_chat_consent_text       string Text of consent notice
  *
  * @package    Agent_Builder
  * @subpackage Includes
@@ -31,7 +31,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class GDPR {
 
 	/** Cron hook for data retention cleanup. */
-	const CRON_HOOK = 'agentic_gdpr_cleanup';
+	const CRON_HOOK = 'agent_builder_gdpr_cleanup';
 
 	/** Nonce action for consent dismissal. */
 	const CONSENT_NONCE = 'agentic_consent';
@@ -142,7 +142,7 @@ class GDPR {
 
 		$per_page = 50;
 		$offset   = ( $page - 1 ) * $per_page;
-		$table    = $wpdb->prefix . 'agentic_conversations';
+		$table    = $wpdb->prefix . 'agent_builder_conversations';
 
 		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" ) !== $table ) { // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			return array(
@@ -225,7 +225,7 @@ class GDPR {
 
 		$per_page = 50;
 		$offset   = ( $page - 1 ) * $per_page;
-		$table    = $wpdb->prefix . 'agentic_security_log';
+		$table    = $wpdb->prefix . 'agent_builder_security_log';
 
 		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" ) !== $table ) { // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			return array(
@@ -334,7 +334,7 @@ class GDPR {
 			);
 		}
 
-		$table = $wpdb->prefix . 'agentic_conversations';
+		$table = $wpdb->prefix . 'agent_builder_conversations';
 		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" ) !== $table ) { // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			return array(
 				'items_removed'  => 0,
@@ -380,7 +380,7 @@ class GDPR {
 			);
 		}
 
-		$table = $wpdb->prefix . 'agentic_security_log';
+		$table = $wpdb->prefix . 'agent_builder_security_log';
 		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" ) !== $table ) { // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			return array(
 				'items_removed'  => 0,
@@ -421,7 +421,7 @@ class GDPR {
 
 		$per_page = 50;
 		$offset   = ( $page - 1 ) * $per_page;
-		$table    = $wpdb->prefix . 'agentic_audit_log';
+		$table    = $wpdb->prefix . 'agent_builder_audit_log';
 
 		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" ) !== $table ) { // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			return array(
@@ -512,7 +512,7 @@ class GDPR {
 
 		$per_page = 50;
 		$offset   = ( $page - 1 ) * $per_page;
-		$table    = $wpdb->prefix . 'agentic_jobs';
+		$table    = $wpdb->prefix . 'agent_builder_jobs';
 
 		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" ) !== $table ) { // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			return array(
@@ -541,7 +541,7 @@ class GDPR {
 		$export_items = array();
 		foreach ( $rows as $row ) {
 			$export_items[] = array(
-				'group_id'    => 'agentic_jobs',
+				'group_id'    => 'agent_builder_jobs',
 				'group_label' => __( 'AI Jobs', 'agent-builder' ),
 				'item_id'     => 'job-' . $row->id,
 				'data'        => array(
@@ -603,7 +603,7 @@ class GDPR {
 			);
 		}
 
-		$table = $wpdb->prefix . 'agentic_audit_log';
+		$table = $wpdb->prefix . 'agent_builder_audit_log';
 		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" ) !== $table ) { // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			return array(
 				'items_removed'  => 0,
@@ -644,7 +644,7 @@ class GDPR {
 			);
 		}
 
-		$table = $wpdb->prefix . 'agentic_jobs';
+		$table = $wpdb->prefix . 'agent_builder_jobs';
 		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" ) !== $table ) { // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			return array(
 				'items_removed'  => 0,
@@ -675,11 +675,11 @@ class GDPR {
 	public static function run_cleanup(): void {
 		global $wpdb;
 
-		$conv_days  = (int) get_option( 'agentic_retention_conversations', 30 );
-		$audit_days = (int) get_option( 'agentic_retention_audit_log', 30 );
+		$conv_days  = (int) get_option( 'agent_builder_retention_conversations', 30 );
+		$audit_days = (int) get_option( 'agent_builder_retention_audit_log', 30 );
 
 		if ( $conv_days > 0 ) {
-			$table = $wpdb->prefix . 'agentic_conversations';
+			$table = $wpdb->prefix . 'agent_builder_conversations';
 			if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" ) === $table ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				$wpdb->query( // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
 					$wpdb->prepare(
@@ -690,7 +690,7 @@ class GDPR {
 			}
 
 			// Local conversational memory follows the same retention window.
-			$mem_table = $wpdb->prefix . 'agentic_memory';
+			$mem_table = $wpdb->prefix . 'agent_builder_memory';
 			if ( $wpdb->get_var( "SHOW TABLES LIKE '{$mem_table}'" ) === $mem_table ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				$wpdb->query( // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
 					$wpdb->prepare(
@@ -703,7 +703,7 @@ class GDPR {
 		}
 
 		if ( $audit_days > 0 ) {
-			foreach ( array( 'agentic_audit_log', 'agentic_security_log' ) as $suffix ) {
+			foreach ( array( 'agent_builder_audit_log', 'agent_builder_security_log' ) as $suffix ) {
 				$table = $wpdb->prefix . $suffix;
 				if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" ) === $table ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 					$wpdb->query( // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
@@ -735,7 +735,7 @@ class GDPR {
 	 * @return array{pass: false, reason: string, code: string}|null
 	 */
 	public static function check_consent(): ?array {
-		if ( ! get_option( 'agentic_chat_consent_enabled', false ) ) {
+		if ( ! get_option( 'agent_builder_chat_consent_enabled', false ) ) {
 			return null; // Consent gate disabled.
 		}
 
@@ -764,7 +764,7 @@ class GDPR {
 	 * Return the configured consent notice text (with a safe fallback).
 	 */
 	public static function get_consent_text(): string {
-		$text = get_option( 'agentic_chat_consent_text', '' );
+		$text = get_option( 'agent_builder_chat_consent_text', '' );
 		if ( empty( trim( (string) $text ) ) ) {
 			return 'By chatting you agree to your messages being processed by an AI. We do not share your data with third parties.';
 		}

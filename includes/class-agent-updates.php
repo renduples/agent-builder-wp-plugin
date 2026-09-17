@@ -23,7 +23,7 @@ class Agent_Updates {
 
 	const TRANSIENT     = 'agentic_agent_updates';
 	const TTL           = 12 * HOUR_IN_SECONDS;
-	const OPT_IN_OPTION = 'agentic_agent_updates_optin';
+	const OPT_IN_OPTION = 'agent_builder_agent_updates_optin';
 
 	/**
 	 * Marketplace URL for discovering / installing community agents.

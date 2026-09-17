@@ -67,7 +67,7 @@ class Add_Custom_Js extends Tool_Base {
 			return array( 'error' => 'js is required and cannot be empty.' );
 		}
 
-		$snippets   = (array) get_option( 'agentic_custom_js', array() );
+		$snippets   = (array) get_option( 'agent_builder_custom_js', array() );
 		$snippet_id = 'js_' . time() . '_' . wp_rand( 1000, 9999 );
 
 		$snippets[ $snippet_id ] = array(
@@ -77,7 +77,7 @@ class Add_Custom_Js extends Tool_Base {
 			'created_at' => gmdate( 'c' ),
 		);
 
-		update_option( 'agentic_custom_js', $snippets );
+		update_option( 'agent_builder_custom_js', $snippets );
 
 		return array(
 			'snippet_id' => $snippet_id,

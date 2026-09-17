@@ -3,14 +3,14 @@
  * Provider Registry
  *
  * Single source of truth for LLM provider configuration.
- * Providers are stored in the `wp_agentic_providers` database table.
+ * Providers are stored in the `wp_agent_builder_providers` database table.
  * Built-in providers are seeded on first use and can be edited but not deleted.
  * Custom providers can be added, edited, and deleted freely.
  *
  * Endpoint URL placeholders:
  *   %MODEL%      — replaced with the model string (rawurlencode'd)
  *   %KEY%        — replaced with the API key (rawurlencode'd); used by Google
- *   %OLLAMA_URL% — replaced with the agentic_ollama_url option value
+ *   %OLLAMA_URL% — replaced with the agent_builder_ollama_url option value
  *
  * auth_type values:
  *   bearer    — Authorization: Bearer {key}  (OpenAI, xAI, Mistral, Llama, Cohere)
@@ -51,7 +51,7 @@ class Provider_Registry {
 	/**
 	 * DB table name suffix (without $wpdb->prefix).
 	 */
-	private const TABLE = 'agentic_providers';
+	private const TABLE = 'agent_builder_providers';
 
 	/**
 	 * On WP 7.0+, attempt to retrieve credentials from the new central
@@ -428,7 +428,7 @@ class Provider_Registry {
 		if ( class_exists( __NAMESPACE__ . '\\Emergency_Stop' ) && Emergency_Stop::is_active() ) {
 			return false;
 		}
-		$ollama_url = get_option( 'agentic_ollama_url', '' );
+		$ollama_url = get_option( 'agent_builder_ollama_url', '' );
 		foreach ( self::get_all() as $p ) {
 			$slug = $p['slug'] ?? '';
 			if ( 'agentic' === $slug ) {
@@ -495,7 +495,7 @@ class Provider_Registry {
 	 */
 	public static function resolve_endpoint( string $endpoint, string $model = '', string $api_key = '' ): string {
 		if ( str_contains( $endpoint, '%OLLAMA_URL%' ) ) {
-			$base     = rtrim( get_option( 'agentic_ollama_url', 'http://localhost:11434' ), '/' );
+			$base     = rtrim( get_option( 'agent_builder_ollama_url', 'http://localhost:11434' ), '/' );
 			$endpoint = str_replace( '%OLLAMA_URL%', $base, $endpoint );
 		}
 		if ( str_contains( $endpoint, '%MODEL%' ) ) {
@@ -753,7 +753,7 @@ class Provider_Registry {
 		unset( $p );
 
 		// One-time migration: move the Agentic AI key from the legacy option into the table.
-		$legacy_key = get_option( 'agentic_ai_api_key_builtin', '' );
+		$legacy_key = get_option( 'agent_builder_ai_api_key_builtin', '' );
 		if ( ! empty( $legacy_key ) ) {
 			$agentic_entry = null;
 			foreach ( self::$cache as $p ) {
@@ -766,7 +766,7 @@ class Provider_Registry {
 				self::save_api_key( 'agentic', $legacy_key );
 				self::$cache = null; // Invalidate so next call re-loads with the migrated key.
 			}
-			delete_option( 'agentic_ai_api_key_builtin' );
+			delete_option( 'agent_builder_ai_api_key_builtin' );
 		}
 	}
 
@@ -815,10 +815,10 @@ class Provider_Registry {
 	 * @return void
 	 */
 	public static function init(): void {
-		add_action( 'agentic_refresh_provider_models', array( self::class, 'cron_refresh_all_live_models' ) );
+		add_action( 'agent_builder_refresh_provider_models', array( self::class, 'cron_refresh_all_live_models' ) );
 
-		if ( is_admin() && ! wp_next_scheduled( 'agentic_refresh_provider_models' ) ) {
-			wp_schedule_event( time(), 'daily', 'agentic_refresh_provider_models' );
+		if ( is_admin() && ! wp_next_scheduled( 'agent_builder_refresh_provider_models' ) ) {
+			wp_schedule_event( time(), 'daily', 'agent_builder_refresh_provider_models' );
 		}
 	}
 
@@ -829,7 +829,7 @@ class Provider_Registry {
 	 * @return bool
 	 */
 	public static function platform_sync_allowed(): bool {
-		return '1' === (string) get_option( 'agentic_allow_platform_sync', '0' );
+		return '1' === (string) get_option( 'agent_builder_allow_platform_sync', '0' );
 	}
 
 	/**
@@ -897,7 +897,7 @@ class Provider_Registry {
 		}
 
 		if ( 'ollama' === $slug ) {
-			$ollama_url = rtrim( get_option( 'agentic_ollama_url', 'http://localhost:11434' ), '/' );
+			$ollama_url = rtrim( get_option( 'agent_builder_ollama_url', 'http://localhost:11434' ), '/' );
 			$resp       = wp_remote_get( $ollama_url . '/api/tags', array( 'timeout' => 10 ) );
 			if ( is_wp_error( $resp ) || 200 !== wp_remote_retrieve_response_code( $resp ) ) {
 				return array();

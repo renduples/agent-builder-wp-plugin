@@ -94,7 +94,7 @@ class UI_Settings_REST {
 
 		$show_onboarding = $request->get_param( 'show_onboarding' );
 		if ( null !== $show_onboarding ) {
-			update_option( 'agentic_show_onboarding', rest_sanitize_boolean( $show_onboarding ) ? '1' : '0', false );
+			update_option( 'agent_builder_show_onboarding', rest_sanitize_boolean( $show_onboarding ) ? '1' : '0', false );
 		}
 
 		// Appearance — chat font + accent.
@@ -104,18 +104,18 @@ class UI_Settings_REST {
 				: array( '' );
 			$font_in    = sanitize_text_field( (string) $request->get_param( 'global_font' ) );
 			if ( in_array( $font_in, $font_allow, true ) ) {
-				update_option( 'agentic_global_font', $font_in, false );
+				update_option( 'agent_builder_global_font', $font_in, false );
 			}
 		}
 
 		if ( null !== $request->get_param( 'use_theme_accent' ) || null !== $request->get_param( 'global_accent' ) ) {
 			$use_theme = rest_sanitize_boolean( $request->get_param( 'use_theme_accent' ) );
 			if ( $use_theme || '' === (string) $request->get_param( 'global_accent' ) ) {
-				update_option( 'agentic_global_accent', '', false );
+				update_option( 'agent_builder_global_accent', '', false );
 			} else {
 				$accent = sanitize_hex_color( (string) $request->get_param( 'global_accent' ) );
 				if ( ! empty( $accent ) ) {
-					update_option( 'agentic_global_accent', $accent, false );
+					update_option( 'agent_builder_global_accent', $accent, false );
 				}
 			}
 		}
@@ -143,11 +143,11 @@ class UI_Settings_REST {
 	 */
 	private static function current( array $warnings = array() ): array {
 		return array(
-			'ui_mode'            => 'advanced' === get_option( 'agentic_ui_mode', 'basic' ) ? 'advanced' : 'basic',
-			'show_onboarding'    => '0' !== get_option( 'agentic_show_onboarding', '1' ),
+			'ui_mode'            => 'advanced' === get_option( 'agent_builder_ui_mode', 'basic' ) ? 'advanced' : 'basic',
+			'show_onboarding'    => '0' !== get_option( 'agent_builder_show_onboarding', '1' ),
 			'disable_all_agents' => Emergency_Stop::is_active(),
-			'global_font'        => (string) get_option( 'agentic_global_font', '' ),
-			'global_accent'      => (string) get_option( 'agentic_global_accent', '' ),
+			'global_font'        => (string) get_option( 'agent_builder_global_font', '' ),
+			'global_accent'      => (string) get_option( 'agent_builder_global_accent', '' ),
 			'themes_url'         => admin_url( 'admin.php?page=agentic-settings&tab=global' ),
 			'warnings'           => $warnings,
 		);

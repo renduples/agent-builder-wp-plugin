@@ -144,7 +144,7 @@ class Chat_Assets {
 			}
 		}
 
-		$agentic_overlay_whitelabel = '1' === get_option( 'agentic_chat_whitelabel', '1' );
+		$agentic_overlay_whitelabel = '1' === get_option( 'agent_builder_chat_whitelabel', '1' );
 		$agentic_provider_labels    = array(
 			'openai'    => 'OpenAI',
 			'anthropic' => 'Anthropic',
@@ -158,7 +158,7 @@ class Chat_Assets {
 			'meta'      => 'Meta Llama',
 			'cohere'    => 'Cohere',
 		);
-		$agentic_overlay_provider   = get_option( 'agentic_llm_provider', 'agentic' );
+		$agentic_overlay_provider   = get_option( 'agent_builder_llm_provider', 'agentic' );
 
 		wp_localize_script(
 			'agentic-chat-overlay',
@@ -177,7 +177,7 @@ class Chat_Assets {
 				'agentNames'      => $agentic_agent_names,
 				'showBranding'    => $agentic_overlay_whitelabel ? '0' : '1',
 				'provider'        => $agentic_provider_labels[ $agentic_overlay_provider ] ?? ucfirst( $agentic_overlay_provider ),
-				'model'           => get_option( 'agentic_model', '' ),
+				'model'           => get_option( 'agent_builder_model', '' ),
 				'slashCommands'   => self::get_slash_commands_for_js(),
 				'i18n'            => agent_builder_chat_i18n(),
 			)
@@ -194,7 +194,7 @@ class Chat_Assets {
 	 */
 	public static function enqueue_editor_sidebar(): void {
 		$agentic_es_settings = wp_parse_args(
-			(array) get_option( 'agentic_editor_sidebar_settings', array() ),
+			(array) get_option( 'agent_builder_editor_sidebar_settings', array() ),
 			array(
 				'enabled'         => '0',
 				'agent_slug'      => '',
@@ -398,8 +398,8 @@ class Chat_Assets {
 				'vision'         => $features['vision'],
 				'costs'          => '0',
 				'tts'            => $features['tts'],
-				'ttsVoice'       => get_option( 'agentic_tts_voice', 'journey-f' ),
-				'consentEnabled' => get_option( 'agentic_chat_consent_enabled', false ) ? '1' : '0',
+				'ttsVoice'       => get_option( 'agent_builder_tts_voice', 'journey-f' ),
+				'consentEnabled' => get_option( 'agent_builder_chat_consent_enabled', false ) ? '1' : '0',
 				'consentText'    => \Agentic\GDPR::get_consent_text(),
 				'isAdmin'        => current_user_can( 'manage_options' ) ? '1' : '0',
 				'adminUrl'       => admin_url(),
@@ -449,7 +449,7 @@ class Chat_Assets {
 			return;
 		}
 
-		$config   = (array) get_option( 'agentic_modal_config', array() );
+		$config   = (array) get_option( 'agent_builder_modal_config', array() );
 		$registry = \Agentic_Agent_Registry::get_instance();
 		$registry->load_active_agents();
 		$all_instances = $registry->get_all_instances();
@@ -470,7 +470,7 @@ class Chat_Assets {
 		$first_slug  = array_key_first( $agents );
 		$first_agent = $agents[ $first_slug ];
 		$position    = $config[ $first_slug ]['position'] ?? 'bottom-right';
-		$whitelabel  = '1' === get_option( 'agentic_chat_whitelabel', '1' );
+		$whitelabel  = '1' === get_option( 'agent_builder_chat_whitelabel', '1' );
 
 		include AGENT_BUILDER_DIR . 'templates/modal-widget.php';
 	}
@@ -485,7 +485,7 @@ class Chat_Assets {
 	 * @return void
 	 */
 	public static function apply_frontend_chat_theme(): void {
-		$theme = get_option( 'agentic_chat_theme', 'light' );
+		$theme = get_option( 'agent_builder_chat_theme', 'light' );
 
 		// Map each theme to --agentic-* CSS variables on .agentic-chat-frontend.
 		// Dark must be listed explicitly — the frontend CSS defaults to light colors.
@@ -518,8 +518,8 @@ class Chat_Assets {
 	 * @return string CSS rule, or '' when no global appearance is configured.
 	 */
 	public static function global_appearance_overrides( string $surface ): string {
-		$accent = (string) get_option( 'agentic_global_accent', '' );
-		$font   = (string) get_option( 'agentic_global_font', '' );
+		$accent = (string) get_option( 'agent_builder_global_accent', '' );
+		$font   = (string) get_option( 'agent_builder_global_font', '' );
 		if ( '' === $accent && '' === $font ) {
 			return '';
 		}
@@ -632,7 +632,7 @@ class Chat_Assets {
 	 * @return void
 	 */
 	public static function maybe_add_chat_theme_overrides(): void {
-		$theme = get_option( 'agentic_chat_theme', 'light' );
+		$theme = get_option( 'agent_builder_chat_theme', 'light' );
 
 		if ( 'dark' !== $theme ) {
 			$themes = self::get_theme_overrides();
@@ -654,7 +654,7 @@ class Chat_Assets {
 	 * @return void
 	 */
 	private static function apply_overlay_chat_theme(): void {
-		$theme = get_option( 'agentic_chat_theme', 'light' );
+		$theme = get_option( 'agent_builder_chat_theme', 'light' );
 
 		$themes = array(
 			'dark'     => '.agentic-overlay{--aco-bg:#1a1a2e;--aco-text:#f0f0f0;--aco-text-muted:#a0a0a0;--aco-primary:#8b5cf6;--aco-primary-hover:#6366f1;--aco-border:rgba(139,92,246,0.2);--aco-user-bg:rgba(99,102,241,0.3);--aco-user-text:#f0f0f0;--aco-agent-bg:rgba(139,92,246,0.15);--aco-agent-text:#f0f0f0;--aco-code-bg:rgba(255,255,255,0.08);--aco-pre-bg:#0f0f1e;--aco-pre-text:#f0f0f0}',
@@ -739,14 +739,14 @@ class Chat_Assets {
 			return array();
 		}
 
-		$slugs = (array) get_option( 'agentic_modal_agents', array() );
+		$slugs = (array) get_option( 'agent_builder_modal_agents', array() );
 		if ( empty( $slugs ) ) {
 			return array();
 		}
 
-		$config       = (array) get_option( 'agentic_modal_config', array() );
+		$config       = (array) get_option( 'agent_builder_modal_config', array() );
 		$logged_in    = is_user_logged_in();
-		$anon_allowed = '1' === get_option( 'agentic_allow_anonymous_chat', '0' );
+		$anon_allowed = '1' === get_option( 'agent_builder_allow_anonymous_chat', '0' );
 
 		// Anonymous visitors need anonymous chat enabled globally.
 		if ( ! $logged_in && ! $anon_allowed ) {

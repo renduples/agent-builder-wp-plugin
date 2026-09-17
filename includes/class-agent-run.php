@@ -5,7 +5,7 @@
  * A single run spans one top-level invocation and all of the sequential
  * delegations nested beneath it. It enforces delegation depth, fan-out,
  * and cost/token budgets, carries a small shared scratchpad, and persists
- * a summary row to the {prefix}agentic_runs table for observability.
+ * a summary row to the {prefix}agent_builder_runs table for observability.
  *
  * Free tier: sequential, in-process delegation only. Parallel, durable, and
  * visual workflow orchestration are reserved for Agent Builder Pro.
@@ -358,7 +358,7 @@ class Agent_Run {
 	 */
 	public function persist_progress(): void {
 		global $wpdb;
-		$table = $wpdb->prefix . 'agentic_runs';
+		$table = $wpdb->prefix . 'agent_builder_runs';
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$wpdb->update(
 			$table,
@@ -400,7 +400,7 @@ class Agent_Run {
 	 */
 	private function persist_start(): void {
 		global $wpdb;
-		$table = $wpdb->prefix . 'agentic_runs';
+		$table = $wpdb->prefix . 'agent_builder_runs';
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$wpdb->insert(
 			$table,
@@ -421,7 +421,7 @@ class Agent_Run {
 	 */
 	private function persist_finish( string $status ): void {
 		global $wpdb;
-		$table = $wpdb->prefix . 'agentic_runs';
+		$table = $wpdb->prefix . 'agent_builder_runs';
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$wpdb->update(
 			$table,

@@ -46,7 +46,7 @@ class Agent_Ready_Score {
 	/**
 	 * Option storing the last computed score.
 	 */
-	public const OPTION = 'agentic_score_latest';
+	public const OPTION = 'agent_builder_score_latest';
 
 	/**
 	 * Cron hook for the weekly re-scan.
@@ -256,7 +256,7 @@ class Agent_Ready_Score {
 	private static function check_approval_gate_configured(): array {
 		global $wpdb;
 
-		$table  = $wpdb->prefix . 'agentic_approval_queue';
+		$table  = $wpdb->prefix . 'agent_builder_approval_queue';
 		$exists = (bool) $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 		if ( ! $exists ) {

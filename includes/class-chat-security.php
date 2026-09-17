@@ -164,7 +164,7 @@ class Chat_Security {
 		 * @return bool
 		 */
 	public static function is_enabled(): bool {
-		return (bool) get_option( 'agentic_security_enabled', true );
+		return (bool) get_option( 'agent_builder_security_enabled', true );
 	}
 
 		/**
@@ -173,7 +173,7 @@ class Chat_Security {
 		 * @return int
 		 */
 	private static function get_auth_rate_limit(): int {
-		return (int) get_option( 'agentic_rate_limit_authenticated', self::DEFAULT_RATE_LIMIT_AUTH );
+		return (int) get_option( 'agent_builder_rate_limit_authenticated', self::DEFAULT_RATE_LIMIT_AUTH );
 	}
 
 		/**
@@ -182,7 +182,7 @@ class Chat_Security {
 		 * @return int
 		 */
 	private static function get_anon_rate_limit(): int {
-		return (int) get_option( 'agentic_rate_limit_anonymous', self::DEFAULT_RATE_LIMIT_ANON );
+		return (int) get_option( 'agent_builder_rate_limit_anonymous', self::DEFAULT_RATE_LIMIT_ANON );
 	}
 
 	/**
@@ -411,7 +411,7 @@ class Chat_Security {
 
 		// Per-IP daily limit.
 		$ip_key   = 'agentic_daily_ip_' . md5( $ip );
-		$ip_limit = (int) get_option( 'agentic_daily_limit_anonymous', self::DEFAULT_DAILY_LIMIT_ANON );
+		$ip_limit = (int) get_option( 'agent_builder_daily_limit_anonymous', self::DEFAULT_DAILY_LIMIT_ANON );
 		$ip_count = (int) get_transient( $ip_key );
 
 		if ( $ip_count >= $ip_limit ) {
@@ -425,7 +425,7 @@ class Chat_Security {
 
 		// Site-wide daily limit for all anonymous messages.
 		$global_key   = 'agentic_daily_anon_global';
-		$global_limit = (int) get_option( 'agentic_daily_limit_anonymous_global', self::DEFAULT_DAILY_LIMIT_ANON_GLOBAL );
+		$global_limit = (int) get_option( 'agent_builder_daily_limit_anonymous_global', self::DEFAULT_DAILY_LIMIT_ANON_GLOBAL );
 		$global_count = (int) get_transient( $global_key );
 
 		if ( $global_count >= $global_limit ) {

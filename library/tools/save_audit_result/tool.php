@@ -50,10 +50,10 @@ class Save_Audit_Result extends \Agentic\Tool_Base {
 	}
 
 	public function execute( array $args ): array {
-		$history   = get_option( 'agentic_site_auditor_history', array() );
+		$history   = get_option( 'agent_builder_site_auditor_history', array() );
 		$history[] = $args['result'];
 		$history   = array_slice( $history, -12 );
-		update_option( 'agentic_site_auditor_history', $history, false );
+		update_option( 'agent_builder_site_auditor_history', $history, false );
 
 		return array(
 			'saved'        => true,

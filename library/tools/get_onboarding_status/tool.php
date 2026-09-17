@@ -94,7 +94,7 @@ class Get_Onboarding_Status extends \Agentic\Tool_Base {
 
 		$has_knowledge = class_exists( '\Agentic\Okf_Store' )
 			? \Agentic\Okf_Store::has_active_knowledge()
-			: (bool) get_option( 'agentic_has_knowledge', false );
+			: (bool) get_option( 'agent_builder_has_knowledge', false );
 
 		$steps = array(
 			array(

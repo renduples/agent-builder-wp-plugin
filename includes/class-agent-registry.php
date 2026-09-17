@@ -80,7 +80,7 @@ class Agentic_Agent_Registry {
 	/**
 	 * Option name for active agents
 	 */
-	const ACTIVE_AGENTS_OPTION = 'agentic_active_agents';
+	const ACTIVE_AGENTS_OPTION = 'agent_builder_active_agents';
 
 	/**
 	 * Required agent header fields

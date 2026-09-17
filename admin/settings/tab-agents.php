@@ -36,14 +36,14 @@ foreach ( \Agentic\Provider_Registry::get_all() as $agentic_prov_entry ) {
 }
 
 // Collect active agents that have full metadata.
-$agentic_active_agents = array();
+$agent_builder_active_agents = array();
 foreach ( $agentic_active_slugs as $agentic_slug ) {
 	if ( isset( $agentic_all_installed[ $agentic_slug ] ) ) {
-		$agentic_active_agents[ $agentic_slug ] = $agentic_all_installed[ $agentic_slug ];
+		$agent_builder_active_agents[ $agentic_slug ] = $agentic_all_installed[ $agentic_slug ];
 	}
 }
 
-if ( ! empty( $agentic_active_agents ) ) :
+if ( ! empty( $agent_builder_active_agents ) ) :
 	// Labels for the "use global default" option in each dropdown.
 	$agentic_default_provider_label = \Agentic\Provider_Registry::get( $agentic_llm_provider_val )['name'] ?? ucfirst( $agentic_llm_provider_val );
 	$agentic_default_model_label    = ! empty( $agentic_model_val ) ? $agentic_model_val : 'default';
@@ -55,8 +55,8 @@ if ( ! empty( $agentic_active_agents ) ) :
 	$agentic_default_mode_label     = $agentic_default_mode_map[ $agentic_agent_mode_val ] ?? 'Supervised';
 
 	// Global feature flags — used to disable per-agent overrides.
-	$agentic_global_vision_llm = get_option( 'agentic_chat_vision', '1' );
-	$agentic_global_cache_llm  = get_option( 'agentic_response_cache_enabled', true ) ? '1' : '0';
+	$agentic_global_vision_llm = get_option( 'agent_builder_chat_vision', '1' );
+	$agentic_global_cache_llm  = get_option( 'agent_builder_response_cache_enabled', true ) ? '1' : '0';
 
 	// Build provider → models map for use in PHP rendering and JS.
 	$agentic_provider_models = array();
@@ -86,7 +86,7 @@ if ( ! empty( $agentic_active_agents ) ) :
 	</thead>
 	<tbody>
 			<?php
-			foreach ( $agentic_active_agents as $agentic_slug => $agentic_agent_data ) :
+			foreach ( $agent_builder_active_agents as $agentic_slug => $agentic_agent_data ) :
 				$agentic_ov_provider     = \Agentic\Agent_Settings::get( $agentic_slug, 'override_provider' );
 				$agentic_ov_model        = \Agentic\Agent_Settings::get( $agentic_slug, 'override_model' );
 				$agentic_ov_vision_model = \Agentic\Agent_Settings::get( $agentic_slug, 'override_vision_model' );
@@ -100,7 +100,7 @@ if ( ! empty( $agentic_active_agents ) ) :
 			</td>
 			<td>
 				<select
-					name="agentic_agent_overrides[<?php echo esc_attr( $agentic_slug ); ?>][provider]"
+					name="agent_builder_agent_overrides[<?php echo esc_attr( $agentic_slug ); ?>][provider]"
 					class="agentic-agent-provider-select"
 					data-slug="<?php echo esc_attr( $agentic_slug ); ?>"
 					class="agentic-select-full"
@@ -122,7 +122,7 @@ if ( ! empty( $agentic_active_agents ) ) :
 				}
 				?>
 				<select
-					name="agentic_agent_overrides[<?php echo esc_attr( $agentic_slug ); ?>][model]"
+					name="agent_builder_agent_overrides[<?php echo esc_attr( $agentic_slug ); ?>][model]"
 					class="agentic-agent-model-select"
 					data-slug="<?php echo esc_attr( $agentic_slug ); ?>"
 					data-saved-model="<?php echo esc_attr( $agentic_ov_model ); ?>"
@@ -148,7 +148,7 @@ if ( ! empty( $agentic_active_agents ) ) :
 					}
 					?>
 				<select
-					name="agentic_agent_overrides[<?php echo esc_attr( $agentic_slug ); ?>][vision_model]"
+					name="agent_builder_agent_overrides[<?php echo esc_attr( $agentic_slug ); ?>][vision_model]"
 					class="agentic-agent-vision-model-select"
 					data-slug="<?php echo esc_attr( $agentic_slug ); ?>"
 					data-saved-model="<?php echo esc_attr( $agentic_ov_vision_model ); ?>"
@@ -165,7 +165,7 @@ if ( ! empty( $agentic_active_agents ) ) :
 			</td>
 			<td class="agentic-td-nowrap">
 				<select
-					name="agentic_agent_overrides[<?php echo esc_attr( $agentic_slug ); ?>][mode]"
+					name="agent_builder_agent_overrides[<?php echo esc_attr( $agentic_slug ); ?>][mode]"
 					class="agentic-agent-mode-select"
 					class="agentic-select-minus-24"
 				>
@@ -191,9 +191,9 @@ if ( ! empty( $agentic_active_agents ) ) :
 				$agentic_ov_weak        = \Agentic\Agent_Settings::get( $agentic_slug, 'weak_model_tool_guidance', '' );
 				$agentic_effective_weak = $agentic_ov_weak !== '' ? $agentic_ov_weak : '1';
 				?>
-				<input type="hidden" name="agentic_agent_overrides[<?php echo esc_attr( $agentic_slug ); ?>][weak_model_tool_guidance]" value="">
+				<input type="hidden" name="agent_builder_agent_overrides[<?php echo esc_attr( $agentic_slug ); ?>][weak_model_tool_guidance]" value="">
 				<input type="checkbox"
-					name="agentic_agent_overrides[<?php echo esc_attr( $agentic_slug ); ?>][weak_model_tool_guidance]"
+					name="agent_builder_agent_overrides[<?php echo esc_attr( $agentic_slug ); ?>][weak_model_tool_guidance]"
 					value="1"
 					<?php checked( $agentic_effective_weak, '1' ); ?>
 					title="Enable enhanced tool guidance for weaker models on this agent">
@@ -203,7 +203,7 @@ if ( ! empty( $agentic_active_agents ) ) :
 				$agentic_ov_retries = \Agentic\Agent_Settings::get( $agentic_slug, 'max_tool_retries', '' );
 				?>
 				<input type="number" min="1" max="10" step="1" style="width:60px;"
-					name="agentic_agent_overrides[<?php echo esc_attr( $agentic_slug ); ?>][max_tool_retries]"
+					name="agent_builder_agent_overrides[<?php echo esc_attr( $agentic_slug ); ?>][max_tool_retries]"
 					value="<?php echo esc_attr( $agentic_ov_retries ); ?>"
 					placeholder="3"
 					title="Max retries when tool calls fail (for weaker models)">
@@ -277,12 +277,12 @@ if ( ! empty( $agentic_active_agents ) ) :
 	</thead>
 	<tbody>
 		<?php
-		$agentic_global_audio  = get_option( 'agentic_chat_audio', '1' );
-		$agentic_global_tts    = get_option( 'agentic_chat_tts', '1' );
-		$agentic_global_vision = get_option( 'agentic_chat_vision', '1' );
-		$agentic_global_costs  = get_option( 'agentic_chat_costs', '1' );
-		$agentic_global_cache  = get_option( 'agentic_response_cache_enabled', true ) ? '1' : '0';
-		foreach ( $agentic_active_agents as $agentic_slug => $agentic_agent_data ) :
+		$agentic_global_audio  = get_option( 'agent_builder_chat_audio', '1' );
+		$agentic_global_tts    = get_option( 'agent_builder_chat_tts', '1' );
+		$agentic_global_vision = get_option( 'agent_builder_chat_vision', '1' );
+		$agentic_global_costs  = get_option( 'agent_builder_chat_costs', '1' );
+		$agentic_global_cache  = get_option( 'agent_builder_response_cache_enabled', true ) ? '1' : '0';
+		foreach ( $agent_builder_active_agents as $agentic_slug => $agentic_agent_data ) :
 			$agentic_agent_name = $agentic_agent_data['name'] ?? $agentic_slug;
 			$agentic_cf_audio   = \Agentic\Agent_Settings::get( $agentic_slug, 'override_audio' );
 			$agentic_cf_tts     = \Agentic\Agent_Settings::get( $agentic_slug, 'override_tts' );
@@ -321,7 +321,7 @@ if ( ! empty( $agentic_active_agents ) ) :
 					<small class="agentic-text-dim">Disabled globally</small>
 					<br><small><a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-settings&tab=global' ) ); ?>">Enable</a></small>
 				<?php else : ?>
-					<input type="checkbox" name="agentic_agent_overrides[<?php echo esc_attr( $agentic_slug ); ?>][<?php echo esc_attr( $agentic_feat_key ); ?>]" value="1" <?php checked( $agentic_feat['value'], '1' ); ?> />
+					<input type="checkbox" name="agent_builder_agent_overrides[<?php echo esc_attr( $agentic_slug ); ?>][<?php echo esc_attr( $agentic_feat_key ); ?>]" value="1" <?php checked( $agentic_feat['value'], '1' ); ?> />
 				<?php endif; ?>
 			</td>
 			<?php endforeach; ?>

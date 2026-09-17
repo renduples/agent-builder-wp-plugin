@@ -271,7 +271,7 @@ class Agent_Prompt_Builder {
 	 * Build a global instructions / always-on knowledge block shared by every agent.
 	 *
 	 * Primary source: Knowledge Wiki (OKF) concepts marked always_on (site + agent).
-	 * Fallback: legacy option agentic_global_instructions (pre-migration).
+	 * Fallback: legacy option agent_builder_global_instructions (pre-migration).
 	 * Per-agent persona notes remain separate and more specific.
 	 *
 	 * @param string $agent_slug Agent identifier, so agent-scoped always_on concepts
@@ -289,7 +289,7 @@ class Agent_Prompt_Builder {
 		}
 
 		// Legacy fallback until content lives in OKF.
-		$instructions = trim( (string) get_option( 'agentic_global_instructions', '' ) );
+		$instructions = trim( (string) get_option( 'agent_builder_global_instructions', '' ) );
 		if ( '' === $instructions ) {
 			return '';
 		}
@@ -318,8 +318,8 @@ class Agent_Prompt_Builder {
 
 		$is_admin = function_exists( 'current_user_can' ) && current_user_can( 'manage_options' );
 		$name     = $is_admin
-			? trim( (string) get_option( 'agentic_admin_address', '' ) )
-			: trim( (string) get_option( 'agentic_frontend_address', '' ) );
+			? trim( (string) get_option( 'agent_builder_admin_address', '' ) )
+			: trim( (string) get_option( 'agent_builder_frontend_address', '' ) );
 
 		if ( '' === $name ) {
 			return '';

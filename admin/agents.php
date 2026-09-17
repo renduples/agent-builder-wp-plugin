@@ -197,8 +197,8 @@ $agentic_available_updates = class_exists( '\Agentic\Agent_Updates' ) ? \Agentic
 // per row — WebMCP exposure in particular scans every active agent's own
 // manifest internally, so calling it once and indexing by slug avoids
 // redoing that scan for every row.
-$agentic_webmcp_enabled       = class_exists( '\Agentic\Webmcp_Bridge' ) && \Agentic\Webmcp_Bridge::is_enabled();
-$agentic_webmcp_exposed_slugs = $agentic_webmcp_enabled && class_exists( '\Agentic\Abilities_Manifest' )
+$agent_builder_webmcp_enabled       = class_exists( '\Agentic\Webmcp_Bridge' ) && \Agentic\Webmcp_Bridge::is_enabled();
+$agentic_webmcp_exposed_slugs = $agent_builder_webmcp_enabled && class_exists( '\Agentic\Abilities_Manifest' )
 	? array_unique( array_column( \Agentic\Abilities_Manifest::get_webmcp_exposed(), 'agent_slug' ) )
 	: array();
 

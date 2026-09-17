@@ -58,7 +58,7 @@ class Toggle_Xml_Rpc extends Tool_Base {
 		$enabled = (bool) $args['enabled'];
 
 		// Store: 1 = disabled, 0 = enabled (inverted for legacy reasons).
-		update_option( 'agentic_disable_xmlrpc', $enabled ? 0 : 1 );
+		update_option( 'agent_builder_disable_xmlrpc', $enabled ? 0 : 1 );
 
 		return array(
 			'xmlrpc_enabled' => $enabled,

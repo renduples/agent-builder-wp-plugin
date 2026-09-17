@@ -60,7 +60,7 @@ function _agentic_create_test_tables() {
 	global $wpdb;
 	$charset_collate = $wpdb->get_charset_collate();
 
-	$sql = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agentic_audit_log (
+	$sql = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agent_builder_audit_log (
 		id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 		agent_id varchar(64) NOT NULL,
 		action varchar(128) NOT NULL,
@@ -86,7 +86,7 @@ function _agentic_create_test_tables() {
 	) {$charset_collate};";
 	dbDelta( $sql );
 
-	$sql = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agentic_approval_queue (
+	$sql = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agent_builder_approval_queue (
 		id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 		agent_id varchar(64) NOT NULL,
 		action varchar(128) NOT NULL,
@@ -109,7 +109,7 @@ function _agentic_create_test_tables() {
 	) {$charset_collate};";
 	dbDelta( $sql );
 
-	$sql = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agentic_tools (
+	$sql = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agent_builder_tools (
 		id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 		name varchar(128) NOT NULL,
 		description text NOT NULL,
