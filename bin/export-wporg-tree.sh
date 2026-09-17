@@ -49,10 +49,21 @@ rsync -a "${EXCLUDES[@]}" "$ROOT/" "$DEST/"
 # via is_available()/get_unavailable_reason() and report themselves
 # unavailable rather than erroring — that mechanism is what makes it safe to
 # simply not ship these two packages here, no tool code needs to change.
-# Spreadsheet/DOCX tools (phpspreadsheet, phpword) and zipstream stay.
+#
+# phpoffice/phpword is excluded for a different reason, not size: its
+# LICENSE.md is GNU Lesser General Public License *version 3* with no "or
+# later" clause (LGPL-3.0-only), which cannot be validly combined into this
+# plugin's GPL-2.0-or-later codebase (WordPress.org Guideline 1) — verified
+# against every package that actually ships here, not just top-level
+# requires (see docs/SUBMISSION-NOTES.md §7). create_docx, html_to_docx, and
+# read_docx already have the exact same is_available()/get_unavailable_reason()
+# guard as the PDF tools, so removing the library here is enough — no tool
+# code changes. phpoffice/math (phpword's own dependency, MIT, otherwise
+# fine) drops out automatically once phpword is gone. Spreadsheet tools
+# (phpspreadsheet, MIT) and its zipstream dependency (MIT) stay.
 php -r '
 	$json = json_decode( file_get_contents( $argv[1] . "/composer.json" ), true );
-	unset( $json["require"]["mpdf/mpdf"], $json["require"]["smalot/pdfparser"] );
+	unset( $json["require"]["mpdf/mpdf"], $json["require"]["smalot/pdfparser"], $json["require"]["phpoffice/phpword"] );
 	file_put_contents( $argv[1] . "/composer.json", json_encode( $json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) . "\n" );
 ' "$DEST"
 # The trimmed composer.json no longer matches composer.lock, so resolve
@@ -60,6 +71,14 @@ php -r '
 # copied in and never part of the shipped plugin either way.
 ( cd "$DEST" && composer update --no-dev --optimize-autoloader --no-interaction )
 rm -f "$DEST/composer.lock"
+
+# Fail loudly rather than silently ship a GPL-2-incompatible dependency again
+# if a future change to composer.json re-adds phpword (or anything else)
+# without updating the exclusion list above.
+if [[ -d "$DEST/vendor/phpoffice/phpword" ]]; then
+	echo "ERROR: vendor/phpoffice/phpword present in the WP.org tree — this is LGPL-3.0-only and incompatible with Guideline 1. Check composer.json / the unset() list above." >&2
+	exit 1
+fi
 
 # Zip sits beside the tree as a build artifact (gitignored — never commit it).
 PARENT="$(dirname "$DEST")"
