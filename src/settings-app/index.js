@@ -2206,7 +2206,6 @@ function EndpointsTab( { data, setData, onSave, saving, error, saved, clearSaved
 
 function MCPTab( { data } ) {
 	const agents = data.agents || [];
-	const connectors = data.connectors || [];
 	const unattendedWrites = data.unattended_writes || [];
 
 	const [ tests, setTests ] = useState( {} );
@@ -2496,33 +2495,10 @@ function MCPTab( { data } ) {
 				</div>
 			</Panel>
 
-			<Panel title={ __( 'Connected clients', 'agent-builder' ) }>
-				{ connectors.length ? (
-					<p>
-						{ connectors.map( ( c ) => (
-							<span
-								key={ c.slug }
-								className="agentic-react-badge"
-								style={ { marginRight: 6 } }
-							>
-								{ c.label }
-							</span>
-						) ) }
-					</p>
-				) : (
-					<p className="agentic-react-lead">
-						{ __(
-							'No clients have connected via the approval flow yet.',
-							'agent-builder'
-						) }
-					</p>
-				) }
-			</Panel>
-
 			<Panel title={ __( 'Application Passwords', 'agent-builder' ) }>
 				<p className="agentic-react-lead">
 					{ __(
-						'Credentials for manually configuring an MCP client (e.g. Cursor) that needs a username and password rather than the browser-driven approval flow.',
+						'Credentials for configuring an external MCP client (e.g. Cursor, Claude Desktop) with a username and password. The password is shown once, here, and is never sent anywhere else by this plugin.',
 						'agent-builder'
 					) }
 				</p>

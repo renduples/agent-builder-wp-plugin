@@ -249,15 +249,6 @@ This plugin connects to external AI APIs to process prompts and tool executions 
 * **Terms of Service:** [https://agentic-plugin.com/terms-of-service/](https://agentic-plugin.com/terms-of-service/)
 * **Privacy Policy:** [https://agentic-plugin.com/privacy-policy/](https://agentic-plugin.com/privacy-policy/)
 
-= Agentic MCP Connector Relay (Opt in) =
-* **Endpoints:**
-  * `https://mcp.agentic-plugin.com/api/verify-state`
-  * `https://mcp.agentic-plugin.com/oauth2/relay-callback`
-* **When used:** Only when an administrator uses the browser-driven "Connect an MCP client" approval screen to link an external client such as Claude.ai or Cursor. Direct MCP access via a manually created Application Password (Settings → MCP) never contacts this service.
-* **Data sent:** Site URL, the approving administrator's WordPress username and email address, a newly generated WordPress Application Password (base64-encoded) scoped to that connection, the list of active agent slugs, and the connecting provider's name.
-* **Terms of Service:** [https://agentic-plugin.com/terms-of-service/](https://agentic-plugin.com/terms-of-service/)
-* **Privacy Policy:** [https://agentic-plugin.com/privacy-policy/](https://agentic-plugin.com/privacy-policy/)
-
 = Community Agent Skills Repositories (Opt in) =
 * **Endpoints:**
   * WordPress.org Skills: `https://api.github.com/repos/WordPress/agent-skills/` and `https://raw.githubusercontent.com/WordPress/agent-skills/`

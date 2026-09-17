@@ -175,8 +175,7 @@ class Admin_Settings_REST {
 	 * Passwords — a real authentication credential, not just a plugin
 	 * setting, so this requires actual site-administrator capability
 	 * (manage_options) rather than the broader agentic_manage_settings a
-	 * role could otherwise be granted. Matches the same default the
-	 * relay-connect approval flow itself uses (agentic_relay_connect_capability).
+	 * role could otherwise be granted.
 	 */
 	public static function can_manage_mcp_credentials(): bool {
 		return current_user_can( 'manage_options' );
@@ -465,11 +464,11 @@ class Admin_Settings_REST {
 
 	/**
 	 * MCP tab "Create Application Password": mint a new "Agent Builder
-	 * Relay" credential for the current user, the same call
-	 * Agentic_Relay_Connect::process_approval() makes for the OAuth-style
-	 * connector flow — this is the manual-setup equivalent, for configuring
-	 * a generic MCP client (e.g. Cursor) that needs a username + password
-	 * rather than a browser-driven approval.
+	 * Relay" credential for the current user, shown once in their own
+	 * browser so they can paste it into an external MCP client's config
+	 * (e.g. Cursor, Claude Desktop). The plaintext password is returned only
+	 * in this response and never stored or transmitted anywhere by this
+	 * plugin — this is the sole way to connect an external MCP client.
 	 *
 	 * @return \WP_REST_Response|\WP_Error
 	 */
@@ -543,19 +542,6 @@ class Admin_Settings_REST {
 				'uuid'    => $uuid,
 			)
 		);
-
-		// Agentic_Relay_Connect::CONNECTORS_OPTION only ever grows — nothing
-		// else removes a provider from it once the connector-approval flow
-		// adds it, so "Connected Clients" would otherwise still show a
-		// provider as connected long after its only credential is gone. Since
-		// that option doesn't track which credential belongs to which
-		// provider, there's no way to correctly prune just one entry when
-		// several might be connected — but once every Agent Builder Relay
-		// credential is gone, "nothing is connected" is unambiguous, so
-		// clear it then rather than leave a permanently stale badge.
-		if ( empty( self::data_mcp_credentials() ) ) {
-			update_option( \Agentic_Relay_Connect::CONNECTORS_OPTION, array() );
-		}
 
 		return new \WP_REST_Response( array( 'ok' => true ), 200 );
 	}
@@ -1013,9 +999,8 @@ class Admin_Settings_REST {
 
 	/**
 	 * Model Context Protocol status: each active agent's own MCP endpoint and
-	 * readiness, connected clients, and the "Agent Builder Relay" credentials
-	 * that authenticate them. MCP is free and unconditional — has_connector is
-	 * informational only, not a gate on MCP access.
+	 * readiness, and the "Agent Builder Relay" credentials that authenticate
+	 * them. MCP is free and unconditional.
 	 *
 	 * @return array<string,mixed>
 	 */
@@ -1040,31 +1025,13 @@ class Admin_Settings_REST {
 			}
 		}
 
-		$connectors = get_option( \Agentic_Relay_Connect::CONNECTORS_OPTION, array() );
-		$connectors = is_array( $connectors ) ? array_values( $connectors ) : array();
-
-		// {slug, label} rather than the raw slug — the same human-readable
-		// label the approval and success screens show ("Claude (Anthropic)"),
-		// so a connected provider reads the same way everywhere in the
-		// connector flow instead of a third, differently-formatted display
-		// ("anthropic", unformatted) unique to this one list.
-		$connector_rows = array_map(
-			static fn( $slug ) => array(
-				'slug'  => $slug,
-				'label' => \Agentic_Relay_Connect::provider_label( $slug ),
-			),
-			$connectors
-		);
-
 		return array(
 			'rest_namespace'    => 'agentic/v1',
 			'mcp_available'     => array(
-				'is_pro'        => false,
-				'has_connector' => ! empty( $connectors ),
-				'can_use'       => true,
+				'is_pro'  => false,
+				'can_use' => true,
 			),
 			'agents'            => $agents,
-			'connectors'        => $connector_rows,
 			'credentials'       => self::data_mcp_credentials(),
 			'unattended_writes' => self::data_mcp_unattended_writes(),
 		);
@@ -1084,14 +1051,9 @@ class Admin_Settings_REST {
 	 * they're not the notable case; MEDIUM is the tier that would normally
 	 * pause for an in-chat/in-page confirmation but does not here.
 	 *
-	 * Public (was private) — Agentic_Relay_Connect's own connector-approval
-	 * screen shows the same disclosure before minting the identical
-	 * credential via that flow, so both call sites share one source rather
-	 * than risking two lists drifting apart.
-	 *
 	 * @return array<int, array{agent:string, tool:string, description:string}>
 	 */
-	public static function data_mcp_unattended_writes(): array {
+	private static function data_mcp_unattended_writes(): array {
 		if ( ! class_exists( '\\Agentic_Agent_Registry' ) || ! class_exists( '\\Agentic_Relay_Connect' ) || ! class_exists( Abilities_Manifest::class ) ) {
 			return array();
 		}
