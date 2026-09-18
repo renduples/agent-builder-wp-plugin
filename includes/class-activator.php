@@ -111,6 +111,28 @@ final class Activator {
 
 		$fresh_install = ( '0.0.0' === self::get_db_schema_version() );
 
+		// Rescue any pre-2.14.0 data under the old agentic_* table/option
+		// names *before* anything below runs. create_tables() and
+		// set_default_options() both use CREATE TABLE IF NOT EXISTS / a
+		// plain add_option() existence check against the *new*
+		// agent_builder_* names — on an upgrading site, running them first
+		// would create fresh, empty/default-valued rows under the new
+		// names, and migrate_schema_2_14_0()'s later RENAME TABLE / options
+		// UPDATE would then either fail outright (duplicate table name) or
+		// silently no-op per row (the new name already "exists", so nothing
+		// looks renameable) — either way losing the site's real data behind
+		// a fresh default. Confirmed against a real production DB copy in
+		// the sibling self-hosted repo (agent-builder-plugin): without this
+		// early call, agent_builder_active_agents ended up with only the
+		// bundled agent slugs instead of the site's real, larger active
+		// list. Calling it here is safe to repeat later via the normal
+		// run_migrations() pass below — every step it takes checks
+		// existence first, so a second call against already-migrated data
+		// is a fast no-op.
+		if ( version_compare( self::get_db_schema_version(), '2.14.0', '<' ) ) {
+			self::migrate_schema_2_14_0();
+		}
+
 		self::set_flags();
 		self::create_tables();  // Security-log table is created here — safe to log after this point.
 		self::set_default_options();
@@ -1624,6 +1646,22 @@ final class Activator {
 			self::record( 'rename_options_failed', 'error', $wpdb->last_error );
 			$success = false;
 		}
+
+		// The rename above is a raw SQL UPDATE, bypassing add_option()/
+		// update_option()/delete_option() entirely — so it never invalidates
+		// WordPress's own options cache (the per-option cache, the
+		// autoloaded "alloptions" blob, and the "notoptions" negative
+		// cache). If anything earlier in this same request already read one
+		// of these options, that cache entry is now stale and would keep
+		// returning the pre-rename (or "doesn't exist") result for the rest
+		// of the request even though the database row has already moved.
+		// Confirmed concretely in the sibling self-hosted repo
+		// (agent-builder-plugin): without this flush,
+		// activate_bundled_agents() (which runs later in this same
+		// activate() call) read a stale "option doesn't exist" for
+		// agent_builder_active_agents and silently overwrote the site's
+		// real, just-migrated agent list with only the bundled defaults.
+		wp_cache_flush();
 
 		// Clear scheduled events left under the old hook names. The new
 		// names are re-scheduled automatically by each owning class's own
