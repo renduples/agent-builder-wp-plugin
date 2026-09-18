@@ -26,7 +26,7 @@ final class Activator {
 
 	/**
 	 * Structured log collected throughout activation.
-	 * Written to the audit log and to agentic_last_activation_log at the end.
+	 * Written to the audit log and to agent_builder_last_activation_log at the end.
 	 *
 	 * @var array<int, array{step: string, status: string, details: mixed}>
 	 */
@@ -134,7 +134,7 @@ final class Activator {
 
 		// Persist the full activation log to an option (readable even if tables failed).
 		update_option(
-			'agentic_last_activation_log',
+			'agent_builder_last_activation_log',
 			array(
 				'schema_version' => $schema_version,
 				'activated_at'   => gmdate( 'Y-m-d H:i:s' ),
@@ -1374,10 +1374,16 @@ final class Activator {
 	 * - The 13 custom tables, via RENAME TABLE (a metadata-only operation —
 	 *   no data is copied or lost, and it is near-instant even on a large
 	 *   table).
-	 * - Every agentic_* wp_options row (~110 keys, including the schema
-	 *   version option itself — see get_db_schema_version() /
-	 *   set_db_schema_version() above), via one blanket UPDATE instead of
-	 *   100+ individual reads/writes.
+	 * - Every one of this plugin's 133 agentic_* wp_options keys (including
+	 *   the schema version option itself — see get_db_schema_version() /
+	 *   set_db_schema_version() above), via one UPDATE ... WHERE option_name
+	 *   IN (...) against an explicit allowlist rather than a LIKE 'agentic_%'
+	 *   wildcard. A wildcard would be simpler, but a site can run other,
+	 *   unrelated agentic_*-prefixed data belonging to other plugins/services
+	 *   sharing the same database (confirmed against a real copy of one such
+	 *   site's data — Stripe keys, license-signing secrets,
+	 *   affiliate/marketplace/relay data, none of it this plugin's) and a
+	 *   wildcard would silently rename those too.
 	 * - The old-named scheduled cron events. The hook callbacks themselves
 	 *   already switched to listening on the agent_builder_* names in this
 	 *   same release, and each owning class re-schedules its own cron under
@@ -1387,7 +1393,12 @@ final class Activator {
 	 *
 	 * Explicitly NOT touched: the 6 agentic_manage_ and agentic_view_
 	 * capability strings (WordPress user-role capabilities live in usermeta, never in
-	 * wp_options, so the blanket UPDATE below cannot reach them regardless),
+	 * wp_options, so this migration's options UPDATE cannot reach them
+	 * regardless), the various agentic_*-prefixed usermeta keys, transients,
+	 * AJAX action names, nonce actions, cache keys, custom-post-type slugs,
+	 * and shortcode tags found alongside these while enumerating options
+	 * (none of those are "options" in the reviewer's finding, and several —
+	 * shortcode tags, CPT slugs — would break existing content on rename),
 	 * the Agentic\ namespace and the small set of global Agentic_* classes,
 	 * and the agentic/v1 REST namespace — none of those were part of the
 	 * reviewer's finding, and renaming the REST namespace would break every
@@ -1453,13 +1464,160 @@ final class Activator {
 			}
 		}
 
-		// One statement catches every agentic_* option row (~110 keys,
-		// including agentic_db_schema_version itself) instead of 100+
-		// individual reads/writes. option_name is matched with a fixed LIKE
-		// pattern and rewritten with a fixed REPLACE() — no user input.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+		// An explicit allowlist, not a LIKE 'agentic\_%' wildcard: this site
+		// (and potentially others) runs additional, unrelated agentic_*-prefixed
+		// data belonging to other plugins/services sharing the same database
+		// (confirmed against a production copy — Stripe keys, license-signing
+		// secrets, affiliate/marketplace/relay data, none of it this plugin's).
+		// A wildcard would silently rename those too. This list is every
+		// agent_builder_* option this plugin itself reads or writes, found via
+		// an exhaustive grep for get_option()/add_option()/update_option()/
+		// delete_option() call sites (including multi-line calls and options
+		// read only via a class constant), not hand-transcribed.
+		$option_names = array(
+			'agentic_abilities_signed_version',
+			'agentic_active_agents',
+			'agentic_admin_address',
+			'agentic_admin_bar_agents',
+			'agentic_admin_bar_config',
+			'agentic_admin_launcher_agent',
+			'agentic_admin_launcher_screens',
+			'agentic_admin_launchers_enabled',
+			'agentic_agent_mode',
+			'agentic_agent_overrides',
+			'agentic_agent_permissions',
+			'agentic_agent_personas',
+			'agentic_agent_updates_optin',
+			'agentic_agents_dir_imported',
+			'agentic_agents_needing_migration',
+			'agentic_ai_api_key_builtin',
+			'agentic_ai_radar_notice',
+			'agentic_allow_anonymous_chat',
+			'agentic_allow_deregister_on_uninstall',
+			'agentic_allow_platform_sync',
+			'agentic_approval_auto_max_risk',
+			'agentic_approval_comfort',
+			'agentic_approval_email_notify',
+			'agentic_approval_email_to',
+			'agentic_approval_risk_ack',
+			'agentic_audit_enabled',
+			'agentic_bundled_seed_hashes',
+			'agentic_bundled_updates_available',
+			'agentic_chat_audio',
+			'agentic_chat_consent_enabled',
+			'agentic_chat_consent_text',
+			'agentic_chat_costs',
+			'agentic_chat_theme',
+			'agentic_chat_tts',
+			'agentic_chat_vision',
+			'agentic_chat_whitelabel',
+			'agentic_custom_css',
+			'agentic_custom_js',
+			'agentic_daily_limit_anonymous',
+			'agentic_daily_limit_anonymous_global',
+			'agentic_db_schema_version',
+			'agentic_deactivate_delete_data',
+			'agentic_default_agent_mode',
+			'agentic_deployments_migrated',
+			'agentic_directory_submission',
+			'agentic_disable_all_agents',
+			'agentic_disable_all_agents_snapshot',
+			'agentic_disable_xmlrpc',
+			'agentic_disabled_inbound_abilities',
+			'agentic_disabled_tools',
+			'agentic_disallow_file_edit',
+			'agentic_editor_sidebar_seo_slug_fixed_v1',
+			'agentic_editor_sidebar_settings',
+			'agentic_enable_weak_model_tool_guidance',
+			'agentic_frontend_address',
+			'agentic_github_token',
+			'agentic_global_accent',
+			'agentic_global_font',
+			'agentic_global_instructions',
+			'agentic_gutenberg_block_agents',
+			'agentic_has_knowledge',
+			'agentic_ip_anonymize',
+			'agentic_last_activation_log',
+			'agentic_last_system_check',
+			'agentic_learned_tools_unsupported',
+			'agentic_license_key',
+			'agentic_llm_api_keys',
+			'agentic_llm_provider',
+			'agentic_local_memory_enabled',
+			'agentic_max_tool_retries',
+			'agentic_mcp_enabled_agents',
+			'agentic_mcp_last_connected',
+			'agentic_memory_ttl_days',
+			'agentic_message_scanning',
+			'agentic_modal_agents',
+			'agentic_modal_config',
+			'agentic_model',
+			'agentic_model_preferences',
+			'agentic_okf_examples_seeded',
+			'agentic_okf_global_instructions_migrated',
+			'agentic_ollama_url',
+			'agentic_onboarding_complete',
+			'agentic_overrides_migrated_v1',
+			'agentic_personas_migrated_v1',
+			'agentic_pricing_version',
+			'agentic_psi_api_key',
+			'agentic_psi_notice_dismissed',
+			'agentic_rag_api_secret',
+			'agentic_rag_service_removed_v1',
+			'agentic_rate_limit_anonymous',
+			'agentic_rate_limit_authenticated',
+			'agentic_response_cache_enabled',
+			'agentic_response_cache_ttl',
+			'agentic_retention_audit_log',
+			'agentic_retention_conversations',
+			'agentic_risk_overrides',
+			'agentic_sc_default_height',
+			'agentic_sc_default_show_header',
+			'agentic_sc_default_style',
+			'agentic_score_latest',
+			'agentic_security_enabled',
+			'agentic_service_consent',
+			'agentic_short_links',
+			'agentic_shortcode_deployments',
+			'agentic_show_onboarding',
+			'agentic_show_welcome_notice',
+			'agentic_show_whatsapp_cta',
+			'agentic_site_auditor_history',
+			'agentic_site_auditor_notice',
+			'agentic_skills_agent_slug_array_v1',
+			'agentic_skills_seeded_plugin_version',
+			'agentic_skills_seeded_version',
+			'agentic_system_check_done',
+			'agentic_test_allow_opt',
+			'agentic_test_approved_opt',
+			'agentic_test_disabled_opt',
+			'agentic_test_queued_opt',
+			'agentic_tool_scopes',
+			'agentic_tools_ability_profile',
+			'agentic_tools_seeded_version',
+			'agentic_tts_voice',
+			'agentic_turnstile_require_all',
+			'agentic_turnstile_require_anonymous',
+			'agentic_turnstile_secret_key',
+			'agentic_turnstile_site_key',
+			'agentic_ui_mode',
+			'agentic_usage_limits',
+			'agentic_user_event_triggers',
+			'agentic_user_roles',
+			'agentic_user_scheduled_tasks',
+			'agentic_video_model',
+			'agentic_vision_model',
+			'agentic_webmcp_enabled',
+		);
+
+		$placeholders = implode( ', ', array_fill( 0, count( $option_names ), '%s' ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Bulk rename, run once per upgrade; not a request-time query.
 		$options_result = $wpdb->query(
-			"UPDATE {$wpdb->options} SET option_name = REPLACE(option_name, 'agentic_', 'agent_builder_') WHERE option_name LIKE 'agentic\\_%' ESCAPE '\\\\'"
+			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- placeholders are %s tokens from array_fill; PHPCS can't see the runtime count.
+			$wpdb->prepare(
+				"UPDATE {$wpdb->options} SET option_name = REPLACE(option_name, 'agentic_', 'agent_builder_') WHERE option_name IN ({$placeholders})", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- $placeholders is only %s tokens; safe.
+				$option_names
+			)
 		);
 
 		if ( false === $options_result ) {
@@ -1470,9 +1628,9 @@ final class Activator {
 		// Clear scheduled events left under the old hook names. The new
 		// names are re-scheduled automatically by each owning class's own
 		// idempotent wp_next_scheduled() check on its next init — see
-		// Job_Manager::init(), Provider_Registry::init(), GDPR::init(), and
-		// Activator::schedule_cron_events() (called earlier in this same
-		// activate() pass, before run_migrations()).
+		// Job_Manager::init(), Provider_Registry::init(), GDPR::init(),
+		// Agent_Ready_Score::init(), and Activator::schedule_cron_events()
+		// (called earlier in this same activate() pass, before run_migrations()).
 		foreach (
 			array(
 				'agentic_cleanup_audit_log',
@@ -1482,6 +1640,7 @@ final class Activator {
 				'agentic_job_health_check',
 				'agentic_process_job',
 				'agentic_refresh_provider_models',
+				'agentic_rescan_score',
 			) as $old_hook
 		) {
 			if ( false !== wp_next_scheduled( $old_hook ) ) {

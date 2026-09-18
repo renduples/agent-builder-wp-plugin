@@ -26,7 +26,7 @@ class Github_Api extends \Agentic\Tool_Base {
 	private const BASE_URL = 'https://api.github.com';
 
 	/** WordPress option key for the GitHub personal access token. */
-	private const TOKEN_OPTION = 'agentic_github_token';
+	private const TOKEN_OPTION = 'agent_builder_github_token';
 
 	public function get_name(): string {
 		return 'github_api';
@@ -71,7 +71,7 @@ class Github_Api extends \Agentic\Tool_Base {
 		$token = get_option( self::TOKEN_OPTION, '' );
 		if ( '' === $token ) {
 			return array(
-				'error' => 'No GitHub token configured. There is no settings-screen field for this yet — set one with WP-CLI: wp option update agentic_github_token "<your personal access token>".',
+				'error' => 'No GitHub token configured. There is no settings-screen field for this yet — set one with WP-CLI: wp option update agent_builder_github_token "<your personal access token>".',
 			);
 		}
 

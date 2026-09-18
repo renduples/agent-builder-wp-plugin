@@ -105,7 +105,7 @@ class Db_Update_Option extends \Agentic\Tool_Base {
 			'db_version',
 			'initial_db_version',
 			'wp_user_roles',
-			'agentic_disabled_tools',
+			'agent_builder_disabled_tools',
 			'agent_builder_tool_scopes',
 			'agent_builder_active_agents',
 		);

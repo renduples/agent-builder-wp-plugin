@@ -57,7 +57,7 @@ class Post_Admin_Notice extends \Agentic\Tool_Base {
 
 	public function execute( array $args ): array {
 		update_option(
-			'agentic_site_auditor_notice',
+			'agent_builder_site_auditor_notice',
 			array(
 				'message' => $args['message'],
 				'type'    => $args['type'],

@@ -34,12 +34,12 @@ class Emergency_Stop {
 	/**
 	 * Option: '0' | '1'.
 	 */
-	public const OPTION_ENABLED = 'agentic_disable_all_agents';
+	public const OPTION_ENABLED = 'agent_builder_disable_all_agents';
 
 	/**
 	 * Snapshot used to restore agents + provider keys when the switch is turned off.
 	 */
-	public const OPTION_SNAPSHOT = 'agentic_disable_all_agents_snapshot';
+	public const OPTION_SNAPSHOT = 'agent_builder_disable_all_agents_snapshot';
 
 	/**
 	 * Whether the emergency stop is currently active.

@@ -33,7 +33,7 @@ class Agent_Permissions {
 	/**
 	 * WordPress option key for permission settings.
 	 */
-	public const OPTION_KEY = 'agentic_agent_permissions';
+	public const OPTION_KEY = 'agent_builder_agent_permissions';
 
 	/**
 	 * Available permission scopes.

@@ -45,7 +45,7 @@ class Agentic_Relay_Connect {
 	 * distinct from "ready" (mcp_readiness(), which only means the agent is
 	 * capable of responding, not that anything has ever actually connected).
 	 */
-	const LAST_CONNECTED_OPTION = 'agentic_mcp_last_connected';
+	const LAST_CONNECTED_OPTION = 'agent_builder_mcp_last_connected';
 
 	/**
 	 * Slugs of agents an admin has explicitly turned MCP *on* for — MCP is
@@ -54,7 +54,7 @@ class Agentic_Relay_Connect {
 	 * independent of the agent's own active/inactive state — an agent can
 	 * be active for chat with its MCP endpoint still switched off.
 	 */
-	const ENABLED_AGENTS_OPTION = 'agentic_mcp_enabled_agents';
+	const ENABLED_AGENTS_OPTION = 'agent_builder_mcp_enabled_agents';
 
 	/**
 	 * Register hooks.

@@ -32,7 +32,7 @@ class Recheck_AI_Crawler_Access extends \Agentic\Tool_Base {
 	/**
 	 * Admin-notice option key.
 	 */
-	private const NOTICE_OPTION = 'agentic_ai_radar_notice';
+	private const NOTICE_OPTION = 'agent_builder_ai_radar_notice';
 
 	/**
 	 * Option names whose changes can affect robots.txt / crawler access.

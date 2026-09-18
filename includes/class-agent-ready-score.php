@@ -51,7 +51,7 @@ class Agent_Ready_Score {
 	/**
 	 * Cron hook for the weekly re-scan.
 	 */
-	public const CRON_HOOK = 'agentic_rescan_score';
+	public const CRON_HOOK = 'agent_builder_rescan_score';
 
 	/**
 	 * Weight given to each check's category, used to compute the overall score.

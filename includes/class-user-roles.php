@@ -5,7 +5,7 @@
  * Manages fine-grained access control: which WordPress user roles can use
  * which parts of the Agent Builder plugin and which agents.
  *
- * Settings are stored in the `agentic_user_roles` option and are enforced
+ * Settings are stored in the `agent_builder_user_roles` option and are enforced
  * via a `user_has_cap` filter that injects `agentic_*` custom capabilities.
  * Administrators always retain full access regardless of stored settings.
  *
@@ -29,7 +29,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class User_Roles {
 
 	/** Option key used to persist settings. */
-	const OPTION_KEY = 'agentic_user_roles';
+	const OPTION_KEY = 'agent_builder_user_roles';
 
 	/** Prefix for all custom capabilities injected by this class. */
 	const CAP_PREFIX = 'agentic_';

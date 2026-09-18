@@ -28,7 +28,7 @@ class Agent_Lifecycle {
 	/**
 	 * Option key for admin-created scheduled tasks (Deployment → Scheduled Tasks).
 	 */
-	const USER_SCHEDULED_TASKS_OPTION = 'agentic_user_scheduled_tasks';
+	const USER_SCHEDULED_TASKS_OPTION = 'agent_builder_user_scheduled_tasks';
 
 	/**
 	 * Option key for admin-created event triggers (Deployment → Event Listeners).

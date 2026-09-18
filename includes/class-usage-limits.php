@@ -7,7 +7,7 @@
  * (pre-request) and Agent_Controller (post-completion for token accounting).
  *
  * Storage:
- *  - Option `agentic_usage_limits` holds the configured limits per role/anonymous.
+ *  - Option `agent_builder_usage_limits` holds the configured limits per role/anonymous.
  *  - Counters are kept in transients keyed by user_id (or IP hash) + date so they
  *    automatically expire at midnight.
  *
@@ -30,7 +30,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Usage_Limits {
 
 	/** Option key for stored limits. */
-	const OPTION_KEY = 'agentic_usage_limits';
+	const OPTION_KEY = 'agent_builder_usage_limits';
 
 	/** Transient prefix for daily query counts. */
 	const TRANSIENT_QUERIES = 'agentic_ul_q_';
@@ -191,7 +191,7 @@ class Usage_Limits {
 			'settings_changed',
 			'usage_limits',
 			array(
-				'setting' => 'agentic_usage_limits',
+				'setting' => self::OPTION_KEY,
 				'changes' => $changed,
 			)
 		);

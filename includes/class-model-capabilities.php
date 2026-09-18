@@ -43,7 +43,7 @@ final class Model_Capabilities {
 	 * schemas" facts — for local/unknown models (e.g. Ollama tags) not yet
 	 * covered by a static rule, keyed by "{provider}:{model}".
 	 */
-	private const LEARNED_UNSUPPORTED_OPTION = 'agentic_learned_tools_unsupported';
+	private const LEARNED_UNSUPPORTED_OPTION = 'agent_builder_learned_tools_unsupported';
 
 	/**
 	 * Capability defaults (safe baseline for classic GPT-4o / Claude / Gemini chat).
