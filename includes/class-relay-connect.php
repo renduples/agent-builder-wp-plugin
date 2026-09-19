@@ -29,6 +29,10 @@ use Agentic\Tools_Registry;
 use Agentic\Risk_Level;
 use Agentic\Abilities_Manifest;
 use Agentic\Tool_Base;
+use Agentic\Tool_Executor;
+use Agentic\Audit_Log;
+use Agentic\Abilities_Bridge;
+use Agentic\Agent_Settings;
 
 /**
  * Registers and serves each agent's on-site MCP endpoint.
@@ -607,6 +611,50 @@ class Agentic_Relay_Connect {
 	}
 
 	/**
+	 * Resolve an agent's effective operating mode for risk enforcement,
+	 * mirroring Agent_Controller::apply_agent_overrides()'s precedence
+	 * (per-agent override → agent's own default → site-wide setting) minus
+	 * that method's LLM provider/model side effects, which don't apply to
+	 * a single MCP tool call.
+	 *
+	 * @param string $slug Agent slug.
+	 * @return string One of 'disabled'|'supervised'|'autonomous'.
+	 */
+	private static function effective_mode_for_agent( string $slug ): string {
+		$global_mode = (string) get_option( 'agent_builder_agent_mode', 'supervised' );
+
+		$mode_override = Agent_Settings::get( $slug, 'override_mode' );
+		if ( ! empty( $mode_override ) ) {
+			$mode = $mode_override;
+		} else {
+			$agent         = \Agentic_Agent_Registry::get_instance()->get_agent_instance( $slug );
+			$agent_default = $agent ? $agent->get_default_mode() : '';
+			$mode          = ! empty( $agent_default ) ? $agent_default : $global_mode;
+		}
+
+		return in_array( $mode, array( 'disabled', 'supervised', 'autonomous' ), true ) ? $mode : $global_mode;
+	}
+
+	/**
+	 * Run a tool through the same risk-gate/audit pipeline every other
+	 * invocation path (chat, WebMCP, cron) uses, instead of calling the
+	 * tool directly. MCP has no live confirmation UI of its own, so a
+	 * MEDIUM-risk tool without a prior "Always Allow" grant correctly
+	 * comes back as 'confirmation_required' rather than silently
+	 * executing — see Tool_Executor::execute()'s 'confirm' branch.
+	 *
+	 * @param string                $tool_name        Tool name.
+	 * @param array                 $arguments        Tool arguments.
+	 * @param string                $slug             Calling agent slug.
+	 * @param Abilities_Bridge|null $abilities_bridge Optional third-party abilities fallback.
+	 * @return array Raw Tool_Executor result (not yet MCP-wrapped).
+	 */
+	private static function execute_via_tool_executor( string $tool_name, array $arguments, string $slug, ?Abilities_Bridge $abilities_bridge = null ): array {
+		$executor = new Tool_Executor( Tool_Loader::get_instance(), new Audit_Log(), $abilities_bridge );
+		return $executor->execute( $tool_name, $arguments, $slug, self::effective_mode_for_agent( $slug ), 'mcp' );
+	}
+
+	/**
 	 * Execute an ability via MCP tools/call (6.9+).
 	 *
 	 * @param mixed  $id        JSON-RPC request id.
@@ -639,9 +687,45 @@ class Agentic_Relay_Connect {
 			return self::mcp_error( $id, -32601, "Unknown tool: $mcp_name" );
 		}
 
+		// An ability that maps back to one of this plugin's own registered
+		// tools gets full risk-gating + audit logging via Tool_Executor,
+		// same as every other invocation path.
+		if ( null !== $own_tool_name ) {
+			$result = self::execute_via_tool_executor( $own_tool_name, $arguments, $slug );
+
+			return self::mcp_result(
+				$id,
+				array(
+					'content' => array(
+						array(
+							'type' => 'text',
+							'text' => (string) wp_json_encode( $result ),
+						),
+					),
+					'isError' => ! empty( $result['error'] ),
+				)
+			);
+		}
+
+		// Genuine third-party WordPress ability — this plugin's own risk
+		// levels were never defined for it, so it keeps running through
+		// the ability's own permission_callback rather than Tool_Executor
+		// (which would only ever see it as an unregistered/default-risk
+		// tool). Still logged here so MCP-triggered activity involving a
+		// third-party ability is traceable in the same audit trail.
 		try {
 			$result = $ability->execute( $arguments );
 			$text   = is_string( $result ) ? $result : (string) wp_json_encode( $result );
+
+			( new Audit_Log() )->log(
+				$slug,
+				'tool_call',
+				$ability->get_name(),
+				array(
+					'_invocation'          => 'mcp',
+					'_third_party_ability' => true,
+				)
+			);
 
 			return self::mcp_result(
 				$id,
@@ -655,6 +739,16 @@ class Agentic_Relay_Connect {
 				)
 			);
 		} catch ( \Throwable $e ) {
+			( new Audit_Log() )->log(
+				$slug,
+				'tool_blocked',
+				$ability->get_name(),
+				array(
+					'_invocation' => 'mcp',
+					'error'       => $e->getMessage(),
+				)
+			);
+
 			return self::mcp_result(
 				$id,
 				array(
@@ -697,10 +791,7 @@ class Agentic_Relay_Connect {
 			return self::mcp_error( $id, -32603, 'Insufficient permissions for this tool.' );
 		}
 
-		$result = Tool_Loader::get_instance()->execute( $tool_name, $arguments );
-		if ( null === $result ) {
-			return self::mcp_error( $id, -32602, "Unknown tool: $mcp_name" );
-		}
+		$result = self::execute_via_tool_executor( $tool_name, $arguments, $slug );
 
 		return self::mcp_result(
 			$id,
