@@ -28,6 +28,7 @@ wp_enqueue_style( 'agentic-ui' );
 wp_enqueue_script( 'agentic-ui' );
 
 use Agentic\Tools_Registry;
+use Agentic\Tool_Loader;
 
 if ( ! function_exists( 'agentic_render_tool_description' ) ) {
 	/**
@@ -92,6 +93,18 @@ foreach ( $agentic_instances as $agentic_agent ) {
 
 // Load all tools from the database.
 $agentic_all_tools = Tools_Registry::get_all();
+
+// Tools whose optional library isn't shipped in this build (e.g. PDF/Word
+// generation on WordPress.org) still appear above, listed rather than
+// hidden, but need an explanation so enabling one doesn't look like it will
+// work. Tool_Loader holds live PHP instances (Tools_Registry is DB metadata
+// only), so is_available() has to be checked here.
+$agentic_unavailable_tools = array();
+foreach ( Tool_Loader::get_instance()->get_all() as $agentic_tool_name => $agentic_tool_instance ) {
+	if ( ! $agentic_tool_instance->is_available() ) {
+		$agentic_unavailable_tools[ $agentic_tool_name ] = $agentic_tool_instance->get_unavailable_reason();
+	}
+}
 
 // Category labels.
 $agentic_category_tabs = array(
@@ -405,6 +418,12 @@ data-ability="<?php echo esc_attr( $agentic_ab_orig ); ?>"
 					</td>
 					<td>
 						<strong><code><?php echo esc_html( $agentic_tool['name'] ); ?></code></strong>
+						<?php if ( isset( $agentic_unavailable_tools[ $agentic_tool['name'] ] ) ) : ?>
+							<br />
+							<span class="agentic-badge-amber" title="<?php echo esc_attr( $agentic_unavailable_tools[ $agentic_tool['name'] ] ); ?>">
+								<?php esc_html_e( 'Unavailable on this install', 'agent-builder' ); ?>
+							</span>
+						<?php endif; ?>
 						<?php if ( $agentic_abilities_api ) : ?>
 							<br />
 							<span class="agentic-text-muted agentic-text-xxs" title="<?php esc_attr_e( 'Published as a WordPress ability (MCP, REST, core AI) while this tool is enabled.', 'agent-builder' ); ?>">
