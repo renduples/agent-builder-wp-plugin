@@ -1193,61 +1193,8 @@ class REST_API {
 		$label     = str_replace( '_', ' ', (string) $tool_name );
 
 		// Special handling for code_change actions (file writes).
-		if ( 'code_change' === $tool_name && ! empty( $params['path'] ) ) {
-			$repo_path      = Tool_Helpers::get_allowed_repo_base();
-			$target_subpath = ltrim( str_replace( '..', '', $params['path'] ), '/\\' );
-
-			if ( ! Tool_Helpers::is_allowed_subpath( $target_subpath ) ) {
-				return array(
-					'ran'     => false,
-					'success' => false,
-					'message' => __( 'Could not write file — path is not allowed.', 'agent-builder' ),
-				);
-			}
-
-			if ( File_Manager::has_denylisted_extension( $target_subpath ) ) {
-				return array(
-					'ran'     => false,
-					'success' => false,
-					'message' => __( 'Could not write file — this file type is not allowed.', 'agent-builder' ),
-				);
-			}
-
-			$full_path = realpath( $repo_path . '/' . $target_subpath );
-
-			if ( ! $full_path || ! str_starts_with( $full_path, trailingslashit( realpath( $repo_path ) ) ) ) {
-				return array(
-					'ran'     => false,
-					'success' => false,
-					'message' => __( 'Could not write file — invalid path.', 'agent-builder' ),
-				);
-			}
-
-			if ( ! empty( $params['content'] ) ) {
-				$dir = dirname( $full_path );
-				if ( File_Manager::is_writable( $dir ) ) {
-					$written = File_Manager::put_contents( $full_path, $params['content'] );
-					if ( false === $written ) {
-						return array(
-							'ran'     => true,
-							'success' => false,
-							'message' => __( 'File write failed.', 'agent-builder' ),
-							'detail'  => $target_subpath,
-						);
-					}
-					return array(
-						'ran'     => true,
-						'success' => true,
-						'message' => __( 'File updated successfully.', 'agent-builder' ),
-						'detail'  => $target_subpath,
-					);
-				}
-			}
-			return array(
-				'ran'     => false,
-				'success' => false,
-				'message' => __( 'File was not writable.', 'agent-builder' ),
-			);
+		if ( 'code_change' === $tool_name ) {
+			return $this->execute_code_change( $approval, is_array( $params ) ? $params : array() );
 		}
 
 		// Generic tool execution — run the tool directly with stored params.
@@ -1346,6 +1293,218 @@ class REST_API {
 				),
 			'detail'  => $detail,
 			'result'  => is_array( $result ) ? self::summarize_tool_result( $result ) : $result,
+		);
+	}
+
+	/**
+	 * Extensions a code_change write may ever target.
+	 *
+	 * This is a positive allowlist, not a denylist: a forged or tampered
+	 * approval row is assumed to control `params.path` completely, so the
+	 * only safe posture is "nothing runs unless it is on this list". Every
+	 * entry here is inert content (data, markup or plain text) under the
+	 * uploads directory — nothing a web server, WordPress or this plugin
+	 * ever executes. `.php` and friends are unreachable by construction,
+	 * regardless of what File_Manager's own denylist does or does not cover
+	 * at any point in the future.
+	 *
+	 * `.html`/`.htm` and `.svg` are deliberately absent as well: both run
+	 * script in a visitor's browser under the site's own origin when served
+	 * from uploads, which is the same "code the site ends up running" problem
+	 * one step removed.
+	 *
+	 * @var string[]
+	 */
+	private const CODE_CHANGE_ALLOWED_EXTENSIONS = array(
+		'txt',
+		'md',
+		'json',
+		'csv',
+		'xml',
+		'yml',
+		'yaml',
+		'css',
+	);
+
+	/**
+	 * Write a file for an approved `code_change` action.
+	 *
+	 * Threat model: the approval row is untrusted. `handle_approval()` looks
+	 * the row up by ID and runs whatever `action`/`params` it carries, so
+	 * anything that can insert into or update `{$prefix}agent_builder_approval_queue`
+	 * (a SQLi elsewhere, a compromised admin, a rogue agent writing the queue
+	 * directly) controls both the path and the content that reach this method.
+	 * Every check below therefore assumes both are hostile:
+	 *
+	 *  1. The raw path must be a plain relative path — no null bytes, no
+	 *     backslashes, no `..` segment. Traversal is rejected outright rather
+	 *     than stripped, since stripping `..` turns `....//` back into `../`.
+	 *  2. It must resolve to an existing regular file under wp-content/uploads/,
+	 *     checked after realpath() so a symlink planted inside uploads cannot
+	 *     redirect the write into plugins/, themes/ or outside wp-content.
+	 *  3. Both the requested path and the symlink-resolved real path must end
+	 *     in an allowlisted inert extension, and must not hit
+	 *     File_Manager's own denylist. Checking the resolved path is what
+	 *     stops `uploads/notes.txt` → symlink → `uploads/shell.php`.
+	 *  4. File_Manager::put_contents() re-applies its own root allowlist and
+	 *     extension denylist independently — kept deliberately redundant so
+	 *     neither layer is load-bearing on its own.
+	 *
+	 * Refusals are recorded in the security log: nothing in this plugin ever
+	 * creates a `code_change` approval, so a rejected write here is by
+	 * definition either a forged row or a corrupted one, and worth surfacing.
+	 *
+	 * @param array<string,mixed> $approval Approval record.
+	 * @param array<string,mixed> $params   Decoded approval params.
+	 * @return array{ran:bool,success:bool,message:string,detail?:string}
+	 */
+	private function execute_code_change( array $approval, array $params ): array {
+		$raw_path = $params['path'] ?? '';
+
+		if ( ! is_string( $raw_path ) || '' === trim( $raw_path ) ) {
+			return $this->refuse_code_change( $approval, $raw_path, 'missing_path', __( 'Could not write file — no path was given.', 'agent-builder' ) );
+		}
+
+		$denied = __( 'Could not write file — path is not allowed.', 'agent-builder' );
+
+		// Reject traversal and Windows/NTFS path tricks outright — never strip.
+		if ( str_contains( $raw_path, "\0" ) || str_contains( $raw_path, '\\' ) || str_contains( $raw_path, '::' ) ) {
+			return $this->refuse_code_change( $approval, $raw_path, 'illegal_characters', $denied );
+		}
+
+		$target_subpath = ltrim( $raw_path, '/' );
+
+		foreach ( explode( '/', $target_subpath ) as $segment ) {
+			if ( '..' === $segment ) {
+				return $this->refuse_code_change( $approval, $raw_path, 'traversal', $denied );
+			}
+		}
+
+		if ( ! Tool_Helpers::is_allowed_subpath( $target_subpath ) ) {
+			return $this->refuse_code_change( $approval, $raw_path, 'outside_uploads', $denied );
+		}
+
+		$bad_type = __( 'Could not write file — this file type is not allowed.', 'agent-builder' );
+
+		if ( ! $this->is_inert_write_target( $target_subpath ) ) {
+			return $this->refuse_code_change( $approval, $raw_path, 'extension_not_allowed', $bad_type );
+		}
+
+		$repo_path    = realpath( Tool_Helpers::get_allowed_repo_base() );
+		$uploads_root = $repo_path ? trailingslashit( $repo_path ) . 'uploads/' : '';
+		$real_uploads = $uploads_root ? realpath( $uploads_root ) : false;
+		$full_path    = realpath( trailingslashit( (string) $repo_path ) . $target_subpath );
+
+		if ( ! $repo_path || ! $real_uploads || ! $full_path ) {
+			return $this->refuse_code_change( $approval, $raw_path, 'unresolvable_path', __( 'Could not write file — invalid path.', 'agent-builder' ) );
+		}
+
+		// Post-realpath containment: a symlink inside uploads cannot escape it.
+		if ( ! str_starts_with( $full_path, trailingslashit( $real_uploads ) ) ) {
+			return $this->refuse_code_change( $approval, $raw_path, 'escapes_uploads', $denied );
+		}
+
+		// Only overwrite an existing regular file — never a directory, and
+		// never a device/fifo/special file.
+		if ( ! is_file( $full_path ) ) {
+			return $this->refuse_code_change( $approval, $raw_path, 'not_a_regular_file', __( 'Could not write file — invalid path.', 'agent-builder' ) );
+		}
+
+		// The resolved target must be inert too, not just the requested name.
+		if ( ! $this->is_inert_write_target( $full_path ) ) {
+			return $this->refuse_code_change( $approval, $raw_path, 'resolved_extension_not_allowed', $bad_type );
+		}
+
+		$content = $params['content'] ?? '';
+
+		if ( ! is_string( $content ) || '' === $content ) {
+			return array(
+				'ran'     => false,
+				'success' => false,
+				'message' => __( 'Could not write file — no content was given.', 'agent-builder' ),
+			);
+		}
+
+		if ( ! File_Manager::is_writable( dirname( $full_path ) ) ) {
+			return array(
+				'ran'     => false,
+				'success' => false,
+				'message' => __( 'File was not writable.', 'agent-builder' ),
+			);
+		}
+
+		// put_contents() independently re-checks allowed roots and the
+		// extension denylist; a false return here means it refused or failed.
+		if ( false === File_Manager::put_contents( $full_path, $content ) ) {
+			return array(
+				'ran'     => true,
+				'success' => false,
+				'message' => __( 'File write failed.', 'agent-builder' ),
+				'detail'  => $target_subpath,
+			);
+		}
+
+		return array(
+			'ran'     => true,
+			'success' => true,
+			'message' => __( 'File updated successfully.', 'agent-builder' ),
+			'detail'  => $target_subpath,
+		);
+	}
+
+	/**
+	 * Whether a path ends in an allowlisted inert extension.
+	 *
+	 * Matches on the trailing ".ext" of the basename after normalising the
+	 * trailing dots/spaces NTFS silently strips at creation time, so
+	 * `shell.php.txt ` cannot present one extension to this check and another
+	 * to the filesystem. Also re-applies File_Manager's denylist, so the two
+	 * lists can never disagree in the permissive direction.
+	 *
+	 * @param string $path Absolute or relative path.
+	 * @return bool
+	 */
+	private function is_inert_write_target( string $path ): bool {
+		if ( File_Manager::has_denylisted_extension( $path ) ) {
+			return false;
+		}
+
+		$filename = rtrim( strtolower( basename( $path ) ), ". \t\n\r\0\x0B" );
+
+		foreach ( self::CODE_CHANGE_ALLOWED_EXTENSIONS as $ext ) {
+			if ( str_ends_with( $filename, '.' . $ext ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Record and format a refused code_change write.
+	 *
+	 * @param array<string,mixed> $approval Approval record.
+	 * @param mixed               $raw_path Path exactly as the approval carried it.
+	 * @param string              $reason   Machine-readable refusal reason.
+	 * @param string              $message  User-facing message.
+	 * @return array{ran:bool,success:bool,message:string}
+	 */
+	private function refuse_code_change( array $approval, mixed $raw_path, string $reason, string $message ): array {
+		\Agentic\Security_Log::log_system(
+			'code_change_write_blocked',
+			'approvals',
+			array(
+				'approval_id' => $approval['id'] ?? '',
+				'agent_id'    => $approval['agent_id'] ?? '',
+				'reason'      => $reason,
+				'path'        => is_scalar( $raw_path ) ? substr( (string) $raw_path, 0, 255 ) : '(non-scalar)',
+			)
+		);
+
+		return array(
+			'ran'     => false,
+			'success' => false,
+			'message' => $message,
 		);
 	}
 
