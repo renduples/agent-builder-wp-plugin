@@ -8,7 +8,7 @@
  * outbound HTTP request — see readme.txt's "Agent-Ready Score (Local Only)"
  * External Services entry, which depends on that being true. Three checks
  * (llms_txt_present, robots_ai_directives, schema_org_present) deliberately
- * stay lighter than Agent Builder Pro's "AI Radar" agent — see
+ * stay lighter than the bundled "AI Radar" agent's own deeper scan — see
  * docs/agent-ready-score-brief.md — schema_org_present in particular is a
  * proxy signal (active-plugin detection) rather than real HTML/JSON-LD
  * parsing, because real parsing would require fetching the rendered page

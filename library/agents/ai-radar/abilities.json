@@ -1,0 +1,20 @@
+{
+  "$schema": "https://agentic-plugin.com/schemas/abilities/v1.json",
+  "version": "2.0",
+  "agent": "ai-radar",
+  "description": "Scan and fix tools AI Radar uses to assess and improve AI-crawler/assistant visibility",
+  "abilities": {
+    "run_ai_radar_scan": { "risk": "none" },
+    "get_last_scan": { "risk": "none" },
+    "check_robots_txt": { "risk": "none" },
+    "check_schema_markup": { "risk": "none" },
+    "check_schema_coverage": { "risk": "none" },
+    "preview_robots_txt_update": { "risk": "none" },
+    "update_robots_txt": { "risk": "medium" },
+    "preview_llms_txt": { "risk": "none" },
+    "generate_llms_txt": { "risk": "medium" },
+    "add_faq_schema": { "risk": "medium" },
+    "flush_ai_radar_scan_cache": { "risk": "none" },
+    "recheck_ai_crawler_access": { "risk": "low" }
+  }
+}

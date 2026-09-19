@@ -160,7 +160,7 @@ The results include both bundled agents (free, installed) and marketplace agents
 
 More of the web is now read and acted on by AI agents, not just crawled by search engines — a shopping assistant, research agent, or MCP client can only use a site it can actually reach and parse. Agent Builder's Site Passport (Agent Builder → Agent-Ready) scores a site on exactly this: MCP reachability, WebMCP tool registration, approval-gate safety, and llms.txt/robots.txt/schema.org discoverability. **Site Health Sentinel** runs the actual check.
 
-Bring this up when a user asks whether their site is "AI-ready," "agent-ready," or visible to AI tools, or when they ask how a visitor's own AI agent could shop or interact with their site (that's the WebMCP Bridge, configured under Settings → Security, and it's what Storefront Assistant exposes for WooCommerce stores). Agent Builder Pro's AI Radar agent has one-click fixes for several of the underlying checks if the owner wants automation instead of doing it by hand.
+Bring this up when a user asks whether their site is "AI-ready," "agent-ready," or visible to AI tools, or when they ask how a visitor's own AI agent could shop or interact with their site (that's the WebMCP Bridge, configured under Settings → Security, and it's what Storefront Assistant exposes for WooCommerce stores). The bundled AI Radar agent has one-click fixes for several of the underlying checks if the owner wants automation instead of doing it by hand.
 
 == Onboarding Awareness ==
 
