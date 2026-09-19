@@ -183,8 +183,21 @@ class Admin_Notice_Manager {
 		if ( empty( $shadowed ) ) {
 			return;
 		}
+
+		// Dismissal is scoped to the exact current slug set (sorted, so key
+		// order never causes a spurious mismatch) — resolving today's warning
+		// must not silently suppress a different agent getting shadowed later.
+		$slugs = array_keys( $shadowed );
+		sort( $slugs );
+		$slug_key  = implode( ',', $slugs );
+		$dismissed = (string) get_user_meta( get_current_user_id(), 'agentic_shadowed_agent_notice_dismissed', true );
+		if ( $dismissed === $slug_key ) {
+			return;
+		}
+
+		$nonce = wp_create_nonce( 'agentic_dismiss_shadowed_agent_notice' );
 		?>
-		<div class="notice notice-warning">
+		<div class="notice notice-warning is-dismissible" id="agentic-shadowed-agent-notice" data-slugs="<?php echo esc_attr( $slug_key ); ?>" data-nonce="<?php echo esc_attr( $nonce ); ?>">
 			<p>
 				<strong><?php esc_html_e( 'Some bundled agents are not receiving updates.', 'agent-builder' ); ?></strong>
 			</p>
@@ -211,6 +224,19 @@ class Admin_Notice_Manager {
 				</p>
 			<?php endif; ?>
 		</div>
+		<script>
+		( function () {
+			var notice = document.getElementById( 'agentic-shadowed-agent-notice' );
+			if ( ! notice ) { return; }
+			notice.addEventListener( 'click', function ( e ) {
+				if ( ! e.target.classList.contains( 'notice-dismiss' ) ) { return; }
+				wp.ajax.post( 'agentic_dismiss_shadowed_agent_notice', {
+					nonce: notice.dataset.nonce,
+					slugs: notice.dataset.slugs,
+				} );
+			} );
+		} () );
+		</script>
 		<?php
 	}
 }

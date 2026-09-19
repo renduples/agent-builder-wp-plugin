@@ -128,6 +128,9 @@ On WordPress 6.9+, Agent Builder provides bidirectional integration: (1) **Outbo
 = What happens to my data if I delete the plugin? =
 Uninstall keeps your data unless you check “Delete all plugin data” on the deactivation dialog. If you do choose to delete, conversation history, options, custom tables, and the agents and skills you created or imported are all removed.
 
+= Is this plugin translated into other languages? =
+The interface text is written in English, and the `.pot` translation template is included so you (or [translate.wordpress.org](https://translate.wordpress.org/)) can generate your own `.mo`/`.json` translation files for your site's locale. Pre-built translations for 11 languages ship with Agent Builder Pro.
+
 == Screenshots ==
 
 1. Dashboard — Overview of active agents, connected providers, safety status, and quick actions.

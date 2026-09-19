@@ -46,8 +46,10 @@ class Ajax_Dispatcher {
 
 		$handlers = array(
 			// Dashboard notices.
-			'agentic_dismiss_setup_notice'       => array( Admin_Ajax::class, 'dismiss_setup_notice' ),
-			'agentic_dismiss_pro_nudge'          => array( Admin_Ajax::class, 'dismiss_pro_nudge' ),
+			'agentic_dismiss_setup_notice'          => array( Admin_Ajax::class, 'dismiss_setup_notice' ),
+			'agentic_dismiss_pro_nudge'             => array( Admin_Ajax::class, 'dismiss_pro_nudge' ),
+			'agentic_dismiss_shadowed_agent_notice' => array( Admin_Ajax::class, 'dismiss_shadowed_agent_notice' ),
+			'agentic_dismiss_pending_approval_notice' => array( Admin_Ajax::class, 'dismiss_pending_approval_notice' ),
 
 			// Plugin deactivation modal (plugins.php).
 			'agentic_plugin_deactivate'          => array( Admin_Ajax::class, 'plugin_deactivate' ),
