@@ -519,61 +519,6 @@ class Okf_Store {
 	}
 
 	/**
-	 * Migrate Settings → General “Instructions for Agents” into an always-on OKF concept.
-	 *
-	 * Idempotent: runs once (option flag). Does not overwrite a richer existing concept body.
-	 *
-	 * @return bool True when a concept was created or updated from the option.
-	 */
-	public static function migrate_global_instructions_to_okf(): bool {
-		if ( get_option( 'agent_builder_okf_global_instructions_migrated', '' ) === '1' ) {
-			return false;
-		}
-
-		$legacy = trim( (string) get_option( 'agent_builder_global_instructions', '' ) );
-		self::ensure_bundle( 'site' );
-
-		$existing = self::get_concept( self::SITE_OVERVIEW_ID, 'site', true );
-		$wrote    = false;
-
-		if ( '' !== $legacy ) {
-			$need_write = is_wp_error( $existing );
-			if ( ! $need_write && is_array( $existing ) ) {
-				// Only overwrite if empty body or still the placeholder.
-				$body       = trim( (string) ( $existing['body'] ?? '' ) );
-				$need_write = ( '' === $body );
-			}
-			if ( $need_write ) {
-				$result = self::save_concept(
-					self::SITE_OVERVIEW_ID,
-					array(
-						'type'        => 'Policy',
-						'title'       => __( 'Site overview', 'agent-builder' ),
-						'description' => __( 'Standing guidance for every agent. Always included in prompts.', 'agent-builder' ),
-						'tags'        => array( 'site', 'overview', 'always-on' ),
-						'status'      => 'stable',
-						'always_on'   => true,
-					),
-					$legacy,
-					'site'
-				);
-				$wrote  = ! is_wp_error( $result );
-			} elseif ( is_array( $existing ) && ! self::is_always_on( $existing['frontmatter'] ?? array() ) ) {
-				// Ensure flag if concept already had content but not always_on.
-				$fm              = $existing['frontmatter'] ?? array();
-				$fm['always_on'] = true;
-				$fm['type']      = $fm['type'] ?? 'Policy';
-				$fm['title']     = $fm['title'] ?? __( 'Site overview', 'agent-builder' );
-				self::save_concept( self::SITE_OVERVIEW_ID, $fm, (string) ( $existing['body'] ?? '' ), 'site' );
-				$wrote = true;
-			}
-		}
-
-		update_option( 'agent_builder_okf_global_instructions_migrated', '1', false );
-		return $wrote;
-	}
-
-	/**
 	 * Build a compact prompt block from the wiki index + optional always-on concepts.
 	 *
 	 * @param string $agent_slug Bundle to prefer; falls back to site if empty.

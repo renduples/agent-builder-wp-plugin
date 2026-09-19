@@ -37,7 +37,7 @@ $agentic_api_key_row = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDataba
 		'agentic'
 	)
 );
-$agentic_api_key     = $agentic_api_key_row ? $agentic_api_key_row->api_key : get_option( 'agent_builder_ai_api_key_builtin', '' );
+$agentic_api_key     = $agentic_api_key_row ? $agentic_api_key_row->api_key : '';
 
 if ( ! empty( $agentic_api_key )
 	&& '1' === get_option( 'agent_builder_allow_deregister_on_uninstall', '0' )

@@ -1628,7 +1628,7 @@ class REST_API {
 	/**
 	 * Insert a single conversation turn into the dedicated conversations table.
 	 *
-	 * Silently no-ops if the table does not exist (pre-migration installs).
+	 * Silently no-ops if the table does not exist yet, as a defensive guard.
 	 *
 	 * @param string $session_id Session UUID.
 	 * @param int    $user_id    WordPress user ID.

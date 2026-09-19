@@ -311,15 +311,6 @@ final class Plugin {
 	 * @return void
 	 */
 	public function admin_init(): void {
-		// Run database schema upgrades if needed — admin_init fires once per session
-		// after an update, keeping this off the frontend/REST/cron critical path.
-		Activator::maybe_upgrade( AGENT_BUILDER_DB_VERSION );
-
-		// One-time: Settings “Instructions for Agents” → OKF site-overview (always-on).
-		if ( class_exists( __NAMESPACE__ . '\\Okf_Store' ) ) {
-			Okf_Store::migrate_global_instructions_to_okf();
-		}
-
 		// Setup notice — shown as a banner (see show_setup_needed_notice) rather than
 		// a hard redirect, so CLI-activated installs don't trap admins on the signup page.
 
