@@ -264,6 +264,7 @@ This plugin connects to external AI APIs to process prompts and tool executions 
   * ClawHub: `https://wry-manatee-359.convex.site/api/v1/`
 * **When used:** When browsing or importing community skills from the Skills screen.
 * **Data sent:** Unauthenticated GET requests for public skills; search queries when using ClawHub.
+* **Imported content:** A skill is plain text (YAML frontmatter + Markdown) stored in this plugin's own database — never a program file, and never written to disk, executed, or included as code. Manually uploading a skill file only accepts `.md`, `.markdown`, or `.txt`; anything else, including `.php`, is rejected before the file is even read.
 * **Terms of Service:** [GitHub Terms](https://docs.github.com/site-policy/github-terms/github-terms-of-service) | [GitHub Privacy](https://docs.github.com/site-policy/privacy-policies/github-privacy-statement) | [Convex Terms](https://www.convex.dev/legal/tos) | [Convex Privacy](https://www.convex.dev/legal/privacy) | [OpenClaw Docs](https://docs.openclaw.ai/)
 
 = GitHub API (Opt in) =

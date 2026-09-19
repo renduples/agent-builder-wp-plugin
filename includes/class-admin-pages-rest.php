@@ -1854,6 +1854,21 @@ class Admin_Pages_REST {
 	}
 
 	/**
+	 * Extensions accepted for an uploaded skill file. A skill's `content` is
+	 * only ever stored as a database TEXT column — never written back out to
+	 * disk, eval()'d, or include()'d anywhere in this plugin — but the
+	 * client-side `accept=".md"` on the file input is a UI hint only, not a
+	 * security control, so the upload itself must be validated server-side
+	 * too. Allowlisted rather than denylisted (see File_Manager's own
+	 * DENYLISTED_EXTENSIONS for why a denylist alone isn't enough) since a
+	 * skill file has one legitimate shape and everything else should be
+	 * rejected, not just the executable-looking cases.
+	 *
+	 * @var string[]
+	 */
+	private const ALLOWED_SKILL_FILE_EXTENSIONS = array( 'md', 'markdown', 'txt' );
+
+	/**
 	 * Import a SKILL.md file uploaded from the "Create Skill" gallery.
 	 *
 	 * Accepts any file matching the agentskills.io shape (YAML frontmatter +
@@ -1873,6 +1888,22 @@ class Admin_Pages_REST {
 
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- $_FILES[...]['error'] is a PHP-generated integer upload-error code (UPLOAD_ERR_* constant), not user-supplied string data.
 		if ( empty( $_FILES['agentic_skill_file']['tmp_name'] ) || UPLOAD_ERR_OK !== ( $_FILES['agentic_skill_file']['error'] ?? UPLOAD_ERR_NO_FILE ) ) {
+			wp_safe_redirect(
+				add_query_arg(
+					array(
+						'skill_view'   => 'new',
+						'import_error' => 1,
+					),
+					$redirect_base
+				)
+			);
+			exit;
+		}
+
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitize_file_name() below is the actual sanitizer; this just extracts the extension for the allowlist check.
+		$uploaded_name      = wp_unslash( $_FILES['agentic_skill_file']['name'] ?? '' );
+		$uploaded_extension = strtolower( pathinfo( sanitize_file_name( $uploaded_name ), PATHINFO_EXTENSION ) );
+		if ( ! in_array( $uploaded_extension, self::ALLOWED_SKILL_FILE_EXTENSIONS, true ) ) {
 			wp_safe_redirect(
 				add_query_arg(
 					array(
