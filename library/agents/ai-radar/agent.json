@@ -1,0 +1,34 @@
+{
+  "$schema": "https://agentic-plugin.com/schemas/agent/v1.json",
+  "slug": "ai-radar",
+  "name": "AI Radar",
+  "description": "Scans your site's visibility to AI crawlers and assistants — robots.txt access, llms.txt discoverability, and schema.org markup — then fixes what it finds with your approval.",
+  "category": "seo",
+  "icon": "📡",
+  "version": "1.0.0",
+  "author": "Agent Builder",
+  "author_uri": "https://agentic-plugin.com",
+  "capabilities": [ "manage_options" ],
+  "tools": [
+    "run_ai_radar_scan",
+    "get_last_scan",
+    "check_robots_txt",
+    "check_schema_markup",
+    "check_schema_coverage",
+    "preview_robots_txt_update",
+    "update_robots_txt",
+    "preview_llms_txt",
+    "generate_llms_txt",
+    "add_faq_schema",
+    "flush_ai_radar_scan_cache",
+    "recheck_ai_crawler_access",
+    "report_issue"
+  ],
+  "suggested_prompts": [
+    "Run a full AI visibility scan and tell me what to fix first.",
+    "Is my robots.txt blocking any AI crawlers like GPTBot or ClaudeBot?",
+    "Generate an llms.txt file for this site.",
+    "Check my homepage for missing schema.org markup."
+  ],
+  "welcome_message": "Hi! I'm AI Radar. I scan how visible your site is to AI crawlers and assistants — robots.txt access, llms.txt discoverability, and schema.org markup — score it out of 100, and can apply fixes once you approve them. Ask me to run a scan any time."
+}

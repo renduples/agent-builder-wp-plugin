@@ -2192,11 +2192,12 @@ const AGENT_READY_CHECK_LABELS = {
 	commerce_readiness: __( 'Commerce readiness', 'agent-builder' ),
 };
 
-// Checks whose only fix path today is Pro's AI Radar agent — everything else
-// non-fixable (currently just commerce_readiness) has no fix UI at all yet,
-// so it must not show the AI Radar upsell, which can't fix it either. See
-// class-agent-ready-score.php's check_commerce_readiness() docblock.
-const PRO_FIXABLE_CHECKS = [ 'llms_txt_present', 'robots_ai_directives', 'schema_org_present' ];
+// Checks whose only fix path today is the bundled AI Radar agent (a chat
+// conversation, not a one-click REST action like the other fixable checks
+// below) — everything else non-fixable (currently just commerce_readiness)
+// has no fix UI at all yet, so it must not show the AI Radar link either.
+// See class-agent-ready-score.php's check_commerce_readiness() docblock.
+const AI_RADAR_FIXABLE_CHECKS = [ 'llms_txt_present', 'robots_ai_directives', 'schema_org_present' ];
 
 function AgentReadyFixList( { categories, onApplyFix, applying } ) {
 	const entries = Object.entries( categories || {} )
@@ -2227,9 +2228,9 @@ function AgentReadyFixList( { categories, onApplyFix, applying } ) {
 						>
 							{ __( 'Fix now', 'agent-builder' ) }
 						</Button>
-					) : PRO_FIXABLE_CHECKS.includes( id ) ? (
-						<Button variant="link" href="https://agentic-plugin.com/pricing/" target="_blank">
-							{ __( 'Fix this with AI Radar (Pro) →', 'agent-builder' ) }
+					) : AI_RADAR_FIXABLE_CHECKS.includes( id ) ? (
+						<Button variant="link" href="admin.php?page=agentic-chat&agent=ai-radar">
+							{ __( 'Fix this with AI Radar →', 'agent-builder' ) }
 						</Button>
 					) : (
 						<span className="agentic-react-muted">

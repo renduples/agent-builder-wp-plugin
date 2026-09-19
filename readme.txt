@@ -36,7 +36,7 @@ One of the first WordPress plugins actively built for AI-agent safety.
 
 ### 🚀 Zero-Code Simplicity
 
-**11 free built-in agents**: Content Writer, SEO Optimizer, Site Health Sentinel, Support Triage, WordPress Assistant, Assistant Trainer, Agent Orchestrator, Editorial Director, User Assistant, Skills Assistant, Storefront Assistant.
+**12 free built-in agents**: Content Writer, SEO Optimizer, Site Health Sentinel, Support Triage, WordPress Assistant, Assistant Trainer, Agent Orchestrator, Editorial Director, User Assistant, Skills Assistant, Storefront Assistant, AI Radar.
 
 * **Basic / Advanced Modes:** Guided flows for owners; a full developer console (manifests, risk audits, REST API, MCP) for power users.
 * **Embed Everywhere:** Gutenberg blocks, shortcodes, or wp-admin launchers.
@@ -108,7 +108,7 @@ WebMCP (Web-based Model Context Protocol) lets your visitors' own AI browser age
 MCP (Model Context Protocol) is an open standard that lets external AI clients like Claude Desktop, Cursor, and VS Code connect directly to your WordPress site as a tool provider. You create a secure MCP credential in Settings → MCP, and external clients can then access safe tools on your site under your approval gate, with full audit logging.
 
 = Is Agent Builder free? =
-Yes. The free core plugin includes all 11 bundled agents, the complete tools/skills hub, the Approvals queue, the local OKF Knowledge wiki, multi-provider BYOK support, and cloud AI image/video generation (via the optional Agentic AI connection, which includes daily free credits — no purchase required). Advanced hosted vector embeddings and semantic search across large document sets are available via optional Agent Builder Pro add-ons.
+Yes. The free core plugin includes all 12 bundled agents, the complete tools/skills hub, the Approvals queue, the local OKF Knowledge wiki, multi-provider BYOK support, and cloud AI image/video generation (via the optional Agentic AI connection, which includes daily free credits — no purchase required). Advanced hosted vector embeddings and semantic search across large document sets are available via optional Agent Builder Pro add-ons.
 
 PDF and Word document generation are not bundled in this WordPress.org package (license and file-size reasons); spreadsheet creation, editing, and analysis are. The PDF/Word tools still appear in the Tools list so agents can use them if you're on a build that includes those libraries — Tools Hub marks them "Unavailable on this install" otherwise.
 
