@@ -501,8 +501,10 @@ class Agentic_Agent_Registry {
 
 		$agent = $agents[ $slug ];
 
-		// Block premium agents (those with a .requires-license marker) — this build
-		// has no license path at all.
+		// A purchased add-on agent ships a .requires-license marker in its own
+		// folder. No bundled agent carries that marker and nothing in this build
+		// writes one, so this branch is reachable only when a separately purchased
+		// package has been installed into a build that cannot verify its license.
 		if ( ! empty( $agent['directory'] ) && file_exists( $agent['directory'] . '/.requires-license' ) ) {
 			\Agentic\Security_Log::log_system(
 				'agent_activate_failed',
@@ -514,7 +516,7 @@ class Agentic_Agent_Registry {
 			);
 			return new WP_Error(
 				'license_required',
-				__( 'This agent requires a premium license. Upgrade at agentic-plugin.com to activate it.', 'agent-builder' )
+				__( 'This agent is a purchased add-on that needs a license, and this build cannot verify licenses. Activate it on the Agent Builder installation it was purchased for.', 'agent-builder' )
 			);
 		}
 

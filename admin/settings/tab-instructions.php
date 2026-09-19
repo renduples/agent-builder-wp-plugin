@@ -181,5 +181,5 @@ document.getElementById('agentic-persona-agent-select').addEventListener('change
 
 <div class="agentic-callout-blue">
 	<strong>Two ways to give agents knowledge</strong>
-	Use the free <a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-train-data&tab=wiki' ) ); ?>"><strong>Knowledge Wiki (OKF)</strong></a> for curated markdown concepts (policies, FAQs, playbooks) that stay on your server. For large PDFs and whole-site semantic search, upgrade to <strong>Agent Builder Pro</strong> and use <a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-train-data&tab=vector' ) ); ?>"><strong>Knowledge → Vector Store</strong></a>.
+	Use the free <a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-train-data&tab=wiki' ) ); ?>"><strong>Knowledge Wiki (OKF)</strong></a> for curated markdown concepts (policies, FAQs, playbooks) that stay on your server. Hosted vector search for large PDFs and whole-site semantic retrieval is available separately in Agent Builder Pro.
 </div>

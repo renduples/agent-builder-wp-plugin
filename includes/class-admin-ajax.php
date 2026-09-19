@@ -717,7 +717,7 @@ class Admin_Ajax {
 		}
 
 		if ( ! class_exists( '\Agentic\Costs_Manager' ) ) {
-			wp_send_json_error( 'Requires Agent Builder Pro.', 403 );
+			wp_send_json_error( 'Per-agent cost breakdown is not available in this build.', 403 );
 		}
 
 		$days = max( 1, min( 365, absint( wp_unslash( $_POST['days'] ?? 30 ) ) ) );
