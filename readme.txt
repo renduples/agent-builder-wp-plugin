@@ -229,7 +229,6 @@ This plugin connects to external AI APIs to process prompts and tool executions 
 = Agentic AI Services (Opt in) =
 * **Endpoints:**
   * Chat Service: `https://chat.agentic-plugin.com`
-  * Vector Store / RAG: `https://rag.agentic-plugin.com`
   * Image Generation: `https://imagegen.agentic-plugin.com`
   * Text-to-Speech: `https://tts.agentic-plugin.com`
   * Video Generation: `https://videogen.agentic-plugin.com`
@@ -245,9 +244,17 @@ This plugin connects to external AI APIs to process prompts and tool executions 
   * `https://agentic-plugin.com/wp-json/agentic/v1/register` — only when an administrator submits the plugin's sign-up form to obtain a free Agentic API key. Sends the administrator's email address, site URL, site name, plugin version, and plan tier.
   * `https://agentic-plugin.com/wp-json/agentic-license/v1/cancellation-feedback` — only when a licensed, previously-consenting administrator submits a reason on the plugin-deactivation survey. Sends the license key, site URL, the selected reason, an optional free-text comment, and plugin version.
   * `https://agentic-plugin.com/wp-json/agentic/v1/agents/activate-token` — only when installing an uploaded community or purchased agent package that includes a license file. Sends the license token, agent slug, and site URL.
-  * `https://agentic-plugin.com/wp-json/agentic/v1/report-issue` — only when an administrator explicitly confirms sending a diagnostic report via the in-chat "report an issue" tool (a preview is always shown first, and a second explicit confirmation is required before anything is sent). Sends site URL, recent error-log excerpts, the active AI provider, plugin/WordPress/PHP version information, and the administrator's own description of the problem.
+  * `https://agentic-plugin.com/wp-json/agentic/v1/report-issue` — only when an administrator explicitly confirms sending a diagnostic report via the in-chat "report an issue" tool (a preview is always shown first, and a second explicit confirmation is required before anything is sent). While composing the preview, the tool also makes a lightweight `GET /health` connectivity check against the Chat Service endpoint above to include in the report; this check itself sends no personal data. Sends site URL, recent error-log excerpts, the active AI provider, connectivity status, plugin/WordPress/PHP version information, and the administrator's own description of the problem.
+  * `https://agentic-plugin.com/wp-json/agentic/v1/deregister` — only when the plugin is uninstalled, and only if an Agentic API key is configured and an administrator has explicitly enabled "Deregister on uninstall". Sends the API key and site URL.
 * **Terms of Service:** [https://agentic-plugin.com/terms-of-service/](https://agentic-plugin.com/terms-of-service/)
 * **Privacy Policy:** [https://agentic-plugin.com/privacy-policy/](https://agentic-plugin.com/privacy-policy/)
+
+= Cloudflare Turnstile (Opt in) =
+* **Endpoint:** `https://challenges.cloudflare.com/turnstile/v0/siteverify`
+* **When used:** Only when an administrator has configured a Cloudflare Turnstile site key and secret key in Settings → Security — for anonymous chat-widget bot protection, and optionally for spam protection on native forms.
+* **Data sent:** Your configured Turnstile secret key, the visitor's challenge-response token, and the visitor's IP address.
+* **Terms of Service:** [https://www.cloudflare.com/website-terms/](https://www.cloudflare.com/website-terms/)
+* **Privacy Policy:** [https://www.cloudflare.com/privacypolicy/](https://www.cloudflare.com/privacypolicy/)
 
 = Community Agent Skills Repositories (Opt in) =
 * **Endpoints:**
@@ -279,6 +286,11 @@ This plugin connects to external AI APIs to process prompts and tool executions 
 * **Data sent:** Your site's URL, the URL of this plugin's own `/.well-known/webmcp.json` manifest, and a minimal score summary (overall score, letter grade, and the date it was last checked — not the full per-check breakdown).
 * **Terms of Service:** [https://sitepassport.org/terms](https://sitepassport.org/terms)
 * **Privacy Policy:** [https://sitepassport.org/privacy](https://sitepassport.org/privacy)
+
+= Your Own Configured Form Webhook (Opt in) =
+* **Endpoint:** A URL you configure yourself, per form — not a fixed third-party service. Behaves like the "Ollama (Local)" entry above: this plugin does not send data anywhere except where you've explicitly pointed it.
+* **When used:** Only for a native form that has a webhook URL set in its own form settings, and only when a visitor submits that specific form.
+* **Data sent:** The submitted form's field values, plus the form ID, title, and submission timestamp — sent only to the URL you configured, with an optional HMAC-SHA256 signature header if you also set a shared secret.
 
 
 == Changelog ==
