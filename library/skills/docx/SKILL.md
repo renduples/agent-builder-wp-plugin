@@ -5,6 +5,8 @@ description: "Use this skill whenever a Word document (.docx) is the primary inp
 
 # Word Document (docx) Skill
 
+**Availability:** These tools require the PhpWord library, which is not bundled with the free WordPress.org release of this plugin (only spreadsheet tools ship there — see the plugin's FAQ). If `read_docx`, `create_docx`, or `html_to_docx` returns an "unavailable" error, tell the user Word document generation isn't available on this install rather than retrying — self-hosted and Agent Builder Pro installs include it.
+
 ## Available Tools
 
 | Tool | When to use |

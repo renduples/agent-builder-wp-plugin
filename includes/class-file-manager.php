@@ -198,7 +198,7 @@ WEBCONFIG;
 			// umask produces — a misconfigured umask (e.g. 0000) would
 			// otherwise leave the new file world-writable. Set it explicitly
 			// rather than trust the environment.
-			// phpcs:ignore WordPress.WP.AlternativeFunctions.chmod_chmod
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_chmod
 			chmod( $path, self::SAFE_FILE_MODE );
 		}
 		return $result;
@@ -251,7 +251,7 @@ WEBCONFIG;
 		$result = copy( $src, $dest );
 		if ( $result ) {
 			// Same umask concern as put_contents()'s native fallback.
-			// phpcs:ignore WordPress.WP.AlternativeFunctions.chmod_chmod
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_chmod
 			chmod( $dest, self::SAFE_FILE_MODE );
 		}
 		return $result;
@@ -326,7 +326,7 @@ WEBCONFIG;
 			// wp_mkdir_p() already applies FS_CHMOD_DIR when it goes through
 			// WP_Filesystem, but its plain-mkdir() fallback inherits the
 			// host's umask — set the mode explicitly either way.
-			// phpcs:ignore WordPress.WP.AlternativeFunctions.chmod_chmod
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_chmod
 			chmod( $path, self::SAFE_DIR_MODE );
 		}
 		return $result;
@@ -382,7 +382,7 @@ WEBCONFIG;
 			// tool argument.
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
 			if ( false !== file_put_contents( $file, $content ) ) {
-				// phpcs:ignore WordPress.WP.AlternativeFunctions.chmod_chmod
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_chmod
 				chmod( $file, self::SAFE_FILE_MODE );
 			}
 		}
