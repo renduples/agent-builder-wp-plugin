@@ -126,13 +126,11 @@ class Run_Prompt_Tests extends \Agentic\Tool_Base {
 			return $denied;
 		}
 
-		$path = Manage_Prompt_Catalog::catalog_path();
-
-		if ( ! is_readable( $path ) ) {
-			return array(
-				'error' => 'The prompt catalog is not present on this install — prompt testing is only available on a source checkout.',
-			);
+		if ( ! $this->is_available() ) {
+			return $this->tool_error( 'catalog_missing', $this->get_unavailable_reason() );
 		}
+
+		$path = Manage_Prompt_Catalog::catalog_path();
 
 		try {
 			$catalog = Prompt_Catalog::load( $path );
@@ -220,6 +218,25 @@ class Run_Prompt_Tests extends \Agentic\Tool_Base {
 			),
 			'note'    => 'A verdict of PASS with stopped_for_approval true means the agent correctly paused for permission — that is the safety model working, not a failure.',
 		);
+	}
+
+
+	/**
+	 * Whether a prompt catalog can be found on this install.
+	 *
+	 * @return bool
+	 */
+	public function is_available(): bool {
+		return Prompt_Catalog::is_available();
+	}
+
+	/**
+	 * Explain why the tool cannot run.
+	 *
+	 * @return string
+	 */
+	public function get_unavailable_reason(): string {
+		return __( 'No prompt-test catalog was found on this site. The catalog normally ships with the plugin at library/prompt-tests/most_popular_prompts.md.', 'agent-builder' );
 	}
 
 	/**

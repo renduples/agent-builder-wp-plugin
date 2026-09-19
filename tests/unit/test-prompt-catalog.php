@@ -370,16 +370,17 @@ MD;
 	 * agent or tool that does not exist — without spending a penny on the LLM.
 	 */
 	public function test_the_shipped_catalog_is_valid(): void {
-		$path = AGENT_BUILDER_DIR . 'tests/most_popular_prompts.md';
+		$path = Prompt_Catalog::shipped_path();
 
-		if ( ! is_readable( $path ) ) {
-			$this->markTestSkipped( 'Catalog not present (stripped from the WordPress.org build).' );
-		}
+		$this->assertFileIsReadable(
+			$path,
+			'The shipped catalog must be present — it lives under library/ precisely so it survives the WordPress.org build.'
+		);
 
 		$result = Prompt_Catalog::load( $path );
 
 		$this->assertSame( array(), $result['warnings'], "Catalog parse warnings:\n" . implode( "\n", $result['warnings'] ) );
-		$this->assertGreaterThanOrEqual( 50, count( $result['rows'] ), 'Expected at least 50 prompts in the catalog.' );
+		$this->assertGreaterThanOrEqual( 54, count( $result['rows'] ), 'Expected at least 54 prompts in the catalog.' );
 
 		$agent_slugs = array_map(
 			'basename',
@@ -393,5 +394,43 @@ MD;
 		$problems = Prompt_Catalog::validate( $result['rows'], $agent_slugs, $tool_names );
 
 		$this->assertSame( array(), $problems, "Catalog validation problems:\n" . implode( "\n", $problems ) );
+
+		// The readme tells owners every bundled agent is covered. Keep that true.
+		$covered   = array_keys( Prompt_Catalog::count_by_agent( $result['rows'] ) );
+		$uncovered = array_values( array_diff( $agent_slugs, $covered ) );
+		sort( $uncovered );
+
+		$this->assertSame(
+			array(),
+			$uncovered,
+			'Bundled agents with no prompt in the catalog: ' . implode( ', ', $uncovered )
+		);
+	}
+
+	/**
+	 * The shipped catalog lives where the WordPress.org build will keep it.
+	 *
+	 * tests/ is stripped by .distignore, so a catalog there would ship a command
+	 * and three tools with nothing to read.
+	 */
+	public function test_shipped_catalog_survives_the_distributed_build(): void {
+		$this->assertStringContainsString( 'library/prompt-tests/', Prompt_Catalog::shipped_path() );
+		$this->assertStringNotContainsString( '/tests/', Prompt_Catalog::shipped_path() );
+	}
+
+	/**
+	 * The site's own copy wins over the shipped one when it exists.
+	 */
+	public function test_site_local_catalog_takes_precedence(): void {
+		$local = Prompt_Catalog::site_local_path();
+
+		$this->assertStringContainsString( 'prompt-tests', $local );
+		$this->assertStringNotContainsString( AGENT_BUILDER_DIR, $local, 'Edits must never land inside the plugin directory.' );
+
+		if ( is_readable( $local ) ) {
+			$this->assertSame( $local, Prompt_Catalog::resolve_path() );
+		} else {
+			$this->assertSame( Prompt_Catalog::shipped_path(), Prompt_Catalog::resolve_path() );
+		}
 	}
 }

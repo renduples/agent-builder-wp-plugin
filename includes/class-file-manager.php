@@ -365,9 +365,9 @@ WEBCONFIG;
 		$path = untrailingslashit( $path );
 
 		$protections = array(
-			'index.php'  => "<?php\n// Silence is golden.\n",
-			'.htaccess'  => self::PROTECTIVE_HTACCESS,
-			'web.config' => self::PROTECTIVE_WEB_CONFIG,
+			'index.php'   => "<?php\n// Silence is golden.\n",
+			'.htaccess'   => self::PROTECTIVE_HTACCESS,
+			'web.config'  => self::PROTECTIVE_WEB_CONFIG,
 		);
 
 		foreach ( $protections as $filename => $content ) {
@@ -436,8 +436,6 @@ WEBCONFIG;
 	 *   - `abilities.json` specifically, under the plugin's own bundled
 	 *     library/agents/ tree (AGENT_BUILDER_DIR) — see the narrow
 	 *     exception below; nothing else in the plugin directory is writable.
-	 *   - `tests/most_popular_prompts.md` specifically — the prompt-test
-	 *     catalog, also a single named file under AGENT_BUILDER_DIR.
 	 *
 	 * The plugin directory itself is deliberately NOT a general allowed
 	 * root: WordPress.org Plugin Developer FAQ / Guideline 8 treat a tool
@@ -447,14 +445,6 @@ WEBCONFIG;
 	 * agent's abilities.json (e.g. turning off WebMCP exposure on a risky
 	 * ability) — both take no tool parameters at all, so neither the path
 	 * nor the content is ever attacker-influenced.
-	 *
-	 * The prompt-catalog exception is the same shape: one exact filename, at
-	 * one exact location, holding markdown rather than anything executable
-	 * (the extension denylist still applies). It exists so manage_prompt_catalog
-	 * can maintain the catalog it tests against. On a WordPress.org install the
-	 * whole `tests/` directory is stripped from the zip, so the path does not
-	 * exist there and the write simply fails — the self-improvement loop only
-	 * works on a source checkout, which is where it belongs.
 	 *
 	 * Throws nothing — returns false so callers can surface the failure cleanly.
 	 *
@@ -499,19 +489,6 @@ WEBCONFIG;
 		if ( defined( 'AGENT_BUILDER_DIR' ) ) {
 			$agents_library_root = trailingslashit( AGENT_BUILDER_DIR ) . 'library/agents/';
 			if ( str_starts_with( $real, $agents_library_root ) && 'abilities.json' === basename( $real ) ) {
-				return true;
-			}
-
-			// Compared against the resolved plugin directory as well as the raw
-			// constant: a dev checkout is very often symlinked into wp-content/
-			// plugins/, and realpath() above has already resolved $real.
-			$catalog      = trailingslashit( AGENT_BUILDER_DIR ) . 'tests/most_popular_prompts.md';
-			$catalog_real = realpath( AGENT_BUILDER_DIR );
-			$catalog_real = false === $catalog_real
-				? $catalog
-				: trailingslashit( $catalog_real ) . 'tests/most_popular_prompts.md';
-
-			if ( $catalog === $real || $catalog_real === $real ) {
 				return true;
 			}
 		}

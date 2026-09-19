@@ -2,7 +2,7 @@
 /**
  * Prompt catalog parser for the prompt-testing harness.
  *
- * Reads tests/most_popular_prompts.md — a hand-edited markdown document whose
+ * Reads most_popular_prompts.md — a hand-edited markdown document whose
  * tables are the single source of truth for which prompts run against which
  * bundled agent. The markdown is authoritative on purpose: a sidecar JSON file
  * would drift the first time someone edited only the table.
@@ -41,6 +41,71 @@ final class Prompt_Catalog {
 	 * @var string[]
 	 */
 	public const REQUIRED_COLUMNS = array( 'prompt', 'agent' );
+
+	/**
+	 * The catalog that ships inside the plugin.
+	 *
+	 * Lives under library/ rather than tests/ because tests/ is stripped from
+	 * the WordPress.org zip — a command and three tools that ship with nothing
+	 * to read would make the readme describe something the distributed plugin
+	 * cannot do. This copy is treated as read-only: plugin updates replace it.
+	 *
+	 * @return string
+	 */
+	public static function shipped_path(): string {
+		return AGENT_BUILDER_DIR . 'library/prompt-tests/most_popular_prompts.md';
+	}
+
+	/**
+	 * The site's own editable copy, if it has one.
+	 *
+	 * Created on first edit by copying the shipped file (see
+	 * Prompt_Catalog_Writer). Keeping edits out of the plugin directory means a
+	 * plugin update never clobbers an owner's additions, and nothing needs to
+	 * write inside AGENT_BUILDER_DIR at all.
+	 *
+	 * @return string
+	 */
+	public static function site_local_path(): string {
+		$base = defined( 'AGENT_BUILDER_KNOWLEDGE_DIR' )
+			? AGENT_BUILDER_KNOWLEDGE_DIR
+			: WP_CONTENT_DIR . '/agentic-knowledge';
+
+		return trailingslashit( $base ) . 'prompt-tests/most_popular_prompts.md';
+	}
+
+	/**
+	 * The catalog to actually read: the site's copy when it exists, else the
+	 * shipped one.
+	 *
+	 * @return string
+	 */
+	public static function resolve_path(): string {
+		$local = self::site_local_path();
+
+		return is_readable( $local ) ? $local : self::shipped_path();
+	}
+
+	/**
+	 * Where prompt-test reports are written by default.
+	 *
+	 * Beside the site's catalog, for the same reason: it must be writable on a
+	 * zip install, where the plugin directory is not.
+	 *
+	 * @return string
+	 */
+	public static function default_report_path(): string {
+		return dirname( self::site_local_path() ) . '/prompt_test_results.md';
+	}
+
+	/**
+	 * Whether any catalog is readable on this install.
+	 *
+	 * @return bool
+	 */
+	public static function is_available(): bool {
+		return is_readable( self::resolve_path() );
+	}
 
 	/**
 	 * Load and parse a catalog file.

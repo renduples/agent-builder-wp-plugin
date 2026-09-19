@@ -8,6 +8,12 @@
  * coverage-gap analysis and the column legend all survive an agent editing a
  * row in the middle of the file.
  *
+ * Writes are copy-on-write: the first edit copies the shipped catalog into
+ * wp-content/agentic-knowledge/ and every edit after that lands there. The
+ * shipped copy inside the plugin is never modified, so a plugin update cannot
+ * clobber an owner's additions — and nothing here needs permission to write
+ * inside the plugin directory.
+ *
  * @package    Agent_Builder
  * @subpackage Prompt_Testing
  * @since      3.4.1
@@ -44,6 +50,7 @@ final class Prompt_Catalog_Writer {
 	 * @return array{success: bool, message: string, row?: array<string, mixed>}
 	 */
 	public static function update_row( string $path, string $id, array $fields ): array {
+		$path  = self::writable_copy( $path );
 		$found = self::find_row( $path, $id );
 
 		if ( null === $found ) {
@@ -74,6 +81,7 @@ final class Prompt_Catalog_Writer {
 	 * @return array{success: bool, message: string}
 	 */
 	public static function remove_row( string $path, string $id ): array {
+		$path  = self::writable_copy( $path );
 		$found = self::find_row( $path, $id );
 
 		if ( null === $found ) {
@@ -112,6 +120,7 @@ final class Prompt_Catalog_Writer {
 			return self::fail( 'Both agent and prompt are required to add a row.' );
 		}
 
+		$path    = self::writable_copy( $path );
 		$catalog = Prompt_Catalog::load( $path );
 		$rows    = $catalog['rows'];
 
@@ -144,6 +153,53 @@ final class Prompt_Catalog_Writer {
 			'message' => sprintf( 'Added %s to the %s table.', $row['id'], $agent ),
 			'row'     => $row,
 		);
+	}
+
+	/**
+	 * Resolve the path an edit should actually be written to.
+	 *
+	 * Anything already outside the plugin directory is edited in place — that
+	 * covers the site's own copy and a --prompts path a developer chose. A path
+	 * inside the plugin is the shipped, read-only catalog, so it is copied to
+	 * the site-local location first and the copy is edited instead.
+	 *
+	 * @param string $path Requested path.
+	 * @return string Path to edit.
+	 */
+	private static function writable_copy( string $path ): string {
+		$plugin_dir  = defined( 'AGENT_BUILDER_DIR' ) ? trailingslashit( AGENT_BUILDER_DIR ) : '';
+		$real        = realpath( $path );
+		$real        = false === $real ? $path : $real;
+		$plugin_real = '';
+		if ( '' !== $plugin_dir ) {
+			$resolved    = realpath( $plugin_dir );
+			$plugin_real = trailingslashit( false === $resolved ? $plugin_dir : $resolved );
+		}
+
+		$inside_plugin = '' !== $plugin_real && str_starts_with( $real, $plugin_real );
+
+		if ( ! $inside_plugin ) {
+			return $path;
+		}
+
+		$local = Prompt_Catalog::site_local_path();
+
+		if ( is_readable( $local ) ) {
+			return $local;
+		}
+
+		\Agentic\File_Manager::ensure_protected_dir( dirname( $local ) );
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Local catalog file read as data.
+		$contents = (string) file_get_contents( $path );
+
+		if ( \Agentic\File_Manager::put_contents( $local, $contents ) ) {
+			return $local;
+		}
+
+		// The copy failed — fall back to the original so the caller gets a
+		// clear write error rather than silently editing the wrong file.
+		return $path;
 	}
 
 	/**

@@ -1,8 +1,8 @@
 # Most Popular Prompts
 
-The prompt catalog for `wp agent prompt-test`. Fifty things that genuinely frustrate
+The prompt catalog for `wp agent prompt-test`. Fifty-four things that genuinely frustrate
 WordPress site owners, ranked by how much they hurt, each assigned to the bundled agent
-that should handle it.
+that should handle it. Every bundled agent has at least one.
 
 **This file is the source of truth.** The runner parses the tables below directly — there is
 no sidecar data file to keep in sync. Edit it by hand; `wp agent prompt-test --dry-run`
@@ -161,6 +161,20 @@ still appears with `Coverage: none` or `partial` and is collected under
 | ID | Rank | Agent | Prompt | Expect Tools | Coverage | Notes | Source |
 |---|---|---|---|---|---|---|---|
 | P50 | 50 | storefront-assistant | Show me what you've got for under fifty pounds. | wc_browse_products | full | Shopper-facing, not owner-facing. Needs WooCommerce with products; will skip or fail on a store-less site. | woo |
+
+## Assistant Trainer (assistant-trainer)
+
+| ID | Rank | Agent | Prompt | Expect Tools | Coverage | Notes | Source |
+|---|---|---|---|---|---|---|---|
+| P51 | 51 | assistant-trainer | I keep doing the same job by hand every week. Can you build me something that does it? | analyze_requirements | partial | The meta-agent's core job. Asks clarifying questions first, so a single turn may not reach generate_agent. | faq |
+| P52 | 52 | assistant-trainer | What AI agents do I already have, and what does each one do? | list_library_agents | full | | faq |
+
+## Skills Assistant (skills-assistant)
+
+| ID | Rank | Agent | Prompt | Expect Tools | Coverage | Notes | Source |
+|---|---|---|---|---|---|---|---|
+| P53 | 53 | skills-assistant | My agent keeps writing in the wrong tone. Can I teach it how we write? | manage_skill | full | Expect a gated pass — writing a skill changes how the agent behaves from then on. | content |
+| P54 | 54 | skills-assistant | Has someone already written instructions for handling WooCommerce orders that I can reuse? | browse_community_skills | full | Hits the live WordPress.org skills repo, so it needs outbound HTTP. | woo |
 
 ---
 

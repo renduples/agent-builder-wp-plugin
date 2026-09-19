@@ -33,9 +33,8 @@ class Test_Prompt_Catalog_Writer extends TestCase {
 	/**
 	 * Point the writer at a scratch file inside an allowed write root.
 	 *
-	 * File_Manager only permits the real catalog path under the plugin
-	 * directory, so the fixture lives in uploads instead — which also proves the
-	 * writer goes through File_Manager rather than around it.
+	 * Uploads rather than the plugin directory, which proves the writer goes
+	 * through File_Manager rather than around it.
 	 */
 	public function setUp(): void {
 		parent::setUp();
@@ -239,6 +238,40 @@ MD;
 
 		$this->assertFalse( $result['success'] );
 		$this->assertStringContainsString( 'P99', $result['message'] );
+	}
+
+	/**
+	 * An edit aimed at the shipped catalog is redirected to the site's own copy.
+	 *
+	 * This is what lets the plugin directory stay read-only: the shipped file is
+	 * never modified, so a plugin update cannot clobber an owner's additions.
+	 */
+	public function test_editing_the_shipped_catalog_redirects_to_a_site_local_copy(): void {
+		$shipped = Prompt_Catalog::shipped_path();
+		$local   = Prompt_Catalog::site_local_path();
+
+		if ( is_readable( $local ) ) {
+			unlink( $local );
+		}
+
+		$before = md5_file( $shipped );
+
+		$result = Prompt_Catalog_Writer::update_row( $shipped, 'P01', array( 'notes' => 'redirect probe' ) );
+
+		$this->assertTrue( $result['success'], $result['message'] );
+
+		// The shipped copy is untouched...
+		$this->assertSame( $before, md5_file( $shipped ), 'The shipped catalog must never be modified.' );
+
+		// ...and the edit landed in the site's own copy.
+		$this->assertFileIsReadable( $local );
+		$rows = array_column( Prompt_Catalog::load( $local )['rows'], null, 'id' );
+		$this->assertSame( 'redirect probe', $rows['P01']['notes'] );
+
+		// Once it exists, it is what the runner reads.
+		$this->assertSame( $local, Prompt_Catalog::resolve_path() );
+
+		unlink( $local );
 	}
 
 	/**

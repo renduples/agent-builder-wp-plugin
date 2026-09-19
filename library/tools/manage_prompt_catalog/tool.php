@@ -2,7 +2,7 @@
 /**
  * Tool: manage_prompt_catalog
  *
- * Read and edit tests/most_popular_prompts.md — the ranked catalog of
+ * Read and edit most_popular_prompts.md — the ranked catalog of
  * real-world prompts the prompt-test harness replays against the bundled
  * agents. Lets an agent keep the suite that measures it current: re-rank a
  * prompt whose frustration has changed, correct an expectation that no longer
@@ -126,13 +126,11 @@ class Manage_Prompt_Catalog extends \Agentic\Tool_Base {
 			return $denied;
 		}
 
-		$path = self::catalog_path();
-
-		if ( ! is_readable( $path ) ) {
-			return array(
-				'error' => 'The prompt catalog is not present on this install. It ships in the GitHub repo at tests/most_popular_prompts.md but is excluded from the WordPress.org build, so prompt testing is only available on a source checkout.',
-			);
+		if ( ! $this->is_available() ) {
+			return $this->tool_error( 'catalog_missing', $this->get_unavailable_reason() );
 		}
+
+		$path = self::catalog_path();
 
 		$action = sanitize_key( (string) ( $arguments['action'] ?? '' ) );
 
@@ -151,12 +149,35 @@ class Manage_Prompt_Catalog extends \Agentic\Tool_Base {
 	}
 
 	/**
-	 * The catalog path.
+	 * The catalog to read: the site's own copy when it has one, else the
+	 * copy that ships with the plugin.
+	 *
+	 * Edits are redirected to the site-local copy by Prompt_Catalog_Writer, so
+	 * the shipped file is never modified and a plugin update cannot overwrite
+	 * an owner's additions.
 	 *
 	 * @return string
 	 */
 	public static function catalog_path(): string {
-		return AGENT_BUILDER_DIR . 'tests/most_popular_prompts.md';
+		return Prompt_Catalog::resolve_path();
+	}
+
+	/**
+	 * Whether a prompt catalog can be found on this install.
+	 *
+	 * @return bool
+	 */
+	public function is_available(): bool {
+		return Prompt_Catalog::is_available();
+	}
+
+	/**
+	 * Explain why the tool cannot run.
+	 *
+	 * @return string
+	 */
+	public function get_unavailable_reason(): string {
+		return __( 'No prompt-test catalog was found on this site. The catalog normally ships with the plugin at library/prompt-tests/most_popular_prompts.md.', 'agent-builder' );
 	}
 
 	/**

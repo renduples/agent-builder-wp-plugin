@@ -3,7 +3,7 @@
 PHPUnit tells you the code works. This tells you the *agents* work.
 
 `wp agent prompt-test` replays a ranked catalog of real-world prompts —
-[`most_popular_prompts.md`](most_popular_prompts.md), fifty things that genuinely frustrate
+[`most_popular_prompts.md`](most_popular_prompts.md), fifty-four things that genuinely frustrate
 WordPress site owners — against the bundled agents on a live install, and writes a report
 saying which ones answered, which tools they actually reached for, and what it cost.
 
@@ -32,9 +32,9 @@ ask first — but do not rely on that.
 - **An administrator account.** The bundled agents require between them `manage_options`,
   `edit_posts`, `moderate_comments`, `list_users`, `edit_users` and `read`. Pass it with
   WP-CLI's own global flag: `--user=admin`. Running as nobody is an error, not a silent skip.
-- **A source checkout.** `tests/` is stripped from the WordPress.org zip, so the catalog is not
-  present on a zip install. The command still works there — point it at your own catalog with
-  `--prompts=<path>`.
+That is all. The catalog ships **inside the plugin**, at
+`library/prompt-tests/most_popular_prompts.md`, so this works on a WordPress.org install as
+well as a source checkout.
 
 ## Quick start
 
@@ -73,8 +73,8 @@ deliberate: there is no default that quietly spends money.
 | `--max-iterations=<n>` | `10` | Tool-loop ceiling per prompt. |
 | `--timeout=<seconds>` | provider default | Per-request LLM timeout. |
 | `--delay=<seconds>` | `0` | Sleep between prompts, to stay under a rate limit. |
-| `--prompts=<path>` | `tests/most_popular_prompts.md` | Alternate catalog. Also accepted positionally. |
-| `--output=<path>` | `tests/prompt_test_results.md` | Where the report goes. `-` writes to stdout. |
+| `--prompts=<path>` | site copy, else shipped | Alternate catalog. Also accepted positionally. |
+| `--output=<path>` | `wp-content/agentic-knowledge/prompt-tests/prompt_test_results.md` | Where the report goes. `-` writes to stdout. |
 | `--format=<fmt>` | `md` | `md` writes the report; `table`/`json`/`csv`/`yaml` print to stdout instead. |
 | `--max-response-chars=<n>` | `2000` | Truncate responses in the report. `0` keeps them whole. |
 | `--allow-skips` | off | Exit 0 even when prompts were skipped for a missing capability. |
@@ -125,6 +125,17 @@ they never contaminate the agent cost you are actually measuring.
 [`most_popular_prompts.md`](most_popular_prompts.md) is the source of truth — the runner parses
 those markdown tables directly. There is no generated sidecar to keep in sync; edit the file.
 
+There are two copies, and the difference matters:
+
+| | Path | Role |
+|---|---|---|
+| **Shipped** | `library/prompt-tests/most_popular_prompts.md` | Ships in the plugin. Treated as read-only — a plugin update replaces it. |
+| **Yours** | `wp-content/agentic-knowledge/prompt-tests/most_popular_prompts.md` | Created the first time anything edits the catalog, by copying the shipped file. |
+
+The runner reads your copy when it exists and the shipped one otherwise, and
+`manage_prompt_catalog` always writes to your copy. So your additions survive plugin updates,
+and nothing ever needs to write inside the plugin directory.
+
 Its columns and the rules for writing a good prompt are documented at the top of the file
 itself. The short version:
 
@@ -142,8 +153,10 @@ in about a second, for free. Run it after any edit.
 
 ## Reading the report
 
-`tests/prompt_test_results.md` is overwritten on every run and is **gitignored** — it contains
-real LLM output from your site and real cost figures, and it churns every run.
+The report is written beside your catalog, at
+`wp-content/agentic-knowledge/prompt-tests/prompt_test_results.md`, and overwritten on every
+run. It contains real LLM output from your site and real cost figures, so it is deliberately
+kept out of the plugin directory and out of git.
 
 It is rewritten after *every prompt*, not once at the end. A fatal, an OOM kill or a ctrl-C
 thirty prompts into a paid run still leaves a readable report of the thirty that finished.
@@ -246,3 +259,5 @@ a failure as a report to read rather than a build to block.
 The parser and the catalog *are* covered by PHPUnit — `tests/unit/test-prompt-catalog.php` and
 `test-prompt-catalog-writer.php` validate the shipped catalog on every run, for free. A typo in
 a tool name or an agent slug fails there, in milliseconds, long before it can waste a paid run.
+They also assert that every bundled agent has at least one prompt, and that the shipped catalog
+lives somewhere the WordPress.org build keeps.

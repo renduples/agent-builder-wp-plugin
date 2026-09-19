@@ -56,7 +56,8 @@ class Prompt_Test_Command extends \WP_CLI_Command {
 	 * ## OPTIONS
 	 *
 	 * [<catalog>]
-	 * : Path to a prompt catalog. Defaults to tests/most_popular_prompts.md.
+	 * : Path to a prompt catalog. Defaults to the site's own copy if it has one,
+	 * otherwise the one bundled with the plugin.
 	 *
 	 * [--all]
 	 * : Run every prompt in the catalog.
@@ -374,7 +375,7 @@ class Prompt_Test_Command extends \WP_CLI_Command {
 			return $path;
 		}
 
-		return AGENT_BUILDER_DIR . 'tests/most_popular_prompts.md';
+		return Prompt_Catalog::resolve_path();
 	}
 
 	/**
@@ -389,10 +390,9 @@ class Prompt_Test_Command extends \WP_CLI_Command {
 	 */
 	private function catalog_help( string $path, string $message ): string {
 		return $message . "\n"
-			. "The prompt catalog ships in the GitHub repo but is excluded from the WordPress.org zip.\n"
 			. sprintf( "Expected at: %s\n", $path )
-			. 'Get it from https://github.com/renduples/agent-builder-wp-plugin/blob/main/tests/most_popular_prompts.md '
-			. 'or pass --prompts=<path> to use your own.';
+			. sprintf( "The catalog normally ships with the plugin at %s.\n", 'library/prompt-tests/most_popular_prompts.md' )
+			. 'Pass --prompts=<path> to use a catalog of your own.';
 	}
 
 	/**
@@ -408,15 +408,9 @@ class Prompt_Test_Command extends \WP_CLI_Command {
 			return $path;
 		}
 
-		$default = AGENT_BUILDER_DIR . 'tests/prompt_test_results.md';
-
-		if ( is_dir( dirname( $default ) ) ) {
-			return $default;
-		}
-
-		$uploads = wp_upload_dir( null, false );
-
-		return trailingslashit( $uploads['basedir'] ) . 'agent-builder/prompt_test_results.md';
+		// Beside the site's own catalog, not inside the plugin: on a
+		// WordPress.org install the plugin directory is not writable.
+		return Prompt_Catalog::default_report_path();
 	}
 
 	/**
