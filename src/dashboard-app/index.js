@@ -17,7 +17,7 @@ function formatInt( n ) {
 
 function AdminPageFooter( { footer } ) {
 	const f = footer || {};
-	const docUrl = f.doc_url || 'https://agentic-plugin.com/the-dashboard/';
+	const docUrl = f.doc_url || 'https://agentic-plugin.com/documentation/dashboard/';
 	const supportUrl = f.support_url || 'https://agentic-plugin.com/support/';
 	const policy =
 		f.policy ||
