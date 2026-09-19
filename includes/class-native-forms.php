@@ -602,6 +602,30 @@ class Agentic_Native_Forms {
 	}
 
 	/**
+	 * Count the published entries submitted to a form.
+	 *
+	 * Entries are `agentic_form_entry` posts whose post_parent is the form
+	 * (see save_entry()); there is no separate entries table.
+	 *
+	 * @param int $form_id Form CPT post ID.
+	 * @return int
+	 */
+	public function count_entries( int $form_id ): int {
+		$query = new WP_Query(
+			array(
+				'post_type'      => self::ENTRY_CPT,
+				'post_parent'    => $form_id,
+				'post_status'    => 'publish',
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+				'no_found_rows'  => false,
+			)
+		);
+
+		return (int) $query->found_posts;
+	}
+
+	/**
 	 * Send notification emails on new submission.
 	 *
 	 * Reads per-form notification config from meta. Falls back to admin email

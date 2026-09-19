@@ -102,14 +102,9 @@ class List_Native_Forms extends \Agentic\Tool_Base {
 			$definition = $engine->get_definition( $form_id );
 			$fields     = $definition['fields'] ?? array();
 
-			// Count entries.
-			global $wpdb;
-			$entry_count = (int) $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-				$wpdb->prepare(
-					"SELECT COUNT(*) FROM {$wpdb->prefix}agentic_form_entries WHERE form_id = %d",
-					$form_id
-				)
-			);
+			// Entries are agentic_form_entry posts parented to the form, not rows
+			// in a table — the engine counts them.
+			$entry_count = $engine->count_entries( $form_id );
 
 			$forms[] = array(
 				'id'                => $form_id,

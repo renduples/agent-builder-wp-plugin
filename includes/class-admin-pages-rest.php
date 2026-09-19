@@ -81,7 +81,7 @@ class Admin_Pages_REST {
 	 * each already gated behind its own `agentic_*` capability at the
 	 * wp-admin menu level (see Admin_Menu_Handler::register()). The
 	 * capability required here must match that per-page grant, otherwise a
-	 * role granted e.g. `agentic_manage_tools` can see the menu item and
+	 * role granted e.g. `agent_builder_manage_tools` can see the menu item and
 	 * the empty page shell but every data request 403s.
 	 *
 	 * @param \WP_REST_Request $request Request.
@@ -99,34 +99,34 @@ class Admin_Pages_REST {
 		$agents_actions = array( 'save_approval_prefs', 'approval_decide', 'approval_decide_bulk' );
 
 		if ( 'tools' === $page || 'skills' === $page || in_array( $action, $tools_actions, true ) ) {
-			return current_user_can( 'agentic_manage_tools' );
+			return current_user_can( 'agent_builder_manage_tools' );
 		}
 
 		if ( 'approvals' === $page || 'deployment' === $page || in_array( $action, $agents_actions, true ) ) {
-			return current_user_can( 'agentic_manage_agents' );
+			return current_user_can( 'agent_builder_manage_agents' );
 		}
 
 		if ( 'logs' === $page ) {
-			return current_user_can( 'agentic_view_audit_log' );
+			return current_user_can( 'agent_builder_view_audit_log' );
 		}
 
 		if ( 'agent-ready' === $page || in_array( $action, array( 'apply_free_fix', 'confirm_agent_ready_proposal', 'toggle_webmcp_expose', 'submit_to_directory' ), true ) ) {
 			// submit_to_directory is the one deliberate phone-home this feature
 			// makes — require manage_options explicitly rather than the page's
-			// normal agentic_manage_settings, even though the current_user_can(
+			// normal agent_builder_manage_settings, even though the current_user_can(
 			// 'manage_options' ) short-circuit above already covers the common
 			// case; this keeps the requirement legible if that short-circuit is
 			// ever narrowed.
 			return 'submit_to_directory' === $action
 				? current_user_can( 'manage_options' )
-				: current_user_can( 'agentic_manage_settings' );
+				: current_user_can( 'agent_builder_manage_settings' );
 		}
 
 		// Site-wide Basic/Advanced default — same cap as the Dashboard
 		// Interface Settings card / Settings → Interface (the other
 		// callers of Admin_Settings_REST::set_ui_mode()).
 		if ( 'set_ui_mode' === $action ) {
-			return current_user_can( 'agentic_manage_settings' );
+			return current_user_can( 'agent_builder_manage_settings' );
 		}
 
 		// set_screen_mode is a personal, per-user preference for one screen —
@@ -137,20 +137,20 @@ class Admin_Pages_REST {
 		if ( 'set_screen_mode' === $action || 'reset_screen_modes' === $action ) {
 			$screen = sanitize_key( (string) $request->get_param( 'screen' ) );
 			if ( in_array( $screen, array( 'tools', 'skills' ), true ) ) {
-				return current_user_can( 'agentic_manage_tools' );
+				return current_user_can( 'agent_builder_manage_tools' );
 			}
 			if ( in_array( $screen, array( 'approvals', 'deployment', 'agents' ), true ) ) {
-				return current_user_can( 'agentic_manage_agents' );
+				return current_user_can( 'agent_builder_manage_agents' );
 			}
 			if ( 'logs' === $screen ) {
-				return current_user_can( 'agentic_view_audit_log' );
+				return current_user_can( 'agent_builder_view_audit_log' );
 			}
-			return current_user_can( 'agentic_manage_settings' );
+			return current_user_can( 'agent_builder_manage_settings' );
 		}
 
 		// train-data, safety-center, and anything unmapped stay behind the
 		// broadest admin-settings privilege as a safe default.
-		return current_user_can( 'agentic_manage_settings' );
+		return current_user_can( 'agent_builder_manage_settings' );
 	}
 
 	/**
@@ -1171,7 +1171,7 @@ class Admin_Pages_REST {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	private static function save_approval_prefs( \WP_REST_Request $request ) {
-		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'agentic_manage_agents' ) ) {
+		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'agent_builder_manage_agents' ) ) {
 			return new \WP_Error( 'forbidden', __( 'Permission denied.', 'agent-builder' ), array( 'status' => 403 ) );
 		}
 
@@ -1260,7 +1260,7 @@ class Admin_Pages_REST {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	private static function approval_decide( \WP_REST_Request $request ) {
-		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'agentic_manage_agents' ) ) {
+		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'agent_builder_manage_agents' ) ) {
 			return new \WP_Error( 'forbidden', __( 'Permission denied.', 'agent-builder' ), array( 'status' => 403 ) );
 		}
 		$id     = absint( $request->get_param( 'id' ) );
@@ -1315,7 +1315,7 @@ class Admin_Pages_REST {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	private static function approval_decide_bulk( \WP_REST_Request $request ) {
-		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'agentic_manage_agents' ) ) {
+		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'agent_builder_manage_agents' ) ) {
 			return new \WP_Error( 'forbidden', __( 'Permission denied.', 'agent-builder' ), array( 'status' => 403 ) );
 		}
 
@@ -1741,7 +1741,7 @@ class Admin_Pages_REST {
 	 * CSV file — e.g. to attach to a support email when diagnosing an issue.
 	 * Plain admin-post handler (not REST) so a simple GET navigation
 	 * triggers a native browser download; gated the same way the Logs page
-	 * itself is (agentic_view_audit_log), plus a nonce since this both reads
+	 * itself is (agent_builder_view_audit_log), plus a nonce since this both reads
 	 * potentially sensitive data and is reachable via direct URL.
 	 *
 	 * @return void
@@ -1750,7 +1750,7 @@ class Admin_Pages_REST {
 		if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( wp_unslash( $_GET['_wpnonce'] ) ), 'agentic_export_logs' ) ) {
 			wp_die( esc_html__( 'Security check failed. Please reload the Activity page and try exporting again.', 'agent-builder' ), 403 );
 		}
-		if ( ! current_user_can( 'agentic_view_audit_log' ) && ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( 'agent_builder_view_audit_log' ) && ! current_user_can( 'manage_options' ) ) {
 			wp_die( esc_html__( 'You do not have permission to export logs.', 'agent-builder' ), 403 );
 		}
 
@@ -1830,7 +1830,7 @@ class Admin_Pages_REST {
 		if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( wp_unslash( $_GET['_wpnonce'] ) ), 'agentic_export_skill' ) ) {
 			wp_die( esc_html__( 'Security check failed. Please reload the Skills page and try exporting again.', 'agent-builder' ), 403 );
 		}
-		if ( ! current_user_can( 'agentic_manage_tools' ) ) {
+		if ( ! current_user_can( 'agent_builder_manage_tools' ) ) {
 			wp_die( esc_html__( 'You do not have permission to export skills.', 'agent-builder' ), 403 );
 		}
 
@@ -1880,7 +1880,7 @@ class Admin_Pages_REST {
 		if ( ! isset( $_POST['agentic_skill_import_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['agentic_skill_import_nonce'] ) ), 'agentic_import_skill' ) ) {
 			wp_die( esc_html__( 'Security check failed. Please reload the Skills page and try importing again.', 'agent-builder' ), 403 );
 		}
-		if ( ! current_user_can( 'agentic_manage_tools' ) ) {
+		if ( ! current_user_can( 'agent_builder_manage_tools' ) ) {
 			wp_die( esc_html__( 'You do not have permission to import skills.', 'agent-builder' ), 403 );
 		}
 
@@ -2733,7 +2733,7 @@ class Admin_Pages_REST {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	private static function set_emergency_stop( \WP_REST_Request $request ) {
-		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'agentic_manage_settings' ) ) {
+		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'agent_builder_manage_settings' ) ) {
 			return new \WP_Error( 'forbidden', __( 'Permission denied.', 'agent-builder' ), array( 'status' => 403 ) );
 		}
 

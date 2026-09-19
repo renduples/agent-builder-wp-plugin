@@ -6,7 +6,9 @@
  * which parts of the Agent Builder plugin and which agents.
  *
  * Settings are stored in the `agent_builder_user_roles` option and are enforced
- * via a `user_has_cap` filter that injects `agentic_*` custom capabilities.
+ * via a `user_has_cap` filter that injects `agent_builder_*` custom capabilities.
+ * The capabilities are never written to a role or user (no add_cap), so the
+ * prefix lives only in code and the stored settings hold the bare privilege keys.
  * Administrators always retain full access regardless of stored settings.
  *
  * @package    Agent_Builder
@@ -32,7 +34,7 @@ class User_Roles {
 	const OPTION_KEY = 'agent_builder_user_roles';
 
 	/** Prefix for all custom capabilities injected by this class. */
-	const CAP_PREFIX = 'agentic_';
+	const CAP_PREFIX = 'agent_builder_';
 
 	// -------------------------------------------------------------------------
 	// Privilege definitions
@@ -42,7 +44,7 @@ class User_Roles {
 	 * Plugin administration privilege definitions.
 	 *
 	 * Keys become the unprefixed capability names (e.g. `view_dashboard` →
-	 * `agentic_view_dashboard`).
+	 * `agent_builder_view_dashboard`).
 	 *
 	 * @return array<string, array{label: string, description: string}>
 	 */
@@ -208,7 +210,7 @@ class User_Roles {
 		// manage_options capability, not the literal 'administrator' role name, so
 		// multisite super admins and custom admin-equivalent roles (which can
 		// already reach the manage_options-gated pages) are not locked out of the
-		// agentic_* -gated pages such as Chat. manage_options is WordPress's own
+		// agent_builder_* -gated pages such as Chat. manage_options is WordPress's own
 		// definition of a site administrator.
 		if ( in_array( 'administrator', (array) $user->roles, true ) || $user->has_cap( 'manage_options' ) ) {
 			return true;
@@ -235,7 +237,7 @@ class User_Roles {
 	/**
 	 * `user_has_cap` filter callback.
 	 *
-	 * Dynamically grants `agentic_*` capabilities based on stored role settings.
+	 * Dynamically grants `agent_builder_*` capabilities based on stored role settings.
 	 * Hooked in `Plugin::init_hooks()` so it runs for both admin and REST contexts.
 	 *
 	 * @param array<string, bool> $allcaps All capabilities the user currently has.
