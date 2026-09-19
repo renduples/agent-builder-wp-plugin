@@ -505,7 +505,7 @@ document.addEventListener('DOMContentLoaded', function() {
 				if (passed === total) {
 					html += '<div class="notice notice-success inline" style="margin-bottom: 15px;"><p><strong>All checks passed!</strong> Your server is ready for the Agent Builder.</p></div>';
 				} else {
-					html += '<div class="notice notice-error inline" style="margin-bottom: 15px;"><p><strong>Some checks failed.</strong> Please fix the issues below before using the Agent Builder.</p></div>';
+					html += '<div class="notice notice-error inline" style="margin-bottom: 15px;"><p><strong>System checks failed.</strong> Please address the issues below before using Agent Builder.</p></div>';
 				}
 				
 				// Results table
