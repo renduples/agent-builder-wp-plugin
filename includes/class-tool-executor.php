@@ -81,7 +81,7 @@ class Tool_Executor {
 	 * @param array           $arguments          Decoded tool arguments from the LLM.
 	 * @param string          $agent_id           Calling agent identifier.
 	 * @param string          $mode               Agent operating mode ('disabled'|'supervised'|'autonomous').
-	 * @param string          $invocation_context How this run was triggered ('chat'|'cron'|'hook'|'cli').
+	 * @param string          $invocation_context How this run was triggered ('chat'|'cron'|'hook'|'cli'|'mcp').
 	 * @param Agent_Base|null $agent             Agent instance for inline tool fallback, or null.
 	 * @param string          $session_id         Browser-tab session ID for session-scoped grants.
 	 * @return array Tool result.
