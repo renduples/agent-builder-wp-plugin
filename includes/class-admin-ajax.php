@@ -203,6 +203,49 @@ class Admin_Ajax {
 	}
 
 	/**
+	 * Persist dismissal of the shadowed-bundled-agents notice, scoped to the
+	 * exact set of currently-shadowed slugs the admin saw. Stored (not just
+	 * "dismissed = true") so the notice comes back if a *different* agent
+	 * ever gets shadowed later — dismissing today's warning shouldn't
+	 * silence a genuinely new one next month.
+	 *
+	 * @return void
+	 */
+	public static function dismiss_shadowed_agent_notice(): void {
+		check_ajax_referer( 'agentic_dismiss_shadowed_agent_notice', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( 'Permission denied.' );
+		}
+
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitize_key() applied per-item below; this is just the raw list to split.
+		$slugs = isset( $_POST['slugs'] ) ? wp_unslash( $_POST['slugs'] ) : '';
+		$slugs = array_map( 'sanitize_key', explode( ',', (string) $slugs ) );
+		sort( $slugs );
+
+		update_user_meta( get_current_user_id(), 'agentic_shadowed_agent_notice_dismissed', implode( ',', $slugs ) );
+		wp_send_json_success();
+	}
+
+	/**
+	 * Persist dismissal of the pending-approvals notice, scoped to the exact
+	 * count the admin saw (see dismiss_shadowed_agent_notice() for why).
+	 *
+	 * @return void
+	 */
+	public static function dismiss_pending_approval_notice(): void {
+		check_ajax_referer( 'agentic_dismiss_pending_approval_notice', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( 'Permission denied.' );
+		}
+
+		$count = isset( $_POST['count'] ) ? absint( wp_unslash( $_POST['count'] ) ) : 0;
+		update_user_meta( get_current_user_id(), 'agentic_pending_approval_notice_dismissed_count', $count );
+		wp_send_json_success();
+	}
+
+	/**
 	 * Toggle a tool's enabled/disabled state.
 	 *
 	 * @return void

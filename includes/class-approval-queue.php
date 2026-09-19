@@ -55,14 +55,42 @@ class Approval_Queue {
 
 		$count = $this->get_pending_count();
 
-		if ( $count > 0 ) {
-			$url = admin_url( 'admin.php?page=agentic-approvals' );
-			printf(
-				'<div class="notice notice-warning"><p><strong>Agentic:</strong> %s pending approval(s). <a href="%s">Review now</a></p></div>',
-				esc_html( $count ),
-				esc_url( $url )
-			);
+		if ( $count <= 0 ) {
+			return;
 		}
+
+		// Dismissal is scoped to the exact current count, not a flat "seen it"
+		// flag — so acknowledging today's 3 pending approvals doesn't also
+		// silence a 4th one that shows up tomorrow.
+		$dismissed = (int) get_user_meta( get_current_user_id(), 'agentic_pending_approval_notice_dismissed_count', true );
+		if ( $dismissed === $count ) {
+			return;
+		}
+
+		$url   = admin_url( 'admin.php?page=agentic-approvals' );
+		$nonce = wp_create_nonce( 'agentic_dismiss_pending_approval_notice' );
+		printf(
+			'<div class="notice notice-warning is-dismissible" id="agentic-pending-approval-notice" data-count="%d" data-nonce="%s"><p><strong>Agentic:</strong> %s pending approval(s). <a href="%s">Review now</a></p></div>',
+			(int) $count,
+			esc_attr( $nonce ),
+			esc_html( $count ),
+			esc_url( $url )
+		);
+		?>
+		<script>
+		( function () {
+			var notice = document.getElementById( 'agentic-pending-approval-notice' );
+			if ( ! notice ) { return; }
+			notice.addEventListener( 'click', function ( e ) {
+				if ( ! e.target.classList.contains( 'notice-dismiss' ) ) { return; }
+				wp.ajax.post( 'agentic_dismiss_pending_approval_notice', {
+					nonce: notice.dataset.nonce,
+					count: notice.dataset.count,
+				} );
+			} );
+		} () );
+		</script>
+		<?php
 	}
 
 	/**
