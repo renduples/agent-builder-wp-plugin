@@ -38,6 +38,30 @@
 		</properties>
 	</rule>
 
+	<rule ref="WordPress.WP.Capabilities">
+		<properties>
+			<!--
+				The plugin's custom capabilities. They are virtual: never
+				registered with add_cap(), but granted at runtime by
+				User_Roles::filter_user_has_cap() from the stored role settings
+				(User_Roles::CAP_PREFIX + privilege key). Listing them here is
+				what tells the Capabilities sniff they are real.
+			-->
+			<property name="custom_capabilities" type="array">
+				<element value="agent_builder_view_dashboard"/>
+				<element value="agent_builder_manage_agents"/>
+				<element value="agent_builder_view_audit_log"/>
+				<element value="agent_builder_manage_tools"/>
+				<element value="agent_builder_run_tasks_manually"/>
+				<element value="agent_builder_manage_settings"/>
+				<element value="agent_builder_chat_frontend"/>
+				<element value="agent_builder_chat_admin_bar"/>
+				<element value="agent_builder_view_agent_list"/>
+				<element value="agent_builder_use_uploaded_agents"/>
+			</property>
+		</properties>
+	</rule>
+
 	<rule ref="WordPress.Security.EscapeOutput"/>
 	<rule ref="WordPress.Security.NonceVerification"/>
 </ruleset>
