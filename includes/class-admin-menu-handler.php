@@ -37,7 +37,7 @@ class Admin_Menu_Handler {
 		add_menu_page(
 			__( 'Agent Builder', 'agent-builder' ),
 			__( 'Agent Builder', 'agent-builder' ),
-			'agentic_view_dashboard',
+			'agent_builder_view_dashboard',
 			'agent-builder',
 			fn() => $this->render_page( 'dashboard' ),
 			'dashicons-superhero',
@@ -72,7 +72,7 @@ class Admin_Menu_Handler {
 			'agent-builder',
 			__( 'Agent Builder — Dashboard', 'agent-builder' ),
 			__( 'Dashboard', 'agent-builder' ),
-			'agentic_view_dashboard',
+			'agent_builder_view_dashboard',
 			'agent-builder'
 		);
 
@@ -80,7 +80,7 @@ class Admin_Menu_Handler {
 			'agent-builder',
 			__( 'Agent Builder — Chat', 'agent-builder' ),
 			__( 'Chat', 'agent-builder' ),
-			'agentic_chat_admin_bar',
+			'agent_builder_chat_admin_bar',
 			'agentic-chat',
 			array( $this, 'render_chat_page' )
 		);
@@ -99,7 +99,7 @@ class Admin_Menu_Handler {
 			'agent-builder',
 			__( 'Agent Builder — Agents', 'agent-builder' ),
 			$agentic_agents_menu_title,
-			'agentic_manage_agents',
+			'agent_builder_manage_agents',
 			'agentic-agents',
 			fn() => $this->render_page( 'agents' )
 		);
@@ -112,7 +112,7 @@ class Admin_Menu_Handler {
 			'agent-builder',
 			__( 'Agent Builder — Publish', 'agent-builder' ),
 			__( 'Publish', 'agent-builder' ),
-			'agentic_manage_agents',
+			'agent_builder_manage_agents',
 			'agentic-deployment',
 			fn() => $this->render_page( 'deployment' )
 		);
@@ -122,7 +122,7 @@ class Admin_Menu_Handler {
 			'',
 			__( 'Agent Builder — Run', 'agent-builder' ),
 			__( 'Run', 'agent-builder' ),
-			'agentic_run_tasks_manually',
+			'agent_builder_run_tasks_manually',
 			'agentic-run-task',
 			fn() => $this->render_page( 'run-task' )
 		);
@@ -142,7 +142,7 @@ class Admin_Menu_Handler {
 			'',
 			__( 'Agent Builder — Add Knowledge', 'agent-builder' ),
 			__( 'Add Knowledge', 'agent-builder' ),
-			'agentic_manage_settings',
+			'agent_builder_manage_settings',
 			'agentic-knowledge-wizard',
 			fn() => $this->render_page( 'knowledge-wizard' )
 		);
@@ -161,7 +161,7 @@ class Admin_Menu_Handler {
 			'agent-builder',
 			__( 'Agent Builder — Knowledge', 'agent-builder' ),
 			__( 'Knowledge', 'agent-builder' ),
-			'agentic_manage_settings',
+			'agent_builder_manage_settings',
 			'agentic-train-data',
 			array( $this, 'render_train_data_page' )
 		);
@@ -170,7 +170,7 @@ class Admin_Menu_Handler {
 			'agent-builder',
 			__( 'Agent Builder — Tools', 'agent-builder' ),
 			__( 'Tools', 'agent-builder' ),
-			'agentic_manage_tools',
+			'agent_builder_manage_tools',
 			'agentic-tools',
 			fn() => $this->render_page( 'tools' )
 		);
@@ -182,7 +182,7 @@ class Admin_Menu_Handler {
 			'agent-builder',
 			__( 'Agent Builder — Skills', 'agent-builder' ),
 			__( 'Skills', 'agent-builder' ),
-			'agentic_manage_tools',
+			'agent_builder_manage_tools',
 			'agentic-skills',
 			fn() => $this->render_page( 'skills' )
 		);
@@ -201,7 +201,7 @@ class Admin_Menu_Handler {
 			'agent-builder',
 			__( 'Agent Builder — Approvals', 'agent-builder' ),
 			$agentic_approvals_title,
-			'agentic_manage_agents',
+			'agent_builder_manage_agents',
 			'agentic-approvals',
 			fn() => $this->render_page( 'approvals' )
 		);
@@ -216,7 +216,7 @@ class Admin_Menu_Handler {
 			'agent-builder',
 			__( 'Agent Builder — Safety Center', 'agent-builder' ),
 			__( 'Safety Center', 'agent-builder' ),
-			'agentic_manage_settings',
+			'agent_builder_manage_settings',
 			'agentic-safety-center',
 			fn() => $this->render_page( 'safety-center' )
 		);
@@ -235,7 +235,7 @@ class Admin_Menu_Handler {
 			'agent-builder',
 			__( 'Agent Builder — Site Passport', 'agent-builder' ),
 			__( 'Passport', 'agent-builder' ),
-			'agentic_manage_settings',
+			'agent_builder_manage_settings',
 			'agentic-agent-ready',
 			fn() => $this->render_page( 'agent-ready' )
 		);
@@ -246,7 +246,7 @@ class Admin_Menu_Handler {
 			'agent-builder',
 			__( 'Agent Builder — Activity', 'agent-builder' ),
 			__( 'Activity', 'agent-builder' ),
-			'agentic_view_audit_log',
+			'agent_builder_view_audit_log',
 			'agentic-audit-log',
 			fn() => $this->render_page( 'logs' )
 		);
@@ -255,7 +255,7 @@ class Admin_Menu_Handler {
 			'agent-builder',
 			__( 'Agent Builder — Settings', 'agent-builder' ),
 			__( 'Settings', 'agent-builder' ),
-			'agentic_manage_settings',
+			'agent_builder_manage_settings',
 			'agentic-settings',
 			array( $this, 'render_settings_page' )
 		);
@@ -501,7 +501,7 @@ class Admin_Menu_Handler {
 	 * @return void
 	 */
 	public function handle_save_quick_actions(): void {
-		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'agentic_manage_settings' ) ) {
+		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'agent_builder_manage_settings' ) ) {
 			wp_die( esc_html__( 'You do not have permission to customize Quick Actions.', 'agent-builder' ) );
 		}
 		check_admin_referer( 'agentic_save_quick_actions' );
@@ -555,7 +555,7 @@ class Admin_Menu_Handler {
 		if ( 'account' !== sanitize_key( wp_unslash( $_GET['tab'] ) ) ) {
 			return;
 		}
-		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'agentic_manage_settings' ) ) {
+		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'agent_builder_manage_settings' ) ) {
 			return;
 		}
 		wp_safe_redirect( admin_url( 'admin.php?page=agentic-settings&tab=providers' ) );
@@ -574,7 +574,7 @@ class Admin_Menu_Handler {
 		if ( ! isset( $_POST['agentic_provider_action'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			return;
 		}
-		if ( ! current_user_can( 'agentic_manage_settings' ) && ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( 'agent_builder_manage_settings' ) && ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
 		check_admin_referer( 'agentic_provider_nonce' );
@@ -662,7 +662,7 @@ class Admin_Menu_Handler {
 	 * @return void
 	 */
 	public function handle_set_emergency_stop(): void {
-		if ( ! current_user_can( 'agentic_manage_settings' ) && ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( 'agent_builder_manage_settings' ) && ! current_user_can( 'manage_options' ) ) {
 			wp_die( esc_html__( 'You do not have permission to use the emergency stop.', 'agent-builder' ) );
 		}
 		check_admin_referer( 'agentic_set_emergency_stop' );
@@ -689,7 +689,7 @@ class Admin_Menu_Handler {
 	 * @return void
 	 */
 	public function handle_set_agent_updates(): void {
-		if ( ! current_user_can( 'agentic_manage_settings' ) && ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( 'agent_builder_manage_settings' ) && ! current_user_can( 'manage_options' ) ) {
 			wp_die( esc_html__( 'You do not have permission to change update settings.', 'agent-builder' ) );
 		}
 		check_admin_referer( 'agentic_set_agent_updates' );
@@ -814,21 +814,21 @@ class Admin_Menu_Handler {
 				'label' => __( 'Dashboard', 'agent-builder' ),
 				'url'   => admin_url( 'admin.php?page=agent-builder' ),
 				'pages' => array( 'agent-builder' ),
-				'cap'   => 'agentic_view_dashboard',
+				'cap'   => 'agent_builder_view_dashboard',
 			),
 			array(
 				'id'    => 'agents',
 				'label' => __( 'Agents', 'agent-builder' ),
 				'url'   => admin_url( 'admin.php?page=agentic-agents' ),
 				'pages' => array( 'agentic-agents' ),
-				'cap'   => 'agentic_manage_agents',
+				'cap'   => 'agent_builder_manage_agents',
 			),
 			array(
 				'id'       => 'tools-skills',
 				'label'    => __( 'Tools & Skills', 'agent-builder' ),
 				'url'      => admin_url( 'admin.php?page=agentic-tools' ),
 				'pages'    => array( 'agentic-tools', 'agentic-skills' ),
-				'cap'      => 'agentic_manage_tools',
+				'cap'      => 'agent_builder_manage_tools',
 				'children' => array(
 					array(
 						'id'    => 'tools',
@@ -849,14 +849,14 @@ class Admin_Menu_Handler {
 				'label' => __( 'Knowledge', 'agent-builder' ),
 				'url'   => admin_url( 'admin.php?page=agentic-train-data' ),
 				'pages' => array( 'agentic-train-data' ),
-				'cap'   => 'agentic_manage_settings',
+				'cap'   => 'agent_builder_manage_settings',
 			),
 			array(
 				'id'    => 'logs',
 				'label' => __( 'Logs', 'agent-builder' ),
 				'url'   => admin_url( 'admin.php?page=agentic-audit-log' ),
 				'pages' => array( 'agentic-audit-log' ),
-				'cap'   => 'agentic_view_audit_log',
+				'cap'   => 'agent_builder_view_audit_log',
 			),
 			array(
 				'id'    => 'providers',
@@ -864,7 +864,7 @@ class Admin_Menu_Handler {
 				'url'   => admin_url( 'admin.php?page=agentic-settings&tab=providers' ),
 				'pages' => array( 'agentic-settings' ),
 				'tabs'  => array( 'providers' ),
-				'cap'   => 'agentic_manage_settings',
+				'cap'   => 'agent_builder_manage_settings',
 			),
 			array(
 				'id'           => 'settings',
@@ -872,7 +872,7 @@ class Admin_Menu_Handler {
 				'url'          => admin_url( 'admin.php?page=agentic-settings' ),
 				'pages'        => array( 'agentic-settings' ),
 				'exclude_tabs' => array( 'providers' ),
-				'cap'          => 'agentic_manage_settings',
+				'cap'          => 'agent_builder_manage_settings',
 			),
 		);
 	}
@@ -1037,7 +1037,7 @@ class Admin_Menu_Handler {
 	 * @return void
 	 */
 	private function render_global_mode_switch( string $page ): void {
-		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'agentic_manage_settings' ) ) {
+		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'agent_builder_manage_settings' ) ) {
 			return;
 		}
 

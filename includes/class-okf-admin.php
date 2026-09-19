@@ -23,7 +23,7 @@ class Okf_Admin {
 	/**
 	 * Capability required to manage the wiki.
 	 */
-	const CAP = 'agentic_manage_settings';
+	const CAP = 'agent_builder_manage_settings';
 
 	/**
 	 * Register AJAX actions (optional; dispatcher also maps handlers).

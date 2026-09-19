@@ -129,14 +129,14 @@ class Dashboard_REST {
 	 * View capability.
 	 */
 	public static function can_view(): bool {
-		return current_user_can( 'manage_options' ) || current_user_can( 'agentic_view_dashboard' );
+		return current_user_can( 'manage_options' ) || current_user_can( 'agent_builder_view_dashboard' );
 	}
 
 	/**
 	 * Manage capability (toggles / quick actions).
 	 */
 	public static function can_manage(): bool {
-		return current_user_can( 'manage_options' ) || current_user_can( 'agentic_manage_settings' );
+		return current_user_can( 'manage_options' ) || current_user_can( 'agent_builder_manage_settings' );
 	}
 
 	/**

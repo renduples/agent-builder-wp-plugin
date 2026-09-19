@@ -78,13 +78,13 @@ class Knowledge_Wizard_REST {
 	}
 
 	/**
-	 * Same gate as the classic Wiki editor (agentic_manage_settings or
+	 * Same gate as the classic Wiki editor (agent_builder_manage_settings or
 	 * manage_options — see admin/train-data.php).
 	 *
 	 * @return bool
 	 */
 	public static function can_manage(): bool {
-		return current_user_can( 'agentic_manage_settings' ) || current_user_can( 'manage_options' );
+		return current_user_can( 'agent_builder_manage_settings' ) || current_user_can( 'manage_options' );
 	}
 
 	/**

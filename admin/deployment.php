@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'agentic_manage_agents' ) ) {
+if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'agent_builder_manage_agents' ) ) {
 	wp_die( esc_html__( 'You do not have permission to access this page.', 'agent-builder' ) );
 }
 

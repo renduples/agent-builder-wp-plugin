@@ -4,7 +4,7 @@
  *
  * Read-only lookup of the real, currently authenticated WordPress user this
  * conversation belongs to: display name, WP roles, and the specific
- * agentic_* / manage_options capabilities that actually gate what they can
+ * agent_builder_* / manage_options capabilities that actually gate what they can
  * do in this plugin (including whether they can resolve an item in the
  * Approval Queue). Lets an agent tailor its guidance — e.g. explaining that
  * only an administrator can approve a high-risk action — without ever
@@ -81,14 +81,14 @@ class Get_User_Context extends \Agentic\Tool_Base {
 
 		$user             = wp_get_current_user();
 		$is_admin         = current_user_can( 'manage_options' );
-		$can_manage_agents = $is_admin || current_user_can( 'agentic_manage_agents' );
+		$can_manage_agents = $is_admin || current_user_can( 'agent_builder_manage_agents' );
 
 		$capabilities = array();
 		foreach ( \Agentic\User_Roles::get_plugin_privileges() as $key => $info ) {
-			$capabilities[ $key ] = current_user_can( 'agentic_' . $key );
+			$capabilities[ $key ] = current_user_can( \Agentic\User_Roles::CAP_PREFIX . $key );
 		}
 		foreach ( \Agentic\User_Roles::get_agent_privileges() as $key => $info ) {
-			$capabilities[ $key ] = current_user_can( 'agentic_' . $key );
+			$capabilities[ $key ] = current_user_can( \Agentic\User_Roles::CAP_PREFIX . $key );
 		}
 
 		$roles = array_values( (array) $user->roles );

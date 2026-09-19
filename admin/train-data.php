@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-if ( ! current_user_can( 'agentic_manage_settings' ) && ! current_user_can( 'manage_options' ) ) {
+if ( ! current_user_can( 'agent_builder_manage_settings' ) && ! current_user_can( 'manage_options' ) ) {
 	wp_die( esc_html__( 'You do not have permission to access this page.', 'agent-builder' ) );
 }
 
@@ -25,9 +25,9 @@ if ( ! current_user_can( 'agentic_manage_settings' ) && ! current_user_can( 'man
 // knowledge-wizard guided flow — no duplicated wizard logic. Advanced keeps
 // today's wiki editor + Instructions/Memory/Vector tabs unchanged. Screen
 // key 'knowledge' uses the unmapped set_screen_mode fallback
-// (agentic_manage_settings), which matches this page's capability — same
+// (agent_builder_manage_settings), which matches this page's capability — same
 // as Phase 6 'providers', unlike Phase 4 'agents' which had to be mapped
-// because that screen requires agentic_manage_agents.
+// because that screen requires agent_builder_manage_agents.
 $agentic_knowledge_advanced = \Agentic\Admin_Menu_Handler::is_advanced_mode( 'knowledge' );
 
 // Agent Builder Pro (which owns the Vector Store admin UI) can never be

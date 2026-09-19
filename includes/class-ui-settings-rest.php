@@ -68,7 +68,7 @@ class UI_Settings_REST {
 	 * @return bool
 	 */
 	public static function check_permission(): bool {
-		return current_user_can( 'agentic_manage_settings' ) || current_user_can( 'manage_options' );
+		return current_user_can( 'agent_builder_manage_settings' ) || current_user_can( 'manage_options' );
 	}
 
 	/**

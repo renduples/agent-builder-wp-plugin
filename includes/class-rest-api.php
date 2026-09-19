@@ -1556,13 +1556,13 @@ class REST_API {
 	 * Check if the user can manage the admin approval queue.
 	 *
 	 * Same capability the Approvals admin page is registered under
-	 * (agentic_manage_agents), so a role granted that privilege via
+	 * (agent_builder_manage_agents), so a role granted that privilege via
 	 * Settings > Users can actually act on it, not just view the page.
 	 *
 	 * @return bool
 	 */
 	public function check_manage_agents(): bool {
-		return current_user_can( 'manage_options' ) || current_user_can( 'agentic_manage_agents' );
+		return current_user_can( 'manage_options' ) || current_user_can( 'agent_builder_manage_agents' );
 	}
 
 	/**

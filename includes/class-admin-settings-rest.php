@@ -167,14 +167,14 @@ class Admin_Settings_REST {
 	 * Permission.
 	 */
 	public static function can_manage(): bool {
-		return current_user_can( 'agentic_manage_settings' ) || current_user_can( 'manage_options' );
+		return current_user_can( 'agent_builder_manage_settings' ) || current_user_can( 'manage_options' );
 	}
 
 	/**
 	 * Permission for minting/revoking MCP "Agent Builder Relay" Application
 	 * Passwords — a real authentication credential, not just a plugin
 	 * setting, so this requires actual site-administrator capability
-	 * (manage_options) rather than the broader agentic_manage_settings a
+	 * (manage_options) rather than the broader agent_builder_manage_settings a
 	 * role could otherwise be granted.
 	 */
 	public static function can_manage_mcp_credentials(): bool {
