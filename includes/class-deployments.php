@@ -39,9 +39,6 @@ class Deployments {
 	const SOURCE_CODE  = 'code';
 	const SOURCE_AUTO  = 'auto';
 
-	/** Migration flag option key. */
-	const MIGRATED_OPTION = 'agent_builder_deployments_migrated';
-
 	// -------------------------------------------------------------------------
 	// Table management
 	// -------------------------------------------------------------------------

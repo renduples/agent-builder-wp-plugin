@@ -270,8 +270,7 @@ class Agent_Prompt_Builder {
 	/**
 	 * Build a global instructions / always-on knowledge block shared by every agent.
 	 *
-	 * Primary source: Knowledge Wiki (OKF) concepts marked always_on (site + agent).
-	 * Fallback: legacy option agent_builder_global_instructions (pre-migration).
+	 * Source: Knowledge Wiki (OKF) concepts marked always_on (site + agent).
 	 * Per-agent persona notes remain separate and more specific.
 	 *
 	 * @param string $agent_slug Agent identifier, so agent-scoped always_on concepts
@@ -279,21 +278,11 @@ class Agent_Prompt_Builder {
 	 * @return string Block to append, or empty string when nothing set.
 	 */
 	public static function global_instructions_block( string $agent_slug = '' ): string {
-		// Soft migrate once so existing sites keep context in the wiki.
-		if ( class_exists( __NAMESPACE__ . '\\Okf_Store' ) ) {
-			Okf_Store::migrate_global_instructions_to_okf();
-			$okf = Okf_Store::always_on_prompt_block( $agent_slug );
-			if ( '' !== $okf ) {
-				return $okf;
-			}
-		}
-
-		// Legacy fallback until content lives in OKF.
-		$instructions = trim( (string) get_option( 'agent_builder_global_instructions', '' ) );
-		if ( '' === $instructions ) {
+		if ( ! class_exists( __NAMESPACE__ . '\\Okf_Store' ) ) {
 			return '';
 		}
-		return "\n\n[SITE INSTRUCTIONS]\n" . $instructions . "\n";
+
+		return Okf_Store::always_on_prompt_block( $agent_slug );
 	}
 
 	/**

@@ -299,8 +299,7 @@ class Dashboard_REST {
 		return new \WP_REST_Response(
 			array(
 				'version'                 => AGENT_BUILDER_VERSION,
-				// agentic_db_schema_version is the pre-2.14.0 option name, read here only as a fallback for sites that haven't run migrate_schema_2_14_0() yet.
-				'schema_version'          => (string) get_option( 'agent_builder_db_schema_version', get_option( 'agentic_db_schema_version', AGENT_BUILDER_DB_VERSION ) ),
+				'schema_version'          => (string) get_option( 'agent_builder_db_schema_version', AGENT_BUILDER_DB_VERSION ),
 				'is_pro'                  => $is_pro,
 				'is_advanced'             => $is_advanced,
 				'is_configured'           => $is_configured,

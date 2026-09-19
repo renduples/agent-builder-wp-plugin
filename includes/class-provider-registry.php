@@ -751,23 +751,6 @@ class Provider_Registry {
 			}
 		}
 		unset( $p );
-
-		// One-time migration: move the Agentic AI key from the legacy option into the table.
-		$legacy_key = get_option( 'agent_builder_ai_api_key_builtin', '' );
-		if ( ! empty( $legacy_key ) ) {
-			$agentic_entry = null;
-			foreach ( self::$cache as $p ) {
-				if ( 'agentic' === $p['slug'] ) {
-					$agentic_entry = $p;
-					break;
-				}
-			}
-			if ( $agentic_entry && empty( $agentic_entry['api_key'] ) ) {
-				self::save_api_key( 'agentic', $legacy_key );
-				self::$cache = null; // Invalidate so next call re-loads with the migrated key.
-			}
-			delete_option( 'agent_builder_ai_api_key_builtin' );
-		}
 	}
 
 	/**
