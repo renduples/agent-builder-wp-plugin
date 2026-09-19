@@ -71,7 +71,7 @@ function SettingsPageFooter( { tab } ) {
 		( typeof window !== 'undefined' && window.agenticSettingsBoot ) || {};
 	const byTab = boot.footerByTab || {};
 	const f = ( tab && byTab[ tab ] ) || boot.footer || {};
-	const docUrl = f.doc_url || 'https://agentic-plugin.com/settings/';
+	const docUrl = f.doc_url || 'https://agentic-plugin.com/documentation/settings/';
 	const supportUrl = f.support_url || 'https://agentic-plugin.com/support/';
 	const policy =
 		f.policy ||
