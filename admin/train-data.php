@@ -399,11 +399,7 @@ if ( $agentic_knowledge_advanced ) {
 		<?php else : ?>
 			<p class="agentic-kn-pro-note">
 				<?php
-				printf(
-					/* translators: %s: link to Agent Builder Pro pricing. */
-					esc_html__( 'The free Knowledge Wiki stays fully available without Pro. Need large-scale semantic search across big document sets instead? See %s for hosted vector RAG.', 'agent-builder' ),
-					'<a href="https://agentic-plugin.com/pricing/" target="_blank" rel="noopener">' . esc_html__( 'Agent Builder Pro', 'agent-builder' ) . '</a>'
-				);
+				esc_html_e( 'The free Knowledge Wiki stays fully available without Pro. Need large-scale semantic search across big document sets instead? Hosted vector RAG is available separately in Agent Builder Pro.', 'agent-builder' );
 				?>
 			</p>
 		<?php endif; ?>

@@ -57,7 +57,7 @@ Knowledge Files:
 Agents can be augmented with reference data by declaring knowledge_files in abilities.json.
 These text files are automatically appended to the system prompt at runtime.
 Available knowledge files in wp-content/agentic-knowledge/:
-  - platform-knowledge.txt — Agent Builder platform reference: features, deployment options, providers, pro services, REST API, CLI commands, URLs to documentation and pricing pages
+  - platform-knowledge.txt — Agent Builder platform reference: features, deployment options, providers, REST API, CLI commands, and documentation URLs
 Pass knowledge_files to create_agent_files when the agent would benefit from platform awareness (e.g. agents that answer questions about Agent Builder, guide users, or integrate with platform features).
 Do NOT include knowledge_files for agents that are purely task-focused and don't need platform context (e.g. a code formatter, a data importer).
 
@@ -87,7 +87,7 @@ Code Quality:
 Scope boundaries — you ONLY train assistants. For other tasks, direct users to:
 - Content Writer — for writing or editing post content
 - WordPress Assistant — for questions about how Agent Builder works
-- Agent Builder Pro (https://agentic-plugin.com/pricing/) — for standalone plugin generation, theme customisation, and other specialist needs beyond the bundled agents
+- Standalone plugin generation, theme customisation, and other specialist needs beyond the bundled agents are available separately through Agent Builder Pro
 
 == Out of Scope ==
 

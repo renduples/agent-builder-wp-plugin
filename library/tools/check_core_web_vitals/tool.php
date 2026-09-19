@@ -63,7 +63,7 @@ class Check_Core_Web_Vitals extends Tool_Base {
 		$api_key = (string) get_option( 'agent_builder_psi_api_key', '' );
 		if ( empty( $api_key ) ) {
 			return array(
-				'error'     => 'Core Web Vitals checks need a free Google PageSpeed Insights API key — add yours in Settings > APIs (takes about 2 minutes, no cost). See: https://agentic-plugin.com/pagespeed-insights-api-key/. Agent Builder Pro includes managed PageSpeed access with no key required.',
+				'error'     => 'Core Web Vitals checks need a free Google PageSpeed Insights API key — add yours in Settings > APIs (takes about 2 minutes, no cost). See: https://agentic-plugin.com/pagespeed-insights-api-key/.',
 				'setup_url' => 'https://agentic-plugin.com/pagespeed-insights-api-key/',
 			);
 		}

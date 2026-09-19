@@ -1225,7 +1225,7 @@
             if (data.history_days_limit) {
                 const limitNote = document.createElement('div');
                 limitNote.className = 'agentic-history-limit-note';
-                limitNote.innerHTML = 'Showing last ' + data.history_days_limit + ' days. <a href="https://agentic-plugin.com/pricing/" target="_blank" rel="noopener">Upgrade for full history \u2192</a>';
+                limitNote.textContent = 'Showing last ' + data.history_days_limit + ' days.';
                 listEl.appendChild(limitNote);
             }
         } catch (err) {

@@ -120,7 +120,7 @@ const llmProviders = {
 	},
 	agentic: {
 		name: 'Agentic AI (Free)',
-		docs: 'https://agentic-plugin.com/pricing/',
+		docs: 'https://agentic-plugin.com/documentation/',
 		modelDocs: 'https://agentic-plugin.com/documentation/',
 		models: {},
 		default: 'gemini-2.5-flash',

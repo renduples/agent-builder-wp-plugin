@@ -319,7 +319,6 @@ class Dashboard_REST {
 					'safety_center' => admin_url( 'admin.php?page=agentic-safety-center' ),
 					'agent_ready'   => admin_url( 'admin.php?page=agentic-agent-ready' ),
 					'backups'       => admin_url( 'admin.php?page=agentic-approvals&tab=backups' ),
-					'pricing'       => 'https://agentic-plugin.com/pricing/',
 					'community'     => class_exists( Agent_Updates::class )
 						? Agent_Updates::MARKETPLACE_URL
 						: 'https://agentic-plugin.com/community-agents/',
