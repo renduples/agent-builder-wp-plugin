@@ -48,6 +48,7 @@ More at [Community Agents](https://agentic-plugin.com/community-agents/).
 | `admin/` | Classic PHP admin screens (non-React) |
 | `src/` | React admin surfaces (Dashboard, Safety Center, Settings, etc.), built via `@wordpress/scripts` into `build/` |
 | `templates/` | Frontend chat widget and modal markup |
+| `tests/` | PHPUnit suite (`tests/unit/`), plus the prompt-test catalog and its docs (`most_popular_prompts.md`, `PROMPT-TESTING.md`) — committed to git, excluded from the WordPress.org zip |
 
 Adding a new tool means creating a directory under `library/tools/`, declaring its risk level (`includes/class-risk-level.php` documents the tiers and the reasoning behind each floor), and registering it in the relevant agent's `abilities.json`.
 
@@ -79,6 +80,29 @@ To run a single test file or method:
 Coverage priorities live under `tests/unit/`: `Risk_Level` (enforcement matrix + `BASELINE_RISKS` floor), `Audit_Log_Integrity` (hash-chain tamper detection), `Approval_Queue` (create/approve/reject/expire), `Tool_Executor` (the full risk-gate flow — allow/confirm/queue/block, plus that a non-readonly tool triggers a table backup before it runs), and `Abilities_Manifest` (effective-risk resolution). `tests/unit/test-tool-risk-floor-coverage.php` is a standing regression test: it fails the moment a new non-readonly tool ships under `library/tools/` without either a `get_risk_level()` override or a `Risk_Level::BASELINE_RISKS` entry.
 
 No test makes a real outbound HTTP call — `tests/helpers/MockWPFunctions.php` intercepts `wp_remote_*()` via the `pre_http_request` filter for any test that needs one.
+
+### Prompt tests (real LLM calls)
+
+Alongside the hermetic PHPUnit suite there's a prompt-testing harness — PHPUnit for the *agents*
+rather than for the code. It replays a ranked catalog of ~50 real-world prompts
+([`tests/most_popular_prompts.md`](tests/most_popular_prompts.md)) against the bundled agents on
+a live install and writes a report to `tests/prompt_test_results.md`.
+
+```
+wp agent prompt-test --dry-run                             # resolve and validate, no LLM calls
+wp agent prompt-test --user=admin --agent=seo-optimizer
+wp agent prompt-test --user=admin --rank=1-10 --max-cost=0.50
+```
+
+Unlike `composer test` this makes **real LLM calls against your configured provider and costs
+real money**, and prompts that write really write — so it's deliberately not part of
+`composer test` or CI, and a bare invocation runs nothing until you select a subset. The catalog
+and the parser are covered by the PHPUnit suite, so a bad tool name or agent slug fails for free
+in milliseconds rather than partway through a paid run.
+
+Assistant Trainer can also drive this from chat — running prompts, then proposing the tools or
+skills an agent turns out to be missing. Full instructions, every flag, and how to add prompts:
+[`tests/PROMPT-TESTING.md`](tests/PROMPT-TESTING.md).
 
 ## Releases
 

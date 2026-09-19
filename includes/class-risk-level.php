@@ -332,6 +332,14 @@ class Risk_Level {
 		'manage_skill'                         => self::HIGH,
 		'manage_user_privileges'               => self::HIGH,
 		'browse_community_skills'              => self::MEDIUM,
+		// Prompt-testing (3.4.1). run_prompt_tests makes real, paid LLM calls and
+		// replays prompts that can themselves write, so it confirms in chat before
+		// running. manage_prompt_catalog deliberately has no floor here: it
+		// overrides get_risk_level() to NONE so its abilities.json risk_by_action
+		// map can keep list/get free while add/update/remove still confirm — a
+		// flat floor here would apply to reads too. analyze_prompt_results is
+		// annotated readonly.
+		'run_prompt_tests'                     => self::MEDIUM,
 
 		// ------------------------------------------------------------------
 		// Dormant-library floors (#116). None of these currently override

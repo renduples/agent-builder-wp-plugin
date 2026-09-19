@@ -66,7 +66,7 @@ spl_autoload_register(
 // wp-content/agentic-agents/ (or -knowledge/, -backups/) needs to move.
 define( 'AGENT_BUILDER_FILE', __FILE__ );
 define( 'AGENT_BUILDER_VERSION', '3.4.0' );
-define( 'AGENT_BUILDER_DB_VERSION', '2.14.0' );
+define( 'AGENT_BUILDER_DB_VERSION', '2.14.1' );
 define( 'AGENT_BUILDER_DIR', plugin_dir_path( __FILE__ ) );
 define( 'AGENT_BUILDER_URL', plugin_dir_url( __FILE__ ) );
 define( 'AGENT_BUILDER_BASENAME', plugin_basename( __FILE__ ) );
@@ -566,6 +566,13 @@ final class Plugin {
 			if ( file_exists( $abilities_cli ) ) {
 				require_once $abilities_cli;
 			}
+			// The prompt-test engine itself lives in includes/prompt-testing/ and
+			// autoloads, because the self-improvement tools call it outside WP-CLI
+			// too. Only the command wrapper is CLI-only.
+			$prompt_test_cli = $cli_dir . 'class-prompt-test-command.php';
+			if ( file_exists( $prompt_test_cli ) ) {
+				require_once $prompt_test_cli;
+			}
 
 			if ( class_exists( '\\Agentic\\CLI_Command' ) ) {
 				\WP_CLI::add_command( 'agent', '\\Agentic\\CLI_Command' );
@@ -575,6 +582,9 @@ final class Plugin {
 			}
 			if ( class_exists( '\\Agentic\\CLI\\Abilities_Command' ) ) {
 				\WP_CLI::add_command( 'agent abilities', '\\Agentic\\CLI\\Abilities_Command' );
+			}
+			if ( class_exists( '\\Agentic\\CLI\\Prompt_Test_Command' ) ) {
+				\WP_CLI::add_command( 'agent prompt-test', '\\Agentic\\CLI\\Prompt_Test_Command' );
 			}
 		}
 	}
