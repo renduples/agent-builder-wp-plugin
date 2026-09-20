@@ -247,7 +247,7 @@ class Report_Issue extends \Agentic\Tool_Base {
 
 		// The site is identified by its URL (and license key if present). We do NOT
 		// transmit the provider API key.
-		$license = (string) get_option( 'agent_builder_license_key', '' );
+		$license = \Agentic\Provider_Registry::get_license_key();
 
 		$response = wp_remote_post(
 			$endpoint,

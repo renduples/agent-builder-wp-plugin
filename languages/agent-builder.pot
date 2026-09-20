@@ -2,21 +2,21 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Agent Builder 3.4.2\n"
+"Project-Id-Version: Agent Builder 3.4.1\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/agent-builder\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-20T06:01:32+00:00\n"
+"POT-Creation-Date: 2026-09-19T13:57:01+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: agent-builder\n"
 
 #. Plugin Name of the plugin
 #: agent-builder.php
-#: admin/signup.php:56
+#: admin/signup.php:47
 #: includes/class-admin-menu-handler.php:38
 #: includes/class-admin-menu-handler.php:39
 msgid "Agent Builder"
@@ -189,13 +189,13 @@ msgstr ""
 #: admin/deployment.php:49
 #: admin/providers.php:93
 #: admin/settings.php:638
-#: admin/signup.php:125
-#: admin/signup.php:268
+#: admin/signup.php:107
+#: admin/signup.php:250
 #: admin/train-data.php:84
 #: admin/train-data.php:118
 #: includes/class-admin-menu-handler.php:1055
 #: includes/class-admin-settings-rest.php:216
-#: src/dashboard-app/index.js:1179
+#: src/dashboard-app/index.js:873
 #: src/interface-settings/index.js:182
 #: src/settings-app/index.js:311
 #: src/shared/components.js:189
@@ -206,15 +206,14 @@ msgstr ""
 #: admin/deployment.php:52
 #: admin/providers.php:96
 #: admin/settings.php:643
-#: admin/signup.php:126
-#: admin/signup.php:272
+#: admin/signup.php:108
+#: admin/signup.php:254
 #: admin/train-data.php:87
 #: admin/train-data.php:121
 #: includes/class-admin-menu-handler.php:1058
 #: includes/class-admin-settings-rest.php:221
-#: src/dashboard-app/index.js:211
-#: src/dashboard-app/index.js:1009
-#: src/dashboard-app/index.js:1190
+#: src/dashboard-app/index.js:703
+#: src/dashboard-app/index.js:884
 #: src/interface-settings/index.js:186
 #: src/settings-app/index.js:313
 #: src/shared/components.js:200
@@ -259,8 +258,8 @@ msgstr ""
 
 #: admin/agents.php:335
 #: src/dashboard-activity/index.js:142
-#: src/dashboard-app/index.js:753
-#: src/dashboard-app/index.js:1260
+#: src/dashboard-app/index.js:447
+#: src/dashboard-app/index.js:954
 msgid "Community Agents"
 msgstr ""
 
@@ -578,7 +577,6 @@ msgstr ""
 
 #: admin/approvals.php:219
 #: src/admin-pages/index.js:1780
-#: src/dashboard-app/index.js:247
 #: src/shared/chat-embed.js:151
 msgid "Approve"
 msgstr ""
@@ -690,7 +688,7 @@ msgstr ""
 #: admin/train-data.php:314
 #: includes/class-gdpr.php:557
 #: src/admin-pages/index.js:2156
-#: src/dashboard-app/index.js:506
+#: src/dashboard-app/index.js:200
 #: src/settings-app/index.js:625
 #: src/settings-app/index.js:1994
 #: src/settings-app/index.js:2377
@@ -1219,7 +1217,6 @@ msgstr ""
 
 #: admin/deployment/deployment-event-listeners.php:109
 #: includes/class-admin-surfaces.php:149
-#: src/dashboard-app/index.js:18
 msgid "Comments"
 msgstr ""
 
@@ -1236,7 +1233,6 @@ msgstr ""
 
 #: admin/deployment/deployment-event-listeners.php:124
 #: includes/class-admin-pages-rest.php:622
-#: src/dashboard-app/index.js:19
 msgid "Media"
 msgstr ""
 
@@ -1333,7 +1329,7 @@ msgstr ""
 #: admin/tools.php:563
 #: includes/class-chat-assets.php:57
 #: src/admin-pages/index.js:129
-#: src/dashboard-app/index.js:1067
+#: src/dashboard-app/index.js:761
 msgid "Cancel"
 msgstr ""
 
@@ -1412,7 +1408,7 @@ msgstr ""
 
 #: admin/deployment/deployment-event-listeners.php:342
 #: admin/deployment/deployment-scheduled-tasks.php:507
-#: src/dashboard-app/index.js:1059
+#: src/dashboard-app/index.js:753
 #: src/interface-settings/index.js:378
 #: src/shared/components.js:113
 msgid "Saving…"
@@ -1879,8 +1875,8 @@ msgid "Enabled"
 msgstr ""
 
 #: admin/deployment/deployment-shortcodes.php:267
-#: admin/signup.php:116
-#: admin/signup.php:261
+#: admin/signup.php:98
+#: admin/signup.php:243
 #: admin/skills.php:905
 #: includes/class-admin-pages-rest.php:2368
 #: src/admin-pages/index.js:947
@@ -1999,7 +1995,7 @@ msgstr ""
 #: includes/class-admin-pages-rest.php:1647
 #: src/admin-pages/index.js:3231
 #: src/dashboard-activity/index.js:88
-#: src/dashboard-app/index.js:704
+#: src/dashboard-app/index.js:398
 msgid "Activity"
 msgstr ""
 
@@ -2036,7 +2032,7 @@ msgstr ""
 #: admin/settings-llm.php:131
 #: assets/js/gutenberg-blocks.js:329
 #: src/agent-wizard/index.js:584
-#: src/dashboard-app/index.js:851
+#: src/dashboard-app/index.js:545
 #: src/settings-app/index.js:628
 #: src/settings-app/index.js:1707
 msgid "Model"
@@ -2044,7 +2040,7 @@ msgstr ""
 
 #: admin/partials/chat-playground-panel.php:66
 #: assets/js/gutenberg-blocks.js:320
-#: src/dashboard-app/index.js:840
+#: src/dashboard-app/index.js:534
 #: src/settings-app/index.js:1704
 msgid "Provider"
 msgstr ""
@@ -2169,7 +2165,7 @@ msgstr ""
 #: admin/providers.php:470
 #: admin/settings-endpoints.php:180
 #: assets/js/gutenberg-blocks.js:65
-#: src/dashboard-app/index.js:874
+#: src/dashboard-app/index.js:568
 #: src/settings-app/index.js:672
 msgid "Default"
 msgstr ""
@@ -2190,7 +2186,7 @@ msgid "Invalid security token. Please go back and try again."
 msgstr ""
 
 #: admin/run-task.php:37
-#: includes/class-admin-ajax.php:1353
+#: includes/class-admin-ajax.php:1290
 msgid "Missing agent or task parameter."
 msgstr ""
 
@@ -2567,7 +2563,7 @@ msgid "Reset this endpoint to its default URL?"
 msgstr ""
 
 #: admin/settings-endpoints.php:177
-#: admin/signup.php:103
+#: admin/signup.php:85
 #: admin/skills.php:298
 msgid "Reset"
 msgstr ""
@@ -2666,7 +2662,7 @@ msgstr ""
 #: admin/settings-llm.php:239
 #: includes/class-admin-menu-handler.php:1287
 #: src/admin-pages/index.js:203
-#: src/dashboard-app/index.js:365
+#: src/dashboard-app/index.js:59
 #: src/settings-app/index.js:109
 msgid "Terms of Service"
 msgstr ""
@@ -2967,7 +2963,7 @@ msgid "Connect"
 msgstr ""
 
 #: admin/setup.php:464
-#: src/dashboard-app/index.js:885
+#: src/dashboard-app/index.js:579
 #: src/settings-app/index.js:2166
 #: src/settings-app/index.js:2466
 msgid "Test"
@@ -3065,8 +3061,8 @@ msgid "Controls how much authority your AI agents have. You can change this any 
 msgstr ""
 
 #: admin/setup.php:853
-#: admin/signup.php:114
-#: admin/signup.php:253
+#: admin/signup.php:96
+#: admin/signup.php:235
 #: includes/class-admin-pages-rest.php:2369
 #: src/settings-app/index.js:785
 msgid "Supervised"
@@ -3081,8 +3077,8 @@ msgid "The AI proposes changes — you review and approve before anything is sav
 msgstr ""
 
 #: admin/setup.php:862
-#: admin/signup.php:115
-#: admin/signup.php:257
+#: admin/signup.php:97
+#: admin/signup.php:239
 #: includes/class-admin-pages-rest.php:2370
 #: src/settings-app/index.js:789
 msgid "Autonomous"
@@ -3121,7 +3117,6 @@ msgid "Go ahead, talk to WordPress!!"
 msgstr ""
 
 #: admin/setup.php:910
-#: includes/site-brief/class-site-brief-checker.php:85
 msgid "WordPress Assistant"
 msgstr ""
 
@@ -3160,75 +3155,67 @@ msgstr ""
 msgid "Enlarged preview"
 msgstr ""
 
-#: admin/signup.php:60
+#: admin/signup.php:51
 msgid "Connect to Agentic AI"
 msgstr ""
 
-#: admin/signup.php:62
+#: admin/signup.php:53
 msgid "Connect your AI agents to an LLM Provider with just one click."
 msgstr ""
 
-#: admin/signup.php:63
+#: admin/signup.php:54
 msgid "Free daily credits, no payment info required."
 msgstr ""
 
-#: admin/signup.php:69
-msgid "Your Agentic AI connection is missing its license key."
-msgstr ""
-
-#: admin/signup.php:70
-msgid "This site has an API key but no license key, so the hosted provider cannot be used yet. Connect again with the same email address and the existing key will be re-issued together with its license."
-msgstr ""
-
-#: admin/signup.php:80
+#: admin/signup.php:62
 msgid "Registration"
 msgstr ""
 
-#: admin/signup.php:83
+#: admin/signup.php:65
 msgid "Email Address"
 msgstr ""
 
-#: admin/signup.php:85
+#: admin/signup.php:67
 msgid "Free daily credits and API key will be sent to this email address."
 msgstr ""
 
-#: admin/signup.php:90
+#: admin/signup.php:72
 msgid "Site Name"
 msgstr ""
 
-#: admin/signup.php:95
+#: admin/signup.php:77
 msgid "Site URL"
 msgstr ""
 
-#: admin/signup.php:97
+#: admin/signup.php:79
 msgid "Set this to the production domain you are registering for."
 msgstr ""
 
-#: admin/signup.php:102
+#: admin/signup.php:84
 msgid "Configuration"
 msgstr ""
 
-#: admin/signup.php:107
+#: admin/signup.php:89
 msgid "Setting"
 msgstr ""
 
-#: admin/signup.php:108
+#: admin/signup.php:90
 msgid "Explanation"
 msgstr ""
 
-#: admin/signup.php:112
+#: admin/signup.php:94
 msgid "Security Mode"
 msgstr ""
 
-#: admin/signup.php:123
+#: admin/signup.php:105
 msgid "How would you like Agent Builder to work?"
 msgstr ""
 
-#: admin/signup.php:134
+#: admin/signup.php:116
 msgid "Chat Model"
 msgstr ""
 
-#: admin/signup.php:135
+#: admin/signup.php:117
 #: src/admin-pages/index.js:3253
 #: src/agent-wizard/index.js:312
 #: src/deploy-wizard/index.js:197
@@ -3238,134 +3225,134 @@ msgstr ""
 msgid "Loading…"
 msgstr ""
 
-#: admin/signup.php:147
+#: admin/signup.php:129
 msgid "Vision Model"
 msgstr ""
 
-#: admin/signup.php:158
+#: admin/signup.php:140
 msgid "Voice"
 msgstr ""
 
-#: admin/signup.php:169
+#: admin/signup.php:151
 msgid "Video Model"
 msgstr ""
 
 #. translators: 1: opening link tag, 2: closing link tag
-#: admin/signup.php:186
+#: admin/signup.php:168
 #, php-format
 msgid "I agree to the %1$sTerms & Conditions%2$s"
 msgstr ""
 
 #. translators: 1: opening link tag, 2: closing link tag
-#: admin/signup.php:197
+#: admin/signup.php:179
 #, php-format
 msgid "I agree to the %1$sPrivacy Policy%2$s"
 msgstr ""
 
-#: admin/signup.php:208
-#: admin/signup.php:579
-#: admin/signup.php:586
+#: admin/signup.php:190
+#: admin/signup.php:561
+#: admin/signup.php:568
 msgid "Get Free API Key"
 msgstr ""
 
 #. translators: 1: opening link tag, 2: closing link tag
-#: admin/signup.php:219
+#: admin/signup.php:201
 #, php-format
 msgid "%1$sSkip — I will pay for tokens with my own LLM Provider.%2$s"
 msgstr ""
 
-#: admin/signup.php:224
+#: admin/signup.php:206
 msgid "(xAI, OpenAI, Anthropic etc.)"
 msgstr ""
 
-#: admin/signup.php:229
+#: admin/signup.php:211
 msgid "Agent Builder supports multiple AI providers. You can add as many as you like later."
 msgstr ""
 
-#: admin/signup.php:254
+#: admin/signup.php:236
 msgid "Agents propose actions which are queued for your review before they run. Recommended for most sites."
 msgstr ""
 
-#: admin/signup.php:258
+#: admin/signup.php:240
 msgid "Agents act immediately without waiting for approval. Use only on sites where you fully trust the agents."
 msgstr ""
 
-#: admin/signup.php:262
+#: admin/signup.php:244
 msgid "Chat only — all tools and site actions are disabled. Agents cannot modify content or call external services."
 msgstr ""
 
-#: admin/signup.php:269
+#: admin/signup.php:251
 msgid "Guided, plain language, best for getting started"
 msgstr ""
 
-#: admin/signup.php:273
+#: admin/signup.php:255
 msgid "Full console, best if you've used developer tools like this before"
 msgstr ""
 
-#: admin/signup.php:285
+#: admin/signup.php:267
 msgid "Fast and capable. Best balance of speed and quality for most tasks."
 msgstr ""
 
-#: admin/signup.php:286
+#: admin/signup.php:268
 msgid "Fastest and most efficient. Ideal for simple, high-volume queries."
 msgstr ""
 
-#: admin/signup.php:287
+#: admin/signup.php:269
 msgid "Most powerful. Best for complex reasoning and demanding tasks."
 msgstr ""
 
-#: admin/signup.php:288
+#: admin/signup.php:270
 msgid "Lightweight open model. Very efficient and low credit cost."
 msgstr ""
 
-#: admin/signup.php:292
-#: admin/signup.php:293
+#: admin/signup.php:274
+#: admin/signup.php:275
 msgid "Neural voice. Natural, expressive, and highly lifelike."
 msgstr ""
 
-#: admin/signup.php:294
+#: admin/signup.php:276
 msgid "Neural voice. Gender-neutral, natural-sounding speech."
 msgstr ""
 
-#: admin/signup.php:295
-#: admin/signup.php:296
+#: admin/signup.php:277
+#: admin/signup.php:278
 msgid "High-quality neural voice. Clear and professional."
 msgstr ""
 
-#: admin/signup.php:297
-#: admin/signup.php:298
+#: admin/signup.php:279
+#: admin/signup.php:280
 msgid "Standard synthesised voice. Lightweight and low credit usage."
 msgstr ""
 
-#: admin/signup.php:302
+#: admin/signup.php:284
 msgid "AI video generation, visual only. Reliable and efficient."
 msgstr ""
 
-#: admin/signup.php:303
+#: admin/signup.php:285
 msgid "AI video with native audio. Higher quality, higher credit cost."
 msgstr ""
 
-#: admin/signup.php:535
+#: admin/signup.php:517
 msgid "Please agree to the Terms & Conditions and Privacy Policy."
 msgstr ""
 
-#: admin/signup.php:542
+#: admin/signup.php:524
 msgid "Please enter your email address."
 msgstr ""
 
-#: admin/signup.php:549
+#: admin/signup.php:531
 msgid "Registering…"
 msgstr ""
 
-#: admin/signup.php:572
+#: admin/signup.php:554
 msgid "API key saved — redirecting…"
 msgstr ""
 
-#: admin/signup.php:580
+#: admin/signup.php:562
 msgid "Registration failed. Please try again."
 msgstr ""
 
-#: admin/signup.php:587
+#: admin/signup.php:569
 #: src/shared/chat-embed.js:298
 msgid "Connection error. Please try again."
 msgstr ""
@@ -3540,7 +3527,7 @@ msgstr ""
 #: admin/skills.php:379
 #: admin/skills.php:893
 #: src/admin-pages/index.js:910
-#: src/dashboard-app/index.js:540
+#: src/dashboard-app/index.js:234
 msgid "Version"
 msgstr ""
 
@@ -4418,8 +4405,8 @@ msgstr ""
 #: includes/class-admin-ajax.php:452
 #: includes/class-admin-ajax.php:474
 #: includes/class-admin-ajax.php:575
-#: includes/class-admin-ajax.php:1253
-#: includes/class-admin-ajax.php:1346
+#: includes/class-admin-ajax.php:1180
+#: includes/class-admin-ajax.php:1283
 #: includes/class-admin-pages-rest.php:1175
 #: includes/class-admin-pages-rest.php:1264
 #: includes/class-admin-pages-rest.php:1319
@@ -4522,27 +4509,23 @@ msgstr ""
 msgid "No models returned. Ensure your API key is saved and valid."
 msgstr ""
 
-#: includes/class-admin-ajax.php:1201
-msgid "No API key returned. Please try again."
-msgstr ""
-
-#: includes/class-admin-ajax.php:1213
-msgid "Your API key was issued but could not be saved on this site. Please deactivate and reactivate Agent Builder to repair its database tables, then try again."
-msgstr ""
-
-#: includes/class-admin-ajax.php:1231
-msgid "Your API key was saved, but the service did not issue a license key, which the hosted Agentic AI provider needs. Please try connecting again in a few minutes, or add your own provider key under Settings → Providers."
-msgstr ""
-
-#: includes/class-admin-ajax.php:1278
+#: includes/class-admin-ajax.php:1205
 msgid "Email address is required."
 msgstr ""
 
-#: includes/class-admin-ajax.php:1331
+#: includes/class-admin-ajax.php:1236
+msgid "No API key returned. Please try again."
+msgstr ""
+
+#: includes/class-admin-ajax.php:1248
+msgid "Your API key was issued but could not be saved on this site. Please deactivate and reactivate Agent Builder to repair its database tables, then try again."
+msgstr ""
+
+#: includes/class-admin-ajax.php:1268
 msgid "API key saved."
 msgstr ""
 
-#: includes/class-admin-ajax.php:1358
+#: includes/class-admin-ajax.php:1295
 msgid "Task not found on this agent."
 msgstr ""
 
@@ -4783,35 +4766,35 @@ msgstr ""
 
 #: includes/class-admin-menu-handler.php:1278
 #: src/admin-pages/index.js:185
-#: src/dashboard-app/index.js:343
+#: src/dashboard-app/index.js:37
 #: src/settings-app/index.js:91
 msgid "Need help?"
 msgstr ""
 
 #: includes/class-admin-menu-handler.php:1279
 #: src/admin-pages/index.js:187
-#: src/dashboard-app/index.js:349
+#: src/dashboard-app/index.js:43
 #: src/settings-app/index.js:93
 msgid "Visit our Support Center"
 msgstr ""
 
 #: includes/class-admin-menu-handler.php:1281
 #: src/admin-pages/index.js:191
-#: src/dashboard-app/index.js:353
+#: src/dashboard-app/index.js:47
 #: src/settings-app/index.js:97
 msgid "Documentation"
 msgstr ""
 
 #: includes/class-admin-menu-handler.php:1289
 #: src/admin-pages/index.js:214
-#: src/dashboard-app/index.js:376
+#: src/dashboard-app/index.js:70
 #: src/settings-app/index.js:120
 msgid "Privacy Policy"
 msgstr ""
 
 #: includes/class-admin-menu-handler.php:1291
 #: src/admin-pages/index.js:224
-#: src/dashboard-app/index.js:386
+#: src/dashboard-app/index.js:80
 #: src/settings-app/index.js:130
 msgid "GDPR Policy"
 msgstr ""
@@ -4969,7 +4952,6 @@ msgstr ""
 #: includes/class-admin-pages-rest.php:616
 #: includes/class-native-forms.php:113
 #: includes/class-native-forms.php:117
-#: src/dashboard-app/index.js:20
 msgid "Forms"
 msgstr ""
 
@@ -5451,7 +5433,7 @@ msgid "Knowledge Wiki"
 msgstr ""
 
 #: includes/class-admin-pages-rest.php:2267
-#: src/dashboard-app/index.js:665
+#: src/dashboard-app/index.js:359
 msgid "Site Passport"
 msgstr ""
 
@@ -6039,7 +6021,6 @@ msgstr ""
 
 #: includes/class-chat-assets.php:58
 #: src/admin-pages/index.js:1453
-#: src/dashboard-app/index.js:262
 msgid "Dismiss"
 msgstr ""
 
@@ -6308,20 +6289,15 @@ msgstr ""
 msgid "Added from pasted text."
 msgstr ""
 
-#: includes/class-llm-client.php:233
-#: includes/class-llm-client.php:465
-msgid "The hosted Agentic AI connection has no license key, so requests would be rejected. Reconnect from Agent Builder → Quick Start, or add your own provider key under Settings → Providers."
-msgstr ""
-
-#: includes/class-llm-client.php:334
+#: includes/class-llm-client.php:324
 msgid "The AI service requires payment or additional credits to continue."
 msgstr ""
 
-#: includes/class-llm-client.php:335
+#: includes/class-llm-client.php:325
 msgid "Rate limit reached. Please wait a moment and try again."
 msgstr ""
 
-#: includes/class-llm-client.php:347
+#: includes/class-llm-client.php:337
 msgid "The AI model is currently busy. Please try again shortly."
 msgstr ""
 
@@ -7445,293 +7421,10 @@ msgstr ""
 msgid "Iterations: %s"
 msgstr ""
 
-#. translators: %d: abandoned plugin count.
-#: includes/site-brief/checkers/class-checker-abandoned-plugins.php:86
-#, php-format
-msgid "%d abandoned plugin"
-msgid_plural "%d abandoned plugins"
-msgstr[0] ""
-msgstr[1] ""
-
-#: includes/site-brief/checkers/class-checker-abandoned-plugins.php:91
-msgid "Review on the Plugins screen. Site Brief will not uninstall anything."
-msgstr ""
-
-#: includes/site-brief/checkers/class-checker-caching.php:70
-msgid "No page cache detected"
-msgstr ""
-
-#: includes/site-brief/checkers/class-checker-caching.php:71
-msgid "A page cache plugin (or advanced-cache.php drop-in) was not found. Site Brief will not turn caching on."
-msgstr ""
-
-#: includes/site-brief/checkers/class-checker-caching.php:73
-msgid "Install or enable a page cache from Plugins if you want one. manage_cache is not offered in this version."
-msgstr ""
-
-#. translators: %d: number of comments.
-#: includes/site-brief/checkers/class-checker-comments-queue.php:88
-#, php-format
-msgid "%d comment is awaiting moderation"
-msgid_plural "%d comments are awaiting moderation"
-msgstr[0] ""
-msgstr[1] ""
-
-#. translators: %d: number of held comments.
-#: includes/site-brief/checkers/class-checker-comments-queue.php:93
-#, php-format
-msgid "%d held comments in the moderation queue."
-msgstr ""
-
-#: includes/site-brief/checkers/class-checker-comments-queue.php:100
-msgid "Open the Comments screen to review held comments."
-msgstr ""
-
-#. translators: %d: number of spam comments.
-#: includes/site-brief/checkers/class-checker-comments-queue.php:114
-#, php-format
-msgid "%d spam comment is queued"
-msgid_plural "%d spam comments are queued"
-msgstr[0] ""
-msgstr[1] ""
-
-#. translators: %d: spam count.
-#: includes/site-brief/checkers/class-checker-comments-queue.php:119
-#, php-format
-msgid "%d comments marked as spam."
-msgstr ""
-
-#: includes/site-brief/checkers/class-checker-comments-queue.php:126
-msgid "Queue cleanup_spam_comments for approval. The scan will not delete anything."
-msgstr ""
-
-#. translators: %d: mismatched core files.
-#: includes/site-brief/checkers/class-checker-core-integrity.php:76
-#, php-format
-msgid "%d WordPress core file does not match checksums"
-msgid_plural "%d WordPress core files do not match checksums"
-msgstr[0] ""
-msgstr[1] ""
-
-#: includes/site-brief/checkers/class-checker-core-integrity.php:85
-msgid "Restore core files from a host backup or a fresh WordPress copy. Site Brief will never rewrite core files."
-msgstr ""
-
-#. translators: %d: overdue cron events.
-#: includes/site-brief/checkers/class-checker-cron.php:72
-#, php-format
-msgid "%d WP-Cron event is overdue"
-msgid_plural "%d WP-Cron events are overdue"
-msgstr[0] ""
-msgstr[1] ""
-
-#: includes/site-brief/checkers/class-checker-cron.php:75
-msgid "Scheduled events are running late. Site Brief does not trigger cron in this version."
-msgstr ""
-
-#: includes/site-brief/checkers/class-checker-cron.php:77
-msgid "Check DISABLE_WP_CRON and your host’s real cron. No write is queued."
-msgstr ""
-
-#. translators: %d: forms with zero entries.
-#: includes/site-brief/checkers/class-checker-forms.php:85
-#, php-format
-msgid "%d native form has no submissions"
-msgid_plural "%d native forms have no submissions"
-msgstr[0] ""
-msgstr[1] ""
-
-#: includes/site-brief/checkers/class-checker-forms.php:90
-msgid "This is a diagnose card only. There is no mail-deliverability tool in this version."
-msgstr ""
-
-#: includes/site-brief/checkers/class-checker-forms.php:115
-msgid "Form submissions look stale or empty"
-msgstr ""
-
-#. translators: %s: form plugin slugs.
-#: includes/site-brief/checkers/class-checker-forms.php:118
-#, php-format
-msgid "Detected: %s. Site Brief cannot test mail delivery in this version."
-msgstr ""
-
-#: includes/site-brief/checkers/class-checker-forms.php:126
-msgid "Diagnose card only. No mail-server tool is in the tree."
-msgstr ""
-
-#. translators: %d: number of images.
-#: includes/site-brief/checkers/class-checker-oversized-media.php:135
-#, php-format
-msgid "%d image is over 1 MB"
-msgid_plural "%d images are over 1 MB"
-msgstr[0] ""
-msgstr[1] ""
-
-#: includes/site-brief/checkers/class-checker-oversized-media.php:148
-msgid "Queue compress_image for the largest file (max 10 per Approve). The scan does not rewrite files."
-msgstr ""
-
-#. translators: %d: fatal count.
-#: includes/site-brief/checkers/class-checker-php-errors.php:84
-#, php-format
-msgid "%d PHP fatal in debug.log"
-msgid_plural "%d PHP fatals in debug.log"
-msgstr[0] ""
-msgstr[1] ""
-
-#: includes/site-brief/checkers/class-checker-php-errors.php:93
-msgid "Review debug.log on the host. Site Brief does not edit PHP files."
-msgstr ""
-
-#. translators: %s: plugin name.
-#: includes/site-brief/checkers/class-checker-plugin-updates.php:90
-#, php-format
-msgid "%s has an update"
-msgstr ""
-
-#. translators: %d: number of plugins.
-#: includes/site-brief/checkers/class-checker-plugin-updates.php:95
-#, php-format
-msgid "%d plugin has updates"
-msgid_plural "%d plugins have updates"
-msgstr[0] ""
-msgstr[1] ""
-
-#: includes/site-brief/checkers/class-checker-plugin-updates.php:105
-msgid "Open the Plugins screen to review updates. Agent Builder will not auto-update."
-msgstr ""
-
-#. translators: %d: administrator count.
-#: includes/site-brief/checkers/class-checker-privileged-users.php:88
-#, php-format
-msgid "%d administrator accounts"
-msgstr ""
-
-#. translators: %s: comma-separated logins.
-#: includes/site-brief/checkers/class-checker-privileged-users.php:93
-#, php-format
-msgid "Accounts: %s. Review for unexpected administrators."
-msgstr ""
-
-#: includes/site-brief/checkers/class-checker-privileged-users.php:100
-msgid "Open Users to review roles. Site Brief will not change accounts."
-msgstr ""
-
-#. translators: %d: failed login count.
-#: includes/site-brief/checkers/class-checker-security.php:78
-#, php-format
-msgid "%d failed logins in the last 24 hours."
-msgstr ""
-
-#: includes/site-brief/checkers/class-checker-security.php:88
-msgid "Security flags on this site"
-msgstr ""
-
-#: includes/site-brief/checkers/class-checker-security.php:95
-msgid "Review failed logins and administrator accounts. No lock or reset is queued in this version."
-msgstr ""
-
-#. translators: 1: health score, 2: grade.
-#: includes/site-brief/checkers/class-checker-site-health.php:82
-#, php-format
-msgid "Site health score %1$d (%2$s)."
-msgstr ""
-
-#: includes/site-brief/checkers/class-checker-site-health.php:90
-msgid "Open Site Health for details. The scan does not apply a fix."
-msgstr ""
-
-#. translators: %s: theme name.
-#: includes/site-brief/checkers/class-checker-theme-updates.php:93
-#, php-format
-msgid "Active theme %s has an update"
-msgstr ""
-
-#: includes/site-brief/checkers/class-checker-theme-updates.php:102
-msgid "Open the Themes screen to review the update. Agent Builder will not auto-update."
-msgstr ""
-
-#. translators: %d: unused attachments.
-#: includes/site-brief/checkers/class-checker-unused-media.php:75
-#, php-format
-msgid "%d unused media item"
-msgid_plural "%d unused media items"
-msgstr[0] ""
-msgstr[1] ""
-
-#: includes/site-brief/checkers/class-checker-unused-media.php:78
-msgid "Counted from post content and featured images only. Nothing is deleted in this version."
-msgstr ""
-
-#: includes/site-brief/checkers/class-checker-unused-media.php:80
-msgid "Dismiss if this is expected. Site Brief will not delete media."
-msgstr ""
-
-#. translators: %d: low-stock products.
-#: includes/site-brief/checkers/class-checker-wc-low-stock.php:97
-#, php-format
-msgid "%d product is below the stock threshold"
-msgid_plural "%d products are below the stock threshold"
-msgstr[0] ""
-msgstr[1] ""
-
-#: includes/site-brief/checkers/class-checker-wc-low-stock.php:102
-msgid "Open Products to restock. wc_update_stock is high-risk and is not run from Site Brief."
-msgstr ""
-
-#. translators: %d: unpaid order count.
-#: includes/site-brief/checkers/class-checker-wc-unpaid.php:99
-#, php-format
-msgid "%d unpaid order"
-msgid_plural "%d unpaid orders"
-msgstr[0] ""
-msgstr[1] ""
-
-#. translators: %s: order numbers.
-#: includes/site-brief/checkers/class-checker-wc-unpaid.php:104
-#, php-format
-msgid "Order numbers: %s. Customer emails are not shown."
-msgstr ""
-
-#: includes/site-brief/checkers/class-checker-wc-unpaid.php:111
-msgid "Open WooCommerce orders. Site Brief will not change order status or expose customer email."
-msgstr ""
-
-#: includes/site-brief/class-site-brief-checker.php:84
-msgid "Site Health Sentinel"
-msgstr ""
-
-#: includes/site-brief/class-site-brief-checker.php:86
-msgid "Support Triage"
-msgstr ""
-
-#: includes/site-brief/class-site-brief-checker.php:87
-msgid "Storefront Assistant"
-msgstr ""
-
-#: includes/site-brief/class-site-brief-controller.php:145
-msgid "You must be logged in to use Site Brief."
-msgstr ""
-
-#: includes/site-brief/class-site-brief-controller.php:152
-msgid "You do not have permission to do this."
-msgstr ""
-
-#: includes/site-brief/class-site-brief-controller.php:177
-msgid "Connect an AI provider before scanning. Site Brief does not run without one."
-msgstr ""
-
-#: includes/site-brief/class-site-brief-controller.php:225
-#: includes/site-brief/class-site-brief-controller.php:261
-msgid "That Site Brief card was not found."
-msgstr ""
-
-#: includes/site-brief/class-site-brief-controller.php:301
-msgid "Could not add this job to the approval queue."
-msgstr ""
-
-#: includes/site-brief/class-site-brief-controller.php:321
-msgid "This card has no write action. Dismiss it if you are done."
+#: library/tools/analyze_prompt_results/tool.php:341
+#: library/tools/manage_prompt_catalog/tool.php:180
+#: library/tools/run_prompt_tests/tool.php:239
+msgid "No prompt-test catalog was found on this site. The catalog normally ships with the plugin at library/prompt-tests/most_popular_prompts.md."
 msgstr ""
 
 #: library/tools/analyze_spreadsheet/tool.php:97
@@ -8611,21 +8304,21 @@ msgid "View raw Activity / Audit log"
 msgstr ""
 
 #: src/admin-pages/index.js:2929
-#: src/dashboard-app/index.js:908
+#: src/dashboard-app/index.js:602
 #: src/interface-settings/index.js:336
 #: src/settings-app/index.js:1862
 msgid "EMERGENCY STOP: deactivate and log agent states, cancel all jobs, and disconnect providers. Continue?"
 msgstr ""
 
 #: src/admin-pages/index.js:2933
-#: src/dashboard-app/index.js:912
+#: src/dashboard-app/index.js:606
 #: src/interface-settings/index.js:340
 #: src/settings-app/index.js:1866
 msgid "Turn off emergency stop?"
 msgstr ""
 
 #: src/admin-pages/index.js:2950
-#: src/dashboard-app/index.js:922
+#: src/dashboard-app/index.js:616
 msgid "Emergency stop restore finished with warnings:"
 msgstr ""
 
@@ -8702,7 +8395,7 @@ msgid "Restore agent system"
 msgstr ""
 
 #: src/admin-pages/index.js:3152
-#: src/dashboard-app/index.js:1101
+#: src/dashboard-app/index.js:795
 #: src/interface-settings/index.js:318
 #: src/settings-app/index.js:1847
 msgid "Disable All Agents"
@@ -9006,7 +8699,7 @@ msgid "Create agent"
 msgstr ""
 
 #: src/dashboard-activity/index.js:93
-#: src/dashboard-app/index.js:710
+#: src/dashboard-app/index.js:404
 msgid "View Activity →"
 msgstr ""
 
@@ -9015,362 +8708,299 @@ msgid "Could not load activity."
 msgstr ""
 
 #: src/dashboard-activity/index.js:106
-#: src/dashboard-app/index.js:716
+#: src/dashboard-app/index.js:410
 msgid "Total Actions"
 msgstr ""
 
 #: src/dashboard-activity/index.js:111
-#: src/dashboard-app/index.js:721
+#: src/dashboard-app/index.js:415
 msgid "Tokens Used"
 msgstr ""
 
 #: src/dashboard-activity/index.js:119
-#: src/dashboard-app/index.js:729
+#: src/dashboard-app/index.js:423
 msgid "Est. Cost"
 msgstr ""
 
 #: src/dashboard-activity/index.js:120
-#: src/dashboard-app/index.js:730
+#: src/dashboard-app/index.js:424
 msgid "Estimated Usage"
 msgstr ""
 
 #: src/dashboard-activity/index.js:127
-#: src/dashboard-app/index.js:737
+#: src/dashboard-app/index.js:431
 msgid "Active Agents"
 msgstr ""
 
 #: src/dashboard-activity/index.js:132
-#: src/dashboard-app/index.js:742
+#: src/dashboard-app/index.js:436
 msgid "Uploaded Agents"
 msgstr ""
 
 #: src/dashboard-activity/index.js:137
-#: src/dashboard-app/index.js:747
+#: src/dashboard-app/index.js:441
 msgid "User-Created Agents"
 msgstr ""
 
-#: src/dashboard-app/index.js:16
-msgid "Plugin updates"
-msgstr ""
-
-#: src/dashboard-app/index.js:17
-msgid "Health"
-msgstr ""
-
-#: src/dashboard-app/index.js:21
-msgid "Store"
-msgstr ""
-
-#: src/dashboard-app/index.js:53
-msgid "Could not load Site Brief."
-msgstr ""
-
-#: src/dashboard-app/index.js:77
-msgid "Scan failed."
-msgstr ""
-
-#: src/dashboard-app/index.js:107
-msgid "Could not update that card."
-msgstr ""
-
-#: src/dashboard-app/index.js:126
-msgid "Site Brief"
-msgstr ""
-
-#: src/dashboard-app/index.js:129
-msgid "A read-only look at this site. Nothing changes until you approve."
-msgstr ""
-
-#: src/dashboard-app/index.js:161
-msgid "Scan this site"
-msgstr ""
-
-#. translators: %s: last scan time.
-#: src/dashboard-app/index.js:171
-#, js-format
-msgid "No urgent items. Last scan %s."
-msgstr ""
-
-#: src/dashboard-app/index.js:183
-#: src/dashboard-app/index.js:296
-msgid "Scan again"
-msgstr ""
-
-#: src/dashboard-app/index.js:270
-msgid "Not now"
-msgstr ""
-
-#. translators: %d: hidden card count.
-#: src/dashboard-app/index.js:284
-#, js-format
-msgid "Show all (%d)"
-msgstr ""
-
-#. translators: 1: order count, 2: revenue, 3: currency.
-#: src/dashboard-app/index.js:306
-#, js-format
-msgid "Store this month: %1$s orders, %2$s %3$s."
-msgstr ""
-
-#: src/dashboard-app/index.js:330
+#: src/dashboard-app/index.js:24
 msgid "The dashboard summarizes agents, approvals, activity, and providers at a glance."
 msgstr ""
 
-#: src/dashboard-app/index.js:443
+#: src/dashboard-app/index.js:137
 msgid "Drag to rearrange"
 msgstr ""
 
-#: src/dashboard-app/index.js:451
+#: src/dashboard-app/index.js:145
 msgid "Drag to rearrange dashboard card"
 msgstr ""
 
-#: src/dashboard-app/index.js:513
+#: src/dashboard-app/index.js:207
 msgid "Manage License →"
 msgstr ""
 
-#: src/dashboard-app/index.js:519
+#: src/dashboard-app/index.js:213
 msgid "License"
 msgstr ""
 
-#: src/dashboard-app/index.js:535
+#: src/dashboard-app/index.js:229
 msgid "Renew"
 msgstr ""
 
-#: src/dashboard-app/index.js:544
+#: src/dashboard-app/index.js:238
 msgid "Schema"
 msgstr ""
 
-#: src/dashboard-app/index.js:545
+#: src/dashboard-app/index.js:239
 msgid "The version of Agent Builder’s database structure. Updates automatically when needed — you don’t need to do anything here."
 msgstr ""
 
-#: src/dashboard-app/index.js:553
+#: src/dashboard-app/index.js:247
 msgid "Pending Jobs"
 msgstr ""
 
-#: src/dashboard-app/index.js:559
+#: src/dashboard-app/index.js:253
 msgid "abandoned — auto-recovered"
 msgstr ""
 
-#: src/dashboard-app/index.js:567
+#: src/dashboard-app/index.js:261
 msgid "Running Jobs"
 msgstr ""
 
-#: src/dashboard-app/index.js:573
+#: src/dashboard-app/index.js:267
 msgid "stuck — auto-recovered"
 msgstr ""
 
-#: src/dashboard-app/index.js:577
+#: src/dashboard-app/index.js:271
 msgid "Completed Jobs"
 msgstr ""
 
-#: src/dashboard-app/index.js:595
+#: src/dashboard-app/index.js:289
 msgid "Approvals & Backups"
 msgstr ""
 
-#: src/dashboard-app/index.js:601
+#: src/dashboard-app/index.js:295
 msgid "View Approvals →"
 msgstr ""
 
-#: src/dashboard-app/index.js:606
+#: src/dashboard-app/index.js:300
 msgid "Pending Approvals"
 msgstr ""
 
-#: src/dashboard-app/index.js:612
+#: src/dashboard-app/index.js:306
 msgid "Completed Approvals"
 msgstr ""
 
-#: src/dashboard-app/index.js:620
+#: src/dashboard-app/index.js:314
 msgid "Files Backed Up"
 msgstr ""
 
-#: src/dashboard-app/index.js:626
+#: src/dashboard-app/index.js:320
 msgid "DB Tables Backed Up"
 msgstr ""
 
 #. translators: %s: number of pending approvals.
-#: src/dashboard-app/index.js:637
+#: src/dashboard-app/index.js:331
 #, js-format
 msgid "%s waiting for your OK."
 msgstr ""
 
-#: src/dashboard-app/index.js:644
+#: src/dashboard-app/index.js:338
 msgid "Open Safety Center →"
 msgstr ""
 
-#: src/dashboard-app/index.js:671
+#: src/dashboard-app/index.js:365
 msgid "View Details →"
 msgstr ""
 
-#: src/dashboard-app/index.js:676
+#: src/dashboard-app/index.js:370
 msgid "Site Score"
 msgstr ""
 
-#: src/dashboard-app/index.js:686
+#: src/dashboard-app/index.js:380
 msgid "Fix now →"
 msgstr ""
 
-#: src/dashboard-app/index.js:795
+#: src/dashboard-app/index.js:489
 #: src/settings-app/index.js:2086
 #: src/settings-app/index.js:2256
 msgid "Test failed."
 msgstr ""
 
-#: src/dashboard-app/index.js:805
+#: src/dashboard-app/index.js:499
 msgid "Connected Providers"
 msgstr ""
 
-#: src/dashboard-app/index.js:811
+#: src/dashboard-app/index.js:505
 msgid "Manage Providers →"
 msgstr ""
 
-#: src/dashboard-app/index.js:817
+#: src/dashboard-app/index.js:511
 msgid "No AI providers connected."
 msgstr ""
 
-#: src/dashboard-app/index.js:819
+#: src/dashboard-app/index.js:513
 msgid "Run the Setup Wizard"
 msgstr ""
 
-#: src/dashboard-app/index.js:884
+#: src/dashboard-app/index.js:578
 #: src/settings-app/index.js:2165
 #: src/settings-app/index.js:2462
 msgid "Testing…"
 msgstr ""
 
-#: src/dashboard-app/index.js:977
+#: src/dashboard-app/index.js:671
 msgid "Quick Actions"
 msgstr ""
 
-#: src/dashboard-app/index.js:984
+#: src/dashboard-app/index.js:678
 msgid "Manage Actions →"
 msgstr ""
 
-#: src/dashboard-app/index.js:990
+#: src/dashboard-app/index.js:684
 msgid "Chatbot offline —"
 msgstr ""
 
-#: src/dashboard-app/index.js:992
+#: src/dashboard-app/index.js:686
 msgid "Configure now"
 msgstr ""
 
-#: src/dashboard-app/index.js:1000
+#: src/dashboard-app/index.js:694
 msgid "Choose which links appear in Quick Actions. Setup Wizard is always available."
 msgstr ""
 
-#: src/dashboard-app/index.js:1012
+#: src/dashboard-app/index.js:706
 msgid "Pro"
 msgstr ""
 
-#: src/dashboard-app/index.js:1015
+#: src/dashboard-app/index.js:709
 msgid "Required"
 msgstr ""
 
-#: src/dashboard-app/index.js:1060
+#: src/dashboard-app/index.js:754
 msgid "Save Quick Actions"
 msgstr ""
 
-#: src/dashboard-app/index.js:1104
+#: src/dashboard-app/index.js:798
 msgid "ACTIVE"
 msgstr ""
 
-#: src/dashboard-app/index.js:1122
+#: src/dashboard-app/index.js:816
 #: src/interface-settings/index.js:322
 #: src/settings-app/index.js:1851
 msgid "Emergency stop"
 msgstr ""
 
-#: src/dashboard-app/index.js:1124
+#: src/dashboard-app/index.js:818
 #: src/interface-settings/index.js:324
 #: src/settings-app/index.js:1853
 msgid ": deactivate and log agent states, cancels all jobs and disconnects providers."
 msgstr ""
 
-#: src/dashboard-app/index.js:1155
+#: src/dashboard-app/index.js:849
 msgid "Interface Settings"
 msgstr ""
 
-#: src/dashboard-app/index.js:1161
+#: src/dashboard-app/index.js:855
 msgid "Manage Interface →"
 msgstr ""
 
-#: src/dashboard-app/index.js:1168
+#: src/dashboard-app/index.js:862
 msgid "Default interface:"
 msgstr ""
 
-#: src/dashboard-app/index.js:1193
+#: src/dashboard-app/index.js:887
 msgid "Used by any screen you have not set individually. Tools, Approvals, and Activity each have their own Basic/Advanced switch now."
 msgstr ""
 
-#: src/dashboard-app/index.js:1205
+#: src/dashboard-app/index.js:899
 #: src/settings-app/index.js:281
 msgid "Reset every screen back to your default interface? Any screen you switched individually will lose that override."
 msgstr ""
 
-#: src/dashboard-app/index.js:1221
+#: src/dashboard-app/index.js:915
 #: src/settings-app/index.js:329
 msgid "Reset all screens to my default"
 msgstr ""
 
-#: src/dashboard-app/index.js:1232
+#: src/dashboard-app/index.js:926
 msgid "Automatic Agent Updates"
 msgstr ""
 
-#: src/dashboard-app/index.js:1250
+#: src/dashboard-app/index.js:944
 msgid "Keep installed agents updated automatically. Opt out any time."
 msgstr ""
 
-#: src/dashboard-app/index.js:1271
+#: src/dashboard-app/index.js:965
 msgid "Browse →"
 msgstr ""
 
-#: src/dashboard-app/index.js:1275
+#: src/dashboard-app/index.js:969
 msgid "Discover and install agents created by the WordPress community."
 msgstr ""
 
-#: src/dashboard-app/index.js:1293
+#: src/dashboard-app/index.js:987
 msgid "Getting Started"
 msgstr ""
 
 #. translators: 1: done count, 2: total
-#: src/dashboard-app/index.js:1298
+#: src/dashboard-app/index.js:992
 #, js-format
 msgid "%1$d of %2$d steps complete"
 msgstr ""
 
-#: src/dashboard-app/index.js:1384
+#: src/dashboard-app/index.js:1078
 msgid "Could not load dashboard."
 msgstr ""
 
-#: src/dashboard-app/index.js:1514
+#: src/dashboard-app/index.js:1208
 msgid "Loading dashboard…"
 msgstr ""
 
-#: src/dashboard-app/index.js:1524
+#: src/dashboard-app/index.js:1218
 msgid "Dashboard unavailable."
 msgstr ""
 
-#: src/dashboard-app/index.js:1614
+#: src/dashboard-app/index.js:1308
 msgid "Saving layout…"
 msgstr ""
 
-#: src/dashboard-app/index.js:1624
+#: src/dashboard-app/index.js:1318
 msgid "Reset layout"
 msgstr ""
 
-#: src/dashboard-app/index.js:1628
+#: src/dashboard-app/index.js:1322
 msgid "Drag ⋮⋮ to rearrange cards"
 msgstr ""
 
-#: src/dashboard-app/index.js:1639
+#: src/dashboard-app/index.js:1331
 msgid "Emergency stop is ACTIVE"
 msgstr ""
 
-#: src/dashboard-app/index.js:1645
+#: src/dashboard-app/index.js:1337
 msgid "All agents are deactivated, jobs are cancelled, and LLM providers are disconnected. Chat and agent activation are blocked."
 msgstr ""
 
-#: src/dashboard-app/index.js:1650
+#: src/dashboard-app/index.js:1342
 msgid "Manage Interface"
 msgstr ""
 

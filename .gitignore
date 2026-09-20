@@ -25,6 +25,12 @@
 # Internal docs/design notes — local only, never published to the public repo
 /docs/
 
+# Prompt-test output — real LLM responses from your own site, real cost figures,
+# rewritten on every run. A local artifact, like a coverage report. Reports
+# normally land in wp-content/agentic-knowledge/prompt-tests/, outside the repo;
+# this covers the case of pointing --output at the checkout.
+prompt_test_results.md
+
 # WP.org submission zips — build artifacts from bin/export-wporg-tree.sh, never commit
 *.zip
 /dist/

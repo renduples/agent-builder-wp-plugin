@@ -137,6 +137,38 @@ class Tool_Executor {
 	}
 
 	/**
+	 * Turn a tool slug into something a site owner can read.
+	 *
+	 * @param string $tool_name Tool slug.
+	 * @return string
+	 */
+	private static function friendly_tool_name( string $tool_name ): string {
+		$label = trim( str_replace( '_', ' ', $tool_name ) );
+
+		return '' === $label ? $tool_name : ucfirst( $label );
+	}
+
+	/**
+	 * Normalise a manifest reason to exactly one sentence-ending full stop.
+	 *
+	 * Manifest reasons are hand-written and inconsistent about trailing
+	 * punctuation, so interpolating one raw produced a doubled stop in some
+	 * places and none in others.
+	 *
+	 * @param string $reason Declared reason, possibly empty.
+	 * @return string Empty string when nothing was declared.
+	 */
+	private static function as_sentence( string $reason ): string {
+		$reason = trim( $reason );
+
+		if ( '' === $reason ) {
+			return '';
+		}
+
+		return rtrim( $reason, " \t\n\r\0\x0B." ) . '.';
+	}
+
+	/**
 	 * Execute a tool call with full risk-level enforcement.
 	 *
 	 * @param string          $tool_name          Tool name.
@@ -286,9 +318,18 @@ class Tool_Executor {
 		}
 
 		if ( 'confirm' === $enforcement ) {
-			$manifest    = Abilities_Manifest::load( $agent_id );
-			$reason      = $manifest['abilities'][ $tool_name ]['reason'] ?? 'This action requires your confirmation before proceeding.';
-			$description = sprintf( '%s — %s', $tool_name, $reason );
+			$manifest = Abilities_Manifest::load( $agent_id );
+			$label    = self::friendly_tool_name( $tool_name );
+
+			// A tool the manifest does not describe (report_issue, for one, is
+			// declared in no bundled agent's abilities.json) used to fall back to
+			// "This action requires your confirmation before proceeding." — which
+			// the message below then quoted back as its own Reason, producing a
+			// tautology with a doubled full stop. Say what the tool is instead.
+			$reason      = self::as_sentence( (string) ( $manifest['abilities'][ $tool_name ]['reason'] ?? '' ) );
+			$description = '' === $reason
+				? sprintf( '%s — can change your site, so it needs your approval.', $label )
+				: sprintf( '%s — %s', $label, $reason );
 			$proposal    = Agent_Proposals::create( $tool_name, $arguments, $agent_id, $description );
 
 			$this->audit->log(
@@ -306,8 +347,10 @@ class Tool_Executor {
 				'status'      => 'confirmation_required',
 				'proposal_id' => $proposal['id'],
 				'message'     => sprintf(
-					'This action requires your confirmation. Reason: %s. Please approve or reject in the chat.',
-					$reason
+					'%s Approve or reject it below.',
+					'' === $reason
+						? sprintf( '“%s” can change your site, so it needs your approval first.', $label )
+						: sprintf( '“%s” needs your approval first: %s', $label, $reason )
 				),
 				'reason'      => $reason,
 			);

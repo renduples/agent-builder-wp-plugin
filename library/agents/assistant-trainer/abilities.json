@@ -1,8 +1,8 @@
 {
   "$schema": "https://agentic-plugin.com/schemas/abilities/v1.json",
-  "version": "1.1",
+  "version": "1.2",
   "agent": "assistant-trainer",
-  "description": "Tools required by the Assistant Trainer for building and managing agents",
+  "description": "Tools required by the Assistant Trainer for building and managing agents, and for running the prompt-test suite against them",
   "knowledge_files": [
     "platform-knowledge.txt"
   ],
@@ -48,6 +48,26 @@
     "delete_agent": {
       "risk": "medium",
       "reason": "Deletes an agent directory and all its files"
+    },
+    "manage_prompt_catalog": {
+      "risk": "medium",
+      "reason": "Edits the prompt-test catalog, which decides what the agents are measured against. Reading it is free; changing it is a judgement call worth confirming.",
+      "risk_by_action": {
+        "list": "none",
+        "get": "none"
+      }
+    },
+    "run_prompt_tests": {
+      "risk": "medium",
+      "reason": "Makes real, paid LLM calls and replays prompts that can themselves write to the site."
+    },
+    "analyze_prompt_results": {
+      "risk": "none",
+      "reason": "Read-only correlation of the catalog, the agent manifests and the tool registry."
+    },
+    "manage_skill": {
+      "risk": "high",
+      "reason": "Writing a skill changes how an agent behaves from then on, so it needs sign-off — matching the floor Skills Assistant already carries."
     }
   }
 }

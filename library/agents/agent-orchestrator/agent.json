@@ -1,29 +1,32 @@
 {
-  "$schema": "https://agentic-plugin.com/schemas/agent/v1.json",
-  "slug": "agent-orchestrator",
-  "name": "Agent Orchestrator",
-  "description": "Puts your agents to work — chat widgets, scheduled tasks, automatic triggers — without needing the technical Publish screens. Ask it to deploy an agent and it handles the setup.",
-  "category": "developer",
-  "icon": "🚀",
-  "version": "1.0.0",
-  "author": "Agent Builder",
-  "author_uri": "https://agentic-plugin.com",
-  "capabilities": [ "manage_options" ],
-  "tools": [
-    "manage_agent_shortcode",
-    "manage_editor_sidebar_agent",
-    "manage_frontend_modal_agent",
-    "manage_gutenberg_block_agent",
-    "manage_admin_bar_launcher",
-    "manage_scheduled_task",
-    "manage_event_listener",
-    "agents_available"
-  ],
-  "suggested_prompts": [
-    "Put my Content Writer agent on the homepage as a chat widget.",
-    "Make my Site Health Sentinel check my site every morning and email me if something's wrong.",
-    "Set up an agent to reply to new comments automatically.",
-    "Add an AI panel to the block editor so I can chat with an agent while I write."
-  ],
-  "welcome_message": "Hi! I'm the Agent Orchestrator. I handle putting your agents to work — chat widgets on your site, scheduled check-ins, automatic replies to things that happen on your site — all without the technical setup screens. What would you like to deploy?"
+    "$schema": "https://agentic-plugin.com/schemas/agent/v1.json",
+    "slug": "agent-orchestrator",
+    "name": "Agent Orchestrator",
+    "description": "Puts your agents to work — chat widgets, scheduled tasks, automatic triggers — without needing the technical Publish screens. Ask it to deploy an agent and it handles the setup.",
+    "category": "developer",
+    "icon": "🚀",
+    "version": "1.1.0",
+    "author": "Agent Builder",
+    "author_uri": "https://agentic-plugin.com",
+    "capabilities": [
+        "manage_options"
+    ],
+    "tools": [
+        "get_agent_list",
+        "manage_agent_shortcode",
+        "manage_editor_sidebar_agent",
+        "manage_frontend_modal_agent",
+        "manage_gutenberg_block_agent",
+        "manage_admin_bar_launcher",
+        "manage_scheduled_task",
+        "manage_event_listener",
+        "agents_available"
+    ],
+    "suggested_prompts": [
+        "Put my Content Writer agent on the homepage as a chat widget.",
+        "Make my Site Health Sentinel check my site every morning and email me if something's wrong.",
+        "Set up an agent to reply to new comments automatically.",
+        "Add an AI panel to the block editor so I can chat with an agent while I write."
+    ],
+    "welcome_message": "Hi! I'm the Agent Orchestrator. I handle putting your agents to work — chat widgets on your site, scheduled check-ins, automatic replies to things that happen on your site — all without the technical setup screens. What would you like to deploy?"
 }
