@@ -2,11 +2,12 @@
 /**
  * Unit Tests for the hosted-provider billing identity.
  *
- * Regression cover for issue #136: `agent_builder_license_key` was read in four
- * places and written in none, so on a fresh install the hosted Agentic provider
- * had no identity to send. Requests were rejected by the relay, and
- * has_usable_provider() decided nothing was configured — which gates the whole
- * admin menu, so completing signup sent the user straight back to signup.
+ * Regression cover for #135: on a fresh install `agent_builder_license_key` was
+ * never written, so the hosted Agentic provider had no identity to send.
+ * Requests were rejected by the relay, and has_usable_provider() decided
+ * nothing was configured. The identity is the license key (stored by signup),
+ * which the relay meters by — a distinct value from the provider's API key, and
+ * the API key must NOT be used as a fallback identity.
  *
  * @package Agentic\Tests
  */
@@ -43,31 +44,34 @@ class Test_Provider_License_Key extends TestCase {
 	}
 
 	/**
-	 * The bug: signup stores the credential on the provider row and never sets
-	 * the option, so the identity has to be resolvable from the row alone.
+	 * The identity is the license key, which signup stores in the option — it is
+	 * NOT the agentic provider row's API key. The relay meters by the license
+	 * key (a distinct value from the API key), so a site that has only an API
+	 * key (e.g. an older signup from before #135 stored the license key) has no
+	 * usable identity until it reconnects.
 	 */
-	public function test_identity_falls_back_to_the_provider_row(): void {
+	public function test_api_key_alone_is_not_an_identity(): void {
 		$this->assertSame( '', Provider_Registry::get_license_key(), 'precondition: nothing configured' );
 
 		Provider_Registry::save_api_key( 'agentic', 'relay-key-abc123' );
 		Provider_Registry::invalidate();
 
 		$this->assertSame(
-			'relay-key-abc123',
+			'',
 			Provider_Registry::get_license_key(),
-			'With the option unset, the identity must come from the agentic provider row.'
+			'The API key is not the metering identity; without the license-key option there is none.'
 		);
 	}
 
 	/**
-	 * A site that already has the option set keeps using it.
+	 * The license key stored in the option is the identity.
 	 */
-	public function test_explicit_option_overrides_the_provider_row(): void {
+	public function test_identity_comes_from_the_license_option(): void {
 		Provider_Registry::save_api_key( 'agentic', 'row-key' );
 		Provider_Registry::invalidate();
-		update_option( 'agent_builder_license_key', 'explicit-key' );
+		update_option( 'agent_builder_license_key', 'AGNT-TEST-KEY' );
 
-		$this->assertSame( 'explicit-key', Provider_Registry::get_license_key() );
+		$this->assertSame( 'AGNT-TEST-KEY', Provider_Registry::get_license_key() );
 	}
 
 	/**
@@ -88,11 +92,27 @@ class Test_Provider_License_Key extends TestCase {
 	public function test_connected_site_counts_as_usable(): void {
 		Provider_Registry::save_api_key( 'agentic', 'relay-key-abc123' );
 		Provider_Registry::invalidate();
+		update_option( 'agent_builder_license_key', 'AGNT-TEST-KEY' );
 		update_option( 'agent_builder_llm_provider', 'agentic' );
 
 		$this->assertTrue(
 			Provider_Registry::has_usable_provider(),
-			'A site that completed signup must not be funnelled back to setup.'
+			'A site with both the API key and the license key must not be funnelled back to setup.'
+		);
+	}
+
+	/**
+	 * The other half: an API key but no license key is NOT usable — the site is
+	 * sent back to Quick Start to reconnect (which stores the license key).
+	 */
+	public function test_api_key_without_license_is_not_usable(): void {
+		Provider_Registry::save_api_key( 'agentic', 'relay-key-abc123' );
+		Provider_Registry::invalidate();
+		update_option( 'agent_builder_llm_provider', 'agentic' );
+
+		$this->assertFalse(
+			Provider_Registry::has_usable_provider(),
+			'Without a license key the hosted provider cannot meter, so it is not usable.'
 		);
 	}
 
@@ -105,6 +125,7 @@ class Test_Provider_License_Key extends TestCase {
 	public function test_identity_is_attached_to_the_hosted_request(): void {
 		Provider_Registry::save_api_key( 'agentic', 'relay-key-abc123' );
 		Provider_Registry::invalidate();
+		update_option( 'agent_builder_license_key', 'AGNT-TEST-KEY' );
 		update_option( 'agent_builder_llm_provider', 'agentic' );
 		update_option( 'agent_builder_model', 'gemini-2.5-flash' );
 
@@ -116,7 +137,7 @@ class Test_Provider_License_Key extends TestCase {
 
 		$body = $format->invoke( $client, array( array( 'role' => 'user', 'content' => 'hello' ) ), array(), false );
 
-		$this->assertSame( 'relay-key-abc123', $body['user_id'] ?? '', 'The relay meters on user_id; an empty one is rejected.' );
+		$this->assertSame( 'AGNT-TEST-KEY', $body['user_id'] ?? '', 'The relay meters on the license key, sent as user_id.' );
 		$this->assertNotEmpty( $body['site_url'] ?? '' );
 	}
 }
