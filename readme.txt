@@ -172,7 +172,7 @@ The interface text is written in English, and the `.pot` translation template is
 9. Safety Center — Risk inventory, kill switch, per-agent tool scopes, and audit-log integrity check.
 10. Quick Start Wizard — Connect your LLM provider and choose Basic or Advanced mode in under two minutes.
 11. Settings & Providers — Connect and manage LLM providers. Interface (UI modes) and Security are in the same Settings nav.
-12. Prompt Tests — the Assistant Trainer replays real-world requests, reports what passed, what stopped for approval and what it cost, then proposes the tool an agent is missing. You approve.
+12. Site Brief — A read-only scan of your site, turned into a ranked list of approve-to-act jobs, each attributed to the agent that raised it. Nothing changes until you approve.
 
 == External Services ==
 
@@ -264,6 +264,7 @@ This plugin connects to external AI APIs to process prompts and tool executions 
   * Image Generation: `https://imagegen.agentic-plugin.com`
   * Text-to-Speech: `https://tts.agentic-plugin.com`
   * Video Generation: `https://videogen.agentic-plugin.com`
+  * Video Delivery (retrieving generated video files): `https://videos.agentic-plugin.com`
   * Music Search (Jamendo): the Video Generation endpoint above proxies royalty-free background-music searches to [Jamendo](https://www.jamendo.com/) — your search terms are relayed to Jamendo's catalog, not sent to Jamendo directly from your site.
 * **When used:** Only when using Agentic managed AI credits or Pro cloud features.
 * **Data sent:** Site URL, license key, prompt text, and task-specific media/document payloads.
