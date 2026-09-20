@@ -67,6 +67,34 @@ final class Activator {
 	}
 
 	/**
+	 * Sync stored schema version after a plugin upgrade.
+	 *
+	 * register_activation_hook does not fire on WP.org auto-updates, so
+	 * agent_builder_db_schema_version would otherwise stay on the previous
+	 * value and the dashboard Schema tile would never catch up.
+	 *
+	 * Admin + logged-in only. No-op (no DB writes) when the stored option
+	 * already equals AGENT_BUILDER_DB_VERSION. When behind, re-runs
+	 * create_tables() (dbDelta, idempotent, no data loss) then writes the
+	 * current constant.
+	 *
+	 * @return void
+	 */
+	public static function maybe_upgrade(): void {
+		if ( ! is_admin() || ! is_user_logged_in() ) {
+			return;
+		}
+
+		$stored = (string) get_option( 'agent_builder_db_schema_version', '' );
+		if ( AGENT_BUILDER_DB_VERSION === $stored ) {
+			return;
+		}
+
+		self::create_tables();
+		self::set_db_schema_version( AGENT_BUILDER_DB_VERSION );
+	}
+
+	/**
 	 * Run all activation tasks.
 	 *
 	 * @param string $schema_version Current DB_SCHEMA_VERSION from Plugin class.
