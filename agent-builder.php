@@ -314,8 +314,11 @@ final class Plugin {
 		// Setup notice — shown as a banner (see show_setup_needed_notice) rather than
 		// a hard redirect, so CLI-activated installs don't trap admins on the signup page.
 
-		// After a plugin update the activation hook does not re-fire, so
-		// bundled abilities.json signatures can go stale if the file changed.
+		// After a plugin update the activation hook does not re-fire, so the
+		// stored schema version (and bundled abilities.json signatures) can
+		// stay stale. maybe_upgrade is a no-op when already current.
+		Activator::maybe_upgrade();
+
 		// Re-sign whenever the stored signing version differs from the current one.
 		$signed_version = get_option( 'agent_builder_abilities_signed_version', '' );
 		if ( AGENT_BUILDER_VERSION !== $signed_version ) {
