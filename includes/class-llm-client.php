@@ -1298,7 +1298,7 @@ class LLM_Client {
 		// usage by license key. Gated on the provider (not the request format) so a
 		// user's own Google/Gemini key never leaks these fields to Google's API.
 		if ( 'agentic' === $this->provider ) {
-			$body['user_id']  = (string) get_option( 'agent_builder_license_key', '' );
+			$body['user_id']  = Provider_Registry::get_license_key();
 			$body['site_url'] = home_url();
 		}
 

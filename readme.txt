@@ -319,6 +319,7 @@ This plugin connects to external AI APIs to process prompts and tool executions 
 == Changelog ==
 
 = 3.4.1 - 2026-09-19 =
+* Fixed: the hosted Agentic free tier could not connect on a new site. The billing identity sent to the service was read from a setting nothing ever saved, so completing signup left the plugin still asking you to sign up. It now reads the key your account was issued.
 * New: Prompt Tests. A ranked catalog of 54 real-world owner requests, a `wp agent prompt-test` command that replays them against the bundled agents and writes a markdown report, and three Assistant Trainer tools (run_prompt_tests, analyze_prompt_results, manage_prompt_catalog) so it can check the agents' coverage and propose improvements for your approval. Never runs unattended; real provider calls only when you start it, within a cost cap.
 
 = 3.4.0 - 2026-09-10 =

@@ -415,12 +415,49 @@ class Provider_Registry {
 	}
 
 	/**
+	 * The billing identity sent to the hosted Agentic relay.
+	 *
+	 * The relay meters usage by this value, and rejects a request without one
+	 * ("This site is not activated for Agentic hosted AI"). It used to be read
+	 * straight from the `agent_builder_license_key` option — but nothing in the
+	 * plugin ever wrote that option, so on a fresh install it was always empty:
+	 * signup stored the credential on the provider row and the option stayed
+	 * unset, leaving the hosted free tier unable to authenticate and the admin
+	 * menu convinced nothing was configured. See issue #136.
+	 *
+	 * The credential the relay issues is the same one stored as the `agentic`
+	 * provider's API key — `Admin_Ajax::handle_agentic_signup()` accepts it
+	 * under either name (`api_key` or `license_key`) and stores it once. So the
+	 * row is the source of truth and the option is only an override, honoured
+	 * first for any site that already has it set.
+	 *
+	 * Deliberately not written back to the option: that would put a second,
+	 * unencrypted copy of a live credential in wp_options, when the provider
+	 * row is already encrypted at rest. Reading through here instead also means
+	 * every path that saves a key — signup, the setup wizard, Settings → APIs —
+	 * works, rather than only the one that happened to be patched.
+	 *
+	 * @return string Billing identity, or '' when the site has no hosted key.
+	 */
+	public static function get_license_key(): string {
+		$explicit = (string) get_option( 'agent_builder_license_key', '' );
+
+		if ( '' !== $explicit ) {
+			return $explicit;
+		}
+
+		$agentic = self::get( 'agentic' );
+
+		return (string) ( $agentic['api_key'] ?? '' );
+	}
+
+	/**
 	 * Whether at least one provider is fully usable for chat right now.
 	 *
-	 * Stricter than get_active(): the hosted "agentic" provider also needs the
-	 * site license key (agent_builder_license_key) so the proxy can meter usage.
-	 * Without it the proxy silently serves unmetered, so it is not counted here
-	 * and the admin funnels the user back to setup.
+	 * Stricter than get_active(): the hosted "agentic" provider also needs a
+	 * billing identity (see get_license_key()) so the proxy can meter usage.
+	 * Without one the proxy rejects the request, so it is not counted here and
+	 * the admin funnels the user back to setup.
 	 *
 	 * @return bool
 	 */
@@ -432,7 +469,7 @@ class Provider_Registry {
 		foreach ( self::get_all() as $p ) {
 			$slug = $p['slug'] ?? '';
 			if ( 'agentic' === $slug ) {
-				if ( ! empty( $p['api_key'] ) && '' !== (string) get_option( 'agent_builder_license_key', '' ) ) {
+				if ( ! empty( $p['api_key'] ) && '' !== self::get_license_key() ) {
 					return true;
 				}
 				continue;
