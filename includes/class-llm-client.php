@@ -224,6 +224,16 @@ class LLM_Client {
 			return new \WP_Error( 'not_configured', 'LLM API key not configured.' );
 		}
 
+		// The hosted relay meters by license key and rejects requests without one
+		// ("missing license key"). Say so here, with the fix, instead of letting
+		// the relay's error surface in chat (#135).
+		if ( 'agentic' === $this->provider && '' === (string) get_option( 'agent_builder_license_key', '' ) ) {
+			return new \WP_Error(
+				'agentic_license_missing',
+				__( 'The hosted Agentic AI connection has no license key, so requests would be rejected. Reconnect from Agent Builder → Quick Start, or add your own provider key under Settings → Providers.', 'agent-builder' )
+			);
+		}
+
 		// Models that cannot tool-call (tinyllama, runtime-discovered Ollama tags, …):
 		// strip tools before the request so agents still get a text reply (D8).
 		if ( ! empty( $tools ) && ! Model_Capabilities::supports_tools( (string) $this->model, (string) $this->provider ) ) {
@@ -444,6 +454,16 @@ class LLM_Client {
 
 		if ( ! $this->is_configured() ) {
 			return new \WP_Error( 'not_configured', 'LLM API key not configured.' );
+		}
+
+		// The hosted relay meters by license key and rejects requests without one
+		// ("missing license key"). Say so here, with the fix, instead of letting
+		// the relay's error surface in chat (#135).
+		if ( 'agentic' === $this->provider && '' === (string) get_option( 'agent_builder_license_key', '' ) ) {
+			return new \WP_Error(
+				'agentic_license_missing',
+				__( 'The hosted Agentic AI connection has no license key, so requests would be rejected. Reconnect from Agent Builder → Quick Start, or add your own provider key under Settings → Providers.', 'agent-builder' )
+			);
 		}
 
 		// Same tool stripping as chat() for models without tool support (D8).

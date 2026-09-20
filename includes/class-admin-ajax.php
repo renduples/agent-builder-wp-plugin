@@ -1166,10 +1166,83 @@ class Admin_Ajax {
 	}
 
 	/**
+	 * Store the credentials the hosted signup endpoint returned.
+	 *
+	 * The register endpoint answers with `api_key` and, on every current
+	 * server, `license_key`. They are different things: the API key
+	 * authenticates requests to the hosted provider, the license key is the
+	 * billing identity the hosted relay meters by (LLM_Client sends it as
+	 * `user_id`) and the value Provider_Registry::has_usable_provider() checks.
+	 * Until 3.4.1 this handler collapsed both into the API key and never stored
+	 * the license key, so a fresh install could sign up "successfully" and still
+	 * have no usable hosted provider (#135).
+	 *
+	 * Kept separate from the AJAX wrapper so it can be unit-tested without
+	 * wp_send_json_*().
+	 *
+	 * @param array<string, mixed> $body  Decoded JSON response from the register endpoint.
+	 * @param string               $email Email the site registered with; stored so the
+	 *                                    site can be reconnected with the same account.
+	 * @return array{api_key: string, license_key: string}|\WP_Error
+	 */
+	public static function persist_hosted_signup( array $body, string $email = '' ): array|\WP_Error {
+		$api_key     = sanitize_text_field( (string) ( $body['api_key'] ?? '' ) );
+		$license_key = sanitize_text_field( (string) ( $body['license_key'] ?? '' ) );
+
+		// Servers older than marketplace 2.9.38 returned only license_key and
+		// expected it to be used as the API key. Keep that working.
+		if ( '' === $api_key && '' !== $license_key ) {
+			$api_key = $license_key;
+		}
+
+		if ( '' === $api_key ) {
+			return new \WP_Error(
+				'agentic_no_api_key',
+				(string) ( $body['message'] ?? __( 'No API key returned. Please try again.', 'agent-builder' ) )
+			);
+		}
+
+		// save_api_key() returns false when the 'agentic' provider row is missing
+		// or unwritable (e.g. a providers table that never fully seeded).
+		// Reporting success in that case strands the user: no LLM is configured,
+		// so the chat page is never registered and the post-signup redirect lands
+		// on WordPress's generic "not allowed" page.
+		if ( ! Provider_Registry::save_api_key( 'agentic', $api_key ) ) {
+			return new \WP_Error(
+				'agentic_api_key_not_saved',
+				__( 'Your API key was issued but could not be saved on this site. Please deactivate and reactivate Agent Builder to repair its database tables, then try again.', 'agent-builder' )
+			);
+		}
+
+		if ( '' !== $license_key ) {
+			update_option( 'agent_builder_license_key', $license_key );
+		}
+		if ( '' !== $email ) {
+			update_option( 'agent_builder_hosted_account_email', sanitize_email( $email ), false );
+		}
+
+		$stored_license = (string) get_option( 'agent_builder_license_key', '' );
+		if ( '' === $stored_license ) {
+			// The API key is saved, so a retry can re-resolve the license (the
+			// endpoint returns the existing key together with its license for the
+			// same email), but the hosted provider is not usable until it does.
+			return new \WP_Error(
+				'agentic_license_key_missing',
+				__( 'Your API key was saved, but the service did not issue a license key, which the hosted Agentic AI provider needs. Please try connecting again in a few minutes, or add your own provider key under Settings → Providers.', 'agent-builder' )
+			);
+		}
+
+		return array(
+			'api_key'     => $api_key,
+			'license_key' => $stored_license,
+		);
+	}
+
+	/**
 	 * AJAX handler: register for an Agentic AI API key.
 	 *
 	 * Called from the sign-up page. POSTs to Agentic AI services,
-	 * stores the returned API key, and sets the default provider.
+	 * stores the returned API key and license key, and sets the default provider.
 	 *
 	 * @return void
 	 */
@@ -1229,26 +1302,16 @@ class Admin_Ajax {
 
 		$body = json_decode( wp_remote_retrieve_body( $response ), true );
 
-		// Accept either 'api_key' or 'license_key' from the server response.
-		$api_key = $body['api_key'] ?? $body['license_key'] ?? '';
-
-		if ( empty( $api_key ) ) {
-			$server_msg = $body['message'] ?? __( 'No API key returned. Please try again.', 'agent-builder' );
-			wp_send_json_error( array( 'message' => $server_msg ) );
-		}
-
-		// Store the API key in the providers table. save_api_key() returns false
-		// when the 'agentic' provider row is missing or unwritable (e.g. a providers
-		// table that never fully seeded). Reporting success in that case strands the
-		// user: no LLM is configured, so the chat page is never registered and the
-		// post-signup redirect lands on WordPress's generic "not allowed" page.
-		if ( ! Provider_Registry::save_api_key( 'agentic', $api_key ) ) {
+		$stored = self::persist_hosted_signup( is_array( $body ) ? $body : array(), $email );
+		if ( is_wp_error( $stored ) ) {
 			wp_send_json_error(
 				array(
-					'message' => __( 'Your API key was issued but could not be saved on this site. Please deactivate and reactivate Agent Builder to repair its database tables, then try again.', 'agent-builder' ),
+					'message' => $stored->get_error_message(),
+					'code'    => $stored->get_error_code(),
 				)
 			);
 		}
+		$api_key = $stored['api_key'];
 
 		// Set Agentic AI as the default provider with user-chosen configuration.
 		update_option( 'agent_builder_llm_provider', 'agentic' );
