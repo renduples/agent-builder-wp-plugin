@@ -349,9 +349,17 @@ class Site_Brief_Controller {
 		$advanced = class_exists( Admin_Menu_Handler::class )
 			&& Admin_Menu_Handler::is_advanced_mode( 'dashboard' );
 
+		$dismissed = (array) ( $data['dismissed'] ?? array() );
+
 		$cards = array();
 		foreach ( (array) ( $data['cards'] ?? array() ) as $card ) {
 			if ( ! is_array( $card ) ) {
+				continue;
+			}
+			// A dismissed card stays hidden until its evidence changes — mirror the
+			// runner's filter here so a dismissal takes effect immediately, not only
+			// after the next scan.
+			if ( Site_Brief_Store::is_dismissed( (string) ( $card['id'] ?? '' ), (string) ( $card['evidence_hash'] ?? '' ), $dismissed ) ) {
 				continue;
 			}
 			if ( ! $advanced ) {
