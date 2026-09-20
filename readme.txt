@@ -4,7 +4,7 @@ Tags: ai, ai safety, ai agents, mcp, webmcp
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 3.4.2
+Stable tag: 4.0.0
 Donate link: https://agentic-plugin.com/donate/
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -328,6 +328,14 @@ This plugin connects to external AI APIs to process prompts and tool executions 
 
 
 == Changelog ==
+
+= 4.0.0 - 2026-09-20 =
+Major release. The safety-first way to run AI agents on WordPress — agents that take real actions only after you approve them.
+* Site Brief — a read-only scan that turns your site into a ranked list of approve-to-act jobs, each attributed to the agent that raised it. Nothing changes until you approve.
+* Prompt Tests — replay a catalog of real owner requests against your agents; see what passed, what stopped for approval and what it cost, and get proposed improvements for your approval.
+* Safety Center — one screen for risk inventory, approval gates, per-agent tool scopes, tamper-detection status, and an emergency stop.
+* Agent-Ready Score and the opt-in WebMCP Bridge for AI-agent discoverability.
+* Hardened throughout: hash-chained tamper-proof Activity log, a stronger approval write-path, and a consistent agent_builder_ prefix across constants, options, tables, hooks, and capabilities.
 
 = 3.4.2 - 2026-09-20 =
 * Added Site Brief: a read-only dashboard scan that turns this site into a ranked list of approve-to-act jobs. No new external services.
