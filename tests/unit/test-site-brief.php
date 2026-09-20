@@ -141,6 +141,46 @@ class Test_Site_Brief extends TestCase {
 	}
 
 	/**
+	 * Dismissing a card drops it from the presented brief straight away, not
+	 * only after the next scan. Regression: present() must apply the dismissed
+	 * filter the runner already applies, so the dismiss response and a plain
+	 * reload both hide the card.
+	 */
+	public function test_dismiss_card_hides_it_from_presented_brief(): void {
+		$card = array(
+			'id'            => 'plugin_updates:akismet',
+			'checker_id'    => 'plugin_updates',
+			'evidence_hash' => hash( 'sha256', 'akismet:1.0:1.1' ),
+			'title'         => 'Akismet has an update',
+		);
+		Site_Brief_Store::save(
+			array(
+				'status'   => 'complete',
+				'last_run' => gmdate( 'c' ),
+				'cards'    => array( $card ),
+			)
+		);
+
+		$request = new \WP_REST_Request( 'POST', '/agentic/v1/site-brief/cards/plugin_updates:akismet/dismiss' );
+		$request->set_param( 'id', $card['id'] );
+
+		$response = Site_Brief_Controller::dismiss_card( $request );
+		$this->assertInstanceOf( \WP_REST_Response::class, $response );
+		$this->assertSame( 200, $response->get_status() );
+
+		$ids = wp_list_pluck( (array) ( $response->get_data()['cards'] ?? array() ), 'id' );
+		$this->assertNotContains(
+			$card['id'],
+			$ids,
+			'A dismissed card must not appear in the presented brief.'
+		);
+		$this->assertTrue(
+			(bool) ( $response->get_data()['healthy'] ?? false ),
+			'With its only card dismissed the brief should read as healthy.'
+		);
+	}
+
+	/**
 	 * The JSON option is not autoloaded.
 	 */
 	public function test_option_is_not_autoloaded(): void {
