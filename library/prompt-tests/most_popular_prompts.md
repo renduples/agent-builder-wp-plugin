@@ -17,7 +17,7 @@ re-validates every row in about a second, for free. See
 | **Rank** | 1 = most frustrating. `--rank=` targets it. |
 | **Agent** | Exactly one bundled agent slug. Validated before any LLM call. |
 | **Prompt** | Sent verbatim, and must be self-contained — the harness sends no conversation history. |
-| **Expect Tools** | Tools the run should reach for. Blank means only the baseline checks apply. |
+| **Expect Tools** | Tools the run should reach for. Blank means only the baseline checks apply. Comma-separated entries must *all* be called; write `toolA\|toolB` within one entry when either is a fair answer, which is often the case. |
 | **Coverage** | `full`, `partial` or `none` — how well the assigned agent can actually answer. |
 | **Notes** | Read by humans, echoed into the report, never asserted on. |
 | **Source** | Where the frustration ranking came from. |
@@ -81,10 +81,10 @@ still appears with `Coverage: none` or `partial` and is collected under
 | ID | Rank | Agent | Prompt | Expect Tools | Coverage | Notes | Source |
 |---|---|---|---|---|---|---|---|
 | P10 | 5 | seo-optimizer | My site doesn't show up on Google at all. What's wrong? | get_seo_overview | partial | Cannot check index status or the "discourage search engines" setting — the two most common actual causes. | seo |
-| P11 | 10 | seo-optimizer | Which of my pages need SEO work the most? | list_posts_needing_seo | full | | seo |
+| P11 | 10 | seo-optimizer | Which of my pages need SEO work the most? | list_posts_needing_seo\|get_seo_overview | full | | seo |
 | P12 | 13 | seo-optimizer | A lot of my posts are really short. Does that hurt me, and which ones are they? | list_posts_needing_seo | full | Thin-content detection; the <300-word threshold. | seo |
 | P13 | 20 | seo-optimizer | My titles get impressions but nobody clicks them. Can you improve them? | optimize_post_title | full | Expected to stop for approval before rewriting a live title. | seo |
-| P14 | 24 | seo-optimizer | Nobody can find my older posts. How should I link things together better? | analyze_internal_links, get_link_suggestions | full | | seo |
+| P14 | 24 | seo-optimizer | Nobody can find my older posts. How should I link things together better? | analyze_internal_links\|get_link_suggestions | full | | seo |
 | P15 | 27 | seo-optimizer | Half my pages have no meta description. Can you fix that? | list_posts_needing_seo, update_post_seo | full | Write action — expect a gated pass in supervised mode. | seo |
 | P16 | 36 | seo-optimizer | Is the content on my About page actually any good? | analyze_content_quality | partial | Needs an About page to exist on the test site. | seo |
 
@@ -93,13 +93,13 @@ still appears with `Coverage: none` or `partial` and is collected under
 | ID | Rank | Agent | Prompt | Expect Tools | Coverage | Notes | Source |
 |---|---|---|---|---|---|---|---|
 | P17 | 8 | wordpress-assistant | My photos are enormous and I think they're slowing the site down. | find_oversized_images | partial | Finds them; cannot compress or convert to WebP — those tools exist but are not on any bundled agent. | common |
-| P18 | 14 | wordpress-assistant | I've got loads of plugins and no idea what half of them do. Which ones can I get rid of? | check_plugin_status, get_abandoned_plugins | full | | maint |
-| P19 | 17 | wordpress-assistant | Is this plugin still maintained, or has it been abandoned? | get_plugin_maintenance_status | full | Self-contained on purpose — the agent should ask which plugin rather than guess. | security |
-| P20 | 19 | wordpress-assistant | My media library is huge. What's taking up all the space? | get_media_storage_report, find_unused_media | full | | maint |
+| P18 | 14 | wordpress-assistant | I've got loads of plugins and no idea what half of them do. Which ones can I get rid of? | check_plugin_status\|get_abandoned_plugins | full | | maint |
+| P19 | 17 | wordpress-assistant | Is this plugin still maintained, or has it been abandoned? | get_plugin_maintenance_status\|get_abandoned_plugins | full | Self-contained on purpose — the agent should ask which plugin rather than guess. | security |
+| P20 | 19 | wordpress-assistant | My media library is huge. What's taking up all the space? | get_media_storage_report\|find_unused_media | full | | maint |
 | P21 | 22 | wordpress-assistant | I'm brand new to this. Where do I even start? | get_onboarding_status | full | The onboarding prompt; tests tone as much as tooling. | faq |
 | P22 | 26 | wordpress-assistant | Screen readers can't describe my images. Can you sort out the alt text? | update_attachment_alt_text | partial | Can set alt text per image; no site-wide accessibility audit on this agent. | faq |
 | P23 | 30 | wordpress-assistant | What is actually on my website? Give me the overview. | get_site_overview | full | | faq |
-| P24 | 35 | wordpress-assistant | What can this plugin actually do for me? | get_agent_list, search_capabilities | full | | faq |
+| P24 | 35 | wordpress-assistant | What can this plugin actually do for me? | get_agent_list\|search_capabilities | full | | faq |
 | P25 | 41 | wordpress-assistant | Are there any images in my library I'm not using anywhere? | find_unused_media | full | | maint |
 | P26 | 48 | wordpress-assistant | What are people actually searching for when they land on my site? | analyze_search_intent | partial | Intent analysis, not real search-console data. | seo |
 
@@ -108,10 +108,10 @@ still appears with `Coverage: none` or `partial` and is collected under
 | ID | Rank | Agent | Prompt | Expect Tools | Coverage | Notes | Source |
 |---|---|---|---|---|---|---|---|
 | P27 | 7 | support-triage | I'm drowning in spam comments. Can you deal with them? | list_comments | partial | Can review and moderate one at a time; `cleanup_spam_comments` exists but is not on this agent. | security |
-| P28 | 15 | support-triage | Has anyone filled in my contact form recently? I think I'm missing enquiries. | list_native_forms, get_native_form_submissions | partial | Reads stored submissions — which is exactly how an owner discovers mail is broken. | common |
+| P28 | 15 | support-triage | Has anyone filled in my contact form recently? I think I'm missing enquiries. | list_native_forms\|get_native_form_submissions | partial | Reads stored submissions — which is exactly how an owner discovers mail is broken. | common |
 | P29 | 23 | support-triage | There are comments waiting for me. Which ones actually need a reply? | list_comments | full | Triage and prioritisation, the agent's core job. | faq |
-| P30 | 29 | support-triage | Someone left an angry comment. Can you draft a polite reply for me to check? | reply_to_comment | full | Expect a gated pass — replying publicly is a real action. | faq |
-| P31 | 42 | support-triage | Summarise what my visitors have been asking about this month. | list_comments, search_content | partial | | faq |
+| P30 | 29 | support-triage | Someone left an angry comment. Can you draft a polite reply for me to check? | list_comments\|reply_to_comment | full | Expect a gated pass — replying publicly is a real action. On a site with no comments, looking and reporting none is the correct answer, so list_comments alone satisfies it. | faq |
+| P31 | 42 | support-triage | Summarise what my visitors have been asking about this month. | list_comments\|search_content | partial | | faq |
 
 ## User Assistant (user-assistant)
 
@@ -121,7 +121,7 @@ still appears with `Coverage: none` or `partial` and is collected under
 | P33 | 18 | user-assistant | Someone keeps trying to log into my site as admin. What can I do? | list_privileged_users | partial | Can review and lock accounts; `get_failed_logins` exists but is not on this agent, so it cannot see the attempts. | security |
 | P34 | 25 | user-assistant | I've got accounts that haven't logged in for years. Can we clean them up? | find_inactive_users | full | Expect a gated pass if it proposes locking anyone. | maint |
 | P35 | 32 | user-assistant | I want my editor to be able to use the AI agents but not change settings. | manage_user_privileges | full | High-risk write — expect it to queue for approval. | faq |
-| P36 | 39 | user-assistant | This account looks suspicious. Can you lock it until I've checked? | lock_user_account | full | High risk by design; a gated pass is the correct outcome. | security |
+| P36 | 39 | user-assistant | Lock the account for the user with the email address spam-signup@example.com until I've reviewed it. | lock_user_account\|list_privileged_users | partial | Names its target, per the self-contained rule — the earlier wording said "this account" and the agent rightly refused to guess. Needs that user to exist; on a site without it, refusing is correct. | security |
 | P37 | 46 | user-assistant | Has anyone new signed up recently? | get_recent_registrations | full | | faq |
 
 ## Content Writer (content-writer)
@@ -148,7 +148,7 @@ still appears with `Coverage: none` or `partial` and is collected under
 |---|---|---|---|---|---|---|---|
 | P46 | 34 | ai-radar | Can ChatGPT and other AI assistants actually see my website? | run_ai_radar_scan | full | The 2026 version of "am I on Google". | ai |
 | P47 | 40 | ai-radar | Is my robots.txt accidentally blocking anything important? | check_robots_txt | full | | ai |
-| P48 | 43 | ai-radar | My pages don't get those rich Google results. What's missing? | check_schema_markup, check_schema_coverage | full | | seo |
+| P48 | 43 | ai-radar | My pages don't get those rich Google results. What's missing? | check_schema_markup\|check_schema_coverage | full | | seo |
 
 ## Agent Orchestrator (agent-orchestrator)
 
@@ -166,7 +166,7 @@ still appears with `Coverage: none` or `partial` and is collected under
 
 | ID | Rank | Agent | Prompt | Expect Tools | Coverage | Notes | Source |
 |---|---|---|---|---|---|---|---|
-| P51 | 51 | assistant-trainer | I keep doing the same job by hand every week. Can you build me something that does it? | analyze_requirements | partial | The meta-agent's core job. Asks clarifying questions first, so a single turn may not reach generate_agent. | faq |
+| P51 | 51 | assistant-trainer | I keep doing the same job by hand every week. Can you build me something that does it? | analyze_requirements\|search_capabilities | partial | The meta-agent's core job. Asks clarifying questions first, so a single turn may not reach generate_agent. | faq |
 | P52 | 52 | assistant-trainer | What AI agents do I already have, and what does each one do? | list_library_agents | full | | faq |
 
 ## Skills Assistant (skills-assistant)

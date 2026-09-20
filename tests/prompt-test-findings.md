@@ -10,6 +10,10 @@ First full sweep of the 54-prompt catalog against the 12 bundled agents, on lffc
 | Cost | 1,668,629 tokens · 13m 55s |
 | Report | `wp-content/agentic-knowledge/prompt-tests/prompt_test_results.md` |
 
+> **Status: all findings below were fixed on 2026-09-20.** The fixes are described inline under
+> each item. The numbers in this document are from the original sweep and are kept as the
+> baseline to re-measure against — they are not current.
+
 **Read the headline number carefully.** 21 "failures" is not 21 bugs. Sorting them by cause
 gives **5 real product gaps**, one behavioural pattern worth a product decision, and the rest
 split between flaws in this catalog and a test site with almost no content. The five real gaps
@@ -54,8 +58,9 @@ There are **12 active agents** on that site. Two problems, both serious:
 This is the single most likely thing for a reviewer to hit: "deploy a chat widget" is the
 plugin's headline use case, and the answer is both wrong and an upsell.
 
-**Fix:** add `get_agent_list` to `library/agents/agent-orchestrator/agent.json` +
-`abilities.json`, re-sign, bump DB version. One-line manifest change.
+**Fixed.** `get_agent_list` added to the manifest and abilities (risk `none`), the prompt now
+calls it first and explains that `agents_available` is the download catalogue and says nothing
+about what is installed. The Pro line came from the prompt itself — see A6.
 
 ### A2. Content Writer refuses work it has the tools for · P40
 
@@ -68,8 +73,9 @@ It declares **`search_media_library` and `set_featured_image`**. It has exactly 
 the job and delegated it away. The system prompt's self-description is narrower than its real
 toolset.
 
-**Fix:** widen the scope wording in
-`library/agents/content-writer/templates/system-prompt.txt` to cover the media tools it holds.
+**Fixed.** The Scope section now states that media already in the library is its job, naming
+`search_media_library` and `set_featured_image`, and tells it to check its own tool list before
+deciding something is out of scope. A test asserts the prompt names the tool it declares.
 
 ### A3. Content Writer writes into the chat instead of creating the draft · P38 · rank 4
 
@@ -82,9 +88,10 @@ For a non-technical owner, prose in a chat box is materially worse than "draft c
 the link" — they now have to copy, paste and format it themselves, which is the work they were
 trying to avoid. This is the use case that sells the plugin.
 
-**Fix:** the system prompt should require that drafted content is saved via
-`create_post_content` (as a draft, which the risk gate will surface for approval) rather than
-returned as chat text.
+**Fixed.** Step 4 changed from *"present the draft"* to *"save the draft, then share it"*: call
+`create_post_content` with status `draft` and link it. The prompt now says explicitly that
+leaving the text in the chat box has not done the job, and that saving a draft is always safe
+because publishing is the step that needs approval.
 
 ### A4. The approval message is a tautology · P22
 
@@ -99,6 +106,10 @@ name the actual tool and risk.
 
 Also in P22: an alt-text request routed to `report_issue`, which is simply the wrong tool.
 
+**Fixed.** `Tool_Executor` now names the tool and drops the tautology:
+*"'Report issue' can change your site, so it needs your approval first. Approve or reject it
+below."* A declared manifest reason is used when there is one, normalised to a single full stop.
+
 ### A5. Third-party MCP tools outcompete our own
 
 lffci.org has Rank Math installed and MCP-exposed. Our agents repeatedly preferred its tools:
@@ -109,7 +120,38 @@ lffci.org has Rank Math installed and MCP-exposed. Our agents repeatedly preferr
 
 Not wrong in itself — using a better-informed tool is reasonable — but it means **agent
 behaviour changes based on what else is installed**, and our own tools can be sidelined on a
-real site. Worth a deliberate decision on whether bundled agents should prefer first-party tools.
+real site.
+
+**Fixed as a preference, not a block.** Every agent prompt now carries a `[TOOL PREFERENCE]`
+block: prefer a first-party tool when both would answer, because its results are what the rest
+of the instructions describe and its safety checks are the ones the owner configured; reach for
+a third-party tool when it genuinely does something ours cannot, and say which and why.
+Forbidding them outright would make agents worse on exactly the sites most invested in their setup.
+
+### A6. Five bundled prompts instructed agents to advertise Pro · found while fixing A1
+
+The Pro recommendation in P49 was not the model improvising. It was **written into the system
+prompt**: *"if nothing free fits, say so and mention that additional specialist agents are
+available separately through Agent Builder Pro."*
+
+Grepping the rest found the same instruction in four more places the admin UI never renders:
+
+| File | What it told the agent |
+|---|---|
+| `agent-orchestrator/templates/system-prompt.txt` | mention Agent Builder Pro if nothing free fits |
+| `assistant-trainer/templates/system-prompt.txt` | specialist needs "available separately through Agent Builder Pro" |
+| `support-triage/templates/system-prompt.txt` | mention Pro's "deeper support-automation options" |
+| `seo-optimizer/templates/system-prompt.txt` | route to "Agent Builder Pro if nothing free fits" |
+| `library/knowledge/platform-knowledge.txt` | a full Pro feature list, loaded into two agents' context |
+
+`c19d845` removed Pro upsell surfaces and pricing URLs from the free build, but only from code
+and templates the UI renders. Nobody grepped the *model's* instructions, so the plugin still
+shipped telling its agents to sell a paid tier — invisible until an agent said it out loud.
+
+**Fixed.** All five rewritten to state capability limits without naming a product, plus the two
+`SKILL.md` availability notes. `tests/unit/test-no-upsell-in-agent-content.php` now scans every
+system prompt, manifest, knowledge file and SKILL.md for upsell phrasing, so this cannot return
+quietly.
 
 ## B. Behavioural pattern — a product decision, not a bug
 
@@ -131,14 +173,15 @@ correctly every time (P35 `manage_user_privileges`, P53 `manage_skill`, P43/P44
 
 ## C. Flaws in this catalog — my fault, not the agents'
 
-- **P36 is not self-contained.** *"This account looks suspicious, can you lock it"* names no
-  account, and the site has one admin. The agent correctly refused to guess and asked which
-  account — the right behaviour. The catalog's own rules require self-contained prompts; this
-  one breaks them. **Rewrite it.**
-- **`expect_tools` is AND-only.** There is no way to say "either of these is acceptable", so a
-  prompt answerable two ways always fails. This accounts for most of the
-  wordpress-assistant and seo-optimizer failures — P11, P18, P19, P20, P24, P51 all took a
-  defensible alternative route and answered well. **The harness needs `toolA|toolB` support.**
+- **P36 was not self-contained.** *"This account looks suspicious, can you lock it"* named no
+  account, and the site has one admin. The agent correctly refused to guess — the right
+  behaviour. The catalog's own rules require self-contained prompts. **Fixed:** rewritten to
+  name the account it means.
+- **`expect_tools` was AND-only.** There was no way to say "either of these is acceptable", so a
+  prompt answerable two ways always failed. This accounts for most of the wordpress-assistant
+  and seo-optimizer failures — P11, P18, P19, P20, P24, P51 all took a defensible alternative
+  route and answered well. **Fixed:** an entry may now read `toolA|toolB`, satisfied by either,
+  and ten rows were relaxed accordingly. Commas still mean "and".
 - **P13 was arguably right to refuse.** It declined to optimise the title of a placeholder
   "Hello world!" post and advised writing real content first. Good judgement, scored as failure.
 
@@ -153,15 +196,22 @@ lffci.org has **1 post, 38 pages, 36 media items, 0 comments, 2 users**.
 These need a seeded fixture site before the numbers mean anything. Until then, treat
 support-triage and part of seo-optimizer as **untested**, not failing.
 
-## Recommended order
+## What was done
 
-1. **A1** Agent Orchestrator `get_agent_list` — one-line manifest fix, wrong answer + Pro upsell.
-2. **A3** Content Writer saves drafts — the flagship use case.
-3. **A2** Content Writer scope wording — it is refusing work it can do.
-4. **A4** Approval message copy — reviewers will see it.
-5. **C** Fix P36, add `toolA|toolB` to the harness, then re-run to get a truthful baseline.
-6. **A5** Decide the first-party-tool preference question.
-7. **D** Seed a fixture site so support-triage is measurable at all.
+All of A1–A6 and C are fixed, with a regression test behind the two that could return quietly
+(the upsell scan, and Agent Orchestrator's ability to list installed agents).
+
+**B is deliberately unchanged.** Agents asking conversationally instead of proposing through the
+tool is a product decision, not a defect — A3 changes it for the one case where it clearly hurt
+(drafting), and the rest should be decided rather than patched prompt by prompt.
+
+**D is still open.** Seeding a fixture site would mutate the dev's own content, so it needs a
+`--seed` flag and a disposable target rather than a quick fix. Until then, treat support-triage
+as untested rather than failing: the mitigation applied here is narrower — P30's expectation now
+accepts `list_comments` alone, because on a site with no comments, looking and reporting none
+*is* the correct answer.
+
+Re-run `wp agent prompt-test --all` to measure against the baseline above.
 
 ## Caveats
 

@@ -90,9 +90,32 @@ final class Assert_Verdict implements Verdict_Strategy {
 			$called  = array_map( 'strtolower', (array) ( $result['tools_used'] ?? array() ) );
 			$missing = array();
 
-			foreach ( $expected as $tool ) {
-				if ( ! in_array( strtolower( (string) $tool ), $called, true ) ) {
-					$missing[] = (string) $tool;
+			// An entry may list alternatives as "toolA|toolB", satisfied when the
+			// run called any one of them. Plenty of prompts are answerable two
+			// defensible ways — "which posts need SEO work" is served by either
+			// list_posts_needing_seo or get_seo_overview — and without this the
+			// catalog had to either pick one arbitrarily and fail good answers, or
+			// assert nothing at all.
+			foreach ( $expected as $entry ) {
+				$alternatives = array_values(
+					array_filter( array_map( 'trim', explode( '|', (string) $entry ) ) )
+				);
+
+				if ( empty( $alternatives ) ) {
+					continue;
+				}
+
+				$satisfied = false;
+
+				foreach ( $alternatives as $tool ) {
+					if ( in_array( strtolower( $tool ), $called, true ) ) {
+						$satisfied = true;
+						break;
+					}
+				}
+
+				if ( ! $satisfied ) {
+					$missing[] = implode( ' or ', $alternatives );
 				}
 			}
 

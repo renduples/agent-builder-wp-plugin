@@ -426,14 +426,24 @@ final class Prompt_Catalog {
 				continue;
 			}
 
-			foreach ( $row['expect_tools'] as $tool ) {
-				if ( ! in_array( $tool, $tool_names, true ) ) {
-					$problems[] = sprintf(
-						'%s (line %d): expected tool "%s" is not a registered tool.',
-						$row['id'],
-						$row['source_line'],
-						$tool
-					);
+			foreach ( $row['expect_tools'] as $entry ) {
+				// An entry may offer alternatives as "toolA|toolB"; every named
+				// tool still has to exist.
+				foreach ( explode( '|', (string) $entry ) as $tool ) {
+					$tool = trim( $tool );
+
+					if ( '' === $tool ) {
+						continue;
+					}
+
+					if ( ! in_array( $tool, $tool_names, true ) ) {
+						$problems[] = sprintf(
+							'%s (line %d): expected tool "%s" is not a registered tool.',
+							$row['id'],
+							$row['source_line'],
+							$tool
+						);
+					}
 				}
 			}
 		}

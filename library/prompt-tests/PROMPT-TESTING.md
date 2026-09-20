@@ -144,6 +144,10 @@ itself. The short version:
 - Make it **self-contained** — the harness sends no conversation history.
 - Only list `expect_tools` the assigned agent genuinely declares, or validation fails and the
   whole run refuses to start.
+- **Commas mean "and", a pipe means "or".** `a, b` requires both; `a|b` within one entry passes
+  if either was called. Reach for the pipe whenever a prompt has two fair answers — "which posts
+  need SEO work" is served just as well by `get_seo_overview` as by `list_posts_needing_seo`,
+  and an expectation that insists on one of them fails good work.
 - Be honest in `Coverage`. The `partial` and `none` rows are the most valuable in the file:
   they are the ones that say what the product cannot do. The catalog's own **Coverage gaps**
   section collects them.

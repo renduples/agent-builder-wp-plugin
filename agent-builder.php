@@ -66,7 +66,7 @@ spl_autoload_register(
 // wp-content/agentic-agents/ (or -knowledge/, -backups/) needs to move.
 define( 'AGENT_BUILDER_FILE', __FILE__ );
 define( 'AGENT_BUILDER_VERSION', '3.4.1' );
-define( 'AGENT_BUILDER_DB_VERSION', '2.14.1' );
+define( 'AGENT_BUILDER_DB_VERSION', '2.14.2' );
 define( 'AGENT_BUILDER_DIR', plugin_dir_path( __FILE__ ) );
 define( 'AGENT_BUILDER_URL', plugin_dir_url( __FILE__ ) );
 define( 'AGENT_BUILDER_BASENAME', plugin_basename( __FILE__ ) );

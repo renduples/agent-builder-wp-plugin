@@ -6,7 +6,7 @@ allowed-tools: get_pdf_info read_pdf create_pdf merge_pdfs
 
 # PDF Skill
 
-**Availability:** These tools require the mPDF and pdfparser libraries, which are not bundled with the free WordPress.org release of this plugin (only spreadsheet tools ship there — see the plugin's FAQ). If any of the tools below return an "unavailable" error, tell the user PDF generation/reading isn't available on this install rather than retrying — self-hosted and Agent Builder Pro installs include it.
+**Availability:** These tools require the mPDF and pdfparser libraries, which are not bundled with the free WordPress.org release of this plugin (only spreadsheet tools ship there — see the plugin's FAQ). If any of the tools below return an "unavailable" error, tell the user PDF generation/reading isn't available on this install rather than retrying — a self-hosted install with the libraries present does include it.
 
 ## Available Tools
 

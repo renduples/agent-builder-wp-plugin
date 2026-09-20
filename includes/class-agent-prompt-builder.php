@@ -62,6 +62,7 @@ class Agent_Prompt_Builder {
 			. self::persona_notes_block( $slug )
 			. self::response_style_block( $slug )
 			. self::team_block( $agent )
+			. self::first_party_tools_block()
 			. self::reasoning_guidance_block( $slug )
 			. self::handoff_context_block( $handoff_from, $handoff_context );
 
@@ -74,6 +75,31 @@ class Agent_Prompt_Builder {
 		return $output;
 	}
 
+	/**
+	 * Tell the agent to prefer this plugin's own tools over third-party ones.
+	 *
+	 * Other plugins publish their abilities through the same WordPress Abilities
+	 * API this plugin bridges into, so on a real site an agent's tool list also
+	 * contains entries like `rank_math__*` or `wp_extended__*`. A full
+	 * prompt-test sweep showed agents reaching for those in preference to the
+	 * bundled tools they were given — which makes behaviour depend on whatever
+	 * else happens to be installed, and sidesteps the risk tiers and approval
+	 * gating that only apply to this plugin's own tools.
+	 *
+	 * Deliberately a preference, not a block: a third-party tool is often the
+	 * only way to do something, and forbidding them outright would make the
+	 * agents worse on exactly the sites that invested most in their setup.
+	 *
+	 * @return string
+	 */
+	private static function first_party_tools_block(): string {
+		return "\n\n[TOOL PREFERENCE]\n"
+			. 'Some tools in your list come from other plugins installed on this site; they usually carry a vendor '
+			. 'prefix such as `rank_math__` or `wp_extended__`. When one of your own tools and a third-party tool '
+			. 'would both answer the request, use your own: its results are what the rest of your instructions '
+			. 'describe, and its safety checks are the ones the site owner configured. Reach for a third-party tool '
+			. 'when it genuinely does something none of yours can, and say which one you used and why.';
+	}
 	/**
 	 * Build the team roster block for team-lead agents.
 	 *
