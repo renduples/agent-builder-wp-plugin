@@ -75,6 +75,68 @@ class Tool_Executor {
 	}
 
 	/**
+	 * Run a read-only tool without approval routing, backups, or argument logging.
+	 *
+	 * Site Brief uses this so a dashboard scan can never queue or execute a write.
+	 * The caller must pass its own exact allowlist; anything off that list is
+	 * refused even if a filter later tries to widen it. Tools whose intrinsic
+	 * risk is above low are refused even if they appear on the list.
+	 *
+	 * @param string   $tool_name  Tool slug.
+	 * @param array    $arguments  Tool arguments.
+	 * @param string[] $allowlist  Exact slugs this caller may invoke.
+	 * @return array Tool result or an error payload.
+	 */
+	public function observe( string $tool_name, array $arguments, array $allowlist ): array {
+		if ( ! in_array( $tool_name, $allowlist, true ) ) {
+			return array(
+				'error'   => 'not_allowlisted',
+				'message' => sprintf( 'Observe mode refused off-list tool: %s', $tool_name ),
+			);
+		}
+
+		if ( ! Tools_Registry::is_enabled( $tool_name ) ) {
+			return array(
+				'error'   => 'disabled',
+				'message' => sprintf( 'The tool "%s" has been disabled by an administrator.', $tool_name ),
+			);
+		}
+
+		$tool = $this->tool_loader->get( $tool_name );
+		if ( ! $tool ) {
+			return array(
+				'error'   => 'unknown_tool',
+				'message' => sprintf( 'Unknown tool: %s', $tool_name ),
+			);
+		}
+
+		if ( ! $tool->is_available() ) {
+			return array(
+				'error'   => 'unavailable',
+				'message' => $tool->get_unavailable_reason(),
+			);
+		}
+
+		$risk = $tool->get_risk_level();
+		if ( Risk_Level::weight( $risk ) > Risk_Level::weight( Risk_Level::LOW ) ) {
+			return array(
+				'error'   => 'risk_too_high',
+				'message' => sprintf( 'Observe mode refuses %s-risk tool: %s', $risk, $tool_name ),
+			);
+		}
+
+		Tool_Base::set_calling_agent( 'site-brief' );
+		$result = $this->tool_loader->execute( $tool_name, $arguments );
+
+		return null === $result
+			? array(
+				'error'   => 'unknown_tool',
+				'message' => sprintf( 'Unknown tool: %s', $tool_name ),
+			)
+			: $result;
+	}
+
+	/**
 	 * Turn a tool slug into something a site owner can read.
 	 *
 	 * @param string $tool_name Tool slug.

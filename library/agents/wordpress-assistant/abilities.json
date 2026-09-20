@@ -67,6 +67,14 @@
     "find_oversized_images": {
       "risk": "none"
     },
+    "compress_image": {
+      "risk": "medium",
+      "reason": "Writes a compressed copy of a media library image"
+    },
+    "convert_image_to_webp": {
+      "risk": "medium",
+      "reason": "Writes a WebP copy of a media library image"
+    },
     "find_unused_media": {
       "risk": "none"
     },

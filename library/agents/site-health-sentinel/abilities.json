@@ -12,6 +12,9 @@
     "check_core_web_vitals": { "risk": "none" },
     "get_cron_jobs": { "risk": "none" },
     "get_security_overview": { "risk": "none" },
-    "check_agent_readiness": { "risk": "none" }
+    "check_agent_readiness": { "risk": "none" },
+    "verify_core_integrity": { "risk": "none" },
+    "check_theme_status": { "risk": "none" },
+    "check_caching_status": { "risk": "none" }
   }
 }

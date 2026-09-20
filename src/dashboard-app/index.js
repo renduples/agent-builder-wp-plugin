@@ -4,12 +4,318 @@
 import { createRoot, useCallback, useEffect, useState } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import { __ } from '@wordpress/i18n';
-import { Spinner, Notice } from '@wordpress/components';
+import { Spinner, Notice, Button } from '@wordpress/components';
 import { InfoTip } from '../shared/components';
 
 const DASH_PATH = 'agentic/v1/dashboard';
 const STATS_PATH = 'agentic/v1/dashboard-stats?period=week';
+const BRIEF_PATH = 'agentic/v1/site-brief';
 const REFRESH_MS = 30000;
+
+const BRIEF_CHECKER_LABELS = {
+	plugin_updates: __( 'Plugin updates', 'agent-builder' ),
+	site_health: __( 'Health', 'agent-builder' ),
+	comments_queue: __( 'Comments', 'agent-builder' ),
+	oversized_media: __( 'Media', 'agent-builder' ),
+	forms: __( 'Forms', 'agent-builder' ),
+	wc_unpaid: __( 'Store', 'agent-builder' ),
+};
+
+function formatBriefTime( iso ) {
+	if ( ! iso ) {
+		return '';
+	}
+	const d = new Date( iso );
+	if ( Number.isNaN( d.getTime() ) ) {
+		return iso;
+	}
+	return d.toLocaleString();
+}
+
+function SiteBriefPanel() {
+	const [ brief, setBrief ] = useState( null );
+	const [ error, setError ] = useState( '' );
+	const [ running, setRunning ] = useState( false );
+	const [ hidden, setHidden ] = useState( [] );
+	const [ showAll, setShowAll ] = useState( false );
+	const [ busyId, setBusyId ] = useState( '' );
+
+	const loadBrief = useCallback( () => {
+		return apiFetch( { path: BRIEF_PATH } )
+			.then( ( d ) => {
+				setBrief( d );
+				setError( '' );
+				return d;
+			} )
+			.catch( ( e ) => {
+				setError(
+					e.message ||
+						__( 'Could not load Site Brief.', 'agent-builder' )
+				);
+			} );
+	}, [] );
+
+	useEffect( () => {
+		loadBrief();
+	}, [ loadBrief ] );
+
+	if ( ! brief || ! brief.has_usable_provider ) {
+		return null;
+	}
+
+	const runScan = () => {
+		setRunning( true );
+		setError( '' );
+		apiFetch( { path: BRIEF_PATH + '/run', method: 'POST' } )
+			.then( ( d ) => {
+				setBrief( d );
+				setHidden( [] );
+				setShowAll( false );
+			} )
+			.catch( ( e ) => {
+				setError(
+					e.message || __( 'Scan failed.', 'agent-builder' )
+				);
+			} )
+			.finally( () => setRunning( false ) );
+	};
+
+	const act = ( card, action ) => {
+		if ( 'not_now' === action ) {
+			setHidden( ( prev ) => prev.concat( card.id ) );
+			return;
+		}
+		setBusyId( card.id );
+		apiFetch( {
+			path: BRIEF_PATH + '/cards/' + encodeURIComponent( card.id ) + '/' + action,
+			method: 'POST',
+		} )
+			.then( ( d ) => {
+				if ( d.redirect_url ) {
+					window.location.href = d.redirect_url;
+					return;
+				}
+				if ( d.approvals_url && d.approval_id ) {
+					window.location.href = d.approvals_url;
+					return;
+				}
+				setBrief( d );
+			} )
+			.catch( ( e ) => {
+				setError(
+					e.message ||
+						__( 'Could not update that card.', 'agent-builder' )
+				);
+			} )
+			.finally( () => setBusyId( '' ) );
+	};
+
+	const isRunning = running || brief.status === 'running';
+	const cards = ( brief.cards || [] ).filter(
+		( c ) => ! hidden.includes( c.id )
+	);
+	const visible = showAll ? cards : cards.slice( 0, 10 );
+	const checkers = brief.checkers || Object.keys( BRIEF_CHECKER_LABELS );
+	const canRun = !! brief.caps?.run;
+	const canApprove = !! brief.caps?.approve;
+	const scanned = !! brief.last_run;
+
+	return (
+		<div className="agentic-card agentic-site-brief">
+			<div className="agentic-card-header agentic-flex-between">
+				<h2>{ __( 'Site Brief', 'agent-builder' ) }</h2>
+			</div>
+			<p className="agentic-site-brief-lede">
+				{ __(
+					'A read-only look at this site. Nothing changes until you approve.',
+					'agent-builder'
+				) }
+			</p>
+
+			{ error && (
+				<Notice status="error" isDismissible={ false }>
+					{ error }
+				</Notice>
+			) }
+
+			{ isRunning && (
+				<div className="agentic-site-brief-progress" role="status">
+					<Spinner />
+					<ul className="agentic-site-brief-checklist">
+						{ checkers.map( ( id ) => (
+							<li key={ id }>
+								{ BRIEF_CHECKER_LABELS[ id ] || id }
+							</li>
+						) ) }
+					</ul>
+				</div>
+			) }
+
+			{ ! scanned && ! isRunning && (
+				<p>
+					<Button
+						variant="primary"
+						onClick={ runScan }
+						disabled={ ! canRun }
+					>
+						{ __( 'Scan this site', 'agent-builder' ) }
+					</Button>
+				</p>
+			) }
+
+			{ scanned && ! isRunning && brief.healthy && cards.length === 0 && (
+				<div className="agentic-site-brief-healthy">
+					<p>
+						{ sprintf(
+							/* translators: %s: last scan time. */
+							__(
+								'No urgent items. Last scan %s.',
+								'agent-builder'
+							),
+							formatBriefTime( brief.last_run )
+						) }
+					</p>
+					<Button
+						variant="secondary"
+						onClick={ runScan }
+						disabled={ ! canRun }
+					>
+						{ __( 'Scan again', 'agent-builder' ) }
+					</Button>
+				</div>
+			) }
+
+			{ scanned && ! isRunning && cards.length > 0 && (
+				<>
+					<ul className="agentic-site-brief-cards">
+						{ visible.map( ( card ) => (
+							<li
+								key={ card.id }
+								className="agentic-site-brief-item"
+							>
+								<div className="agentic-site-brief-item-head">
+									<strong>{ card.title }</strong>
+									<span className="agentic-text-muted">
+										{ card.agent_label }
+									</span>
+								</div>
+								<p className="agentic-site-brief-evidence">
+									{ card.evidence }
+								</p>
+								<p className="agentic-site-brief-action">
+									{ card.proposed_action }
+								</p>
+								{ brief.is_advanced && (
+									<details className="agentic-site-brief-advanced">
+										<summary>
+											{ __(
+												'Advanced',
+												'agent-builder'
+											) }
+										</summary>
+										<p>
+											{ ( card.tool_slugs || [] ).join(
+												', '
+											) }
+											{ ' · ' }
+											{ card.action_risk }
+										</p>
+										{ card.raw && (
+											<pre>
+												{ JSON.stringify(
+													card.raw,
+													null,
+													2
+												) }
+											</pre>
+										) }
+									</details>
+								) }
+								<div className="agentic-site-brief-buttons">
+									{ card.approve?.type &&
+										card.approve.type !== 'none' && (
+											<Button
+												variant="primary"
+												disabled={
+													! canApprove ||
+													busyId === card.id
+												}
+												onClick={ () =>
+													act( card, 'approve' )
+												}
+											>
+												{ __(
+													'Approve',
+													'agent-builder'
+												) }
+											</Button>
+										) }
+									<Button
+										variant="secondary"
+										disabled={
+											! canRun || busyId === card.id
+										}
+										onClick={ () =>
+											act( card, 'dismiss' )
+										}
+									>
+										{ __( 'Dismiss', 'agent-builder' ) }
+									</Button>
+									<Button
+										variant="tertiary"
+										onClick={ () =>
+											act( card, 'not_now' )
+										}
+									>
+										{ __( 'Not now', 'agent-builder' ) }
+									</Button>
+								</div>
+							</li>
+						) ) }
+					</ul>
+					{ cards.length > 10 && ! showAll && (
+						<p>
+							<Button
+								variant="link"
+								onClick={ () => setShowAll( true ) }
+							>
+								{ sprintf(
+									/* translators: %d: hidden card count. */
+									__( 'Show all (%d)', 'agent-builder' ),
+									cards.length
+								) }
+							</Button>
+						</p>
+					) }
+					<p>
+						<Button
+							variant="secondary"
+							onClick={ runScan }
+							disabled={ ! canRun }
+						>
+							{ __( 'Scan again', 'agent-builder' ) }
+						</Button>
+					</p>
+				</>
+			) }
+
+			{ brief.store_stats && (
+				<p className="agentic-text-muted agentic-site-brief-store">
+					{ sprintf(
+						/* translators: 1: order count, 2: revenue, 3: currency. */
+						__(
+							'Store this month: %1$s orders, %2$s %3$s.',
+							'agent-builder'
+						),
+						Number( brief.store_stats.total_orders || 0 ),
+						Number( brief.store_stats.total_revenue || 0 ),
+						brief.store_stats.currency || ''
+					) }
+				</p>
+			) }
+		</div>
+	);
+}
 
 function formatInt( n ) {
 	return Number( n || 0 ).toLocaleString();
@@ -1323,6 +1629,8 @@ function DashboardApp() {
 					</span>
 				</div>
 			</div>
+
+			<SiteBriefPanel />
 
 			{ data.emergency_stop && (
 				<div className="agentic-emergency-banner" role="alert">

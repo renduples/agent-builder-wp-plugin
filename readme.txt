@@ -4,7 +4,7 @@ Tags: ai, ai safety, ai agents, mcp, webmcp
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 3.4.1
+Stable tag: 3.4.2
 Donate link: https://agentic-plugin.com/donate/
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -31,6 +31,13 @@ Unlike plugins that add AI without guardrails, **Agent Builder puts safety at th
 * **Tamper-Proof Activity Log:** Hash-chained audit trail; tampering becomes detectable.
 
 One of the first WordPress plugins actively built for AI-agent safety.
+
+### Site Brief
+
+After you connect a provider, scan this WordPress install. Agent Builder
+lists what it found — updates, Site Health, held comments, oversized
+media, store issues if you run WooCommerce — and queues a fix only when
+you approve. The scan does not change the site.
 
 ---
 
@@ -104,6 +111,9 @@ Standard chatbot plugins stream text from an API. Agent Builder gives agents per
 
 = Is Agent Builder safe? =
 Yes. Agent Builder is built around safety controls: (1) every tool is classified by risk level, (2) medium-risk actions need confirmation, high-risk actions queue for your review, (3) you have a one-click Emergency Stop to disable all agents, (4) a tamper-proof audit log records everything, (5) per-agent tool scopes show exactly what each agent can do. Read the “Agent Safety” section above for the full picture.
+
+= Does Site Brief change my site by itself? =
+No. The scan is read-only. Writes use the same approval queue as chat.
 
 = What if an agent tries to do something dangerous? =
 It depends on the risk level. Low-risk actions happen immediately. Medium-risk actions pause and ask for confirmation. High-risk actions (like publishing a post, deleting data, or updating settings) queue in the Approvals screen where you review them one by one before they execute. Extreme-risk tools (like arbitrary shell execution) are blocked by default.
@@ -317,6 +327,9 @@ This plugin connects to external AI APIs to process prompts and tool executions 
 
 
 == Changelog ==
+
+= 3.4.2 - 2026-09-20 =
+* Added Site Brief: a read-only dashboard scan that turns this site into a ranked list of approve-to-act jobs. No new external services.
 
 = 3.4.1 - 2026-09-19 =
 * Fixed: the hosted Agentic free tier could not connect on a new site. The billing identity sent to the service was read from a setting nothing ever saved, so completing signup left the plugin still asking you to sign up. It now reads the key your account was issued.
