@@ -87,6 +87,73 @@
 	align-items: start;
 }
 
+/* Site Brief (dashboard, top of page) */
+.agentic-site-brief {
+	margin-top: 20px;
+}
+.agentic-site-brief-lede {
+	margin: 0 0 12px;
+	color: #50575e;
+}
+.agentic-site-brief-progress {
+	display: flex;
+	align-items: flex-start;
+	gap: 16px;
+}
+.agentic-site-brief-checklist {
+	margin: 0;
+	padding-left: 18px;
+	color: #50575e;
+}
+.agentic-site-brief-healthy {
+	padding: 12px 14px;
+	background: #edfaef;
+	border: 1px solid #68de7c;
+	border-radius: 6px;
+}
+.agentic-site-brief-cards {
+	list-style: none;
+	margin: 0 0 12px;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+.agentic-site-brief-item {
+	border: 1px solid #dcdcde;
+	border-radius: 6px;
+	padding: 14px 16px;
+	background: #fff;
+}
+.agentic-site-brief-item-head {
+	display: flex;
+	justify-content: space-between;
+	gap: 12px;
+	flex-wrap: wrap;
+}
+.agentic-site-brief-evidence,
+.agentic-site-brief-action {
+	margin: 8px 0 0;
+}
+.agentic-site-brief-buttons {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 12px;
+}
+.agentic-site-brief-advanced {
+	margin-top: 8px;
+}
+.agentic-site-brief-advanced pre {
+	max-height: 160px;
+	overflow: auto;
+	background: #f6f7f7;
+	padding: 8px;
+}
+.agentic-site-brief-store {
+	margin-top: 12px;
+}
+
 /* Drag-and-drop rearrange — handle bottom-right of each card */
 .agentic-card.has-drag-handle {
 	position: relative;
