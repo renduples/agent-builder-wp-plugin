@@ -451,6 +451,26 @@ class Provider_Registry {
 	}
 
 	/**
+	 * Whether the hosted "agentic" provider has an API key but no license key.
+	 *
+	 * That is the state a site is left in when it signed up before 3.4.1: the
+	 * signup handler stored the API key and discarded the license key (#135).
+	 * has_usable_provider() correctly reports false for it, so the admin is
+	 * funnelled back to Quick Start; this tells that screen why, so it can say
+	 * that signing up again with the same email repairs the connection (the
+	 * endpoint returns the existing key together with its license).
+	 *
+	 * @return bool
+	 */
+	public static function hosted_license_missing(): bool {
+		$p = self::get( 'agentic' );
+		if ( null === $p || empty( $p['api_key'] ) ) {
+			return false;
+		}
+		return '' === (string) get_option( 'agent_builder_license_key', '' );
+	}
+
+	/**
 	 * Return slugs of providers that do NOT require an API key.
 	 *
 	 * @return string[]

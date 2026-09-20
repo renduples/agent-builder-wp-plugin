@@ -16,7 +16,13 @@ if ( ! current_user_can( 'manage_options' ) ) {
 
 $agentic_signup_site_url = home_url();
 $agentic_signup_name     = get_bloginfo( 'name' );
-$agentic_signup_email    = get_option( 'admin_email', '' );
+// Prefer the address this site already registered with, so reconnecting
+// returns the existing key and its license instead of opening a new account.
+$agentic_signup_email    = (string) get_option( 'agent_builder_hosted_account_email', '' );
+if ( '' === $agentic_signup_email ) {
+	$agentic_signup_email = get_option( 'admin_email', '' );
+}
+$agentic_license_missing = \Agentic\Provider_Registry::hosted_license_missing();
 $agentic_signup_version  = AGENT_BUILDER_VERSION;
 $agentic_signup_nonce    = wp_create_nonce( 'agentic_signup' );
 $agentic_pricing_url     = \Agentic\Service_Registry::url( 'agentic-api' ) . '/wp-json/agentic/v1/model-pricing';
@@ -53,6 +59,15 @@ $agentic_signup_tts_voices     = array(
 			<?php esc_html_e( 'Connect your AI agents to an LLM Provider with just one click.', 'agent-builder' ); ?>
 			<br><?php esc_html_e( 'Free daily credits, no payment info required.', 'agent-builder' ); ?>
 		</p>
+
+		<?php if ( $agentic_license_missing ) : ?>
+			<div class="notice notice-warning inline" id="agentic-license-missing-notice">
+				<p>
+					<strong><?php esc_html_e( 'Your Agentic AI connection is missing its license key.', 'agent-builder' ); ?></strong>
+					<?php esc_html_e( 'This site has an API key but no license key, so the hosted provider cannot be used yet. Connect again with the same email address and the existing key will be re-issued together with its license.', 'agent-builder' ); ?>
+				</p>
+			</div>
+		<?php endif; ?>
 
 		<form id="agentic-signup-form" method="post">
 			<input type="hidden" name="_wpnonce" value="<?php echo esc_attr( $agentic_signup_nonce ); ?>">
