@@ -16,6 +16,16 @@
     "list_native_forms": {
       "risk": "none"
     },
+    "get_form_stats": {
+      "risk": "none"
+    },
+    "detect_form_plugins": {
+      "risk": "none"
+    },
+    "cleanup_spam_comments": {
+      "risk": "medium",
+      "reason": "Permanently deletes comments marked as spam"
+    },
     "get_native_form_submissions": {
       "risk": "low",
       "reason": "Form submissions can contain personal data"
