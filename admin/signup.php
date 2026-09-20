@@ -16,16 +16,19 @@ if ( ! current_user_can( 'manage_options' ) ) {
 
 $agentic_signup_site_url = home_url();
 $agentic_signup_name     = get_bloginfo( 'name' );
-// Prefer the address this site already registered with, so reconnecting
-// returns the existing key and its license instead of opening a new account.
-$agentic_signup_email    = (string) get_option( 'agent_builder_hosted_account_email', '' );
-if ( '' === $agentic_signup_email ) {
-	$agentic_signup_email = get_option( 'admin_email', '' );
-}
-$agentic_license_missing = \Agentic\Provider_Registry::hosted_license_missing();
+$agentic_signup_email    = get_option( 'admin_email', '' );
 $agentic_signup_version  = AGENT_BUILDER_VERSION;
 $agentic_signup_nonce    = wp_create_nonce( 'agentic_signup' );
 $agentic_pricing_url     = \Agentic\Service_Registry::url( 'agentic-api' ) . '/wp-json/agentic/v1/model-pricing';
+
+// Prefer the address this site already registered with, so reconnecting
+// returns the existing key and its license instead of opening a new account.
+$agentic_hosted_email = (string) get_option( 'agent_builder_hosted_account_email', '' );
+if ( '' !== $agentic_hosted_email ) {
+	$agentic_signup_email = $agentic_hosted_email;
+}
+
+$agentic_license_missing = \Agentic\Provider_Registry::hosted_license_missing();
 
 // Fallback lists rendered before the endpoint responds (short labels, 1-2 words).
 $agentic_fallback_llm_models   = array(
