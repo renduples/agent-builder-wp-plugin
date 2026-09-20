@@ -4,7 +4,7 @@ Tags: ai, ai safety, ai agents, mcp, webmcp
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 3.4.0
+Stable tag: 3.4.1
 Donate link: https://agentic-plugin.com/donate/
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -34,6 +34,18 @@ One of the first WordPress plugins actively built for AI-agent safety.
 
 ---
 
+### 🧪 Agents That Test Themselves
+
+Every release is graded against **54 real problems WordPress owners actually ask about** — "my site feels slow on my phone", "I'm drowning in spam comments", "my scheduled posts aren't publishing" — ranked by how often they come up and how stuck people get. Each one is assigned to the bundled agent that should handle it.
+
+* **Prompt Tests:** `wp agent prompt-test` replays the catalog through the same path as a real chat and writes a plain-markdown report: pass or fail, which tools the agent called, whether it stopped for your approval, tokens and cost.
+* **Agents that check their own work:** ask the Assistant Trainer to replay a few prompts, analyse where coverage is thin, and propose specific improvements — a tool an agent should be granted, a request no agent can answer honestly yet. It proposes; you approve. Nothing changes on its own.
+* **Your problems, not ours:** add the request that frustrates you to the catalog. If an agent can't handle it, that is a gap you can see.
+
+Prompt Tests never run by themselves. They call your AI provider only when you start them, within a spending cap you set.
+
+---
+
 ### 🚀 Zero-Code Simplicity
 
 **12 free built-in agents**: Content Writer, SEO Optimizer, Site Health Sentinel, Support Triage, WordPress Assistant, Assistant Trainer, Agent Orchestrator, Editorial Director, User Assistant, Skills Assistant, Storefront Assistant, AI Radar.
@@ -50,6 +62,7 @@ One of the first WordPress plugins actively built for AI-agent safety.
 * **MCP Ready:** Connect Claude Desktop, Cursor, and VS Code via secure credentials.
 * **WordPress Abilities API (WP 6.9+):** Exposes tools as native abilities; imports other plugins' abilities.
 * **Multi-LLM BYOK:** OpenAI, Anthropic, Google Gemini, DeepSeek, xAI, Kimi, Mistral, Cohere, or local Ollama.
+* **Prompt Tests (evals):** `wp agent prompt-test --dry-run` validates the catalog for free; `--agent=`, `--rank=` and `--max-cost=` choose what to spend on. Point it at a staging site from CI.
 
 == Installation ==
 
@@ -94,6 +107,9 @@ Yes. Agent Builder is built around safety controls: (1) every tool is classified
 
 = What if an agent tries to do something dangerous? =
 It depends on the risk level. Low-risk actions happen immediately. Medium-risk actions pause and ask for confirmation. High-risk actions (like publishing a post, deleting data, or updating settings) queue in the Approvals screen where you review them one by one before they execute. Extreme-risk tools (like arbitrary shell execution) are blocked by default.
+
+= How do I know the agents actually work on real problems? =
+Because they are tested the way you would use them. Agent Builder ships a ranked catalog of 54 real requests from WordPress owners, each assigned to a bundled agent, and a WP-CLI command (`wp agent prompt-test`) that replays them through the real chat path and writes a report of what every agent did: tools called, approval stops, cost. Run it on your own site, add your own requests, and read the report in plain markdown. From chat, ask the Assistant Trainer "which of my agents are missing tools?" and it will analyse the results and propose what to grant — you approve. It runs only when you start it and costs only what your AI provider charges for those calls.
 
 = Can I undo a change an agent made? =
 Yes. Before an agent modifies a tracked file or database table, Agent Builder automatically creates a timestamped backup — this is on by default and needs no setup. Every backup shows up in the Approvals screen, where you can restore it with one click.
@@ -146,6 +162,7 @@ The interface text is written in English, and the `.pot` translation template is
 9. Safety Center — Risk inventory, kill switch, per-agent tool scopes, and audit-log integrity check.
 10. Quick Start Wizard — Connect your LLM provider and choose Basic or Advanced mode in under two minutes.
 11. Settings & Providers — Connect and manage LLM providers. Interface (UI modes) and Security are in the same Settings nav.
+12. Prompt Tests — the Assistant Trainer replays real-world requests, reports what passed, what stopped for approval and what it cost, then proposes the tool an agent is missing. You approve.
 
 == External Services ==
 
@@ -300,6 +317,10 @@ This plugin connects to external AI APIs to process prompts and tool executions 
 
 
 == Changelog ==
+
+= 3.4.1 - 2026-09-19 =
+* Fixed: the hosted Agentic free tier could not connect on a new site. The billing identity sent to the service was read from a setting nothing ever saved, so completing signup left the plugin still asking you to sign up. It now reads the key your account was issued.
+* New: Prompt Tests. A ranked catalog of 54 real-world owner requests, a `wp agent prompt-test` command that replays them against the bundled agents and writes a markdown report, and three Assistant Trainer tools (run_prompt_tests, analyze_prompt_results, manage_prompt_catalog) so it can check the agents' coverage and propose improvements for your approval. Never runs unattended; real provider calls only when you start it, within a cost cap.
 
 = 3.4.0 - 2026-09-10 =
 * New "Safety Center" admin screen providing a unified risk dashboard — risk inventory, approval-gate configuration, per-agent tool scopes, tamper-detection status, and emergency stop; 

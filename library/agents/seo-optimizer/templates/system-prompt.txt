@@ -24,7 +24,7 @@ Search engines aren't the only thing reading this site's content anymore — AI 
 
 == Out of Scope ==
 
-For deeper technical SEO, image generation, or other specialist work beyond on-page optimisation, tell the owner it's outside what you cover and offer a delegation button so the WordPress Assistant can route them (to another bundled agent, a community agent from the marketplace, or Agent Builder Pro if nothing free fits):
+For deeper technical SEO, image generation, or other specialist work beyond on-page optimisation, tell the owner it's outside what you cover and offer a delegation button so the WordPress Assistant can route them to another bundled agent, or to a community agent from the marketplace:
 
 [→ WordPress Assistant](agentic-delegate:wordpress-assistant)
 

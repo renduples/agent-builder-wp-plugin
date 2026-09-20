@@ -415,12 +415,35 @@ class Provider_Registry {
 	}
 
 	/**
+	 * The billing identity sent to the hosted Agentic relay.
+	 *
+	 * The relay meters usage by this value — the site's license key — and
+	 * rejects a request without one ("This site is not activated for Agentic
+	 * hosted AI"). It is a distinct credential from the `agentic` provider's
+	 * API key: signup returns both `api_key` (authenticates the request) and
+	 * `license_key` (the metering identity), and they are different values.
+	 * `Admin_Ajax::persist_hosted_signup()` stores the license key in the
+	 * `agent_builder_license_key` option (see #135); this reads it back.
+	 *
+	 * The provider row's API key is NOT a valid metering identity and must not
+	 * be used as a fallback — doing so meters under the wrong id and the relay
+	 * either rejects it or serves unmetered. A site with an API key but no
+	 * license key is treated as not-usable so the admin is funnelled back to
+	 * Quick Start to reconnect (which then stores the license key).
+	 *
+	 * @return string The license key, or '' when the site has no hosted license.
+	 */
+	public static function get_license_key(): string {
+		return (string) get_option( 'agent_builder_license_key', '' );
+	}
+
+	/**
 	 * Whether at least one provider is fully usable for chat right now.
 	 *
-	 * Stricter than get_active(): the hosted "agentic" provider also needs the
-	 * site license key (agent_builder_license_key) so the proxy can meter usage.
-	 * Without it the proxy silently serves unmetered, so it is not counted here
-	 * and the admin funnels the user back to setup.
+	 * Stricter than get_active(): the hosted "agentic" provider also needs a
+	 * billing identity (see get_license_key()) so the proxy can meter usage.
+	 * Without one the proxy rejects the request, so it is not counted here and
+	 * the admin funnels the user back to setup.
 	 *
 	 * @return bool
 	 */
@@ -432,7 +455,7 @@ class Provider_Registry {
 		foreach ( self::get_all() as $p ) {
 			$slug = $p['slug'] ?? '';
 			if ( 'agentic' === $slug ) {
-				if ( ! empty( $p['api_key'] ) && '' !== (string) get_option( 'agent_builder_license_key', '' ) ) {
+				if ( ! empty( $p['api_key'] ) && '' !== self::get_license_key() ) {
 					return true;
 				}
 				continue;

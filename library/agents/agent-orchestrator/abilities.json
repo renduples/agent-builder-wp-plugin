@@ -1,16 +1,65 @@
 {
   "$schema": "https://agentic-plugin.com/schemas/abilities/v1.json",
-  "version": "2.0",
+  "version": "1.1",
   "agent": "agent-orchestrator",
   "description": "Deployment-management tools the Agent Orchestrator uses to embed agents as chat widgets, scheduled tasks, and automatic triggers on behalf of a Basic-mode user.",
   "abilities": {
-    "manage_agent_shortcode": { "risk": "low", "risk_by_action": { "list": "none" }, "reason": "Creates/edits/deletes a shortcode embed row — reversible, no code execution." },
-    "manage_editor_sidebar_agent": { "risk": "low", "risk_by_action": { "get": "none" }, "reason": "Toggles editor-sidebar config — reversible." },
-    "manage_frontend_modal_agent": { "risk": "low", "risk_by_action": { "list": "none" }, "reason": "Toggles the site-wide floating chat widget — reversible." },
-    "manage_gutenberg_block_agent": { "risk": "low", "risk_by_action": { "list": "none" }, "reason": "Toggles Gutenberg block availability — reversible." },
-    "manage_admin_bar_launcher": { "risk": "low", "risk_by_action": { "get": "none" }, "reason": "Toggles wp-admin chat launchers — reversible." },
-    "manage_scheduled_task": { "risk": "medium", "risk_by_action": { "list": "none" }, "reason": "Creates a recurring task an agent runs unattended on a schedule." },
-    "manage_event_listener": { "risk": "medium", "risk_by_action": { "list": "none" }, "reason": "Creates a trigger that runs an agent unattended when a WordPress event fires." },
-    "agents_available": { "risk": "none", "reason": "Read-only browsing of the community agent catalog." }
+    "get_agent_list": {
+      "risk": "none",
+      "reason": "Read-only list of the agents installed on this site. Needed before deploying one anywhere."
+    },
+    "manage_agent_shortcode": {
+      "risk": "low",
+      "risk_by_action": {
+        "list": "none"
+      },
+      "reason": "Creates/edits/deletes a shortcode embed row — reversible, no code execution."
+    },
+    "manage_editor_sidebar_agent": {
+      "risk": "low",
+      "risk_by_action": {
+        "get": "none"
+      },
+      "reason": "Toggles editor-sidebar config — reversible."
+    },
+    "manage_frontend_modal_agent": {
+      "risk": "low",
+      "risk_by_action": {
+        "list": "none"
+      },
+      "reason": "Toggles the site-wide floating chat widget — reversible."
+    },
+    "manage_gutenberg_block_agent": {
+      "risk": "low",
+      "risk_by_action": {
+        "list": "none"
+      },
+      "reason": "Toggles Gutenberg block availability — reversible."
+    },
+    "manage_admin_bar_launcher": {
+      "risk": "low",
+      "risk_by_action": {
+        "get": "none"
+      },
+      "reason": "Toggles wp-admin chat launchers — reversible."
+    },
+    "manage_scheduled_task": {
+      "risk": "medium",
+      "risk_by_action": {
+        "list": "none"
+      },
+      "reason": "Creates a recurring task an agent runs unattended on a schedule."
+    },
+    "manage_event_listener": {
+      "risk": "medium",
+      "risk_by_action": {
+        "list": "none"
+      },
+      "reason": "Creates a trigger that runs an agent unattended when a WordPress event fires."
+    },
+    "agents_available": {
+      "risk": "none",
+      "reason": "Read-only browsing of the community agent catalog."
+    }
   }
 }

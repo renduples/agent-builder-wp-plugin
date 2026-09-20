@@ -2,10 +2,10 @@
     "$schema": "https://agentic-plugin.com/schemas/agent/v1.json",
     "slug": "assistant-trainer",
     "name": "Assistant Trainer",
-    "description": "Meta-agent that trains new AI agents from natural language descriptions.",
+    "description": "Meta-agent that trains new AI agents from natural language descriptions, and keeps the existing ones honest by running the prompt-test suite against them and proposing the tools or skills they turn out to be missing.",
     "category": "developer",
     "icon": "🏗️",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "author": "Agentic Community",
     "author_uri": "https://agentic-plugin.com/developer/agentic-community/",
     "capabilities": [
@@ -25,13 +25,18 @@
         "generate_agent_documentation",
         "generate_agent",
         "create_agent_files",
-        "delete_agent"
+        "delete_agent",
+        "manage_prompt_catalog",
+        "run_prompt_tests",
+        "analyze_prompt_results",
+        "manage_skill"
     ],
     "suggested_prompts": [
         "Create an assistant that manages WordPress backups",
-        "Build an image optimization assistant for media library",
-        "Design an assistant for managing redirects",
+        "Run the prompt tests for the SEO Optimizer and tell me what's failing",
+        "Which of our agents are missing tools they're expected to have?",
+        "Add a prompt to the test catalog for people whose site got hacked",
         "Show me the existing assistants in the library"
     ],
-    "welcome_message": "I train new AI assistants for WordPress!\n\nTell me what kind of assistant you need and I'll:\n- Generate compliant code\n- Design its tools and capabilities\n- Help test and write documentation\n\nWhat assistant would you like to build?"
+    "welcome_message": "I train new AI assistants for WordPress — and I keep the existing ones honest.\n\nTell me what kind of assistant you need and I'll design its tools, generate compliant code, and help you test it.\n\nOr point me at the prompt-test suite: I can run real prompts against the bundled agents, see which tools they actually reach for, and tell you exactly what they're missing.\n\nWhat would you like to do?"
 }

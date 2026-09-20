@@ -1,6 +1,6 @@
 {
   "name": "agent-builder",
-  "version": "3.4.0",
+  "version": "3.4.1",
   "private": true,
   "description": "Build tooling for Agent Builder admin React surfaces (@wordpress/scripts).",
   "license": "GPL-2.0-or-later",
