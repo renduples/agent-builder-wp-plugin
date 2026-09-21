@@ -343,8 +343,50 @@
             chatContainer.style.opacity = '1';
         }
 
-        // Agent delegation: if an initial_message was passed via URL param, pre-fill and auto-submit.
-        if (typeof agenticChat !== 'undefined' && agenticChat.initialMessage && input) {
+        // Site Brief assignment: fetch the one-time opening message (short
+        // token in the URL; the finding itself is never put on the query string)
+        // then pre-fill and auto-send it as the first user turn.
+        var briefToken = '';
+        try {
+            briefToken = new URLSearchParams(window.location.search).get('brief') || '';
+        } catch (e) {
+            briefToken = '';
+        }
+        if (!briefToken && typeof agenticChat !== 'undefined' && agenticChat.briefToken) {
+            briefToken = agenticChat.briefToken;
+        }
+        if (briefToken && typeof agenticChat !== 'undefined' && agenticChat.restUrl) {
+            try {
+                var cleaned = new URL(window.location.href);
+                cleaned.searchParams.delete('brief');
+                if (window.history && window.history.replaceState) {
+                    window.history.replaceState({}, '', cleaned.toString());
+                }
+            } catch (e) {}
+            fetch(agenticChat.restUrl + 'site-brief/opening/' + encodeURIComponent(briefToken), {
+                headers: { 'X-WP-Nonce': agenticChat.nonce }
+            }).then(function (resp) {
+                return resp.ok ? resp.json() : null;
+            }).then(function (data) {
+                var msg = data && data.message ? String(data.message).trim() : '';
+                if (!msg || !input) {
+                    return;
+                }
+                input.value = msg;
+                autoResize();
+                setTimeout(function () {
+                    var f = form;
+                    if (f && typeof f.requestSubmit === 'function') {
+                        f.requestSubmit();
+                    } else if (f) {
+                        f.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                    } else {
+                        sendMessage(msg);
+                    }
+                }, 600);
+            }).catch(function () {});
+        } else if (typeof agenticChat !== 'undefined' && agenticChat.initialMessage && input) {
+            // Agent delegation: if an initial_message was passed via URL param, pre-fill and auto-submit.
             input.value = agenticChat.initialMessage;
             autoResize();
             setTimeout(function() {

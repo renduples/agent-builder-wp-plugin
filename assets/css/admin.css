@@ -138,8 +138,13 @@
 .agentic-site-brief-buttons {
 	display: flex;
 	flex-wrap: wrap;
+	align-items: center;
 	gap: 8px;
 	margin-top: 12px;
+}
+.agentic-site-brief-assigned {
+	color: #00a32a;
+	font-weight: 600;
 }
 .agentic-site-brief-advanced {
 	margin-top: 8px;

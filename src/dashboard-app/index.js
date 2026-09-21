@@ -117,7 +117,6 @@ function SiteBriefPanel() {
 	const visible = showAll ? cards : cards.slice( 0, 10 );
 	const checkers = brief.checkers || Object.keys( BRIEF_CHECKER_LABELS );
 	const canRun = !! brief.caps?.run;
-	const canApprove = !! brief.caps?.approve;
 	const scanned = !! brief.last_run;
 
 	return (
@@ -127,7 +126,7 @@ function SiteBriefPanel() {
 			</div>
 			<p className="agentic-site-brief-lede">
 				{ __(
-					'A read-only look at this site. Nothing changes until you approve.',
+					'A read-only look at this site. Assign an agent to investigate a finding together — nothing changes until you agree.',
 					'agent-builder'
 				) }
 			</p>
@@ -234,29 +233,43 @@ function SiteBriefPanel() {
 									</details>
 								) }
 								<div className="agentic-site-brief-buttons">
-									{ card.approve?.type &&
-										card.approve.type !== 'none' && (
-											<Button
-												variant="primary"
-												label={ __(
-													'Approve and carry out this action, or open the relevant screen. Nothing runs until you approve.',
+									{ card.assigned ? (
+										<span className="agentic-site-brief-assigned">
+											{ sprintf(
+												/* translators: 1: agent display name, 2: assignment timestamp. */
+												__(
+													'Assigned to %s on %s',
 													'agent-builder'
-												) }
-												showTooltip
-												disabled={
-													! canApprove ||
-													busyId === card.id
-												}
-												onClick={ () =>
-													act( card, 'approve' )
-												}
-											>
-												{ __(
-													'Approve',
-													'agent-builder'
-												) }
-											</Button>
-										) }
+												),
+												card.assigned.agent_label ||
+													card.assigned.agent,
+												formatBriefTime(
+													card.assigned.at
+												)
+											) }
+										</span>
+									) : (
+										<Button
+											variant="primary"
+											label={ __(
+												'Open the recommended agent in chat with this finding, to investigate and fix it together',
+												'agent-builder'
+											) }
+											showTooltip
+											disabled={
+												! canRun ||
+												busyId === card.id
+											}
+											onClick={ () =>
+												act( card, 'assign' )
+											}
+										>
+											{ __(
+												'Assign Agent',
+												'agent-builder'
+											) }
+										</Button>
+									) }
 									<Button
 										variant="secondary"
 										label={ __(

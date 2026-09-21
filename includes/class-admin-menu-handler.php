@@ -1467,6 +1467,10 @@ class Admin_Menu_Handler {
 				'handoffFrom'    => isset( $_GET['handoff_from'] ) ? sanitize_key( wp_unslash( $_GET['handoff_from'] ) ) : '',
 				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				'handoffContext' => isset( $_GET['handoff_context'] ) ? sanitize_textarea_field( wp_unslash( $_GET['handoff_context'] ) ) : '',
+				// Site Brief [Assign Agent] one-time payload token. The finding
+				// text is fetched from REST, never placed on the query string.
+				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				'briefToken'     => isset( $_GET['brief'] ) ? sanitize_key( wp_unslash( $_GET['brief'] ) ) : '',
 				'slashCommands'  => \Agentic\Chat_Assets::get_slash_commands_for_js(),
 				'i18n'           => agent_builder_chat_i18n(),
 			)
