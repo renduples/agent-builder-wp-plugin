@@ -745,12 +745,11 @@ class Admin_Menu_Handler {
 			return;
 		}
 
-		// No usable provider — revert onboarding so the setup wizard reappears
-		// (a plugin with zero configured providers is non-functional).
+		// No usable provider — revert onboarding so the dismissible setup banner
+		// (Admin_Notice_Manager::show_setup_needed_notice) reappears. Deliberately
+		// NO hard redirect: the banner does the reminding, so CLI-activated or
+		// provider-less installs are never trapped on the signup wizard.
 		update_option( 'agent_builder_onboarding_complete', false );
-
-		wp_safe_redirect( admin_url( 'admin.php?page=agentic-signup' ) );
-		exit;
 	}
 
 	/**
