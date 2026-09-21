@@ -282,6 +282,19 @@ class Site_Brief_Controller {
 			$agent_label = $agent;
 		}
 
+		// A premium/marketplace agent that is not installed (e.g. the WooCommerce
+		// Assistant) cannot be activated or opened in chat. Rather than record a
+		// broken assignment, hand back the marketplace link so the UI can offer to
+		// get it. The card stays un-assigned until the agent is present.
+		if ( ! self::is_agent_available( $agent ) ) {
+			$payload                = self::present( Site_Brief_Store::get() );
+			$payload['upsell']      = true;
+			$payload['agent']       = $agent;
+			$payload['agent_label'] = $agent_label;
+			$payload['upsell_url']  = self::agent_marketplace_url( $agent );
+			return new \WP_REST_Response( $payload, 200 );
+		}
+
 		self::maybe_activate_agent( $agent );
 		Site_Brief_Store::assign( (string) $card['id'], $agent, $agent_label );
 
@@ -400,6 +413,17 @@ class Site_Brief_Controller {
 					$card['assigned']['agent_label'] = $card['assigned']['agent'];
 				}
 			}
+			// Surface whether the recommended agent is installed. When it is a
+			// premium/marketplace agent the site does not have yet (e.g. the
+			// WooCommerce Assistant), the card offers a "get it" link instead of
+			// an Assign button — computed here (not at scan time) so installing
+			// the agent flips the card on the next reload without a re-scan.
+			$agent_slug              = (string) ( $card['agent'] ?? '' );
+			$card['agent_available'] = '' === $agent_slug || self::is_agent_available( $agent_slug );
+			if ( ! $card['agent_available'] ) {
+				$card['agent_upsell_url'] = self::agent_marketplace_url( $agent_slug );
+			}
+
 			if ( ! $advanced ) {
 				unset( $card['tool_slugs'], $card['raw'] );
 			}
@@ -517,5 +541,41 @@ class Site_Brief_Controller {
 			return;
 		}
 		$registry->activate_agent( $slug );
+	}
+
+	/**
+	 * Whether the card's recommended agent is installed on this site.
+	 *
+	 * Bundled library agents always count as installed; a premium/marketplace
+	 * agent counts only once the site owner has installed it. When the registry
+	 * is unavailable we fail open to the Assign flow (which validates the agent
+	 * itself) rather than showing an upsell for a core agent.
+	 *
+	 * @param string $slug Agent slug.
+	 * @return bool
+	 */
+	private static function is_agent_available( string $slug ): bool {
+		if ( '' === $slug || ! class_exists( '\Agentic_Agent_Registry' ) ) {
+			return true;
+		}
+		return \Agentic_Agent_Registry::get_instance()->is_agent_installed( $slug );
+	}
+
+	/**
+	 * Marketplace URL a card links to when its recommended agent is a premium
+	 * add-on that is not installed.
+	 *
+	 * @param string $slug Agent slug.
+	 * @return string
+	 */
+	private static function agent_marketplace_url( string $slug ): string {
+		$url = 'https://agentic-plugin.com/marketplace/' . rawurlencode( $slug ) . '/';
+		/**
+		 * Filter the Site Brief upsell URL for an uninstalled recommended agent.
+		 *
+		 * @param string $url  Marketplace URL for the agent.
+		 * @param string $slug Agent slug.
+		 */
+		return (string) apply_filters( 'agentic_site_brief_agent_upsell_url', $url, $slug );
 	}
 }

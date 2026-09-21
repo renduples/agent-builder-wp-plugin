@@ -40,7 +40,7 @@ class Checker_Wc_Low_Stock extends Site_Brief_Checker {
 	 * {@inheritdoc}
 	 */
 	public function get_agent(): string {
-		return 'storefront-assistant';
+		return 'woocommerce-assistant';
 	}
 
 	/**

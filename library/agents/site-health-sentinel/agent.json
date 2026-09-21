@@ -8,13 +8,18 @@
   "version": "1.0.0",
   "author": "Agent Builder",
   "author_uri": "https://agentic-plugin.com",
-  "capabilities": [ "manage_options" ],
+  "capabilities": [
+    "manage_options"
+  ],
   "tools": [
     "get_site_overview",
     "run_health_check",
     "get_database_health",
     "get_php_errors",
     "check_plugin_updates",
+    "verify_core_integrity",
+    "check_theme_status",
+    "check_caching_status",
     "check_core_web_vitals",
     "get_cron_jobs",
     "get_security_overview",

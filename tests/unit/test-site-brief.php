@@ -392,4 +392,58 @@ class Test_Site_Brief extends TestCase {
 		$this->assertStringNotContainsString( ':', (string) $card['id'] );
 		$this->assertMatchesRegularExpression( '/^[A-Za-z0-9_.-]+$/', (string) $card['id'] );
 	}
+
+	/**
+	 * Every Site Brief card must be jointly serviceable: its recommended agent
+	 * must actually be able to receive the tools the checker relies on. For a
+	 * bundled agent that means each required tool is declared in BOTH agent.json
+	 * (the chat runtime's candidate list) AND abilities.json (the runtime gate).
+	 * A premium marketplace agent is exempt — it is intentionally not bundled and
+	 * the card offers a "get it" upsell instead — but it must genuinely be absent
+	 * from the bundled library, or the allowlist has gone stale.
+	 *
+	 * This guards against a checker pointing at an agent that cannot help, which
+	 * the handler-level tests miss because they never resolve tools to an agent.
+	 */
+	public function test_every_checker_agent_can_service_its_card(): void {
+		$premium_upsell = array( 'woocommerce-assistant' );
+		$lib            = AGENT_BUILDER_DIR . 'library/agents/';
+
+		$checkers = ( new \ReflectionClass( Site_Brief_Runner::class ) )->getConstant( 'CHECKERS' );
+		$this->assertNotEmpty( $checkers, 'Runner exposes no checkers.' );
+
+		foreach ( $checkers as $id => $class ) {
+			$checker = new $class();
+			$agent   = $checker->get_agent();
+			$needs   = $checker->get_tools();
+
+			$this->assertNotSame( '', $agent, "Checker {$id} has no recommended agent." );
+
+			if ( in_array( $agent, $premium_upsell, true ) ) {
+				$this->assertDirectoryDoesNotExist(
+					$lib . $agent,
+					"Agent {$agent} is bundled; remove it from the premium-upsell allowlist."
+				);
+				continue;
+			}
+
+			$agent_json = json_decode( (string) file_get_contents( $lib . $agent . '/agent.json' ), true );
+			$abilities  = json_decode( (string) file_get_contents( $lib . $agent . '/abilities.json' ), true );
+			$declared   = (array) ( $agent_json['tools'] ?? array() );
+			$granted    = array_keys( (array) ( $abilities['abilities'] ?? array() ) );
+
+			foreach ( $needs as $tool ) {
+				$this->assertContains(
+					$tool,
+					$declared,
+					"Checker {$id}: agent {$agent} agent.json 'tools' is missing {$tool} (chat runtime never offers it)."
+				);
+				$this->assertContains(
+					$tool,
+					$granted,
+					"Checker {$id}: agent {$agent} abilities.json is missing {$tool} (runtime gate blocks it)."
+				);
+			}
+		}
+	}
 }
