@@ -370,4 +370,26 @@ class Test_Site_Brief extends TestCase {
 		$stored = Site_Brief_Store::get();
 		$this->assertSame( array(), $stored['assigned'] );
 	}
+
+	/**
+	 * Card ids must be URL-route-safe. A ':' separator becomes %3A under
+	 * encodeURIComponent, and WP REST routing then fails to match, so the
+	 * assign/dismiss routes 404 for cards such as site_health:1. Ids use '.'.
+	 */
+	public function test_card_ids_are_url_route_safe(): void {
+		$checker = new \Agentic\Site_Brief\Checker_Site_Health();
+		$method  = new \ReflectionMethod( $checker, 'card' );
+		$card    = $method->invoke(
+			$checker,
+			array(
+				'subject'  => '1',
+				'title'    => 'Example',
+				'evidence' => 'Example',
+			)
+		);
+
+		$this->assertSame( 'site_health.1', $card['id'] );
+		$this->assertStringNotContainsString( ':', (string) $card['id'] );
+		$this->assertMatchesRegularExpression( '/^[A-Za-z0-9_.-]+$/', (string) $card['id'] );
+	}
 }
