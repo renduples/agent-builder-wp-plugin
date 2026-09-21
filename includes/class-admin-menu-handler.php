@@ -1422,7 +1422,7 @@ class Admin_Menu_Handler {
 			'agentic-chat',
 			AGENT_BUILDER_URL . 'assets/js/chat.js',
 			array( 'agentic-ui' ),
-			AGENT_BUILDER_VERSION,
+			(string) filemtime( AGENT_BUILDER_DIR . 'assets/js/chat.js' ),
 			true
 		);
 
