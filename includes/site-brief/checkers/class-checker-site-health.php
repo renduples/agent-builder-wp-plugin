@@ -71,22 +71,56 @@ class Checker_Site_Health extends Site_Brief_Checker {
 			return array();
 		}
 
+		$score = (int) ( $result['score'] ?? 0 );
+		$grade = (string) ( $result['grade'] ?? '' );
+
 		$cards = array();
+
+		// A single summary card for the overall score/grade. This used to be
+		// stamped as the evidence line on every individual issue card below;
+		// it now appears exactly once, as its own card.
+		$cards[] = $this->card(
+			array(
+				'subject'          => 'score',
+				'title'            => sprintf(
+					/* translators: 1: health score, 2: grade. */
+					__( 'Site health score %1$d (%2$s).', 'agent-builder' ),
+					$score,
+					$grade
+				),
+				'evidence'         => sprintf(
+					/* translators: %d: number of issues found. */
+					_n(
+						'%d issue found by WordPress Site Health.',
+						'%d issues found by WordPress Site Health.',
+						count( $issues ),
+						'agent-builder'
+					),
+					count( $issues )
+				),
+				'evidence_payload' => array(
+					'score'  => $score,
+					'grade'  => $grade,
+					'issues' => count( $issues ),
+				),
+				'proposed_action'  => __( 'Open Site Health for details. The scan does not apply a fix.', 'agent-builder' ),
+				'action_risk'      => 'none',
+				'approve'          => $this->approve_url( admin_url( 'site-health.php' ) ),
+				'raw'              => array(
+					'score' => $score,
+					'grade' => $grade,
+				),
+			)
+		);
+
+		// One card per individual issue — no repeated site-health score line.
 		foreach ( array_slice( $issues, 0, 5 ) as $index => $issue ) {
 			$cards[] = $this->card(
 				array(
 					'subject'          => (string) $index,
 					'title'            => $issue,
-					'evidence'         => sprintf(
-						/* translators: 1: health score, 2: grade. */
-						__( 'Site health score %1$d (%2$s).', 'agent-builder' ),
-						(int) ( $result['score'] ?? 0 ),
-						(string) ( $result['grade'] ?? '' )
-					),
-					'evidence_payload' => array(
-						'issue' => $issue,
-						'score' => (int) ( $result['score'] ?? 0 ),
-					),
+					'evidence'         => '',
+					'evidence_payload' => array( 'issue' => $issue ),
 					'proposed_action'  => __( 'Open Site Health for details. The scan does not apply a fix.', 'agent-builder' ),
 					'action_risk'      => 'none',
 					'approve'          => $this->approve_url( admin_url( 'site-health.php' ) ),

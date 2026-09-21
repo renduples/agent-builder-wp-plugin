@@ -199,9 +199,11 @@ function SiteBriefPanel() {
 										{ card.agent_label }
 									</span>
 								</div>
-								<p className="agentic-site-brief-evidence">
-									{ card.evidence }
-								</p>
+								{ card.evidence && (
+									<p className="agentic-site-brief-evidence">
+										{ card.evidence }
+									</p>
+								) }
 								<p className="agentic-site-brief-action">
 									{ card.proposed_action }
 								</p>
@@ -236,6 +238,11 @@ function SiteBriefPanel() {
 										card.approve.type !== 'none' && (
 											<Button
 												variant="primary"
+												label={ __(
+													'Approve and carry out this action, or open the relevant screen. Nothing runs until you approve.',
+													'agent-builder'
+												) }
+												showTooltip
 												disabled={
 													! canApprove ||
 													busyId === card.id
@@ -252,6 +259,11 @@ function SiteBriefPanel() {
 										) }
 									<Button
 										variant="secondary"
+										label={ __(
+											'Dismiss to hide this card. It will not return unless the finding changes.',
+											'agent-builder'
+										) }
+										showTooltip
 										disabled={
 											! canRun || busyId === card.id
 										}
@@ -263,6 +275,11 @@ function SiteBriefPanel() {
 									</Button>
 									<Button
 										variant="tertiary"
+										label={ __(
+											'Not now leaves it for later. It may reappear on the next scan.',
+											'agent-builder'
+										) }
+										showTooltip
 										onClick={ () =>
 											act( card, 'not_now' )
 										}
