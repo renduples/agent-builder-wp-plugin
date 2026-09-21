@@ -74,8 +74,12 @@ class Admin_Notice_Manager {
 			return;
 		}
 
-		// Plugin pages only - do not nag Dashboard / Plugins / Posts / etc.
-		if ( ! $this->is_plugin_admin_screen() ) {
+		// Show on Agent Builder screens and on the Plugins list — where the admin
+		// lands right after activation — so the one-time, dismissible "finish setup"
+		// reminder is actually seen. Still kept off Dashboard / Posts / etc.
+		$agentic_screen  = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		$on_plugins_page = $agentic_screen && is_string( $agentic_screen->id ) && 'plugins' === $agentic_screen->id;
+		if ( ! $this->is_plugin_admin_screen() && ! $on_plugins_page ) {
 			return;
 		}
 
