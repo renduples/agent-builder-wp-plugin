@@ -41,7 +41,7 @@ if ( isset( $_POST['agentic_setup_nonce'] ) && wp_verify_nonce( sanitize_text_fi
 			)
 		);
 
-		$agentic_redirect_url = admin_url( 'admin.php?page=agentic-chat&onboarding=1' );
+		$agentic_redirect_url = admin_url( 'admin.php?page=agent-builder&onboarding=1' );
 		echo '<script>window.location.href=' . wp_json_encode( $agentic_redirect_url ) . ';</script>';
 		exit;
 	}

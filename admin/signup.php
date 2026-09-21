@@ -572,7 +572,7 @@ $agentic_signup_tts_voices     = array(
 				msgEl.textContent = <?php echo wp_json_encode( __( 'API key saved — redirecting…', 'agent-builder' ) ); ?>;
 				msgEl.className   = 'agentic-signup-msg success';
 				setTimeout( function () {
-					window.location.href = <?php echo wp_json_encode( admin_url( 'admin.php?page=agentic-chat&agent=wordpress-assistant' ) ); ?>;
+					window.location.href = <?php echo wp_json_encode( admin_url( 'admin.php?page=agent-builder' ) ); ?>;
 				}, 800 );
 			} else {
 				btn.disabled    = false;
