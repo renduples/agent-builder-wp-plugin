@@ -53,6 +53,7 @@ class Site_Brief_Store {
 			'status'        => 'idle',
 			'cards'         => array(),
 			'dismissed'     => array(),
+			'assigned'      => array(),
 			'store_stats'   => null,
 			'skipped'       => array(),
 		);
@@ -121,6 +122,30 @@ class Site_Brief_Store {
 		$data['dismissed'][ $card_id ] = array(
 			'hash' => $evidence_hash,
 			'at'   => gmdate( 'c' ),
+		);
+		self::save( $data );
+	}
+
+	/**
+	 * Record an assignment keyed by card id.
+	 *
+	 * Survives a reload and a later scan for the same card id (unlike
+	 * dismissals, assignments are not evidence-hash gated).
+	 *
+	 * @param string $card_id     Card id (checker or checker:subject).
+	 * @param string $agent       Recommended agent slug.
+	 * @param string $agent_label Human label for that agent.
+	 * @return void
+	 */
+	public static function assign( string $card_id, string $agent, string $agent_label ): void {
+		$data = self::get();
+		if ( ! isset( $data['assigned'] ) || ! is_array( $data['assigned'] ) ) {
+			$data['assigned'] = array();
+		}
+		$data['assigned'][ $card_id ] = array(
+			'agent'       => sanitize_key( $agent ),
+			'agent_label' => sanitize_text_field( $agent_label ),
+			'at'          => gmdate( 'c' ),
 		);
 		self::save( $data );
 	}

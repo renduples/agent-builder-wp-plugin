@@ -275,4 +275,99 @@ class Test_Site_Brief extends TestCase {
 		$this->assertTrue( class_exists( Site_Brief_Controller::class ) );
 		$this->assertTrue( class_exists( Site_Brief_Runner::class ) );
 	}
+
+	/**
+	 * Assign records state in the store, present() surfaces it on the card
+	 * (assign response AND a later GET/reload), and the response carries a
+	 * short chat redirect_url that does not embed the finding.
+	 */
+	public function test_assign_records_state_and_present_surfaces_it(): void {
+		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $admin );
+
+		$card = array(
+			'id'              => 'plugin_updates:akismet',
+			'checker_id'      => 'plugin_updates',
+			'evidence_hash'   => hash( 'sha256', 'akismet:1.0:1.1' ),
+			'title'           => 'Akismet has an update',
+			'evidence'        => 'Akismet (1.0 → 1.1)',
+			'proposed_action' => 'Update the plugin.',
+			'agent'           => 'site-health-sentinel',
+			'agent_label'     => 'Site Health Sentinel',
+		);
+		Site_Brief_Store::save(
+			array(
+				'status'   => 'complete',
+				'last_run' => gmdate( 'c' ),
+				'cards'    => array( $card ),
+			)
+		);
+
+		$request = new \WP_REST_Request( 'POST', '/agentic/v1/site-brief/cards/plugin_updates:akismet/assign' );
+		$request->set_param( 'id', $card['id'] );
+
+		$response = Site_Brief_Controller::assign_card( $request );
+		$this->assertInstanceOf( \WP_REST_Response::class, $response );
+		$this->assertSame( 200, $response->get_status() );
+
+		$data = $response->get_data();
+		$this->assertNotEmpty( $data['redirect_url'] );
+		$this->assertStringContainsString( 'page=agentic-chat', $data['redirect_url'] );
+		$this->assertStringContainsString( 'agent=site-health-sentinel', $data['redirect_url'] );
+		$this->assertStringContainsString( 'brief=', $data['redirect_url'] );
+		$this->assertStringNotContainsString( 'Akismet', $data['redirect_url'] );
+		$this->assertStringNotContainsString( rawurlencode( $card['evidence'] ), $data['redirect_url'] );
+
+		$this->assertNotEmpty( $data['cards'] );
+		$this->assertSame( $card['id'], $data['cards'][0]['id'] );
+		$this->assertIsArray( $data['cards'][0]['assigned'] ?? null );
+		$this->assertSame( 'site-health-sentinel', $data['cards'][0]['assigned']['agent'] );
+		$this->assertSame( 'Site Health Sentinel', $data['cards'][0]['assigned']['agent_label'] );
+		$this->assertNotEmpty( $data['cards'][0]['assigned']['at'] );
+
+		$stored = Site_Brief_Store::get();
+		$this->assertArrayHasKey( $card['id'], $stored['assigned'] );
+		$this->assertSame( 'site-health-sentinel', $stored['assigned'][ $card['id'] ]['agent'] );
+
+		$reload = rest_get_server()->dispatch( new \WP_REST_Request( 'GET', '/agentic/v1/site-brief' ) );
+		$this->assertSame( 200, $reload->get_status() );
+		$reloaded = $reload->get_data();
+		$this->assertSame( $card['id'], $reloaded['cards'][0]['id'] );
+		$this->assertSame( 'site-health-sentinel', $reloaded['cards'][0]['assigned']['agent'] );
+		$this->assertSame( 'Site Health Sentinel', $reloaded['cards'][0]['assigned']['agent_label'] );
+		$this->assertSame( $data['cards'][0]['assigned']['at'], $reloaded['cards'][0]['assigned']['at'] );
+
+		$parsed = wp_parse_url( $data['redirect_url'] );
+		$query  = array();
+		parse_str( (string) ( $parsed['query'] ?? '' ), $query );
+		$token = sanitize_key( (string) ( $query['brief'] ?? '' ) );
+		$this->assertNotSame( '', $token );
+
+		$open_req = new \WP_REST_Request( 'GET', '/agentic/v1/site-brief/opening/' . $token );
+		$open_res = rest_get_server()->dispatch( $open_req );
+		$this->assertSame( 200, $open_res->get_status() );
+		$opening = (string) ( $open_res->get_data()['message'] ?? '' );
+		$this->assertStringContainsString( 'Akismet has an update', $opening );
+		$this->assertStringContainsString( 'Akismet (1.0 → 1.1)', $opening );
+		$this->assertStringContainsString( 'Update the plugin.', $opening );
+		$this->assertStringContainsString( 'ask me before making any change', $opening );
+
+		$replay = rest_get_server()->dispatch( $open_req );
+		$this->assertSame( 404, $replay->get_status() );
+	}
+
+	/**
+	 * Assigning an unknown card is 404 and does not write assigned state.
+	 */
+	public function test_assign_unknown_card_is_404(): void {
+		$request = new \WP_REST_Request( 'POST', '/agentic/v1/site-brief/cards/missing/assign' );
+		$request->set_param( 'id', 'missing' );
+
+		$response = Site_Brief_Controller::assign_card( $request );
+		$this->assertInstanceOf( \WP_Error::class, $response );
+		$this->assertSame( 'site_brief_unknown_card', $response->get_error_code() );
+
+		$stored = Site_Brief_Store::get();
+		$this->assertSame( array(), $stored['assigned'] );
+	}
 }

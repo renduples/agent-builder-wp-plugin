@@ -225,6 +225,7 @@ class Site_Brief_Runner {
 
 		$previous  = Site_Brief_Store::get();
 		$dismissed = is_array( $previous['dismissed'] ?? null ) ? $previous['dismissed'] : array();
+		$assigned  = is_array( $previous['assigned'] ?? null ) ? $previous['assigned'] : array();
 		$cards     = array();
 		$skipped   = array();
 		$stats     = null;
@@ -291,6 +292,7 @@ class Site_Brief_Runner {
 			'status'        => $status,
 			'cards'         => array_values( $cards ),
 			'dismissed'     => $dismissed,
+			'assigned'      => $assigned,
 			'store_stats'   => $stats,
 			'skipped'       => $skipped,
 		);
