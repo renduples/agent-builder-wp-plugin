@@ -8,12 +8,16 @@
   "version": "1.0.0",
   "author": "Agent Builder",
   "author_uri": "https://agentic-plugin.com",
-  "capabilities": [ "moderate_comments" ],
+  "capabilities": [
+    "moderate_comments"
+  ],
   "tools": [
     "list_comments",
     "get_post_content",
     "search_content",
     "list_native_forms",
+    "get_form_stats",
+    "detect_form_plugins",
     "get_native_form_submissions",
     "get_form_entries",
     "moderate_comment",

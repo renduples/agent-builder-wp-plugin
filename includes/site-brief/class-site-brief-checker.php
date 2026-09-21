@@ -81,10 +81,11 @@ abstract class Site_Brief_Checker {
 	 */
 	protected function agent_label( string $slug ): string {
 		$labels = array(
-			'site-health-sentinel' => __( 'Site Health Sentinel', 'agent-builder' ),
-			'wordpress-assistant'  => __( 'WordPress Assistant', 'agent-builder' ),
-			'support-triage'       => __( 'Support Triage', 'agent-builder' ),
-			'storefront-assistant' => __( 'Storefront Assistant', 'agent-builder' ),
+			'site-health-sentinel'  => __( 'Site Health Sentinel', 'agent-builder' ),
+			'wordpress-assistant'   => __( 'WordPress Assistant', 'agent-builder' ),
+			'support-triage'        => __( 'Support Triage', 'agent-builder' ),
+			'storefront-assistant'  => __( 'Storefront Assistant', 'agent-builder' ),
+			'woocommerce-assistant' => __( 'WooCommerce Assistant', 'agent-builder' ),
 		);
 		return $labels[ $slug ] ?? $slug;
 	}

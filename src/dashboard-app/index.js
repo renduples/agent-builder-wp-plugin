@@ -248,6 +248,24 @@ function SiteBriefPanel() {
 												)
 											) }
 										</span>
+									) : card.agent_available === false ? (
+										<Button
+											variant="primary"
+											href={ card.agent_upsell_url }
+											target="_blank"
+											rel="noopener noreferrer"
+											label={ __(
+												'This finding needs a premium agent. Opens the marketplace in a new tab to get it.',
+												'agent-builder'
+											) }
+											showTooltip
+										>
+											{ sprintf(
+												/* translators: %s: recommended agent display name. */
+												__( 'Get %s', 'agent-builder' ),
+												card.agent_label
+											) }
+										</Button>
 									) : (
 										<Button
 											variant="primary"
