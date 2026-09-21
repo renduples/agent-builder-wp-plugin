@@ -105,7 +105,6 @@ class Checker_Site_Health extends Site_Brief_Checker {
 				),
 				'proposed_action'  => __( 'Open Site Health for details. The scan does not apply a fix.', 'agent-builder' ),
 				'action_risk'      => 'none',
-				'approve'          => $this->approve_url( admin_url( 'site-health.php' ) ),
 				'raw'              => array(
 					'score' => $score,
 					'grade' => $grade,
@@ -123,7 +122,6 @@ class Checker_Site_Health extends Site_Brief_Checker {
 					'evidence_payload' => array( 'issue' => $issue ),
 					'proposed_action'  => __( 'Open Site Health for details. The scan does not apply a fix.', 'agent-builder' ),
 					'action_risk'      => 'none',
-					'approve'          => $this->approve_url( admin_url( 'site-health.php' ) ),
 					'raw'              => array( 'issue' => $issue ),
 				)
 			);

@@ -101,7 +101,6 @@ class Checker_Wc_Low_Stock extends Site_Brief_Checker {
 					'evidence_payload' => array( 'count' => $count ),
 					'proposed_action'  => __( 'Open Products to restock. wc_update_stock is high-risk and is not run from Site Brief.', 'agent-builder' ),
 					'action_risk'      => 'high',
-					'approve'          => $this->approve_url( admin_url( 'edit.php?post_type=product' ) ),
 					'raw'              => array( 'count' => $count ),
 				)
 			),

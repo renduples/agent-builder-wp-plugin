@@ -110,7 +110,6 @@ class Checker_Wc_Unpaid extends Site_Brief_Checker {
 					),
 					'proposed_action'  => __( 'Open WooCommerce orders. Site Brief will not change order status or expose customer email.', 'agent-builder' ),
 					'action_risk'      => 'none',
-					'approve'          => $this->approve_url( $orders_url ),
 					'raw'              => array( 'total' => $total ),
 				)
 			),

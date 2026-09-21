@@ -99,7 +99,6 @@ class Checker_Comments_Queue extends Site_Brief_Checker {
 					),
 					'proposed_action'  => __( 'Open the Comments screen to review held comments.', 'agent-builder' ),
 					'action_risk'      => 'medium',
-					'approve'          => $this->approve_url( admin_url( 'edit-comments.php?comment_status=moderated' ) ),
 					'raw'              => array( 'total' => $held_total ),
 				)
 			);
@@ -125,11 +124,6 @@ class Checker_Comments_Queue extends Site_Brief_Checker {
 					),
 					'proposed_action'  => __( 'Queue cleanup_spam_comments for approval. The scan will not delete anything.', 'agent-builder' ),
 					'action_risk'      => 'medium',
-					'approve'          => $this->approve_queue(
-						'cleanup_spam_comments',
-						array( 'dry_run' => false ),
-						'medium'
-					),
 					'raw'              => array( 'total' => $spam_total ),
 				)
 			);

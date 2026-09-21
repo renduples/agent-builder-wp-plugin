@@ -72,7 +72,6 @@ class Checker_Caching extends Site_Brief_Checker {
 					'evidence_payload' => array( 'page_cache' => false ),
 					'proposed_action'  => __( 'Install or enable a page cache from Plugins if you want one. manage_cache is not offered in this version.', 'agent-builder' ),
 					'action_risk'      => 'none',
-					'approve'          => $this->approve_url( admin_url( 'plugins.php' ) ),
 					'raw'              => array( 'page_cache' => $page ),
 				)
 			),
