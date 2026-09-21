@@ -109,7 +109,7 @@ abstract class Site_Brief_Checker {
 	protected function card( array $spec ): array {
 		$checker_id = $this->get_id();
 		$subject    = isset( $spec['subject'] ) ? (string) $spec['subject'] : '';
-		$card_id    = '' === $subject ? $checker_id : $checker_id . ':' . $subject;
+		$card_id    = '' === $subject ? $checker_id : $checker_id . '.' . $subject;
 		$agent      = $this->get_agent();
 		$payload    = $spec['evidence_payload'] ?? ( $spec['evidence'] ?? '' );
 
