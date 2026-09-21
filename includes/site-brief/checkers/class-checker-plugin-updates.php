@@ -104,7 +104,6 @@ class Checker_Plugin_Updates extends Site_Brief_Checker {
 					'evidence_payload' => $plugins,
 					'proposed_action'  => __( 'Open the Plugins screen to review updates. Agent Builder will not auto-update.', 'agent-builder' ),
 					'action_risk'      => 'medium',
-					'approve'          => $this->approve_url( admin_url( 'plugins.php' ) ),
 					'raw'              => $plugins,
 				)
 			),

@@ -99,7 +99,6 @@ class Checker_Privileged_Users extends Site_Brief_Checker {
 					),
 					'proposed_action'  => __( 'Open Users to review roles. Site Brief will not change accounts.', 'agent-builder' ),
 					'action_risk'      => 'none',
-					'approve'          => $this->approve_url( admin_url( 'users.php?role=administrator' ) ),
 					'raw'              => array( 'total' => $total ),
 				)
 			),

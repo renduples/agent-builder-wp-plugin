@@ -101,7 +101,6 @@ class Checker_Theme_Updates extends Site_Brief_Checker {
 					),
 					'proposed_action'  => __( 'Open the Themes screen to review the update. Agent Builder will not auto-update.', 'agent-builder' ),
 					'action_risk'      => 'medium',
-					'approve'          => $this->approve_url( admin_url( 'themes.php' ) ),
 					'raw'              => array(
 						'slug'    => (string) ( $active['slug'] ?? '' ),
 						'version' => $current,

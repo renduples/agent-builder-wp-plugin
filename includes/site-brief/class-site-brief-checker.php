@@ -112,13 +112,6 @@ abstract class Site_Brief_Checker {
 		$card_id    = '' === $subject ? $checker_id : $checker_id . ':' . $subject;
 		$agent      = $this->get_agent();
 		$payload    = $spec['evidence_payload'] ?? ( $spec['evidence'] ?? '' );
-		$approve    = isset( $spec['approve'] ) && is_array( $spec['approve'] )
-			? $spec['approve']
-			: array( 'type' => 'none' );
-
-		if ( ! isset( $approve['type'] ) ) {
-			$approve['type'] = 'none';
-		}
 
 		$raw = $spec['raw'] ?? array();
 		if ( is_array( $raw ) && count( $raw ) > 20 ) {
@@ -137,41 +130,9 @@ abstract class Site_Brief_Checker {
 			'scan_risk'       => 'none',
 			'severity'        => (int) ( $spec['severity'] ?? $this->get_severity() ),
 			'evidence_hash'   => $this->evidence_hash( $payload ),
-			'approve'         => $approve,
 			'dismissable'     => array_key_exists( 'dismissable', $spec ) ? (bool) $spec['dismissable'] : true,
 			'tool_slugs'      => array_values( array_map( 'strval', (array) ( $spec['tool_slugs'] ?? $this->get_tools() ) ) ),
 			'raw'             => is_array( $raw ) ? $raw : array(),
-		);
-	}
-
-	/**
-	 * Admin-URL approve payload. The scan never follows the URL.
-	 *
-	 * @param string $url Admin URL (passed through wp_validate_redirect later).
-	 * @return array<string, string>
-	 */
-	protected function approve_url( string $url ): array {
-		return array(
-			'type' => 'admin_url',
-			'url'  => $url,
-		);
-	}
-
-	/**
-	 * Queue-a-write approve payload. The scan never runs the write.
-	 *
-	 * @param string               $tool      Write tool slug.
-	 * @param array<string, mixed> $arguments Tool arguments.
-	 * @param string               $risk      Action risk.
-	 * @return array<string, mixed>
-	 */
-	protected function approve_queue( string $tool, array $arguments, string $risk = 'medium' ): array {
-		return array(
-			'type'      => 'queue',
-			'tool'      => $tool,
-			'arguments' => $arguments,
-			'risk'      => $risk,
-			'agent'     => $this->get_agent(),
 		);
 	}
 }

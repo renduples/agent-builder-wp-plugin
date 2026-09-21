@@ -17,7 +17,6 @@ declare(strict_types=1);
 namespace Agentic\Site_Brief;
 
 use Agentic\Admin_Menu_Handler;
-use Agentic\Approval_Queue;
 use Agentic\Audit_Log;
 use Agentic\Provider_Registry;
 
@@ -89,23 +88,6 @@ class Site_Brief_Controller {
 
 		register_rest_route(
 			self::NS,
-			'/site-brief/cards/(?P<id>[a-zA-Z0-9_.:-]+)/approve',
-			array(
-				'methods'             => \WP_REST_Server::CREATABLE,
-				'callback'            => array( self::class, 'approve_card' ),
-				'permission_callback' => array( self::class, 'can_approve' ),
-				'args'                => array(
-					'id' => array(
-						'type'              => 'string',
-						'required'          => true,
-						'sanitize_callback' => 'sanitize_text_field',
-					),
-				),
-			)
-		);
-
-		register_rest_route(
-			self::NS,
 			'/site-brief/cards/(?P<id>[a-zA-Z0-9_.:-]+)/assign',
 			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -157,14 +139,6 @@ class Site_Brief_Controller {
 		return self::check_cap( 'agent_builder_manage_agents' );
 	}
 
-	/**
-	 * Approve capability — same as the Approvals screen.
-	 *
-	 * @return bool|\WP_Error
-	 */
-	public static function can_approve() {
-		return self::check_cap( 'agent_builder_manage_agents' );
-	}
 
 	/**
 	 * Logged-in + current_user_can. Unauthenticated → 401, lacking cap → 403.
@@ -373,84 +347,6 @@ class Site_Brief_Controller {
 		return (string) ( $data['message'] ?? '' );
 	}
 
-	/**
-	 * POST /site-brief/cards/{id}/approve
-	 *
-	 * Queues a write via Approval_Queue or returns an admin URL. Never runs
-	 * the write in this request (and never in the scan request).
-	 *
-	 * @param \WP_REST_Request $request Request.
-	 * @return \WP_REST_Response|\WP_Error
-	 */
-	public static function approve_card( \WP_REST_Request $request ) {
-		$card = self::find_card( (string) $request->get_param( 'id' ) );
-		if ( null === $card ) {
-			return new \WP_Error(
-				'site_brief_unknown_card',
-				__( 'That Site Brief card was not found.', 'agent-builder' ),
-				array( 'status' => 404 )
-			);
-		}
-
-		$approve = is_array( $card['approve'] ?? null ) ? $card['approve'] : array();
-		$type    = (string) ( $approve['type'] ?? 'none' );
-
-		$audit = new Audit_Log();
-		$audit->log(
-			'site-brief',
-			'site_brief_approve',
-			(string) ( $card['checker_id'] ?? '' ),
-			array(
-				'card_id'    => $card['id'],
-				'type'       => $type,
-				'tool_names' => $card['tool_slugs'] ?? array(),
-			)
-		);
-
-		if ( 'queue' === $type && ! empty( $approve['tool'] ) ) {
-			$params               = is_array( $approve['arguments'] ?? null ) ? $approve['arguments'] : array();
-			$params['source']     = 'site_brief';
-			$params['checker_id'] = (string) ( $card['checker_id'] ?? '' );
-
-			$queue = new Approval_Queue();
-			$qid   = $queue->add(
-				(string) ( $approve['agent'] ?? $card['agent'] ?? 'wordpress-assistant' ),
-				(string) $approve['tool'],
-				$params,
-				(string) ( $card['proposed_action'] ?? '' ),
-				7,
-				(string) ( $approve['risk'] ?? $card['action_risk'] ?? 'medium' ),
-				'supervised',
-				'site_brief'
-			);
-
-			if ( ! $qid ) {
-				return new \WP_Error(
-					'site_brief_queue_failed',
-					__( 'Could not add this job to the approval queue.', 'agent-builder' ),
-					array( 'status' => 500 )
-				);
-			}
-
-			$payload                  = self::present( Site_Brief_Store::get() );
-			$payload['approval_id']   = (int) $qid;
-			$payload['approvals_url'] = admin_url( 'admin.php?page=agentic-approvals' );
-			return new \WP_REST_Response( $payload, 200 );
-		}
-
-		if ( 'admin_url' === $type && ! empty( $approve['url'] ) ) {
-			$redirect                = wp_validate_redirect( (string) $approve['url'], admin_url() );
-			$payload                 = self::present( Site_Brief_Store::get() );
-			$payload['redirect_url'] = $redirect;
-			return new \WP_REST_Response( $payload, 200 );
-		}
-
-		return new \WP_Error(
-			'site_brief_no_write',
-			__( 'This card has no write action. Dismiss it if you are done.', 'agent-builder' ),
-			array( 'status' => 400 )
-		);
-	}
 
 	/**
 	 * Locate a stored card by id.
@@ -525,8 +421,7 @@ class Site_Brief_Controller {
 			'is_advanced'         => $advanced,
 			'healthy'             => empty( $cards ) && '' !== (string) ( $data['last_run'] ?? '' ),
 			'caps'                => array(
-				'run'     => $can_run,
-				'approve' => $can_run,
+				'run' => $can_run,
 			),
 			'urls'                => array(
 				'approvals' => admin_url( 'admin.php?page=agentic-approvals' ),

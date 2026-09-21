@@ -147,14 +147,6 @@ class Checker_Oversized_Media extends Site_Brief_Checker {
 					),
 					'proposed_action'  => __( 'Queue compress_image for the largest file (max 10 per Approve). The scan does not rewrite files.', 'agent-builder' ),
 					'action_risk'      => 'medium',
-					'approve'          => $this->approve_queue(
-						'compress_image',
-						array(
-							'attachment_id' => $first['id'],
-							'quality'       => 80,
-						),
-						'medium'
-					),
 					'raw'              => $shown,
 				)
 			),

@@ -90,7 +90,6 @@ class Checker_Abandoned_Plugins extends Site_Brief_Checker {
 					'evidence_payload' => $abandoned,
 					'proposed_action'  => __( 'Review on the Plugins screen. Site Brief will not uninstall anything.', 'agent-builder' ),
 					'action_risk'      => 'none',
-					'approve'          => $this->approve_url( admin_url( 'plugins.php' ) ),
 					'raw'              => array_slice( $abandoned, 0, 8 ),
 				)
 			),
