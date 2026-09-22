@@ -1008,6 +1008,26 @@ class LLM_Client {
 	}
 
 	/**
+	 * Normalize a decoded tool result into a Gemini functionResponse.response
+	 * value, which must be a JSON object (Struct), never a bare list.
+	 *
+	 * A list-returning tool result (e.g. list_privileged_users) would otherwise
+	 * 400 with "Proto field is not repeating, cannot start list". Associative
+	 * arrays pass through unchanged; lists and non-arrays are wrapped under
+	 * 'result'.
+	 *
+	 * @param mixed  $decoded  Decoded tool result (array, scalar, or null).
+	 * @param string $fallback Raw content used when $decoded is not an array.
+	 * @return array<string, mixed>
+	 */
+	private static function google_function_response( $decoded, string $fallback ): array {
+		if ( is_array( $decoded ) && $decoded !== array_values( $decoded ) ) {
+			return $decoded;
+		}
+		return array( 'result' => is_array( $decoded ) ? $decoded : $fallback );
+	}
+
+	/**
 	 * WordPress option storing the last-seen hosted credit balance, so the
 	 * admin has some visibility without a portal trip.
 	 */
@@ -1279,7 +1299,10 @@ class LLM_Client {
 								array(
 									'functionResponse' => array(
 										'name'     => $msg['name'] ?? $msg['tool_call_id'] ?? 'unknown',
-										'response' => is_array( $decoded ) ? $decoded : array( 'result' => $msg['content'] ?? '' ),
+										// Gemini's functionResponse.response must be a JSON object (Struct),
+										// never a bare list, or the request 400s ("Proto field is not
+										// repeating, cannot start list"). See google_function_response().
+										'response' => self::google_function_response( $decoded, (string) ( $msg['content'] ?? '' ) ),
 									),
 								),
 							),
