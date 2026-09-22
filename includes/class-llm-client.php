@@ -979,6 +979,29 @@ class LLM_Client {
 	}
 
 	/**
+	 * Max output tokens to send in generationConfig for Google-dialect requests
+	 * (native Google/Gemini and the hosted "agentic" provider, which also uses
+	 * req_format=google).
+	 *
+	 * Without an explicit cap, the hosted proxy reserves credits against the
+	 * model's full output ceiling (e.g. 65,536 tokens for gemini-2.5-flash)
+	 * rather than realistic usage, causing funded accounts to see spurious
+	 * 402s. The default is well above observed real-world usage (~244 tokens
+	 * average) but far below the ceiling that inflates the reservation.
+	 *
+	 * @return int
+	 */
+	private function google_max_output_tokens(): int {
+		/**
+		 * Filter the maxOutputTokens sent in generationConfig for Google-dialect
+		 * chat requests.
+		 *
+		 * @param int $max_output_tokens Default max output tokens.
+		 */
+		return (int) apply_filters( 'agentic_google_max_output_tokens', 8192 );
+	}
+
+	/**
 	 * Format request body for a specific provider (public version for testing).
 	 *
 	 * @param string $provider       Provider name.
@@ -1029,6 +1052,7 @@ class LLM_Client {
 				if ( ! empty( $system_text ) ) {
 					$body['systemInstruction'] = array( 'parts' => array( array( 'text' => $system_text ) ) );
 				}
+				$body['generationConfig'] = array( 'maxOutputTokens' => $this->google_max_output_tokens() );
 				break;
 
 			default:
@@ -1284,6 +1308,7 @@ class LLM_Client {
 						);
 					}
 				}
+				$body['generationConfig'] = array( 'maxOutputTokens' => $this->google_max_output_tokens() );
 				break;
 
 			case 'agentic':
