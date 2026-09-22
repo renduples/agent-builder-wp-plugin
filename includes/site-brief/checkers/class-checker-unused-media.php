@@ -46,6 +46,13 @@ class Checker_Unused_Media extends Site_Brief_Checker {
 	/**
 	 * {@inheritdoc}
 	 */
+	public function get_category(): string {
+		return 'media';
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
 	public function get_severity(): int {
 		return 20;
 	}

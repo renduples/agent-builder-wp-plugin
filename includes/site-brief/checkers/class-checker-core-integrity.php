@@ -46,6 +46,20 @@ class Checker_Core_Integrity extends Site_Brief_Checker {
 	/**
 	 * {@inheritdoc}
 	 */
+	public function get_category(): string {
+		return 'security';
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function get_label(): string {
+		return __( 'Core file integrity', 'agent-builder' );
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
 	public function get_severity(): int {
 		return 100;
 	}

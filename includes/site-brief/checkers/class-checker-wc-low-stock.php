@@ -46,6 +46,20 @@ class Checker_Wc_Low_Stock extends Site_Brief_Checker {
 	/**
 	 * {@inheritdoc}
 	 */
+	public function get_category(): string {
+		return 'woocommerce';
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function get_label(): string {
+		return __( 'Low stock', 'agent-builder' );
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
 	public function get_severity(): int {
 		return 50;
 	}

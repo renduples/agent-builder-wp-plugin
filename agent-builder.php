@@ -713,6 +713,7 @@ Admin_Pages_REST::init();
 React_Admin::init();
 Dashboard_REST::init();
 \Agentic\Site_Brief\Site_Brief_Controller::init();
+\Agentic\Site_Brief\Agent_Matcher::init();
 Agent_Wizard_REST::init();
 Knowledge_Wizard_REST::init();
 Deploy_Wizard_REST::init();
