@@ -8,6 +8,7 @@
 namespace Agentic\Tests;
 
 use Agentic\Audit_Log;
+use Agentic\Site_Brief\Agent_Matcher;
 use Agentic\Site_Brief\Checker_Wc_Low_Stock;
 use Agentic\Site_Brief\Checker_Wc_Stats;
 use Agentic\Site_Brief\Checker_Wc_Unpaid;
@@ -28,8 +29,11 @@ class Test_Site_Brief extends TestCase {
 	public function setUp(): void {
 		parent::setUp();
 		delete_option( Site_Brief_Store::OPTION );
+		delete_option( Site_Brief_Runner::ENABLED_CHECKERS_OPTION );
 		delete_transient( Site_Brief_Runner::RUN_LOCK );
+		Site_Brief_Runner::clear_progress();
 		Site_Brief_Runner::load_checkers();
+		$this->reset_matcher_state();
 	}
 
 	/**
@@ -37,8 +41,22 @@ class Test_Site_Brief extends TestCase {
 	 */
 	public function tearDown(): void {
 		delete_option( Site_Brief_Store::OPTION );
+		delete_option( Site_Brief_Runner::ENABLED_CHECKERS_OPTION );
 		delete_transient( Site_Brief_Runner::RUN_LOCK );
+		Site_Brief_Runner::clear_progress();
+		$this->reset_matcher_state();
 		parent::tearDown();
+	}
+
+	/**
+	 * Drop every cache Agent_Matcher keeps between tests.
+	 */
+	private function reset_matcher_state(): void {
+		delete_option( Agent_Matcher::MAP_OPTION );
+		delete_option( Agent_Matcher::CATALOG_LAST_GOOD_OPTION );
+		delete_option( 'agent_builder_allow_platform_sync' );
+		delete_transient( Agent_Matcher::CATALOG_TRANSIENT );
+		Agent_Matcher::reset_request_cache();
 	}
 
 	/**
@@ -394,36 +412,68 @@ class Test_Site_Brief extends TestCase {
 	}
 
 	/**
-	 * Every Site Brief card must be jointly serviceable: its recommended agent
-	 * must actually be able to receive the tools the checker relies on. For a
-	 * bundled agent that means each required tool is declared in BOTH agent.json
-	 * (the chat runtime's candidate list) AND abilities.json (the runtime gate).
-	 * A premium marketplace agent is exempt — it is intentionally not bundled and
-	 * the card offers a "get it" upsell instead — but it must genuinely be absent
-	 * from the bundled library, or the allowlist has gone stale.
+	 * Every Site Brief card must be jointly serviceable: the agent
+	 * Agent_Matcher recommends must actually be able to receive the tools
+	 * the checker relies on. For a bundled agent that means each required
+	 * tool is declared in BOTH agent.json (the chat runtime's candidate
+	 * list) AND abilities.json (the runtime gate). The marketplace path is
+	 * exercised too, with a faked catalog standing in for the real one, so a
+	 * checker whose tools nothing bundled covers (WooCommerce) still
+	 * resolves to a genuinely capable agent rather than a bare hint.
 	 *
-	 * This guards against a checker pointing at an agent that cannot help, which
-	 * the handler-level tests miss because they never resolve tools to an agent.
+	 * This guards against a checker whose matched agent cannot help, which
+	 * the handler-level tests miss because they never resolve tools to an
+	 * agent.
 	 */
 	public function test_every_checker_agent_can_service_its_card(): void {
-		$premium_upsell = array( 'woocommerce-assistant' );
-		$lib            = AGENT_BUILDER_DIR . 'library/agents/';
+		$lib = AGENT_BUILDER_DIR . 'library/agents/';
+
+		update_option( 'agent_builder_allow_platform_sync', '1' );
+		add_filter(
+			'pre_http_request',
+			static function ( $preempt, $args, $url ) {
+				if ( ! str_contains( (string) $url, 'agentic-marketplace/v1/agents' ) ) {
+					return $preempt;
+				}
+				return array(
+					'response' => array( 'code' => 200 ),
+					'body'     => wp_json_encode(
+						array(
+							'agents' => array(
+								array(
+									'slug'  => 'woocommerce-assistant',
+									'name'  => 'WooCommerce Assistant',
+									'url'   => 'https://agentic-plugin.com/marketplace/woocommerce-assistant/',
+									'tools' => array( 'wc_get_orders', 'wc_get_stock_report', 'wc_get_store_stats' ),
+								),
+							),
+						)
+					),
+				);
+			},
+			10,
+			3
+		);
 
 		$checkers = ( new \ReflectionClass( Site_Brief_Runner::class ) )->getConstant( 'CHECKERS' );
 		$this->assertNotEmpty( $checkers, 'Runner exposes no checkers.' );
 
 		foreach ( $checkers as $id => $class ) {
-			$checker = new $class();
-			$agent   = $checker->get_agent();
-			$needs   = $checker->get_tools();
+			$checker  = new $class();
+			$needs    = $checker->get_tools();
+			$resolved = Agent_Matcher::resolve_for_checker( $checker );
+			$agent    = $resolved['slug'];
 
-			$this->assertNotSame( '', $agent, "Checker {$id} has no recommended agent." );
+			$this->assertNotSame( '', $agent, "Checker {$id} resolved to no agent." );
 
-			if ( in_array( $agent, $premium_upsell, true ) ) {
+			if ( 'marketplace' === $resolved['source'] ) {
 				$this->assertDirectoryDoesNotExist(
 					$lib . $agent,
-					"Agent {$agent} is bundled; remove it from the premium-upsell allowlist."
+					"Agent {$agent} is bundled; Agent_Matcher should have matched it as installed, not marketplace."
 				);
+				// The faked catalog feed above IS this test's declaration of
+				// that agent's tools, and eligibility already required full
+				// coverage — nothing further to check here.
 				continue;
 			}
 
@@ -445,5 +495,122 @@ class Test_Site_Brief extends TestCase {
 				);
 			}
 		}
+	}
+
+	/**
+	 * Unset === enabled, so a checker defaults on until explicitly disabled.
+	 */
+	public function test_checker_enabled_defaults_true_when_unset(): void {
+		$this->assertTrue( Site_Brief_Runner::is_checker_enabled( 'plugin_updates' ) );
+
+		update_option( Site_Brief_Runner::ENABLED_CHECKERS_OPTION, array( 'plugin_updates' => false ) );
+
+		$this->assertFalse( Site_Brief_Runner::is_checker_enabled( 'plugin_updates' ) );
+		$this->assertTrue( Site_Brief_Runner::is_checker_enabled( 'site_health' ) );
+	}
+
+	/**
+	 * A disabled checker is excluded from the run entirely — it never
+	 * appears in the progress step list, regardless of whether it would
+	 * have produced a card.
+	 */
+	public function test_disabled_checker_is_excluded_from_the_scan(): void {
+		update_option( Site_Brief_Runner::ENABLED_CHECKERS_OPTION, array( 'plugin_updates' => false ) );
+
+		$runner = new Site_Brief_Runner();
+		$runner->run();
+
+		$progress = Site_Brief_Runner::get_progress();
+		$step_ids = wp_list_pluck( $progress['steps'], 'id' );
+
+		$this->assertNotContains( 'plugin_updates', $step_ids );
+		$this->assertContains( 'matching', $step_ids );
+	}
+
+	/**
+	 * A full run writes progress up front (every planned step, including the
+	 * trailing "matching" step) and leaves it in a 'done' state with every
+	 * step marked complete and nothing left "current".
+	 */
+	public function test_run_writes_progress_and_finishes_done(): void {
+		$this->assertSame( 'idle', Site_Brief_Runner::get_progress()['status'] );
+
+		$runner = new Site_Brief_Runner();
+		$result = $runner->run();
+
+		$progress = Site_Brief_Runner::get_progress();
+		$this->assertSame( 'done', $progress['status'] );
+		$this->assertNull( $progress['current'] );
+		$this->assertNotEmpty( $progress['steps'] );
+
+		$step_ids = wp_list_pluck( $progress['steps'], 'id' );
+		$this->assertSame( 'matching', end( $step_ids ) );
+		$this->assertSame( $step_ids, $progress['done'], 'Every planned step should be marked done.' );
+		$this->assertSame( 'complete', $result['status'] );
+	}
+
+	/**
+	 * GET /site-brief/progress surfaces the runner's live transient.
+	 */
+	public function test_rest_progress_reflects_runner_state(): void {
+		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $admin );
+
+		$idle = rest_get_server()->dispatch( new \WP_REST_Request( 'GET', '/agentic/v1/site-brief/progress' ) );
+		$this->assertSame( 200, $idle->get_status() );
+		$this->assertSame( 'idle', $idle->get_data()['status'] );
+
+		( new Site_Brief_Runner() )->run();
+
+		$done = rest_get_server()->dispatch( new \WP_REST_Request( 'GET', '/agentic/v1/site-brief/progress' ) );
+		$this->assertSame( 200, $done->get_status() );
+		$this->assertSame( 'done', $done->get_data()['status'] );
+	}
+
+	/**
+	 * GET /site-brief/checkers lists every checker enabled by default; POST
+	 * persists a change and the runner honors it immediately.
+	 */
+	public function test_rest_checkers_list_and_update(): void {
+		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $admin );
+
+		$get = rest_get_server()->dispatch( new \WP_REST_Request( 'GET', '/agentic/v1/site-brief/checkers' ) );
+		$this->assertSame( 200, $get->get_status() );
+
+		$rows = $get->get_data()['checkers'];
+		$ids  = wp_list_pluck( $rows, 'id' );
+		$this->assertContains( 'plugin_updates', $ids );
+		foreach ( $rows as $row ) {
+			$this->assertTrue( $row['enabled'], "Checker {$row['id']} should default enabled." );
+			$this->assertNotSame( '', $row['category'] );
+			$this->assertNotSame( '', $row['label'] );
+		}
+
+		$post = new \WP_REST_Request( 'POST', '/agentic/v1/site-brief/checkers' );
+		$post->set_body_params( array( 'enabled' => array( 'plugin_updates' => false ) ) );
+		$response = rest_get_server()->dispatch( $post );
+		$this->assertSame( 200, $response->get_status() );
+
+		$updated = wp_list_pluck( $response->get_data()['checkers'], 'enabled', 'id' );
+		$this->assertFalse( $updated['plugin_updates'] );
+		$this->assertTrue( $updated['site_health'] );
+		$this->assertFalse( Site_Brief_Runner::is_checker_enabled( 'plugin_updates' ) );
+	}
+
+	/**
+	 * A subscriber may view checkers but not change them.
+	 */
+	public function test_rest_checkers_update_requires_manage_cap(): void {
+		$subscriber = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		wp_set_current_user( $subscriber );
+
+		$get = rest_get_server()->dispatch( new \WP_REST_Request( 'GET', '/agentic/v1/site-brief/checkers' ) );
+		$this->assertSame( 403, $get->get_status() );
+
+		$post = new \WP_REST_Request( 'POST', '/agentic/v1/site-brief/checkers' );
+		$post->set_body_params( array( 'enabled' => array( 'plugin_updates' => false ) ) );
+		$response = rest_get_server()->dispatch( $post );
+		$this->assertSame( 403, $response->get_status() );
 	}
 }

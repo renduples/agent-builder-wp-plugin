@@ -102,6 +102,22 @@ class Site_Brief_Runner {
 	public const RUN_LOCK = 'agent_builder_site_brief_running';
 
 	/**
+	 * Transient carrying live per-step scan progress for the progressive UI.
+	 */
+	public const PROGRESS_KEY = 'agent_builder_sb_progress';
+
+	/**
+	 * How long a progress snapshot survives without being refreshed.
+	 */
+	public const PROGRESS_TTL = 2 * MINUTE_IN_SECONDS;
+
+	/**
+	 * Option holding the set of checkers the site owner has enabled.
+	 * Missing/unset id === enabled, so a new checker defaults on.
+	 */
+	public const ENABLED_CHECKERS_OPTION = 'agent_builder_sb_enabled_checkers';
+
+	/**
 	 * Checker id => class, in scan order (fast reads first).
 	 *
 	 * @var array<string, class-string<Site_Brief_Checker>>
@@ -216,7 +232,71 @@ class Site_Brief_Runner {
 	}
 
 	/**
-	 * Run every applicable checker until the time budget expires.
+	 * Whether a checker id is enabled. Unset === enabled, so a checker added
+	 * in a later release defaults on rather than silently vanishing.
+	 *
+	 * @param string $id Checker id.
+	 * @return bool
+	 */
+	public static function is_checker_enabled( string $id ): bool {
+		$enabled = get_option( self::ENABLED_CHECKERS_OPTION, array() );
+		if ( ! is_array( $enabled ) || ! array_key_exists( $id, $enabled ) ) {
+			return true;
+		}
+		return (bool) $enabled[ $id ];
+	}
+
+	/**
+	 * Live progress snapshot for the progressive scan UI.
+	 *
+	 * @return array<string, mixed>
+	 */
+	public static function get_progress(): array {
+		$data = get_transient( self::PROGRESS_KEY );
+		if ( is_array( $data ) ) {
+			return $data;
+		}
+		return array(
+			'status'  => 'idle',
+			'steps'   => array(),
+			'done'    => array(),
+			'current' => null,
+		);
+	}
+
+	/**
+	 * Clear the progress transient (a fresh scan starts clean).
+	 *
+	 * @return void
+	 */
+	public static function clear_progress(): void {
+		delete_transient( self::PROGRESS_KEY );
+	}
+
+	/**
+	 * Persist a progress snapshot for GET /site-brief/progress to read.
+	 *
+	 * @param string           $status  'running' or 'done'.
+	 * @param array<int, mixed> $steps  Full ordered step list for this run.
+	 * @param array<int, string> $done  Step ids completed so far.
+	 * @param string|null       $current Step id currently executing, or null.
+	 * @return void
+	 */
+	private function write_progress( string $status, array $steps, array $done, ?string $current ): void {
+		set_transient(
+			self::PROGRESS_KEY,
+			array(
+				'status'  => $status,
+				'steps'   => $steps,
+				'done'    => $done,
+				'current' => $current,
+			),
+			self::PROGRESS_TTL
+		);
+	}
+
+	/**
+	 * Run every applicable, enabled checker until the time budget expires.
 	 *
 	 * @return array<string, mixed> Persistable brief payload.
 	 */
@@ -231,11 +311,8 @@ class Site_Brief_Runner {
 		$stats     = null;
 		$status    = 'complete';
 
+		$runnable = array();
 		foreach ( self::CHECKERS as $id => $class ) {
-			if ( microtime( true ) >= $this->deadline ) {
-				$status = 'partial';
-				break;
-			}
 			if ( ! class_exists( $class ) ) {
 				continue;
 			}
@@ -243,9 +320,35 @@ class Site_Brief_Runner {
 			if ( ! $checker instanceof Site_Brief_Checker ) {
 				continue;
 			}
-			if ( ! $checker->is_applicable() ) {
+			if ( ! self::is_checker_enabled( $id ) || ! $checker->is_applicable() ) {
 				continue;
 			}
+			$runnable[ $id ] = $checker;
+		}
+
+		$steps = array();
+		foreach ( $runnable as $id => $checker ) {
+			$steps[] = array(
+				'id'    => $id,
+				'label' => $checker->get_label(),
+			);
+		}
+		$matching_label = __( 'Matching best-fit agents…', 'agent-builder' );
+		$steps[]        = array(
+			'id'    => 'matching',
+			'label' => $matching_label,
+		);
+
+		$done = array();
+		$this->write_progress( 'running', $steps, $done, null );
+
+		foreach ( $runnable as $id => $checker ) {
+			if ( microtime( true ) >= $this->deadline ) {
+				$status = 'partial';
+				break;
+			}
+
+			$this->write_progress( 'running', $steps, $done, $id );
 
 			$missing = false;
 			foreach ( $checker->get_tools() as $tool_name ) {
@@ -256,6 +359,7 @@ class Site_Brief_Runner {
 			}
 			if ( $missing ) {
 				$skipped[] = $id;
+				$done[]    = $id;
 				continue;
 			}
 
@@ -264,19 +368,23 @@ class Site_Brief_Runner {
 				$stats = $found['store_stats'];
 				unset( $found['store_stats'] );
 			}
-			if ( ! is_array( $found ) ) {
-				continue;
-			}
-			foreach ( $found as $card ) {
-				if ( ! is_array( $card ) || empty( $card['id'] ) ) {
-					continue;
+			if ( is_array( $found ) ) {
+				foreach ( $found as $card ) {
+					if ( ! is_array( $card ) || empty( $card['id'] ) ) {
+						continue;
+					}
+					if ( Site_Brief_Store::is_dismissed( (string) $card['id'], (string) ( $card['evidence_hash'] ?? '' ), $dismissed ) ) {
+						continue;
+					}
+					$cards[] = $card;
 				}
-				if ( Site_Brief_Store::is_dismissed( (string) $card['id'], (string) ( $card['evidence_hash'] ?? '' ), $dismissed ) ) {
-					continue;
-				}
-				$cards[] = $card;
 			}
+			$done[] = $id;
 		}
+
+		$this->write_progress( 'running', $steps, $done, 'matching' );
+		self::resolve_agents( $cards, $runnable );
+		$done[] = 'matching';
 
 		usort(
 			$cards,
@@ -284,6 +392,8 @@ class Site_Brief_Runner {
 				return (int) ( $b['severity'] ?? 0 ) <=> (int) ( $a['severity'] ?? 0 );
 			}
 		);
+
+		$this->write_progress( 'done', $steps, $done, null );
 
 		return array(
 			'version'       => Site_Brief_Store::SCHEMA,
@@ -296,6 +406,30 @@ class Site_Brief_Runner {
 			'store_stats'   => $stats,
 			'skipped'       => $skipped,
 		);
+	}
+
+	/**
+	 * Overlay each card's 'agent'/'agent_label' with the Agent_Matcher's
+	 * best-fit resolution, resolving each checker at most once per scan.
+	 *
+	 * @param array<int, array<string, mixed>>       $cards    Cards collected this scan (by reference).
+	 * @param array<string, Site_Brief_Checker>      $runnable Checkers that ran this scan, keyed by id.
+	 * @return void
+	 */
+	private static function resolve_agents( array &$cards, array $runnable ): void {
+		$resolved = array();
+		foreach ( $cards as &$card ) {
+			$checker_id = (string) ( $card['checker_id'] ?? '' );
+			if ( '' === $checker_id || ! isset( $runnable[ $checker_id ] ) ) {
+				continue;
+			}
+			if ( ! array_key_exists( $checker_id, $resolved ) ) {
+				$resolved[ $checker_id ] = Agent_Matcher::resolve_for_checker( $runnable[ $checker_id ] );
+			}
+			$card['agent']       = $resolved[ $checker_id ]['slug'];
+			$card['agent_label'] = $resolved[ $checker_id ]['label'];
+		}
+		unset( $card );
 	}
 
 	/**

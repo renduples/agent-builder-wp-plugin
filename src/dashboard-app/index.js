@@ -1,10 +1,21 @@
 /**
  * Full Agent Builder dashboard — all cards as React + @wordpress/components.
  */
-import { createRoot, useCallback, useEffect, useState } from '@wordpress/element';
+import {
+	createRoot,
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+} from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import { __ } from '@wordpress/i18n';
-import { Spinner, Notice, Button } from '@wordpress/components';
+import {
+	Spinner,
+	Notice,
+	Button,
+	CheckboxControl,
+} from '@wordpress/components';
 import { InfoTip } from '../shared/components';
 
 const DASH_PATH = 'agentic/v1/dashboard';
@@ -21,6 +32,16 @@ const BRIEF_CHECKER_LABELS = {
 	wc_unpaid: __( 'Store', 'agent-builder' ),
 };
 
+const BRIEF_CATEGORY_LABELS = {
+	security: __( 'Security', 'agent-builder' ),
+	performance: __( 'Performance', 'agent-builder' ),
+	media: __( 'Media', 'agent-builder' ),
+	forms: __( 'Forms', 'agent-builder' ),
+	maintenance: __( 'Maintenance', 'agent-builder' ),
+	woocommerce: __( 'WooCommerce', 'agent-builder' ),
+	general: __( 'General', 'agent-builder' ),
+};
+
 function formatBriefTime( iso ) {
 	if ( ! iso ) {
 		return '';
@@ -32,6 +53,118 @@ function formatBriefTime( iso ) {
 	return d.toLocaleString();
 }
 
+/**
+ * Per-test configuration: a checkbox per checker, grouped by category.
+ * Collapsed by default; loads the checker list on first expand.
+ *
+ * @param {Object}  root0        Props.
+ * @param {boolean} root0.canRun Whether the current user may change settings.
+ */
+function SiteBriefSettings( { canRun } ) {
+	const [ open, setOpen ] = useState( false );
+	const [ checkers, setCheckers ] = useState( null );
+	const [ saving, setSaving ] = useState( false );
+	const [ settingsError, setSettingsError ] = useState( '' );
+
+	useEffect( () => {
+		if ( ! open || checkers ) {
+			return;
+		}
+		apiFetch( { path: BRIEF_PATH + '/checkers' } )
+			.then( ( d ) => setCheckers( d.checkers || [] ) )
+			.catch( ( e ) => {
+				setSettingsError(
+					e.message || __( 'Could not load checks.', 'agent-builder' )
+				);
+			} );
+	}, [ open, checkers ] );
+
+	if ( ! canRun ) {
+		return null;
+	}
+
+	const toggle = ( id, value ) => {
+		const next = checkers.map( ( c ) =>
+			c.id === id ? { ...c, enabled: value } : c
+		);
+		setCheckers( next );
+		setSaving( true );
+		const enabled = {};
+		next.forEach( ( c ) => {
+			enabled[ c.id ] = c.enabled;
+		} );
+		apiFetch( {
+			path: BRIEF_PATH + '/checkers',
+			method: 'POST',
+			data: { enabled },
+		} )
+			.then( ( d ) => setCheckers( d.checkers || next ) )
+			.catch( ( e ) => {
+				setSettingsError(
+					e.message ||
+						__( 'Could not save that change.', 'agent-builder' )
+				);
+			} )
+			.finally( () => setSaving( false ) );
+	};
+
+	const grouped = {};
+	( checkers || [] ).forEach( ( c ) => {
+		const cat = c.category || 'general';
+		grouped[ cat ] = grouped[ cat ] || [];
+		grouped[ cat ].push( c );
+	} );
+
+	return (
+		<div className="agentic-site-brief-settings">
+			<Button variant="link" onClick={ () => setOpen( ! open ) }>
+				{ open
+					? __( 'Hide checks', 'agent-builder' )
+					: __( 'Configure checks', 'agent-builder' ) }
+			</Button>
+			{ open && (
+				<div className="agentic-site-brief-settings-panel">
+					{ settingsError && (
+						<Notice status="error" isDismissible={ false }>
+							{ settingsError }
+						</Notice>
+					) }
+					{ ! checkers && <Spinner /> }
+					{ Object.keys( grouped )
+						.sort()
+						.map( ( cat ) => (
+							<div
+								key={ cat }
+								className="agentic-site-brief-settings-group"
+							>
+								<h4>{ BRIEF_CATEGORY_LABELS[ cat ] || cat }</h4>
+								{ grouped[ cat ].map( ( c ) => (
+									<CheckboxControl
+										key={ c.id }
+										label={ c.label }
+										checked={ !! c.enabled }
+										disabled={ saving || ! c.applicable }
+										help={
+											c.applicable
+												? undefined
+												: __(
+														'Not applicable on this site.',
+														'agent-builder'
+												  )
+										}
+										onChange={ ( value ) =>
+											toggle( c.id, value )
+										}
+									/>
+								) ) }
+							</div>
+						) ) }
+				</div>
+			) }
+		</div>
+	);
+}
+
 function SiteBriefPanel() {
 	const [ brief, setBrief ] = useState( null );
 	const [ error, setError ] = useState( '' );
@@ -39,6 +172,17 @@ function SiteBriefPanel() {
 	const [ hidden, setHidden ] = useState( [] );
 	const [ showAll, setShowAll ] = useState( false );
 	const [ busyId, setBusyId ] = useState( '' );
+	const [ progress, setProgress ] = useState( null );
+	const pollRef = useRef( null );
+
+	const stopPolling = useCallback( () => {
+		if ( pollRef.current ) {
+			clearInterval( pollRef.current );
+			pollRef.current = null;
+		}
+	}, [] );
+
+	useEffect( () => stopPolling, [ stopPolling ] );
 
 	const loadBrief = useCallback( () => {
 		return apiFetch( { path: BRIEF_PATH } )
@@ -59,6 +203,15 @@ function SiteBriefPanel() {
 		loadBrief();
 	}, [ loadBrief ] );
 
+	const pollProgress = useCallback( () => {
+		apiFetch( { path: BRIEF_PATH + '/progress' } )
+			.then( ( p ) => setProgress( p ) )
+			.catch( () => {
+				// Polling failure just means the checklist falls back to the
+				// plain spinner below — the scan itself is unaffected.
+			} );
+	}, [] );
+
 	if ( ! brief || ! brief.has_usable_provider ) {
 		return null;
 	}
@@ -66,6 +219,9 @@ function SiteBriefPanel() {
 	const runScan = () => {
 		setRunning( true );
 		setError( '' );
+		setProgress( null );
+		pollProgress();
+		pollRef.current = setInterval( pollProgress, 1000 );
 		apiFetch( { path: BRIEF_PATH + '/run', method: 'POST' } )
 			.then( ( d ) => {
 				setBrief( d );
@@ -77,7 +233,10 @@ function SiteBriefPanel() {
 					e.message || __( 'Scan failed.', 'agent-builder' )
 				);
 			} )
-			.finally( () => setRunning( false ) );
+			.finally( () => {
+				stopPolling();
+				setRunning( false );
+			} );
 	};
 
 	const act = ( card, action ) => {
@@ -131,6 +290,8 @@ function SiteBriefPanel() {
 				) }
 			</p>
 
+			<SiteBriefSettings canRun={ canRun } />
+
 			{ error && (
 				<Notice status="error" isDismissible={ false }>
 					{ error }
@@ -139,14 +300,49 @@ function SiteBriefPanel() {
 
 			{ isRunning && (
 				<div className="agentic-site-brief-progress" role="status">
-					<Spinner />
-					<ul className="agentic-site-brief-checklist">
-						{ checkers.map( ( id ) => (
-							<li key={ id }>
-								{ BRIEF_CHECKER_LABELS[ id ] || id }
-							</li>
-						) ) }
-					</ul>
+					{ progress &&
+					progress.steps &&
+					progress.steps.length > 0 ? (
+						<ul className="agentic-site-brief-checklist">
+							{ progress.steps.map( ( step ) => {
+								const isDone = (
+									progress.done || []
+								).includes( step.id );
+								const isCurrent =
+									progress.current === step.id;
+								let marker = '';
+								if ( isDone ) {
+									marker = '✓ ';
+								} else if ( isCurrent ) {
+									marker = '… ';
+								}
+								return (
+									<li
+										key={ step.id }
+										className={
+											'agentic-site-brief-step' +
+											( isDone ? ' is-done' : '' ) +
+											( isCurrent ? ' is-current' : '' )
+										}
+									>
+										{ marker }
+										{ step.label }
+									</li>
+								);
+							} ) }
+						</ul>
+					) : (
+						<>
+							<Spinner />
+							<ul className="agentic-site-brief-checklist">
+								{ checkers.map( ( id ) => (
+									<li key={ id }>
+										{ BRIEF_CHECKER_LABELS[ id ] || id }
+									</li>
+								) ) }
+							</ul>
+						</>
+					) }
 				</div>
 			) }
 
