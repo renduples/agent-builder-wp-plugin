@@ -400,6 +400,12 @@ class LLM_Client {
 			);
 		}
 
+		// The hosted proxy reports the caller's credit balance on every successful
+		// call — capture it so the admin has some visibility without a portal trip.
+		if ( 'agentic' === $this->provider ) {
+			$this->capture_hosted_credits( is_array( $data ) ? $data : array() );
+		}
+
 		// Normalize provider-specific response formats to OpenAI-compatible structure.
 		$agentic_resp_format = Provider_Registry::get( $this->provider )['resp_format'] ?? 'openai';
 		if ( 'cohere' === $agentic_resp_format ) {
@@ -999,6 +1005,46 @@ class LLM_Client {
 		 * @param int $max_output_tokens Default max output tokens.
 		 */
 		return (int) apply_filters( 'agentic_google_max_output_tokens', 8192 );
+	}
+
+	/**
+	 * WordPress option storing the last-seen hosted credit balance, so the
+	 * admin has some visibility without a portal trip.
+	 */
+	private const HOSTED_CREDITS_OPTION = 'agent_builder_hosted_credits';
+
+	/**
+	 * Record the hosted proxy's reported credit balance from a successful
+	 * response body (fields `x_credits_used` / `x_credits_remaining`, sent on
+	 * every successful hosted "agentic" call). Silently does nothing when the
+	 * fields are absent so it never invents a stale reading.
+	 *
+	 * @param array $data Decoded response body.
+	 */
+	private function capture_hosted_credits( array $data ): void {
+		if ( ! isset( $data['x_credits_remaining'] ) ) {
+			return;
+		}
+		update_option(
+			self::HOSTED_CREDITS_OPTION,
+			array(
+				'remaining'  => (float) $data['x_credits_remaining'],
+				'used'       => isset( $data['x_credits_used'] ) ? (float) $data['x_credits_used'] : null,
+				'checked_at' => time(),
+			),
+			false
+		);
+	}
+
+	/**
+	 * Last-seen hosted credit balance captured from a successful "agentic"
+	 * response, or an empty array if none has been seen yet.
+	 *
+	 * @return array{remaining?: float, used?: float|null, checked_at?: int}
+	 */
+	public static function get_last_hosted_credits(): array {
+		$stored = get_option( self::HOSTED_CREDITS_OPTION, array() );
+		return is_array( $stored ) ? $stored : array();
 	}
 
 	/**
