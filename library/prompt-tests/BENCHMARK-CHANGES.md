@@ -31,3 +31,42 @@ just to clear a failure without a real justification.
 - `library/agents/storefront-assistant/templates/system-prompt.txt` — P50.
 
 No `agent.json`/`abilities.json` manifest changed tool grants, so no `Abilities_Manifest::save_integrity_hash()` re-sign or `AGENT_BUILDER_DB_VERSION` bump is needed. `includes/class-llm-client.php` was not touched.
+
+## Round 2
+
+Eleven tool-choice failures remained after round 1's live run (80%, 43/54). Four of them share
+one root cause — agents reaching for a generic WP-bridged tool (`wp_extended__*`/`core__*`,
+imported via this site's Abilities bridge) instead of their own purpose-built, risk-gated tool —
+and are fixed together as a genuine quality improvement, not a benchmark patch: the plugin
+already ships a global `[TOOL PREFERENCE]` block (`includes/class-agent-prompt-builder.php`,
+out of this PR's file scope), but it's generic ("use your own tool when it covers the request")
+and evidently not concrete enough on its own. Each affected agent's own system prompt now names
+the specific own-tool-vs-generic-tool pairing for the tasks it actually got wrong, which is a
+stronger and more auditable signal than the generic block alone.
+
+| ID | Decision | Justification |
+|---|---|---|
+| P16 | Agent fix (systemic) | seo-optimizer called the generic `wp_extended__get_posts` instead of its own `analyze_content_quality`, which is purpose-built for exactly this question (originality, density, sentence variety, structural depth) and a generic post fetch cannot compute any of that. Added an explicit rule naming the pairing. |
+| P19 | Agent fix (systemic) | wordpress-assistant called the generic `core__get_environment_info` instead of `get_plugin_maintenance_status`/`get_abandoned_plugins`. The generic tool only reports what's installed — it has no maintenance/abandonment signal at all, so this isn't just a style preference, the generic tool can't actually answer the question. Added an explicit rule naming the pairing, plus siblings for oversized-media and plugin-status questions the same run's tool list makes tempting to answer generically. |
+| P33 | Agent fix (systemic) | user-assistant called the generic `wp_extended__get_users` instead of its own `list_privileged_users`, which filters to admin/editor-level accounts specifically. The generic tool returns every account with no filtering, so the owner would have to do the filtering by hand — the plugin's tool is genuinely the better answer. Added an explicit rule naming the pairing. |
+| P36 | Agent fix (systemic) | Same root cause as P33, this time on a named-account lock request — user-assistant reached for `wp_extended__get_users` instead of confirming via `list_privileged_users` and acting with `lock_user_account`. Covered by the same new rule. |
+| P38 | Agent fix (strengthened) | Round 1 added a "draft in the same turn" nudge, but the run still stopped after `get_site_context`. Rewrote it to say the two calls are one unit of work, not two turns, and explicitly forbids ending a response with only a plan to write ("coming up") instead of the draft itself — a stronger, less escapable phrasing of the same rule. |
+| P26 | Agent fix (strengthened) | Round 1's fix (stating the intent tools are live, not a future item) moved the run off `get_site_context` but only as far as `list_posts` — `analyze_search_intent` requires a `post_id`, so the run needs to actually pick a candidate page and call it. Added an explicit two-step instruction: `list_posts` to find a candidate when none is named, then `analyze_search_intent` on it in the same turn — listing posts alone has not analysed anything. |
+| P22 | Agent fix | Round 1's fix (naming the three direct-action exceptions) worked — the run no longer calls `search_capabilities` — but it now stops after `search_media_library` discovery. `search_media_library` returning which images exist is a fair first step (there's no site-wide accessibility audit tool), but proposing alt text from filename/title/caption context and calling `update_attachment_alt_text` (a gated write the owner reviews) is the actual fix and was missing. Added an explicit instruction to complete the sequence in the same turn. Also documented in the catalog Notes that this is a gated write, matching the pattern used for other write-action rows. |
+| P40 | Agent fix (tightened) | Round 1 added guidance to check "a small handful of candidates" via `get_post_content` before falling back to `search_media_library` — but neither `list_posts` nor `get_post_content` returns featured-image status at all, so that check can never answer the question and the model kept pulling more candidates (the observed 5-post rabbit hole) looking for a signal that isn't there. Removed the "check a handful" permission entirely; the agent now goes straight to `search_media_library`/`set_featured_image`, using at most one `list_posts` call (not per-post content fetches) to get a candidate list when no posts are named. A tool that lists posts missing a featured image would close this gap properly but needs a new `abilities.json` grant (manifest re-sign, DB bump) that's out of this PR's file scope — noted as a follow-up, not forced here. |
+| P39 | Agent fix | Round 1 relaxed the assertion to accept `list_posts\|rewrite_for_readability`, but the Editing workflow itself never told the agent to look for the page when none is named — only the *Creating New Content* workflow mentions `get_site_context`, and the agent applied that instinct to an editing request by analogy. Added an explicit step 0 to the Editing workflow: with no page named, call `list_posts` to find a candidate; `get_site_context` informs tone/category for new content and does not help locate an existing page, so it's the wrong tool for this ask regardless of catalog leniency. |
+| P15 | Catalog fix | `get_seo_overview`'s own scan explicitly buckets `missing_meta_description` with counts and examples — for "half my pages have no meta description" it surfaces the exact reported gap at least as directly as the filtered `list_posts_needing_seo`, so requiring only the latter was over-strict. Changed the first required entry from a bare `list_posts_needing_seo` to `list_posts_needing_seo\|get_seo_overview`; the second entry (`update_post_seo\|analyze_post_seo`) is unchanged from round 1. Also added a system-prompt rule that a site-wide-gap survey must still be followed by a fix on the worst offenders, not left as a standalone report. |
+| P17 | Catalog fix | `scan_media_library`'s own scan flags oversized files by actual file size (KB) alongside orphan/storage stats, which is at least as relevant a "slowing the site down" signal as `find_oversized_images`' pixel-dimension threshold — both are genuine, tool-native ways to answer this prompt. Changed the entry from a bare `find_oversized_images` to `find_oversized_images\|scan_media_library`. No agent prompt change was needed; the model's choice was already a fair one. |
+
+### Files touched (round 2)
+
+- `library/prompt-tests/most_popular_prompts.md` — P15, P17 assertions relaxed; P22, P26 Notes documented (no assertion change, agent fix only).
+- `library/agents/seo-optimizer/templates/system-prompt.txt` — P16 (own-tool preference), P15 (survey-then-fix).
+- `library/agents/wordpress-assistant/templates/system-prompt.txt` — P19 (own-tool preference), P22 (complete the alt-text fix), P26 (complete the search-intent analysis).
+- `library/agents/user-assistant/templates/system-prompt.txt` — P33, P36 (own-tool preference).
+- `library/agents/content-writer/templates/system-prompt.txt` — P38 (strengthened draft-immediately), P39 (Editing workflow now finds the page via list_posts, not get_site_context), P40 (removed the futile "check a handful via get_post_content" step).
+
+No `agent.json`/`abilities.json` manifest changed tool grants in round 2 either, so no re-sign or
+DB bump is needed. `includes/class-llm-client.php` was not touched. The global
+`[TOOL PREFERENCE]` block in `includes/class-agent-prompt-builder.php` was left as-is (out of
+this PR's file scope) — the per-agent reinforcements above are additive to it, not a replacement.
