@@ -17,6 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+use Agentic\LLM_Client;
 use Agentic\Provider_Registry;
 
 // ── Form handlers (before output) ───────────────────────────────────────────
@@ -42,10 +43,13 @@ if ( class_exists( '\Agentic\Costs_Manager' ) && isset( $_POST['agentic_save_ale
 
 // ── Load data ───────────────────────────────────────────────────────────────
 
-$agentic_alerts          = class_exists( '\Agentic\Costs_Manager' ) ? \Agentic\Costs_Manager::get_alerts() : array();
-$agentic_all_providers   = Provider_Registry::get_all();
-$agentic_active_slugs    = array_map( static fn( $p ) => $p['slug'], Provider_Registry::get_active() );
+$agentic_alerts                = class_exists( '\Agentic\Costs_Manager' ) ? \Agentic\Costs_Manager::get_alerts() : array();
+$agentic_all_providers         = Provider_Registry::get_all();
+$agentic_active_slugs          = array_map( static fn( $p ) => $p['slug'], Provider_Registry::get_active() );
 $agent_builder_pricing_version = get_option( 'agent_builder_pricing_version', '' );
+$agentic_hosted_credits        = ( 'agentic' === get_option( 'agent_builder_llm_provider', '' ) )
+	? LLM_Client::get_last_hosted_credits()
+	: array();
 
 ?>
 
@@ -106,6 +110,35 @@ $agent_builder_pricing_version = get_option( 'agent_builder_pricing_version', ''
 				<?php esc_html_e( 'Save Alert Settings', 'agent-builder' ); ?>
 			</button>
 		</form>
+	</div>
+<?php endif; ?>
+
+<?php if ( isset( $agentic_hosted_credits['remaining'] ) ) : ?>
+	<!-- Hosted Credits -->
+	<div class="agentic-llm-section">
+		<h2><?php esc_html_e( 'Hosted Credits', 'agent-builder' ); ?></h2>
+		<p class="description">
+			<?php esc_html_e( 'Balance reported by the Agentic AI hosted connection as of your last chat request.', 'agent-builder' ); ?>
+		</p>
+		<p>
+			<strong><?php esc_html_e( 'Remaining:', 'agent-builder' ); ?></strong>
+			<?php echo esc_html( number_format( (float) $agentic_hosted_credits['remaining'], 2 ) ); ?>
+			<?php if ( isset( $agentic_hosted_credits['used'] ) && null !== $agentic_hosted_credits['used'] ) : ?>
+				&nbsp;·&nbsp;<strong><?php esc_html_e( 'Last call used:', 'agent-builder' ); ?></strong>
+				<?php echo esc_html( number_format( (float) $agentic_hosted_credits['used'], 2 ) ); ?>
+			<?php endif; ?>
+		</p>
+		<?php if ( ! empty( $agentic_hosted_credits['checked_at'] ) ) : ?>
+			<p class="description">
+				<?php
+				printf(
+					/* translators: %s: human-readable time difference, e.g. "5 minutes" */
+					esc_html__( 'Last updated %s ago.', 'agent-builder' ),
+					esc_html( human_time_diff( (int) $agentic_hosted_credits['checked_at'] ) )
+				);
+				?>
+			</p>
+		<?php endif; ?>
 	</div>
 <?php endif; ?>
 

@@ -400,6 +400,12 @@ class LLM_Client {
 			);
 		}
 
+		// The hosted proxy reports the caller's credit balance on every successful
+		// call — capture it so the admin has some visibility without a portal trip.
+		if ( 'agentic' === $this->provider ) {
+			$this->capture_hosted_credits( is_array( $data ) ? $data : array() );
+		}
+
 		// Normalize provider-specific response formats to OpenAI-compatible structure.
 		$agentic_resp_format = Provider_Registry::get( $this->provider )['resp_format'] ?? 'openai';
 		if ( 'cohere' === $agentic_resp_format ) {
@@ -979,6 +985,89 @@ class LLM_Client {
 	}
 
 	/**
+	 * Max output tokens to send in generationConfig for Google-dialect requests
+	 * (native Google/Gemini and the hosted "agentic" provider, which also uses
+	 * req_format=google).
+	 *
+	 * Without an explicit cap, the hosted proxy reserves credits against the
+	 * model's full output ceiling (e.g. 65,536 tokens for gemini-2.5-flash)
+	 * rather than realistic usage, causing funded accounts to see spurious
+	 * 402s. The default is well above observed real-world usage (~244 tokens
+	 * average) but far below the ceiling that inflates the reservation.
+	 *
+	 * @return int
+	 */
+	private function google_max_output_tokens(): int {
+		/**
+		 * Filter the maxOutputTokens sent in generationConfig for Google-dialect
+		 * chat requests.
+		 *
+		 * @param int $max_output_tokens Default max output tokens.
+		 */
+		return (int) apply_filters( 'agentic_google_max_output_tokens', 8192 );
+	}
+
+	/**
+	 * Normalize a decoded tool result into a Gemini functionResponse.response
+	 * value, which must be a JSON object (Struct), never a bare list.
+	 *
+	 * A list-returning tool result (e.g. list_privileged_users) would otherwise
+	 * 400 with "Proto field is not repeating, cannot start list". Associative
+	 * arrays pass through unchanged; lists and non-arrays are wrapped under
+	 * 'result'.
+	 *
+	 * @param mixed  $decoded  Decoded tool result (array, scalar, or null).
+	 * @param string $fallback Raw content used when $decoded is not an array.
+	 * @return array<string, mixed>
+	 */
+	private static function google_function_response( $decoded, string $fallback ): array {
+		if ( is_array( $decoded ) && $decoded !== array_values( $decoded ) ) {
+			return $decoded;
+		}
+		return array( 'result' => is_array( $decoded ) ? $decoded : $fallback );
+	}
+
+	/**
+	 * WordPress option storing the last-seen hosted credit balance, so the
+	 * admin has some visibility without a portal trip.
+	 */
+	private const HOSTED_CREDITS_OPTION = 'agent_builder_hosted_credits';
+
+	/**
+	 * Record the hosted proxy's reported credit balance from a successful
+	 * response body (fields `x_credits_used` / `x_credits_remaining`, sent on
+	 * every successful hosted "agentic" call). Silently does nothing when the
+	 * fields are absent so it never invents a stale reading.
+	 *
+	 * @param array $data Decoded response body.
+	 */
+	private function capture_hosted_credits( array $data ): void {
+		if ( ! isset( $data['x_credits_remaining'] ) ) {
+			return;
+		}
+		update_option(
+			self::HOSTED_CREDITS_OPTION,
+			array(
+				'remaining'  => (float) $data['x_credits_remaining'],
+				'used'       => isset( $data['x_credits_used'] ) ? (float) $data['x_credits_used'] : null,
+				'checked_at' => time(),
+			),
+			false
+		);
+	}
+
+	/**
+	 * Last-seen hosted credit balance captured from a successful "agentic"
+	 * response, or an empty array if none has been seen yet.
+	 *
+	 * @return array{remaining?: float, used?: float|null, checked_at?: int}
+	 */
+	public static function get_last_hosted_credits(): array {
+		$stored = get_option( self::HOSTED_CREDITS_OPTION, array() );
+		return is_array( $stored ) ? $stored : array();
+	}
+
+	/**
 	 * Format request body for a specific provider (public version for testing).
 	 *
 	 * @param string $provider       Provider name.
@@ -1029,6 +1118,7 @@ class LLM_Client {
 				if ( ! empty( $system_text ) ) {
 					$body['systemInstruction'] = array( 'parts' => array( array( 'text' => $system_text ) ) );
 				}
+				$body['generationConfig'] = array( 'maxOutputTokens' => $this->google_max_output_tokens() );
 				break;
 
 			default:
@@ -1209,7 +1299,10 @@ class LLM_Client {
 								array(
 									'functionResponse' => array(
 										'name'     => $msg['name'] ?? $msg['tool_call_id'] ?? 'unknown',
-										'response' => is_array( $decoded ) ? $decoded : array( 'result' => $msg['content'] ?? '' ),
+										// Gemini's functionResponse.response must be a JSON object (Struct),
+										// never a bare list, or the request 400s ("Proto field is not
+										// repeating, cannot start list"). See google_function_response().
+										'response' => self::google_function_response( $decoded, (string) ( $msg['content'] ?? '' ) ),
 									),
 								),
 							),
@@ -1284,6 +1377,7 @@ class LLM_Client {
 						);
 					}
 				}
+				$body['generationConfig'] = array( 'maxOutputTokens' => $this->google_max_output_tokens() );
 				break;
 
 			case 'agentic':
