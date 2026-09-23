@@ -105,6 +105,31 @@
 	padding-left: 18px;
 	color: #50575e;
 }
+.agentic-site-brief-step.is-current {
+	color: #1d2327;
+	font-weight: 600;
+}
+.agentic-site-brief-step.is-done {
+	color: #00a32a;
+}
+.agentic-site-brief-settings {
+	margin: 0 0 12px;
+}
+.agentic-site-brief-settings-panel {
+	margin-top: 8px;
+	padding: 12px 14px;
+	background: #f6f7f7;
+	border-radius: 6px;
+}
+.agentic-site-brief-settings-group {
+	margin-bottom: 12px;
+}
+.agentic-site-brief-settings-group:last-child {
+	margin-bottom: 0;
+}
+.agentic-site-brief-settings-group h4 {
+	margin: 0 0 6px;
+}
 .agentic-site-brief-healthy {
 	padding: 12px 14px;
 	background: #edfaef;

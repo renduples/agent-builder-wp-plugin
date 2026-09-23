@@ -66,6 +66,27 @@ abstract class Site_Brief_Checker {
 	}
 
 	/**
+	 * Category this checker belongs to, for the settings panel and agent
+	 * category tiebreaks (e.g. 'security', 'performance', 'media', 'forms',
+	 * 'maintenance', 'woocommerce'). Override per checker.
+	 *
+	 * @return string
+	 */
+	public function get_category(): string {
+		return 'general';
+	}
+
+	/**
+	 * Human label for the settings panel. Defaults to a de-slugified id;
+	 * override where that reads awkwardly.
+	 *
+	 * @return string
+	 */
+	public function get_label(): string {
+		return ucfirst( str_replace( '_', ' ', $this->get_id() ) );
+	}
+
+	/**
 	 * Run the checker and return zero or more cards.
 	 *
 	 * @param Site_Brief_Runner $runner Runner (observe-mode tool calls).
@@ -74,20 +95,16 @@ abstract class Site_Brief_Checker {
 	abstract public function run( Site_Brief_Runner $runner ): array;
 
 	/**
-	 * Human label for a bundled agent slug.
+	 * Human label for an agent slug. This is only the pre-discovery fallback
+	 * used while building a card (Site_Brief_Runner overlays the actual
+	 * Agent_Matcher-resolved slug/label once the scan finishes matching) —
+	 * no hardcoded agent-name map, just a de-slugified guess.
 	 *
 	 * @param string $slug Agent slug.
 	 * @return string
 	 */
 	protected function agent_label( string $slug ): string {
-		$labels = array(
-			'site-health-sentinel'  => __( 'Site Health Sentinel', 'agent-builder' ),
-			'wordpress-assistant'   => __( 'WordPress Assistant', 'agent-builder' ),
-			'support-triage'        => __( 'Support Triage', 'agent-builder' ),
-			'storefront-assistant'  => __( 'Storefront Assistant', 'agent-builder' ),
-			'woocommerce-assistant' => __( 'WooCommerce Assistant', 'agent-builder' ),
-		);
-		return $labels[ $slug ] ?? $slug;
+		return Agent_Matcher::deslug( $slug );
 	}
 
 	/**

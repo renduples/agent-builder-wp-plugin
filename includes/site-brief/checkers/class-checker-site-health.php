@@ -46,6 +46,13 @@ class Checker_Site_Health extends Site_Brief_Checker {
 	/**
 	 * {@inheritdoc}
 	 */
+	public function get_category(): string {
+		return 'performance';
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
 	public function get_severity(): int {
 		return 70;
 	}

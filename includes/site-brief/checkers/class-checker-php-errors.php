@@ -46,6 +46,20 @@ class Checker_Php_Errors extends Site_Brief_Checker {
 	/**
 	 * {@inheritdoc}
 	 */
+	public function get_category(): string {
+		return 'maintenance';
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function get_label(): string {
+		return __( 'PHP errors', 'agent-builder' );
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
 	public function get_severity(): int {
 		return 85;
 	}

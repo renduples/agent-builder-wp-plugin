@@ -46,6 +46,20 @@ class Checker_Wc_Stats extends Site_Brief_Checker {
 	/**
 	 * {@inheritdoc}
 	 */
+	public function get_category(): string {
+		return 'woocommerce';
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function get_label(): string {
+		return __( 'Store stats', 'agent-builder' );
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
 	public function get_severity(): int {
 		return 5;
 	}

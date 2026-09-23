@@ -46,6 +46,13 @@ class Checker_Forms extends Site_Brief_Checker {
 	/**
 	 * {@inheritdoc}
 	 */
+	public function get_category(): string {
+		return 'forms';
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
 	public function get_severity(): int {
 		return 40;
 	}

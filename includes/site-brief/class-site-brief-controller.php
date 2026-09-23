@@ -105,6 +105,39 @@ class Site_Brief_Controller {
 
 		register_rest_route(
 			self::NS,
+			'/site-brief/progress',
+			array(
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => array( self::class, 'get_progress' ),
+				'permission_callback' => array( self::class, 'can_view' ),
+			)
+		);
+
+		register_rest_route(
+			self::NS,
+			'/site-brief/checkers',
+			array(
+				array(
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => array( self::class, 'get_checkers' ),
+					'permission_callback' => array( self::class, 'can_view' ),
+				),
+				array(
+					'methods'             => \WP_REST_Server::EDITABLE,
+					'callback'            => array( self::class, 'update_checkers' ),
+					'permission_callback' => array( self::class, 'can_run' ),
+					'args'                => array(
+						'enabled' => array(
+							'type'     => 'object',
+							'required' => true,
+						),
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			self::NS,
 			'/site-brief/opening/(?P<token>[a-zA-Z0-9]+)',
 			array(
 				'methods'             => \WP_REST_Server::READABLE,
@@ -195,6 +228,7 @@ class Site_Brief_Controller {
 		}
 
 		set_transient( Site_Brief_Runner::RUN_LOCK, get_current_user_id(), 60 );
+		Site_Brief_Runner::clear_progress();
 
 		try {
 			$runner = new Site_Brief_Runner();
@@ -338,6 +372,79 @@ class Site_Brief_Controller {
 			);
 		}
 		return new \WP_REST_Response( array( 'message' => $message ), 200 );
+	}
+
+	/**
+	 * GET /site-brief/progress — live per-step scan progress for the
+	 * progressive UI. Safe to poll from a second request while /run is
+	 * still executing in another PHP worker; both read/write the same
+	 * transient.
+	 *
+	 * @return \WP_REST_Response
+	 */
+	public static function get_progress(): \WP_REST_Response {
+		return new \WP_REST_Response( Site_Brief_Runner::get_progress(), 200 );
+	}
+
+	/**
+	 * GET /site-brief/checkers — every checker with its label, category,
+	 * applicability, and enabled state, for the settings panel.
+	 *
+	 * @return \WP_REST_Response
+	 */
+	public static function get_checkers(): \WP_REST_Response {
+		return new \WP_REST_Response( array( 'checkers' => self::list_checkers() ), 200 );
+	}
+
+	/**
+	 * POST/PUT /site-brief/checkers — persist which checkers are enabled.
+	 *
+	 * @param \WP_REST_Request $request Request with an 'enabled' map of id => bool.
+	 * @return \WP_REST_Response
+	 */
+	public static function update_checkers( \WP_REST_Request $request ): \WP_REST_Response {
+		$submitted = (array) $request->get_param( 'enabled' );
+		$known     = array_keys( ( new \ReflectionClass( Site_Brief_Runner::class ) )->getConstant( 'CHECKERS' ) );
+
+		$enabled = get_option( Site_Brief_Runner::ENABLED_CHECKERS_OPTION, array() );
+		$enabled = is_array( $enabled ) ? $enabled : array();
+		foreach ( $known as $id ) {
+			if ( array_key_exists( $id, $submitted ) ) {
+				$enabled[ $id ] = (bool) $submitted[ $id ];
+			}
+		}
+		update_option( Site_Brief_Runner::ENABLED_CHECKERS_OPTION, $enabled );
+
+		return new \WP_REST_Response( array( 'checkers' => self::list_checkers() ), 200 );
+	}
+
+	/**
+	 * Build the checker list the settings panel renders.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	private static function list_checkers(): array {
+		Site_Brief_Runner::load_checkers();
+		$classes = ( new \ReflectionClass( Site_Brief_Runner::class ) )->getConstant( 'CHECKERS' );
+
+		$out = array();
+		foreach ( $classes as $id => $class ) {
+			if ( ! class_exists( $class ) ) {
+				continue;
+			}
+			$checker = new $class();
+			if ( ! $checker instanceof Site_Brief_Checker ) {
+				continue;
+			}
+			$out[] = array(
+				'id'         => $id,
+				'label'      => $checker->get_label(),
+				'category'   => $checker->get_category(),
+				'applicable' => $checker->is_applicable(),
+				'enabled'    => Site_Brief_Runner::is_checker_enabled( $id ),
+			);
+		}
+		return $out;
 	}
 
 	/**
