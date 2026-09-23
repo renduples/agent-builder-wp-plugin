@@ -85,23 +85,23 @@ still appears with `Coverage: none` or `partial` and is collected under
 | P12 | 13 | seo-optimizer | A lot of my posts are really short. Does that hurt me, and which ones are they? | list_posts_needing_seo | full | Thin-content detection; the <300-word threshold. | seo |
 | P13 | 20 | seo-optimizer | My titles get impressions but nobody clicks them. Can you improve them? | get_seo_overview\|optimize_post_title | full | Plural, no post named, and there is no CTR/Search-Console signal wired up to pick one — surveying title issues site-wide via get_seo_overview is a fair first (and, in one turn, sufficient) step. When it proceeds further it should stop for approval before rewriting a live title. | seo |
 | P14 | 24 | seo-optimizer | Nobody can find my older posts. How should I link things together better? | analyze_internal_links\|get_link_suggestions | full | | seo |
-| P15 | 27 | seo-optimizer | Half my pages have no meta description. Can you fix that? | list_posts_needing_seo, update_post_seo\|analyze_post_seo | full | Write action — expect a gated pass in supervised mode. analyze_post_seo's own description says "always analyse before updating," so auditing the specific post before proposing the fix is the correct order, not a stall. | seo |
+| P15 | 27 | seo-optimizer | Half my pages have no meta description. Can you fix that? | list_posts_needing_seo\|get_seo_overview, update_post_seo\|analyze_post_seo | full | Write action — expect a gated pass in supervised mode. get_seo_overview's own scan explicitly buckets `missing_meta_description` with counts and examples, so it genuinely surfaces this exact gap and is as fair an opening survey as the filtered list. analyze_post_seo's own description says "always analyse before updating," so auditing the specific post before proposing the fix is the correct order, not a stall. | seo |
 | P16 | 36 | seo-optimizer | Is the content on my About page actually any good? | analyze_content_quality | partial | Needs an About page to exist on the test site. | seo |
 
 ## WordPress Assistant (wordpress-assistant)
 
 | ID | Rank | Agent | Prompt | Expect Tools | Coverage | Notes | Source |
 |---|---|---|---|---|---|---|---|
-| P17 | 8 | wordpress-assistant | My photos are enormous and I think they're slowing the site down. | find_oversized_images | partial | Finds them; cannot compress or convert to WebP — those tools exist but are not on any bundled agent. | common |
+| P17 | 8 | wordpress-assistant | My photos are enormous and I think they're slowing the site down. | find_oversized_images\|scan_media_library | partial | Finds them; cannot compress or convert to WebP — those tools exist but are not on any bundled agent. scan_media_library's own scan flags oversized files by actual file size (KB) alongside orphan/storage stats — for "slowing the site down" that is at least as relevant a signal as find_oversized_images' pixel-dimension threshold, so either is a fair answer. | common |
 | P18 | 14 | wordpress-assistant | I've got loads of plugins and no idea what half of them do. Which ones can I get rid of? | check_plugin_status\|get_abandoned_plugins | full | | maint |
 | P19 | 17 | wordpress-assistant | Is this plugin still maintained, or has it been abandoned? | get_plugin_maintenance_status\|get_abandoned_plugins | full | Self-contained on purpose — the agent should ask which plugin rather than guess. | security |
 | P20 | 19 | wordpress-assistant | My media library is huge. What's taking up all the space? | get_media_storage_report\|find_unused_media | full | | maint |
 | P21 | 22 | wordpress-assistant | I'm brand new to this. Where do I even start? | get_onboarding_status | full | The onboarding prompt; tests tone as much as tooling. | faq |
-| P22 | 26 | wordpress-assistant | Screen readers can't describe my images. Can you sort out the alt text? | update_attachment_alt_text | partial | Can set alt text per image; no site-wide accessibility audit on this agent. | faq |
+| P22 | 26 | wordpress-assistant | Screen readers can't describe my images. Can you sort out the alt text? | update_attachment_alt_text | partial | Can set alt text per image; no site-wide accessibility audit on this agent. Write action — expect a gated pass in supervised mode. A discovery call to search_media_library first (to find which images lack alt text) is a reasonable precursor, but the run must still propose and call update_attachment_alt_text, not stop at discovery. | faq |
 | P23 | 30 | wordpress-assistant | What is actually on my website? Give me the overview. | get_site_overview | full | | faq |
 | P24 | 35 | wordpress-assistant | What can this plugin actually do for me? | get_agent_list\|search_capabilities | full | | faq |
 | P25 | 41 | wordpress-assistant | Are there any images in my library I'm not using anywhere? | find_unused_media | full | | maint |
-| P26 | 48 | wordpress-assistant | What are people actually searching for when they land on my site? | analyze_search_intent | partial | Intent analysis, not real search-console data. | seo |
+| P26 | 48 | wordpress-assistant | What are people actually searching for when they land on my site? | analyze_search_intent | partial | Intent analysis, not real search-console data. analyze_search_intent requires a post_id, so a preceding list_posts call to pick the likeliest landing page (the homepage or a top page) is a fair precursor, but the run must still call analyze_search_intent on it, not stop at the list. | seo |
 
 ## Support Triage (support-triage)
 
