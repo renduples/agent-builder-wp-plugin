@@ -72,7 +72,7 @@ still appears with `Coverage: none` or `partial` and is collected under
 | P04 | 6 | site-health-sentinel | My site showed a blank white page this morning. What happened? | get_php_errors | partial | Reads the error log; cannot restore a site that is currently down. | common |
 | P05 | 9 | site-health-sentinel | My scheduled posts aren't publishing on time. Why not? | get_cron_jobs | full | Classic WP-Cron-on-a-low-traffic-site problem; the agent can actually diagnose this one. | common |
 | P06 | 12 | site-health-sentinel | My database has got really big. Is that a problem and what's in there? | get_database_health | partial | Diagnoses bloat; cannot clean revisions or transients — those tools exist but are not on this agent. | maint |
-| P07 | 16 | site-health-sentinel | Give me a plain-English health check of my whole site. | run_health_check, get_site_overview | full | The "just tell me if anything's wrong" prompt. | faq |
+| P07 | 16 | site-health-sentinel | Give me a plain-English health check of my whole site. | run_health_check\|get_site_overview | full | The "just tell me if anything's wrong" prompt. A thorough run reaching for the specific diagnostic tools (web vitals, security, cron, etc.) instead of the summary tool is an equally valid — arguably more thorough — answer. | faq |
 | P08 | 31 | site-health-sentinel | I got an email saying my site had a critical error. What does that mean? | get_php_errors | partial | Tests whether the agent translates a fatal error into something a non-developer can act on. | common |
 | P09 | 44 | site-health-sentinel | Is my site ready for AI agents to use safely? | check_agent_readiness | full | Site Passport readiness score. | ai |
 
@@ -83,9 +83,9 @@ still appears with `Coverage: none` or `partial` and is collected under
 | P10 | 5 | seo-optimizer | My site doesn't show up on Google at all. What's wrong? | get_seo_overview | partial | Cannot check index status or the "discourage search engines" setting — the two most common actual causes. | seo |
 | P11 | 10 | seo-optimizer | Which of my pages need SEO work the most? | list_posts_needing_seo\|get_seo_overview | full | | seo |
 | P12 | 13 | seo-optimizer | A lot of my posts are really short. Does that hurt me, and which ones are they? | list_posts_needing_seo | full | Thin-content detection; the <300-word threshold. | seo |
-| P13 | 20 | seo-optimizer | My titles get impressions but nobody clicks them. Can you improve them? | optimize_post_title | full | Expected to stop for approval before rewriting a live title. | seo |
+| P13 | 20 | seo-optimizer | My titles get impressions but nobody clicks them. Can you improve them? | get_seo_overview\|optimize_post_title | full | Plural, no post named, and there is no CTR/Search-Console signal wired up to pick one — surveying title issues site-wide via get_seo_overview is a fair first (and, in one turn, sufficient) step. When it proceeds further it should stop for approval before rewriting a live title. | seo |
 | P14 | 24 | seo-optimizer | Nobody can find my older posts. How should I link things together better? | analyze_internal_links\|get_link_suggestions | full | | seo |
-| P15 | 27 | seo-optimizer | Half my pages have no meta description. Can you fix that? | list_posts_needing_seo, update_post_seo | full | Write action — expect a gated pass in supervised mode. | seo |
+| P15 | 27 | seo-optimizer | Half my pages have no meta description. Can you fix that? | list_posts_needing_seo, update_post_seo\|analyze_post_seo | full | Write action — expect a gated pass in supervised mode. analyze_post_seo's own description says "always analyse before updating," so auditing the specific post before proposing the fix is the correct order, not a stall. | seo |
 | P16 | 36 | seo-optimizer | Is the content on my About page actually any good? | analyze_content_quality | partial | Needs an About page to exist on the test site. | seo |
 
 ## WordPress Assistant (wordpress-assistant)
@@ -129,7 +129,7 @@ still appears with `Coverage: none` or `partial` and is collected under
 | ID | Rank | Agent | Prompt | Expect Tools | Coverage | Notes | Source |
 |---|---|---|---|---|---|---|---|
 | P38 | 4 | content-writer | I don't have time to write. Can you draft me a blog post about how to choose a local tradesperson? | create_post_content | full | The #1 reason owners buy AI tooling: 5–8 hrs/week of writing is not feasible. Expect a gated pass. | content |
-| P39 | 21 | content-writer | This page is a wall of text and nobody reads it. Can you make it easier to read? | rewrite_for_readability | full | Self-contained enough that the agent should ask which page. Expect a gated pass. | content |
+| P39 | 21 | content-writer | This page is a wall of text and nobody reads it. Can you make it easier to read? | list_posts\|rewrite_for_readability | full | No page named — listing posts to find the candidate (and reasonably asking the owner which one) is a fair opening move, not just proceeding straight to the analysis. Expect a gated pass if it does proceed. | content |
 | P40 | 28 | content-writer | Some of my posts have no featured image and look broken when shared. | search_media_library | partial | Can find and set an image; cannot generate one — `generate_image` is not on this agent. | content |
 | P41 | 37 | content-writer | My categories are a complete mess. Can you help me tidy them up? | manage_categories | partial | | content |
 | P42 | 45 | content-writer | Which of my posts are actually doing well? | get_post_performance | partial | | content |
@@ -138,7 +138,7 @@ still appears with `Coverage: none` or `partial` and is collected under
 
 | ID | Rank | Agent | Prompt | Expect Tools | Coverage | Notes | Source |
 |---|---|---|---|---|---|---|---|
-| P43 | 33 | editorial-director | I never know what to write next and I post about once a year. Help me get consistent. | get_content_stats, get_site_writing_stats | partial | Consistency is the single most cited content failure. Planning only — nothing schedules it. | content |
+| P43 | 33 | editorial-director | I never know what to write next and I post about once a year. Help me get consistent. | get_content_stats\|get_site_writing_stats | partial | Consistency is the single most cited content failure. Planning only — nothing schedules it. The agent owns these stats tools itself for exactly this kind of "simple lookup" per its own operating rules, so either one grounding the plan in real cadence data is enough. | content |
 | P44 | 38 | editorial-director | Find my weakest posts and organise getting them rewritten and optimised. | list_posts_needing_seo, delegate_to_agent | full | The only `"team": true` agent — this is the delegation path under test. | content |
 | P45 | 49 | editorial-director | How much have I actually published this year? | get_site_writing_stats | full | | content |
 
@@ -154,7 +154,7 @@ still appears with `Coverage: none` or `partial` and is collected under
 
 | ID | Rank | Agent | Prompt | Expect Tools | Coverage | Notes | Source |
 |---|---|---|---|---|---|---|---|
-| P49 | 47 | agent-orchestrator | I want a chat box on my website so visitors can ask questions. | manage_frontend_modal_agent | full | Expect a gated pass — this changes what the public site shows. | faq |
+| P49 | 47 | agent-orchestrator | I want a chat box on my website so visitors can ask questions. | get_agent_list\|manage_frontend_modal_agent | full | Expect a gated pass — this changes what the public site shows. No agent named, and the agent's own operating procedure calls get_agent_list first and asks which agent when more than one is active and it isn't obvious — a single turn may reasonably stop there, the same pattern already accepted for P51. | faq |
 
 ## Storefront Assistant (storefront-assistant)
 
