@@ -277,6 +277,59 @@ class Test_Bridge_Tool_Suppression extends TestCase {
 	}
 
 	/**
+	 * An agent holding a bundled content tool does NOT get the plugin's own
+	 * generic wp-extended/search-content ability offered — the P16 hop where
+	 * seo-optimizer bypassed analyze_content_quality via search_content
+	 * instead of get_posts once get_posts alone was suppressed.
+	 */
+	public function test_agent_with_bundled_post_tool_does_not_get_bridged_search_content(): void {
+		$controller = $this->make_controller_for_agent(
+			'test-bridge-dedupe-search-content',
+			array( 'analyze_content_quality' )
+		);
+
+		$offered = $this->get_offered_tool_names( $controller );
+
+		$this->assertContains( 'analyze_content_quality', $offered );
+		$this->assertNotContains( 'wp_extended__search_content', $offered );
+		$this->assert_suppression_logged( 'test-bridge-dedupe-search-content', 'wp_extended__search_content', 'analyze_content_quality' );
+	}
+
+	/**
+	 * An agent holding a bundled content tool does NOT get the plugin's own
+	 * generic wp-extended/get-recent-posts ability offered — the other half
+	 * of the P16 hop.
+	 */
+	public function test_agent_with_bundled_post_tool_does_not_get_bridged_get_recent_posts(): void {
+		$controller = $this->make_controller_for_agent(
+			'test-bridge-dedupe-recent-posts',
+			array( 'analyze_content_quality' )
+		);
+
+		$offered = $this->get_offered_tool_names( $controller );
+
+		$this->assertContains( 'analyze_content_quality', $offered );
+		$this->assertNotContains( 'wp_extended__get_recent_posts', $offered );
+		$this->assert_suppression_logged( 'test-bridge-dedupe-recent-posts', 'wp_extended__get_recent_posts', 'analyze_content_quality' );
+	}
+
+	/**
+	 * A structural bridged tool with no bundled equivalent (get_menus — the
+	 * plugin ships no menu-management tool) must never be suppressed,
+	 * regardless of which bundled tools the agent holds.
+	 */
+	public function test_structural_bridged_get_menus_is_never_suppressed(): void {
+		$controller = $this->make_controller_for_agent(
+			'test-bridge-dedupe-structural',
+			array( 'analyze_content_quality', 'list_privileged_users', 'get_site_overview', 'scan_media_library', 'list_comments', 'manage_categories' )
+		);
+
+		$offered = $this->get_offered_tool_names( $controller );
+
+		$this->assertContains( 'wp_extended__get_menus', $offered );
+	}
+
+	/**
 	 * The suppression map is filterable via agent_builder_bridge_suppressed_tools.
 	 */
 	public function test_suppression_map_is_filterable(): void {
