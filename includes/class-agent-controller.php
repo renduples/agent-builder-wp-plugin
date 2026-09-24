@@ -419,18 +419,116 @@ class Agent_Controller {
 		// These are opt-in via the Abilities bridge; they do not need an abilities.json
 		// entry (that file only gates Agent Builder's own tools). Schemas are sanitized
 		// in LLM_Client before the provider API call (OpenAI rejects top-level oneOf/etc).
+		//
+		// A generic bridged tool (e.g. a third-party "get all users" ability) is withheld
+		// when the agent already holds a bundled tool that supersedes it — a system-prompt
+		// nudge to "prefer your own tools" was not reliable enough on its own (the model
+		// kept reaching for the generic CRUD tool over the purpose-built, risk-gated one).
+		// An agent that lacks the bundled equivalent still gets the bridged tool: this only
+		// narrows an agent's own duplicate options, it never strips a capability the plugin
+		// itself doesn't provide.
 		if ( $this->abilities_bridge ) {
 			$ability_tools = $this->abilities_bridge->get_third_party_abilities_as_tools();
 			foreach ( $ability_tools as $ability_tool ) {
 				$ability_fn = $ability_tool['function']['name'] ?? '';
-				if ( $ability_fn && ! in_array( $ability_fn, $all_tool_names, true ) ) {
-					$filtered_tools[] = $ability_tool;
-					$all_tool_names[] = $ability_fn;
+				if ( ! $ability_fn || in_array( $ability_fn, $all_tool_names, true ) ) {
+					continue;
 				}
+
+				$superseded_by = $this->find_superseding_bundled_tool( $ability_fn, $all_tool_names );
+				if ( $superseded_by ) {
+					$this->audit->log(
+						$agent_slug,
+						'tool_suppressed',
+						$ability_fn,
+						array(
+							'reason'        => 'bundled equivalent present',
+							'superseded_by' => $superseded_by,
+						)
+					);
+					continue;
+				}
+
+				$filtered_tools[] = $ability_tool;
+				$all_tool_names[] = $ability_fn;
 			}
 		}
 
 		return $filtered_tools;
+	}
+
+	/**
+	 * Bridged generic tool slugs mapped to the bundled Agent Builder tool
+	 * slugs that make them redundant for an agent that already holds one.
+	 *
+	 * Covers the generic third-party/core CRUD abilities the WP 6.9+ Abilities
+	 * bridge tends to import (get_users, get_posts, get_environment_info style
+	 * tools) that the model otherwise reaches for instead of an agent's own
+	 * purpose-built, risk-gated equivalent.
+	 *
+	 * @return array<string, string[]> Bridged tool name => superseding bundled tool slugs.
+	 */
+	private static function get_bridge_suppression_map(): array {
+		$user_tools = array(
+			'list_privileged_users',
+			'find_inactive_users',
+			'get_recent_registrations',
+			'lock_user_account',
+			'manage_user_privileges',
+		);
+		$post_tools = array(
+			'list_posts',
+			'get_post_content',
+			'list_posts_needing_seo',
+			'analyze_content_quality',
+		);
+		$env_tools  = array(
+			'get_site_overview',
+			'check_plugin_status',
+			'get_plugin_maintenance_status',
+			'get_abandoned_plugins',
+		);
+
+		$map = array(
+			'wp_extended__get_users'            => $user_tools,
+			'core__get_users'                   => $user_tools,
+			'wp_extended__get_posts'            => $post_tools,
+			'core__get_posts'                   => $post_tools,
+			'wp_extended__get_post'             => $post_tools,
+			'core__get_post'                    => $post_tools,
+			'wp_extended__get_environment_info' => $env_tools,
+			'core__get_environment_info'        => $env_tools,
+		);
+
+		/**
+		 * Filter the bridged-tool suppression map.
+		 *
+		 * @param array<string, string[]> $map Bridged tool name => superseding bundled tool slugs.
+		 */
+		return apply_filters( 'agent_builder_bridge_suppressed_tools', $map );
+	}
+
+	/**
+	 * Find the bundled tool slug (if any) that supersedes a bridged tool for
+	 * an agent whose bundled/inline tool names have already been resolved.
+	 *
+	 * @param string   $ability_fn     Bridged tool's function name.
+	 * @param string[] $all_tool_names Tool names already selected for this agent so far.
+	 * @return string|null The superseding bundled slug, or null when not suppressed.
+	 */
+	private function find_superseding_bundled_tool( string $ability_fn, array $all_tool_names ): ?string {
+		$map = self::get_bridge_suppression_map();
+		if ( empty( $map[ $ability_fn ] ) ) {
+			return null;
+		}
+
+		foreach ( $map[ $ability_fn ] as $bundled_slug ) {
+			if ( in_array( $bundled_slug, $all_tool_names, true ) ) {
+				return $bundled_slug;
+			}
+		}
+
+		return null;
 	}
 
 	/**
