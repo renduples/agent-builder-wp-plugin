@@ -469,35 +469,83 @@ class Agent_Controller {
 	 * @return array<string, string[]> Bridged tool name => superseding bundled tool slugs.
 	 */
 	private static function get_bridge_suppression_map(): array {
-		$user_tools = array(
+		$user_tools     = array(
 			'list_privileged_users',
 			'find_inactive_users',
 			'get_recent_registrations',
 			'lock_user_account',
 			'manage_user_privileges',
 		);
-		$post_tools = array(
+		$post_tools     = array(
 			'list_posts',
 			'get_post_content',
 			'list_posts_needing_seo',
 			'analyze_content_quality',
+			'get_seo_overview',
+			'get_post_performance',
+			'rewrite_for_readability',
+			'get_post_revisions',
+			'list_registered_post_types',
 		);
-		$env_tools  = array(
+		$media_tools    = array(
+			'scan_media_library',
+			'find_oversized_images',
+			'find_unused_media',
+			'get_media_storage_report',
+			'search_media_library',
+		);
+		$env_tools      = array(
 			'get_site_overview',
+			'get_site_context',
 			'check_plugin_status',
 			'get_plugin_maintenance_status',
 			'get_abandoned_plugins',
+			'run_health_check',
+		);
+		$comment_tools  = array(
+			'list_comments',
+			'moderate_comment',
+		);
+		$taxonomy_tools = array(
+			'manage_categories',
+			'manage_tags',
+			'list_registered_taxonomies',
 		);
 
 		$map = array(
-			'wp_extended__get_users'            => $user_tools,
-			'core__get_users'                   => $user_tools,
-			'wp_extended__get_posts'            => $post_tools,
-			'core__get_posts'                   => $post_tools,
-			'wp_extended__get_post'             => $post_tools,
-			'core__get_post'                    => $post_tools,
-			'wp_extended__get_environment_info' => $env_tools,
-			'core__get_environment_info'        => $env_tools,
+			// Users.
+			'wp_extended__get_users'          => $user_tools,
+			'wp_extended__get_roles'          => $user_tools,
+			'core__get_user_info'             => $user_tools,
+
+			// Content / posts.
+			'wp_extended__get_posts'          => $post_tools,
+			'wp_extended__get_post'           => $post_tools,
+			'wp_extended__get_recent_posts'   => $post_tools,
+			'wp_extended__get_post_counts'    => $post_tools,
+			'wp_extended__get_post_meta'      => $post_tools,
+			'wp_extended__get_post_revisions' => $post_tools,
+			'wp_extended__get_post_types'     => $post_tools,
+			'wp_extended__search_content'     => $post_tools,
+
+			// Media.
+			'wp_extended__get_media'          => $media_tools,
+			'wp_extended__get_image_sizes'    => $media_tools,
+
+			// Plugins / environment / site.
+			'wp_extended__get_plugins'        => $env_tools,
+			'core__get_environment_info'      => $env_tools,
+			'core__get_site_info'             => $env_tools,
+			'wp_extended__get_site_health'    => $env_tools,
+
+			// Comments.
+			'wp_extended__get_comments'       => $comment_tools,
+
+			// Taxonomy.
+			'wp_extended__get_categories'     => $taxonomy_tools,
+			'wp_extended__get_tags'           => $taxonomy_tools,
+			'wp_extended__get_taxonomies'     => $taxonomy_tools,
+			'wp_extended__get_terms'          => $taxonomy_tools,
 		);
 
 		/**
