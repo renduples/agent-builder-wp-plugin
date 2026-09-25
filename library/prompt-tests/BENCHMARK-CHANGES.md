@@ -70,3 +70,30 @@ No `agent.json`/`abilities.json` manifest changed tool grants in round 2 either,
 DB bump is needed. `includes/class-llm-client.php` was not touched. The global
 `[TOOL PREFERENCE]` block in `includes/class-agent-prompt-builder.php` was left as-is (out of
 this PR's file scope) — the per-agent reinforcements above are additive to it, not a replacement.
+
+## Round 3
+
+After round 2's fixes, the live run reached a mean ~88.6% (N=6) with zero deterministic
+failures, but three prompts still failed more often than not — in every case the agent picked a
+*different bundled tool it already owns* over the expected one, a sibling-tool confusion rather
+than a bridge escape. All three are agent fixes: the existing prompt guidance either didn't cover
+this specific pairing yet, or named a different (already-fixed) confusion and left this one
+unaddressed.
+
+| ID | Decision | Justification |
+|---|---|---|
+| P28 | Agent fix | Support Triage had no guidance at all distinguishing `detect_form_plugins` from the form-reading tools, so "has anyone filled in my contact form recently?" — a question about stored entries — pattern-matched to the tool whose description says "Always call this first before any other form tool." Read `detect_form_plugins`' own description: it only reports which form *plugin* is installed (Contact Form 7, WPForms, etc.) and never returns a submission. Added an explicit rule: submission/entry questions go to `list_native_forms` then `get_native_form_submissions`; `detect_form_plugins` is reserved for questions about which plugin is running or setting one up. |
+| P36 | Agent fix | Round 2 fixed this prompt's confusion with the *generic bridged* `wp_extended__get_users`, and that fix holds — the run no longer reaches for it. The remaining failure is a different, undocumented confusion: the model now picks `manage_user_privileges`, one of user-assistant's own tools, over `lock_user_account`. Read `manage_user_privileges`' own description and parameter schema: its actions (`get`, `set_privilege`, `set_usage_limit`, `set_anonymous_chat`) are all role-wide (which WordPress *role* can do what) and it has no per-account action whatsoever — it structurally cannot lock one named account. Added an explicit scope rule: a request naming one account (by name or email) is `lock_user_account` (after `list_privileged_users` to identify it if needed); `manage_user_privileges` is only for requests naming a role or a class of users. |
+| P16 | Agent fix (strengthened) | Round 2 added a rule preferring `analyze_content_quality` for single-page quality questions, but it only said what *to* call, never what *not* to — so `get_seo_overview`'s description ("scan all published posts... returns counts and examples") still reads as a plausible opener for "is my About page any good?" and sometimes still won the choice. Read `get_seo_overview`'s own description again: it is a site-wide scan (missing meta, title length, thin content, links, images across *every* published post) with no per-page quality verdict at all. Added an explicit negative rule: do not open a single-page content-quality question with `get_seo_overview` — it cannot answer it — go straight to `analyze_content_quality` on the named page. |
+
+### Files touched (round 3)
+
+- `library/agents/support-triage/templates/system-prompt.txt` — P28 (list_native_forms/get_native_form_submissions vs. detect_form_plugins).
+- `library/agents/user-assistant/templates/system-prompt.txt` — P36 (lock_user_account vs. manage_user_privileges, scoped by single-account vs. role-wide).
+- `library/agents/seo-optimizer/templates/system-prompt.txt` — P16 (explicit negative rule against get_seo_overview for single-page quality questions).
+
+No `most_popular_prompts.md` assertion changed in round 3 — all three prompts already accept the
+correct bundled tool (`list_native_forms|get_native_form_submissions`, `lock_user_account|list_privileged_users`,
+`analyze_content_quality`); the fix in every case was making the agent prompt reliably choose the
+tool the assertion already expects. No `agent.json`/`abilities.json` manifest changed tool grants,
+so no re-sign or DB bump is needed. `includes/class-llm-client.php` was not touched.
