@@ -97,3 +97,6 @@ correct bundled tool (`list_native_forms|get_native_form_submissions`, `lock_use
 `analyze_content_quality`); the fix in every case was making the agent prompt reliably choose the
 tool the assertion already expects. No `agent.json`/`abilities.json` manifest changed tool grants,
 so no re-sign or DB bump is needed. `includes/class-llm-client.php` was not touched.
+
+### Round 3 addendum - P12 fair-assertion fix
+P12 (seo-optimizer, "which posts are really short?") expected list_posts_needing_seo only, but the agent reliably calls get_seo_overview. get_seo_overview buckets thin_content at the same <300-word threshold (get_seo_overview/tool.php lines 100,125-126), so it genuinely returns the short posts with counts/examples - a correct answer, not a miss. P11 and P15 already accept get_seo_overview as an OR-alternative; P12 was simply missed in round 1. Added get_seo_overview as a fair OR-alternative (catalog fix, source-verified - not gaming).
