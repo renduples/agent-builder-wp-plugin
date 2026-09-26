@@ -18,6 +18,7 @@
         "report_issue",
         "get_author_list",
         "analyze_post",
+        "find_posts_without_featured_image",
         "search_media_library",
         "set_featured_image",
         "get_post_performance",
