@@ -1,7 +1,7 @@
 import { useState } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import { __, sprintf } from '@wordpress/i18n';
-import { Button, Notice } from '@wordpress/components';
+import { Button, Notice, ToggleControl } from '@wordpress/components';
 
 const AGENT_READY_CHECK_LABELS = {
 	mcp_server_reachable: __( 'MCP server reachable', 'agent-builder' ),

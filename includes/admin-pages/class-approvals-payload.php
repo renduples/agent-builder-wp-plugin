@@ -89,7 +89,7 @@ class Approvals_Payload {
 	}
 
 
-	private static function approval_comfort_profiles(): array {
+	public static function approval_comfort_profiles(): array {
 		$active = sanitize_key( (string) get_option( 'agent_builder_approval_comfort', 'careful' ) );
 		$cards  = array(
 			array(
@@ -134,7 +134,7 @@ class Approvals_Payload {
 	}
 
 
-	private static function get_approval_prefs(): array {
+	public static function get_approval_prefs(): array {
 		$email = sanitize_email( (string) get_option( 'agent_builder_approval_email_to', '' ) );
 		if ( ! is_email( $email ) ) {
 			$email = (string) get_option( 'admin_email' );

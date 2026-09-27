@@ -263,7 +263,7 @@ class Tools_Payload {
 	}
 
 
-	private static function tools_ability_profiles(): array {
+	public static function tools_ability_profiles(): array {
 		return array(
 			'browse' => array(
 				'label'    => __( 'Browse & answer', 'agent-builder' ),

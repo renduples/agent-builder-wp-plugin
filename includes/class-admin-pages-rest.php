@@ -254,7 +254,7 @@ class Admin_Pages_REST {
 
 		if ( 'apply_tools_profile' === $action ) {
 			$profile_id = sanitize_key( (string) $request->get_param( 'profile' ) );
-			$profiles   = self::tools_ability_profiles();
+			$profiles   = Tools_Payload::tools_ability_profiles();
 			if ( ! isset( $profiles[ $profile_id ] ) || 'custom' === $profile_id ) {
 				return new \WP_Error( 'invalid_profile', __( 'Unknown ability profile.', 'agent-builder' ), array( 'status' => 400 ) );
 			}
@@ -600,113 +600,6 @@ class Admin_Pages_REST {
 	}
 
 	/**
-	 * Named ability profiles for Basic Tools UI.
-	 *
-	 * @return array<string, array{label:string,summary:string,detail:string,max_risk:string,icon:string}>
-	 */
-	private static function tools_ability_profiles(): array {
-		return array(
-			'browse' => array(
-				'label'    => __( 'Browse & answer', 'agent-builder' ),
-				'summary'  => __( 'Safest — read-only help', 'agent-builder' ),
-				'detail'   => __( 'Agents can look things up and answer questions. They cannot change posts, settings, or your site.', 'agent-builder' ),
-				'max_risk' => 'low',
-				'icon'     => '👀',
-			),
-			'assist' => array(
-				'label'    => __( 'Help with drafts', 'agent-builder' ),
-				'summary'  => __( 'Balanced — create drafts with care', 'agent-builder' ),
-				'detail'   => __( 'Read plus everyday writing (drafts and light edits). Riskier changes still ask for confirmation.', 'agent-builder' ),
-				'max_risk' => 'medium',
-				'icon'     => '✍️',
-			),
-			'manage' => array(
-				'label'    => __( 'Manage my site', 'agent-builder' ),
-				'summary'  => __( 'Full productivity — approvals for big changes', 'agent-builder' ),
-				'detail'   => __( 'Most tools on, including significant updates. High-risk actions go through the Approvals queue. Extreme tools stay off.', 'agent-builder' ),
-				'max_risk' => 'high',
-				'icon'     => '🛠️',
-			),
-			'custom' => array(
-				'label'    => __( 'Custom mix', 'agent-builder' ),
-				'summary'  => __( 'You mixed tools manually', 'agent-builder' ),
-				'detail'   => __( 'Individual tools were toggled outside a profile.', 'agent-builder' ),
-				'max_risk' => 'high',
-				'icon'     => '⚙️',
-			),
-		);
-	}
-
-	/**
-	 * Comfort profiles for non-technical Approvals preferences.
-	 *
-	 * @return array<int, array<string, mixed>>
-	 */
-	private static function approval_comfort_profiles(): array {
-		$active = sanitize_key( (string) get_option( 'agent_builder_approval_comfort', 'careful' ) );
-		$cards  = array(
-			array(
-				'id'        => 'careful',
-				'icon'      => '🛡️',
-				'label'     => __( 'Always ask me', 'agent-builder' ),
-				'summary'   => __( 'Safest default', 'agent-builder' ),
-				'detail'    => __( 'Important or writing actions wait for you. Best when you want full control.', 'agent-builder' ),
-				'risk_note' => __( 'No automatic approvals beyond the safest reads.', 'agent-builder' ),
-				'auto_max'  => 'none',
-				'mode'      => 'supervised',
-				'needs_ack' => false,
-			),
-			array(
-				'id'        => 'balanced',
-				'icon'      => '⚖️',
-				'label'     => __( 'Auto-approve low risk', 'agent-builder' ),
-				'summary'   => __( 'Recommended for most sites', 'agent-builder' ),
-				'detail'    => __( 'Simple look-ups run freely. Drafts and bigger changes still pause for confirmation or this queue.', 'agent-builder' ),
-				'risk_note' => __( 'You accept that low-risk tools may run without a separate approval email.', 'agent-builder' ),
-				'auto_max'  => 'low',
-				'mode'      => 'supervised',
-				'needs_ack' => false,
-			),
-			array(
-				'id'        => 'hands_off',
-				'icon'      => '⚡',
-				'label'     => __( 'Trust more (higher risk)', 'agent-builder' ),
-				'summary'   => __( 'Faster — use with care', 'agent-builder' ),
-				'detail'    => __( 'Agents work with less interruption (autonomous mode). You can still review history. Extreme tools stay blocked.', 'agent-builder' ),
-				'risk_note' => __( 'I understand agents may change content without waiting in this queue, and I accept that increased risk.', 'agent-builder' ),
-				'auto_max'  => 'medium',
-				'mode'      => 'autonomous',
-				'needs_ack' => true,
-			),
-		);
-		foreach ( $cards as &$c ) {
-			$c['active'] = ( $c['id'] === $active );
-		}
-		unset( $c );
-		return $cards;
-	}
-
-	/**
-	 * Current approval notification / comfort prefs.
-	 *
-	 * @return array<string, mixed>
-	 */
-	private static function get_approval_prefs(): array {
-		$email = sanitize_email( (string) get_option( 'agent_builder_approval_email_to', '' ) );
-		if ( ! is_email( $email ) ) {
-			$email = (string) get_option( 'admin_email' );
-		}
-		return array(
-			'email_notify'  => (bool) get_option( 'agent_builder_approval_email_notify', false ),
-			'email_to'      => $email,
-			'comfort'       => sanitize_key( (string) get_option( 'agent_builder_approval_comfort', 'careful' ) ),
-			'auto_max_risk' => sanitize_key( (string) get_option( 'agent_builder_approval_auto_max_risk', 'none' ) ),
-			'risk_ack'      => (bool) get_option( 'agent_builder_approval_risk_ack', false ),
-			'agent_mode'    => (string) get_option( 'agent_builder_agent_mode', 'supervised' ),
-		);
-	}
-
-	/**
 	 * Save Approvals preferences from React UI.
 	 *
 	 * @param \WP_REST_Request $request Request.
@@ -723,7 +616,7 @@ class Admin_Pages_REST {
 		$risk_ack     = rest_sanitize_boolean( $request->get_param( 'risk_ack' ) );
 
 		$profiles = array();
-		foreach ( self::approval_comfort_profiles() as $p ) {
+		foreach ( Approvals_Payload::approval_comfort_profiles() as $p ) {
 			$profiles[ $p['id'] ] = $p;
 		}
 		if ( ! isset( $profiles[ $comfort ] ) ) {
@@ -742,7 +635,7 @@ class Admin_Pages_REST {
 			return new \WP_Error( 'invalid_email', __( 'Enter a valid email address.', 'agent-builder' ), array( 'status' => 400 ) );
 		}
 
-		$prev = self::get_approval_prefs();
+		$prev = Approvals_Payload::get_approval_prefs();
 
 		update_option( 'agent_builder_approval_email_notify', $email_notify ? 1 : 0, false );
 		if ( is_email( $email_to ) ) {
@@ -786,7 +679,7 @@ class Admin_Pages_REST {
 		return new \WP_REST_Response(
 			array(
 				'ok'    => true,
-				'prefs' => self::get_approval_prefs(),
+				'prefs' => Approvals_Payload::get_approval_prefs(),
 			),
 			200
 		);
