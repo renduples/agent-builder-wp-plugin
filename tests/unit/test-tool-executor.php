@@ -173,6 +173,64 @@ class Test_Tool_Executor extends TestCase {
 	}
 
 	/**
+	 * The confirmation payload carries a reduced summary of the scalar tool
+	 * arguments worth surfacing on the card. duplicate_post is MEDIUM risk, so
+	 * in supervised mode it routes to the confirm branch; its new_title maps to
+	 * "title", and a post_id-only call falls back to the raw id so the card is
+	 * never entirely opaque.
+	 */
+	public function test_confirm_summary_payload(): void {
+		$result = $this->make_executor()->execute(
+			'duplicate_post',
+			array( 'post_id' => 123, 'new_title' => 'Fresh copy' ),
+			'test-agent',
+			'supervised',
+			'chat'
+		);
+
+		$this->assertSame( 'confirmation_required', $result['status'] );
+		$this->assertArrayHasKey( 'summary', $result );
+		$this->assertSame( 'Fresh copy', $result['summary']['title'] );
+		$this->assertArrayNotHasKey( 'post_id', $result['summary'], 'a friendly field suppresses the post_id fallback' );
+
+		$fallback = $this->make_executor()->execute(
+			'duplicate_post',
+			array( 'post_id' => 123 ),
+			'test-agent',
+			'supervised',
+			'chat'
+		);
+		$this->assertSame( array( 'post_id' => '123' ), $fallback['summary'] );
+	}
+
+	/**
+	 * new_type (switch_post_type) has no MEDIUM-risk tool, so it can't reach the
+	 * confirm branch through execute(). Exercise the private mapping directly
+	 * instead, covering the alternate keys the confirm summary resolves.
+	 */
+	public function test_summarize_arguments_maps_alternate_keys(): void {
+		$method = new \ReflectionMethod( Tool_Executor::class, 'summarize_arguments' );
+
+		// new_title (duplicate tools) surfaces under "title".
+		$this->assertSame(
+			array( 'title' => 'Fresh copy' ),
+			$method->invoke( null, array( 'new_title' => 'Fresh copy' ) )
+		);
+
+		// new_type (switch_post_type) surfaces under "post_type".
+		$this->assertSame(
+			array( 'post_type' => 'page' ),
+			$method->invoke( null, array( 'new_type' => 'page' ) )
+		);
+
+		// post_id is surfaced only as a last-resort fallback.
+		$this->assertSame(
+			array( 'post_id' => '123' ),
+			$method->invoke( null, array( 'post_id' => 123 ) )
+		);
+	}
+
+	/**
 	 * When enforcement resolves to 'allow' (the site's auto-approve
 	 * preference raises the ceiling to HIGH here), a non-readonly tool
 	 * actually executes, AND Tool_Helpers::backup_tables_for_tool() must
