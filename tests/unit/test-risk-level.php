@@ -266,4 +266,63 @@ class Test_Risk_Level extends TestCase {
 			Risk_Level::max( Risk_Level::NONE, $baseline['force_password_reset'] )
 		);
 	}
+
+	// ─── clamp_enforcement() ─────────────────────────────────────────────────
+
+	/**
+	 * A HIGH-risk decision loosened from 'queue' baseline to 'confirm' (not
+	 * just to 'allow') must still be reclamped without the grant flag — the
+	 * gate-bypass bug: only a literal 'allow' was ever treated as "loosened",
+	 * so a filter returning 'confirm' on a HIGH-risk (normally 'queue')
+	 * baseline passed through unclamped and routed the call through the chat
+	 * confirmation path instead of the admin approval queue.
+	 */
+	public function test_clamp_enforcement_reclamps_any_less_restrictive_decision(): void {
+		$ctx_no_grant = array( 'risk' => Risk_Level::HIGH, 'baseline' => 'queue' );
+
+		$this->assertSame(
+			'queue',
+			Risk_Level::clamp_enforcement( 'confirm', $ctx_no_grant ),
+			'a HIGH-risk queue baseline loosened to confirm must be reclamped, not just a loosening to allow'
+		);
+		$this->assertSame(
+			'queue',
+			Risk_Level::clamp_enforcement( 'allow', $ctx_no_grant )
+		);
+
+		// The grant flag still permits any loosening, not just to 'allow'.
+		$ctx_with_grant = array( 'risk' => Risk_Level::HIGH, 'baseline' => 'queue', 'granted' => true );
+		$this->assertSame( 'confirm', Risk_Level::clamp_enforcement( 'confirm', $ctx_with_grant ) );
+
+		// A decision that is *more* restrictive than baseline (a filter
+		// tightening) is never reclamped.
+		$this->assertSame(
+			'block',
+			Risk_Level::clamp_enforcement( 'block', $ctx_no_grant )
+		);
+	}
+
+	/**
+	 * Only HIGH risk is subject to the loosening clamp — MEDIUM/LOW decisions
+	 * pass through clamp_enforcement() untouched (Tool_Executor's own
+	 * enforcement-value validation is what guards those, not this clamp).
+	 */
+	public function test_clamp_enforcement_only_applies_to_high_risk(): void {
+		$ctx = array( 'risk' => Risk_Level::MEDIUM, 'baseline' => 'confirm' );
+		$this->assertSame( 'allow', Risk_Level::clamp_enforcement( 'allow', $ctx ) );
+	}
+
+	// ─── is_valid_enforcement() ──────────────────────────────────────────────
+
+	/**
+	 * is_valid_enforcement() only accepts the four documented decisions.
+	 */
+	public function test_is_valid_enforcement_rejects_unknown_strings(): void {
+		foreach ( Risk_Level::ENFORCEMENT_LEVELS as $enforcement ) {
+			$this->assertTrue( Risk_Level::is_valid_enforcement( $enforcement ) );
+		}
+		$this->assertFalse( Risk_Level::is_valid_enforcement( 'allowed' ) );
+		$this->assertFalse( Risk_Level::is_valid_enforcement( '' ) );
+		$this->assertFalse( Risk_Level::is_valid_enforcement( 'ALLOW' ) );
+	}
 }

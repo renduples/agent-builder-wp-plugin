@@ -355,6 +355,132 @@ class Test_Tool_Executor extends TestCase {
 	}
 
 	/**
+	 * A HIGH-risk tool's baseline is 'queue'. A filter that loosens it to
+	 * 'confirm' (not literally 'allow') must still be reclamped back to
+	 * 'queue' without the grant flag — the gate-bypass bug this fix targets.
+	 * Before the fix, 'confirm' passed clamp_enforcement() unchanged and the
+	 * call was routed through Agent_Proposals (chat confirmation) instead of
+	 * the admin Approval_Queue, with no grant check at all.
+	 */
+	public function test_high_risk_filter_loosen_to_confirm_is_reclamped_to_queue(): void {
+		$filter = static function () {
+			return 'confirm';
+		};
+		add_filter( 'agent_builder_tool_enforcement', $filter );
+
+		$result = $this->make_executor()->execute(
+			'db_update_option',
+			array( 'name' => 'agent_builder_test_confirm_bypass_opt', 'value' => 'should-not-be-set' ),
+			'test-agent',
+			'autonomous',
+			'chat'
+		);
+
+		remove_filter( 'agent_builder_tool_enforcement', $filter );
+
+		$this->assertSame( 'queued_for_approval', $result['status'], 'must be reclamped to the queue path, not left as confirm' );
+		$this->assertArrayNotHasKey( 'proposal_id', $result, 'the chat confirmation (proposal) path must never be reached' );
+		$this->assertFalse( get_option( 'agent_builder_test_confirm_bypass_opt' ) );
+	}
+
+	/**
+	 * A filter returning an unrecognized enforcement value (typo, stray
+	 * string, anything not one of allow/confirm/queue/block) must never fall
+	 * through to the 'allow' execution path — it is treated as the pre-filter
+	 * baseline instead.
+	 */
+	public function test_unrecognized_enforcement_value_falls_back_to_baseline_not_allow(): void {
+		$filter = static function () {
+			return 'totally-bogus-value';
+		};
+		add_filter( 'agent_builder_tool_enforcement', $filter );
+
+		$result = $this->make_executor()->execute(
+			'add_custom_css',
+			array( 'css' => 'body{color:blue}' ),
+			'test-agent',
+			'supervised',
+			'chat'
+		);
+
+		remove_filter( 'agent_builder_tool_enforcement', $filter );
+
+		$this->assertSame(
+			'confirmation_required',
+			$result['status'] ?? null,
+			'an unrecognized enforcement value must fall back to baseline (confirm here), not silently execute'
+		);
+		$this->assertArrayNotHasKey( 'success', $result );
+	}
+
+	/**
+	 * A filter returning a non-string value (null, an array, an int) must be
+	 * validated and rejected *before* it reaches the strictly-typed
+	 * Risk_Level::clamp_enforcement(), which would otherwise throw a
+	 * TypeError instead of failing closed to the pre-filter baseline.
+	 *
+	 * @dataProvider provide_non_string_enforcement_values
+	 */
+	public function test_non_string_enforcement_value_fails_closed_to_baseline_not_typeerror( $bogus_value ): void {
+		$filter = static function () use ( $bogus_value ) {
+			return $bogus_value;
+		};
+		add_filter( 'agent_builder_tool_enforcement', $filter );
+
+		$result = $this->make_executor()->execute(
+			'add_custom_css',
+			array( 'css' => 'body{color:blue}' ),
+			'test-agent',
+			'supervised',
+			'chat'
+		);
+
+		remove_filter( 'agent_builder_tool_enforcement', $filter );
+
+		$this->assertSame(
+			'confirmation_required',
+			$result['status'] ?? null,
+			'a non-string enforcement value must fail closed to baseline (confirm here), not throw or silently execute'
+		);
+		$this->assertArrayNotHasKey( 'success', $result );
+	}
+
+	public function provide_non_string_enforcement_values(): array {
+		return array(
+			'null'  => array( null ),
+			'array' => array( array( 'allow' ) ),
+			'int'   => array( 1 ),
+		);
+	}
+
+	/**
+	 * A filter-driven block on a tool that is not itself extreme risk gets a
+	 * generic policy-denial message, not the "classified as extreme risk"
+	 * wording — that phrasing is reserved for the baseline-extreme-risk
+	 * branch above it.
+	 */
+	public function test_filter_driven_block_on_non_extreme_tool_gets_generic_message(): void {
+		$filter = static function () {
+			return 'block';
+		};
+		add_filter( 'agent_builder_tool_enforcement', $filter );
+
+		$result = $this->make_executor()->execute(
+			'add_custom_css',
+			array( 'css' => 'body{color:green}' ),
+			'test-agent',
+			'supervised',
+			'chat'
+		);
+
+		remove_filter( 'agent_builder_tool_enforcement', $filter );
+
+		$this->assertArrayHasKey( 'error', $result );
+		$this->assertStringNotContainsString( 'extreme risk', $result['error'] );
+		$this->assertStringContainsString( 'policy', $result['error'] );
+	}
+
+	/**
 	 * $ctx['run_id'] and $ctx['run_kind'] are populated from the passed
 	 * Agent_Run, and $ctx['user_id'] resolves to the run's owner.
 	 */
@@ -470,6 +596,34 @@ class Test_Tool_Executor extends TestCase {
 
 		remove_action( 'agent_builder_tool_executed', $listener, 10 );
 
+		$this->assertSame( 0, $calls );
+	}
+
+	/**
+	 * `agent_builder_tool_executed` must not fire for a call that resolves to
+	 * the synthesized "Unknown tool" error — none of Tool_Loader, the
+	 * agent-inline fallback, or the abilities bridge actually produced a
+	 * result, so nothing "executed."
+	 */
+	public function test_tool_executed_does_not_fire_for_unresolved_unknown_tool(): void {
+		$calls    = 0;
+		$listener = static function () use ( &$calls ) {
+			++$calls;
+		};
+		add_action( 'agent_builder_tool_executed', $listener, 10, 4 );
+
+		$result = $this->make_executor()->execute(
+			'no_such_tool_does_not_exist',
+			array(),
+			'test-agent',
+			'autonomous',
+			'chat'
+		);
+
+		remove_action( 'agent_builder_tool_executed', $listener, 10 );
+
+		$this->assertArrayHasKey( 'error', $result );
+		$this->assertStringContainsString( 'Unknown tool', $result['error'] );
 		$this->assertSame( 0, $calls );
 	}
 
