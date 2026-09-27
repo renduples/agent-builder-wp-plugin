@@ -66,7 +66,7 @@ spl_autoload_register(
 // wp-content/agentic-agents/ (or -knowledge/, -backups/) needs to move.
 define( 'AGENT_BUILDER_FILE', __FILE__ );
 define( 'AGENT_BUILDER_VERSION', '4.0.2' );
-define( 'AGENT_BUILDER_DB_VERSION', '2.14.2' );
+define( 'AGENT_BUILDER_DB_VERSION', '2.15.0' );
 define( 'AGENT_BUILDER_DIR', plugin_dir_path( __FILE__ ) );
 define( 'AGENT_BUILDER_URL', plugin_dir_url( __FILE__ ) );
 define( 'AGENT_BUILDER_BASENAME', plugin_basename( __FILE__ ) );
@@ -693,6 +693,7 @@ final class Plugin {
 require_once AGENT_BUILDER_DIR . 'includes/class-job-manager.php';
 require_once AGENT_BUILDER_DIR . 'includes/interface-job-processor.php';
 require_once AGENT_BUILDER_DIR . 'includes/class-agent-job-processor.php';
+require_once AGENT_BUILDER_DIR . 'includes/class-agent-task-job-processor.php';
 require_once AGENT_BUILDER_DIR . 'includes/class-jobs-api.php';
 require_once AGENT_BUILDER_DIR . 'includes/class-ui-settings-rest.php';
 require_once AGENT_BUILDER_DIR . 'includes/class-dashboard-rest.php';
@@ -739,6 +740,7 @@ Ability_Provider_Registry::register(
 );
 
 Job_Manager::init();
+Agent_Task_Job_Processor::init();
 Provider_Registry::init();
 Jobs_API::init();
 UI_Settings_REST::init();
