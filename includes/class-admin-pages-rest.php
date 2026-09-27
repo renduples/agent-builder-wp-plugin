@@ -17,6 +17,7 @@ declare(strict_types=1);
 
 namespace Agentic;
 
+use Agentic\Admin_Pages\Admin_Profiles;
 use Agentic\Admin_Pages\Agent_Ready_Payload;
 use Agentic\Admin_Pages\Approvals_Payload;
 use Agentic\Admin_Pages\Deployment_Payload;
@@ -254,7 +255,7 @@ class Admin_Pages_REST {
 
 		if ( 'apply_tools_profile' === $action ) {
 			$profile_id = sanitize_key( (string) $request->get_param( 'profile' ) );
-			$profiles   = Tools_Payload::tools_ability_profiles();
+			$profiles   = Admin_Profiles::tools_ability_profiles();
 			if ( ! isset( $profiles[ $profile_id ] ) || 'custom' === $profile_id ) {
 				return new \WP_Error( 'invalid_profile', __( 'Unknown ability profile.', 'agent-builder' ), array( 'status' => 400 ) );
 			}
@@ -616,7 +617,7 @@ class Admin_Pages_REST {
 		$risk_ack     = rest_sanitize_boolean( $request->get_param( 'risk_ack' ) );
 
 		$profiles = array();
-		foreach ( Approvals_Payload::approval_comfort_profiles() as $p ) {
+		foreach ( Admin_Profiles::approval_comfort_profiles() as $p ) {
 			$profiles[ $p['id'] ] = $p;
 		}
 		if ( ! isset( $profiles[ $comfort ] ) ) {
@@ -635,7 +636,7 @@ class Admin_Pages_REST {
 			return new \WP_Error( 'invalid_email', __( 'Enter a valid email address.', 'agent-builder' ), array( 'status' => 400 ) );
 		}
 
-		$prev = Approvals_Payload::get_approval_prefs();
+		$prev = Admin_Profiles::get_approval_prefs();
 
 		update_option( 'agent_builder_approval_email_notify', $email_notify ? 1 : 0, false );
 		if ( is_email( $email_to ) ) {
@@ -679,7 +680,7 @@ class Admin_Pages_REST {
 		return new \WP_REST_Response(
 			array(
 				'ok'    => true,
-				'prefs' => Approvals_Payload::get_approval_prefs(),
+				'prefs' => Admin_Profiles::get_approval_prefs(),
 			),
 			200
 		);
