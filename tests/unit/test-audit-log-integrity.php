@@ -205,6 +205,39 @@ class Test_Audit_Log_Integrity extends TestCase {
 	}
 
 	/**
+	 * log() with a scalar $details value still produces the hash-protected
+	 * details._run_id correlation copy when a run is active — not just for
+	 * array/null $details.
+	 */
+	public function test_log_adds_run_id_for_scalar_details(): void {
+		global $wpdb;
+
+		Agent_Run::reset_current_for_tests();
+		$run = Agent_Run::begin( 'test-agent' );
+
+		$audit = new Audit_Log();
+		$id    = $audit->log( 'test-agent', 'tool_call', 'list_posts', 'a scalar detail' );
+
+		$this->assertNotFalse( $id );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test assertion against the raw row.
+		$row = $wpdb->get_row(
+			$wpdb->prepare( "SELECT * FROM {$wpdb->prefix}agent_builder_audit_log WHERE id = %d", $id ),
+			ARRAY_A
+		);
+
+		$details = json_decode( $row['details'], true );
+		$this->assertSame( $run->get_run_id(), $details['_run_id'] );
+		$this->assertSame( 'a scalar detail', $details['value'] );
+
+		$result = Audit_Log_Integrity::verify_chain();
+		$this->assertTrue( $result['valid'] );
+
+		$run->finish( 'completed' );
+		Agent_Run::reset_current_for_tests();
+	}
+
+	/**
 	 * Tampering the bare run_id column alone — leaving details._run_id
 	 * (and therefore the hash) untouched — is, by design, not detectable by
 	 * the chain: run_id sits outside canonical_row() so it can be corrected

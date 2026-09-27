@@ -632,6 +632,16 @@ class Agent_Run {
 		// instance is settled and must not have the shutdown safety net
 		// overwrite it with 'aborted' when the current request ends.
 		$this->finished = true;
+
+		// Mirror finish()'s own self::$current clearing: a later begin() in
+		// this same process (e.g. a second lifecycle event in one cron batch)
+		// must start a fresh run rather than getting back this settled one.
+		// finish() can't do this for us — its clearing lives inside the
+		// `if ( ! $this->finished )` guard, which a waiting run's later
+		// finish() call never reaches since $finished is already true here.
+		if ( self::$current === $this ) {
+			self::$current = null;
+		}
 	}
 
 	/**
@@ -1033,9 +1043,17 @@ class Agent_Run {
 		$run->result_text  = (string) ( $summary['text'] ?? '' );
 		$run->result_cards = is_array( $summary['cards'] ?? null ) ? $summary['cards'] : array();
 
-		$state           = self::decode_assoc( $row['state'] ?? '' );
-		$run->scratchpad = is_array( $state['scratchpad'] ?? null ) ? $state['scratchpad'] : array();
-		$run->messages   = is_array( $state['messages'] ?? null ) ? $state['messages'] : array();
+		$state = self::decode_assoc( $row['state'] ?? '' );
+		if ( array_key_exists( 'scratchpad', $state ) || array_key_exists( 'messages', $state ) ) {
+			// Current (>= 2.15.0) shape: {scratchpad, messages}.
+			$run->scratchpad = is_array( $state['scratchpad'] ?? null ) ? $state['scratchpad'] : array();
+			$run->messages   = is_array( $state['messages'] ?? null ) ? $state['messages'] : array();
+		} else {
+			// Legacy (pre-2.15.0) shape: the whole decoded value *is* the
+			// scratchpad, with no wrapper and no transcript.
+			$run->scratchpad = $state;
+			$run->messages   = array();
+		}
 
 		$run->finished = in_array( $run->status, self::TERMINAL_STATUSES, true );
 
@@ -1093,7 +1111,9 @@ class Agent_Run {
 		$stripped  = array_values( array_map( array( self::class, 'strip_message_images' ), $messages ) );
 		$remaining = count( $stripped );
 
-		while ( $remaining > 1 ) {
+		// $remaining > 0 (not > 1): a single oversized message must be
+		// dropped too, rather than left over the declared cap.
+		while ( $remaining > 0 ) {
 			$encoded = wp_json_encode( $stripped );
 			if ( is_string( $encoded ) && strlen( $encoded ) <= self::TRANSCRIPT_CAP_BYTES ) {
 				break;

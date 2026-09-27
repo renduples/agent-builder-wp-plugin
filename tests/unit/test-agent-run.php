@@ -201,6 +201,70 @@ class Test_Agent_Run extends TestCase {
 	}
 
 	/**
+	 * A single message that alone exceeds the 200KB transcript cap is dropped
+	 * rather than left in the persisted transcript over the declared bound.
+	 */
+	public function test_mark_waiting_drops_a_single_oversized_message(): void {
+		$run = Agent_Run::begin( 'content-writer' );
+
+		$oversized_transcript = array(
+			array(
+				'role'    => 'assistant',
+				'content' => str_repeat( 'x', 250 * 1024 ),
+			),
+		);
+
+		$run->mark_waiting( 'approval', '42', $oversized_transcript );
+
+		$this->assertSame( array(), $run->resume_state()['messages'] );
+	}
+
+	/**
+	 * mark_waiting() clears Agent_Run::current() the same way finish() does,
+	 * so a later begin() in the same process starts a fresh run rather than
+	 * getting back the already-settled waiting instance.
+	 */
+	public function test_mark_waiting_clears_current_run(): void {
+		$run = Agent_Run::begin( 'content-writer' );
+		$this->assertSame( $run, Agent_Run::current() );
+
+		$run->mark_waiting( 'approval', '42', array() );
+
+		$this->assertNull( Agent_Run::current() );
+
+		$next = Agent_Run::begin( 'seo-optimizer' );
+		$this->assertNotSame( $run, $next );
+		$this->assertNotSame( $run->get_run_id(), $next->get_run_id() );
+
+		$next->finish( 'completed' );
+	}
+
+	/**
+	 * A run whose state column was written before 2.15.0 (the bare
+	 * scratchpad object, with no {scratchpad, messages} wrapper) still loads
+	 * its scratchpad correctly instead of it being silently dropped.
+	 */
+	public function test_load_recovers_scratchpad_from_legacy_flat_state_shape(): void {
+		$run    = Agent_Run::begin( 'content-writer' );
+		$run_id = $run->get_run_id();
+
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Simulating a pre-2.15.0 row shape for the test.
+		$wpdb->update(
+			$wpdb->prefix . 'agent_builder_runs',
+			array( 'state' => wp_json_encode( array( 'delegated_key' => 'delegated_value' ) ) ),
+			array( 'run_id' => $run_id )
+		);
+
+		$reloaded = Agent_Run::load( $run_id );
+
+		$this->assertSame( 'delegated_value', $reloaded->scratch_get( 'delegated_key' ) );
+		$this->assertSame( array(), $reloaded->resume_state()['messages'] );
+
+		$run->finish( 'completed' );
+	}
+
+	/**
 	 * record_iteration() sums iterations, tokens, cost, and unions tool names
 	 * across multiple calls.
 	 */

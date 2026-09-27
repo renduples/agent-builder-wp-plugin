@@ -129,6 +129,16 @@ final class Plugin {
 		// --- Hooks needed on every request (frontend, REST, cron) ---.
 		add_action( 'init', array( $this, 'init' ) );
 
+		// Schema-repair path for frontend/REST/cron requests: maybe_upgrade()
+		// only runs from admin_init, so a site whose first post-auto-update
+		// request is one of those — with no administrator having loaded
+		// wp-admin yet — kept a stale table (missing M10 columns) until an
+		// admin happened to visit, silently dropping every Agent_Run/Audit_Log
+		// insert made in the meantime. maybe_upgrade_schema() is a single cheap
+		// get_option() read once the schema is current, so this costs nothing
+		// on the common path.
+		add_action( 'init', array( Activator::class, 'maybe_upgrade_schema' ) );
+
 		// Admin bar agent menu — front-end only. The 'wp' action does not fire in
 		// wp-admin, so this naturally skips the backend. Deferred until 'wp' so
 		// is_admin_bar_showing() is reliable; also skips REST, cron, and

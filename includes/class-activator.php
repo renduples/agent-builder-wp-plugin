@@ -231,6 +231,11 @@ final class Activator {
 	 * fills in any bundled tools/skills/agents added since the site's last
 	 * seed — existing data is never touched, only gaps are filled.
 	 *
+	 * A cron/REST/frontend request that arrives before any admin has loaded
+	 * wp-admin post-upgrade is instead covered by maybe_upgrade_schema()
+	 * (hooked on 'init'), which repairs the table shape but leaves the notice
+	 * and seed-flag side effects below to this, the wp-admin path.
+	 *
 	 * @return void
 	 */
 	public static function maybe_upgrade(): void {
@@ -238,28 +243,85 @@ final class Activator {
 			return;
 		}
 
-		$stored = (string) get_option( 'agent_builder_db_schema_version', '' );
-		if ( AGENT_BUILDER_DB_VERSION === $stored ) {
+		if ( ! self::schema_is_stale() ) {
 			return;
 		}
 
 		self::$activation_log = array();
-		self::guarded_step( 'maybe_upgrade_create_tables', array( __CLASS__, 'create_tables' ) );
-		$tables_ok = 'ok' === self::last_log_status( 'create_tables' );
-		if ( ! $tables_ok ) {
-			update_option( 'agent_builder_activation_degraded', true );
-		}
+		$tables_ok            = self::run_schema_upgrade();
 		self::flush_deferred_log( AGENT_BUILDER_DB_VERSION );
 
 		if ( ! $tables_ok ) {
 			return; // Leave stored version behind — retried on the next admin_init.
 		}
 
-		self::set_db_schema_version( AGENT_BUILDER_DB_VERSION );
-
 		if ( ! self::is_safe_mode() ) {
 			update_option( 'agent_builder_needs_seed', true );
 		}
+	}
+
+	/**
+	 * Broader entry point for the same idempotent dbDelta schema sync as
+	 * maybe_upgrade(), without the wp-admin + logged-in gate.
+	 *
+	 * maybe_upgrade() only runs from admin_init, so a site whose first
+	 * post-auto-update request is frontend/REST/WP-Cron — with no
+	 * administrator having loaded wp-admin yet — kept a stale table for the
+	 * whole time until an admin happened to visit, silently dropping every
+	 * Agent_Run/Audit_Log insert made in the meantime (a missing column fails
+	 * the insert outright). Hooked on 'init' so it runs on every request type.
+	 *
+	 * Kept deliberately minimal: it only re-runs create_tables() and bumps the
+	 * stored version. The admin-only notices (agent_builder_activation_degraded)
+	 * and the deferred-seed flag stay exclusive to maybe_upgrade()'s wp-admin
+	 * path — a stray cron/REST/frontend hit should repair the schema, not
+	 * start background seeding or surface an admin notice on its own.
+	 *
+	 * The stored-version check is a single cheap get_option() call, so this
+	 * is a no-op read on every request once the schema is current.
+	 *
+	 * @return void
+	 */
+	public static function maybe_upgrade_schema(): void {
+		if ( is_admin() && is_user_logged_in() ) {
+			return; // maybe_upgrade() (admin_init) owns this case.
+		}
+
+		if ( ! self::schema_is_stale() ) {
+			return;
+		}
+
+		self::$activation_log = array();
+		self::run_schema_upgrade();
+		self::flush_deferred_log( AGENT_BUILDER_DB_VERSION );
+	}
+
+	/**
+	 * Whether the stored schema version is behind the running plugin's.
+	 *
+	 * @return bool
+	 */
+	private static function schema_is_stale(): bool {
+		$stored = (string) get_option( 'agent_builder_db_schema_version', '' );
+		return AGENT_BUILDER_DB_VERSION !== $stored;
+	}
+
+	/**
+	 * Re-run the idempotent dbDelta table creation and, on success, bump the
+	 * stored schema version. Shared by maybe_upgrade() and maybe_upgrade_schema().
+	 *
+	 * @return bool True when tables were created/upgraded successfully.
+	 */
+	private static function run_schema_upgrade(): bool {
+		self::guarded_step( 'maybe_upgrade_create_tables', array( __CLASS__, 'create_tables' ) );
+		$tables_ok = 'ok' === self::last_log_status( 'create_tables' );
+		if ( ! $tables_ok ) {
+			update_option( 'agent_builder_activation_degraded', true );
+			return false;
+		}
+
+		self::set_db_schema_version( AGENT_BUILDER_DB_VERSION );
+		return true;
 	}
 
 	/**

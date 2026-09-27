@@ -84,10 +84,20 @@ class Audit_Log {
 		$run              = Agent_Run::current();
 		$run_id           = $run instanceof Agent_Run ? $run->get_run_id() : '';
 		$details_with_run = $details;
-		if ( '' !== $run_id && is_array( $details_with_run ) ) {
-			$details_with_run['_run_id'] = $run_id;
-		} elseif ( '' !== $run_id && null === $details_with_run ) {
-			$details_with_run = array( '_run_id' => $run_id );
+		if ( '' !== $run_id ) {
+			if ( null === $details_with_run ) {
+				$details_with_run = array( '_run_id' => $run_id );
+			} elseif ( is_array( $details_with_run ) ) {
+				$details_with_run['_run_id'] = $run_id;
+			} else {
+				// A scalar or object $details value falls outside both cases
+				// above — normalize it so the tamper-evident correlation is
+				// never silently skipped.
+				$details_with_run = array(
+					'value'   => $details_with_run,
+					'_run_id' => $run_id,
+				);
+			}
 		}
 
 		$data = array(
