@@ -801,7 +801,11 @@
         h = h.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
         h = h.replace(/\*([^*]+)\*/g, '<em>$1</em>');
 
-        h = h.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+        h = h.replace(/\[([^\]]+)\]\(([^)]+)\)/g, function (match, label, url) {
+            var href = safeLinkHref(url);
+            if (href === null) return label; // unsafe scheme — plain text
+            return '<a href="' + href + '" target="_blank" rel="noopener">' + label + '</a>';
+        });
 
         h = h.replace(/^\s*[-*]\s+(.*)$/gm, '<li>$1</li>');
         h = h.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
@@ -875,6 +879,24 @@
         var d = document.createElement('div');
         d.textContent = text;
         return d.innerHTML;
+    }
+
+    // Validate a link URL against a safe-scheme allowlist and make it safe to
+    // interpolate into href="…". Returns the attribute-safe URL, or null when
+    // the scheme is disallowed (javascript:, data:, vbscript:, etc.).
+    // The URL argument is already HTML-escaped by esc() — which escapes &, <, >
+    // but NOT the quote characters — so this only needs to escape " and ' on top
+    // of that. Scheme detection mirrors the URL Standard: strip ASCII
+    // tab/newline/CR and surrounding C0 control + space first, so a
+    // "java\tscript:"-style obfuscation can't masquerade as a relative URL.
+    function safeLinkHref(url) {
+        var stripped = url.replace(/[\t\n\r]/g, '').replace(/^[\x00-\x20]+|[\x00-\x20]+$/g, '');
+        var scheme = stripped.match(/^([a-z][a-z0-9+.\-]*):/i);
+        if (scheme) {
+            var name = scheme[1].toLowerCase();
+            if (name !== 'http' && name !== 'https' && name !== 'mailto') return null;
+        }
+        return url.replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
 
     function uuid() {

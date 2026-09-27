@@ -34,6 +34,28 @@ function escapeHtml( text ) {
 		.replace( /'/g, '&#039;' );
 }
 
+// Validate a link URL against a safe-scheme allowlist and make it safe to
+// interpolate into href="…". Returns the attribute-safe URL, or null when the
+// scheme is disallowed (javascript:, data:, vbscript:, etc.). Scheme detection
+// mirrors the URL Standard: strip ASCII tab/newline/CR and surrounding C0
+// control + space first, so a "java\tscript:"-style obfuscation can't
+// masquerade as a relative URL.
+function safeLinkHref( url ) {
+	const stripped = url
+		.replace( /[\t\n\r]/g, '' )
+		.replace( /^[\x00-\x20]+|[\x00-\x20]+$/g, '' );
+	const scheme = stripped.match( /^([a-z][a-z0-9+.\-]*):/i );
+	if ( scheme ) {
+		const name = scheme[ 1 ].toLowerCase();
+		if ( name !== 'http' && name !== 'https' && name !== 'mailto' ) {
+			return null;
+		}
+	}
+	// escapeHtml() has already escaped &, <, >, " and ' in the URL; these two
+	// replacements keep the three renderers behaving identically (no-op here).
+	return url.replace( /"/g, '&quot;' ).replace( /'/g, '&#039;' );
+}
+
 // Mirrors assets/js/chat.js's renderMarkdown(): escape first, then apply a
 // small set of safe substitutions on the already-escaped text. Kept in lockstep
 // with chat.js/chat-overlay.js — see the note in the PR about the one deliberate
@@ -115,10 +137,19 @@ function renderChatMarkdown( text ) {
 	h = h.replace( /\*\*([^*]+)\*\*/g, '<strong>$1</strong>' );
 	h = h.replace( /\*([^*]+)\*/g, '<em>$1</em>' );
 
-	h = h.replace(
-		/\[([^\]]+)\]\(([^)]+)\)/g,
-		'<a href="$2" target="_blank" rel="noopener">$1</a>'
-	);
+	h = h.replace( /\[([^\]]+)\]\(([^)]+)\)/g, ( match, label, url ) => {
+		const href = safeLinkHref( url );
+		if ( href === null ) {
+			return label;
+		}
+		return (
+			'<a href="' +
+			href +
+			'" target="_blank" rel="noopener">' +
+			label +
+			'</a>'
+		);
+	} );
 
 	h = h.replace( /^\s*[-*]\s+(.*)$/gm, '<li>$1</li>' );
 	h = h.replace( /(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>' );
