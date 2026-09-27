@@ -334,9 +334,9 @@ WEBCONFIG;
 
 	/**
 	 * Create one of the plugin's own writable directories (agentic-agents,
-	 * agentic-knowledge, agentic-backups, agentic-exports — never the shared
-	 * uploads directory, which this plugin does not own) and seed it with
-	 * execution-denying protection, the first time it is created.
+	 * agentic-knowledge, agentic-backups — never the shared uploads directory,
+	 * which this plugin does not own) and seed it with execution-denying
+	 * protection, the first time it is created.
 	 *
 	 * This is defense-in-depth against a misconfigured webserver, not the
 	 * primary control: the extension denylist above is what actually stops
@@ -557,26 +557,36 @@ WEBCONFIG;
 	/**
 	 * Recursively delete a directory and all its contents using native PHP.
 	 *
+	 * Wrapped in a try/catch: RecursiveDirectoryIterator throws (rather than
+	 * returning false) when it cannot open a directory — an unreadable or
+	 * inaccessible entry inside a tree being swept (e.g. the one-time legacy
+	 * agent-export cleanup) would otherwise propagate up and fatal the whole
+	 * request. Degrades to "nothing further deleted" instead.
+	 *
 	 * @param string $path Absolute directory path.
 	 * @return bool
 	 */
 	private static function rmdir_recursive( string $path ): bool {
-		$iterator = new \RecursiveIteratorIterator(
-			new \RecursiveDirectoryIterator( $path, \RecursiveDirectoryIterator::SKIP_DOTS ),
-			\RecursiveIteratorIterator::CHILD_FIRST
-		);
+		try {
+			$iterator = new \RecursiveIteratorIterator(
+				new \RecursiveDirectoryIterator( $path, \RecursiveDirectoryIterator::SKIP_DOTS ),
+				\RecursiveIteratorIterator::CHILD_FIRST
+			);
 
-		foreach ( $iterator as $item ) {
-			if ( $item->isDir() ) {
-				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir
-				rmdir( $item->getPathname() );
-			} else {
-				// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
-				unlink( $item->getPathname() );
+			foreach ( $iterator as $item ) {
+				if ( $item->isDir() ) {
+					// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir
+					rmdir( $item->getPathname() );
+				} else {
+					// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
+					unlink( $item->getPathname() );
+				}
 			}
-		}
 
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir
-		return rmdir( $path );
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir
+			return rmdir( $path );
+		} catch ( \Throwable $e ) {
+			return false;
+		}
 	}
 }

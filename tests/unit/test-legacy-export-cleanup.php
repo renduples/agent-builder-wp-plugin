@@ -167,6 +167,35 @@ class Test_Legacy_Export_Cleanup extends TestCase {
 	}
 
 	/**
+	 * An unreadable entry inside the legacy wp-content/agentic-exports/ tree
+	 * makes the recursive delete throw (RecursiveDirectoryIterator throws on a
+	 * directory it cannot open). File_Manager::rmdir() must swallow that and
+	 * return false instead — so this one-time security sweep degrades to "leave
+	 * the flag unset, retry next request" rather than fatalling every request
+	 * (the sweep runs on init, for every visitor, until the flag is set).
+	 */
+	public function test_unreadable_legacy_entry_does_not_fatal(): void {
+		wp_mkdir_p( $this->exports_dir . '/locked' );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture write.
+		file_put_contents( $this->exports_dir . '/locked/secret.zip', 'zip-bytes' );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- Simulate an unreadable entry.
+		chmod( $this->exports_dir . '/locked', 0000 );
+		wp_set_current_user( 0 );
+
+		try {
+			Activator::maybe_cleanup_legacy_agent_exports();
+		} finally {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- Restore so tearDown can remove the tree.
+			chmod( $this->exports_dir . '/locked', 0755 );
+		}
+
+		$this->assertFalse(
+			get_option( 'agent_builder_legacy_exports_cleaned' ),
+			'An unreadable legacy entry must leave the flag unset (retry later), not crash the request'
+		);
+	}
+
+	/**
 	 * A concurrent request holding the lock skips the sweep and leaves the
 	 * flag unset so it is retried once the lock clears.
 	 */
