@@ -479,11 +479,16 @@ class Provider_Registry {
 	 * prompts must use this instead, so a stopped site still shows its full menu
 	 * and the administrator can reach Interface Settings to disable the stop.
 	 *
+	 * While the stop is active the answer is derived from the stop's own
+	 * snapshot, not assumed: a site that never configured a provider before the
+	 * stop (empty snapshot) is still unconfigured and must be routed to Quick
+	 * Start, whereas a site that had a real provider keeps its full menu.
+	 *
 	 * @return bool
 	 */
 	public static function has_configured_provider(): bool {
 		if ( self::is_emergency_stop_active() ) {
-			return true;
+			return self::was_configured_before_stop();
 		}
 		$ollama_url = get_option( 'agent_builder_ollama_url', '' );
 		foreach ( self::get_all() as $p ) {
@@ -504,6 +509,40 @@ class Provider_Registry {
 				return true;
 			}
 		}
+		return false;
+	}
+
+	/**
+	 * Whether a provider was configured at the moment the emergency stop was
+	 * enabled, read back from the stop's own restore snapshot.
+	 *
+	 * Emergency_Stop::enable() snapshots each provider's key state (`had_key` /
+	 * `encrypted_key`) and the Ollama URL before disconnecting them, so this is
+	 * the only reliable signal that a provider existed before the stop. A site
+	 * that was never configured still has an empty snapshot and must be routed
+	 * to Quick Start rather than treated as a configured-but-stopped site.
+	 *
+	 * @return bool
+	 */
+	private static function was_configured_before_stop(): bool {
+		$snapshot = get_option( Emergency_Stop::OPTION_SNAPSHOT, array() );
+		if ( ! is_array( $snapshot ) ) {
+			return false;
+		}
+
+		if ( ! empty( $snapshot['ollama_url'] ) ) {
+			return true;
+		}
+
+		foreach ( (array) ( $snapshot['providers'] ?? array() ) as $info ) {
+			if ( ! is_array( $info ) ) {
+				continue;
+			}
+			if ( ! empty( $info['had_key'] ) || ! empty( $info['encrypted_key'] ) ) {
+				return true;
+			}
+		}
+
 		return false;
 	}
 

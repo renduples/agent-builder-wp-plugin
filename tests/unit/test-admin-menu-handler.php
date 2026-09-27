@@ -160,6 +160,9 @@ class Test_Admin_Menu_Handler extends TestCase {
 	 * has_configured_provider() reads true, so any_llm_configured() keeps the full
 	 * menu registered and the administrator can reach Interface Settings to
 	 * disable the stop instead of being funnelled to Quick Start.
+	 *
+	 * The stop's own snapshot records the provider that existed before the stop,
+	 * which is what has_configured_provider() reads while the stop is active.
 	 */
 	public function test_emergency_stop_is_distinct_from_no_provider(): void {
 		// Configure a usable hosted provider first.
@@ -172,7 +175,24 @@ class Test_Admin_Menu_Handler extends TestCase {
 			'precondition: a configured provider is usable before the stop.'
 		);
 
-		// Flip the emergency stop on.
+		// Flip the emergency stop on with the snapshot enable() would have
+		// persisted — the provider captured with its key.
+		update_option(
+			'agent_builder_disable_all_agents_snapshot',
+			array(
+				'providers'    => array(
+					'agentic' => array(
+						'slug'          => 'agentic',
+						'name'          => 'Agentic',
+						'had_key'       => true,
+						'encrypted_key' => 'enc:relay-key-abc123',
+						'default_model' => '',
+						'auth_type'     => 'bearer',
+					),
+				),
+				'ollama_url'   => '',
+			)
+		);
 		update_option( 'agent_builder_disable_all_agents', '1' );
 
 		$this->assertFalse(
@@ -181,8 +201,68 @@ class Test_Admin_Menu_Handler extends TestCase {
 		);
 		$this->assertTrue(
 			Provider_Registry::has_configured_provider(),
-			'A stopped site is still configured and must keep its full admin menu.'
+			'A stopped site with a provider in its snapshot is still configured and must keep its full admin menu.'
 		);
+	}
+
+	/**
+	 * A site that was never configured is still unconfigured even while the
+	 * emergency stop is active: the stop's snapshot has no provider keys, so
+	 * has_configured_provider() reads false and the administrator is funnelled
+	 * to Quick Start (the "connect a provider" notice) instead of being shown a
+	 * full menu with nothing to reach.
+	 */
+	public function test_emergency_stop_with_empty_snapshot_is_unconfigured(): void {
+		// No provider key anywhere, mirroring a fresh install.
+		Provider_Registry::save_api_key( 'agentic', '' );
+		Provider_Registry::invalidate();
+		delete_option( 'agent_builder_license_key' );
+		delete_option( 'agent_builder_ollama_url' );
+
+		// The stop is active, but its snapshot shows nothing was ever configured.
+		update_option(
+			'agent_builder_disable_all_agents_snapshot',
+			array(
+				'providers'  => array(
+					'agentic' => array(
+						'slug'          => 'agentic',
+						'name'          => 'Agentic',
+						'had_key'       => false,
+						'encrypted_key' => '',
+						'default_model' => '',
+						'auth_type'     => 'bearer',
+					),
+				),
+				'ollama_url' => '',
+			)
+		);
+		update_option( 'agent_builder_disable_all_agents', '1' );
+
+		$this->assertFalse(
+			Provider_Registry::has_usable_provider(),
+			'Nothing is usable while the stop is active.'
+		);
+		$this->assertFalse(
+			Provider_Registry::has_configured_provider(),
+			'A stopped site whose snapshot shows no provider was configured is unconfigured.'
+		);
+
+		// An administrator landing on a hidden page is routed to Quick Start, not
+		// shown the misleading "Administrator access required" screen.
+		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $admin );
+		$_GET['page'] = 'agentic-settings';
+
+		$handler = new Admin_Menu_Handler();
+
+		try {
+			$handler->maybe_show_access_notice();
+			$this->fail( 'Expected maybe_show_access_notice() to wp_die() with the connect-provider notice.' );
+		} catch ( \WPDieException $e ) {
+			$this->assertSame( 403, $e->getCode() );
+			$this->assertStringContainsString( 'Connect an AI provider to unlock this screen', $e->getMessage() );
+			$this->assertStringContainsString( 'Go to Quick Start', $e->getMessage() );
+		}
 	}
 
 	/**
@@ -194,7 +274,9 @@ class Test_Admin_Menu_Handler extends TestCase {
 		Provider_Registry::save_api_key( 'agentic', '' );
 		Provider_Registry::invalidate();
 		delete_option( 'agent_builder_license_key' );
+		delete_option( 'agent_builder_ollama_url' );
 		delete_option( 'agent_builder_disable_all_agents' );
+		delete_option( 'agent_builder_disable_all_agents_snapshot' );
 
 		parent::tearDown();
 	}
