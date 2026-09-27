@@ -414,6 +414,46 @@ class Test_Tool_Executor extends TestCase {
 	}
 
 	/**
+	 * A filter returning a non-string value (null, an array, an int) must be
+	 * validated and rejected *before* it reaches the strictly-typed
+	 * Risk_Level::clamp_enforcement(), which would otherwise throw a
+	 * TypeError instead of failing closed to the pre-filter baseline.
+	 *
+	 * @dataProvider provide_non_string_enforcement_values
+	 */
+	public function test_non_string_enforcement_value_fails_closed_to_baseline_not_typeerror( $bogus_value ): void {
+		$filter = static function () use ( $bogus_value ) {
+			return $bogus_value;
+		};
+		add_filter( 'agent_builder_tool_enforcement', $filter );
+
+		$result = $this->make_executor()->execute(
+			'add_custom_css',
+			array( 'css' => 'body{color:blue}' ),
+			'test-agent',
+			'supervised',
+			'chat'
+		);
+
+		remove_filter( 'agent_builder_tool_enforcement', $filter );
+
+		$this->assertSame(
+			'confirmation_required',
+			$result['status'] ?? null,
+			'a non-string enforcement value must fail closed to baseline (confirm here), not throw or silently execute'
+		);
+		$this->assertArrayNotHasKey( 'success', $result );
+	}
+
+	public function provide_non_string_enforcement_values(): array {
+		return array(
+			'null'  => array( null ),
+			'array' => array( array( 'allow' ) ),
+			'int'   => array( 1 ),
+		);
+	}
+
+	/**
 	 * A filter-driven block on a tool that is not itself extreme risk gets a
 	 * generic policy-denial message, not the "classified as extreme risk"
 	 * wording — that phrasing is reserved for the baseline-extreme-risk

@@ -261,15 +261,18 @@ class Tool_Executor {
 		 * @param array  $ctx         Gate context — see Tool_Executor::execute().
 		 */
 		$enforcement = apply_filters( 'agent_builder_tool_enforcement', $baseline, $ctx );
-		$enforcement = Risk_Level::clamp_enforcement( $enforcement, $ctx );
 
 		// A filter (or a bug in one) can return anything — a typo, a stray
-		// value, null coerced to ''. Never let an unrecognized value fall
-		// through the checks below to the 'allow' path; treat it as the
-		// pre-filter baseline instead.
-		if ( ! Risk_Level::is_valid_enforcement( $enforcement ) ) {
+		// value, null, an int, an array. Validate the type and value here,
+		// before it ever reaches the strictly-typed clamp_enforcement() —
+		// passing a non-string there would throw a TypeError instead of
+		// failing closed. Never let an unrecognized value fall through to
+		// the 'allow' path; treat it as the pre-filter baseline instead.
+		if ( ! is_string( $enforcement ) || ! Risk_Level::is_valid_enforcement( $enforcement ) ) {
 			$enforcement = $baseline;
 		}
+
+		$enforcement = Risk_Level::clamp_enforcement( $enforcement, $ctx );
 
 		/**
 		 * Fires once the gate decision for this tool call is final.
