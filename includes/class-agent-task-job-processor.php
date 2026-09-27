@@ -47,8 +47,11 @@ class Agent_Task_Job_Processor implements Job_Processor_Interface {
 				// An earlier-priority callback may have returned a non-array;
 				// cast it back so appending self::class can't throw a TypeError
 				// from an `array` type hint before Job_Manager's own fallback runs.
+				// Restore the built-in default allowlist entry rather than an
+				// empty array, so Agent_Builder_Job_Processor's own jobs are not
+				// dropped and later rejected as "processor not allowed".
 				if ( ! is_array( $allowed ) ) {
-					$allowed = array();
+					$allowed = array( Agent_Builder_Job_Processor::class );
 				}
 				$allowed[] = self::class;
 				return $allowed;

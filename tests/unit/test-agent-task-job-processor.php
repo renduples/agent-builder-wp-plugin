@@ -136,6 +136,32 @@ class Test_Agent_Task_Job_Processor extends TestCase {
 	}
 
 	/**
+	 * Regression: when an earlier-priority filter returns a non-array, the
+	 * callback restores the built-in default allowlist entry rather than an
+	 * empty array, so Agent_Builder_Job_Processor's own jobs are not dropped
+	 * and later rejected as "processor not allowed".
+	 */
+	public function test_init_callback_preserves_default_allowlist_on_non_array_from_earlier_filter(): void {
+		$callback = function () {
+			return 'not-an-array';
+		};
+		add_filter( 'agent_builder_job_processors', $callback, 5 );
+
+		try {
+			$allowed = apply_filters(
+				'agent_builder_job_processors',
+				array( \Agentic\Agent_Builder_Job_Processor::class )
+			);
+		} finally {
+			remove_filter( 'agent_builder_job_processors', $callback, 5 );
+		}
+
+		$this->assertIsArray( $allowed );
+		$this->assertContains( \Agentic\Agent_Builder_Job_Processor::class, $allowed );
+		$this->assertContains( Agent_Task_Job_Processor::class, $allowed );
+	}
+
+	/**
 	 * The processor resolves the Agent_Run by run_id before doing anything
 	 * else: a missing run fails the job cleanly (status failed, "Run not
 	 * found"), and does not crash or get rejected by the allowlist.
