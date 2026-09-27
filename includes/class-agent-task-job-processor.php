@@ -102,8 +102,6 @@ class Agent_Task_Job_Processor implements Job_Processor_Interface {
 			throw new \Exception( 'Run not found: ' . esc_html( $run_id ) );
 		}
 
-		$run->make_current();
-
 		$agent_id = (string) ( $request_data['agent_id'] ?? '' );
 		$agent    = \Agentic_Agent_Registry::get_instance()->get_agent_instance( $agent_id );
 
@@ -114,22 +112,35 @@ class Agent_Task_Job_Processor implements Job_Processor_Interface {
 
 		$prompt = (string) ( $request_data['prompt'] ?? '' );
 
+		// Resuming a waiting run: hand the controller the run id, its saved
+		// resume state, and (when present) the resolved tool result so its
+		// resume branch takes over. A fresh run needs no options — the
+		// controller begins and owns the run's lifecycle itself.
+		$options = array();
+		if ( isset( $request_data['resume'] ) && is_array( $request_data['resume'] ) ) {
+			$options['run_id']       = $run_id;
+			$options['resume_state'] = $request_data['resume'];
+			if ( isset( $request_data['tool_result'] ) && is_array( $request_data['tool_result'] ) ) {
+				$options['tool_result'] = $request_data['tool_result'];
+			}
+		}
+
 		$progress_callback( 20, 'Running autonomous task…' );
 
 		$controller = new Agent_Controller();
-		$result     = $controller->run_autonomous_task( $agent, $prompt, $run_id );
+		$result     = $controller->run_autonomous_task( $agent, $prompt, $run_id, $options );
 
 		if ( null === $result ) {
 			$run->finish( 'failed', array( 'error' => 'Autonomous task failed to start.' ) );
 			throw new \Exception( 'Autonomous task failed to start.' );
 		}
 
-		$run->finish(
-			'completed',
-			array(
-				'text' => (string) ( $result['response'] ?? '' ),
-			)
-		);
+		// Only a non-terminal 'error' still needs finishing here: 'completed',
+		// 'cancelled' and 'aborted' were already finished by the controller, and
+		// 'waiting' / 'continuing' must stay in their hand-off state.
+		if ( 'error' === (string) ( $result['status'] ?? 'completed' ) ) {
+			$run->finish( 'failed', array( 'error' => (string) ( $result['response'] ?? 'Autonomous task errored.' ) ) );
+		}
 
 		$progress_callback( 100, 'Completed' );
 
