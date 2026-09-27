@@ -162,6 +162,57 @@ class Admin_Notice_Manager {
 	}
 
 	/**
+	 * Show a dismissible notice when activation (or a later deferred seeding
+	 * step) hit an error and the plugin finished setup in a reduced state.
+	 *
+	 * The plugin is fully safe to use as-is — this only means some bundled
+	 * agents/tools/skills/demo data may not be seeded yet. Offers a one-click
+	 * retry (see Activator::maybe_handle_retry_request()).
+	 *
+	 * @return void
+	 */
+	public function show_activation_degraded_notice(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		if ( ! get_option( 'agent_builder_activation_degraded' ) ) {
+			return;
+		}
+
+		if ( get_user_meta( get_current_user_id(), 'agentic_activation_degraded_notice_dismissed', true ) ) {
+			return;
+		}
+
+		$retry_url = wp_nonce_url(
+			add_query_arg( 'agentic_retry_activation', '1' ),
+			'agentic_retry_activation',
+			'agentic_retry_activation_nonce'
+		);
+		$nonce     = wp_create_nonce( 'agentic_dismiss_activation_degraded_notice' );
+		?>
+		<div class="notice notice-warning is-dismissible" id="agentic-activation-degraded-notice">
+			<p>
+				<strong><?php esc_html_e( 'Agent Builder finished setup in a reduced state.', 'agent-builder' ); ?></strong>
+				<?php esc_html_e( 'A setup step did not complete — often a temporary hosting or database limit. The plugin is safe to use as-is.', 'agent-builder' ); ?>
+				&nbsp;
+				<a href="<?php echo esc_url( $retry_url ); ?>"><?php esc_html_e( 'Click to retry', 'agent-builder' ); ?></a>
+			</p>
+		</div>
+		<script>
+		( function () {
+			var notice = document.getElementById( 'agentic-activation-degraded-notice' );
+			if ( ! notice ) { return; }
+			notice.addEventListener( 'click', function ( e ) {
+				if ( ! e.target.classList.contains( 'notice-dismiss' ) ) { return; }
+				wp.ajax.post( 'agentic_dismiss_activation_degraded_notice', { nonce: <?php echo wp_json_encode( $nonce ); ?> } );
+			} );
+		} () );
+		</script>
+		<?php
+	}
+
+	/**
 	 * Warn when a directory in agentic-agents/ is shadowing a bundled agent.
 	 *
 	 * The registry loads agentic-agents/ before any plugin library, so a copy

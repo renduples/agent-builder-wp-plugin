@@ -5,7 +5,7 @@
  * Plugin Name:       Agent Builder
  * Plugin URI:        https://agentic-plugin.com
  * Description:       Orchestrate role-based AI agents and teams with simple job descriptions.
- * Version:           4.0.0
+ * Version:           4.0.1
  * Requires at least: 6.4
  * Requires PHP:      8.1
  * Author:            Agent Builder Team
@@ -65,7 +65,7 @@ spl_autoload_register(
 // them were renamed from the old AGENTIC_* names, so no site's existing
 // wp-content/agentic-agents/ (or -knowledge/, -backups/) needs to move.
 define( 'AGENT_BUILDER_FILE', __FILE__ );
-define( 'AGENT_BUILDER_VERSION', '4.0.0' );
+define( 'AGENT_BUILDER_VERSION', '4.0.1' );
 define( 'AGENT_BUILDER_DB_VERSION', '2.14.2' );
 define( 'AGENT_BUILDER_DIR', plugin_dir_path( __FILE__ ) );
 define( 'AGENT_BUILDER_URL', plugin_dir_url( __FILE__ ) );
@@ -73,6 +73,14 @@ define( 'AGENT_BUILDER_BASENAME', plugin_basename( __FILE__ ) );
 define( 'AGENT_BUILDER_AGENTS_DIR', WP_CONTENT_DIR . '/agentic-agents' );
 define( 'AGENT_BUILDER_KNOWLEDGE_DIR', WP_CONTENT_DIR . '/agentic-knowledge' );
 define( 'AGENT_BUILDER_BACKUPS_DIR', WP_CONTENT_DIR . '/agentic-backups' );
+
+// AGENT_BUILDER_SAFE_MODE (not defined by this plugin — a site owner opts in
+// by adding `define( 'AGENT_BUILDER_SAFE_MODE', true );` to wp-config.php).
+// When true, all of this plugin's background work is disabled: deferred data
+// seeding (Activator::maybe_run_deferred_seed()) and cron (schedule_cron_events()
+// stops scheduling, and already-scheduled events are cleared). A one-line
+// throttle for a struggling host, or an admin locked out of wp-admin who
+// still has file access, that does not require deactivating the plugin.
 
 // Composer runtime dependencies.
 if ( file_exists( AGENT_BUILDER_DIR . 'vendor/autoload.php' ) ) {
@@ -164,7 +172,9 @@ final class Plugin {
 		// system cron calling it directly (DISABLE_WP_CRON=true) or the built-in
 		// pseudo-cron spawning it via a background HTTP request (DISABLE_WP_CRON=false).
 		// Either way these hooks are not needed on frontend/admin/REST requests.
-		if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
+		// Also skipped entirely under AGENT_BUILDER_SAFE_MODE, so an event that
+		// slipped through before safe mode was switched on still does nothing.
+		if ( defined( 'DOING_CRON' ) && DOING_CRON && ! Activator::is_safe_mode() ) {
 			add_action( 'agentic_agents_loaded', array( '\Agentic\Agent_Lifecycle', 'bind_cron_hooks' ) );
 			add_action( 'agentic_async_event', array( '\Agentic\Agent_Lifecycle', 'handle_async_event' ), 10, 4 );
 			add_action( 'agent_builder_cleanup_audit_log', array( $this, 'run_audit_cleanup' ) );
@@ -244,6 +254,14 @@ final class Plugin {
 		add_action( 'admin_init', array( $menu, 'maybe_redirect_removed_account_tab' ), 1 );
 		add_action( 'admin_init', array( $menu, 'handle_provider_actions' ), 1 );
 		add_action( 'admin_init', array( $menu, 'maybe_redirect_to_quickstart' ) );
+
+		// Deferred/chunked/lock-guarded heavy data seeding (agents, tools, skills,
+		// demo knowledge) moved out of the activation request — see class-activator.php.
+		// Priority 1: handle a pending "Retry now" click before anything else runs
+		// this request, so the redirect it issues happens before any output.
+		add_action( 'admin_init', array( Activator::class, 'maybe_handle_retry_request' ), 1 );
+		add_action( 'admin_init', array( Activator::class, 'maybe_disable_cron_for_safe_mode' ) );
+		add_action( 'admin_init', array( Activator::class, 'maybe_run_deferred_seed' ) );
 		add_action( 'admin_menu', array( $menu, 'register' ) );
 		add_action( 'admin_page_access_denied', array( $menu, 'maybe_show_access_notice' ) );
 		add_action( 'admin_footer', array( $menu, 'render_admin_page_links' ) );
@@ -262,6 +280,7 @@ final class Plugin {
 		add_action( 'admin_notices', array( $notices, 'show_setup_needed_notice' ) );
 		add_action( 'admin_notices', array( $notices, 'show_quota_reached_notice' ) );
 		add_action( 'admin_notices', array( $notices, 'show_shadowed_agent_notice' ) );
+		add_action( 'admin_notices', array( $notices, 'show_activation_degraded_notice' ) );
 
 		// Agent update checks — free / WPorg never phone home, Pro users may opt in.
 		add_action( 'admin_init', array( Agent_Updates::class, 'maybe_check_on_agents_page' ) );
@@ -617,16 +636,28 @@ final class Plugin {
 	/**
 	 * Run the daily audit log retention cleanup.
 	 *
-	 * Hooked to the 'agent_builder_cleanup_audit_log' cron event.
+	 * Hooked to the 'agent_builder_cleanup_audit_log' cron event. Lock-guarded
+	 * (requirement 5, cron safety) so an overlapping trigger — e.g. a slow
+	 * run plus a second pseudo-cron spawn — can never pile up concurrent runs.
 	 *
 	 * @return void
 	 */
 	public function run_audit_cleanup(): void {
-		$audit = new Audit_Log();
-		$audit->cleanup_expired();
+		$lock_key = 'agent_builder_cron_audit_cleanup_lock';
+		if ( get_transient( $lock_key ) ) {
+			return;
+		}
+		set_transient( $lock_key, 1, 5 * MINUTE_IN_SECONDS );
 
-		$queue = new Approval_Queue();
-		$queue->cleanup_expired();
+		try {
+			$audit = new Audit_Log();
+			$audit->cleanup_expired();
+
+			$queue = new Approval_Queue();
+			$queue->cleanup_expired();
+		} finally {
+			delete_transient( $lock_key );
+		}
 	}
 
 	/**
