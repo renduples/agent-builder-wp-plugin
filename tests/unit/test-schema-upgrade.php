@@ -310,6 +310,85 @@ class Test_Schema_Upgrade extends TestCase {
 	}
 
 	/**
+	 * When the shutdown retry also fails (schema still stale at shutdown), the
+	 * still-pending audit rows are stashed into a bounded fallback store rather
+	 * than vanishing with the process — a best-effort bridge so a later request
+	 * can retry them once the schema is current.
+	 */
+	public function test_audit_shutdown_retry_failure_stashes_rows_to_fallback_store(): void {
+		$previous_schema = get_option( 'agent_builder_db_schema_version', false );
+		delete_option( 'agent_builder_audit_fallback_rows' );
+
+		try {
+			update_option( 'agent_builder_db_schema_version', '2.14.2' );
+			$this->assertTrue( Activator::schema_is_stale() );
+
+			$audit = new Audit_Log();
+			$audit->log( 'test-agent', 'tool_call', 'list_posts', array( 'id' => 1 ) );
+
+			// Simulate the shutdown retry: it still finds the schema stale, so the
+			// row remains pending and is then stashed to the fallback store.
+			$shutdown = new \ReflectionMethod( Audit_Log::class, 'flush_and_stash_on_shutdown' );
+			$shutdown->invoke( null );
+
+			$fallback = get_option( 'agent_builder_audit_fallback_rows', array() );
+			$this->assertIsArray( $fallback, 'the fallback store must exist after a failed shutdown retry' );
+			$this->assertCount( 1, $fallback, 'the still-pending row must be stashed, not dropped' );
+			$this->assertSame( 'tool_call', $fallback[0]['action'] );
+		} finally {
+			if ( false === $previous_schema ) {
+				delete_option( 'agent_builder_db_schema_version' );
+			} else {
+				update_option( 'agent_builder_db_schema_version', $previous_schema );
+			}
+			Audit_Log::reset_pending_for_tests();
+			delete_option( 'agent_builder_audit_fallback_rows' );
+		}
+	}
+
+	/**
+	 * The next successful write in any later request drains the fallback store:
+	 * the stashed row is inserted together with the new one, and the store is
+	 * cleared — closing the loop for the best-effort durability bridge.
+	 */
+	public function test_audit_fallback_store_is_drained_on_next_successful_write(): void {
+		$previous_schema = get_option( 'agent_builder_db_schema_version', false );
+		delete_option( 'agent_builder_audit_fallback_rows' );
+
+		try {
+			// Request 1: schema stale, a row is deferred and stashed at shutdown.
+			update_option( 'agent_builder_db_schema_version', '2.14.2' );
+			$audit = new Audit_Log();
+			$audit->log( 'test-agent', 'tool_call', 'list_posts', array( 'id' => 1 ) );
+			$shutdown = new \ReflectionMethod( Audit_Log::class, 'flush_and_stash_on_shutdown' );
+			$shutdown->invoke( null );
+			$this->assertCount( 1, get_option( 'agent_builder_audit_fallback_rows', array() ) );
+
+			// New request: the pending buffer is empty again, the schema is current.
+			Audit_Log::reset_pending_for_tests();
+			update_option( 'agent_builder_db_schema_version', AGENT_BUILDER_DB_VERSION );
+			$this->assertFalse( Activator::schema_is_stale() );
+
+			// A successful write drains the fallback store alongside its own row.
+			$audit->log( 'test-agent', 'tool_call', 'get_post_content', array( 'id' => 2 ) );
+
+			global $wpdb;
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test assertion.
+			$count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}agent_builder_audit_log" );
+			$this->assertSame( 2, $count, 'the stashed row and the new row must both land on the next successful write' );
+			$this->assertSame( array(), get_option( 'agent_builder_audit_fallback_rows', array() ), 'the fallback store must be cleared once drained' );
+		} finally {
+			if ( false === $previous_schema ) {
+				delete_option( 'agent_builder_db_schema_version' );
+			} else {
+				update_option( 'agent_builder_db_schema_version', $previous_schema );
+			}
+			Audit_Log::reset_pending_for_tests();
+			delete_option( 'agent_builder_audit_fallback_rows' );
+		}
+	}
+
+	/**
 	 * Agent_Run::persist() — the shared UPDATE used by finish(),
 	 * mark_waiting(), etc. — must also skip while the schema is stale, not
 	 * just persist_start()'s insert. A run resumed via Agent_Run::load() in a

@@ -26,6 +26,27 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Audit_Log {
 
 	/**
+	 * Option key for the bounded fallback store of audit rows whose shutdown
+	 * retry still could not insert them (a persistently stale schema, or a
+	 * write error). A best-effort bridge — not a full guarantee — so those rows
+	 * survive the request and are retried by a later request's next successful
+	 * write, rather than vanishing with the PHP process. An option is used (not
+	 * a transient) because it lives in the always-present wp_options table,
+	 * unaffected by a stale agent_builder_* schema.
+	 *
+	 * @var string
+	 */
+	private const FALLBACK_OPTION = 'agent_builder_audit_fallback_rows';
+
+	/**
+	 * Maximum number of rows the fallback store keeps, so a permanently-broken
+	 * schema can't grow it unbounded across requests.
+	 *
+	 * @var int
+	 */
+	private const FALLBACK_CAP = 50;
+
+	/**
 	 * Current mode context for this request lifecycle.
 	 *
 	 * @var string
@@ -292,12 +313,19 @@ class Audit_Log {
 
 		self::$dirty = false;
 		self::bust_query_cache();
+
+		// A successful write means the schema is current — opportunistically
+		// retry any rows a prior request stashed in the fallback store.
+		self::drain_fallback();
 	}
 
 	/**
 	 * Register the shutdown safety net once per request: gives any still-pending
 	 * rows one more flush attempt at shutdown, in case something else this
-	 * request repaired the schema after they were deferred.
+	 * request repaired the schema after they were deferred. If that retry also
+	 * fails, the still-pending rows are stashed in a bounded fallback store so
+	 * they survive the process and are retried by a later request's next
+	 * successful write — a best-effort bridge, not a full guarantee.
 	 *
 	 * @return void
 	 */
@@ -309,11 +337,89 @@ class Audit_Log {
 
 		register_shutdown_function(
 			static function (): void {
-				if ( self::$dirty ) {
-					self::flush_pending();
-				}
+				self::flush_and_stash_on_shutdown();
 			}
 		);
+	}
+
+	/**
+	 * The shutdown safety net's body, split out so a test can drive it directly:
+	 * one more flush attempt, then stash whatever still could not land.
+	 *
+	 * @return void
+	 */
+	private static function flush_and_stash_on_shutdown(): void {
+		if ( self::$dirty ) {
+			self::flush_pending();
+		}
+
+		if ( ! empty( self::$pending_rows ) ) {
+			self::stash_pending_to_fallback();
+		}
+	}
+
+	/**
+	 * Move the still-pending rows into the bounded fallback store, so a
+	 * persistently-stale schema (or a shutdown write error) can't make them
+	 * disappear with the process. Best-effort: called at shutdown, so the DB
+	 * connection may already be gone; a failure here is tolerated.
+	 *
+	 * @return void
+	 */
+	private static function stash_pending_to_fallback(): void {
+		$stored = get_option( self::FALLBACK_OPTION, array() );
+		if ( ! is_array( $stored ) ) {
+			$stored = array();
+		}
+
+		$merged = array_merge( $stored, self::$pending_rows );
+
+		// Cap the store so a permanently-broken schema can't grow it unbounded.
+		if ( count( $merged ) > self::FALLBACK_CAP ) {
+			$merged = array_slice( $merged, -self::FALLBACK_CAP );
+		}
+
+		update_option( self::FALLBACK_OPTION, $merged, false );
+	}
+
+	/**
+	 * Opportunistically insert rows previously stashed in the fallback store,
+	 * called from a later request's successful flush (so the schema is known
+	 * current here). Rows that still fail to insert stay in the store; when all
+	 * land, the store is cleared.
+	 *
+	 * @return void
+	 */
+	private static function drain_fallback(): void {
+		$stored = get_option( self::FALLBACK_OPTION, array() );
+		if ( ! is_array( $stored ) || empty( $stored ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'agent_builder_audit_log';
+
+		$remaining = array();
+		foreach ( $stored as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table insert.
+			$result = $wpdb->insert( $table, $row );
+			if ( ! $result ) {
+				$remaining[] = $row;
+				continue;
+			}
+
+			Audit_Log_Integrity::record( (int) $wpdb->insert_id, $row );
+		}
+
+		if ( empty( $remaining ) ) {
+			delete_option( self::FALLBACK_OPTION );
+		} else {
+			update_option( self::FALLBACK_OPTION, $remaining, false );
+		}
 	}
 
 	/**
