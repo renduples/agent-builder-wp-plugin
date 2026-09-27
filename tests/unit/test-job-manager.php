@@ -163,6 +163,33 @@ class Test_Job_Manager extends TestCase {
 	}
 
 	/**
+	 * A throwing agent_builder_job_processors callback is caught and the default
+	 * allowlist is used instead of failing the job: a non-allowlisted processor
+	 * is rejected cleanly with "processor not allowed", and the thrown message
+	 * does not leak into the job's error_message.
+	 */
+	public function test_throwing_allowlist_filter_falls_back_to_default(): void {
+		$callback = function () {
+			throw new \Exception( 'filter exploded' );
+		};
+		add_filter( 'agent_builder_job_processors', $callback );
+		$this->registered_filters[] = array( 'agent_builder_job_processors', $callback );
+
+		$job_id = Job_Manager::create_job(
+			array(
+				'processor' => Runnable_Test_Processor::class,
+			)
+		);
+
+		Job_Manager::process_job( $job_id );
+
+		$job = Job_Manager::get_job( $job_id );
+		$this->assertNotNull( $job );
+		$this->assertSame( Job_Manager::STATUS_FAILED, $job->status );
+		$this->assertSame( 'processor not allowed: ' . Runnable_Test_Processor::class, $job->error_message );
+	}
+
+	/**
 	 * Calling process_job() twice on the same id runs the processor once: the
 	 * second call's atomic claim fails because the job is no longer pending.
 	 */
