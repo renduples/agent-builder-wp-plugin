@@ -164,6 +164,179 @@ class Test_Agent_Controller_Autonomous extends TestCase {
 	}
 
 	/**
+	 * Resuming a run whose status is already terminal (completed) must be
+	 * rejected with a clear error, and must never replay the completed run's
+	 * tool calls against the LLM again.
+	 */
+	public function test_resume_rejects_completed_run_without_replay(): void {
+		$agent_id = 'test-autonomous-resume-terminal';
+		$fake     = new Fake_LLM_Client(
+			array(
+				Fake_LLM_Client::tool_call_response( 'list_posts', array(), array( 'prompt_tokens' => 8, 'completion_tokens' => 4, 'total_tokens' => 12 ) ),
+				Fake_LLM_Client::text_response( 'Listed posts.', array( 'prompt_tokens' => 6, 'completion_tokens' => 3, 'total_tokens' => 9 ) ),
+			)
+		);
+
+		$controller = new Agent_Controller( $fake );
+		$agent      = $this->make_agent( $agent_id );
+
+		$first = $controller->run_autonomous_task( $agent, 'List my posts.', 'task-terminal' );
+		$this->assertSame( 'completed', $first['status'] );
+		$this->assertSame( 2, $fake->chat_calls );
+
+		$run    = Agent_Run::load( $first['run_id'] );
+		$second = $controller->run_autonomous_task(
+			$agent,
+			'List my posts.',
+			'task-terminal',
+			array(
+				'run_id'       => $first['run_id'],
+				'resume_state' => $run->resume_state(),
+				'tool_result'  => array(
+					'tool'   => 'list_posts',
+					'status' => 'completed',
+				),
+			)
+		);
+
+		$this->assertIsArray( $second );
+		$this->assertTrue( $second['error'] ?? false );
+		$this->assertSame( 'error', $second['status'] );
+		$this->assertSame( 2, $fake->chat_calls, 'resuming a completed run must not replay any tool calls' );
+
+		$run_after = Agent_Run::load( $first['run_id'] );
+		$this->assertSame( 'completed', $run_after->to_array()['status'] );
+	}
+
+	/**
+	 * Resuming a run must validate it belongs to the requested agent — a
+	 * mismatched agent_id is rejected and the run is left untouched.
+	 */
+	public function test_resume_rejects_run_belonging_to_a_different_agent(): void {
+		$agent_id = 'test-autonomous-resume-owner';
+		$fake     = new Fake_LLM_Client(
+			array(
+				Fake_LLM_Client::tool_call_response( 'purge_expired_transients', array(), array( 'prompt_tokens' => 20, 'completion_tokens' => 10, 'total_tokens' => 30 ) ),
+			)
+		);
+
+		$controller  = new Agent_Controller( $fake );
+		$agent       = $this->make_agent( $agent_id );
+		$other_agent = $this->make_agent( 'test-autonomous-resume-owner-other' );
+
+		$first = $controller->run_autonomous_task( $agent, 'Purge stale transients.', 'task-owner' );
+		$this->assertSame( 'waiting', $first['status'] );
+
+		$run    = Agent_Run::load( $first['run_id'] );
+		$second = $controller->run_autonomous_task(
+			$other_agent,
+			'Purge stale transients.',
+			'task-owner',
+			array(
+				'run_id'       => $first['run_id'],
+				'resume_state' => $run->resume_state(),
+				'tool_result'  => array(
+					'tool'   => 'purge_expired_transients',
+					'status' => 'completed',
+				),
+			)
+		);
+
+		$this->assertIsArray( $second );
+		$this->assertTrue( $second['error'] ?? false );
+		$this->assertSame( 'error', $second['status'] );
+
+		$run_after = Agent_Run::load( $first['run_id'] );
+		$this->assertSame( 'waiting', $run_after->to_array()['status'] );
+	}
+
+	/**
+	 * The resumed tool message must carry the original LLM tool_call_id
+	 * (from the assistant's tool_calls[].id), not the proposal/approval
+	 * queue's own business id — the two are tracked separately and are
+	 * never equal for a real pending tool call.
+	 */
+	public function test_resume_reconstructs_tool_message_with_original_tool_call_id(): void {
+		$agent_id = 'test-autonomous-resume-toolcallid';
+		$fake     = new Fake_LLM_Client(
+			array(
+				Fake_LLM_Client::tool_call_response( 'purge_expired_transients', array(), array( 'prompt_tokens' => 20, 'completion_tokens' => 10, 'total_tokens' => 30 ) ),
+				Fake_LLM_Client::text_response( 'Transients purged.', array( 'prompt_tokens' => 7, 'completion_tokens' => 5, 'total_tokens' => 12 ) ),
+			)
+		);
+
+		$controller = new Agent_Controller( $fake );
+		$agent      = $this->make_agent( $agent_id );
+
+		$first = $controller->run_autonomous_task( $agent, 'Purge stale transients.', 'task-toolcallid' );
+		$this->assertSame( 'waiting', $first['status'] );
+
+		$run   = Agent_Run::load( $first['run_id'] );
+		$state = $run->resume_state();
+
+		$this->assertNotSame( '', $state['awaiting_tool_call_id'] );
+		$this->assertNotSame(
+			$state['awaiting_id'],
+			$state['awaiting_tool_call_id'],
+			'the LLM tool-call id and the proposal/approval business id must be distinct'
+		);
+
+		$controller->run_autonomous_task(
+			$agent,
+			'Purge stale transients.',
+			'task-toolcallid',
+			array(
+				'run_id'       => $first['run_id'],
+				'resume_state' => $state,
+				'tool_result'  => array(
+					'tool'               => 'purge_expired_transients',
+					'status'             => 'completed',
+					'transients_deleted' => 0,
+				),
+			)
+		);
+
+		// The second chat() call is the resumed one; the reconstructed tool
+		// message is the last one built before the loop's first iteration.
+		$resumed_messages = end( $fake->messages_seen );
+		$last_message      = end( $resumed_messages );
+
+		$this->assertSame( 'tool', $last_message['role'] ?? null );
+		$this->assertSame( $state['awaiting_tool_call_id'], $last_message['tool_call_id'] ?? null );
+		$this->assertNotSame( $state['awaiting_id'], $last_message['tool_call_id'] ?? null );
+	}
+
+	/**
+	 * The ~70% elapsed-time guard hands the run off via mark_continuing(),
+	 * not finish() — so it lands in a non-terminal 'continuing' status that
+	 * survives the shutdown safety net at request end (simulated here by
+	 * calling finish('aborted') the way register_shutdown_guard() would,
+	 * and asserting it is now a no-op).
+	 */
+	public function test_elapsed_time_guard_leaves_run_continuing_not_aborted(): void {
+		$agent_id = 'test-autonomous-elapsed-guard';
+		$agent    = $this->make_agent( $agent_id );
+		$fake     = new Fake_LLM_Client();
+
+		$run = Agent_Run::begin( $agent_id, array( 'task_text' => 'Long-running task.' ) );
+
+		$controller = new Agent_Controller( $fake );
+		$method     = new \ReflectionMethod( Agent_Controller::class, 'dispatch_continuation' );
+		$method->invoke( $controller, $run, $agent, 'Long-running task.', 'task-elapsed' );
+
+		$this->assertSame( 'continuing', $run->to_array()['status'] );
+
+		// Stand-in for the shutdown safety net firing at request end.
+		$run->finish( 'aborted' );
+
+		$this->assertSame(
+			'continuing',
+			$run->to_array()['status'],
+			'the elapsed-time hand-off must not be overwritten to aborted by the shutdown guard'
+		);
+	}
+
+	/**
 	 * An active Emergency Stop aborts the run before any LLM call is made.
 	 */
 	public function test_emergency_stop_aborts_run(): void {

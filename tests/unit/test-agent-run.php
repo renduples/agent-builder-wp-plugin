@@ -172,6 +172,25 @@ class Test_Agent_Run extends TestCase {
 	}
 
 	/**
+	 * mark_waiting()'s optional tool_call_id is tracked separately from the
+	 * approval/proposal business id, and both round-trip through
+	 * resume_state() and a freshly loaded instance.
+	 */
+	public function test_mark_waiting_tracks_tool_call_id_separately_from_business_id(): void {
+		$run = Agent_Run::begin( 'content-writer' );
+
+		$run->mark_waiting( 'proposal', 'proposal-uuid-1', array(), 'call_abc123' );
+
+		$state = $run->resume_state();
+		$this->assertSame( 'proposal-uuid-1', $state['awaiting_id'] );
+		$this->assertSame( 'call_abc123', $state['awaiting_tool_call_id'] );
+		$this->assertNotSame( $state['awaiting_id'], $state['awaiting_tool_call_id'] );
+
+		$reloaded = Agent_Run::load( $run->get_run_id() );
+		$this->assertSame( 'call_abc123', $reloaded->resume_state()['awaiting_tool_call_id'] );
+	}
+
+	/**
 	 * mark_waiting() strips image parts out of the transcript before persisting.
 	 */
 	public function test_mark_waiting_strips_image_payloads(): void {
@@ -309,6 +328,47 @@ class Test_Agent_Run extends TestCase {
 		$this->assertNotSame( $page_1[0]['run_id'], $page_2[0]['run_id'] );
 
 		$run_c->finish( 'completed' );
+	}
+
+	/**
+	 * mark_continuing() moves the run to a non-terminal 'continuing' status
+	 * and settles the in-process instance (mirroring mark_waiting()) so a
+	 * later finish() call — standing in for the shutdown safety net firing
+	 * at request end — is a no-op and never overwrites the hand-off with
+	 * 'aborted'.
+	 */
+	public function test_mark_continuing_is_non_terminal_and_blocks_later_finish(): void {
+		$run = Agent_Run::begin( 'content-writer' );
+
+		$run->mark_continuing();
+
+		$this->assertSame( 'continuing', $run->to_array()['status'] );
+
+		// Stand-in for register_shutdown_guard() firing at request end.
+		$run->finish( 'aborted' );
+
+		$this->assertSame( 'continuing', $run->to_array()['status'] );
+
+		$reloaded = Agent_Run::load( $run->get_run_id() );
+		$this->assertSame( 'continuing', $reloaded->to_array()['status'] );
+	}
+
+	/**
+	 * get_status() and get_root_agent() expose the fields resume validation
+	 * needs to reject replaying a terminal or mismatched-agent run.
+	 */
+	public function test_get_status_and_get_root_agent_accessors(): void {
+		$run = Agent_Run::begin( 'seo-optimizer', array( 'kind' => 'task' ) );
+
+		$this->assertSame( 'running', $run->get_status() );
+		$this->assertSame( 'seo-optimizer', $run->get_root_agent() );
+
+		$run->mark_waiting( 'approval', '1', array() );
+		$this->assertSame( 'waiting', $run->get_status() );
+
+		$reloaded = Agent_Run::load( $run->get_run_id() );
+		$this->assertSame( 'waiting', $reloaded->get_status() );
+		$this->assertSame( 'seo-optimizer', $reloaded->get_root_agent() );
 	}
 
 	/**

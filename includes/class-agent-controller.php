@@ -1317,6 +1317,26 @@ class Agent_Controller {
 					'cards'    => array(),
 				);
 			}
+
+			// A run can only be resumed from its 'waiting' hand-off state — a
+			// terminal run (completed/aborted/cancelled/failed) must never be
+			// replayed, since finish() on an already-finished run silently
+			// no-ops and would let tool calls execute a second time. Also
+			// refuse a run that belongs to a different agent than the one
+			// making this call, so a stale or mismatched run_id can never be
+			// hijacked into another agent's context.
+			if ( 'waiting' !== $run->get_status() || $run->get_root_agent() !== $agent_id ) {
+				return array(
+					'error'    => true,
+					'response' => __( 'Cannot resume: this run is not waiting for input.', 'agent-builder' ),
+					'agent_id' => $agent_id,
+					'task_id'  => $task_id,
+					'run_id'   => $resume_run_id,
+					'status'   => 'error',
+					'cards'    => array(),
+				);
+			}
+
 			$run->make_current();
 			$owns_run = true; // Resuming a paused run in a fresh process; this leg owns it.
 
@@ -1326,7 +1346,7 @@ class Agent_Controller {
 			if ( null !== $resume_tool_result ) {
 				$messages[] = array(
 					'role'         => 'tool',
-					'tool_call_id' => (string) ( $resume_state['awaiting_id'] ?? '' ),
+					'tool_call_id' => (string) ( $resume_state['awaiting_tool_call_id'] ?? '' ),
 					'name'         => (string) ( $resume_tool_result['tool'] ?? '' ),
 					'content'      => wp_json_encode( $resume_tool_result ),
 				);
@@ -1488,11 +1508,12 @@ class Agent_Controller {
 			// Capture reasoning for observability (P0) — autonomous path.
 			$step_reasoning = $this->extract_reasoning( $assistant_message );
 
-			$iter_tools   = array();
-			$has_pending  = false;
-			$pending_msg  = '';
-			$pending_type = '';
-			$pending_id   = '';
+			$iter_tools        = array();
+			$has_pending       = false;
+			$pending_msg       = '';
+			$pending_type      = '';
+			$pending_id        = '';
+			$pending_tool_call = '';
 
 			if ( ! empty( $assistant_message['tool_calls'] ) ) {
 				$this->audit->log(
@@ -1535,9 +1556,10 @@ class Agent_Controller {
 					// autonomous turns do not fan out multiple pending approvals.
 					$tool_status = $tool_result['status'] ?? '';
 					if ( 'confirmation_required' === $tool_status || 'queued_for_approval' === $tool_status ) {
-						$has_pending  = true;
-						$pending_type = 'confirmation_required' === $tool_status ? 'proposal' : 'approval';
-						$pending_id   = (string) ( $tool_result['proposal_id'] ?? $tool_result['approval_id'] ?? '' );
+						$has_pending       = true;
+						$pending_type      = 'confirmation_required' === $tool_status ? 'proposal' : 'approval';
+						$pending_id        = (string) ( $tool_result['proposal_id'] ?? $tool_result['approval_id'] ?? '' );
+						$pending_tool_call = (string) $tool_call['id'];
 						if ( ! empty( $tool_result['message'] ) ) {
 							$pending_msg = (string) $tool_result['message'];
 						}
@@ -1561,7 +1583,7 @@ class Agent_Controller {
 
 			if ( $has_pending ) {
 				if ( $owns_run ) {
-					$run->mark_waiting( $pending_type, $pending_id, $messages );
+					$run->mark_waiting( $pending_type, $pending_id, $messages, $pending_tool_call );
 				}
 
 				$estimated_cost = class_exists( '\Agentic\Costs_Manager' )
@@ -1660,6 +1682,12 @@ class Agent_Controller {
 	 * @return void
 	 */
 	protected function dispatch_continuation( Agent_Run $run, \Agentic\Agent_Base $agent, string $prompt, string $task_id ): void {
+		// Hand off to a non-terminal 'continuing' status before firing the
+		// hook — without this, the shutdown safety net (armed for every run)
+		// sees $finished still false at request end and overwrites this
+		// hand-off with 'aborted', defeating the continuation mechanism.
+		$run->mark_continuing();
+
 		/**
 		 * Fires when an autonomous run has used ~70% of its execution-time
 		 * budget and must hand off to a background continuation job.

@@ -1455,6 +1455,7 @@ final class Activator {
             error text,
             awaiting_type varchar(16) DEFAULT NULL,
             awaiting_id varchar(36) DEFAULT NULL,
+            awaiting_tool_call_id varchar(64) DEFAULT NULL,
             cancel_requested tinyint(1) NOT NULL DEFAULT 0,
             state longtext,
             started_at datetime DEFAULT CURRENT_TIMESTAMP,

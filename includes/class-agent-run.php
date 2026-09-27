@@ -271,6 +271,17 @@ class Agent_Run {
 	private string $awaiting_id = '';
 
 	/**
+	 * The original LLM tool-call id (assistant message's tool_calls[].id) for
+	 * the pending tool call, kept separate from awaiting_id (the
+	 * proposal/approval queue's own business id) so a resumed request can
+	 * reconstruct a tool-role message that correctly pairs with the assistant
+	 * message a provider will validate it against.
+	 *
+	 * @var string
+	 */
+	private string $awaiting_tool_call_id = '';
+
+	/**
 	 * Whether a caller has asked this run to stop cooperatively.
 	 *
 	 * @var bool
@@ -463,6 +474,25 @@ class Agent_Run {
 	}
 
 	/**
+	 * Current status ('running', 'waiting', 'continuing', or a terminal
+	 * status such as 'completed'/'failed'/'aborted'/'cancelled').
+	 *
+	 * @return string
+	 */
+	public function get_status(): string {
+		return $this->status;
+	}
+
+	/**
+	 * Slug of the agent that started this run.
+	 *
+	 * @return string
+	 */
+	public function get_root_agent(): string {
+		return $this->root_agent;
+	}
+
+	/**
 	 * Whether another delegation is permitted under all configured budgets.
 	 *
 	 * @return bool
@@ -602,28 +632,33 @@ class Agent_Run {
 	 * Mark this run as waiting on an approval or proposal, persisting a
 	 * capped transcript so a later request can resume it.
 	 *
-	 * @param string $type       'approval' or 'proposal'.
-	 * @param string $id         Id of the approval/proposal.
-	 * @param array  $transcript Conversation messages to persist for resume.
+	 * @param string $type          'approval' or 'proposal'.
+	 * @param string $id            Id of the approval/proposal.
+	 * @param array  $transcript    Conversation messages to persist for resume.
+	 * @param string $tool_call_id  Original LLM tool-call id (assistant message's
+	 *                              tool_calls[].id) the resumed tool message must
+	 *                              reuse, kept separate from $id above.
 	 * @return void
 	 */
-	public function mark_waiting( string $type, string $id, array $transcript ): void {
-		$this->status        = 'waiting';
-		$this->awaiting_type = $type;
-		$this->awaiting_id   = $id;
-		$this->messages      = self::sanitize_transcript( $transcript );
+	public function mark_waiting( string $type, string $id, array $transcript, string $tool_call_id = '' ): void {
+		$this->status                = 'waiting';
+		$this->awaiting_type         = $type;
+		$this->awaiting_id           = $id;
+		$this->awaiting_tool_call_id = $tool_call_id;
+		$this->messages              = self::sanitize_transcript( $transcript );
 
 		$now = current_time( 'mysql', true );
 
 		$this->persist(
 			array(
-				'status'        => $this->status,
-				'awaiting_type' => $this->awaiting_type,
-				'awaiting_id'   => $this->awaiting_id,
-				'state'         => $this->encode_state(),
-				'updated_at'    => $now,
+				'status'                => $this->status,
+				'awaiting_type'         => $this->awaiting_type,
+				'awaiting_id'           => $this->awaiting_id,
+				'awaiting_tool_call_id' => $this->awaiting_tool_call_id,
+				'state'                 => $this->encode_state(),
+				'updated_at'            => $now,
 			),
-			array( '%s', '%s', '%s', '%s', '%s' )
+			array( '%s', '%s', '%s', '%s', '%s', '%s' )
 		);
 
 		$this->updated_at = $now;
@@ -642,13 +677,42 @@ class Agent_Run {
 	 */
 	public function resume_state(): array {
 		return array(
-			'messages'      => $this->messages,
-			'scratchpad'    => $this->scratchpad,
-			'awaiting_type' => $this->awaiting_type,
-			'awaiting_id'   => $this->awaiting_id,
-			'iterations'    => $this->iterations,
-			'tools_used'    => array_values( $this->tools_used ),
+			'messages'              => $this->messages,
+			'scratchpad'            => $this->scratchpad,
+			'awaiting_type'         => $this->awaiting_type,
+			'awaiting_id'           => $this->awaiting_id,
+			'awaiting_tool_call_id' => $this->awaiting_tool_call_id,
+			'iterations'            => $this->iterations,
+			'tools_used'            => array_values( $this->tools_used ),
 		);
+	}
+
+	/**
+	 * Mark this run as handed off to a background continuation job after the
+	 * ~70% elapsed-time guard fires, without transitioning to a terminal
+	 * status — so a resumed request can pick it back up.
+	 *
+	 * Like mark_waiting(), this settles the in-process instance so the
+	 * shutdown safety net does not overwrite the hand-off with 'aborted' when
+	 * the current request ends.
+	 *
+	 * @return void
+	 */
+	public function mark_continuing(): void {
+		$this->status = 'continuing';
+
+		$now = current_time( 'mysql', true );
+
+		$this->persist(
+			array(
+				'status'     => $this->status,
+				'updated_at' => $now,
+			),
+			array( '%s', '%s' )
+		);
+
+		$this->updated_at = $now;
+		$this->finished   = true;
 	}
 
 	/**
@@ -787,35 +851,36 @@ class Agent_Run {
 	 */
 	public function to_array(): array {
 		return array(
-			'run_id'           => $this->run_id,
-			'root_agent'       => $this->root_agent,
-			'kind'             => $this->kind,
-			'status'           => $this->status,
-			'user_id'          => $this->user_id,
-			'task_text'        => $this->task_text,
-			'parent_run_id'    => $this->parent_run_id,
-			'job_id'           => $this->job_id,
-			'session_id'       => $this->session_id,
-			'invocation'       => $this->invocation,
-			'source_ref'       => $this->source_ref,
-			'depth'            => $this->depth,
-			'delegations'      => $this->delegations,
-			'max_depth'        => $this->max_depth_reached,
-			'iterations'       => $this->iterations,
-			'tokens_used'      => $this->tokens,
-			'cost'             => round( $this->cost, 6 ),
-			'tools_used'       => array_values( $this->tools_used ),
-			'result_summary'   => array(
+			'run_id'                => $this->run_id,
+			'root_agent'            => $this->root_agent,
+			'kind'                  => $this->kind,
+			'status'                => $this->status,
+			'user_id'               => $this->user_id,
+			'task_text'             => $this->task_text,
+			'parent_run_id'         => $this->parent_run_id,
+			'job_id'                => $this->job_id,
+			'session_id'            => $this->session_id,
+			'invocation'            => $this->invocation,
+			'source_ref'            => $this->source_ref,
+			'depth'                 => $this->depth,
+			'delegations'           => $this->delegations,
+			'max_depth'             => $this->max_depth_reached,
+			'iterations'            => $this->iterations,
+			'tokens_used'           => $this->tokens,
+			'cost'                  => round( $this->cost, 6 ),
+			'tools_used'            => array_values( $this->tools_used ),
+			'result_summary'        => array(
 				'text'  => $this->result_text,
 				'cards' => $this->result_cards,
 			),
-			'error'            => $this->error,
-			'awaiting_type'    => $this->awaiting_type,
-			'awaiting_id'      => $this->awaiting_id,
-			'cancel_requested' => $this->cancel_requested,
-			'started_at'       => $this->started_at,
-			'updated_at'       => $this->updated_at,
-			'finished_at'      => $this->finished_at,
+			'error'                 => $this->error,
+			'awaiting_type'         => $this->awaiting_type,
+			'awaiting_id'           => $this->awaiting_id,
+			'awaiting_tool_call_id' => $this->awaiting_tool_call_id,
+			'cancel_requested'      => $this->cancel_requested,
+			'started_at'            => $this->started_at,
+			'updated_at'            => $this->updated_at,
+			'finished_at'           => $this->finished_at,
 		);
 	}
 
@@ -1005,29 +1070,30 @@ class Agent_Run {
 	private static function from_row( array $row ): Agent_Run {
 		$run = new self( (string) ( $row['root_agent'] ?? '' ) );
 
-		$run->run_id            = (string) ( $row['run_id'] ?? $run->run_id );
-		$run->kind              = (string) ( $row['kind'] ?? 'task' );
-		$run->status            = (string) ( $row['status'] ?? 'running' );
-		$run->user_id           = (int) ( $row['user_id'] ?? 0 );
-		$run->task_text         = (string) ( $row['task_text'] ?? '' );
-		$run->parent_run_id     = (string) ( $row['parent_run_id'] ?? '' );
-		$run->job_id            = (string) ( $row['job_id'] ?? '' );
-		$run->session_id        = (string) ( $row['session_id'] ?? '' );
-		$run->invocation        = (string) ( $row['invocation'] ?? '' );
-		$run->source_ref        = (string) ( $row['source_ref'] ?? '' );
-		$run->delegations       = (int) ( $row['delegations'] ?? 0 );
-		$run->max_depth_reached = (int) ( $row['max_depth'] ?? 0 );
-		$run->iterations        = (int) ( $row['iterations'] ?? 0 );
-		$run->tokens            = (int) ( $row['tokens_used'] ?? 0 );
-		$run->cost              = (float) ( $row['cost'] ?? 0.0 );
-		$run->tools_used        = self::decode_list( $row['tools_used'] ?? '' );
-		$run->error             = (string) ( $row['error'] ?? '' );
-		$run->awaiting_type     = (string) ( $row['awaiting_type'] ?? '' );
-		$run->awaiting_id       = (string) ( $row['awaiting_id'] ?? '' );
-		$run->cancel_requested  = ! empty( $row['cancel_requested'] );
-		$run->started_at        = (string) ( $row['started_at'] ?? '' );
-		$run->updated_at        = (string) ( $row['updated_at'] ?? '' );
-		$run->finished_at       = (string) ( $row['finished_at'] ?? '' );
+		$run->run_id                = (string) ( $row['run_id'] ?? $run->run_id );
+		$run->kind                  = (string) ( $row['kind'] ?? 'task' );
+		$run->status                = (string) ( $row['status'] ?? 'running' );
+		$run->user_id               = (int) ( $row['user_id'] ?? 0 );
+		$run->task_text             = (string) ( $row['task_text'] ?? '' );
+		$run->parent_run_id         = (string) ( $row['parent_run_id'] ?? '' );
+		$run->job_id                = (string) ( $row['job_id'] ?? '' );
+		$run->session_id            = (string) ( $row['session_id'] ?? '' );
+		$run->invocation            = (string) ( $row['invocation'] ?? '' );
+		$run->source_ref            = (string) ( $row['source_ref'] ?? '' );
+		$run->delegations           = (int) ( $row['delegations'] ?? 0 );
+		$run->max_depth_reached     = (int) ( $row['max_depth'] ?? 0 );
+		$run->iterations            = (int) ( $row['iterations'] ?? 0 );
+		$run->tokens                = (int) ( $row['tokens_used'] ?? 0 );
+		$run->cost                  = (float) ( $row['cost'] ?? 0.0 );
+		$run->tools_used            = self::decode_list( $row['tools_used'] ?? '' );
+		$run->error                 = (string) ( $row['error'] ?? '' );
+		$run->awaiting_type         = (string) ( $row['awaiting_type'] ?? '' );
+		$run->awaiting_id           = (string) ( $row['awaiting_id'] ?? '' );
+		$run->awaiting_tool_call_id = (string) ( $row['awaiting_tool_call_id'] ?? '' );
+		$run->cancel_requested      = ! empty( $row['cancel_requested'] );
+		$run->started_at            = (string) ( $row['started_at'] ?? '' );
+		$run->updated_at            = (string) ( $row['updated_at'] ?? '' );
+		$run->finished_at           = (string) ( $row['finished_at'] ?? '' );
 
 		$summary           = self::decode_assoc( $row['result_summary'] ?? '' );
 		$run->result_text  = (string) ( $summary['text'] ?? '' );

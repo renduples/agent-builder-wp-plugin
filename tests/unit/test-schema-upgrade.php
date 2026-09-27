@@ -141,6 +141,7 @@ class Test_Schema_Upgrade extends TestCase {
 				'error',
 				'awaiting_type',
 				'awaiting_id',
+				'awaiting_tool_call_id',
 				'cancel_requested',
 			) as $expected_column
 		) {
