@@ -4,6 +4,18 @@
  *
  * Everything that runs on register_activation_hook.
  *
+ * Activation itself stays light: just the idempotent dbDelta table creation,
+ * default options, and a pre-flight check. All heavy data seeding (bundled
+ * agents, ~276 tools, ~33 skills, demo/OKF knowledge) is deferred out of the
+ * activation request and runs chunked (one step per request) and lock-guarded
+ * on admin_init — see maybe_run_deferred_seed(). Every step is wrapped so a
+ * DB hiccup or hosting resource limit degrades the plugin, never the site.
+ *
+ * Define AGENT_BUILDER_SAFE_MODE as true in wp-config.php to disable all of
+ * this plugin's background work (deferred seeding + cron) without
+ * deactivating it — a one-line escape hatch for a struggling host, or an
+ * admin locked out of wp-admin who still has file access.
+ *
  * @package Agent_Builder
  * @since   2.3.0
  */
@@ -67,6 +79,140 @@ final class Activator {
 	}
 
 	/**
+	 * List of heavy data-seeding steps run deferred, one per admin_init hit,
+	 * behind the agent_builder_needs_seed flag. Order matters: agents must
+	 * exist before tools/skills are synced against them.
+	 *
+	 * @var string[]
+	 */
+	private const SEED_STEPS = array(
+		'import_agents_dir',
+		'activate_bundled_agents',
+		'seed_bundled_agents',
+		'seed_tools',
+		'seed_skills',
+		'seed_okf_examples',
+	);
+
+	/**
+	 * Whether the site owner has thrown the safe-mode breaker.
+	 *
+	 * Defining AGENT_BUILDER_SAFE_MODE as true in wp-config.php disables all
+	 * of this plugin's background work — deferred seeding and cron — without
+	 * deactivating it. Meant as a one-line escape hatch (added via File
+	 * Manager/SSH) for a struggling host or an admin locked out of wp-admin.
+	 *
+	 * @return bool
+	 */
+	public static function is_safe_mode(): bool {
+		return defined( 'AGENT_BUILDER_SAFE_MODE' ) && AGENT_BUILDER_SAFE_MODE;
+	}
+
+	/**
+	 * Run a single activation/seeding step, catching every \Throwable so a
+	 * DB hiccup or an unexpected exception in one step can never fatal the
+	 * request or leave the site unable to load. Failures are logged and flip
+	 * the agent_builder_activation_degraded flag (surfaced as an admin
+	 * notice); they never propagate.
+	 *
+	 * @param string   $step Step identifier for the log.
+	 * @param callable $callback Zero-arg callable performing the step.
+	 * @return bool True on success, false if the step threw or errored.
+	 */
+	private static function guarded_step( string $step, callable $callback ): bool {
+		try {
+			$callback();
+			return true;
+		} catch ( \Throwable $e ) {
+			self::record( $step, 'error', 'Uncaught: ' . $e->getMessage() );
+			update_option( 'agent_builder_activation_degraded', true );
+			return false;
+		}
+	}
+
+	/**
+	 * Light pre-flight check run before any heavy work: a trivial $wpdb
+	 * write/read round-trip, plus PHP/MySQL minimums. If this fails we skip
+	 * straight to a safe/degraded activation instead of bursting dbDelta and
+	 * seed queries into an environment that is already struggling.
+	 *
+	 * @return bool True when the environment looks healthy enough for heavy work.
+	 */
+	private static function preflight_check(): bool {
+		global $wpdb;
+
+		if ( version_compare( PHP_VERSION, '8.1', '<' ) ) {
+			self::record( 'preflight_check', 'error', 'PHP ' . PHP_VERSION . ' is below the required 8.1' );
+			return false;
+		}
+
+		$db_version = method_exists( $wpdb, 'db_version' ) ? $wpdb->db_version() : '';
+		if ( $db_version && version_compare( $db_version, '5.6', '<' ) ) {
+			self::record( 'preflight_check', 'error', 'Database version ' . $db_version . ' is below the required 5.6' );
+			return false;
+		}
+
+		// Trivial write/read round-trip through wp_options, proving the DB
+		// connection has headroom before we run 10+ dbDelta calls into it.
+		$probe_key   = 'agent_builder_preflight_probe';
+		$probe_value = (string) wp_generate_password( 12, false, false );
+		$written     = add_option( $probe_key, $probe_value, '', 'no' );
+		$read_back   = get_option( $probe_key );
+		delete_option( $probe_key );
+
+		if ( ! $written || $read_back !== $probe_value ) {
+			self::record( 'preflight_check', 'error', 'trivial $wpdb write/read round-trip failed' );
+			return false;
+		}
+
+		self::record(
+			'preflight_check',
+			'ok',
+			array(
+				'php_version' => PHP_VERSION,
+				'db_version'  => $db_version,
+			)
+		);
+		return true;
+	}
+
+	/**
+	 * Merge whatever has been recorded on self::$activation_log this request
+	 * into the persisted agent_builder_last_activation_log option, then
+	 * reset the in-memory collector. Used by the deferred/chunked seeder
+	 * (which runs across many separate admin_init requests) so its steps
+	 * accumulate into the same history the activation request wrote,
+	 * instead of clobbering it or growing unbounded.
+	 *
+	 * @param string $schema_version Current DB_SCHEMA_VERSION.
+	 * @return void
+	 */
+	private static function flush_deferred_log( string $schema_version ): void {
+		if ( empty( self::$activation_log ) ) {
+			return;
+		}
+
+		$existing = get_option( 'agent_builder_last_activation_log', array() );
+		if ( ! is_array( $existing ) || ! isset( $existing['steps'] ) || ! is_array( $existing['steps'] ) ) {
+			$existing = array(
+				'schema_version' => $schema_version,
+				'activated_at'   => gmdate( 'Y-m-d H:i:s' ),
+				'steps'          => array(),
+			);
+		}
+
+		$existing['steps'] = array_merge( $existing['steps'], self::$activation_log );
+		// Cap history so this option can never grow unbounded across many
+		// deferred admin_init hits.
+		if ( count( $existing['steps'] ) > 200 ) {
+			$existing['steps'] = array_slice( $existing['steps'], -200 );
+		}
+
+		update_option( 'agent_builder_last_activation_log', $existing );
+		self::$activation_log = array();
+	}
+
+	/**
 	 * Sync stored schema version after a plugin upgrade.
 	 *
 	 * register_activation_hook does not fire on WP.org auto-updates, so
@@ -76,7 +222,14 @@ final class Activator {
 	 * Admin + logged-in only. No-op (no DB writes) when the stored option
 	 * already equals AGENT_BUILDER_DB_VERSION. When behind, re-runs
 	 * create_tables() (dbDelta, idempotent, no data loss) then writes the
-	 * current constant.
+	 * current constant. Table creation is guarded the same way as a fresh
+	 * activation — a failure here is logged and leaves the stored version
+	 * behind so it retries on the next admin_init, instead of silently
+	 * marking a failed upgrade as complete.
+	 *
+	 * Also flips agent_builder_needs_seed so the deferred/chunked seeder
+	 * fills in any bundled tools/skills/agents added since the site's last
+	 * seed — existing data is never touched, only gaps are filled.
 	 *
 	 * @return void
 	 */
@@ -90,17 +243,127 @@ final class Activator {
 			return;
 		}
 
-		self::create_tables();
+		self::$activation_log = array();
+		self::guarded_step( 'maybe_upgrade_create_tables', array( __CLASS__, 'create_tables' ) );
+		$tables_ok = 'ok' === self::last_log_status( 'create_tables' );
+		if ( ! $tables_ok ) {
+			update_option( 'agent_builder_activation_degraded', true );
+		}
+		self::flush_deferred_log( AGENT_BUILDER_DB_VERSION );
+
+		if ( ! $tables_ok ) {
+			return; // Leave stored version behind — retried on the next admin_init.
+		}
+
 		self::set_db_schema_version( AGENT_BUILDER_DB_VERSION );
+
+		if ( ! self::is_safe_mode() ) {
+			update_option( 'agent_builder_needs_seed', true );
+		}
+	}
+
+	/**
+	 * Retry entry point for the "finished setup in a reduced state" admin
+	 * notice. Clears the degraded flag and re-arms deferred seeding so the
+	 * next admin_init picks up wherever it left off (seed_progress is left
+	 * intact — steps already completed are not repeated).
+	 *
+	 * @return void
+	 */
+	public static function retry_activation(): void {
+		delete_option( 'agent_builder_activation_degraded' );
+		if ( ! self::is_safe_mode() ) {
+			update_option( 'agent_builder_needs_seed', true );
+		}
+	}
+
+	/**
+	 * Handle the "Retry now" link on the reduced-state admin notice.
+	 * Hooked on admin_init (before headers are sent) so it can redirect back
+	 * to the clean URL once done.
+	 *
+	 * @return void
+	 */
+	public static function maybe_handle_retry_request(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		if ( ! isset( $_GET['agentic_retry_activation_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['agentic_retry_activation_nonce'] ) ), 'agentic_retry_activation' ) ) {
+			return;
+		}
+
+		self::retry_activation();
+
+		wp_safe_redirect( remove_query_arg( array( 'agentic_retry_activation', 'agentic_retry_activation_nonce' ) ) );
+		exit;
+	}
+
+	/**
+	 * Cron safety net for safe mode: if AGENT_BUILDER_SAFE_MODE is switched on
+	 * after cron events were already scheduled (e.g. the site owner throws
+	 * the breaker on a struggling host), actively unschedule them instead of
+	 * relying only on future schedule_cron_events() calls being skipped.
+	 *
+	 * @return void
+	 */
+	public static function maybe_disable_cron_for_safe_mode(): void {
+		if ( ! self::is_safe_mode() ) {
+			return;
+		}
+
+		if ( wp_next_scheduled( 'agent_builder_cleanup_audit_log' ) ) {
+			wp_clear_scheduled_hook( 'agent_builder_cleanup_audit_log' );
+		}
+		if ( wp_next_scheduled( 'agent_builder_costs_check_alerts' ) ) {
+			wp_clear_scheduled_hook( 'agent_builder_costs_check_alerts' );
+		}
 	}
 
 	/**
 	 * Run all activation tasks.
 	 *
+	 * Wrapped in an outer catch-all so activation can never fatal or leave
+	 * WordPress unable to load, no matter what goes wrong inside — every
+	 * individual step already guards itself via guarded_step(), this is the
+	 * last-resort net around the whole method.
+	 *
 	 * @param string $schema_version Current DB_SCHEMA_VERSION from Plugin class.
 	 * @return void
 	 */
 	public static function activate( string $schema_version ): void {
+		try {
+			self::do_activate( $schema_version );
+		} catch ( \Throwable $e ) {
+			self::record( 'activate_fatal_guard', 'error', 'Uncaught: ' . $e->getMessage() );
+			update_option( 'agent_builder_activation_degraded', true );
+			update_option( 'agent_builder_needs_seed', false );
+			try {
+				update_option(
+					'agent_builder_last_activation_log',
+					array(
+						'schema_version' => $schema_version,
+						'activated_at'   => gmdate( 'Y-m-d H:i:s' ),
+						'steps'          => self::$activation_log,
+					)
+				);
+			} catch ( \Throwable $ignored ) {
+				unset( $ignored ); // Never let logging itself take the site down.
+			}
+		}
+	}
+
+	/**
+	 * Actual activation body. Kept light and fast: create the (idempotent)
+	 * tables, set defaults, and — only when a pre-flight check passes and
+	 * safe mode is off — arm the deferred/chunked seeder. The heavy data
+	 * seeding itself (bundled agents, ~276 tools, ~33 skills, demo/OKF
+	 * knowledge) never runs in this request; see maybe_run_deferred_seed().
+	 *
+	 * @param string $schema_version Current DB_SCHEMA_VERSION from Plugin class.
+	 * @return void
+	 */
+	private static function do_activate( string $schema_version ): void {
 		// Reset collector so repeated activations don't accumulate across requests.
 		self::$activation_log = array();
 
@@ -114,24 +377,51 @@ final class Activator {
 			)
 		);
 
-		self::set_flags();
-		self::create_tables();  // Security-log table is created here — safe to log after this point.
-		self::set_default_options();
-		self::import_agents_dir();
-		self::activate_bundled_agents();
-		self::seed_bundled_agents();
-		self::seed_tools( $schema_version );
-		self::seed_skills( $schema_version );
-		// Demo Knowledge Wiki concepts (example: true — hidden from agents).
-		if ( class_exists( __NAMESPACE__ . '\\Okf_Store' ) ) {
-			$okf_seeded = Okf_Store::seed_examples();
-			self::record( 'seed_okf_examples', 'ok', array( 'wrote' => $okf_seeded ) );
+		self::guarded_step( 'set_flags', array( __CLASS__, 'set_flags' ) );
+		self::guarded_step( 'create_tables', array( __CLASS__, 'create_tables' ) ); // Security-log table is created here — safe to log after this point.
+		if ( 'ok' !== self::last_log_status( 'create_tables' ) ) {
+			// create_tables() never throws on a dbDelta/$wpdb error (it just
+			// records a 'warning' with the per-table errors) — but the site
+			// still hit a DB error during setup, so this must still degrade
+			// and notify, per requirement 1.
+			update_option( 'agent_builder_activation_degraded', true );
 		}
-		self::schedule_cron_events();
+		self::guarded_step( 'set_default_options', array( __CLASS__, 'set_default_options' ) );
 
-		flush_rewrite_rules();
+		$preflight_ok = self::guarded_step( 'preflight_check', array( __CLASS__, 'preflight_check' ) )
+			&& 'ok' === self::last_log_status( 'preflight_check' );
 
-		self::set_db_schema_version( $schema_version );
+		if ( self::is_safe_mode() ) {
+			update_option( 'agent_builder_needs_seed', false );
+			self::record( 'defer_seed', 'skipped', 'AGENT_BUILDER_SAFE_MODE defined — heavy seeding stays off' );
+		} elseif ( ! $preflight_ok ) {
+			update_option( 'agent_builder_needs_seed', false );
+			update_option( 'agent_builder_activation_degraded', true );
+			self::record( 'defer_seed', 'skipped', 'pre-flight check failed — activating in a reduced/safe state' );
+		} else {
+			delete_option( 'agent_builder_seed_progress' );
+			update_option( 'agent_builder_needs_seed', true );
+			self::record( 'defer_seed', 'ok', 'heavy seeding deferred to admin_init, chunked one step per request and lock-guarded' );
+		}
+
+		// Cron safety (requirement 5): never schedule anything when safe mode
+		// is on, and never schedule on top of an environment that just
+		// failed its pre-flight check.
+		if ( self::is_safe_mode() ) {
+			self::record( 'schedule_cron_events', 'skipped', 'AGENT_BUILDER_SAFE_MODE defined' );
+		} elseif ( ! $preflight_ok ) {
+			self::record( 'schedule_cron_events', 'skipped', 'pre-flight check failed' );
+		} else {
+			self::guarded_step( 'schedule_cron_events', array( __CLASS__, 'schedule_cron_events' ) );
+		}
+
+		self::guarded_step(
+			'finalize',
+			static function () use ( $schema_version ): void {
+				flush_rewrite_rules();
+				self::set_db_schema_version( $schema_version );
+			}
+		);
 
 		// Persist the full activation log to an option (readable even if tables failed).
 		update_option(
@@ -143,17 +433,170 @@ final class Activator {
 			)
 		);
 
-		// Security log is now available — record the activation event.
-		\Agentic\Security_Log::log_system(
-			'plugin_activated',
-			'agent-builder',
-			array(
-				'version'        => AGENT_BUILDER_VERSION,
-				'schema_version' => $schema_version,
-				'wp_version'     => get_bloginfo( 'version' ),
-				'php_version'    => PHP_VERSION,
-			)
+		// Security log is now available — record the activation event. Guarded:
+		// this is a nice-to-have record, never a reason to fail activation.
+		self::guarded_step(
+			'security_log',
+			static function () use ( $schema_version ): void {
+				\Agentic\Security_Log::log_system(
+					'plugin_activated',
+					'agent-builder',
+					array(
+						'version'        => AGENT_BUILDER_VERSION,
+						'schema_version' => $schema_version,
+						'wp_version'     => get_bloginfo( 'version' ),
+						'php_version'    => PHP_VERSION,
+					)
+				);
+			}
 		);
+	}
+
+	/**
+	 * Read back the status of the most recent self::$activation_log entry
+	 * for a given step, so callers can branch on a guarded_step()'s actual
+	 * outcome (including a non-exception 'warning', e.g. create_tables()
+	 * completing but a $wpdb error occurring on one table) rather than just
+	 * whether it threw.
+	 *
+	 * @param string $step Step identifier as passed to record()/guarded_step().
+	 * @return string|null 'ok', 'warning', 'error', 'skipped', or null if not logged.
+	 */
+	private static function last_log_status( string $step ): ?string {
+		foreach ( array_reverse( self::$activation_log ) as $entry ) {
+			if ( $step === $entry['step'] ) {
+				return $entry['status'];
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Deferred, chunked, lock-guarded heavy data seeding.
+	 *
+	 * Hooked on admin_init. No-ops immediately unless agent_builder_needs_seed
+	 * is set, safe mode is off, and no other request is already seeding
+	 * (a short transient lock prevents concurrent/overlapping runs). Runs at
+	 * most one heavy step (see SEED_STEPS) per request, so a site owner can
+	 * keep using wp-admin normally while the rest trickles in over the next
+	 * few page loads. Progress is tracked in an option so it resumes across
+	 * requests and correctly stops once every step is done.
+	 *
+	 * @return void
+	 */
+	public static function maybe_run_deferred_seed(): void {
+		if ( self::is_safe_mode() ) {
+			return;
+		}
+
+		if ( ! get_option( 'agent_builder_needs_seed' ) ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return; // Only run while an admin is actually browsing wp-admin.
+		}
+
+		$lock_key = 'agent_builder_seed_lock';
+		if ( get_transient( $lock_key ) ) {
+			return; // Another request is already seeding this chunk.
+		}
+		set_transient( $lock_key, 1, 30 );
+
+		self::$activation_log = array();
+		$schema_version       = defined( 'AGENT_BUILDER_DB_VERSION' ) ? AGENT_BUILDER_DB_VERSION : '';
+
+		try {
+			$finished = self::run_seed_chunk( $schema_version );
+			if ( $finished ) {
+				delete_option( 'agent_builder_needs_seed' );
+				delete_option( 'agent_builder_seed_progress' );
+
+				// Every step eventually succeeded (possibly after a transient
+				// failure self-healed on a later automatic attempt) — the
+				// "reduced state" notice no longer applies to seeding.
+				$had_error = false;
+				foreach ( self::$activation_log as $entry ) {
+					if ( 'error' === $entry['status'] ) {
+						$had_error = true;
+						break;
+					}
+				}
+				if ( ! $had_error ) {
+					delete_option( 'agent_builder_activation_degraded' );
+				}
+			}
+		} catch ( \Throwable $e ) {
+			self::record( 'deferred_seed_chunk', 'error', 'Uncaught: ' . $e->getMessage() );
+			update_option( 'agent_builder_activation_degraded', true );
+		} finally {
+			self::flush_deferred_log( $schema_version );
+			delete_transient( $lock_key );
+		}
+	}
+
+	/**
+	 * Run the next not-yet-done step of SEED_STEPS, then return.
+	 *
+	 * @param string $schema_version Current DB_SCHEMA_VERSION.
+	 * @return bool True once every step has been completed.
+	 */
+	private static function run_seed_chunk( string $schema_version ): bool {
+		$progress = get_option( 'agent_builder_seed_progress', array() );
+		if ( ! is_array( $progress ) ) {
+			$progress = array();
+		}
+
+		foreach ( self::SEED_STEPS as $step ) {
+			if ( ! empty( $progress[ $step ] ) ) {
+				continue;
+			}
+
+			$ok = self::guarded_step(
+				$step,
+				function () use ( $step, $schema_version ): void {
+					switch ( $step ) {
+						case 'import_agents_dir':
+							self::import_agents_dir();
+							break;
+						case 'activate_bundled_agents':
+							self::activate_bundled_agents();
+							break;
+						case 'seed_bundled_agents':
+							self::seed_bundled_agents();
+							break;
+						case 'seed_tools':
+							self::seed_tools( $schema_version );
+							break;
+						case 'seed_skills':
+							self::seed_skills( $schema_version );
+							break;
+						case 'seed_okf_examples':
+							// Demo Knowledge Wiki concepts (example: true — hidden from agents).
+							if ( class_exists( __NAMESPACE__ . '\\Okf_Store' ) ) {
+								$okf_seeded = Okf_Store::seed_examples();
+								self::record( 'seed_okf_examples', 'ok', array( 'wrote' => $okf_seeded ) );
+							}
+							break;
+					}
+				}
+			);
+
+			if ( ! $ok ) {
+				// Leave this step un-advanced so it is retried (rate-limited
+				// by the 30s lock) on a later admin_init instead of being
+				// silently skipped forever.
+				return false;
+			}
+
+			$progress[ $step ] = true;
+			update_option( 'agent_builder_seed_progress', $progress );
+
+			// One heavy step per request keeps every hit light.
+			return count( $progress ) >= count( self::SEED_STEPS );
+		}
+
+		return true; // Nothing left to do.
 	}
 
 	/**

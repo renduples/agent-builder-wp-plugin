@@ -4,7 +4,7 @@ Tags: ai, ai safety, ai agents, mcp, webmcp
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 4.0.0
+Stable tag: 4.0.1
 Donate link: https://agentic-plugin.com/donate/
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -329,6 +329,14 @@ This plugin connects to external AI APIs to process prompts and tool executions 
 
 
 == Changelog ==
+
+= 4.0.1 - 2026-09-26 =
+Hardened activation: heavy setup now runs deferred and in the background, and a database/hosting hiccup during setup can no longer take a site offline. New SAFE MODE constant.
+* Activation now only creates the (idempotent) database tables and default options — never fatal, and every step is guarded so a DB error degrades the plugin instead of the site.
+* Heavy setup (bundled agents, ~276 tools, ~33 skills, demo knowledge) is deferred out of the activation request and runs chunked (one step per request) and lock-guarded on admin_init, so a fresh install stays usable while it fills in.
+* New pre-flight check before any heavy work: a trivial database write/read round-trip plus PHP/MySQL version minimums. On failure the plugin activates in a reduced/safe state and shows a dismissible "finished setup in a reduced state — click to retry" admin notice instead of bursting into a struggling host.
+* New `AGENT_BUILDER_SAFE_MODE` wp-config.php constant: define it as `true` to disable all background work (deferred seeding and cron) without deactivating the plugin — a one-line throttle for a struggling host or an admin locked out of wp-admin.
+* Cron events are now lock-guarded against overlapping runs, and are skipped entirely under safe mode or a failed pre-flight check.
 
 = 4.0.0 - 2026-09-20 =
 Major release. The safety-first way to run AI agents on WordPress — agents that take real actions only after you approve them.

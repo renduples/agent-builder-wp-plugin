@@ -50,6 +50,7 @@ class Ajax_Dispatcher {
 			'agentic_dismiss_pro_nudge'             => array( Admin_Ajax::class, 'dismiss_pro_nudge' ),
 			'agentic_dismiss_shadowed_agent_notice' => array( Admin_Ajax::class, 'dismiss_shadowed_agent_notice' ),
 			'agentic_dismiss_pending_approval_notice' => array( Admin_Ajax::class, 'dismiss_pending_approval_notice' ),
+			'agentic_dismiss_activation_degraded_notice' => array( Admin_Ajax::class, 'dismiss_activation_degraded_notice' ),
 
 			// Plugin deactivation modal (plugins.php).
 			'agentic_plugin_deactivate'          => array( Admin_Ajax::class, 'plugin_deactivate' ),

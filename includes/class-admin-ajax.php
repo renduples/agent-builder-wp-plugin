@@ -203,6 +203,26 @@ class Admin_Ajax {
 	}
 
 	/**
+	 * Persist dismissal of the "finished setup in a reduced state" notice.
+	 *
+	 * Scoped to the notice's own lifecycle, not a permanent silence: a
+	 * fresh activation/upgrade failure sets agent_builder_activation_degraded
+	 * again, which brings the notice back regardless of this meta.
+	 *
+	 * @return void
+	 */
+	public static function dismiss_activation_degraded_notice(): void {
+		check_ajax_referer( 'agentic_dismiss_activation_degraded_notice', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( 'Permission denied.' );
+		}
+
+		update_user_meta( get_current_user_id(), 'agentic_activation_degraded_notice_dismissed', '1' );
+		wp_send_json_success();
+	}
+
+	/**
 	 * Persist dismissal of the shadowed-bundled-agents notice, scoped to the
 	 * exact set of currently-shadowed slugs the admin saw. Stored (not just
 	 * "dismissed = true") so the notice comes back if a *different* agent
