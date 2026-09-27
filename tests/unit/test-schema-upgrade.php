@@ -30,6 +30,11 @@ class Test_Schema_Upgrade extends TestCase {
 	public function setUp(): void {
 		parent::setUp();
 		$this->previous_schema = get_option( 'agent_builder_db_schema_version', false );
+		// The schema-repair backoff transient is process/DB-scoped and a failed
+		// (or DDL-committed) prior test can leave it set, which would gate the
+		// very repair these tests assert on. Clear it so each test repairs from
+		// a clean slate.
+		delete_transient( 'agent_builder_schema_repair_backoff' );
 	}
 
 	/**
@@ -192,6 +197,40 @@ class Test_Schema_Upgrade extends TestCase {
 	}
 
 	/**
+	 * A failed repair leaves a short-TTL backoff transient that gates repeated
+	 * full-dbDelta attempts, so a persistent migration failure doesn't turn
+	 * into multi-table DDL + error-log writes on every public request. Once the
+	 * backoff expires, the next request retries and (on success) clears it.
+	 */
+	public function test_schema_repair_backs_off_within_backoff_window(): void {
+		update_option( 'agent_builder_db_schema_version', '2.14.2' );
+		wp_set_current_user( 0 );
+		unset( $GLOBALS['current_screen'] );
+
+		// Simulate the state a failed run_schema_upgrade() leaves behind.
+		set_transient( 'agent_builder_schema_repair_backoff', 1, 60 );
+
+		Activator::maybe_upgrade_schema();
+
+		$this->assertSame(
+			'2.14.2',
+			(string) get_option( 'agent_builder_db_schema_version' ),
+			'a backoff window must gate the repair, leaving the stored version behind'
+		);
+
+		// Expire the backoff: the next attempt proceeds and clears the transient
+		// on success, so it never blocks a later, unrelated migration.
+		delete_transient( 'agent_builder_schema_repair_backoff' );
+		Activator::maybe_upgrade_schema();
+
+		$this->assertSame(
+			AGENT_BUILDER_DB_VERSION,
+			(string) get_option( 'agent_builder_db_schema_version' )
+		);
+		$this->assertFalse( get_transient( 'agent_builder_schema_repair_backoff' ) );
+	}
+
+	/**
 	 * A failed (or not-yet-attempted) schema repair must not let
 	 * Agent_Run::persist_start() insert against a table whose columns dbDelta
 	 * never finished adding — Activator::schema_is_stale() staying true (it
@@ -228,6 +267,46 @@ class Test_Schema_Upgrade extends TestCase {
 		$result    = $audit_log->log( 'test-agent', 'tool_call', 'list_posts', array( 'id' => 1 ) );
 
 		$this->assertFalse( $result, 'Audit_Log::log() must skip its insert while the schema is stale' );
+	}
+
+	/**
+	 * A stale-schema Audit_Log write is buffered, not dropped: log() returns
+	 * false while the schema is stale, and the next log() (once the schema is
+	 * current again) flushes the deferred row together with the new one.
+	 */
+	public function test_audit_log_buffers_stale_write_and_flushes_when_current(): void {
+		$previous_schema = get_option( 'agent_builder_db_schema_version', false );
+
+		try {
+			update_option( 'agent_builder_db_schema_version', '2.14.2' );
+			$this->assertTrue( Activator::schema_is_stale() );
+
+			$audit_log = new Audit_Log();
+			$result    = $audit_log->log( 'test-agent', 'tool_call', 'list_posts', array( 'id' => 1 ) );
+			$this->assertFalse( $result, 'stale schema must defer the write and return false' );
+
+			global $wpdb;
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test assertion.
+			$count_stale = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}agent_builder_audit_log" );
+			$this->assertSame( 0, $count_stale, 'the deferred audit row must not have landed while the schema was stale' );
+
+			update_option( 'agent_builder_db_schema_version', AGENT_BUILDER_DB_VERSION );
+			$this->assertFalse( Activator::schema_is_stale() );
+
+			// The next log() flushes the whole queue: the deferred row + this one.
+			$audit_log->log( 'test-agent', 'tool_call', 'get_post_content', array( 'id' => 2 ) );
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test assertion.
+			$count_after = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}agent_builder_audit_log" );
+			$this->assertSame( 2, $count_after, 'both the deferred row and the new row must land once the schema is current' );
+		} finally {
+			if ( false === $previous_schema ) {
+				delete_option( 'agent_builder_db_schema_version' );
+			} else {
+				update_option( 'agent_builder_db_schema_version', $previous_schema );
+			}
+			Audit_Log::reset_pending_for_tests();
+		}
 	}
 
 	/**

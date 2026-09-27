@@ -95,6 +95,15 @@ final class Activator {
 	);
 
 	/**
+	 * How long (seconds) to wait before re-attempting a schema repair after one
+	 * fails. A full dbDelta pass is multi-table DDL — without a backoff, every
+	 * frontend/REST/cron request during a persistent repair-failure window
+	 * would re-run it (plus error-log writes) on each hit. Writes stay safely
+	 * queued in the Agent_Run/Audit_Log pending buffers in the meantime.
+	 */
+	private const SCHEMA_REPAIR_BACKOFF_SECONDS = 60;
+
+	/**
 	 * Whether the site owner has thrown the safe-mode breaker.
 	 *
 	 * Defining AGENT_BUILDER_SAFE_MODE as true in wp-config.php disables all
@@ -304,6 +313,11 @@ final class Activator {
 		$tables_ok            = self::run_schema_upgrade();
 		self::flush_deferred_log( AGENT_BUILDER_DB_VERSION );
 
+		// Intentional: arm the deferred-seed flag here too, not just in the
+		// admin path. This non-admin call only leaves the flag for the next
+		// wp-admin visit (maybe_run_deferred_seed() is admin_init +
+		// manage_options-gated) to fill newly bundled content — it never starts
+		// seeding on its own.
 		if ( $tables_ok && ! self::is_safe_mode() ) {
 			update_option( 'agent_builder_needs_seed', true );
 		}
@@ -334,14 +348,27 @@ final class Activator {
 	 * @return bool True when tables were created/upgraded successfully.
 	 */
 	private static function run_schema_upgrade(): bool {
+		// Backoff: gate repeated full-dbDelta attempts behind a short-TTL
+		// transient. The stored schema version only bumps on success, so
+		// schema_is_stale() keeps returning true across requests until a repair
+		// lands — meaning every request would otherwise re-run the multi-table
+		// DDL. Writes are queued in the Agent_Run/Audit_Log pending buffers
+		// between attempts, so nothing is lost while we wait. The transient is
+		// cleared on success so it never blocks a later, unrelated migration.
+		if ( false !== get_transient( 'agent_builder_schema_repair_backoff' ) ) {
+			return false;
+		}
+		set_transient( 'agent_builder_schema_repair_backoff', 1, self::SCHEMA_REPAIR_BACKOFF_SECONDS );
+
 		self::guarded_step( 'maybe_upgrade_create_tables', array( __CLASS__, 'create_tables' ) );
 		$tables_ok = 'ok' === self::last_log_status( 'create_tables' );
 		if ( ! $tables_ok ) {
 			update_option( 'agent_builder_activation_degraded', true );
-			return false;
+			return false; // Backoff transient stays set — retried on a later request.
 		}
 
 		self::set_db_schema_version( AGENT_BUILDER_DB_VERSION );
+		delete_transient( 'agent_builder_schema_repair_backoff' );
 		return true;
 	}
 

@@ -33,6 +33,33 @@ class Audit_Log {
 	private static string $mode_context = '';
 
 	/**
+	 * Rows (each a full column => value array ready for $wpdb->insert()) that
+	 * could not be durably written yet, accumulated whenever a flush attempt
+	 * found Activator::schema_is_stale() still true (or hit a write error) and
+	 * retried on the next flush. Mirrors Agent_Run's pending-write buffer so a
+	 * stale-schema audit write is queued and retried — not silently dropped —
+	 * for the rest of the request.
+	 *
+	 * @var array<int, array<string, mixed>>
+	 */
+	private static array $pending_rows = array();
+
+	/**
+	 * Whether at least one pending audit row has not yet durably landed.
+	 *
+	 * @var bool
+	 */
+	private static bool $dirty = false;
+
+	/**
+	 * Whether the shutdown safety net has already been registered for this
+	 * request.
+	 *
+	 * @var bool
+	 */
+	private static bool $shutdown_registered = false;
+
+	/**
 	 * Set the mode context for all subsequent log calls in this request.
 	 *
 	 * @param string $mode One of 'disabled', 'supervised', 'autonomous'.
@@ -118,31 +145,22 @@ class Audit_Log {
 			'run_id'        => '' !== $run_id ? $run_id : null,
 		);
 
-		// Skip the insert when Activator::schema_is_stale() reports the table
-		// shape is out of date — e.g. a prior maybe_upgrade_schema()/
-		// maybe_upgrade() this same request already failed to repair it.
-		// Without this guard the insert would still fire against columns
-		// dbDelta never finished adding, failing silently ($wpdb->insert()
-		// just returns false) — exactly the data-loss bug this whole
-		// fix-forward exists to close, now scoped to "repair failed" instead
-		// of "repair never ran".
-		if ( Activator::schema_is_stale() ) {
-			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Intentional, rare (schema-repair-failure only) debug output.
-			error_log( '[Agent Builder] Audit_Log::log() skipped: schema is stale, a prior repair attempt this request did not succeed' );
-			return false;
-		}
+		// Queue this row and try to flush the whole buffer now. When the schema
+		// is stale (a prior maybe_upgrade_schema()/maybe_upgrade() this request
+		// already failed to repair it) the row is buffered instead of dropped:
+		// the next log() call — or the shutdown safety net — retries the insert
+		// once the schema is current, closing the data-loss gap a plain
+		// schema_is_stale() early-return would leave open for the rest of the
+		// request.
+		self::merge_pending( $data );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table insert.
-		$result = $wpdb->insert( $wpdb->prefix . 'agent_builder_audit_log', $data );
-
-		if ( $result ) {
-			$insert_id = $wpdb->insert_id;
-			// Snapshot the chain hash in the same request as the insert, using
-			// the exact $data just written — see Audit_Log_Integrity for why
-			// this can't be deferred to a later read of the row.
-			Audit_Log_Integrity::record( $insert_id, $data );
-			self::bust_query_cache();
-			return $insert_id;
+		// The flush wrote the whole queue (so this row is durable) exactly when
+		// the buffer emptied; $wpdb->insert_id is then this row's id, since it
+		// was appended last. A false return signals "not durable yet" — callers
+		// ignore it (none check log()'s return), but the queued row retries on
+		// the next flush rather than vanishing.
+		if ( empty( self::$pending_rows ) ) {
+			return (int) $wpdb->insert_id;
 		}
 
 		return false;
@@ -201,6 +219,113 @@ class Audit_Log {
 	public static function log_admin( string $action, string $target_type = 'settings', mixed $details = null, string $reasoning = '' ): int|false {
 		$log = new self();
 		return $log->log( 'human', $action, $target_type, $details, $reasoning );
+	}
+
+	/**
+	 * Queue one fully-built row and try to flush the whole buffer now.
+	 *
+	 * @param array<string, mixed> $data Column => value, ready for $wpdb->insert().
+	 * @return void
+	 */
+	private static function merge_pending( array $data ): void {
+		self::$pending_rows[] = $data;
+		self::register_shutdown_guard();
+		self::flush_pending();
+	}
+
+	/**
+	 * Try to insert every queued row. Any row that fails to insert is kept in
+	 * the buffer (so nothing already accumulated is lost) and the instance is
+	 * marked dirty when the schema is still stale or the write itself fails —
+	 * the same pending-write-buffer treatment Agent_Run::flush_pending() gives
+	 * run rows, so a stale-schema audit write retries on the next flush instead
+	 * of silently vanishing.
+	 *
+	 * @return void
+	 */
+	private static function flush_pending(): void {
+		if ( empty( self::$pending_rows ) ) {
+			return;
+		}
+
+		if ( Activator::schema_is_stale() ) {
+			self::$dirty = true;
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Intentional, rare (schema-repair-failure only) debug output; rows stay pending for the next flush attempt.
+			error_log( '[Agent Builder] Audit_Log: write deferred, schema is stale (a prior repair attempt this request did not succeed); ' . count( self::$pending_rows ) . ' row(s) queued' );
+			return;
+		}
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'agent_builder_audit_log';
+
+		$still_pending = array();
+		$inserted_any  = false;
+		$failed        = false;
+
+		foreach ( self::$pending_rows as $row ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table insert.
+			$result = $wpdb->insert( $table, $row );
+			if ( ! $result ) {
+				$still_pending[] = $row;
+				$failed          = true;
+				continue;
+			}
+
+			// Snapshot the chain hash in the same request as the insert, using
+			// the exact $row just written — see Audit_Log_Integrity for why
+			// this can't be deferred to a later read of the row.
+			Audit_Log_Integrity::record( (int) $wpdb->insert_id, $row );
+			$inserted_any = true;
+		}
+
+		self::$pending_rows = $still_pending;
+
+		if ( $failed ) {
+			self::$dirty = true;
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Intentional debug output for an otherwise-silent write failure; rows stay pending for the next flush attempt.
+			error_log( '[Agent Builder] Audit_Log: write failed against a current-looking schema; ' . count( $still_pending ) . ' row(s) stay pending' );
+			if ( $inserted_any ) {
+				self::bust_query_cache();
+			}
+			return;
+		}
+
+		self::$dirty = false;
+		self::bust_query_cache();
+	}
+
+	/**
+	 * Register the shutdown safety net once per request: gives any still-pending
+	 * rows one more flush attempt at shutdown, in case something else this
+	 * request repaired the schema after they were deferred.
+	 *
+	 * @return void
+	 */
+	private static function register_shutdown_guard(): void {
+		if ( self::$shutdown_registered ) {
+			return;
+		}
+		self::$shutdown_registered = true;
+
+		register_shutdown_function(
+			static function (): void {
+				if ( self::$dirty ) {
+					self::flush_pending();
+				}
+			}
+		);
+	}
+
+	/**
+	 * Reset the in-process pending-write buffer between tests. Production code
+	 * never needs this — the buffer is per-request, and the shutdown guard
+	 * flushes or drops it at end of request.
+	 *
+	 * @return void
+	 */
+	public static function reset_pending_for_tests(): void {
+		self::$pending_rows = array();
+		self::$dirty        = false;
 	}
 
 	/**

@@ -1394,7 +1394,13 @@ class Agent_Run {
 			$result = $wpdb->insert( $table, $this->pending_fields, $values );
 		}
 
-		if ( false === $result ) {
+		// An UPDATE that returned 0 was already disambiguated above (benign no-op
+		// vs vanished row) and only falls through here as success when the row
+		// still exists. An INSERT that returns anything other than a positive row
+		// count — 0 (no row created) or false (query error) — means this run has
+		// still never landed, so both count as a failed flush and the write stays
+		// pending for the next attempt.
+		if ( ( $this->row_inserted && false === $result ) || ( ! $this->row_inserted && ! $result ) ) {
 			$this->dirty = true;
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Intentional debug output for an otherwise-silent write failure; write stays pending for the next flush attempt.
 			error_log( '[Agent Builder] Agent_Run: write failed for run ' . $this->run_id . ' against a current-looking schema' );

@@ -438,6 +438,61 @@ class Test_Agent_Run extends TestCase {
 	}
 
 	/**
+	 * flush_pending()'s INSERT branch must treat a "0 rows affected" result the
+	 * same as a write error: $wpdb->insert() can report 0 (not just false) in
+	 * edge cases, and either way the run has still never landed — so it must
+	 * stay dirty rather than falsely report persisted via is_persisted().
+	 */
+	public function test_insert_reporting_zero_rows_is_treated_as_failed_flush(): void {
+		$previous_schema = get_option( 'agent_builder_db_schema_version', false );
+		$original_wpdb   = $GLOBALS['wpdb'];
+		// Short-circuit schema_is_stale()'s get_option() so the flush below never
+		// hits the stubbed $wpdb (which deliberately has no read methods).
+		$short_circuit   = static function () {
+			return AGENT_BUILDER_DB_VERSION;
+		};
+
+		try {
+			// Defer the initial insert so the run stays in INSERT mode: its row
+			// has never landed, so flush_pending() must INSERT, not UPDATE.
+			update_option( 'agent_builder_db_schema_version', '2.14.2' );
+			$run = Agent_Run::begin( 'content-writer' );
+			$this->assertFalse( $run->is_persisted() );
+
+			$stub          = new class {
+				public $prefix;
+
+				/**
+				 * Simulate a "no row created" insert result.
+				 *
+				 * @return int Always 0.
+				 */
+				public function insert() {
+					return 0;
+				}
+			};
+			$stub->prefix = $original_wpdb->prefix;
+
+			add_filter( 'pre_option_agent_builder_db_schema_version', $short_circuit );
+			$GLOBALS['wpdb'] = $stub;
+
+			$ref = new \ReflectionMethod( Agent_Run::class, 'flush_pending' );
+			$ref->invoke( $run );
+
+			$this->assertFalse( $run->is_persisted(), 'a 0-row insert must leave the run dirty, not report it persisted' );
+		} finally {
+			$GLOBALS['wpdb'] = $original_wpdb;
+			remove_filter( 'pre_option_agent_builder_db_schema_version', $short_circuit );
+			if ( false === $previous_schema ) {
+				delete_option( 'agent_builder_db_schema_version' );
+			} else {
+				update_option( 'agent_builder_db_schema_version', $previous_schema );
+			}
+			Agent_Run::reset_current_for_tests();
+		}
+	}
+
+	/**
 	 * record_iteration() sums iterations, tokens, cost, and unions tool names
 	 * across multiple calls.
 	 */
