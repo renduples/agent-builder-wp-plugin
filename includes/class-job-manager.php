@@ -252,9 +252,11 @@ class Job_Manager {
 	 *
 	 * @param string $job_id Job ID.
 	 * @return void
-	 * @throws \Exception If job processor is invalid or missing.
 	 */
 	public static function process_job( string $job_id ): void {
+		// Allow long-running processor work to exceed the default memory ceiling.
+		wp_raise_memory_limit( 'admin' );
+
 		if ( class_exists( __NAMESPACE__ . '\\Emergency_Stop' ) && Emergency_Stop::is_active() ) {
 			self::update_job(
 				$job_id,
@@ -273,25 +275,47 @@ class Job_Manager {
 			return;
 		}
 
-		// Check if already processing or completed.
-		if ( in_array( $job->status, array( self::STATUS_PROCESSING, self::STATUS_COMPLETED, self::STATUS_CANCELLED ), true ) ) {
+		// Atomically claim the job: the WHERE status='pending' guard makes this a
+		// no-op when a second cron firing (or another worker) has already claimed
+		// it, or when the job is no longer pending, so a job runs at most once.
+		global $wpdb;
+		$table = self::get_table_name();
+		$now   = gmdate( 'Y-m-d H:i:s' );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom jobs table; %i quotes table name.
+		$claimed = $wpdb->query(
+			$wpdb->prepare(
+				'UPDATE %i SET status = %s, updated_at = %s WHERE id = %s AND status = %s',
+				$table,
+				self::STATUS_PROCESSING,
+				$now,
+				$job_id,
+				self::STATUS_PENDING
+			)
+		);
+
+		if ( 1 !== $claimed ) {
 			return;
 		}
 
-		// Update to processing.
-		self::update_job( $job_id, array( 'status' => self::STATUS_PROCESSING ) );
+		// Invalidate the per-job cache so the now-processing row isn't served stale.
+		wp_cache_delete( 'job_' . $job_id, self::CACHE_GROUP );
+		self::invalidate_list_cache();
 
 		try {
-			// Get processor class from request data. Only a class that actually
-			// implements Job_Processor_Interface may be instantiated here — this
-			// value ultimately traces back to a REST request parameter, so a
-			// bare class_exists() would let a caller name ANY loaded class
-			// (WordPress core, any other active plugin) as the "processor".
-			$processor_class = $job->request_data['_processor'] ?? null;
+			// Only an allowlisted class that implements Job_Processor_Interface may
+			// be instantiated here — this value ultimately traces back to a REST
+			// request parameter, so a bare class_exists() would let a caller name
+			// ANY loaded class (WordPress core, any other active plugin).
+			$processor_class = (string) ( $job->request_data['_processor'] ?? '' );
 
-			if ( ! $processor_class || ! class_exists( $processor_class )
-				|| ! in_array( __NAMESPACE__ . '\\Job_Processor_Interface', class_implements( $processor_class ), true ) ) {
-				throw new \Exception( 'Invalid or missing job processor' );
+			$allowed = apply_filters( 'agent_builder_job_processors', array( Agent_Builder_Job_Processor::class ) );
+
+			if ( '' === $processor_class || ! class_exists( $processor_class )
+				|| ! in_array( __NAMESPACE__ . '\\Job_Processor_Interface', class_implements( $processor_class ), true )
+				|| ! in_array( $processor_class, $allowed, true ) ) {
+				self::fail_job( $job_id, 'processor not allowed: ' . $processor_class, $processor_class );
+				return;
 			}
 
 			// Create processor instance.
@@ -322,17 +346,60 @@ class Job_Manager {
 				)
 			);
 
-		} catch ( \Exception $e ) {
-			// Mark as failed.
-			self::update_job(
-				$job_id,
+		} catch ( \Throwable $e ) {
+			// Record any failure — including \Error, which a bare \Exception catch
+			// would let escape and strand the job in 'processing' — truncated and
+			// without the stack trace.
+			self::fail_job( $job_id, $e->getMessage() );
+		}
+	}
+
+	/**
+	 * Mark a job failed with a truncated error message (never the stack trace).
+	 *
+	 * When a processor class is supplied it was rejected by the allowlist, so a
+	 * matching audit entry is written for visibility.
+	 *
+	 * @param string $job_id    Job ID.
+	 * @param string $message   Error message (truncated to a safe column length).
+	 * @param string $processor Processor class that was rejected, or '' otherwise.
+	 * @return void
+	 */
+	private static function fail_job( string $job_id, string $message, string $processor = '' ): void {
+		$error_message = self::truncate_message( $message, 255 );
+
+		self::update_job(
+			$job_id,
+			array(
+				'status'        => self::STATUS_FAILED,
+				'error_message' => $error_message,
+				'message'       => self::truncate_message( 'Failed: ' . $error_message, 255 ),
+			)
+		);
+
+		if ( '' !== $processor && class_exists( 'Agentic\\Audit_Log' ) ) {
+			( new \Agentic\Audit_Log() )->log(
+				'system',
+				'job_processor_not_allowed',
+				'job',
 				array(
-					'status'        => self::STATUS_FAILED,
-					'error_message' => $e->getMessage(),
-					'message'       => 'Failed: ' . $e->getMessage(),
-				)
+					'id'        => $job_id,
+					'processor' => $processor,
+				),
+				'Processor not in allowlist'
 			);
 		}
+	}
+
+	/**
+	 * Truncate a message to a safe column length (message is varchar(255)).
+	 *
+	 * @param string $message Message.
+	 * @param int    $length  Maximum length.
+	 * @return string
+	 */
+	private static function truncate_message( string $message, int $length = 255 ): string {
+		return function_exists( 'mb_substr' ) ? mb_substr( $message, 0, $length ) : substr( $message, 0, $length );
 	}
 
 	/**
