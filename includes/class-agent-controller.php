@@ -1318,17 +1318,19 @@ class Agent_Controller {
 				);
 			}
 
-			// A run can only be resumed from its 'waiting' hand-off state — a
-			// terminal run (completed/aborted/cancelled/failed) must never be
-			// replayed, since finish() on an already-finished run silently
-			// no-ops and would let tool calls execute a second time. Also
-			// refuse a run that belongs to a different agent than the one
-			// making this call, so a stale or mismatched run_id can never be
-			// hijacked into another agent's context.
-			if ( 'waiting' !== $run->get_status() || $run->get_root_agent() !== $agent_id ) {
+			// A run can only be resumed from one of its non-terminal hand-off
+			// states — 'waiting' (paused on an approval/proposal) or
+			// 'continuing' (handed off by the elapsed-time guard) — a terminal
+			// run (completed/aborted/cancelled/failed) must never be replayed,
+			// since finish() on an already-finished run silently no-ops and
+			// would let tool calls execute a second time. Also refuse a run
+			// that belongs to a different agent than the one making this
+			// call, so a stale or mismatched run_id can never be hijacked into
+			// another agent's context.
+			if ( ! in_array( $run->get_status(), array( 'waiting', 'continuing' ), true ) || $run->get_root_agent() !== $agent_id ) {
 				return array(
 					'error'    => true,
-					'response' => __( 'Cannot resume: this run is not waiting for input.', 'agent-builder' ),
+					'response' => __( 'Cannot resume: this run is not in a resumable state.', 'agent-builder' ),
 					'agent_id' => $agent_id,
 					'task_id'  => $task_id,
 					'run_id'   => $resume_run_id,

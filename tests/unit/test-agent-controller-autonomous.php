@@ -337,6 +337,52 @@ class Test_Agent_Controller_Autonomous extends TestCase {
 	}
 
 	/**
+	 * A run handed off by the elapsed-time guard lands in 'continuing', not
+	 * 'waiting' — the resume guard must accept that status too (the
+	 * background continuation job resumes via the same run_id/resume_state
+	 * options as an approval/proposal resume, but with no tool_result, since
+	 * there is no pending tool call to answer).
+	 */
+	public function test_resume_accepts_continuing_run_from_elapsed_guard(): void {
+		$agent_id = 'test-autonomous-resume-continuing';
+		$agent    = $this->make_agent( $agent_id );
+		$fake     = new Fake_LLM_Client(
+			array(
+				Fake_LLM_Client::text_response( 'Finished after continuation.', array( 'prompt_tokens' => 5, 'completion_tokens' => 3, 'total_tokens' => 8 ) ),
+			)
+		);
+
+		$run = Agent_Run::begin( $agent_id, array( 'task_text' => 'Long-running task.' ) );
+		$run->checkpoint_transcript(
+			array(
+				array( 'role' => 'system', 'content' => 'System prompt.' ),
+				array( 'role' => 'user', 'content' => 'Long-running task.' ),
+			)
+		);
+		$run->mark_continuing();
+		Agent_Run::reset_current_for_tests();
+
+		$controller = new Agent_Controller( $fake );
+		$result     = $controller->run_autonomous_task(
+			$agent,
+			'Long-running task.',
+			'task-continuing-resume',
+			array(
+				'run_id'       => $run->get_run_id(),
+				'resume_state' => $run->resume_state(),
+			)
+		);
+
+		$this->assertIsArray( $result );
+		$this->assertFalse( $result['error'] ?? false, 'resuming a continuing run must not be rejected' );
+		$this->assertSame( 'completed', $result['status'] );
+		$this->assertSame( 1, $fake->chat_calls, 'the resumed loop must actually call the LLM again' );
+
+		$run_after = Agent_Run::load( $run->get_run_id() );
+		$this->assertSame( 'completed', $run_after->to_array()['status'] );
+	}
+
+	/**
 	 * An active Emergency Stop aborts the run before any LLM call is made.
 	 */
 	public function test_emergency_stop_aborts_run(): void {

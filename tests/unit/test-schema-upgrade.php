@@ -180,4 +180,37 @@ class Test_Schema_Upgrade extends TestCase {
 		$this->assertSame( $runs_column_count_before, count( $runs_columns_after ) );
 		$this->assertSame( $runs_key_count_before, count( $runs_keys_after ) );
 	}
+
+	/**
+	 * Regression: awaiting_tool_call_id was added to the runs table's dbDelta
+	 * SQL without bumping AGENT_BUILDER_DB_VERSION, so maybe_upgrade()'s
+	 * `AGENT_BUILDER_DB_VERSION === $stored` check would have no-op'd on every
+	 * site already stored at the old '2.15.0' — the new column would never
+	 * land there. Simulates exactly that site: schema option left at the old
+	 * version, table physically missing the column, and asserts the
+	 * (now-bumped) constant makes maybe_upgrade() actually re-run
+	 * create_tables() and add it.
+	 */
+	public function test_upgrade_adds_awaiting_tool_call_id_from_stored_2_15_0(): void {
+		global $wpdb;
+
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		$ref = new \ReflectionMethod( Activator::class, 'create_tables' );
+		$ref->invoke( null );
+
+		$wpdb->query( "ALTER TABLE {$wpdb->prefix}agent_builder_runs DROP COLUMN awaiting_tool_call_id" );
+
+		$runs_columns_before = $wpdb->get_col( "SHOW COLUMNS FROM {$wpdb->prefix}agent_builder_runs", 0 );
+		$this->assertNotContains( 'awaiting_tool_call_id', $runs_columns_before );
+
+		update_option( 'agent_builder_db_schema_version', '2.15.0' );
+		$this->assertNotSame( '2.15.0', AGENT_BUILDER_DB_VERSION, 'This regression test requires AGENT_BUILDER_DB_VERSION to have moved past 2.15.0.' );
+		$this->enter_admin_as_logged_in_user();
+
+		Activator::maybe_upgrade();
+
+		$runs_columns_after = $wpdb->get_col( "SHOW COLUMNS FROM {$wpdb->prefix}agent_builder_runs", 0 );
+		$this->assertContains( 'awaiting_tool_call_id', $runs_columns_after );
+		$this->assertSame( AGENT_BUILDER_DB_VERSION, (string) get_option( 'agent_builder_db_schema_version' ) );
+	}
 }
