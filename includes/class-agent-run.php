@@ -295,6 +295,49 @@ class Agent_Run {
 	private bool $shutdown_registered = false;
 
 	/**
+	 * Column => value for writes not yet durably persisted, accumulated
+	 * whenever a flush attempt found Activator::schema_is_stale() still true
+	 * (or hit a write error). Kept across calls so the *next* flush attempt —
+	 * triggered by whatever state-transition method runs next — writes the
+	 * full up-to-date row instead of just whatever that one call passed,
+	 * closing the gap where a run's in-memory state (e.g. after finish())
+	 * moved ahead of a DB row that a skipped write left behind or never
+	 * created at all.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private array $pending_fields = array();
+
+	/**
+	 * Format specifiers for $pending_fields, same keys and key order.
+	 *
+	 * @var array<string, string>
+	 */
+	private array $pending_formats = array();
+
+	/**
+	 * Whether persist_start()'s insert has ever landed for this run. While
+	 * false, flush_pending() must INSERT the accumulated row rather than
+	 * UPDATE — a schema-stale skip at begin() means no row exists yet.
+	 *
+	 * @var bool
+	 */
+	private bool $row_inserted = false;
+
+	/**
+	 * Whether this instance's in-memory state is currently ahead of the DB
+	 * row — true whenever the last flush attempt found the schema stale or
+	 * the write itself failed. finish()/mark_waiting()/etc. still update
+	 * in-memory state immediately (every call site in this codebase treats
+	 * them as void), so is_persisted()/to_array()['persisted'] is how a
+	 * caller that does check can tell a genuinely durable terminal state
+	 * from one that only looks that way in this process.
+	 *
+	 * @var bool
+	 */
+	private bool $dirty = false;
+
+	/**
 	 * Timestamps (MySQL 'Y-m-d H:i:s', UTC), tracked in-memory so to_array()
 	 * is accurate for a freshly begun run without a round-trip to the DB.
 	 *
@@ -791,6 +834,18 @@ class Agent_Run {
 	}
 
 	/**
+	 * Whether every write made so far on this instance has been durably
+	 * persisted to the DB row — false when a prior flush attempt found the
+	 * schema stale (or hit a write error) and in-memory state has since moved
+	 * ahead of what's actually stored.
+	 *
+	 * @return bool
+	 */
+	public function is_persisted(): bool {
+		return ! $this->dirty;
+	}
+
+	/**
 	 * Full snapshot of the run, for REST/return payloads.
 	 *
 	 * @return array<string, mixed>
@@ -826,6 +881,7 @@ class Agent_Run {
 			'started_at'       => $this->started_at,
 			'updated_at'       => $this->updated_at,
 			'finished_at'      => $this->finished_at,
+			'persisted'        => ! $this->dirty,
 		);
 	}
 
@@ -1001,6 +1057,14 @@ class Agent_Run {
 			function (): void {
 				if ( ! $this->finished ) {
 					$this->finish( 'aborted' );
+					return;
+				}
+
+				// A settled run whose last write(s) were deferred (schema was
+				// stale at the time) gets one more flush attempt here, in case
+				// something else this request repaired the schema afterwards.
+				if ( $this->dirty ) {
+					$this->flush_pending();
 				}
 			}
 		);
@@ -1044,24 +1108,32 @@ class Agent_Run {
 		$run->result_cards = is_array( $summary['cards'] ?? null ) ? $summary['cards'] : array();
 
 		$state       = self::decode_assoc( $row['state'] ?? '' );
-		$has_wrapper = array_key_exists( 'scratchpad', $state ) && array_key_exists( 'messages', $state )
-			&& is_array( $state['scratchpad'] ) && is_array( $state['messages'] );
+		$has_wrapper = array_key_exists( 'scratchpad', $state )
+			&& is_array( $state['scratchpad'] )
+			&& array_key_exists( 'messages', $state )
+			&& is_array( $state['messages'] )
+			&& self::is_transcript_list( $state['messages'] );
 		if ( $has_wrapper ) {
 			// Current (>= 2.15.0) shape: {scratchpad, messages}.
 			$run->scratchpad = $state['scratchpad'];
 			$run->messages   = $state['messages'];
 		} else {
 			// Legacy (pre-2.15.0) shape: the whole decoded value *is* the
-			// scratchpad, with no wrapper and no transcript. Requiring BOTH
-			// keys (not just one) — and both as arrays — avoids misdetecting
-			// a legacy scratchpad that merely happens to contain a key named
-			// "scratchpad" or "messages" as the new wrapper shape, which
-			// would otherwise discard the real legacy data.
+			// scratchpad, with no wrapper and no transcript. Requiring the
+			// wrapper's "messages" value to be a list of role-bearing message
+			// objects — not just an array — avoids misdetecting a legacy
+			// scratchpad that merely happens to contain keys named "scratchpad"
+			// and "messages" as the new wrapper shape, which would otherwise
+			// discard the real legacy data.
 			$run->scratchpad = $state;
 			$run->messages   = array();
 		}
 
 		$run->finished = in_array( $run->status, self::TERMINAL_STATUSES, true );
+
+		// A row was found, so persist_start()'s insert has already landed —
+		// any later write must UPDATE, never re-INSERT.
+		$run->row_inserted = true;
 
 		return $run;
 	}
@@ -1078,6 +1150,40 @@ class Agent_Run {
 		}
 		$decoded = json_decode( $raw, true );
 		return is_array( $decoded ) ? $decoded : array();
+	}
+
+	/**
+	 * Whether a decoded state's "messages" value has the current (>= 2.15.0)
+	 * transcript shape: a list of message objects, each carrying a `role` key.
+	 *
+	 * The current shape's messages are always produced by sanitize_transcript(),
+	 * which re-indexes with array_values() (so always a list) over message
+	 * objects built with a `role` key. A legacy scratchpad would have to hold a
+	 * "messages" key whose value is a list of role-bearing message objects to
+	 * fool this, which scratch_set() never writes — so this closes the gap a
+	 * bare is_array() check leaves open without risking a false negative on a
+	 * real transcript.
+	 *
+	 * @param array $messages Candidate messages value.
+	 * @return bool
+	 */
+	private static function is_transcript_list( array $messages ): bool {
+		if ( array() === $messages ) {
+			return true;
+		}
+
+		$expected = 0;
+		foreach ( $messages as $index => $message ) {
+			if ( $index !== $expected ) {
+				return false; // Not a list.
+			}
+			if ( ! is_array( $message ) || ! array_key_exists( 'role', $message ) ) {
+				return false;
+			}
+			++$expected;
+		}
+
+		return true;
 	}
 
 	/**
@@ -1165,59 +1271,36 @@ class Agent_Run {
 	 * checkpoint_transcript(), request_cancel(), record_iteration(), etc.),
 	 * including ones reached via Agent_Run::load() resuming a run that a
 	 * *different*, earlier (and possibly healthy-schema) request originally
-	 * inserted via persist_start() — so this needs the same
-	 * Activator::schema_is_stale() guard as persist_start(): without it, a
-	 * schema repair that fails in between those two requests would let this
-	 * UPDATE fire against columns a later migration never finished adding,
-	 * silently no-oping or erroring and leaving the row stuck at its
-	 * previous status forever while the run looks finished in-memory.
+	 * inserted via persist_start(). Merges into the pending-write buffer and
+	 * immediately tries to flush it — see merge_pending()/flush_pending().
 	 *
 	 * @param array $fields  Column => value.
 	 * @param array $formats Matching %s/%d/%f formats.
 	 * @return void
 	 */
 	private function persist( array $fields, array $formats ): void {
-		global $wpdb;
-		$table = $wpdb->prefix . 'agent_builder_runs';
-
-		if ( Activator::schema_is_stale() ) {
-			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Intentional, rare (schema-repair-failure only) debug output.
-			error_log( '[Agent Builder] Agent_Run::persist() skipped: schema is stale, a prior repair attempt this request did not succeed' );
-			return;
-		}
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table update, keyed by run_id.
-		$wpdb->update( $table, $fields, array( 'run_id' => $this->run_id ), $formats, array( '%s' ) );
+		$this->merge_pending( $fields, $formats );
 	}
 
 	/**
 	 * Insert the initial run row.
 	 *
-	 * Skips the insert entirely when Activator::schema_is_stale() reports the
-	 * table shape is out of date — e.g. a prior maybe_upgrade_schema()/
-	 * maybe_upgrade() this same request already failed to repair it (a
-	 * transient DB error, a missing ALTER permission). Without this guard the
-	 * insert would still fire against columns dbDelta never finished adding,
-	 * failing silently ($wpdb->insert() just returns false) — exactly the
-	 * data-loss bug this whole fix-forward exists to close, now scoped to
-	 * "repair failed" instead of "repair never ran". The run still works
-	 * in-memory for the rest of this request; only persistence is skipped.
+	 * Merges the initial columns into the pending-write buffer and tries to
+	 * flush immediately, same as every other state-transition method — see
+	 * merge_pending()/flush_pending(). When Activator::schema_is_stale()
+	 * reports the table shape is out of date (e.g. a prior
+	 * maybe_upgrade_schema()/maybe_upgrade() this same request already failed
+	 * to repair it — a transient DB error, a missing ALTER permission), the
+	 * flush is skipped and these columns stay pending: the next
+	 * state-transition call on this instance (or, failing that, the shutdown
+	 * safety net) gets another chance to insert the full accumulated row once
+	 * the schema is current. The run still works in-memory for the rest of
+	 * this request regardless of whether persistence has caught up.
 	 *
 	 * @return void
 	 */
 	private function persist_start(): void {
-		global $wpdb;
-		$table = $wpdb->prefix . 'agent_builder_runs';
-
-		if ( Activator::schema_is_stale() ) {
-			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Intentional, rare (schema-repair-failure only) debug output.
-			error_log( '[Agent Builder] Agent_Run::persist_start() skipped: schema is stale, a prior repair attempt this request did not succeed' );
-			return;
-		}
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table insert.
-		$wpdb->insert(
-			$table,
+		$this->merge_pending(
 			array(
 				'run_id'        => $this->run_id,
 				'root_agent'    => $this->root_agent,
@@ -1235,6 +1318,93 @@ class Agent_Run {
 			),
 			array( '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s' )
 		);
+	}
+
+	/**
+	 * Fold a set of column => value writes into the pending-write buffer
+	 * (later calls win on a shared key, same as a real UPDATE would apply
+	 * them in order) and attempt to flush.
+	 *
+	 * @param array $fields  Column => value.
+	 * @param array $formats Matching %s/%d/%f formats, same order as $fields.
+	 * @return void
+	 */
+	private function merge_pending( array $fields, array $formats ): void {
+		$format_map = array_combine( array_keys( $fields ), $formats );
+
+		$this->pending_fields  = array_merge( $this->pending_fields, $fields );
+		$this->pending_formats = array_merge( $this->pending_formats, $format_map );
+
+		$this->flush_pending();
+	}
+
+	/**
+	 * Try to write the accumulated pending fields to this run's row: INSERT
+	 * if persist_start()'s row has never landed, UPDATE otherwise. Leaves
+	 * $pending_fields/$pending_formats untouched (so nothing already
+	 * accumulated is lost) and marks the instance dirty when the schema is
+	 * still stale or the write itself fails — the data-loss bug this whole
+	 * fix-forward exists to close, now closed one layer up: a caller that
+	 * checks is_persisted()/to_array()['persisted'] can tell a genuinely
+	 * durable terminal state from one that only looks that way in-process,
+	 * and the next successful flush (from a later call on this instance, or
+	 * the shutdown safety net) writes the full up-to-date row.
+	 *
+	 * @return void
+	 */
+	private function flush_pending(): void {
+		if ( empty( $this->pending_fields ) ) {
+			return;
+		}
+
+		if ( Activator::schema_is_stale() ) {
+			$this->dirty = true;
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Intentional, rare (schema-repair-failure only) debug output; write stays pending for the next flush attempt.
+			error_log( '[Agent Builder] Agent_Run: write deferred for run ' . $this->run_id . ', schema is stale (a prior repair attempt this request did not succeed)' );
+			return;
+		}
+
+		global $wpdb;
+		$table  = $wpdb->prefix . 'agent_builder_runs';
+		$values = array_values( $this->pending_formats );
+
+		if ( $this->row_inserted ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table update, keyed by run_id.
+			$result = $wpdb->update( $table, $this->pending_fields, array( 'run_id' => $this->run_id ), $values, array( '%s' ) );
+
+			// $wpdb->update() returns 0 for BOTH "the row already held these exact
+			// values" (a benign no-op) and "no row matched". Only the latter means
+			// this write didn't land — e.g. a run loaded via from_row() whose row
+			// was deleted after the SELECT, or an insert that raced a concurrent
+			// delete. Treating it as success would let is_persisted() report
+			// durable for a row that no longer exists, so disambiguate with a cheap
+			// existence check and stay dirty when the row has vanished.
+			if ( 0 === $result ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Single-row existence check, immediately after an update that reported no rows affected.
+				$still_there = $wpdb->get_var( $wpdb->prepare( 'SELECT run_id FROM %i WHERE run_id = %s', $table, $this->run_id ) );
+				if ( null === $still_there ) {
+					$this->dirty = true;
+					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Intentional debug output for an otherwise-silent write failure; write stays pending for the next flush attempt.
+					error_log( '[Agent Builder] Agent_Run: update matched no row for run ' . $this->run_id . ' (row vanished); write stays pending' );
+					return;
+				}
+			}
+		} else {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table insert.
+			$result = $wpdb->insert( $table, $this->pending_fields, $values );
+		}
+
+		if ( false === $result ) {
+			$this->dirty = true;
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Intentional debug output for an otherwise-silent write failure; write stays pending for the next flush attempt.
+			error_log( '[Agent Builder] Agent_Run: write failed for run ' . $this->run_id . ' against a current-looking schema' );
+			return;
+		}
+
+		$this->row_inserted    = true;
+		$this->pending_fields  = array();
+		$this->pending_formats = array();
+		$this->dirty           = false;
 	}
 
 	/**

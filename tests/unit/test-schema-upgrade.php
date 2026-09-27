@@ -387,9 +387,28 @@ class Test_Schema_Upgrade extends TestCase {
 		$this->enter_admin_as_logged_in_user();
 		$this->recreate_pre_m10_tables();
 
-		Activator::maybe_upgrade();
-
 		global $wpdb;
+
+		// Seed a genuinely pre-existing 2.14.2 row so the test proves dbDelta
+		// preserves existing data while it adds the M10 columns — a bare
+		// empty-table recreate would pass even if the migration dropped rows.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test fixture setup.
+		$wpdb->insert(
+			$wpdb->prefix . 'agent_builder_runs',
+			array(
+				'run_id'      => 'legacy-run-197',
+				'root_agent'  => 'legacy-agent',
+				'status'      => 'completed',
+				'delegations' => 3,
+				'max_depth'   => 2,
+				'tokens_used' => 1234,
+				'cost'        => 0.004200,
+				'state'       => '{"legacy":"scratchpad"}',
+			),
+			array( '%s', '%s', '%s', '%d', '%d', '%d', '%f', '%s' )
+		);
+
+		Activator::maybe_upgrade();
 
 		$runs_columns = $wpdb->get_col( "SHOW COLUMNS FROM {$wpdb->prefix}agent_builder_runs", 0 );
 		foreach (
@@ -429,6 +448,22 @@ class Test_Schema_Upgrade extends TestCase {
 		$this->assertContains( 'run_id', $audit_columns );
 		$audit_keys = $wpdb->get_col( "SHOW INDEX FROM {$wpdb->prefix}agent_builder_audit_log", 2 );
 		$this->assertContains( 'run_id', $audit_keys );
+
+		// The pre-existing 2.14.2 row must survive the migration intact — dbDelta
+		// adds columns without dropping rows, so its data (and the new columns'
+		// defaults) must come back unchanged.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test assertion against the pre-seeded row.
+		$legacy_row = $wpdb->get_row(
+			$wpdb->prepare( "SELECT run_id, root_agent, status, delegations, max_depth, tokens_used, state FROM {$wpdb->prefix}agent_builder_runs WHERE run_id = %s", 'legacy-run-197' ),
+			ARRAY_A
+		);
+		$this->assertIsArray( $legacy_row, 'A pre-existing 2.14.2 row must survive the M10 migration' );
+		$this->assertSame( 'legacy-agent', $legacy_row['root_agent'] );
+		$this->assertSame( 'completed', $legacy_row['status'] );
+		$this->assertSame( 3, (int) $legacy_row['delegations'] );
+		$this->assertSame( 2, (int) $legacy_row['max_depth'] );
+		$this->assertSame( 1234, (int) $legacy_row['tokens_used'] );
+		$this->assertSame( '{"legacy":"scratchpad"}', $legacy_row['state'] );
 
 		// Findings #3/#4: an Agent_Run insert and an Audit_Log insert must
 		// both succeed immediately after maybe_upgrade() runs — the migration

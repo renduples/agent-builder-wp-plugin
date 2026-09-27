@@ -11,6 +11,7 @@
 
 namespace Agentic\Tests;
 
+use Agentic\Activator;
 use Agentic\Agent_Run;
 
 /**
@@ -295,6 +296,143 @@ class Test_Agent_Run extends TestCase {
 		$this->assertSame( 'delegated_value', $reloaded->scratch_get( 'delegated_key' ) );
 		$this->assertSame( 'not-an-array-just-a-legacy-field', $reloaded->scratch_get( 'scratchpad' ) );
 		$this->assertSame( array(), $reloaded->resume_state()['messages'] );
+
+		$run->finish( 'completed' );
+	}
+
+	/**
+	 * The current-shape signal is a "messages" value that is a list of
+	 * role-bearing message objects, not merely an array. A legacy flat
+	 * scratchpad that happens to hold BOTH a "scratchpad" key (an array) AND a
+	 * "messages" key (an array that is not a transcript, e.g. a list of plain
+	 * strings) must still be recovered as the whole legacy scratchpad — not
+	 * misdetected as the current {scratchpad, messages} wrapper, which would
+	 * discard everything under the other keys.
+	 */
+	public function test_load_recovers_legacy_state_with_both_keys_but_no_transcript(): void {
+		$run    = Agent_Run::begin( 'content-writer' );
+		$run_id = $run->get_run_id();
+
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Simulating a pre-2.15.0 row shape for the test.
+		$wpdb->update(
+			$wpdb->prefix . 'agent_builder_runs',
+			array(
+				'state' => wp_json_encode(
+					array(
+						'scratchpad'    => array( 'legacy' => 'nested' ),
+						'messages'      => array( 'not a transcript list' ),
+						'delegated_key' => 'delegated_value',
+					)
+				),
+			),
+			array( 'run_id' => $run_id )
+		);
+
+		$reloaded = Agent_Run::load( $run_id );
+
+		$this->assertSame( 'delegated_value', $reloaded->scratch_get( 'delegated_key' ) );
+		$this->assertSame( array( 'legacy' => 'nested' ), $reloaded->scratch_get( 'scratchpad' ) );
+		$this->assertSame( array( 'not a transcript list' ), $reloaded->scratch_get( 'messages' ) );
+		$this->assertSame( array(), $reloaded->resume_state()['messages'] );
+
+		$run->finish( 'completed' );
+	}
+
+	/**
+	 * A write deferred while the schema is stale must not leave the run
+	 * looking done in-memory (to_array()['persisted']/is_persisted()) while
+	 * silently missing from the DB forever: once the schema is current again,
+	 * the very next state-transition call flushes the whole accumulated row,
+	 * not just its own fields.
+	 */
+	public function test_deferred_write_is_flushed_once_schema_is_current_again(): void {
+		$previous_schema = get_option( 'agent_builder_db_schema_version', false );
+
+		try {
+			update_option( 'agent_builder_db_schema_version', '2.14.2' );
+			$this->assertTrue( Activator::schema_is_stale() );
+
+			$run = Agent_Run::begin( 'content-writer' );
+
+			// persist_start()'s insert was deferred: nothing in the DB yet, and
+			// the instance must admit it, not silently claim success.
+			$this->assertFalse( $run->is_persisted() );
+			$this->assertFalse( $run->to_array()['persisted'] );
+
+			global $wpdb;
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test assertion.
+			$row_before = $wpdb->get_row(
+				$wpdb->prepare( "SELECT * FROM {$wpdb->prefix}agent_builder_runs WHERE run_id = %s", $run->get_run_id() ),
+				ARRAY_A
+			);
+			$this->assertNull( $row_before, 'the deferred insert must not have landed while the schema was stale' );
+
+			update_option( 'agent_builder_db_schema_version', AGENT_BUILDER_DB_VERSION );
+			$this->assertFalse( Activator::schema_is_stale() );
+
+			$run->finish( 'completed', array( 'text' => 'done' ) );
+
+			// finish() flips in-memory status immediately either way; the
+			// point of this test is that the DB row now agrees with it.
+			$this->assertTrue( $run->is_persisted() );
+			$this->assertTrue( $run->to_array()['persisted'] );
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test assertion.
+			$row_after = $wpdb->get_row(
+				$wpdb->prepare( "SELECT * FROM {$wpdb->prefix}agent_builder_runs WHERE run_id = %s", $run->get_run_id() ),
+				ARRAY_A
+			);
+			$this->assertIsArray( $row_after, 'the whole accumulated row (begin() + finish()) must land in one flush' );
+			$this->assertSame( 'completed', $row_after['status'] );
+			$this->assertSame( 'content-writer', $row_after['root_agent'] );
+		} finally {
+			if ( false === $previous_schema ) {
+				delete_option( 'agent_builder_db_schema_version' );
+			} else {
+				update_option( 'agent_builder_db_schema_version', $previous_schema );
+			}
+			Agent_Run::reset_current_for_tests();
+		}
+	}
+
+	/**
+	 * A run that never hits a stale schema stays reported as fully persisted
+	 * throughout its lifecycle — the dirty-tracking added above must not
+	 * regress the common (schema-current) path.
+	 */
+	public function test_healthy_path_stays_marked_persisted(): void {
+		$run = Agent_Run::begin( 'content-writer' );
+		$this->assertTrue( $run->is_persisted() );
+
+		$run->record_iteration( array( 'list_posts' ), 10, 0.001 );
+		$this->assertTrue( $run->is_persisted() );
+
+		$run->finish( 'completed' );
+		$this->assertTrue( $run->is_persisted() );
+		$this->assertTrue( $run->to_array()['persisted'] );
+	}
+
+	/**
+	 * A run whose row vanishes after insert (a concurrent delete, or a load()
+	 * whose row was removed before a later write) must not keep reporting
+	 * itself as persisted: $wpdb->update() returns 0 both for "values already
+	 * correct" (benign) and "no row matched" (the write didn't land). Only the
+	 * latter should leave the instance dirty, so is_persisted() stays honest.
+	 */
+	public function test_update_that_matches_no_row_stays_dirty(): void {
+		$run = Agent_Run::begin( 'content-writer' );
+		$this->assertTrue( $run->is_persisted() );
+
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test setup: simulate the row being deleted out from under the run.
+		$wpdb->delete( $wpdb->prefix . 'agent_builder_runs', array( 'run_id' => $run->get_run_id() ), array( '%s' ) );
+
+		// record_iteration() flushes an UPDATE against the now-missing row.
+		$run->record_iteration( array( 'list_posts' ), 10, 0.001 );
+
+		$this->assertFalse( $run->is_persisted(), 'a run whose row is gone must not report persisted after a 0-row update' );
+		$this->assertFalse( $run->to_array()['persisted'] );
 
 		$run->finish( 'completed' );
 	}
