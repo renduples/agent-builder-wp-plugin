@@ -1623,8 +1623,16 @@
         // Escape HTML first
         let html = escapeHtml(text);
 
-        // Code blocks
-        html = html.replace(/```(\w*)\n([\s\S]*?)```/g, '<div class="agentic-code-wrap"><button class="agentic-copy-btn" title="Copy">Copy</button><pre><code class="language-$1">$2</code></pre></div>');
+        // Extract fenced code blocks into placeholders FIRST — before any other
+        // substitution (headers, lists, bold, links, tables) — so the raw code is
+        // never rewritten into markdown markup, and the single-newline pass below
+        // can't turn the code's own line breaks into <br>. Restored at the very end.
+        var codeNonce = 'agentic_code_' + Math.random().toString(36).slice(2) + Date.now().toString(36) + '_';
+        var codeBlocks = [];
+        html = html.replace(/```(\w*)\n([\s\S]*?)```/g, function (block, lang, code) {
+            codeBlocks.push({ lang: lang, code: code });
+            return codeNonce + (codeBlocks.length - 1);
+        });
         
         // Inline code
         html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
@@ -1718,10 +1726,10 @@
         html = html.replace(/(<\/ul>)<\/p>/g, '$1');
         html = html.replace(/<p>(<ol>)/g, '$1');
         html = html.replace(/(<\/ol>)<\/p>/g, '$1');
-        html = html.replace(/<p>(<pre>)/g, '$1');
-        html = html.replace(/(<\/pre>)<\/p>/g, '$1');
-        html = html.replace(/<p>(<div class="agentic-code-wrap">)/g, '$1');
-        html = html.replace(/(<\/div>)<\/p>/g, '$1');
+        // Unwrap the code placeholder from its paragraph — the real
+        // <div class="agentic-code-wrap"> block is restored after the newline
+        // pass below, so it is the token, not the block, that must escape <p>.
+        html = html.replace(new RegExp('<p>(' + codeNonce + '\\d+)</p>', 'g'), '$1');
         html = html.replace(/<p>(<blockquote>)/g, '$1');
         html = html.replace(/(<\/blockquote>)<\/p>/g, '$1');
         html = html.replace(/<p>(<table>)/g, '$1');
@@ -1731,25 +1739,20 @@
 
         // Preserve single line breaks inside a paragraph (the model's "line1\n
         // line2" and "- item" lists after a colon). Blank lines were already
-        // turned into paragraph breaks above; only lone newlines remain.
-        // Code blocks are held aside first so their inner newlines survive as
-        // real newlines — the copy button reads textContent, which drops <br>.
-        var codeBlocks = [];
-        // Per-message, per-render placeholder that cannot appear in the escaped
-        // HTML (escapeHtml has already run, so only <div class="agentic-code-wrap">
-        // blocks we built remain; the random component makes the token unforgeable
-        // by agent text that might coincidentally contain a fixed sentinel).
-        var codeNonce = 'agentic_code_' + Math.random().toString(36).slice(2) + Date.now().toString(36) + '_';
-        html = html.replace(/<div class="agentic-code-wrap">[\s\S]*?<\/div>/g, function (block) {
-            codeBlocks.push(block);
-            return codeNonce + (codeBlocks.length - 1);
-        });
+        // turned into paragraph breaks above; only lone newlines remain. Code
+        // blocks are still held aside as placeholders, so their inner newlines
+        // survive as real newlines — the copy button reads textContent, which
+        // drops <br>.
         html = html.replace(/\n/g, '<br>');
+
+        // Restore the code blocks now that every substitution and the newline
+        // pass have run, so none of them ever saw the raw code content.
         html = html.replace(new RegExp(codeNonce + '(\\d+)', 'g'), function (m, i) {
-            var restored = codeBlocks[parseInt(i, 10)];
+            var b = codeBlocks[parseInt(i, 10)];
             // A token this render could only have inserted, so a match is always
             // one of our own; keep the guard anyway against index drift.
-            return restored === undefined ? m : restored;
+            return b === undefined ? m :
+                '<div class="agentic-code-wrap"><button class="agentic-copy-btn" title="Copy">Copy</button><pre><code class="language-' + b.lang + '">' + b.code + '</code></pre></div>';
         });
 
         return html;

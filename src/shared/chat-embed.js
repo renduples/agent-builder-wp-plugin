@@ -35,30 +35,152 @@ function escapeHtml( text ) {
 }
 
 // Mirrors assets/js/chat.js's renderMarkdown(): escape first, then apply a
-// small set of safe substitutions on the already-escaped text.
+// small set of safe substitutions on the already-escaped text. Kept in lockstep
+// with chat.js/chat-overlay.js — see the note in the PR about the one deliberate
+// divergence (this React embed renders code blocks without a Copy button).
 function renderChatMarkdown( text ) {
 	if ( ! text ) {
 		return '';
 	}
 	let h = escapeHtml( text );
-	h = h.replace(
-		/```(\w*)\n([\s\S]*?)```/g,
-		'<pre><code>$2</code></pre>'
-	);
+
+	// Extract fenced code blocks into placeholders FIRST — before any other
+	// substitution (headers, lists, bold, links, tables) — so the raw code is
+	// never rewritten into markdown markup, and the single-newline pass below
+	// can't turn the code's own line breaks into <br>. Restored at the very end.
+	const codeNonce =
+		'agentic_code_' +
+		Math.random().toString( 36 ).slice( 2 ) +
+		Date.now().toString( 36 ) +
+		'_';
+	const codeBlocks = [];
+	h = h.replace( /```(\w*)\n([\s\S]*?)```/g, ( block, lang, code ) => {
+		codeBlocks.push( { lang, code } );
+		return codeNonce + ( codeBlocks.length - 1 );
+	} );
+
 	h = h.replace( /`([^`]+)`/g, '<code>$1</code>' );
+
+	// Tables — process before headers/lists to avoid conflicts.
+	h = h.replace( /(^\|.+\|$\n?)+/gm, ( tableBlock ) => {
+		const rows = tableBlock.trim().split( '\n' );
+		if ( rows.length < 2 ) {
+			return tableBlock;
+		}
+		const sepIndex = rows.findIndex( ( r ) =>
+			/^\|[\s:]*-{2,}[\s:]*\|/.test( r )
+		);
+		if ( sepIndex === -1 ) {
+			return tableBlock;
+		}
+		let tableHtml = '<table>';
+		tableHtml += '<thead>';
+		for ( let i = 0; i < sepIndex; i++ ) {
+			const cells = rows[ i ].split( '|' ).slice( 1, -1 );
+			tableHtml +=
+				'<tr>' +
+				cells
+					.map( ( c ) => '<th>' + c.trim() + '</th>' )
+					.join( '' ) +
+				'</tr>';
+		}
+		tableHtml += '</thead>';
+		if ( sepIndex + 1 < rows.length ) {
+			tableHtml += '<tbody>';
+			for ( let i = sepIndex + 1; i < rows.length; i++ ) {
+				if ( ! rows[ i ].trim() ) {
+					continue;
+				}
+				const cells = rows[ i ].split( '|' ).slice( 1, -1 );
+				tableHtml +=
+					'<tr>' +
+					cells
+						.map( ( c ) => '<td>' + c.trim() + '</td>' )
+						.join( '' ) +
+					'</tr>';
+			}
+			tableHtml += '</tbody>';
+		}
+		tableHtml += '</table>';
+		return tableHtml;
+	} );
+
+	h = h.replace( /^-{3,}$/gm, '<hr>' );
+
+	h = h.replace( /^#### (.*$)/gm, '<h4>$1</h4>' );
+	h = h.replace( /^### (.*$)/gm, '<h3>$1</h3>' );
+	h = h.replace( /^## (.*$)/gm, '<h2>$1</h2>' );
+	h = h.replace( /^# (.*$)/gm, '<h1>$1</h1>' );
+
 	h = h.replace( /\*\*([^*]+)\*\*/g, '<strong>$1</strong>' );
 	h = h.replace( /\*([^*]+)\*/g, '<em>$1</em>' );
+
 	h = h.replace(
 		/\[([^\]]+)\]\(([^)]+)\)/g,
 		'<a href="$2" target="_blank" rel="noopener">$1</a>'
 	);
+
 	h = h.replace( /^\s*[-*]\s+(.*)$/gm, '<li>$1</li>' );
 	h = h.replace( /(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>' );
+	h = h.replace( /<\/li>\n<li>/g, '</li><li>' );
+	h = h.replace( /(<\/li>)\n(<\/ul>)/g, '$1$2' );
+
+	h = h.replace( /(?:^[ \t]*\d+\.\s+.*(?:\n|$))+/gm, ( block ) => {
+		const items = block
+			.split( '\n' )
+			.filter( ( line ) => /^[ \t]*\d+\.\s+/.test( line ) );
+		return (
+			'<ol>' +
+			items
+				.map(
+					( line ) =>
+						'<li>' +
+						line.replace( /^[ \t]*\d+\.\s+/, '' ) +
+						'</li>'
+				)
+				.join( '' ) +
+			'</ol>'
+		);
+	} );
+
+	h = h.replace( /^>\s+(.*)$/gm, '<blockquote>$1</blockquote>' );
+
 	h = h.replace( /\n\n/g, '</p><p>' );
 	h = '<p>' + h + '</p>';
 	h = h.replace( /<p><\/p>/g, '' );
-	h = h.replace( /<p>(<(?:ul|pre)>)/g, '$1' );
-	h = h.replace( /(<\/(?:ul|pre)>)<\/p>/g, '$1' );
+	h = h.replace( /<p>(<h[1-6]>)/g, '$1' );
+	h = h.replace( /(<\/h[1-6]>)<\/p>/g, '$1' );
+	h = h.replace( /<p>(<ul>)/g, '$1' );
+	h = h.replace( /(<\/ul>)<\/p>/g, '$1' );
+	h = h.replace( /<p>(<ol>)/g, '$1' );
+	h = h.replace( /(<\/ol>)<\/p>/g, '$1' );
+	h = h.replace( /<p>(<blockquote>)/g, '$1' );
+	h = h.replace( /(<\/blockquote>)<\/p>/g, '$1' );
+	h = h.replace( /<p>(<table>)/g, '$1' );
+	h = h.replace( /(<\/table>)<\/p>/g, '$1' );
+	h = h.replace( /<p>(<hr>)/g, '$1' );
+	h = h.replace( /(<hr>)<\/p>/g, '$1' );
+	// Unwrap the code placeholder from its paragraph — the real <pre> block is
+	// restored after the newline pass below, so the token, not the block, must
+	// escape <p>.
+	h = h.replace(
+		new RegExp( '<p>(' + codeNonce + '\\d+)</p>', 'g' ),
+		'$1'
+	);
+
+	// Preserve single line breaks inside a paragraph. Code blocks are held aside
+	// as placeholders, so their inner newlines survive.
+	h = h.replace( /\n/g, '<br>' );
+
+	// Restore the code blocks now that every substitution and the newline pass
+	// have run, so none of them ever saw the raw code content.
+	h = h.replace( new RegExp( codeNonce + '(\\d+)', 'g' ), ( m, i ) => {
+		const b = codeBlocks[ parseInt( i, 10 ) ];
+		return b === undefined
+			? m
+			: '<pre><code>' + b.code + '</code></pre>';
+	} );
+
 	return h;
 }
 
