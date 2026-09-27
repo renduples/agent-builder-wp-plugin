@@ -187,6 +187,60 @@ class Risk_Level {
 	}
 
 	/**
+	 * Clamp a (possibly filter-modified) enforcement decision back within safe
+	 * bounds, given the gate context it was computed from.
+	 *
+	 * Tool_Executor::execute() runs this immediately after
+	 * `apply_filters( 'agent_builder_tool_enforcement', ... )` so a filter —
+	 * M12's rules layer and Pro's governance are the intended callers — can
+	 * only tighten enforcement, never loosen it past two hard limits:
+	 *
+	 *  - EXTREME risk always resolves to 'block'. Tool_Executor never even
+	 *    calls the filter when baseline enforcement is already 'block', but
+	 *    this still refuses to unblock if $ctx['risk'] is EXTREME, in case a
+	 *    future caller invokes it directly.
+	 *  - HIGH risk can only resolve to 'allow' when the filter's result is
+	 *    looser than $ctx['baseline'] (the enforcement decision computed
+	 *    before any filter ran) AND $ctx carries an explicit grant flag:
+	 *    $ctx['granted'] === true. Nothing in this codebase sets that flag
+	 *    yet — M12's Tool_Grants class is expected to, once it has verified
+	 *    a scoped, expiring grant for the call. Until then, a filter cannot
+	 *    talk a HIGH-risk queue/confirm decision down to 'allow' on its own
+	 *    say-so; the pre-filter baseline is restored instead.
+	 *
+	 * A baseline that was already 'allow' (e.g. the site's auto-approve
+	 * preference covers HIGH risk) is left alone — that is not a filter
+	 * loosening anything, so it isn't reclamped.
+	 *
+	 * Pure function: reads only its arguments, no side effects.
+	 *
+	 * @param string $enforcement Enforcement decision to clamp, as returned by the
+	 *                            `agent_builder_tool_enforcement` filter ('allow'|'confirm'|'queue'|'block').
+	 * @param array  $ctx         Gate context. Reads 'risk' (string risk level),
+	 *                            'baseline' (the pre-filter enforcement decision), and
+	 *                            'granted' (bool, must be exactly true) — every other
+	 *                            key is ignored.
+	 * @return string Clamped enforcement decision.
+	 */
+	public static function clamp_enforcement( string $enforcement, array $ctx ): string {
+		$risk = (string) ( $ctx['risk'] ?? self::NONE );
+
+		if ( self::EXTREME === $risk ) {
+			return 'block';
+		}
+
+		$baseline          = (string) ( $ctx['baseline'] ?? $enforcement );
+		$loosened_to_allow = 'allow' === $enforcement && 'allow' !== $baseline;
+		$has_grant         = true === ( $ctx['granted'] ?? false );
+
+		if ( self::HIGH === $risk && $loosened_to_allow && ! $has_grant ) {
+			return $baseline;
+		}
+
+		return $enforcement;
+	}
+
+	/**
 	 * Load the master risk registry from the wp_agent_builder_tools database table.
 	 *
 	 * @return array Flat map of tool_name => entry array with at least 'risk'.
