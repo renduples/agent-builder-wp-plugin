@@ -690,6 +690,7 @@ final class Plugin {
 require_once AGENT_BUILDER_DIR . 'includes/class-job-manager.php';
 require_once AGENT_BUILDER_DIR . 'includes/interface-job-processor.php';
 require_once AGENT_BUILDER_DIR . 'includes/class-agent-job-processor.php';
+require_once AGENT_BUILDER_DIR . 'includes/class-agent-task-job-processor.php';
 require_once AGENT_BUILDER_DIR . 'includes/class-jobs-api.php';
 require_once AGENT_BUILDER_DIR . 'includes/class-ui-settings-rest.php';
 require_once AGENT_BUILDER_DIR . 'includes/class-dashboard-rest.php';
@@ -736,6 +737,7 @@ Ability_Provider_Registry::register(
 );
 
 Job_Manager::init();
+Agent_Task_Job_Processor::init();
 Provider_Registry::init();
 Jobs_API::init();
 UI_Settings_REST::init();
