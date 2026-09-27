@@ -97,9 +97,17 @@ final class Activator {
 	/**
 	 * Option name and TTL (seconds) for the atomic schema-upgrade lock. See
 	 * acquire_upgrade_lock()/release_upgrade_lock().
+	 *
+	 * The TTL is how long a lock is held before it is treated as abandoned and
+	 * eligible for compare-and-swap takeover. It is deliberately conservative:
+	 * dbDelta() can run an ALTER against a large, populated table that takes
+	 * minutes, and a short TTL would let a second request mistake a slow-but-
+	 * alive migration for a dead owner and run DDL against the same tables
+	 * concurrently. Ten minutes is far longer than any real migration, so an
+	 * expired lock almost always means the owning process actually died.
 	 */
 	private const UPGRADE_LOCK_KEY = 'agent_builder_upgrade_lock';
-	private const UPGRADE_LOCK_TTL = 60;
+	private const UPGRADE_LOCK_TTL = 600;
 
 	/**
 	 * Whether the site owner has thrown the safe-mode breaker.
@@ -231,13 +239,13 @@ final class Activator {
 	 * not just the first admin visit. No-op (no DB writes) when the stored
 	 * option already equals AGENT_BUILDER_DB_VERSION. When behind, re-runs
 	 * create_tables() (dbDelta, idempotent, no data loss) then writes the
-	 * current constant. An atomic 60-second lock (see acquire_upgrade_lock())
-	 * keeps near-simultaneous requests (a cron run and a REST hit landing
+	 * current constant. An atomic lock (see acquire_upgrade_lock()) keeps
+	 * near-simultaneous requests (a cron run and a REST hit landing
 	 * together) from racing into create_tables(); on failure the lock row is
-	 * left in place so a broken site backs off for 60s instead of re-running
-	 * the full dbDelta pass on every request. A failure is logged and leaves
-	 * the stored version behind so it retries later, instead of silently
-	 * marking a failed upgrade complete.
+	 * left in place so a broken site backs off for the lock's TTL instead
+	 * of re-running the full dbDelta pass on every request. A failure is
+	 * logged and leaves the stored version behind so it retries later,
+	 * instead of silently marking a failed upgrade complete.
 	 *
 	 * Also flips agent_builder_needs_seed so the deferred/chunked seeder
 	 * fills in any bundled tools/skills/agents added since the site's last
@@ -251,11 +259,11 @@ final class Activator {
 			return;
 		}
 
-		// Atomic 60-second lock: a cron run and a REST request landing together
-		// during the upgrade window must not both race into
-		// create_tables()/dbDelta(). Released only on success; left in place on
-		// failure so the retry backs off — the TTL is both the backoff window
-		// and the safety net if the process dies mid-upgrade.
+		// Atomic lock: a cron run and a REST request landing together during the
+		// upgrade window must not both race into create_tables()/dbDelta().
+		// Released only on success; left in place on failure so the retry backs
+		// off — the TTL is both the backoff window and the safety net if the
+		// process dies mid-upgrade.
 		$lock_value = self::acquire_upgrade_lock();
 		if ( null === $lock_value ) {
 			return; // Another request is already running (or recently failed).
@@ -290,10 +298,14 @@ final class Activator {
 	 * expiry time. Acquisition is atomic, unlike a transient's get-then-set
 	 * (which has a read-then-write window): the INSERT relies on wp_options'
 	 * unique key on option_name, so a duplicate-key failure IS the "someone else
-	 * already holds it" signal. A stale lock (the process that acquired it died,
-	 * or its 60s TTL passed) is taken over with a compare-and-swap UPDATE that
-	 * includes the old value in its WHERE clause, so two requests racing to take
-	 * over the same expired lock cannot both win.
+	 * already holds it" signal. A stale lock — one whose expiry has passed,
+	 * meaning its owner is no longer renewing it and is presumed dead — is taken
+	 * over with a compare-and-swap UPDATE that includes the old value in its
+	 * WHERE clause, so two requests racing to take over the same expired lock
+	 * cannot both win. The TTL is deliberately long (UPGRADE_LOCK_TTL, 10
+	 * minutes): a dbDelta() ALTER against a large table can legitimately run
+	 * for minutes, and a shorter expiry would let a second request mistake a
+	 * slow-but-alive migration for a dead one and start concurrent DDL.
 	 *
 	 * @return string|null The exact option_value this request wrote (to be passed
 	 *                     back to release_upgrade_lock()), or null if another

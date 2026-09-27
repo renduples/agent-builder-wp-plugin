@@ -96,6 +96,10 @@ class Test_Schema_Upgrade extends TestCase {
 	 * admin visit is required for the migration to run.
 	 */
 	public function test_maybe_upgrade_runs_on_first_cron_or_rest_hit(): void {
+		// '2.14.2' is the last release before the 2.15.0 schema (the current
+		// AGENT_BUILDER_DB_VERSION), so it is genuinely behind and this exercises
+		// the full acquire → create_tables() → set-version path, not the version
+		// short-circuit.
 		update_option( 'agent_builder_db_schema_version', '2.14.2' );
 		wp_set_current_user( 0 );
 		unset( $GLOBALS['current_screen'] );
@@ -118,6 +122,8 @@ class Test_Schema_Upgrade extends TestCase {
 	 * transient.
 	 */
 	public function test_concurrent_requests_do_not_double_run_upgrade(): void {
+		// Behind the current 2.15.0 constant, so the second maybe_upgrade() call
+		// below is rejected by the held lock, not by the version short-circuit.
 		update_option( 'agent_builder_db_schema_version', '2.14.2' );
 
 		// Simulate the first request acquiring the lock mid-upgrade.
@@ -188,6 +194,24 @@ class Test_Schema_Upgrade extends TestCase {
 	}
 
 	/**
+	 * A lock whose owner is still actively working must survive a second
+	 * request's takeover attempt. This is the exact failure the conservative TTL
+	 * closes: under a 60s TTL, a migration that had been running for just over a
+	 * minute (e.g. a slow ALTER on a large, populated table) would look
+	 * "expired" and be taken over by a concurrent request — two processes running
+	 * DDL against the same tables. Here the owner is 60s into its migration, so
+	 * under the new scheme its lease still has (UPGRADE_LOCK_TTL - 60s) to run
+	 * and the acquire must back off.
+	 */
+	public function test_slow_owner_within_ttl_is_not_taken_over(): void {
+		$ttl = self::upgrade_lock_ttl();
+		$this->insert_lock( time() + $ttl - 60, 'slow-owner-token' );
+
+		$taken = self::invoke_private( 'acquire_upgrade_lock' );
+		$this->assertNull( $taken, 'A slow-but-alive owner within the conservative TTL must not be taken over.' );
+	}
+
+	/**
 	 * A request must never release a lock it does not own: if request A's TTL
 	 * expires mid-migration and request B takes the row over, A's release must
 	 * be a no-op (the token-guarded DELETE matches only A's exact value).
@@ -233,6 +257,18 @@ class Test_Schema_Upgrade extends TestCase {
 	private static function invoke_private( string $method, array $args = array() ) {
 		$ref = new \ReflectionMethod( Activator::class, $method );
 		return $ref->invokeArgs( null, $args );
+	}
+
+	/**
+	 * Read Activator's private UPGRADE_LOCK_TTL constant so the slow-owner test
+	 * tracks the real lease rather than a hardcoded duration (a hardcoded value
+	 * would silently stop exercising the takeover path if the TTL ever shrank).
+	 *
+	 * @return int
+	 */
+	private static function upgrade_lock_ttl(): int {
+		$ref = new \ReflectionClassConstant( Activator::class, 'UPGRADE_LOCK_TTL' );
+		return (int) $ref->getValue();
 	}
 
 	/**
