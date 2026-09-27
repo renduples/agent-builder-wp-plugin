@@ -216,7 +216,7 @@ class Tools_Payload {
 
 		$active_profile = self::resolve_active_tools_profile();
 		$profile_cards  = array();
-		foreach ( self::tools_ability_profiles() as $id => $p ) {
+		foreach ( Admin_Profiles::tools_ability_profiles() as $id => $p ) {
 			if ( 'custom' === $id ) {
 				continue;
 			}
@@ -263,43 +263,9 @@ class Tools_Payload {
 	}
 
 
-	public static function tools_ability_profiles(): array {
-		return array(
-			'browse' => array(
-				'label'    => __( 'Browse & answer', 'agent-builder' ),
-				'summary'  => __( 'Safest — read-only help', 'agent-builder' ),
-				'detail'   => __( 'Agents can look things up and answer questions. They cannot change posts, settings, or your site.', 'agent-builder' ),
-				'max_risk' => 'low',
-				'icon'     => '👀',
-			),
-			'assist' => array(
-				'label'    => __( 'Help with drafts', 'agent-builder' ),
-				'summary'  => __( 'Balanced — create drafts with care', 'agent-builder' ),
-				'detail'   => __( 'Read plus everyday writing (drafts and light edits). Riskier changes still ask for confirmation.', 'agent-builder' ),
-				'max_risk' => 'medium',
-				'icon'     => '✍️',
-			),
-			'manage' => array(
-				'label'    => __( 'Manage my site', 'agent-builder' ),
-				'summary'  => __( 'Full productivity — approvals for big changes', 'agent-builder' ),
-				'detail'   => __( 'Most tools on, including significant updates. High-risk actions go through the Approvals queue. Extreme tools stay off.', 'agent-builder' ),
-				'max_risk' => 'high',
-				'icon'     => '🛠️',
-			),
-			'custom' => array(
-				'label'    => __( 'Custom mix', 'agent-builder' ),
-				'summary'  => __( 'You mixed tools manually', 'agent-builder' ),
-				'detail'   => __( 'Individual tools were toggled outside a profile.', 'agent-builder' ),
-				'max_risk' => 'high',
-				'icon'     => '⚙️',
-			),
-		);
-	}
-
-
 	private static function resolve_active_tools_profile(): string {
 		$stored   = sanitize_key( (string) get_option( 'agent_builder_tools_ability_profile', '' ) );
-		$profiles = self::tools_ability_profiles();
+		$profiles = Admin_Profiles::tools_ability_profiles();
 		if ( $stored && isset( $profiles[ $stored ] ) && 'custom' !== $stored ) {
 			return $stored;
 		}
@@ -320,5 +286,4 @@ class Tools_Payload {
 		}
 		return 'manage';
 	}
-
 }
