@@ -11019,3 +11019,14 @@ msgstr ""
 #: src/settings-app/index.js:2954
 msgid "This tab is available via the classic view or an add-on."
 msgstr ""
+
+#: includes/functions.php:63
+#: src/shared/chat-embed.js:20
+msgid "Post type"
+msgstr ""
+
+#: includes/functions.php:64
+#: src/shared/chat-embed.js:21
+msgid "Post"
+msgstr ""
+
