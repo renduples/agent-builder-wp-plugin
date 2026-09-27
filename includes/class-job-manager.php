@@ -309,7 +309,15 @@ class Job_Manager {
 			// ANY loaded class (WordPress core, any other active plugin).
 			$processor_class = (string) ( $job->request_data['_processor'] ?? '' );
 
-			$allowed = apply_filters( 'agent_builder_job_processors', array( Agent_Builder_Job_Processor::class ) );
+			$default_allowlist = array( Agent_Builder_Job_Processor::class );
+			$allowed           = apply_filters( 'agent_builder_job_processors', $default_allowlist );
+
+			// A misbehaving callback may return a non-array; fall back to the
+			// default allowlist rather than passing it into in_array(), which
+			// would throw a TypeError on PHP 8 and fail the job.
+			if ( ! is_array( $allowed ) ) {
+				$allowed = $default_allowlist;
+			}
 
 			if ( '' === $processor_class || ! class_exists( $processor_class )
 				|| ! in_array( __NAMESPACE__ . '\\Job_Processor_Interface', class_implements( $processor_class ), true )

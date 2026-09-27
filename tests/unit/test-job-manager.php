@@ -19,6 +19,15 @@ use Agentic\Job_Manager;
 class Test_Job_Manager extends TestCase {
 
 	/**
+	 * Filter callbacks registered by this test on agent_builder_job_processors,
+	 * removed in tearDown() so one test's allow_processor() can't leak into the
+	 * next test running in the same PHP process.
+	 *
+	 * @var array<int, array{0: string, 1: callable}>
+	 */
+	private array $registered_filters = array();
+
+	/**
 	 * Reset cross-test state and clear the jobs table before each test.
 	 */
 	public function setUp(): void {
@@ -30,6 +39,19 @@ class Test_Job_Manager extends TestCase {
 		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$jobs_table}'" ) === $jobs_table ) {
 			$wpdb->query( "DELETE FROM {$jobs_table}" );
 		}
+	}
+
+	/**
+	 * Remove any allowlist filters registered by this test so they don't leak
+	 * into subsequent tests (WordPress hooks persist across tests in a process).
+	 */
+	public function tearDown(): void {
+		foreach ( $this->registered_filters as $entry ) {
+			remove_filter( $entry[0], $entry[1] );
+		}
+		$this->registered_filters = array();
+
+		parent::tearDown();
 	}
 
 	/**
@@ -114,6 +136,33 @@ class Test_Job_Manager extends TestCase {
 	}
 
 	/**
+	 * A misbehaving agent_builder_job_processors callback returning a non-array
+	 * is coerced back to the default allowlist instead of crashing in_array()
+	 * with a TypeError: a non-allowlisted processor is rejected cleanly with
+	 * the expected "processor not allowed" message.
+	 */
+	public function test_non_array_allowlist_filter_falls_back_to_default(): void {
+		$callback = function () {
+			return 'not-an-array';
+		};
+		add_filter( 'agent_builder_job_processors', $callback );
+		$this->registered_filters[] = array( 'agent_builder_job_processors', $callback );
+
+		$job_id = Job_Manager::create_job(
+			array(
+				'processor' => Runnable_Test_Processor::class,
+			)
+		);
+
+		Job_Manager::process_job( $job_id );
+
+		$job = Job_Manager::get_job( $job_id );
+		$this->assertNotNull( $job );
+		$this->assertSame( Job_Manager::STATUS_FAILED, $job->status );
+		$this->assertSame( 'processor not allowed: ' . Runnable_Test_Processor::class, $job->error_message );
+	}
+
+	/**
 	 * Calling process_job() twice on the same id runs the processor once: the
 	 * second call's atomic claim fails because the job is no longer pending.
 	 */
@@ -169,14 +218,12 @@ class Test_Job_Manager extends TestCase {
 		// (-1), so set a finite limit first to reach the admin_memory_limit filter.
 		$previous_limit = ini_set( 'memory_limit', '64M' );
 
-		$fired = false;
-		add_filter(
-			'admin_memory_limit',
-			function ( $limit ) use ( &$fired ) {
-				$fired = true;
-				return $limit;
-			}
-		);
+		$fired    = false;
+		$callback = function ( $limit ) use ( &$fired ) {
+			$fired = true;
+			return $limit;
+		};
+		add_filter( 'admin_memory_limit', $callback );
 
 		try {
 			$job_id = Job_Manager::create_job(
@@ -187,6 +234,7 @@ class Test_Job_Manager extends TestCase {
 
 			Job_Manager::process_job( $job_id );
 		} finally {
+			remove_filter( 'admin_memory_limit', $callback );
 			if ( false !== $previous_limit ) {
 				ini_set( 'memory_limit', $previous_limit );
 			}
@@ -202,13 +250,12 @@ class Test_Job_Manager extends TestCase {
 	 * @return void
 	 */
 	private function allow_processor( string $class ): void {
-		add_filter(
-			'agent_builder_job_processors',
-			function ( array $allowed ) use ( $class ): array {
-				$allowed[] = $class;
-				return $allowed;
-			}
-		);
+		$callback = function ( array $allowed ) use ( $class ): array {
+			$allowed[] = $class;
+			return $allowed;
+		};
+		add_filter( 'agent_builder_job_processors', $callback );
+		$this->registered_filters[] = array( 'agent_builder_job_processors', $callback );
 	}
 }
 
