@@ -77,12 +77,25 @@ class Audit_Log {
 
 		$identity = self::resolve_agent_identity( $agent_id );
 
+		// Correlate this row with the active run, if any. run_id itself sits
+		// outside Audit_Log_Integrity::canonical_row() (so it can never break
+		// the hash chain), but details._run_id is inside it — the tamper-
+		// evident copy tampering the bare column can't touch.
+		$run              = Agent_Run::current();
+		$run_id           = $run instanceof Agent_Run ? $run->get_run_id() : '';
+		$details_with_run = $details;
+		if ( '' !== $run_id && is_array( $details_with_run ) ) {
+			$details_with_run['_run_id'] = $run_id;
+		} elseif ( '' !== $run_id && null === $details_with_run ) {
+			$details_with_run = array( '_run_id' => $run_id );
+		}
+
 		$data = array(
 			'agent_id'      => $agent_id,
 			'action'        => $action,
 			'target_type'   => $target_type,
 			'target_id'     => is_array( $details ) && isset( $details['id'] ) ? (string) $details['id'] : '',
-			'details'       => wp_json_encode( $details ),
+			'details'       => wp_json_encode( $details_with_run ),
 			'reasoning'     => $reasoning,
 			'mode'          => self::$mode_context,
 			'provider'      => $provider,
@@ -92,6 +105,7 @@ class Audit_Log {
 			'created_at'    => gmdate( 'Y-m-d H:i:s' ),
 			'agent_author'  => $identity['author'],
 			'agent_version' => $identity['version'],
+			'run_id'        => '' !== $run_id ? $run_id : null,
 		);
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table insert.

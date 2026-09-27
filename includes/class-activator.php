@@ -1233,12 +1233,14 @@ final class Activator {
             agent_author varchar(191) DEFAULT '',
             agent_version varchar(32) DEFAULT '',
             integrity_hash char(64) DEFAULT NULL,
+            run_id varchar(36) DEFAULT NULL,
             PRIMARY KEY (id),
             KEY agent_id (agent_id),
             KEY action (action),
             KEY created_at (created_at),
             KEY user_created (user_id, created_at),
-            KEY idx_agent_created (agent_id, created_at)
+            KEY idx_agent_created (agent_id, created_at),
+            KEY run_id (run_id)
         ) $charset_collate;";
 
 		// Approval queue table.
@@ -1257,11 +1259,14 @@ final class Activator {
             executed_at datetime DEFAULT NULL,
             mode varchar(32) DEFAULT '',
             invocation varchar(32) DEFAULT '',
+            run_id varchar(36) DEFAULT NULL,
+            user_id bigint(20) unsigned,
             PRIMARY KEY (id),
             KEY status (status),
             KEY created_at (created_at),
             KEY idx_status_created (status, created_at),
-            KEY idx_expires (expires_at)
+            KEY idx_expires (expires_at),
+            KEY run_id (run_id)
         ) $charset_collate;";
 
 		// Memory table.
@@ -1422,18 +1427,35 @@ final class Activator {
         ) $charset_collate;";
 		$run_delta( 'agent_builder_skills', $sql_skills );
 
-		// Orchestration runs table — one row per top-level multi-agent (team) run.
-		// Tracks delegation depth, fan-out, accumulated tokens/cost, and a small
-		// JSON scratchpad shared across delegated agents within the run.
+		// Orchestration runs table — one row per general run context: an
+		// autonomous task, routine, event, delegation, prompt test, or (Pro)
+		// workflow. Tracks delegation depth, fan-out, accumulated tokens/cost,
+		// iteration/tool progress, and a small JSON scratchpad + transcript
+		// shared across delegated agents / resumed after a pause.
 		$sql_runs = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agent_builder_runs (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
             run_id varchar(36) NOT NULL,
             root_agent varchar(64) NOT NULL DEFAULT '',
+            kind varchar(24) NOT NULL DEFAULT 'task',
             status varchar(16) NOT NULL DEFAULT 'running',
+            user_id bigint(20) unsigned,
+            task_text text,
+            parent_run_id varchar(36) DEFAULT NULL,
+            job_id varchar(36) DEFAULT NULL,
+            session_id varchar(64) DEFAULT NULL,
+            invocation varchar(32) DEFAULT NULL,
+            source_ref varchar(191) DEFAULT NULL,
             delegations int unsigned NOT NULL DEFAULT 0,
             max_depth smallint unsigned NOT NULL DEFAULT 0,
+            iterations int unsigned NOT NULL DEFAULT 0,
             tokens_used int unsigned NOT NULL DEFAULT 0,
             cost decimal(10,6) NOT NULL DEFAULT 0,
+            tools_used text,
+            result_summary longtext,
+            error text,
+            awaiting_type varchar(16) DEFAULT NULL,
+            awaiting_id varchar(36) DEFAULT NULL,
+            cancel_requested tinyint(1) NOT NULL DEFAULT 0,
             state longtext,
             started_at datetime DEFAULT CURRENT_TIMESTAMP,
             updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -1442,7 +1464,11 @@ final class Activator {
             UNIQUE KEY run_id (run_id),
             KEY root_agent (root_agent),
             KEY status (status),
-            KEY started_at (started_at)
+            KEY started_at (started_at),
+            KEY user_status (user_id, status),
+            KEY parent_run_id (parent_run_id),
+            KEY source_ref (source_ref),
+            KEY kind_started (kind, started_at)
         ) $charset_collate;";
 		$run_delta( 'agent_builder_runs', $sql_runs );
 
