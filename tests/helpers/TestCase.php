@@ -75,6 +75,12 @@ class TestCase extends WP_UnitTestCase {
 		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$skills_table}'" ) === $skills_table ) {
 			$wpdb->query( "DELETE FROM {$skills_table}" );
 		}
+
+		$agent_library_table = $wpdb->prefix . 'agent_builder_agent_library';
+		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$agent_library_table}'" ) === $agent_library_table ) {
+			$wpdb->query( "DELETE FROM {$agent_library_table}" );
+			\Agentic\Agent_Library::bust_cache();
+		}
 	}
 
 	/**

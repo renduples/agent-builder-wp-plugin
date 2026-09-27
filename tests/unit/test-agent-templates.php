@@ -8,6 +8,7 @@
 namespace Agentic\Tests;
 
 use Agentic\Abilities_Manifest;
+use Agentic\Agent_Library;
 use Agentic\Agent_Profile;
 use Agentic\Agent_Settings;
 use Agentic\Agent_Templates;
@@ -290,6 +291,283 @@ class Test_Agent_Templates extends TestCase {
 		$this->assertSame( 'upload_error', $result->get_error_code() );
 	}
 
+	/**
+	 * export() writes the zip outside wp_upload_dir()'s public tree, so an
+	 * unauthenticated request that guesses the slug-based filename cannot
+	 * reach it the way it could under wp-content/uploads/.
+	 */
+	public function test_export_writes_outside_public_uploads_tree(): void {
+		$this->create_full_agent( 'exporter-security', 'ExporterSecurity', array( 'list_posts' ) );
+		$this->track( 'exporter-security' );
+
+		$path = Agent_Templates::export( 'exporter-security' );
+
+		$this->assertIsString( $path );
+
+		$uploads_basedir = trailingslashit( wp_upload_dir()['basedir'] );
+		$this->assertFalse( str_starts_with( $path, $uploads_basedir ), 'Export path must not be inside the public uploads tree' );
+		$this->assertTrue( str_starts_with( $path, trailingslashit( AGENT_BUILDER_EXPORTS_DIR ) ) );
+	}
+
+	/**
+	 * import() rejects an archive with more entries than allowed, before any
+	 * extraction happens — no import temp directory is left behind.
+	 */
+	public function test_import_rejects_archive_with_too_many_entries(): void {
+		$files = array();
+		for ( $i = 0; $i < 150; $i++ ) {
+			$files[ 'junk-' . $i . '.txt' ] = 'x';
+		}
+		$zip = $this->build_zip( $files );
+
+		$before = $this->import_temp_dirs();
+
+		$result = Agent_Templates::import( $this->upload_entry( $zip, 'flood.zip' ) );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'zip_too_many_entries', $result->get_error_code() );
+		$this->assertSame( $before, $this->import_temp_dirs(), 'Expected no leftover import temp directory' );
+	}
+
+	/**
+	 * import() rejects an archive whose declared uncompressed size exceeds
+	 * the cap, before any extraction happens — no import temp directory is
+	 * left behind.
+	 */
+	public function test_import_rejects_oversized_archive(): void {
+		$zip = $this->build_zip(
+			array(
+				'agent.json'        => wp_json_encode(
+					array(
+						'slug'         => 'big-agent',
+						'name'         => 'Big',
+						'description' => 'An oversized archive.',
+						'category'     => 'admin',
+						'icon'         => '🤖',
+						'version'      => '1.0.0',
+						'capabilities' => array( 'read' ),
+						'tools'        => array(),
+						'team'         => false,
+					)
+				),
+				'system-prompt.txt' => str_repeat( 'a', 6 * 1024 * 1024 ),
+			)
+		);
+
+		$before = $this->import_temp_dirs();
+
+		$result = Agent_Templates::import( $this->upload_entry( $zip, 'oversized.zip' ) );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'zip_too_large', $result->get_error_code() );
+		$this->assertSame( $before, $this->import_temp_dirs(), 'Expected no leftover import temp directory' );
+	}
+
+	/**
+	 * slug_taken() (via unique_slug()) also sees DB-backed agents from
+	 * agent_builder_agent_library, not just directory-based ones — an
+	 * import colliding with a library-only slug gets the -2 suffix instead
+	 * of silently shadowing the existing DB row.
+	 */
+	public function test_import_resolves_db_backed_slug_collision(): void {
+		Agent_Library::upsert(
+			array(
+				'slug'     => 'lib-agent',
+				'name'     => 'Library Agent',
+				'manifest' => array(
+					'slug'         => 'lib-agent',
+					'name'         => 'Library Agent',
+					'description'  => 'A DB-backed agent with no directory.',
+					'category'     => 'admin',
+					'icon'         => '📚',
+					'version'      => '1.0.0',
+					'capabilities' => array( 'read' ),
+					'tools'        => array(),
+					'team'         => false,
+				),
+				'kind'     => 'manifest',
+				'source'   => 'user',
+				'enabled'  => true,
+			)
+		);
+		\Agentic_Agent_Registry::get_instance()->get_installed_agents( true );
+
+		$zip = $this->build_zip(
+			array(
+				'agent.json'     => wp_json_encode(
+					array(
+						'slug'         => 'lib-agent',
+						'name'         => 'Colliding',
+						'description' => 'A colliding import.',
+						'category'     => 'admin',
+						'icon'         => '🗂️',
+						'version'      => '1.0.0',
+						'capabilities' => array( 'read' ),
+						'tools'        => array( 'list_posts' ),
+						'team'         => false,
+					)
+				),
+				'abilities.json' => wp_json_encode(
+					array(
+						'version'   => '1.0',
+						'abilities' => array( 'list_posts' => array( 'risk' => 'none' ) ),
+					)
+				),
+			)
+		);
+
+		$slug = Agent_Templates::import( $this->upload_entry( $zip, 'lib-agent.zip' ) );
+		$this->track( $slug );
+
+		$this->assertSame( 'lib-agent-2', $slug );
+	}
+
+	/**
+	 * A write_agent() failure partway through (here: the abilities.json
+	 * write step) removes the just-created agent directory instead of
+	 * leaving a malformed one behind that consumes the slug on retry.
+	 */
+	public function test_write_agent_removes_partial_directory_on_abilities_failure(): void {
+		$slug = 'partial-fail-agent';
+		$this->track( $slug );
+
+		$agent_dir = AGENT_BUILDER_AGENTS_DIR . '/' . $slug;
+		// Occupy the abilities.json path with a directory so the real write
+		// fails cleanly after agent.json and the system prompt already wrote.
+		wp_mkdir_p( $agent_dir . '/abilities.json' );
+
+		$manifest = array(
+			'slug'         => $slug,
+			'name'         => 'Partial Fail',
+			'description'  => 'A test agent.',
+			'category'     => 'admin',
+			'icon'         => '🤖',
+			'version'      => '1.0.0',
+			'capabilities' => array( 'read' ),
+			'tools'        => array( 'list_posts' ),
+			'team'         => false,
+		);
+		$abilities = array(
+			'version'   => '1.0',
+			'abilities' => array( 'list_posts' => array( 'risk' => 'none' ) ),
+		);
+
+		$method = new \ReflectionMethod( Agent_Templates::class, 'write_agent' );
+
+		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- Test deliberately forces a native file_put_contents() warning (writing over a directory) to exercise the failure-cleanup path.
+		$result = @$method->invoke( null, $slug, $manifest, 'You are partial.', $abilities );
+
+		$this->assertWPError( $result );
+		$this->assertFalse( is_dir( $agent_dir ), 'Expected the partially-written agent directory to be removed on failure' );
+	}
+
+	/**
+	 * import() refreshes the registry cache after a successful write, so a
+	 * caller that immediately tries to activate the returned slug in the
+	 * same request sees it — not a cache populated by unique_slug()'s
+	 * pre-write collision check.
+	 */
+	public function test_import_then_activate_sees_fresh_registry_cache(): void {
+		$zip = $this->build_zip(
+			array(
+				'agent.json'     => wp_json_encode(
+					array(
+						'slug'         => 'fresh-cache-agent',
+						'name'         => 'Fresh Cache',
+						'description' => 'An imported agent.',
+						'category'     => 'admin',
+						'icon'         => '🆕',
+						'version'      => '1.0.0',
+						'capabilities' => array( 'read' ),
+						'tools'        => array( 'list_posts' ),
+						'team'         => false,
+					)
+				),
+				'abilities.json' => wp_json_encode(
+					array(
+						'version'   => '1.0',
+						'abilities' => array( 'list_posts' => array( 'risk' => 'none' ) ),
+					)
+				),
+			)
+		);
+
+		$slug = Agent_Templates::import( $this->upload_entry( $zip, 'fresh-cache-agent.zip' ) );
+		$this->track( $slug );
+
+		$this->assertSame( 'fresh-cache-agent', $slug );
+
+		$activated = \Agentic_Agent_Registry::get_instance()->activate_agent( $slug );
+
+		$this->assertNotWPError( $activated, 'Expected activation to see the freshly-imported agent, not a stale registry cache' );
+	}
+
+	/**
+	 * import() rejects an archive with no abilities.json instead of silently
+	 * returning a slug that Agentic_Agent_Registry::activate_agent() will
+	 * later refuse to activate for lacking an abilities manifest.
+	 */
+	public function test_import_rejects_archive_missing_abilities(): void {
+		$zip = $this->build_zip(
+			array(
+				'agent.json'        => wp_json_encode(
+					array(
+						'slug'         => 'no-abilities-agent',
+						'name'         => 'No Abilities',
+						'description' => 'Missing abilities.json.',
+						'category'     => 'admin',
+						'icon'         => '🚫',
+						'version'      => '1.0.0',
+						'capabilities' => array( 'read' ),
+						'tools'        => array(),
+						'team'         => false,
+					)
+				),
+				'system-prompt.txt' => 'You lack abilities.',
+			)
+		);
+
+		$result = Agent_Templates::import( $this->upload_entry( $zip, 'no-abilities.zip' ) );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'missing_abilities', $result->get_error_code() );
+	}
+
+	/**
+	 * import() rejects an abilities entry with no risk field instead of
+	 * silently skipping it — same as an explicitly-invalid risk value.
+	 */
+	public function test_import_rejects_ability_entry_missing_risk(): void {
+		$zip = $this->build_zip(
+			array(
+				'agent.json'     => wp_json_encode(
+					array(
+						'slug'         => 'no-risk-agent',
+						'name'         => 'No Risk',
+						'description' => 'Ability entry missing risk.',
+						'category'     => 'admin',
+						'icon'         => '❓',
+						'version'      => '1.0.0',
+						'capabilities' => array( 'read' ),
+						'tools'        => array( 'list_posts' ),
+						'team'         => false,
+					)
+				),
+				'abilities.json' => wp_json_encode(
+					array(
+						'version'   => '1.0',
+						'abilities' => array( 'list_posts' => array( 'reason' => 'no risk key here' ) ),
+					)
+				),
+			)
+		);
+
+		$result = Agent_Templates::import( $this->upload_entry( $zip, 'no-risk.zip' ) );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'risk_downgrade', $result->get_error_code() );
+	}
+
 	// -------------------------------------------------------------------------
 	// Helpers
 	// -------------------------------------------------------------------------
@@ -408,6 +686,17 @@ class Test_Agent_Templates extends TestCase {
 	}
 
 	/**
+	 * List currently-existing import temp directories, to confirm a rejected
+	 * archive left none behind.
+	 *
+	 * @return string[]
+	 */
+	private function import_temp_dirs(): array {
+		$dirs = glob( trailingslashit( get_temp_dir() ) . 'agentic-import-*', GLOB_ONLYDIR );
+		return $dirs ? $dirs : array();
+	}
+
+	/**
 	 * A unique temporary path that does not yet exist.
 	 *
 	 * @return string
@@ -447,11 +736,19 @@ class Test_Agent_Templates extends TestCase {
 	 * @param string $slug Agent slug.
 	 */
 	private function delete_agent( string $slug ): void {
+		$registry = \Agentic_Agent_Registry::get_instance();
+		// Deactivate first, while the agent still exists on disk: leaving a
+		// ghost entry in the agent_builder_active_agents option makes a
+		// later test that reuses the slug see "already_active" wrongly.
+		if ( $registry->is_agent_active( $slug ) ) {
+			$registry->deactivate_agent( $slug );
+		}
+
 		$dir = AGENT_BUILDER_AGENTS_DIR . '/' . $slug;
 		if ( is_dir( $dir ) ) {
 			$this->delete_directory( $dir );
 		}
 		Abilities_Manifest::clear_cache( $slug );
-		\Agentic_Agent_Registry::get_instance()->get_installed_agents( true );
+		$registry->get_installed_agents( true );
 	}
 }

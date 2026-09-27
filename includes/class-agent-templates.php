@@ -9,9 +9,9 @@
  * carries the agent's system prompt and persona text and the filename is a
  * guessable slug — excluding provider keys/settings/credentials and the
  * site-specific avatar attachment id. Importing reverses that: it validates
- * the archive, refuses any abilities that would downgrade a tool below its
- * risk floor, and writes the agent in place (inactive until the owner
- * activates it).
+ * the archive (including a bound on its extracted size before unpacking it),
+ * refuses any abilities that would downgrade a tool below its risk floor, and
+ * writes the agent in place (inactive until the owner activates it).
  *
  * All three operate on the *portable* representation of an agent — a
  * declarative agent.json manifest plus templates/system-prompt.txt and
@@ -42,6 +42,21 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Duplicate/export/import of agents as local, portable templates.
  */
 class Agent_Templates {
+
+	/**
+	 * Maximum number of entries an import archive may contain. A template
+	 * agent is a handful of small text files (agent.json, abilities.json,
+	 * system-prompt.txt, profile.json, a few skills/*.SKILL.md) — generous
+	 * headroom, still low enough to reject a zip-bomb-style entry flood.
+	 */
+	private const MAX_IMPORT_ENTRIES = 100;
+
+	/**
+	 * Maximum total uncompressed size (bytes) an import archive may expand
+	 * to, checked from the zip's own per-entry size table before any bytes
+	 * are extracted.
+	 */
+	private const MAX_IMPORT_UNCOMPRESSED_BYTES = 5 * 1024 * 1024; // 5 MB.
 
 	/**
 	 * Duplicate an installed agent to a new sibling slug.
@@ -211,6 +226,11 @@ class Agent_Templates {
 			return $written;
 		}
 
+		// Force-refresh so a caller that immediately activates $slug in the
+		// same request doesn't hit a stale pre-import cache (duplicate()
+		// already does this after its own write_agent() call).
+		\Agentic_Agent_Registry::get_instance()->get_installed_agents( true );
+
 		self::apply_profile( $slug, $tmp_dir );
 		self::import_skills( $slug, $tmp_dir );
 
@@ -354,17 +374,21 @@ class Agent_Templates {
 		unset( $manifest['system_prompt'] ); // Written to its own file below.
 		$manifest_json = wp_json_encode( $manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 		if ( false === $manifest_json ) {
+			File_Manager::rmdir( $agent_dir, true );
 			return new \WP_Error( 'encode_failed', __( 'Could not encode the agent manifest.', 'agent-builder' ) );
 		}
 		if ( ! File_Manager::put_contents( $agent_dir . '/agent.json', $manifest_json ) ) {
+			File_Manager::rmdir( $agent_dir, true );
 			return new \WP_Error( 'write_failed', __( 'Could not write agent.json.', 'agent-builder' ) );
 		}
 
 		if ( '' !== $system_prompt ) {
 			if ( ! wp_mkdir_p( $agent_dir . '/templates' ) ) {
+				File_Manager::rmdir( $agent_dir, true );
 				return new \WP_Error( 'mkdir_failed', __( 'Could not create the agent templates directory.', 'agent-builder' ) );
 			}
 			if ( ! File_Manager::put_contents( $agent_dir . '/templates/system-prompt.txt', $system_prompt ) ) {
+				File_Manager::rmdir( $agent_dir, true );
 				return new \WP_Error( 'write_failed', __( 'Could not write the system prompt.', 'agent-builder' ) );
 			}
 		}
@@ -372,6 +396,7 @@ class Agent_Templates {
 		if ( is_array( $abilities ) ) {
 			$abilities['agent'] = $slug;
 			if ( ! Abilities_Manifest::write_manifest( $agent_dir, $slug, $abilities ) ) {
+				File_Manager::rmdir( $agent_dir, true );
 				return new \WP_Error( 'write_failed', __( 'Could not write abilities.json.', 'agent-builder' ) );
 			}
 		}
@@ -422,6 +447,11 @@ class Agent_Templates {
 			return new \WP_Error( 'zip_unavailable', __( 'The ZipArchive extension is required to import agents.', 'agent-builder' ) );
 		}
 
+		$bounds_error = self::check_archive_bounds( $zip_path );
+		if ( is_wp_error( $bounds_error ) ) {
+			return $bounds_error;
+		}
+
 		if ( ! function_exists( 'unzip_file' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/file.php';
 		}
@@ -443,6 +473,43 @@ class Agent_Templates {
 		}
 
 		return $tmp_dir;
+	}
+
+	/**
+	 * Reject an oversized or entry-flooded archive before any bytes are
+	 * extracted, using the zip's own entry-count and per-entry size table
+	 * (both available from ZipArchive without decompressing anything).
+	 *
+	 * @param string $zip_path Absolute path to the zip.
+	 * @return true|\WP_Error
+	 */
+	private static function check_archive_bounds( string $zip_path ) {
+		$zip = new \ZipArchive();
+		if ( true !== $zip->open( $zip_path ) ) {
+			return new \WP_Error( 'zip_failed', __( 'Could not open the archive.', 'agent-builder' ) );
+		}
+
+		$count = $zip->numFiles; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Native ZipArchive property name.
+		if ( $count > self::MAX_IMPORT_ENTRIES ) {
+			$zip->close();
+			return new \WP_Error( 'zip_too_many_entries', __( 'The archive has too many entries.', 'agent-builder' ) );
+		}
+
+		$total = 0;
+		for ( $i = 0; $i < $count; $i++ ) {
+			$stat = $zip->statIndex( $i );
+			if ( false === $stat ) {
+				continue;
+			}
+			$total += (int) ( $stat['size'] ?? 0 );
+			if ( $total > self::MAX_IMPORT_UNCOMPRESSED_BYTES ) {
+				$zip->close();
+				return new \WP_Error( 'zip_too_large', __( 'The archive expands to more data than allowed.', 'agent-builder' ) );
+			}
+		}
+
+		$zip->close();
+		return true;
 	}
 
 	/**
@@ -471,12 +538,15 @@ class Agent_Templates {
 	 * Read and risk-check abilities.json from an unpacked archive.
 	 *
 	 * @param string $tmp_dir Unpacked archive directory.
-	 * @return array<string, mixed>|null|\WP_Error Decoded abilities, null when absent, or error.
+	 * @return array<string, mixed>|\WP_Error Decoded abilities, or error.
 	 */
 	private static function read_abilities( string $tmp_dir ) {
 		$abilities_json = $tmp_dir . '/abilities.json';
 		if ( ! file_exists( $abilities_json ) ) {
-			return null;
+			// Agentic_Agent_Registry::activate_agent() refuses to activate an
+			// agent with no abilities manifest, so accepting the import here
+			// would only hand back a slug that can never be activated.
+			return new \WP_Error( 'missing_abilities', __( 'The archive is missing abilities.json.', 'agent-builder' ) );
 		}
 		$raw = json_decode( (string) File_Manager::get_contents( $abilities_json ), true );
 		if ( ! is_array( $raw ) ) {
@@ -487,7 +557,7 @@ class Agent_Templates {
 		if ( ! empty( $downgrades ) ) {
 			return new \WP_Error(
 				'risk_downgrade',
-				__( 'The archive declares tools below their minimum risk:', 'agent-builder' ) . ' ' . implode( '; ', $downgrades )
+				__( 'The archive declares invalid or under-declared tool risk:', 'agent-builder' ) . ' ' . implode( '; ', $downgrades )
 			);
 		}
 
@@ -586,6 +656,10 @@ class Agent_Templates {
 		}
 		foreach ( $map as $tool => $entry ) {
 			if ( ! is_array( $entry ) || empty( $entry['risk'] ) ) {
+				// An entry with no risk field would otherwise import as
+				// "fine" and then fail at activation for the same reason —
+				// flag it here instead, same as an explicitly-invalid risk.
+				$errors[] = sprintf( /* translators: %s: tool name */ __( '%s has no risk declared', 'agent-builder' ), (string) $tool );
 				continue;
 			}
 			$declared = (string) $entry['risk'];
@@ -643,6 +717,13 @@ class Agent_Templates {
 	/**
 	 * Whether a slug is already taken by an installed agent or directory.
 	 *
+	 * Agentic_Agent_Registry::is_agent_installed() only checks the writable
+	 * agents directory and bundled library directories — it never queries
+	 * the agent_builder_agent_library table, so a DB-backed (purchased or
+	 * Assistant-Trainer-built) agent would otherwise be wrongly treated as
+	 * free and silently shadowed. get_installed_agents() merges those rows
+	 * in, so it is checked here too.
+	 *
 	 * @param string $slug Agent slug.
 	 * @return bool
 	 */
@@ -651,7 +732,10 @@ class Agent_Templates {
 		if ( $registry->is_agent_installed( $slug ) ) {
 			return true;
 		}
-		return is_dir( AGENT_BUILDER_AGENTS_DIR . '/' . $slug );
+		if ( is_dir( AGENT_BUILDER_AGENTS_DIR . '/' . $slug ) ) {
+			return true;
+		}
+		return isset( $registry->get_installed_agents( true )[ $slug ] );
 	}
 
 	/**
