@@ -514,6 +514,29 @@ class Test_Agent_Templates extends TestCase {
 	}
 
 	/**
+	 * A crafted archive with two entries sharing one name — the first small,
+	 * the second expanding past the cap — is rejected. check_archive_bounds()
+	 * must measure each entry by *index* (getStreamIndex()), not by name
+	 * (getStream() returns only the first matching entry), or the large
+	 * duplicate is silently skipped and the archive slips past the size bound.
+	 */
+	public function test_import_rejects_duplicate_name_zip_bomb(): void {
+		$zip = $this->build_zip_with_duplicate_names(
+			'system-prompt.txt',
+			'small',
+			str_repeat( 'a', 6 * 1024 * 1024 )
+		);
+
+		$before = $this->import_temp_dirs();
+
+		$result = Agent_Templates::import( $this->upload_entry( $zip, 'duplicate.zip' ) );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'zip_too_large', $result->get_error_code() );
+		$this->assertSame( $before, $this->import_temp_dirs(), 'Expected no leftover import temp directory' );
+	}
+
+	/**
 	 * slug_taken() (via unique_slug()) also sees DB-backed agents from
 	 * agent_builder_agent_library, not just directory-based ones — an
 	 * import colliding with a library-only slug gets the -2 suffix instead
@@ -926,6 +949,43 @@ class Test_Agent_Templates extends TestCase {
 			$raw[ $pos + $offset + $i ] = "\x00";
 		}
 		return $raw;
+	}
+
+	/**
+	 * Build a zip with two STORED entries sharing one name (the first small,
+	 * the second large). ZipArchive::addFromString() replaces an existing
+	 * entry by name instead of appending a duplicate, so this shape — the
+	 * exact getStream() first-match bypass — must be assembled byte-for-byte.
+	 *
+	 * @param string $name  Shared entry name.
+	 * @param string $small Small payload for the first entry.
+	 * @param string $large Large payload for the second entry.
+	 * @return string Path to the zip.
+	 */
+	private function build_zip_with_duplicate_names( string $name, string $small, string $large ): string {
+		$path = $this->temp_path() . '.zip';
+
+		$crc_small = crc32( $small );
+		$len_small = strlen( $small );
+		$crc_large = crc32( $large );
+		$len_large = strlen( $large );
+
+		$local_small = "PK\x03\x04" . pack( 'vvvvvVVVvv', 20, 0, 0, 0, 0, $crc_small, $len_small, $len_small, strlen( $name ), 0 ) . $name . $small;
+		$local_large = "PK\x03\x04" . pack( 'vvvvvVVVvv', 20, 0, 0, 0, 0, $crc_large, $len_large, $len_large, strlen( $name ), 0 ) . $name . $large;
+
+		$offset_small = 0;
+		$offset_large = strlen( $local_small );
+
+		$cd_small = "PK\x01\x02" . pack( 'vvvvvvVVVvvvvvVV', 20, 20, 0, 0, 0, 0, $crc_small, $len_small, $len_small, strlen( $name ), 0, 0, 0, 0, 0, $offset_small ) . $name;
+		$cd_large = "PK\x01\x02" . pack( 'vvvvvvVVVvvvvvVV', 20, 20, 0, 0, 0, 0, $crc_large, $len_large, $len_large, strlen( $name ), 0, 0, 0, 0, 0, $offset_large ) . $name;
+
+		$cd_size = strlen( $cd_small ) + strlen( $cd_large );
+		$cd_off  = strlen( $local_small ) + strlen( $local_large );
+		$eocd    = "PK\x05\x06" . pack( 'vvvvVVv', 0, 0, 2, 2, $cd_size, $cd_off, 0 );
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture write.
+		file_put_contents( $path, $local_small . $local_large . $cd_small . $cd_large . $eocd );
+		return $path;
 	}
 
 	/**

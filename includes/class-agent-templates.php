@@ -639,7 +639,12 @@ class Agent_Templates {
 			if ( false === $name || str_ends_with( $name, '/' ) ) {
 				continue; // Unnamed or directory entry — no decompressed payload.
 			}
-			$stream = $zip->getStream( $name );
+			// Resolve by index, not by name: getStream() returns the first
+			// entry matching a name, so a crafted archive with two entries
+			// sharing one name would have the larger one skipped here and
+			// slip past the cap. getStreamIndex() measures every entry the
+			// way unzip_file() will actually extract it.
+			$stream = $zip->getStreamIndex( $i );
 			if ( false === $stream ) {
 				continue;
 			}
