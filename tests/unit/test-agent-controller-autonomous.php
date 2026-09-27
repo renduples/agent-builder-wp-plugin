@@ -434,6 +434,58 @@ class Test_Agent_Controller_Autonomous extends TestCase {
 	}
 
 	/**
+	 * When the pending tool name matches no assistant turn (so the exact-match
+	 * branch never fires), the derive fallback must return the *last* assistant
+	 * tool-call id in the transcript, not the first. The transcript is walked
+	 * backwards and the fallback is captured on the first qualifying id — an
+	 * unconditional overwrite on every match would instead leave the earliest
+	 * turn's id, contradicting the method's own doc comment.
+	 */
+	public function test_derive_pending_tool_call_id_returns_last_turn_not_first(): void {
+		$controller = new Agent_Controller( new Fake_LLM_Client() );
+
+		$messages = array(
+			array( 'role' => 'system', 'content' => 'System.' ),
+			array( 'role' => 'user', 'content' => 'Do several things.' ),
+			array(
+				'role'       => 'assistant',
+				'tool_calls' => array(
+					array(
+						'id'       => 'call_first',
+						'type'     => 'function',
+						'function' => array( 'name' => 'list_posts', 'arguments' => '{}' ),
+					),
+				),
+			),
+			array( 'role' => 'tool', 'tool_call_id' => 'call_first', 'content' => '{}' ),
+			array(
+				'role'       => 'assistant',
+				'tool_calls' => array(
+					array(
+						'id'       => 'call_last',
+						'type'     => 'function',
+						'function' => array( 'name' => 'get_site_overview', 'arguments' => '{}' ),
+					),
+				),
+			),
+			array( 'role' => 'tool', 'tool_call_id' => 'call_last', 'content' => '{}' ),
+		);
+
+		$method = new \ReflectionMethod( Agent_Controller::class, 'derive_pending_tool_call_id' );
+		$derived = $method->invoke(
+			$controller,
+			$messages,
+			array( 'tool' => 'some_unmatched_tool' )
+		);
+
+		$this->assertSame(
+			'call_last',
+			$derived,
+			'the fallback must be the last assistant tool-call id, not the first'
+		);
+	}
+
+	/**
 	 * Two concurrent resume attempts for the same run_id must not both
 	 * execute the pending tool call, even when the race lands in the exact
 	 * window the atomic claim exists to close: a plain get_status() read

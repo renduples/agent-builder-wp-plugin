@@ -1765,10 +1765,12 @@ class Agent_Controller {
 
 			foreach ( $message['tool_calls'] as $tool_call ) {
 				$id = (string) ( $tool_call['id'] ?? '' );
-				if ( '' !== $id ) {
-					// Overwrite rather than keep the first, so the fallback is
-					// the *last* assistant tool-call id — the pending call is
-					// the final call the assistant made before the pause.
+				// Walking the transcript backwards, the first qualifying id
+				// encountered is already the *last* assistant tool-call id in
+				// the transcript (the final call the assistant made before the
+				// pause). Keep that first-seen id and never overwrite it with
+				// an earlier (older) turn's id.
+				if ( '' === $last_tool_call_id && '' !== $id ) {
 					$last_tool_call_id = $id;
 				}
 				if ( '' !== $tool_name && (string) ( $tool_call['function']['name'] ?? '' ) === $tool_name ) {
