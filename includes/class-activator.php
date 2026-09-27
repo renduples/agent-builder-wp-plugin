@@ -271,11 +271,18 @@ final class Activator {
 	 * Agent_Run/Audit_Log insert made in the meantime (a missing column fails
 	 * the insert outright). Hooked on 'init' so it runs on every request type.
 	 *
-	 * Kept deliberately minimal: it only re-runs create_tables() and bumps the
-	 * stored version. The admin-only notices (agent_builder_activation_degraded)
-	 * and the deferred-seed flag stay exclusive to maybe_upgrade()'s wp-admin
-	 * path — a stray cron/REST/frontend hit should repair the schema, not
-	 * start background seeding or surface an admin notice on its own.
+	 * Kept deliberately minimal: it only re-runs create_tables(), bumps the
+	 * stored version, and (on success) arms the same agent_builder_needs_seed
+	 * flag as maybe_upgrade() — arming it here is safe because the seeder
+	 * itself (maybe_run_deferred_seed()) only ever executes from admin_init
+	 * while current_user_can( 'manage_options' ), so a stray cron/REST/
+	 * frontend hit still can't start background seeding on its own; it just
+	 * leaves the flag for the next wp-admin visit to pick up. Without this,
+	 * a site whose first post-update request bumped the version here would
+	 * have schema_is_stale() return false on every later admin_init, so
+	 * maybe_upgrade() would never arm the flag and newly bundled content
+	 * would never get seeded. The admin-only notice
+	 * (agent_builder_activation_degraded) stays exclusive to maybe_upgrade().
 	 *
 	 * The stored-version check is a single cheap get_option() call, so this
 	 * is a no-op read on every request once the schema is current.
@@ -292,8 +299,12 @@ final class Activator {
 		}
 
 		self::$activation_log = array();
-		self::run_schema_upgrade();
+		$tables_ok            = self::run_schema_upgrade();
 		self::flush_deferred_log( AGENT_BUILDER_DB_VERSION );
+
+		if ( $tables_ok && ! self::is_safe_mode() ) {
+			update_option( 'agent_builder_needs_seed', true );
+		}
 	}
 
 	/**

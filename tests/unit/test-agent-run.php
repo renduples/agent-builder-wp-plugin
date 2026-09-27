@@ -265,6 +265,41 @@ class Test_Agent_Run extends TestCase {
 	}
 
 	/**
+	 * A legacy flat state shape that happens to contain a key literally named
+	 * "scratchpad" (but not also "messages") must still be recovered as the
+	 * whole legacy scratchpad, not misdetected as the current {scratchpad,
+	 * messages} wrapper — which would otherwise discard the real data and
+	 * keep only whatever sat under that one key.
+	 */
+	public function test_load_recovers_legacy_state_that_contains_a_scratchpad_shaped_key(): void {
+		$run    = Agent_Run::begin( 'content-writer' );
+		$run_id = $run->get_run_id();
+
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Simulating a pre-2.15.0 row shape for the test.
+		$wpdb->update(
+			$wpdb->prefix . 'agent_builder_runs',
+			array(
+				'state' => wp_json_encode(
+					array(
+						'scratchpad'    => 'not-an-array-just-a-legacy-field',
+						'delegated_key' => 'delegated_value',
+					)
+				),
+			),
+			array( 'run_id' => $run_id )
+		);
+
+		$reloaded = Agent_Run::load( $run_id );
+
+		$this->assertSame( 'delegated_value', $reloaded->scratch_get( 'delegated_key' ) );
+		$this->assertSame( 'not-an-array-just-a-legacy-field', $reloaded->scratch_get( 'scratchpad' ) );
+		$this->assertSame( array(), $reloaded->resume_state()['messages'] );
+
+		$run->finish( 'completed' );
+	}
+
+	/**
 	 * record_iteration() sums iterations, tokens, cost, and unions tool names
 	 * across multiple calls.
 	 */

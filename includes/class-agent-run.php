@@ -1043,14 +1043,20 @@ class Agent_Run {
 		$run->result_text  = (string) ( $summary['text'] ?? '' );
 		$run->result_cards = is_array( $summary['cards'] ?? null ) ? $summary['cards'] : array();
 
-		$state = self::decode_assoc( $row['state'] ?? '' );
-		if ( array_key_exists( 'scratchpad', $state ) || array_key_exists( 'messages', $state ) ) {
+		$state       = self::decode_assoc( $row['state'] ?? '' );
+		$has_wrapper = array_key_exists( 'scratchpad', $state ) && array_key_exists( 'messages', $state )
+			&& is_array( $state['scratchpad'] ) && is_array( $state['messages'] );
+		if ( $has_wrapper ) {
 			// Current (>= 2.15.0) shape: {scratchpad, messages}.
-			$run->scratchpad = is_array( $state['scratchpad'] ?? null ) ? $state['scratchpad'] : array();
-			$run->messages   = is_array( $state['messages'] ?? null ) ? $state['messages'] : array();
+			$run->scratchpad = $state['scratchpad'];
+			$run->messages   = $state['messages'];
 		} else {
 			// Legacy (pre-2.15.0) shape: the whole decoded value *is* the
-			// scratchpad, with no wrapper and no transcript.
+			// scratchpad, with no wrapper and no transcript. Requiring BOTH
+			// keys (not just one) — and both as arrays — avoids misdetecting
+			// a legacy scratchpad that merely happens to contain a key named
+			// "scratchpad" or "messages" as the new wrapper shape, which
+			// would otherwise discard the real legacy data.
 			$run->scratchpad = $state;
 			$run->messages   = array();
 		}

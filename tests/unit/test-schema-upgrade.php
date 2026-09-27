@@ -43,6 +43,7 @@ class Test_Schema_Upgrade extends TestCase {
 		} else {
 			update_option( 'agent_builder_db_schema_version', $this->previous_schema );
 		}
+		delete_option( 'agent_builder_needs_seed' );
 		parent::tearDown();
 	}
 
@@ -138,6 +139,32 @@ class Test_Schema_Upgrade extends TestCase {
 		$this->assertIsArray( $run_row, 'Agent_Run::begin() must persist a row immediately after maybe_upgrade_schema()' );
 		$run->finish( 'completed' );
 		Agent_Run::reset_current_for_tests();
+	}
+
+	/**
+	 * A successful non-admin upgrade must arm agent_builder_needs_seed just
+	 * like maybe_upgrade() does — otherwise, once maybe_upgrade_schema() has
+	 * already bumped the stored version here, a later admin_init call to
+	 * maybe_upgrade() sees the version already current and skips entirely,
+	 * permanently missing newly bundled content. Arming the flag here is
+	 * safe because maybe_run_deferred_seed() only ever executes from
+	 * admin_init while current_user_can( 'manage_options' ), so this
+	 * non-admin call still can't start background seeding on its own.
+	 */
+	public function test_maybe_upgrade_schema_arms_needs_seed_on_success(): void {
+		update_option( 'agent_builder_db_schema_version', '2.14.2' );
+		delete_option( 'agent_builder_needs_seed' );
+		wp_set_current_user( 0 );
+		unset( $GLOBALS['current_screen'] );
+		$this->recreate_pre_m10_tables();
+
+		Activator::maybe_upgrade_schema();
+
+		$this->assertSame(
+			AGENT_BUILDER_DB_VERSION,
+			(string) get_option( 'agent_builder_db_schema_version' )
+		);
+		$this->assertTrue( (bool) get_option( 'agent_builder_needs_seed' ) );
 	}
 
 	/**
