@@ -52,7 +52,7 @@ class Approvals_Payload {
 			? \Agentic\Admin_Menu_Handler::is_advanced_mode( 'approvals' )
 			: ( 'advanced' === get_option( 'agent_builder_ui_mode', 'basic' ) );
 
-		$prefs = self::get_approval_prefs();
+		$prefs = Admin_Profiles::get_approval_prefs();
 
 		return array(
 			'page'             => 'approvals',
@@ -79,73 +79,12 @@ class Approvals_Payload {
 			'is_advanced'      => $is_advanced,
 			'interface_url'    => admin_url( 'admin.php?page=agentic-settings&tab=interface' ),
 			'prefs'            => $prefs,
-			'comfort_profiles' => self::approval_comfort_profiles(),
+			'comfort_profiles' => Admin_Profiles::approval_comfort_profiles(),
 			'docs_url'         => 'https://agentic-plugin.com/documentation/approvals/',
 			'footer_policy'    => __(
 				'Approvals keep high-risk agent actions under human control. Email alerts use your admin address and never include passwords. See Privacy Policy for how providers process chat.',
 				'agent-builder'
 			),
-		);
-	}
-
-
-	public static function approval_comfort_profiles(): array {
-		$active = sanitize_key( (string) get_option( 'agent_builder_approval_comfort', 'careful' ) );
-		$cards  = array(
-			array(
-				'id'        => 'careful',
-				'icon'      => '🛡️',
-				'label'     => __( 'Always ask me', 'agent-builder' ),
-				'summary'   => __( 'Safest default', 'agent-builder' ),
-				'detail'    => __( 'Important or writing actions wait for you. Best when you want full control.', 'agent-builder' ),
-				'risk_note' => __( 'No automatic approvals beyond the safest reads.', 'agent-builder' ),
-				'auto_max'  => 'none',
-				'mode'      => 'supervised',
-				'needs_ack' => false,
-			),
-			array(
-				'id'        => 'balanced',
-				'icon'      => '⚖️',
-				'label'     => __( 'Auto-approve low risk', 'agent-builder' ),
-				'summary'   => __( 'Recommended for most sites', 'agent-builder' ),
-				'detail'    => __( 'Simple look-ups run freely. Drafts and bigger changes still pause for confirmation or this queue.', 'agent-builder' ),
-				'risk_note' => __( 'You accept that low-risk tools may run without a separate approval email.', 'agent-builder' ),
-				'auto_max'  => 'low',
-				'mode'      => 'supervised',
-				'needs_ack' => false,
-			),
-			array(
-				'id'        => 'hands_off',
-				'icon'      => '⚡',
-				'label'     => __( 'Trust more (higher risk)', 'agent-builder' ),
-				'summary'   => __( 'Faster — use with care', 'agent-builder' ),
-				'detail'    => __( 'Agents work with less interruption (autonomous mode). You can still review history. Extreme tools stay blocked.', 'agent-builder' ),
-				'risk_note' => __( 'I understand agents may change content without waiting in this queue, and I accept that increased risk.', 'agent-builder' ),
-				'auto_max'  => 'medium',
-				'mode'      => 'autonomous',
-				'needs_ack' => true,
-			),
-		);
-		foreach ( $cards as &$c ) {
-			$c['active'] = ( $c['id'] === $active );
-		}
-		unset( $c );
-		return $cards;
-	}
-
-
-	public static function get_approval_prefs(): array {
-		$email = sanitize_email( (string) get_option( 'agent_builder_approval_email_to', '' ) );
-		if ( ! is_email( $email ) ) {
-			$email = (string) get_option( 'admin_email' );
-		}
-		return array(
-			'email_notify'  => (bool) get_option( 'agent_builder_approval_email_notify', false ),
-			'email_to'      => $email,
-			'comfort'       => sanitize_key( (string) get_option( 'agent_builder_approval_comfort', 'careful' ) ),
-			'auto_max_risk' => sanitize_key( (string) get_option( 'agent_builder_approval_auto_max_risk', 'none' ) ),
-			'risk_ack'      => (bool) get_option( 'agent_builder_approval_risk_ack', false ),
-			'agent_mode'    => (string) get_option( 'agent_builder_agent_mode', 'supervised' ),
 		);
 	}
 
@@ -205,5 +144,4 @@ class Approvals_Payload {
 
 		return $out;
 	}
-
 }
