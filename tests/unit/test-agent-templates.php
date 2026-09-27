@@ -8,6 +8,7 @@
 namespace Agentic\Tests;
 
 use Agentic\Abilities_Manifest;
+use Agentic\Admin_Pages_REST;
 use Agentic\Agent_Library;
 use Agentic\Agent_Profile;
 use Agentic\Agent_Settings;
@@ -293,12 +294,11 @@ class Test_Agent_Templates extends TestCase {
 	}
 
 	/**
-	 * export() writes the zip outside wp_upload_dir()'s public tree.
-	 *
-	 * This alone does not make the file unreachable (AGENT_BUILDER_EXPORTS_DIR
-	 * can still sit inside the document root on a stock host) — that is
-	 * covered separately by the non-guessable filename and export_for_download()
-	 * tests below — but it does rule out the uploads/ tree specifically.
+	 * export() writes the zip to the system temp directory (wp_tempnam()),
+	 * outside the web-servable tree entirely — not just wp_upload_dir(), but
+	 * wp-content/ as a whole. This is what makes an exported agent's zip
+	 * unreachable by a direct, unauthenticated HTTP request: the file never
+	 * lives under a path the webserver serves.
 	 */
 	public function test_export_writes_outside_public_uploads_tree(): void {
 		$this->create_full_agent( 'exporter-security', 'ExporterSecurity', array( 'list_posts' ) );
@@ -307,10 +307,11 @@ class Test_Agent_Templates extends TestCase {
 		$path = Agent_Templates::export( 'exporter-security' );
 
 		$this->assertIsString( $path );
+		$this->assertTrue( str_starts_with( $path, trailingslashit( get_temp_dir() ) ), 'Export must be written to the system temp directory' );
+		$this->assertFalse( str_starts_with( $path, trailingslashit( wp_upload_dir()['basedir'] ) ), 'Export path must not be inside the public uploads tree' );
+		$this->assertFalse( str_starts_with( $path, trailingslashit( WP_CONTENT_DIR ) ), 'Export path must not be inside wp-content (document root)' );
 
-		$uploads_basedir = trailingslashit( wp_upload_dir()['basedir'] );
-		$this->assertFalse( str_starts_with( $path, $uploads_basedir ), 'Export path must not be inside the public uploads tree' );
-		$this->assertTrue( str_starts_with( $path, trailingslashit( AGENT_BUILDER_EXPORTS_DIR ) ) );
+		wp_delete_file( $path );
 	}
 
 	/**
@@ -364,9 +365,9 @@ class Test_Agent_Templates extends TestCase {
 	}
 
 	/**
-	 * export() names the on-disk zip randomly, never after the agent's own
-	 * slug — an unauthenticated visitor who already knows the slug (it is
-	 * not a secret) must not be able to construct the export's filename.
+	 * export() writes to a wp_tempnam() file — a fresh temp path with a random
+	 * suffix, never a stable slug-derived name — so even within the temp
+	 * directory the exact filename cannot be constructed from the slug alone.
 	 */
 	public function test_export_uses_non_guessable_filename(): void {
 		$this->create_full_agent( 'exporter-filename', 'ExporterFilename', array( 'list_posts' ) );
@@ -375,31 +376,22 @@ class Test_Agent_Templates extends TestCase {
 		$path = Agent_Templates::export( 'exporter-filename' );
 
 		$this->assertIsString( $path );
-		$this->assertNotSame( trailingslashit( AGENT_BUILDER_EXPORTS_DIR ) . 'exporter-filename.zip', $path );
-		$this->assertStringNotContainsString( 'exporter-filename', basename( $path ) );
-		$this->assertMatchesRegularExpression( '/^[A-Za-z0-9]+\.zip$/', basename( $path ) );
+		$this->assertNotSame( 'exporter-filename.zip', basename( $path ) );
+		$this->assertStringEndsWith( '.tmp', basename( $path ) );
+
+		wp_delete_file( $path );
 	}
 
 	/**
-	 * export_for_download() is the only path an export's bytes ever leave
-	 * the server by: it returns the zip content directly and deletes the
-	 * on-disk file it read it from, leaving nothing behind at any path —
-	 * guessable or not.
+	 * The export download is served by an authenticated admin-post handler
+	 * (capability + nonce + streamed from a temp file), not an AJAX/JSON
+	 * endpoint that would leave a file at a requestable path.
 	 */
-	public function test_export_for_download_deletes_file_after_read(): void {
-		$this->create_full_agent( 'exporter-download', 'ExporterDownload', array( 'list_posts' ) );
-		$this->track( 'exporter-download' );
-
-		$before = glob( trailingslashit( AGENT_BUILDER_EXPORTS_DIR ) . '*.zip' ) ?: array();
-
-		$result = Agent_Templates::export_for_download( 'exporter-download' );
-
-		$this->assertIsArray( $result );
-		$this->assertSame( 'exporter-download.zip', $result['filename'] );
-		$this->assertStringStartsWith( 'PK', $result['content'], 'Expected the returned bytes to be a zip archive' );
-
-		$after = glob( trailingslashit( AGENT_BUILDER_EXPORTS_DIR ) . '*.zip' ) ?: array();
-		$this->assertSame( $before, $after, 'Expected no export zip left on disk after download' );
+	public function test_export_download_is_an_admin_post_handler(): void {
+		$this->assertNotFalse(
+			has_action( 'admin_post_agentic_export_agent', array( Admin_Pages_REST::class, 'export_agent_download' ) ),
+			'Expected the export download to be registered as an admin-post handler'
+		);
 	}
 
 	/**

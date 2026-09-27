@@ -2,12 +2,14 @@
 /**
  * Unit tests for Activator::maybe_cleanup_legacy_agent_exports().
  *
- * Confirms the one-time security sweep removes agent-export zips left behind
- * by the pre-fix exporter at wp_upload_dir()['basedir'] . '/agentic-exports/'
- * (predictable filename, inside the public uploads tree), runs from an
- * always-fires hook with no authenticated user, runs only once, does not mark
- * itself done while a legacy zip remains, and never touches non-zip files in
- * that same directory — it is also used by unrelated document-export tools.
+ * Confirms the one-time security sweep removes legacy agent-export output left
+ * behind by earlier revisions of the exporter: the whole wp-content/agentic-exports/
+ * directory tree (the intermediate revision's working dir), and the *.zip files at
+ * wp_upload_dir()['basedir'] . '/agentic-exports/' (the original pre-fix exporter's
+ * predictable-filename output). It runs from an always-fires hook with no
+ * authenticated user, runs only once, does not mark itself done while legacy
+ * output remains, and never touches non-zip files in the shared uploads
+ * directory — which unrelated document-export tools also use.
  *
  * @package Agentic\Tests
  */
@@ -20,6 +22,13 @@ use Agentic\Activator;
  * Test case for the legacy agent-export cleanup migration.
  */
 class Test_Legacy_Export_Cleanup extends TestCase {
+
+	/**
+	 * Absolute path to the legacy wp-content/agentic-exports directory.
+	 *
+	 * @var string
+	 */
+	private string $exports_dir;
 
 	/**
 	 * Absolute path to the legacy uploads/agentic-exports directory.
@@ -36,10 +45,11 @@ class Test_Legacy_Export_Cleanup extends TestCase {
 	private $previous_flag;
 
 	/**
-	 * Snapshot state and resolve the legacy directory path.
+	 * Snapshot state and resolve the legacy directory paths.
 	 */
 	public function setUp(): void {
 		parent::setUp();
+		$this->exports_dir   = untrailingslashit( WP_CONTENT_DIR ) . '/agentic-exports';
 		$this->legacy_dir    = untrailingslashit( wp_upload_dir()['basedir'] ) . '/agentic-exports';
 		$this->previous_flag = get_option( 'agent_builder_legacy_exports_cleaned', false );
 		delete_option( 'agent_builder_legacy_exports_cleaned' );
@@ -47,7 +57,7 @@ class Test_Legacy_Export_Cleanup extends TestCase {
 	}
 
 	/**
-	 * Remove any files left in the legacy directory and restore state.
+	 * Remove any files left in the legacy directories and restore state.
 	 */
 	public function tearDown(): void {
 		@chmod( $this->legacy_dir, 0755 ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- Restore writability.
@@ -56,6 +66,8 @@ class Test_Legacy_Export_Cleanup extends TestCase {
 				wp_delete_file( $file );
 			}
 		}
+		@chmod( $this->exports_dir, 0755 ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- Restore writability.
+		\Agentic\File_Manager::rmdir( $this->exports_dir, true );
 		if ( false === $this->previous_flag ) {
 			delete_option( 'agent_builder_legacy_exports_cleaned' );
 		} else {
@@ -95,6 +107,23 @@ class Test_Legacy_Export_Cleanup extends TestCase {
 		Activator::maybe_cleanup_legacy_agent_exports();
 
 		$this->assertFileDoesNotExist( $zip_path );
+		$this->assertTrue( (bool) get_option( 'agent_builder_legacy_exports_cleaned' ) );
+	}
+
+	/**
+	 * The whole wp-content/agentic-exports/ directory tree (the intermediate
+	 * revision's export working dir, now fully legacy) is removed — not just
+	 * the .zip files sitting directly inside it.
+	 */
+	public function test_removes_whole_wp_content_exports_directory(): void {
+		wp_mkdir_p( $this->exports_dir . '/subdir' );
+		file_put_contents( $this->exports_dir . '/orphan.zip', 'zip-bytes' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture.
+		file_put_contents( $this->exports_dir . '/subdir/leftover.tmp', 'x' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture.
+		wp_set_current_user( 0 );
+
+		Activator::maybe_cleanup_legacy_agent_exports();
+
+		$this->assertDirectoryDoesNotExist( $this->exports_dir );
 		$this->assertTrue( (bool) get_option( 'agent_builder_legacy_exports_cleaned' ) );
 	}
 

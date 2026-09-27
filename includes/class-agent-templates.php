@@ -5,15 +5,14 @@
  * Duplicating copies an agent (manifest, system prompt, abilities, profile and
  * locally-assigned skills) to a sibling slug. Exporting serialises the same
  * payload into a zip — excluding provider keys/settings/credentials and the
- * site-specific avatar attachment id — under a random, non-guessable on-disk
- * filename in AGENT_BUILDER_EXPORTS_DIR (wp-content/agentic-exports/, a
- * directory sibling of uploads/ that can still sit inside the document root,
- * and whose .htaccess/web.config markers Nginx ignores outright). The archive
- * therefore never leaves the server as a static file: its on-disk name is
- * random (never the agent's slug), and it is read — and deleted the instant it
- * has been read — only by export_for_download(), which is called exclusively
- * from an authenticated, capability- and nonce-gated admin-ajax handler.
- * Importing reverses export(): it validates the
+ * site-specific avatar attachment id — into a transient file in the system
+ * temp directory (wp_tempnam()), never anywhere under wp-content/ or the
+ * uploads tree, so no exported archive is ever reachable by a direct,
+ * unauthenticated HTTP request to a guessable path. The archive only ever
+ * leaves the server as a byte stream: export_agent_download() (the sole
+ * caller) is an authenticated, capability- and nonce-gated admin-post handler
+ * that streams the temp file to the browser and deletes it in a finally block
+ * the moment it has been read. Importing reverses export(): it validates the
  * archive (including a bound on its extracted size before unpacking it),
  * refuses any abilities that would downgrade a tool below its risk floor, and
  * writes the agent in place (inactive until the owner activates it).
@@ -120,10 +119,12 @@ class Agent_Templates {
 	 * provider keys, settings, credentials, the integrity signature, or the
 	 * site-specific avatar attachment id.
 	 *
-	 * The returned path uses a random on-disk filename, not the agent's slug:
-	 * this is a transient working file, never a stable download URL — see
-	 * export_for_download() and the class docblock for how it actually
-	 * reaches an admin.
+	 * The archive is written to a transient file in the system temp directory
+	 * (via wp_tempnam()) — never anywhere under wp-content/ or the uploads
+	 * tree, so no exported agent is ever reachable by a direct, unauthenticated
+	 * HTTP request to a guessable path. The caller (export_agent_download(),
+	 * the sole path that streams its bytes to a browser) is responsible for
+	 * deleting the temp file once it has been streamed.
 	 *
 	 * @param string $slug Agent slug.
 	 * @return string|\WP_Error Absolute path to the zip, or error.
@@ -138,15 +139,16 @@ class Agent_Templates {
 			return new \WP_Error( 'zip_unavailable', __( 'The ZipArchive extension is required to export agents.', 'agent-builder' ) );
 		}
 
-		$exports_dir = untrailingslashit( AGENT_BUILDER_EXPORTS_DIR );
-		if ( ! File_Manager::ensure_protected_dir( $exports_dir ) ) {
-			return new \WP_Error( 'mkdir_failed', __( 'Could not create the export directory.', 'agent-builder' ) );
+		// A fresh, unique temp file outside the web root (WP_TEMP_DIR / sys_get_temp_dir),
+		// pre-created mode 0600 by wp_tempnam(); the archive is built over it.
+		$zip_path = wp_tempnam( $slug );
+		if ( is_wp_error( $zip_path ) ) {
+			return $zip_path;
 		}
 
-		$zip_path = $exports_dir . '/' . wp_generate_password( 32, false ) . '.zip';
-
 		$zip = new \ZipArchive();
-		if ( true !== $zip->open( $zip_path, \ZipArchive::CREATE ) ) {
+		if ( true !== $zip->open( $zip_path, \ZipArchive::CREATE | \ZipArchive::OVERWRITE ) ) {
+			wp_delete_file( $zip_path );
 			return new \WP_Error( 'zip_failed', __( 'Could not create the export archive.', 'agent-builder' ) );
 		}
 
@@ -181,41 +183,11 @@ class Agent_Templates {
 		}
 
 		if ( ! $zip->close() ) {
-			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- Cleanup; failure is non-fatal.
-			@wp_delete_file( $zip_path );
+			wp_delete_file( $zip_path );
 			return new \WP_Error( 'zip_failed', __( 'Could not finalize the export archive.', 'agent-builder' ) );
 		}
 
 		return $zip_path;
-	}
-
-	/**
-	 * Export an agent and return its zip bytes for an authenticated caller
-	 * to hand back to the browser — the sole path an export ever leaves the
-	 * server by (see the class docblock). The on-disk file export() wrote is
-	 * deleted before this returns, whether or not it could be read, so a
-	 * stale/uncleaned export is never left sitting at a discoverable path.
-	 *
-	 * @param string $slug Agent slug.
-	 * @return array{filename: string, content: string}|\WP_Error
-	 */
-	public static function export_for_download( string $slug ) {
-		$zip_path = self::export( $slug );
-		if ( is_wp_error( $zip_path ) ) {
-			return $zip_path;
-		}
-
-		$content = File_Manager::get_contents( $zip_path );
-		wp_delete_file( $zip_path );
-
-		if ( false === $content ) {
-			return new \WP_Error( 'read_failed', __( 'Could not read the export archive.', 'agent-builder' ) );
-		}
-
-		return array(
-			'filename' => $slug . '.zip',
-			'content'  => $content,
-		);
 	}
 
 	/**

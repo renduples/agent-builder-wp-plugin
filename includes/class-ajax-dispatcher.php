@@ -83,7 +83,6 @@ class Ajax_Dispatcher {
 
 			// Agents / updates (page=agentic-agents).
 			'agentic_agent_update'                       => array( Admin_Ajax::class, 'agent_update' ),
-			'agentic_export_agent'                       => array( Admin_Ajax::class, 'export_agent' ),
 
 			// Costs (page=agentic-costs).
 			'agentic_agent_breakdown'                    => array( Admin_Ajax::class, 'agent_breakdown' ),

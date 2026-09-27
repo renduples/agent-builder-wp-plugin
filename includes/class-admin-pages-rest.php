@@ -37,6 +37,7 @@ class Admin_Pages_REST {
 		add_action( 'admin_post_agentic_export_logs', array( __CLASS__, 'export_logs' ) );
 		add_action( 'admin_post_agentic_export_skill', array( __CLASS__, 'export_skill' ) );
 		add_action( 'admin_post_agentic_import_skill', array( __CLASS__, 'import_skill' ) );
+		add_action( 'admin_post_agentic_export_agent', array( __CLASS__, 'export_agent_download' ) );
 	}
 
 	/**
@@ -1849,6 +1850,52 @@ class Admin_Pages_REST {
 		header( 'Content-Disposition: attachment; filename=' . $filename );
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Raw file download body, not HTML.
 		echo (string) ( $skill['content'] ?? '' );
+
+		exit;
+	}
+
+	/**
+	 * Download one agent as a portable template zip.
+	 *
+	 * Builds the archive to a temp file outside the web root (Agent_Templates::export()),
+	 * streams it to the browser with a Content-Disposition attachment, and deletes
+	 * the temp file in a finally block so no exported archive survives the request —
+	 * reachable at a guessable path or not. This is the only path an export's bytes
+	 * ever leave the server.
+	 *
+	 * @return void
+	 */
+	public static function export_agent_download(): void {
+		if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( wp_unslash( $_GET['_wpnonce'] ) ), 'agentic_export_agent' ) ) {
+			wp_die( esc_html__( 'Security check failed. Please reload the Agents page and try exporting again.', 'agent-builder' ), 403 );
+		}
+		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'agent_builder_manage_agents' ) ) {
+			wp_die( esc_html__( 'You do not have permission to export agents.', 'agent-builder' ), 403 );
+		}
+
+		$slug = isset( $_GET['slug'] ) ? sanitize_key( wp_unslash( $_GET['slug'] ) ) : '';
+		if ( '' === $slug ) {
+			wp_die( esc_html__( 'Missing agent slug.', 'agent-builder' ), 400 );
+		}
+
+		$zip_path = Agent_Templates::export( $slug );
+		if ( is_wp_error( $zip_path ) ) {
+			wp_die( esc_html( $zip_path->get_error_message() ), 404 );
+		}
+
+		$filename = sanitize_file_name( $slug ) . '.zip';
+
+		nocache_headers();
+		header( 'Content-Type: application/zip' );
+		header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+		header( 'Content-Length: ' . (string) filesize( $zip_path ) );
+
+		try {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- Stream the temp export straight to the browser, then delete it in the finally below.
+			readfile( $zip_path );
+		} finally {
+			wp_delete_file( $zip_path );
+		}
 
 		exit;
 	}

@@ -73,21 +73,6 @@ define( 'AGENT_BUILDER_BASENAME', plugin_basename( __FILE__ ) );
 define( 'AGENT_BUILDER_AGENTS_DIR', WP_CONTENT_DIR . '/agentic-agents' );
 define( 'AGENT_BUILDER_KNOWLEDGE_DIR', WP_CONTENT_DIR . '/agentic-knowledge' );
 define( 'AGENT_BUILDER_BACKUPS_DIR', WP_CONTENT_DIR . '/agentic-backups' );
-// A working directory for Agent_Templates::export(), not a download
-// location: WP_CONTENT_DIR is itself normally inside the web document root
-// on a stock WordPress host, so moving the zip here instead of
-// wp-content/uploads/ does NOT make it non-public by itself, and
-// File_Manager::ensure_protected_dir()'s .htaccess/web.config markers are
-// ignored outright by Nginx. The export zip this directory holds therefore
-// carries a random, non-guessable on-disk filename (never the agent's
-// slug) and is deleted the moment Agent_Templates::export_for_download()
-// reads it — the *only* code path that ever returns its bytes, gated on the
-// manage_agents/manage_options capability and an AJAX nonce. Those two
-// mechanisms — an unguessable filename and an authenticated, self-deleting
-// download handler — are what keep the archive from ever being served as a
-// static file; the directory markers are defence-in-depth only. See
-// class-agent-templates.php.
-define( 'AGENT_BUILDER_EXPORTS_DIR', WP_CONTENT_DIR . '/agentic-exports' );
 
 // AGENT_BUILDER_SAFE_MODE (not defined by this plugin — a site owner opts in
 // by adding `define( 'AGENT_BUILDER_SAFE_MODE', true );` to wp-config.php).

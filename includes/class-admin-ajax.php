@@ -640,44 +640,6 @@ class Admin_Ajax {
 	}
 
 	/**
-	 * AJAX: export an agent to a portable template zip and hand its bytes
-	 * back as base64 JSON.
-	 *
-	 * This is the only path an exported agent's zip ever leaves the server
-	 * by — Agent_Templates::export_for_download() deletes the on-disk file
-	 * the instant it has been read, so there is never a stable, directly
-	 * requestable URL for it (see class-agent-templates.php and
-	 * AGENT_BUILDER_EXPORTS_DIR's definition in agent-builder.php).
-	 *
-	 * @return void
-	 */
-	public static function export_agent(): void {
-		check_ajax_referer( 'agentic_export_agent', 'nonce' );
-
-		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'agent_builder_manage_agents' ) ) {
-			wp_send_json_error( __( 'Insufficient permissions.', 'agent-builder' ) );
-		}
-
-		$slug = isset( $_POST['slug'] ) ? sanitize_key( wp_unslash( $_POST['slug'] ) ) : '';
-		if ( '' === $slug ) {
-			wp_send_json_error( __( 'Missing agent slug.', 'agent-builder' ) );
-		}
-
-		$result = Agent_Templates::export_for_download( $slug );
-		if ( is_wp_error( $result ) ) {
-			wp_send_json_error( $result->get_error_message() );
-		}
-
-		wp_send_json_success(
-			array(
-				'filename' => $result['filename'],
-				// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Binary zip transport over JSON, not obfuscation.
-				'content'  => base64_encode( $result['content'] ),
-			)
-		);
-	}
-
-	/**
 	 * Per-agent breakdown for the Costs page.
 	 *
 	 * @return void
