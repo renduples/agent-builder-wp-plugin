@@ -81,6 +81,17 @@ class Agent_Run {
 	private const TRANSCRIPT_CAP_BYTES = 200 * 1024;
 
 	/**
+	 * Version tag written into the encoded state column alongside scratchpad
+	 * and messages, so from_row() can unambiguously distinguish the current
+	 * (>= 2.15.0) {scratchpad, messages} wrapper from a legacy flat-scratchpad
+	 * row without relying on a shape heuristic (which a coincidental legacy
+	 * key layout could fool).
+	 *
+	 * @var int
+	 */
+	private const STATE_FORMAT_VERSION = 2;
+
+	/**
 	 * The current in-process run, if any.
 	 *
 	 * @var Agent_Run|null
@@ -1107,24 +1118,17 @@ class Agent_Run {
 		$run->result_text  = (string) ( $summary['text'] ?? '' );
 		$run->result_cards = is_array( $summary['cards'] ?? null ) ? $summary['cards'] : array();
 
-		$state       = self::decode_assoc( $row['state'] ?? '' );
-		$has_wrapper = array_key_exists( 'scratchpad', $state )
-			&& is_array( $state['scratchpad'] )
-			&& array_key_exists( 'messages', $state )
-			&& is_array( $state['messages'] )
-			&& self::is_transcript_list( $state['messages'] );
-		if ( $has_wrapper ) {
-			// Current (>= 2.15.0) shape: {scratchpad, messages}.
-			$run->scratchpad = $state['scratchpad'];
-			$run->messages   = $state['messages'];
+		$state = self::decode_assoc( $row['state'] ?? '' );
+
+		// The current (>= 2.15.0) shape is tagged with a version marker written
+		// by encode_state(). Presence of that marker is the unambiguous signal —
+		// a legacy flat-scratchpad row can't coincidentally carry it, so a row
+		// without the marker is unambiguously legacy, decoded as the whole value
+		// with no wrapper and no transcript, and no shape heuristic is needed.
+		if ( isset( $state['agent_builder_state_version'] ) ) {
+			$run->scratchpad = is_array( $state['scratchpad'] ?? null ) ? $state['scratchpad'] : array();
+			$run->messages   = is_array( $state['messages'] ?? null ) ? $state['messages'] : array();
 		} else {
-			// Legacy (pre-2.15.0) shape: the whole decoded value *is* the
-			// scratchpad, with no wrapper and no transcript. Requiring the
-			// wrapper's "messages" value to be a list of role-bearing message
-			// objects — not just an array — avoids misdetecting a legacy
-			// scratchpad that merely happens to contain keys named "scratchpad"
-			// and "messages" as the new wrapper shape, which would otherwise
-			// discard the real legacy data.
 			$run->scratchpad = $state;
 			$run->messages   = array();
 		}
@@ -1153,40 +1157,6 @@ class Agent_Run {
 	}
 
 	/**
-	 * Whether a decoded state's "messages" value has the current (>= 2.15.0)
-	 * transcript shape: a list of message objects, each carrying a `role` key.
-	 *
-	 * The current shape's messages are always produced by sanitize_transcript(),
-	 * which re-indexes with array_values() (so always a list) over message
-	 * objects built with a `role` key. A legacy scratchpad would have to hold a
-	 * "messages" key whose value is a list of role-bearing message objects to
-	 * fool this, which scratch_set() never writes — so this closes the gap a
-	 * bare is_array() check leaves open without risking a false negative on a
-	 * real transcript.
-	 *
-	 * @param array $messages Candidate messages value.
-	 * @return bool
-	 */
-	private static function is_transcript_list( array $messages ): bool {
-		if ( array() === $messages ) {
-			return true;
-		}
-
-		$expected = 0;
-		foreach ( $messages as $index => $message ) {
-			if ( $index !== $expected ) {
-				return false; // Not a list.
-			}
-			if ( ! is_array( $message ) || ! array_key_exists( 'role', $message ) ) {
-				return false;
-			}
-			++$expected;
-		}
-
-		return true;
-	}
-
-	/**
 	 * Decode a JSON list-of-strings column, tolerating empty/invalid input.
 	 *
 	 * @param mixed $raw Raw column value.
@@ -1205,8 +1175,9 @@ class Agent_Run {
 	private function encode_state(): string {
 		return (string) wp_json_encode(
 			array(
-				'scratchpad' => $this->scratchpad,
-				'messages'   => $this->messages,
+				'agent_builder_state_version' => self::STATE_FORMAT_VERSION,
+				'scratchpad'                  => $this->scratchpad,
+				'messages'                    => $this->messages,
 			)
 		);
 	}

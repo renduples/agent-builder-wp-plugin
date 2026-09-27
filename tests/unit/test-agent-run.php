@@ -340,6 +340,54 @@ class Test_Agent_Run extends TestCase {
 	}
 
 	/**
+	 * A genuinely ambiguous legacy row — a flat scratchpad that happens to hold
+	 * BOTH a "scratchpad" key (an array) AND a "messages" key that is a list of
+	 * role-bearing message objects (the exact shape the old heuristic would
+	 * misread as the current wrapper) — is still recovered as the whole legacy
+	 * scratchpad. The current-shape signal is now an explicit
+	 * agent_builder_state_version marker written by encode_state(), not a shape
+	 * heuristic, so a row that merely *looks* like the {scratchpad, messages}
+	 * wrapper but lacks the marker can no longer be misclassified, which would
+	 * otherwise silently discard its other legacy keys.
+	 */
+	public function test_load_recovers_ambiguous_legacy_state_without_version_marker(): void {
+		$run    = Agent_Run::begin( 'content-writer' );
+		$run_id = $run->get_run_id();
+
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Simulating a pre-2.15.0 row shape for the test.
+		$wpdb->update(
+			$wpdb->prefix . 'agent_builder_runs',
+			array(
+				'state' => wp_json_encode(
+					array(
+						'scratchpad'    => array( 'legacy' => 'nested' ),
+						'messages'      => array(
+							array( 'role' => 'user', 'content' => 'a coincidental role-bearing list' ),
+						),
+						'delegated_key' => 'delegated_value',
+					)
+				),
+			),
+			array( 'run_id' => $run_id )
+		);
+
+		$reloaded = Agent_Run::load( $run_id );
+
+		// The whole decoded value is the legacy scratchpad, including the two
+		// coincidental keys — not just whatever sat under "scratchpad".
+		$this->assertSame( 'delegated_value', $reloaded->scratch_get( 'delegated_key' ) );
+		$this->assertSame( array( 'legacy' => 'nested' ), $reloaded->scratch_get( 'scratchpad' ) );
+		$this->assertSame(
+			array( array( 'role' => 'user', 'content' => 'a coincidental role-bearing list' ) ),
+			$reloaded->scratch_get( 'messages' )
+		);
+		$this->assertSame( array(), $reloaded->resume_state()['messages'] );
+
+		$run->finish( 'completed' );
+	}
+
+	/**
 	 * A write deferred while the schema is stale must not leave the run
 	 * looking done in-memory (to_array()['persisted']/is_persisted()) while
 	 * silently missing from the DB forever: once the schema is current again,
