@@ -219,13 +219,17 @@ final class Activator {
 	 * agent_builder_db_schema_version would otherwise stay on the previous
 	 * value and the dashboard Schema tile would never catch up.
 	 *
-	 * Admin + logged-in only. No-op (no DB writes) when the stored option
-	 * already equals AGENT_BUILDER_DB_VERSION. When behind, re-runs
+	 * Runs on every request (hooked on plugins_loaded) so the first cron,
+	 * REST or frontend hit after an auto-update brings the schema current —
+	 * not just the first admin visit. No-op (no DB writes) when the stored
+	 * option already equals AGENT_BUILDER_DB_VERSION. When behind, re-runs
 	 * create_tables() (dbDelta, idempotent, no data loss) then writes the
-	 * current constant. Table creation is guarded the same way as a fresh
-	 * activation — a failure here is logged and leaves the stored version
-	 * behind so it retries on the next admin_init, instead of silently
-	 * marking a failed upgrade as complete.
+	 * current constant. A 60-second transient lock keeps near-simultaneous
+	 * requests (a cron run and a REST hit landing together) from racing into
+	 * create_tables(); on failure the lock is left in place so a broken site
+	 * backs off for 60s instead of re-running the full dbDelta pass on every
+	 * request. A failure is logged and leaves the stored version behind so
+	 * it retries later, instead of silently marking a failed upgrade complete.
 	 *
 	 * Also flips agent_builder_needs_seed so the deferred/chunked seeder
 	 * fills in any bundled tools/skills/agents added since the site's last
@@ -234,14 +238,21 @@ final class Activator {
 	 * @return void
 	 */
 	public static function maybe_upgrade(): void {
-		if ( ! is_admin() || ! is_user_logged_in() ) {
-			return;
-		}
-
 		$stored = (string) get_option( 'agent_builder_db_schema_version', '' );
 		if ( AGENT_BUILDER_DB_VERSION === $stored ) {
 			return;
 		}
+
+		// 60-second transient lock: a cron run and a REST request landing
+		// together during the upgrade window must not both race into
+		// create_tables()/dbDelta(). Released on success; left in place on
+		// failure so the retry backs off — the TTL is both the backoff window
+		// and the safety net if the process dies mid-upgrade.
+		$lock_key = 'agent_builder_upgrade_lock';
+		if ( get_transient( $lock_key ) ) {
+			return; // Another request is already running (or recently failed).
+		}
+		set_transient( $lock_key, 1, 60 );
 
 		self::$activation_log = array();
 		self::guarded_step( 'maybe_upgrade_create_tables', array( __CLASS__, 'create_tables' ) );
@@ -252,7 +263,7 @@ final class Activator {
 		self::flush_deferred_log( AGENT_BUILDER_DB_VERSION );
 
 		if ( ! $tables_ok ) {
-			return; // Leave stored version behind — retried on the next admin_init.
+			return; // Leave the lock as a 60s backoff and the version behind for retry.
 		}
 
 		self::set_db_schema_version( AGENT_BUILDER_DB_VERSION );
@@ -260,6 +271,8 @@ final class Activator {
 		if ( ! self::is_safe_mode() ) {
 			update_option( 'agent_builder_needs_seed', true );
 		}
+
+		delete_transient( $lock_key );
 	}
 
 	/**

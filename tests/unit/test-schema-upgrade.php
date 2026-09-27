@@ -27,6 +27,10 @@ class Test_Schema_Upgrade extends TestCase {
 	 */
 	public function setUp(): void {
 		parent::setUp();
+		// The upgrade's create_tables()/dbDelta() runs DDL that implicitly
+		// commits MySQL transactions, so a lock set in a prior test can leak
+		// as a committed row. Clear it so each test starts with the lock free.
+		delete_transient( 'agent_builder_upgrade_lock' );
 		$this->previous_schema = get_option( 'agent_builder_db_schema_version', false );
 	}
 
@@ -36,6 +40,7 @@ class Test_Schema_Upgrade extends TestCase {
 	public function tearDown(): void {
 		wp_set_current_user( 0 );
 		unset( $GLOBALS['current_screen'] );
+		delete_transient( 'agent_builder_upgrade_lock' );
 		if ( false === $this->previous_schema ) {
 			delete_option( 'agent_builder_db_schema_version' );
 		} else {
@@ -85,22 +90,52 @@ class Test_Schema_Upgrade extends TestCase {
 	}
 
 	/**
-	 * Front-end / logged-out calls must not write even when stored is behind.
+	 * A logged-out, non-admin request — the shape of the first cron or REST
+	 * hit after an auto-update, where admin_init never fires — still brings
+	 * the stored schema version current. This is the acceptance case: no
+	 * admin visit is required for the migration to run.
 	 */
-	public function test_maybe_upgrade_skips_logged_out_and_non_admin(): void {
-		update_option( 'agent_builder_db_schema_version', '2.14.1' );
+	public function test_maybe_upgrade_runs_on_first_cron_or_rest_hit(): void {
+		update_option( 'agent_builder_db_schema_version', '2.14.2' );
 		wp_set_current_user( 0 );
 		unset( $GLOBALS['current_screen'] );
 
 		Activator::maybe_upgrade();
 
-		$this->assertSame( '2.14.1', (string) get_option( 'agent_builder_db_schema_version' ) );
+		$this->assertSame(
+			AGENT_BUILDER_DB_VERSION,
+			(string) get_option( 'agent_builder_db_schema_version' )
+		);
+	}
 
-		$this->enter_admin_as_logged_in_user();
-		wp_set_current_user( 0 );
+	/**
+	 * A near-simultaneous second request (a REST hit and a cron run landing
+	 * together) must not re-run the upgrade while the first still holds the
+	 * transient lock: the stored version stays behind until the lock clears,
+	 * so create_tables() is not double-invoked.
+	 */
+	public function test_concurrent_requests_do_not_double_run_upgrade(): void {
+		update_option( 'agent_builder_db_schema_version', '2.14.2' );
+
+		// Simulate the first request holding the lock mid-upgrade.
+		set_transient( 'agent_builder_upgrade_lock', 1, 60 );
+
+		Activator::maybe_upgrade(); // Second request lands while the first is running.
+
+		$this->assertSame(
+			'2.14.2',
+			(string) get_option( 'agent_builder_db_schema_version' ),
+			'The second request must skip the upgrade while the lock is held.'
+		);
+
+		// Lock clears (first request finished) — the next request completes it.
+		delete_transient( 'agent_builder_upgrade_lock' );
 		Activator::maybe_upgrade();
 
-		$this->assertSame( '2.14.1', (string) get_option( 'agent_builder_db_schema_version' ) );
+		$this->assertSame(
+			AGENT_BUILDER_DB_VERSION,
+			(string) get_option( 'agent_builder_db_schema_version' )
+		);
 	}
 
 	/**
