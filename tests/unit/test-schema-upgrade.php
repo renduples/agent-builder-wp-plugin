@@ -192,6 +192,83 @@ class Test_Schema_Upgrade extends TestCase {
 	}
 
 	/**
+	 * A failed (or not-yet-attempted) schema repair must not let
+	 * Agent_Run::persist_start() insert against a table whose columns dbDelta
+	 * never finished adding — Activator::schema_is_stale() staying true (it
+	 * is only cleared by a *successful* run_schema_upgrade()) is exactly what
+	 * gates that insert off, closing the "repair failed, request silently
+	 * continues writing anyway" gap.
+	 */
+	public function test_agent_run_skips_persist_start_while_schema_stale(): void {
+		update_option( 'agent_builder_db_schema_version', '2.14.2' );
+		$this->assertTrue( Activator::schema_is_stale() );
+
+		Agent_Run::reset_current_for_tests();
+		$run = Agent_Run::begin( 'test-agent' );
+
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test assertion.
+		$run_row = $wpdb->get_row(
+			$wpdb->prepare( "SELECT * FROM {$wpdb->prefix}agent_builder_runs WHERE run_id = %s", $run->get_run_id() ),
+			ARRAY_A
+		);
+		$this->assertNull( $run_row, 'persist_start() must skip its insert while the schema is stale' );
+
+		Agent_Run::reset_current_for_tests();
+	}
+
+	/**
+	 * Same guard, same reasoning, for Audit_Log::log()'s insert.
+	 */
+	public function test_audit_log_skips_insert_while_schema_stale(): void {
+		update_option( 'agent_builder_db_schema_version', '2.14.2' );
+		$this->assertTrue( Activator::schema_is_stale() );
+
+		$audit_log = new Audit_Log();
+		$result    = $audit_log->log( 'test-agent', 'tool_call', 'list_posts', array( 'id' => 1 ) );
+
+		$this->assertFalse( $result, 'Audit_Log::log() must skip its insert while the schema is stale' );
+	}
+
+	/**
+	 * Agent_Run::persist() — the shared UPDATE used by finish(),
+	 * mark_waiting(), etc. — must also skip while the schema is stale, not
+	 * just persist_start()'s insert. A run resumed via Agent_Run::load() in a
+	 * later request (e.g. after an approval is granted, or a job resumes)
+	 * never goes through persist_start() at all, so without this guard on
+	 * persist() itself, finish() could silently no-op or error against
+	 * columns a failed migration never added, leaving the row stuck at its
+	 * previous status forever while the run looks finished in-memory.
+	 */
+	public function test_agent_run_skips_persist_while_schema_stale(): void {
+		// Force current first: a sibling test earlier in this class runs raw
+		// DDL (recreate_pre_m10_tables()'s DROP/CREATE TABLE), which triggers
+		// MySQL's implicit commit and can desync PHPUnit's per-test rollback,
+		// so the option's value on entry here can't be assumed — pin it
+		// explicitly rather than relying on ambient state.
+		update_option( 'agent_builder_db_schema_version', AGENT_BUILDER_DB_VERSION );
+
+		Agent_Run::reset_current_for_tests();
+		$run = Agent_Run::begin( 'test-agent' ); // Schema current here — the insert lands normally.
+
+		update_option( 'agent_builder_db_schema_version', '2.14.2' ); // Now force stale.
+		$this->assertTrue( Activator::schema_is_stale() );
+
+		$run->finish( 'completed' );
+
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test assertion.
+		$run_row = $wpdb->get_row(
+			$wpdb->prepare( "SELECT * FROM {$wpdb->prefix}agent_builder_runs WHERE run_id = %s", $run->get_run_id() ),
+			ARRAY_A
+		);
+		$this->assertIsArray( $run_row, 'the row inserted while the schema was current must still be there' );
+		$this->assertSame( 'running', $run_row['status'], 'finish() must skip its update while the schema is stale, leaving status untouched' );
+
+		Agent_Run::reset_current_for_tests();
+	}
+
+	/**
 	 * Put the test in a logged-in wp-admin context.
 	 */
 	private function enter_admin_as_logged_in_user(): void {

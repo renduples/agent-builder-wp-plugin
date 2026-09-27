@@ -1161,6 +1161,17 @@ class Agent_Run {
 	/**
 	 * Generic partial update of this run's row, keyed by run_id.
 	 *
+	 * Shared by every state-transition method (finish(), mark_waiting(),
+	 * checkpoint_transcript(), request_cancel(), record_iteration(), etc.),
+	 * including ones reached via Agent_Run::load() resuming a run that a
+	 * *different*, earlier (and possibly healthy-schema) request originally
+	 * inserted via persist_start() — so this needs the same
+	 * Activator::schema_is_stale() guard as persist_start(): without it, a
+	 * schema repair that fails in between those two requests would let this
+	 * UPDATE fire against columns a later migration never finished adding,
+	 * silently no-oping or erroring and leaving the row stuck at its
+	 * previous status forever while the run looks finished in-memory.
+	 *
 	 * @param array $fields  Column => value.
 	 * @param array $formats Matching %s/%d/%f formats.
 	 * @return void
@@ -1168,6 +1179,13 @@ class Agent_Run {
 	private function persist( array $fields, array $formats ): void {
 		global $wpdb;
 		$table = $wpdb->prefix . 'agent_builder_runs';
+
+		if ( Activator::schema_is_stale() ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Intentional, rare (schema-repair-failure only) debug output.
+			error_log( '[Agent Builder] Agent_Run::persist() skipped: schema is stale, a prior repair attempt this request did not succeed' );
+			return;
+		}
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table update, keyed by run_id.
 		$wpdb->update( $table, $fields, array( 'run_id' => $this->run_id ), $formats, array( '%s' ) );
 	}
@@ -1175,11 +1193,27 @@ class Agent_Run {
 	/**
 	 * Insert the initial run row.
 	 *
+	 * Skips the insert entirely when Activator::schema_is_stale() reports the
+	 * table shape is out of date — e.g. a prior maybe_upgrade_schema()/
+	 * maybe_upgrade() this same request already failed to repair it (a
+	 * transient DB error, a missing ALTER permission). Without this guard the
+	 * insert would still fire against columns dbDelta never finished adding,
+	 * failing silently ($wpdb->insert() just returns false) — exactly the
+	 * data-loss bug this whole fix-forward exists to close, now scoped to
+	 * "repair failed" instead of "repair never ran". The run still works
+	 * in-memory for the rest of this request; only persistence is skipped.
+	 *
 	 * @return void
 	 */
 	private function persist_start(): void {
 		global $wpdb;
 		$table = $wpdb->prefix . 'agent_builder_runs';
+
+		if ( Activator::schema_is_stale() ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Intentional, rare (schema-repair-failure only) debug output.
+			error_log( '[Agent Builder] Agent_Run::persist_start() skipped: schema is stale, a prior repair attempt this request did not succeed' );
+			return;
+		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table insert.
 		$wpdb->insert(

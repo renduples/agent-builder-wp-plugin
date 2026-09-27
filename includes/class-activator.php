@@ -233,8 +233,10 @@ final class Activator {
 	 *
 	 * A cron/REST/frontend request that arrives before any admin has loaded
 	 * wp-admin post-upgrade is instead covered by maybe_upgrade_schema()
-	 * (hooked on 'init'), which repairs the table shape but leaves the notice
-	 * and seed-flag side effects below to this, the wp-admin path.
+	 * (hooked on 'init'), which repairs the table shape and, on success, arms
+	 * agent_builder_needs_seed itself too (guarded by safe mode, same as
+	 * here) — only the admin-only degraded notice stays exclusive to this,
+	 * the wp-admin path.
 	 *
 	 * @return void
 	 */
@@ -310,9 +312,17 @@ final class Activator {
 	/**
 	 * Whether the stored schema version is behind the running plugin's.
 	 *
+	 * Public so a write path whose table columns a failed repair may have
+	 * left missing (Agent_Run::persist_start(), Audit_Log::log()) can gate
+	 * on it directly: run_schema_upgrade() only bumps the stored version on
+	 * success, so this keeps returning true — across every request, not just
+	 * the one where the repair failed — until a later attempt actually
+	 * succeeds, instead of the request silently inserting into a table
+	 * dbDelta never finished widening.
+	 *
 	 * @return bool
 	 */
-	private static function schema_is_stale(): bool {
+	public static function schema_is_stale(): bool {
 		$stored = (string) get_option( 'agent_builder_db_schema_version', '' );
 		return AGENT_BUILDER_DB_VERSION !== $stored;
 	}

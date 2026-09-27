@@ -118,6 +118,20 @@ class Audit_Log {
 			'run_id'        => '' !== $run_id ? $run_id : null,
 		);
 
+		// Skip the insert when Activator::schema_is_stale() reports the table
+		// shape is out of date — e.g. a prior maybe_upgrade_schema()/
+		// maybe_upgrade() this same request already failed to repair it.
+		// Without this guard the insert would still fire against columns
+		// dbDelta never finished adding, failing silently ($wpdb->insert()
+		// just returns false) — exactly the data-loss bug this whole
+		// fix-forward exists to close, now scoped to "repair failed" instead
+		// of "repair never ran".
+		if ( Activator::schema_is_stale() ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Intentional, rare (schema-repair-failure only) debug output.
+			error_log( '[Agent Builder] Audit_Log::log() skipped: schema is stale, a prior repair attempt this request did not succeed' );
+			return false;
+		}
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table insert.
 		$result = $wpdb->insert( $wpdb->prefix . 'agent_builder_audit_log', $data );
 
