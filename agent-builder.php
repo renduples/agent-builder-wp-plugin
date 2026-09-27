@@ -73,6 +73,12 @@ define( 'AGENT_BUILDER_BASENAME', plugin_basename( __FILE__ ) );
 define( 'AGENT_BUILDER_AGENTS_DIR', WP_CONTENT_DIR . '/agentic-agents' );
 define( 'AGENT_BUILDER_KNOWLEDGE_DIR', WP_CONTENT_DIR . '/agentic-knowledge' );
 define( 'AGENT_BUILDER_BACKUPS_DIR', WP_CONTENT_DIR . '/agentic-backups' );
+// Deliberately a sibling of wp-content/uploads/, not inside it: uploads is a
+// web-accessible tree on every stock WordPress host, so an exported agent
+// zip (system prompt, persona text, locally-assigned skills) would otherwise
+// be downloadable by anyone who guesses its slug-based filename, on hosts
+// where directory-listing/.htaccess protections don't apply (e.g. Nginx).
+define( 'AGENT_BUILDER_EXPORTS_DIR', WP_CONTENT_DIR . '/agentic-exports' );
 
 // AGENT_BUILDER_SAFE_MODE (not defined by this plugin — a site owner opts in
 // by adding `define( 'AGENT_BUILDER_SAFE_MODE', true );` to wp-config.php).

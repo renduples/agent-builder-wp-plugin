@@ -4,11 +4,14 @@
  *
  * Duplicating copies an agent (manifest, system prompt, abilities, profile and
  * locally-assigned skills) to a sibling slug. Exporting serialises the same
- * payload into a zip under uploads/agentic-exports/, deliberately excluding
- * provider keys/settings/credentials and the site-specific avatar attachment
- * id. Importing reverses that: it validates the archive, refuses any abilities
- * that would downgrade a tool below its risk floor, and writes the agent in
- * place (inactive until the owner activates it).
+ * payload into a zip under wp-content/agentic-exports/ — deliberately a
+ * sibling of, not inside, the web-accessible uploads/ tree, since the zip
+ * carries the agent's system prompt and persona text and the filename is a
+ * guessable slug — excluding provider keys/settings/credentials and the
+ * site-specific avatar attachment id. Importing reverses that: it validates
+ * the archive, refuses any abilities that would downgrade a tool below its
+ * risk floor, and writes the agent in place (inactive until the owner
+ * activates it).
  *
  * All three operate on the *portable* representation of an agent — a
  * declarative agent.json manifest plus templates/system-prompt.txt and
@@ -110,12 +113,7 @@ class Agent_Templates {
 			return new \WP_Error( 'zip_unavailable', __( 'The ZipArchive extension is required to export agents.', 'agent-builder' ) );
 		}
 
-		$uploads = wp_upload_dir();
-		if ( empty( $uploads['basedir'] ) ) {
-			return new \WP_Error( 'no_uploads', __( 'The uploads directory is unavailable.', 'agent-builder' ) );
-		}
-
-		$exports_dir = trailingslashit( $uploads['basedir'] ) . 'agentic-exports';
+		$exports_dir = untrailingslashit( AGENT_BUILDER_EXPORTS_DIR );
 		if ( ! File_Manager::ensure_protected_dir( $exports_dir ) ) {
 			return new \WP_Error( 'mkdir_failed', __( 'Could not create the export directory.', 'agent-builder' ) );
 		}

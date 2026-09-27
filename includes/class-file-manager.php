@@ -334,8 +334,8 @@ WEBCONFIG;
 
 	/**
 	 * Create one of the plugin's own writable directories (agentic-agents,
-	 * agentic-knowledge, agentic-backups — never the shared uploads
-	 * directory, which this plugin does not own) and seed it with
+	 * agentic-knowledge, agentic-backups, agentic-exports — never the shared
+	 * uploads directory, which this plugin does not own) and seed it with
 	 * execution-denying protection, the first time it is created.
 	 *
 	 * This is defense-in-depth against a misconfigured webserver, not the
@@ -433,6 +433,8 @@ WEBCONFIG;
 	 *   - The agentic-agents user directory (AGENT_BUILDER_AGENTS_DIR)
 	 *   - The agentic-knowledge directory (AGENT_BUILDER_KNOWLEDGE_DIR)
 	 *   - The agentic-backups directory (AGENT_BUILDER_BACKUPS_DIR)
+	 *   - The agentic-exports directory (AGENT_BUILDER_EXPORTS_DIR) — deliberately
+	 *     outside the uploads tree; see its definition in agent-builder.php.
 	 *   - `abilities.json` specifically, under the plugin's own bundled
 	 *     library/agents/ tree (AGENT_BUILDER_DIR) — see the narrow
 	 *     exception below; nothing else in the plugin directory is writable.
@@ -465,6 +467,10 @@ WEBCONFIG;
 
 		if ( defined( 'AGENT_BUILDER_BACKUPS_DIR' ) ) {
 			$allowed_roots[] = trailingslashit( AGENT_BUILDER_BACKUPS_DIR );
+		}
+
+		if ( defined( 'AGENT_BUILDER_EXPORTS_DIR' ) ) {
+			$allowed_roots[] = trailingslashit( AGENT_BUILDER_EXPORTS_DIR );
 		}
 
 		$upload_dir = wp_upload_dir( null, false );
