@@ -4,7 +4,7 @@ Tags: ai, ai safety, ai agents, mcp, webmcp
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 4.0.1
+Stable tag: 4.0.2
 Donate link: https://agentic-plugin.com/donate/
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -329,6 +329,9 @@ This plugin connects to external AI APIs to process prompts and tool executions 
 
 
 == Changelog ==
+
+= 4.0.2 - 2026-09-27 =
+* Maintenance: version alignment across the WordPress.org, self-hosted, and Pro editions. Ensures clean compatibility with Agent Builder Pro 4.0.2. No functional changes to this edition.
 
 = 4.0.1 - 2026-09-26 =
 Hardened activation: heavy setup now runs deferred and in the background, and a database/hosting hiccup during setup can no longer take a site offline. New SAFE MODE constant.
