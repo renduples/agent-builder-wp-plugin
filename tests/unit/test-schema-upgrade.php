@@ -197,6 +197,30 @@ class Test_Schema_Upgrade extends TestCase {
 	}
 
 	/**
+	 * A logged-in *non-admin* (subscriber/editor) wp-admin page load must still
+	 * repair the schema here. maybe_upgrade_schema()'s deferral gate keys on
+	 * current_user_can( 'manage_options' ) — matching maybe_upgrade()'s own gate
+	 * — rather than merely is_user_logged_in(), so a subscriber's wp-admin visit
+	 * doesn't defer to maybe_upgrade() (which early-returns on the capability)
+	 * and leave NEITHER path to repair that request.
+	 */
+	public function test_maybe_upgrade_schema_repairs_for_logged_in_non_admin(): void {
+		update_option( 'agent_builder_db_schema_version', '2.14.2' );
+		$subscriber_id = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		wp_set_current_user( $subscriber_id );
+		set_current_screen( 'dashboard' );
+		$this->recreate_pre_m10_tables();
+
+		Activator::maybe_upgrade_schema();
+
+		$this->assertSame(
+			AGENT_BUILDER_DB_VERSION,
+			(string) get_option( 'agent_builder_db_schema_version' ),
+			'a logged-in non-admin must not be deferred to a path that early-returns on manage_options'
+		);
+	}
+
+	/**
 	 * admin-ajax.php sets is_admin() true but never fires admin_init, so a
 	 * logged-in admin's first post-auto-update request being a wp_ajax_* call
 	 * (heartbeat, autosave, a frontend AJAX action) must still repair the schema

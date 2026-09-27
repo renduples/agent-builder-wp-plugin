@@ -1368,7 +1368,18 @@ class Agent_Run {
 	 * @return void
 	 */
 	private function merge_pending( array $fields, array $formats ): void {
-		$format_map = array_combine( array_keys( $fields ), $formats );
+		// Tolerate a short/long $formats array the way wpdb's
+		// process_field_formats() does — pad the shortfall with '%s', ignore the
+		// excess — rather than letting array_combine() throw a ValueError on a
+		// length mismatch. The old $wpdb->update()/insert() calls survived such a
+		// near-miss silently; a defensive check must not turn it into a fatal.
+		$keys = array_keys( $fields );
+		if ( count( $formats ) < count( $keys ) ) {
+			$formats = array_pad( $formats, count( $keys ), '%s' );
+		} elseif ( count( $formats ) > count( $keys ) ) {
+			$formats = array_slice( $formats, 0, count( $keys ) );
+		}
+		$format_map = array_combine( $keys, $formats );
 
 		$this->pending_fields  = array_merge( $this->pending_fields, $fields );
 		$this->pending_formats = array_merge( $this->pending_formats, $format_map );

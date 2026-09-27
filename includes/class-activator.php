@@ -228,8 +228,8 @@ final class Activator {
 	 * agent_builder_db_schema_version would otherwise stay on the previous
 	 * value and the dashboard Schema tile would never catch up.
 	 *
-	 * Admin + logged-in only. No-op (no DB writes) when the stored option
-	 * already equals AGENT_BUILDER_DB_VERSION. When behind, re-runs
+	 * Admin-only (current_user_can( 'manage_options' )). No-op (no DB writes)
+	 * when the stored option already equals AGENT_BUILDER_DB_VERSION. When behind, re-runs
 	 * create_tables() (dbDelta, idempotent, no data loss) then writes the
 	 * current constant. Table creation is guarded the same way as a fresh
 	 * activation — a failure here is logged and leaves the stored version
@@ -250,7 +250,7 @@ final class Activator {
 	 * @return void
 	 */
 	public static function maybe_upgrade(): void {
-		if ( ! is_admin() || ! is_user_logged_in() ) {
+		if ( ! is_admin() || ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
 
@@ -273,7 +273,7 @@ final class Activator {
 
 	/**
 	 * Broader entry point for the same idempotent dbDelta schema sync as
-	 * maybe_upgrade(), without the wp-admin + logged-in gate.
+	 * maybe_upgrade(), without the wp-admin + manage_options gate.
 	 *
 	 * maybe_upgrade() only runs from admin_init, so a site whose first
 	 * post-auto-update request is frontend/REST/WP-Cron — with no
@@ -301,12 +301,17 @@ final class Activator {
 	 * @return void
 	 */
 	public static function maybe_upgrade_schema(): void {
-		// A genuine wp-admin page load (is_admin() true, not AJAX, logged in)
-		// is owned by maybe_upgrade() on admin_init, which also surfaces the
-		// admin-only degraded notice — defer to it rather than racing it.
+		// A genuine wp-admin page load by an administrator (is_admin() true, not
+		// AJAX, manage_options) is owned by maybe_upgrade() on admin_init, which
+		// also surfaces the admin-only degraded notice — defer to it rather than
+		// racing it. The capability check must match maybe_upgrade()'s own gate:
+		// a logged-in *non-admin* (subscriber/editor) wp-admin page load would
+		// defer here only to have maybe_upgrade() early-return on the same
+		// capability, leaving NEITHER path to repair that request — keying the
+		// deferral on manage_options lets that request repair here instead.
 		//
-		// admin-ajax.php sets is_admin() true but never fires admin_init, so a
-		// logged-in admin's first post-auto-update request being a wp_ajax_* call
+		// admin-ajax.php sets is_admin() true but never fires admin_init, so an
+		// admin's first post-auto-update request being a wp_ajax_* call
 		// (heartbeat, autosave, any frontend AJAX action) would otherwise fall
 		// through this early-return and never run either repair — the exact
 		// "first request doesn't get migrated" gap this path exists to close,
@@ -316,7 +321,7 @@ final class Activator {
 		// intentional, accepted trust-boundary change: dbDelta takes no
 		// user-controlled input and is idempotent, and the 60s backoff transient
 		// bounds repetition.
-		if ( is_admin() && ! wp_doing_ajax() && is_user_logged_in() ) {
+		if ( is_admin() && ! wp_doing_ajax() && current_user_can( 'manage_options' ) ) {
 			return; // maybe_upgrade() (admin_init) owns this case.
 		}
 

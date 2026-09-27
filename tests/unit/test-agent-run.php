@@ -531,6 +531,48 @@ class Test_Agent_Run extends TestCase {
 	}
 
 	/**
+	 * merge_pending() must tolerate a short/long $formats array the way wpdb's
+	 * process_field_formats() does (pad the shortfall with '%s', ignore the
+	 * excess) rather than letting array_combine() throw a ValueError on a length
+	 * mismatch — a near-miss the old $wpdb->update()/insert() calls survived
+	 * silently and which must not regress into a fatal.
+	 */
+	public function test_merge_pending_tolerates_mismatched_formats(): void {
+		$previous_schema = get_option( 'agent_builder_db_schema_version', false );
+
+		try {
+			// Keep the schema stale so flush_pending() early-returns before touching
+			// $wpdb; the assertion here is only that merge_pending()'s array_combine()
+			// no longer fatals, and normalizes the formats instead.
+			update_option( 'agent_builder_db_schema_version', '2.14.2' );
+			$run = Agent_Run::begin( 'content-writer' );
+
+			$ref         = new \ReflectionMethod( Agent_Run::class, 'merge_pending' );
+			$formats_ref = new \ReflectionProperty( Agent_Run::class, 'pending_formats' );
+
+			// Short $formats: pad the shortfall with '%s'.
+			$ref->invoke( $run, array( 'status' => 'running', 'task_text' => 'hi' ), array( '%s' ) );
+
+			$pending = $formats_ref->getValue( $run );
+			$this->assertSame( '%s', $pending['status'], 'a missing format must be padded to %s' );
+			$this->assertSame( '%s', $pending['task_text'], 'a missing format must be padded to %s' );
+
+			// Long $formats: ignore the excess, keep only the first count($fields).
+			$ref->invoke( $run, array( 'status' => 'completed' ), array( '%d', '%f', '%s' ) );
+
+			$pending = $formats_ref->getValue( $run );
+			$this->assertSame( '%d', $pending['status'], 'the first format is used and the excess ignored' );
+		} finally {
+			if ( false === $previous_schema ) {
+				delete_option( 'agent_builder_db_schema_version' );
+			} else {
+				update_option( 'agent_builder_db_schema_version', $previous_schema );
+			}
+			Agent_Run::reset_current_for_tests();
+		}
+	}
+
+	/**
 	 * record_iteration() sums iterations, tokens, cost, and unions tool names
 	 * across multiple calls.
 	 */
