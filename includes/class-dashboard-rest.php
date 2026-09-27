@@ -311,6 +311,7 @@ class Dashboard_REST {
 				'urls'                    => array(
 					'admin'         => admin_url(),
 					'icon'          => AGENT_BUILDER_URL . 'assets/icon.svg',
+					'signup'        => admin_url( 'admin.php?page=agentic-signup' ),
 					'license'       => admin_url( 'admin.php?page=agentic-settings&tab=license' ),
 					'providers'     => admin_url( 'admin.php?page=agentic-settings&tab=providers' ),
 					'interface'     => admin_url( 'admin.php?page=agentic-settings&tab=interface' ),
