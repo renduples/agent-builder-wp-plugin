@@ -315,6 +315,51 @@ class Test_Agent_Templates extends TestCase {
 	}
 
 	/**
+	 * export() must refuse to build an archive under the web root. wp_tempnam()
+	 * normally returns a path under WP_TEMP_DIR / sys_get_temp_dir(), but
+	 * get_temp_dir() can fall back to a web-servable directory (under
+	 * wp-content/) when neither is writable — which would silently defeat the
+	 * whole fix. The path-validation guard (is_under_web_root()) treats both
+	 * ABSPATH and WP_CONTENT_DIR as unsafe, and only the real system temp dir
+	 * as safe; an unresolvable path fails closed.
+	 */
+	public function test_export_guard_treats_web_root_paths_as_unsafe(): void {
+		$method = new \ReflectionMethod( Agent_Templates::class, 'is_under_web_root' );
+
+		// A path directly under the WP root but outside wp-content — still
+		// directly web-servable, so it must be rejected.
+		$in_root = ABSPATH . 'agentic-export-guard-probe.tmp';
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture write.
+		$this->assertNotFalse( file_put_contents( $in_root, 'x' ) );
+		$this->assertTrue( $method->invoke( null, $in_root ), 'A path under ABSPATH must be treated as unsafe' );
+
+		// A path under wp-content — the exact fallback location get_temp_dir()
+		// can reach when its preferred temp dirs are not writable.
+		$in_content = WP_CONTENT_DIR . '/agentic-export-guard-probe.tmp';
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture write.
+		$this->assertNotFalse( file_put_contents( $in_content, 'x' ) );
+		$this->assertTrue( $method->invoke( null, $in_content ), 'A path under WP_CONTENT_DIR must be treated as unsafe' );
+
+		// The real system temp dir is outside the web root — the one place an
+		// exported archive may safely live.
+		$in_temp = trailingslashit( get_temp_dir() ) . 'agentic-export-guard-probe.tmp';
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture write.
+		$this->assertNotFalse( file_put_contents( $in_temp, 'x' ) );
+		$this->assertFalse( $method->invoke( null, $in_temp ), 'A path under the system temp dir must be treated as safe' );
+
+		// An unresolvable path fails closed (treated as unsafe) rather than
+		// assuming a path that cannot be checked is fine.
+		$this->assertTrue(
+			$method->invoke( null, trailingslashit( get_temp_dir() ) . 'agentic-export-guard-missing-' . wp_generate_password( 8, false ) . '.tmp' ),
+			'An unresolvable path must fail closed'
+		);
+
+		wp_delete_file( $in_root );
+		wp_delete_file( $in_content );
+		wp_delete_file( $in_temp );
+	}
+
+	/**
 	 * export() of a DB-backed manifest agent (no on-disk abilities.json)
 	 * synthesizes a valid abilities.json from the agent's declared tools at
 	 * their risk floors, so the export round-trips through import() instead of

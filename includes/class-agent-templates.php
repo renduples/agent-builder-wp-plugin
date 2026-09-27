@@ -145,6 +145,24 @@ class Agent_Templates {
 		if ( is_wp_error( $zip_path ) ) {
 			return $zip_path;
 		}
+		if ( false === $zip_path || ! is_string( $zip_path ) ) {
+			// wp_tempnam() returns false (not a WP_Error) when it cannot create
+			// the temp file; a boolean false would otherwise be handed straight
+			// to ZipArchive::open(), whose string parameter raises a TypeError
+			// instead of a controlled export failure.
+			return new \WP_Error( 'zip_failed', __( 'Could not create a temporary export file.', 'agent-builder' ) );
+		}
+
+		// wp_tempnam() prefers WP_TEMP_DIR / sys_get_temp_dir(), but get_temp_dir()
+		// can fall back to a directory WordPress itself serves (under wp-content/)
+		// when neither is writable. That fallback would silently defeat this whole
+		// fix, so validate the resolved path is outside the web root before writing
+		// a single byte to it: a broken export is acceptable, a silently
+		// web-servable one is not.
+		if ( self::is_under_web_root( $zip_path ) ) {
+			wp_delete_file( $zip_path );
+			return new \WP_Error( 'export_unsafe_path', __( 'The export location is not safely outside the web root.', 'agent-builder' ) );
+		}
 
 		$zip = new \ZipArchive();
 		if ( true !== $zip->open( $zip_path, \ZipArchive::CREATE | \ZipArchive::OVERWRITE ) ) {
@@ -188,6 +206,38 @@ class Agent_Templates {
 		}
 
 		return $zip_path;
+	}
+
+	/**
+	 * Whether an absolute path resolves to somewhere inside the web-servable
+	 * tree (ABSPATH or WP_CONTENT_DIR), which a direct HTTP request can reach.
+	 *
+	 * realpath() resolves symlinks and relative segments first, so a path that
+	 * only *looks* outside cannot slip past by pointing back in. If the path
+	 * cannot be resolved, the answer is conservative (true): the temp file
+	 * should already exist (wp_tempnam() pre-creates it), so an unresolvable
+	 * path is itself a failure mode worth rejecting.
+	 *
+	 * @param string $path Absolute file path.
+	 * @return bool
+	 */
+	private static function is_under_web_root( string $path ): bool {
+		$real = realpath( $path );
+		if ( false === $real ) {
+			return true;
+		}
+
+		$abspath = realpath( ABSPATH );
+		if ( false !== $abspath && str_starts_with( $real, trailingslashit( $abspath ) ) ) {
+			return true;
+		}
+
+		$content_dir = realpath( WP_CONTENT_DIR );
+		if ( false !== $content_dir && str_starts_with( $real, trailingslashit( $content_dir ) ) ) {
+			return true;
+		}
+
+		return false;
 	}
 
 	/**
