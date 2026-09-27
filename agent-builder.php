@@ -273,6 +273,7 @@ final class Plugin {
 		add_action( 'admin_init', array( Activator::class, 'maybe_handle_retry_request' ), 1 );
 		add_action( 'admin_init', array( Activator::class, 'maybe_disable_cron_for_safe_mode' ) );
 		add_action( 'admin_init', array( Activator::class, 'maybe_run_deferred_seed' ) );
+		add_action( 'admin_init', array( Activator::class, 'maybe_cleanup_legacy_agent_exports' ) );
 		add_action( 'admin_menu', array( $menu, 'register' ) );
 		add_action( 'admin_page_access_denied', array( $menu, 'maybe_show_access_notice' ) );
 		add_action( 'admin_footer', array( $menu, 'render_admin_page_links' ) );

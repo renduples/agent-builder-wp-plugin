@@ -321,6 +321,44 @@ final class Activator {
 	}
 
 	/**
+	 * One-time cleanup of legacy agent-export zips left behind by the
+	 * pre-fix exporter, which wrote them to
+	 * wp_upload_dir()['basedir'] . '/agentic-exports/<slug>.zip' — inside
+	 * the public uploads tree, at a predictable filename, and never
+	 * deleted. Agent_Templates::export() has since moved to
+	 * AGENT_BUILDER_EXPORTS_DIR (outside the uploads tree, random
+	 * filename, deleted on read), but any file a site already
+	 * accumulated at the old path is still directly downloadable and
+	 * none of that fix touches it.
+	 *
+	 * Runs once, tracked by agent_builder_legacy_exports_cleaned, and
+	 * only ever deletes *.zip files sitting directly in that legacy
+	 * directory. The same uploads/agentic-exports directory is also
+	 * used by unrelated document tools (create_docx, create_pdf,
+	 * create_spreadsheet, merge_pdfs, html_to_docx) — none of which
+	 * ever write a .zip there — so this cannot remove their output.
+	 *
+	 * @return void
+	 */
+	public static function maybe_cleanup_legacy_agent_exports(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		if ( get_option( 'agent_builder_legacy_exports_cleaned' ) ) {
+			return;
+		}
+
+		$legacy_dir = untrailingslashit( wp_upload_dir()['basedir'] ) . '/agentic-exports';
+		$zips       = glob( $legacy_dir . '/*.zip' );
+		foreach ( (array) $zips as $zip ) {
+			wp_delete_file( $zip );
+		}
+
+		update_option( 'agent_builder_legacy_exports_cleaned', true );
+	}
+
+	/**
 	 * Run all activation tasks.
 	 *
 	 * Wrapped in an outer catch-all so activation can never fatal or leave
