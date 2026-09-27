@@ -1867,20 +1867,20 @@ class Admin_Pages_REST {
 	 */
 	public static function export_agent_download(): void {
 		if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( wp_unslash( $_GET['_wpnonce'] ) ), 'agentic_export_agent' ) ) {
-			wp_die( esc_html__( 'Security check failed. Please reload the Agents page and try exporting again.', 'agent-builder' ), 403 );
+			wp_die( esc_html__( 'Security check failed. Please reload the Agents page and try exporting again.', 'agent-builder' ), '', array( 'response' => 403 ) );
 		}
 		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'agent_builder_manage_agents' ) ) {
-			wp_die( esc_html__( 'You do not have permission to export agents.', 'agent-builder' ), 403 );
+			wp_die( esc_html__( 'You do not have permission to export agents.', 'agent-builder' ), '', array( 'response' => 403 ) );
 		}
 
 		$slug = isset( $_GET['slug'] ) ? sanitize_key( wp_unslash( $_GET['slug'] ) ) : '';
 		if ( '' === $slug ) {
-			wp_die( esc_html__( 'Missing agent slug.', 'agent-builder' ), 400 );
+			wp_die( esc_html__( 'Missing agent slug.', 'agent-builder' ), '', array( 'response' => 400 ) );
 		}
 
 		$zip_path = Agent_Templates::export( $slug );
 		if ( is_wp_error( $zip_path ) ) {
-			wp_die( esc_html( $zip_path->get_error_message() ), 404 );
+			wp_die( esc_html( $zip_path->get_error_message() ), '', array( 'response' => 404 ) );
 		}
 
 		$filename = sanitize_file_name( $slug ) . '.zip';
