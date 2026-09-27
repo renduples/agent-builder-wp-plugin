@@ -43,7 +43,13 @@ class Agent_Task_Job_Processor implements Job_Processor_Interface {
 	public static function init(): void {
 		add_filter(
 			'agent_builder_job_processors',
-			static function ( array $allowed ): array {
+			static function ( $allowed ): array {
+				// An earlier-priority callback may have returned a non-array;
+				// cast it back so appending self::class can't throw a TypeError
+				// from an `array` type hint before Job_Manager's own fallback runs.
+				if ( ! is_array( $allowed ) ) {
+					$allowed = array();
+				}
 				$allowed[] = self::class;
 				return $allowed;
 			}
