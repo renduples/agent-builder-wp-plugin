@@ -1763,19 +1763,23 @@ class Agent_Controller {
 				continue;
 			}
 
+			// Within the newest qualifying message, the fallback is the *last*
+			// tool_call in that message's own tool_calls array (the final call
+			// the assistant made before the pause). Older messages must never
+			// overwrite it, since the outer walk is already newest -> oldest.
+			$message_fallback = '';
 			foreach ( $message['tool_calls'] as $tool_call ) {
 				$id = (string) ( $tool_call['id'] ?? '' );
-				// Walking the transcript backwards, the first qualifying id
-				// encountered is already the *last* assistant tool-call id in
-				// the transcript (the final call the assistant made before the
-				// pause). Keep that first-seen id and never overwrite it with
-				// an earlier (older) turn's id.
-				if ( '' === $last_tool_call_id && '' !== $id ) {
-					$last_tool_call_id = $id;
+				if ( '' !== $id ) {
+					$message_fallback = $id;
 				}
 				if ( '' !== $tool_name && (string) ( $tool_call['function']['name'] ?? '' ) === $tool_name ) {
 					return $id;
 				}
+			}
+
+			if ( '' === $last_tool_call_id && '' !== $message_fallback ) {
+				$last_tool_call_id = $message_fallback;
 			}
 		}
 

@@ -486,6 +486,52 @@ class Test_Agent_Controller_Autonomous extends TestCase {
 	}
 
 	/**
+	 * When the newest assistant message carries multiple parallel tool_calls and
+	 * the pending tool name matches none of them, the fallback must be the
+	 * *last* id within that message's own tool_calls array — not the first. A
+	 * single assistant message can request several tools at once, and the final
+	 * one is the most recent call the assistant made before the pause, so it is
+	 * the correct pairing target (mirrors the across-messages direction already
+	 * covered above, applied to the one message's own array).
+	 */
+	public function test_derive_pending_tool_call_id_returns_last_call_within_message_not_first(): void {
+		$controller = new Agent_Controller( new Fake_LLM_Client() );
+
+		$messages = array(
+			array( 'role' => 'system', 'content' => 'System.' ),
+			array( 'role' => 'user', 'content' => 'Do several things at once.' ),
+			array(
+				'role'       => 'assistant',
+				'tool_calls' => array(
+					array(
+						'id'       => 'call_a',
+						'type'     => 'function',
+						'function' => array( 'name' => 'list_posts', 'arguments' => '{}' ),
+					),
+					array(
+						'id'       => 'call_b',
+						'type'     => 'function',
+						'function' => array( 'name' => 'get_site_overview', 'arguments' => '{}' ),
+					),
+				),
+			),
+		);
+
+		$method  = new \ReflectionMethod( Agent_Controller::class, 'derive_pending_tool_call_id' );
+		$derived = $method->invoke(
+			$controller,
+			$messages,
+			array( 'tool' => 'some_unmatched_tool' )
+		);
+
+		$this->assertSame(
+			'call_b',
+			$derived,
+			'the fallback must be the last tool_call id in the message array, not the first'
+		);
+	}
+
+	/**
 	 * Two concurrent resume attempts for the same run_id must not both
 	 * execute the pending tool call, even when the race lands in the exact
 	 * window the atomic claim exists to close: a plain get_status() read
