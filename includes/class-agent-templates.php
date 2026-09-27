@@ -56,11 +56,17 @@ class Agent_Templates {
 	private const MAX_IMPORT_ENTRIES = 100;
 
 	/**
-	 * Maximum total uncompressed size (bytes) an import archive may expand
-	 * to, checked from the zip's own per-entry size table before any bytes
-	 * are extracted.
+	 * Maximum total decompressed size (bytes) an import archive may expand to,
+	 * enforced against the *actual* bytes streamed out of each entry's
+	 * inflater — never the zip's own, attacker-forgeable per-entry size fields.
 	 */
 	private const MAX_IMPORT_UNCOMPRESSED_BYTES = 5 * 1024 * 1024; // 5 MB.
+
+	/**
+	 * Chunk size (bytes) used when streaming an entry's decompressed content to
+	 * count its true size against MAX_IMPORT_UNCOMPRESSED_BYTES.
+	 */
+	private const EXTRACT_CHUNK_BYTES = 64 * 1024;
 
 	/**
 	 * Duplicate an installed agent to a new sibling slug.
@@ -602,9 +608,15 @@ class Agent_Templates {
 	}
 
 	/**
-	 * Reject an oversized or entry-flooded archive before any bytes are
-	 * extracted, using the zip's own entry-count and per-entry size table
-	 * (both available from ZipArchive without decompressing anything).
+	 * Reject an oversized or entry-flooded archive before any bytes are written
+	 * to disk. The entry count is checked up front, but the size bound is
+	 * enforced against the *actual decompressed byte count* — each non-directory
+	 * entry is read through ZipArchive's inflating stream in bounded chunks and
+	 * the running total is checked against the cap as it goes. This never
+	 * trusts the per-entry uncompressed-size fields in the central directory
+	 * (attacker-controlled metadata): a crafted archive that declares small
+	 * sizes while its DEFLATE streams expand to hundreds of MB is aborted here,
+	 * before unzip_file() extracts a single byte to disk.
 	 *
 	 * @param string $zip_path Absolute path to the zip.
 	 * @return true|\WP_Error
@@ -623,15 +635,30 @@ class Agent_Templates {
 
 		$total = 0;
 		for ( $i = 0; $i < $count; $i++ ) {
-			$stat = $zip->statIndex( $i );
-			if ( false === $stat ) {
+			$name = $zip->getNameIndex( $i );
+			if ( false === $name || str_ends_with( $name, '/' ) ) {
+				continue; // Unnamed or directory entry — no decompressed payload.
+			}
+			$stream = $zip->getStream( $name );
+			if ( false === $stream ) {
 				continue;
 			}
-			$total += (int) ( $stat['size'] ?? 0 );
-			if ( $total > self::MAX_IMPORT_UNCOMPRESSED_BYTES ) {
-				$zip->close();
-				return new \WP_Error( 'zip_too_large', __( 'The archive expands to more data than allowed.', 'agent-builder' ) );
+			while ( ! feof( $stream ) ) {
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fread -- Streaming a ZipArchive inflater stream (getStream()); WP_Filesystem has no equivalent for chunked reads of an entry's decompressed bytes.
+				$chunk = fread( $stream, self::EXTRACT_CHUNK_BYTES );
+				if ( false === $chunk || '' === $chunk ) {
+					break;
+				}
+				$total += strlen( $chunk );
+				if ( $total > self::MAX_IMPORT_UNCOMPRESSED_BYTES ) {
+					// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Closing a ZipArchive inflater stream, not a filesystem handle.
+					fclose( $stream );
+					$zip->close();
+					return new \WP_Error( 'zip_too_large', __( 'The archive expands to more data than allowed.', 'agent-builder' ) );
+				}
 			}
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Closing a ZipArchive inflater stream, not a filesystem handle.
+			fclose( $stream );
 		}
 
 		$zip->close();

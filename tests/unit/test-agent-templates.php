@@ -494,6 +494,26 @@ class Test_Agent_Templates extends TestCase {
 	}
 
 	/**
+	 * import() rejects a zip whose central-directory metadata *declares* a small
+	 * uncompressed size but whose DEFLATE stream actually expands beyond the cap
+	 * — the forged-metadata zip-bomb bypass. The size bound must be enforced
+	 * against the real decompressed bytes streamed out of the inflater, not the
+	 * attacker-controlled per-entry size fields.
+	 */
+	public function test_import_rejects_zip_bomb_with_forged_declared_size(): void {
+		$zip    = $this->build_zip( array( 'system-prompt.txt' => str_repeat( 'a', 6 * 1024 * 1024 ) ) );
+		$forged = $this->forge_declared_sizes( $zip );
+
+		$before = $this->import_temp_dirs();
+
+		$result = Agent_Templates::import( $this->upload_entry( $forged, 'bomb.zip' ) );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'zip_too_large', $result->get_error_code() );
+		$this->assertSame( $before, $this->import_temp_dirs(), 'Expected no leftover import temp directory' );
+	}
+
+	/**
 	 * slug_taken() (via unique_slug()) also sees DB-backed agents from
 	 * agent_builder_agent_library, not just directory-based ones — an
 	 * import colliding with a library-only slug gets the -2 suffix instead
@@ -651,6 +671,8 @@ class Test_Agent_Templates extends TestCase {
 	 * directory, so @mkdir() fails without $agent_dir ever existing.
 	 */
 	public function test_write_agent_reports_mkdir_failure_not_slug_taken(): void {
+		$this->skip_when_root();
+
 		$slug = 'mkdir-fail-agent';
 		$this->track( $slug );
 
@@ -859,6 +881,51 @@ class Test_Agent_Templates extends TestCase {
 		}
 		$zip->close();
 		return $path;
+	}
+
+	/**
+	 * Build a zip whose uncompressed-size fields are forged to zero while the
+	 * actual compressed DEFLATE data (and its inflated output) is left intact.
+	 * The result still opens and inflates to the original content — it just
+	 * lies about how large that content is, which is exactly the forged
+	 * central-directory metadata a zip-bomb uses to slip past a size check that
+	 * trusts statIndex()['size'].
+	 *
+	 * @param string $zip_path Path to a single-entry zip.
+	 * @return string Path to the forged zip.
+	 */
+	private function forge_declared_sizes( string $zip_path ): string {
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Test fixture read.
+		$raw = (string) file_get_contents( $zip_path );
+		// Local file header (PK\x03\x04): uncompressed size at +22.
+		$raw = $this->zero_zip_uncompressed_size( $raw, "PK\x03\x04", 22 );
+		// Central directory header (PK\x01\x02): uncompressed size at +24.
+		$raw = $this->zero_zip_uncompressed_size( $raw, "PK\x01\x02", 24 );
+
+		$forged = $this->temp_path() . '-forged.zip';
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture write.
+		file_put_contents( $forged, $raw );
+		return $forged;
+	}
+
+	/**
+	 * Zero the four-byte uncompressed-size field at $offset bytes past the
+	 * first occurrence of $signature in a raw zip blob.
+	 *
+	 * @param string $raw       Raw zip bytes.
+	 * @param string $signature Four-byte header signature.
+	 * @param int    $offset    Byte offset of the uncompressed-size field.
+	 * @return string
+	 */
+	private function zero_zip_uncompressed_size( string $raw, string $signature, int $offset ): string {
+		$pos = strpos( $raw, $signature );
+		if ( false === $pos ) {
+			return $raw;
+		}
+		for ( $i = 0; $i < 4; $i++ ) {
+			$raw[ $pos + $offset + $i ] = "\x00";
+		}
+		return $raw;
 	}
 
 	/**

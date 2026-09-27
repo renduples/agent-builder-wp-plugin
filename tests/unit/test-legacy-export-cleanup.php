@@ -45,14 +45,32 @@ class Test_Legacy_Export_Cleanup extends TestCase {
 	private $previous_flag;
 
 	/**
+	 * Previous stored failure-count option, restored in tearDown.
+	 *
+	 * @var mixed
+	 */
+	private $previous_fail_count;
+
+	/**
+	 * Previous stored give-up flag option, restored in tearDown.
+	 *
+	 * @var mixed
+	 */
+	private $previous_gave_up;
+
+	/**
 	 * Snapshot state and resolve the legacy directory paths.
 	 */
 	public function setUp(): void {
 		parent::setUp();
-		$this->exports_dir   = untrailingslashit( WP_CONTENT_DIR ) . '/agentic-exports';
-		$this->legacy_dir    = untrailingslashit( wp_upload_dir()['basedir'] ) . '/agentic-exports';
-		$this->previous_flag = get_option( 'agent_builder_legacy_exports_cleaned', false );
+		$this->exports_dir          = untrailingslashit( WP_CONTENT_DIR ) . '/agentic-exports';
+		$this->legacy_dir           = untrailingslashit( wp_upload_dir()['basedir'] ) . '/agentic-exports';
+		$this->previous_flag        = get_option( 'agent_builder_legacy_exports_cleaned', false );
+		$this->previous_fail_count  = get_option( 'agent_builder_legacy_exports_fail_count', false );
+		$this->previous_gave_up     = get_option( 'agent_builder_legacy_exports_gave_up', false );
 		delete_option( 'agent_builder_legacy_exports_cleaned' );
+		delete_option( 'agent_builder_legacy_exports_fail_count' );
+		delete_option( 'agent_builder_legacy_exports_gave_up' );
 		wp_mkdir_p( $this->legacy_dir );
 	}
 
@@ -61,9 +79,11 @@ class Test_Legacy_Export_Cleanup extends TestCase {
 	 */
 	public function tearDown(): void {
 		@chmod( $this->legacy_dir, 0755 ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- Restore writability.
-		foreach ( (array) glob( $this->legacy_dir . '/*' ) as $file ) {
-			if ( is_file( $file ) ) {
-				wp_delete_file( $file );
+		foreach ( (array) glob( $this->legacy_dir . '/*' ) as $path ) {
+			if ( is_file( $path ) ) {
+				wp_delete_file( $path );
+			} elseif ( is_dir( $path ) ) {
+				\Agentic\File_Manager::rmdir( $path, true );
 			}
 		}
 		@chmod( $this->exports_dir, 0755 ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- Restore writability.
@@ -72,6 +92,16 @@ class Test_Legacy_Export_Cleanup extends TestCase {
 			delete_option( 'agent_builder_legacy_exports_cleaned' );
 		} else {
 			update_option( 'agent_builder_legacy_exports_cleaned', $this->previous_flag );
+		}
+		if ( false === $this->previous_fail_count ) {
+			delete_option( 'agent_builder_legacy_exports_fail_count' );
+		} else {
+			update_option( 'agent_builder_legacy_exports_fail_count', $this->previous_fail_count );
+		}
+		if ( false === $this->previous_gave_up ) {
+			delete_option( 'agent_builder_legacy_exports_gave_up' );
+		} else {
+			update_option( 'agent_builder_legacy_exports_gave_up', $this->previous_gave_up );
 		}
 		delete_transient( 'agent_builder_legacy_exports_lock' );
 		wp_set_current_user( 0 );
@@ -147,6 +177,8 @@ class Test_Legacy_Export_Cleanup extends TestCase {
 	 * retry after the failure is cleared completes the job.
 	 */
 	public function test_does_not_mark_done_when_a_delete_fails(): void {
+		$this->skip_when_root();
+
 		$zip_path = $this->legacy_dir . '/stubborn.zip';
 		file_put_contents( $zip_path, 'zip-bytes' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_file_put_contents -- Test fixture.
 		wp_set_current_user( 0 );
@@ -175,6 +207,8 @@ class Test_Legacy_Export_Cleanup extends TestCase {
 	 * (the sweep runs on init, for every visitor, until the flag is set).
 	 */
 	public function test_unreadable_legacy_entry_does_not_fatal(): void {
+		$this->skip_when_root();
+
 		wp_mkdir_p( $this->exports_dir . '/locked' );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture write.
 		file_put_contents( $this->exports_dir . '/locked/secret.zip', 'zip-bytes' );
@@ -223,5 +257,54 @@ class Test_Legacy_Export_Cleanup extends TestCase {
 		Activator::maybe_cleanup_legacy_agent_exports();
 
 		$this->assertFileExists( $docx_path );
+	}
+
+	/**
+	 * A .zip in the shared uploads/agentic-exports/ directory that is not
+	 * slug-shaped (e.g. a manual backup or a future unrelated tool's output) is
+	 * left alone: the sweep deletes only the <slug>.zip files the pre-fix
+	 * exporter actually named, not every .zip it happens to find there.
+	 */
+	public function test_does_not_touch_non_slug_zip_files(): void {
+		$backup_path = $this->legacy_dir . '/My Manual Backup.zip';
+		file_put_contents( $backup_path, 'zip-bytes' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_file_put_contents -- Test fixture.
+		wp_set_current_user( 0 );
+
+		Activator::maybe_cleanup_legacy_agent_exports();
+
+		$this->assertFileExists( $backup_path );
+		$this->assertTrue( (bool) get_option( 'agent_builder_legacy_exports_cleaned' ), 'A non-legacy zip must not block completion' );
+	}
+
+	/**
+	 * A permanently-stuck cleanup (a legacy "zip" that can never be deleted)
+	 * stops retrying automatically after a short run of failed attempts: the
+	 * failure counter crosses LEGACY_EXPORT_CLEANUP_MAX_FAILURES, the give-up
+	 * flag is set, and further requests short-circuit instead of re-running the
+	 * sweep forever. The stuck entry is simulated with a non-empty directory
+	 * named <slug>.zip, which wp_delete_file() cannot remove even as root.
+	 */
+	public function test_gives_up_after_repeated_failures(): void {
+		$stuck = $this->legacy_dir . '/stuck.zip';
+		wp_mkdir_p( $stuck . '/inner' );
+		file_put_contents( $stuck . '/inner/keep.txt', 'x' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_file_put_contents -- Test fixture making the directory non-empty.
+		wp_set_current_user( 0 );
+
+		$max = 10; // Mirrors Activator::LEGACY_EXPORT_CLEANUP_MAX_FAILURES.
+		for ( $i = 0; $i < $max; $i++ ) {
+			Activator::maybe_cleanup_legacy_agent_exports();
+			$this->assertFalse( get_option( 'agent_builder_legacy_exports_cleaned' ), 'Must not mark done while the stuck file remains' );
+		}
+
+		$this->assertTrue( (bool) get_option( 'agent_builder_legacy_exports_gave_up' ), 'Expected the sweep to give up after repeated failures' );
+		$this->assertSame( $max, (int) get_option( 'agent_builder_legacy_exports_fail_count' ) );
+
+		// Once it has given up, further requests short-circuit and no longer
+		// re-run the sweep or advance the counter.
+		Activator::maybe_cleanup_legacy_agent_exports();
+		$this->assertSame( $max, (int) get_option( 'agent_builder_legacy_exports_fail_count' ) );
+		$this->assertTrue( is_dir( $stuck ), 'The stuck entry is left for a human to remove' );
+
+		$this->delete_directory( $stuck );
 	}
 }
