@@ -1308,13 +1308,14 @@ class Agent_Controller {
 			$run = Agent_Run::load( $resume_run_id );
 			if ( ! $run ) {
 				return array(
-					'error'    => true,
-					'response' => __( 'Cannot resume: run not found.', 'agent-builder' ),
-					'agent_id' => $agent_id,
-					'task_id'  => $task_id,
-					'run_id'   => $resume_run_id,
-					'status'   => 'error',
-					'cards'    => array(),
+					'error'          => true,
+					'guard_rejected' => true,
+					'response'       => __( 'Cannot resume: run not found.', 'agent-builder' ),
+					'agent_id'       => $agent_id,
+					'task_id'        => $task_id,
+					'run_id'         => $resume_run_id,
+					'status'         => 'error',
+					'cards'          => array(),
 				);
 			}
 
@@ -1329,13 +1330,20 @@ class Agent_Controller {
 			// another agent's context.
 			if ( ! in_array( $run->get_status(), array( 'waiting', 'continuing' ), true ) || $run->get_root_agent() !== $agent_id ) {
 				return array(
-					'error'    => true,
-					'response' => __( 'Cannot resume: this run is not in a resumable state.', 'agent-builder' ),
-					'agent_id' => $agent_id,
-					'task_id'  => $task_id,
-					'run_id'   => $resume_run_id,
-					'status'   => 'error',
-					'cards'    => array(),
+					'error'          => true,
+					// Marks this as a rejected resume *attempt*, not a task
+					// failure — the caller (Agent_Task_Job_Processor::execute())
+					// must not finish() the target run over this: that run may
+					// still be legitimately waiting/continuing elsewhere, and
+					// this guard tripping (stale job data, a race, a mismatched
+					// caller) is not this call's run to finalize.
+					'guard_rejected' => true,
+					'response'       => __( 'Cannot resume: this run is not in a resumable state.', 'agent-builder' ),
+					'agent_id'       => $agent_id,
+					'task_id'        => $task_id,
+					'run_id'         => $resume_run_id,
+					'status'         => 'error',
+					'cards'          => array(),
 				);
 			}
 

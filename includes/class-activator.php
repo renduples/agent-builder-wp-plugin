@@ -238,6 +238,12 @@ final class Activator {
 			return;
 		}
 
+		// Version-independent: runs regardless of whether the stored schema
+		// version already equals AGENT_BUILDER_DB_VERSION. See
+		// maybe_add_awaiting_tool_call_id_column() for why this can't ride
+		// along with the version-gated path below.
+		self::maybe_add_awaiting_tool_call_id_column();
+
 		$stored = (string) get_option( 'agent_builder_db_schema_version', '' );
 		if ( AGENT_BUILDER_DB_VERSION === $stored ) {
 			return;
@@ -259,6 +265,54 @@ final class Activator {
 
 		if ( ! self::is_safe_mode() ) {
 			update_option( 'agent_builder_needs_seed', true );
+		}
+	}
+
+	/**
+	 * One-time, version-independent migration for the awaiting_tool_call_id
+	 * column added to the runs table by the M10b resume-path fix.
+	 *
+	 * Deliberately decoupled from AGENT_BUILDER_DB_VERSION: the next value in
+	 * the programme's schema plan (2.15.1) is reserved for M11's own schema
+	 * work, so this column can't be folded into a version bump here — a site
+	 * that got 2.15.1 from this fix (with only this column added) would then
+	 * wrongly skip M11's real migration, since maybe_upgrade()'s
+	 * `AGENT_BUILDER_DB_VERSION === $stored` check would already match.
+	 *
+	 * Tracked by its own option so it runs at most once per site, checks the
+	 * column directly (never assumes anything about the stored schema
+	 * version), and is a safe no-op if the table doesn't exist yet (a fresh
+	 * activation's create_tables() already includes this column).
+	 *
+	 * @return void
+	 */
+	private static function maybe_add_awaiting_tool_call_id_column(): void {
+		if ( get_option( 'agent_builder_awaiting_tool_call_id_migrated' ) ) {
+			return;
+		}
+
+		try {
+			global $wpdb;
+			$table = $wpdb->prefix . 'agent_builder_runs';
+
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $table is an internal prefix + literal name, not user input.
+			if ( ! $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) ) {
+				return; // Table not created yet — nothing to migrate; leave unmigrated so this retries later.
+			}
+
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is an internal prefix + literal name, not user input.
+			$column_exists = (bool) $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM {$table} LIKE %s", 'awaiting_tool_call_id' ) );
+
+			if ( ! $column_exists ) {
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- schema migration; $table is trusted, no user input.
+				$wpdb->query( "ALTER TABLE {$table} ADD COLUMN awaiting_tool_call_id varchar(64) DEFAULT NULL AFTER awaiting_id" );
+			}
+
+			update_option( 'agent_builder_awaiting_tool_call_id_migrated', true );
+		} catch ( \Throwable $e ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Intentional migration debug output.
+			error_log( '[Agent Builder] maybe_add_awaiting_tool_call_id_column failed: ' . $e->getMessage() );
+			// Leave unmigrated — retried on the next admin_init.
 		}
 	}
 
@@ -385,6 +439,12 @@ final class Activator {
 			// still hit a DB error during setup, so this must still degrade
 			// and notify, per requirement 1.
 			update_option( 'agent_builder_activation_degraded', true );
+		} else {
+			// A fresh install's create_tables() already includes
+			// awaiting_tool_call_id in its dbDelta SQL, so the standalone
+			// migration in maybe_upgrade() would just be a no-op query on
+			// every admin_init until it flips this flag — set it now instead.
+			update_option( 'agent_builder_awaiting_tool_call_id_migrated', true );
 		}
 		self::guarded_step( 'set_default_options', array( __CLASS__, 'set_default_options' ) );
 

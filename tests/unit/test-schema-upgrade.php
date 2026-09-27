@@ -183,15 +183,18 @@ class Test_Schema_Upgrade extends TestCase {
 
 	/**
 	 * Regression: awaiting_tool_call_id was added to the runs table's dbDelta
-	 * SQL without bumping AGENT_BUILDER_DB_VERSION, so maybe_upgrade()'s
-	 * `AGENT_BUILDER_DB_VERSION === $stored` check would have no-op'd on every
-	 * site already stored at the old '2.15.0' — the new column would never
-	 * land there. Simulates exactly that site: schema option left at the old
-	 * version, table physically missing the column, and asserts the
-	 * (now-bumped) constant makes maybe_upgrade() actually re-run
-	 * create_tables() and add it.
+	 * SQL. Bumping AGENT_BUILDER_DB_VERSION to pick it up would collide with
+	 * 2.15.1, which the programme's schema plan reserves for M11's own
+	 * schema work — a site upgraded that way here would then wrongly skip
+	 * M11's real migration later, since the stored version would already
+	 * match. The column is instead added by its own version-independent
+	 * migration, maybe_add_awaiting_tool_call_id_column(), which must run
+	 * (and add the column) even when the stored schema version already
+	 * equals AGENT_BUILDER_DB_VERSION — exactly the case the version-gated
+	 * path in maybe_upgrade() alone would no-op on — and must never touch
+	 * the schema-version option itself.
 	 */
-	public function test_upgrade_adds_awaiting_tool_call_id_from_stored_2_15_0(): void {
+	public function test_maybe_upgrade_adds_awaiting_tool_call_id_independent_of_schema_version(): void {
 		global $wpdb;
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
@@ -199,18 +202,61 @@ class Test_Schema_Upgrade extends TestCase {
 		$ref->invoke( null );
 
 		$wpdb->query( "ALTER TABLE {$wpdb->prefix}agent_builder_runs DROP COLUMN awaiting_tool_call_id" );
+		delete_option( 'agent_builder_awaiting_tool_call_id_migrated' );
 
 		$runs_columns_before = $wpdb->get_col( "SHOW COLUMNS FROM {$wpdb->prefix}agent_builder_runs", 0 );
 		$this->assertNotContains( 'awaiting_tool_call_id', $runs_columns_before );
 
-		update_option( 'agent_builder_db_schema_version', '2.15.0' );
-		$this->assertNotSame( '2.15.0', AGENT_BUILDER_DB_VERSION, 'This regression test requires AGENT_BUILDER_DB_VERSION to have moved past 2.15.0.' );
+		// Stored version already equals the constant — the version-gated
+		// path alone would no-op and never re-run create_tables().
+		update_option( 'agent_builder_db_schema_version', AGENT_BUILDER_DB_VERSION );
 		$this->enter_admin_as_logged_in_user();
+
+		$option_written = false;
+		$tracker        = static function ( $value ) use ( &$option_written ) {
+			$option_written = true;
+			return $value;
+		};
+		add_filter( 'pre_update_option_agent_builder_db_schema_version', $tracker );
 
 		Activator::maybe_upgrade();
 
+		remove_filter( 'pre_update_option_agent_builder_db_schema_version', $tracker );
+
 		$runs_columns_after = $wpdb->get_col( "SHOW COLUMNS FROM {$wpdb->prefix}agent_builder_runs", 0 );
 		$this->assertContains( 'awaiting_tool_call_id', $runs_columns_after );
-		$this->assertSame( AGENT_BUILDER_DB_VERSION, (string) get_option( 'agent_builder_db_schema_version' ) );
+		$this->assertFalse( $option_written, 'This migration must never write the schema-version option.' );
+		$this->assertTrue( (bool) get_option( 'agent_builder_awaiting_tool_call_id_migrated' ) );
+	}
+
+	/**
+	 * The column migration runs at most once per site: once its own
+	 * "migrated" flag is set, a later maybe_upgrade() call must skip the
+	 * SHOW COLUMNS/ALTER TABLE path entirely, even if (hypothetically) the
+	 * column were missing again.
+	 */
+	public function test_maybe_add_awaiting_tool_call_id_column_runs_at_most_once(): void {
+		global $wpdb;
+
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		$ref = new \ReflectionMethod( Activator::class, 'create_tables' );
+		$ref->invoke( null );
+
+		update_option( 'agent_builder_awaiting_tool_call_id_migrated', true );
+		$wpdb->query( "ALTER TABLE {$wpdb->prefix}agent_builder_runs DROP COLUMN awaiting_tool_call_id" );
+
+		try {
+			update_option( 'agent_builder_db_schema_version', AGENT_BUILDER_DB_VERSION );
+			$this->enter_admin_as_logged_in_user();
+
+			Activator::maybe_upgrade();
+
+			$runs_columns_after = $wpdb->get_col( "SHOW COLUMNS FROM {$wpdb->prefix}agent_builder_runs", 0 );
+			$this->assertNotContains( 'awaiting_tool_call_id', $runs_columns_after, 'Already-migrated flag must short-circuit before the column is re-checked.' );
+		} finally {
+			// Restore — DDL isn't rolled back by the per-test transaction.
+			$wpdb->query( "ALTER TABLE {$wpdb->prefix}agent_builder_runs ADD COLUMN awaiting_tool_call_id varchar(64) DEFAULT NULL AFTER awaiting_id" );
+			delete_option( 'agent_builder_awaiting_tool_call_id_migrated' );
+		}
 	}
 }
