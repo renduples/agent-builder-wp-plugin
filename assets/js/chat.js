@@ -1693,9 +1693,18 @@
         html = html.replace(/<\/li>\n<li>/g, '</li><li>');
         html = html.replace(/(<\/li>)\n(<\/ul>)/g, '$1$2');
 
-        // Numbered lists
-        html = html.replace(/^\s*\d+\.\s+(.*)$/gm, '<li>$1</li>');
-        
+        // Numbered lists — wrap each run of "1. item" lines in an <ol> directly,
+        // mirroring the <ul> handling above, so the items are never left as bare
+        // <li> that the later single-newline pass would join with a stray <br>.
+        html = html.replace(/(?:^[ \t]*\d+\.\s+.*(?:\n|$))+/gm, function (block) {
+            const items = block.split('\n').filter(function (line) {
+                return /^[ \t]*\d+\.\s+/.test(line);
+            });
+            return '<ol>' + items.map(function (line) {
+                return '<li>' + line.replace(/^[ \t]*\d+\.\s+/, '') + '</li>';
+            }).join('') + '</ol>';
+        });
+
         // Blockquotes
         html = html.replace(/^>\s+(.*)$/gm, '<blockquote>$1</blockquote>');
         
@@ -1707,6 +1716,8 @@
         html = html.replace(/(<\/h[1-6]>)<\/p>/g, '$1');
         html = html.replace(/<p>(<ul>)/g, '$1');
         html = html.replace(/(<\/ul>)<\/p>/g, '$1');
+        html = html.replace(/<p>(<ol>)/g, '$1');
+        html = html.replace(/(<\/ol>)<\/p>/g, '$1');
         html = html.replace(/<p>(<pre>)/g, '$1');
         html = html.replace(/(<\/pre>)<\/p>/g, '$1');
         html = html.replace(/<p>(<div class="agentic-code-wrap">)/g, '$1');
@@ -1724,15 +1735,20 @@
         // Code blocks are held aside first so their inner newlines survive as
         // real newlines — the copy button reads textContent, which drops <br>.
         var codeBlocks = [];
+        // Per-message, per-render placeholder that cannot appear in the escaped
+        // HTML (escapeHtml has already run, so only <div class="agentic-code-wrap">
+        // blocks we built remain; the random component makes the token unforgeable
+        // by agent text that might coincidentally contain a fixed sentinel).
+        var codeNonce = 'agentic_code_' + Math.random().toString(36).slice(2) + Date.now().toString(36) + '_';
         html = html.replace(/<div class="agentic-code-wrap">[\s\S]*?<\/div>/g, function (block) {
             codeBlocks.push(block);
-            return '\u0000agentic_code_' + (codeBlocks.length - 1) + '\u0000';
+            return codeNonce + (codeBlocks.length - 1);
         });
         html = html.replace(/\n/g, '<br>');
-        html = html.replace(/\u0000agentic_code_(\d+)\u0000/g, function (m, i) {
+        html = html.replace(new RegExp(codeNonce + '(\\d+)', 'g'), function (m, i) {
             var restored = codeBlocks[parseInt(i, 10)];
-            // Leave a stray placeholder untouched (e.g. agent text that literally
-            // contains the sentinel) rather than collapsing it to "undefined".
+            // A token this render could only have inserted, so a match is always
+            // one of our own; keep the guard anyway against index drift.
             return restored === undefined ? m : restored;
         });
 
