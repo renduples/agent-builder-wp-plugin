@@ -305,7 +305,23 @@ final class Activator {
 
 			if ( ! $column_exists ) {
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- schema migration; $table is trusted, no user input.
-				$wpdb->query( "ALTER TABLE {$table} ADD COLUMN awaiting_tool_call_id varchar(64) DEFAULT NULL AFTER awaiting_id" );
+				$altered = $wpdb->query( "ALTER TABLE {$table} ADD COLUMN awaiting_tool_call_id varchar(64) DEFAULT NULL AFTER awaiting_id" );
+
+				if ( false === $altered ) {
+					// ALTER reports failure via a false return + $wpdb->last_error,
+					// never a thrown exception — leave unmigrated so this retries
+					// on the next admin_init instead of permanently suppressing it.
+					return;
+				}
+
+				// Re-verify rather than trust a truthy query result: confirm the
+				// column is actually there before marking this migration done.
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is an internal prefix + literal name, not user input.
+				$column_exists = (bool) $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM {$table} LIKE %s", 'awaiting_tool_call_id' ) );
+
+				if ( ! $column_exists ) {
+					return; // Still missing — retry on the next admin_init.
+				}
 			}
 
 			update_option( 'agent_builder_awaiting_tool_call_id_migrated', true );

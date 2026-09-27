@@ -716,6 +716,51 @@ class Agent_Run {
 	}
 
 	/**
+	 * Atomically claim this run for resume, transitioning it from a
+	 * non-terminal hand-off status ('waiting' or 'continuing') to 'running'
+	 * in a single compare-and-set UPDATE.
+	 *
+	 * A caller resuming a run typically reads its status via get_status()
+	 * first, but that read and the subsequent work (calling the LLM,
+	 * executing the pending tool call) are not atomic with each other — two
+	 * concurrent resume attempts for the same run_id (a duplicate job
+	 * dispatch, or a retry racing the original) could otherwise both pass
+	 * that check and both execute the same pending tool call. This method
+	 * closes that window: only the request whose UPDATE actually matches a
+	 * row still in 'waiting'/'continuing' wins the claim.
+	 *
+	 * @return bool True if this call claimed the run, false if another
+	 *              process already claimed it (or it is no longer in a
+	 *              resumable status).
+	 */
+	public function claim_waiting(): bool {
+		global $wpdb;
+		$table = $wpdb->prefix . 'agent_builder_runs';
+		$now   = current_time( 'mysql', true );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Atomic compare-and-set keyed by run_id + current status; no caching benefit.
+		$updated = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE %i SET status = %s, updated_at = %s WHERE run_id = %s AND status IN ('waiting','continuing')",
+				$table,
+				'running',
+				$now,
+				$this->run_id
+			)
+		);
+
+		if ( 1 !== $updated ) {
+			return false;
+		}
+
+		$this->status     = 'running';
+		$this->updated_at = $now;
+		$this->finished   = false;
+
+		return true;
+	}
+
+	/**
 	 * Record one controller loop iteration: bump the iteration count, union
 	 * in the tools used, and add tokens/cost.
 	 *

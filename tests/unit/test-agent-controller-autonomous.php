@@ -307,6 +307,82 @@ class Test_Agent_Controller_Autonomous extends TestCase {
 	}
 
 	/**
+	 * Two concurrent resume attempts for the same run_id must not both
+	 * execute the pending tool call, even when the race lands in the exact
+	 * window the atomic claim exists to close: a plain get_status() read
+	 * both attempts would see 'waiting' still passes for both, since the
+	 * row hasn't moved yet at that point. This intercepts the moment
+	 * run_autonomous_task()'s resume branch issues its claim_waiting()
+	 * UPDATE and races a second, separately-loaded claim in ahead of it —
+	 * proving the atomic claim itself (not just the earlier status check,
+	 * which alone cannot see this interleaving) rejects the loser.
+	 */
+	public function test_resume_is_atomically_claimed_against_a_concurrent_resume(): void {
+		global $wpdb;
+
+		$agent_id = 'test-autonomous-resume-claim';
+		$fake     = new Fake_LLM_Client(
+			array(
+				Fake_LLM_Client::tool_call_response( 'purge_expired_transients', array(), array( 'prompt_tokens' => 20, 'completion_tokens' => 10, 'total_tokens' => 30 ) ),
+				Fake_LLM_Client::text_response( 'Transients purged.', array( 'prompt_tokens' => 7, 'completion_tokens' => 5, 'total_tokens' => 12 ) ),
+			)
+		);
+
+		$controller = new Agent_Controller( $fake );
+		$agent      = $this->make_agent( $agent_id );
+
+		$first = $controller->run_autonomous_task( $agent, 'Purge stale transients.', 'task-claim' );
+		$this->assertSame( 'waiting', $first['status'] );
+
+		$run          = Agent_Run::load( $first['run_id'] );
+		$resume_state = $run->resume_state();
+		$run_id       = $first['run_id'];
+		$table        = $wpdb->prefix . 'agent_builder_runs';
+
+		// The row is still 'waiting' right up until claim_waiting()'s own
+		// UPDATE runs. Intercept that exact statement the first time it is
+		// about to execute and win the race with a separately-issued claim
+		// of the same row, so the real claim_waiting() call finds 0 rows
+		// left to update.
+		$armed = false;
+		$racer = static function ( $query ) use ( &$armed, $table, $run_id, $wpdb ) {
+			if ( ! $armed && false !== stripos( (string) $query, "SET status = 'running'" ) && false !== stripos( (string) $query, "'waiting','continuing'" ) ) {
+				$armed = true;
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared -- test-only concurrent claimant simulating another process; mirrors claim_waiting()'s own prepared UPDATE.
+				$wpdb->query( $wpdb->prepare( "UPDATE {$table} SET status = 'running' WHERE run_id = %s AND status IN ('waiting','continuing')", $run_id ) );
+			}
+			return $query;
+		};
+		add_filter( 'query', $racer );
+
+		try {
+			$second = $controller->run_autonomous_task(
+				$agent,
+				'Purge stale transients.',
+				'task-claim',
+				array(
+					'run_id'       => $run_id,
+					'resume_state' => $resume_state,
+					'tool_result'  => array(
+						'tool'               => 'purge_expired_transients',
+						'status'             => 'completed',
+						'transients_deleted' => 0,
+					),
+				)
+			);
+		} finally {
+			remove_filter( 'query', $racer );
+		}
+
+		$this->assertTrue( $armed, 'the race must actually intercept claim_waiting()\'s UPDATE for this test to prove anything' );
+		$this->assertIsArray( $second );
+		$this->assertTrue( $second['error'] ?? false );
+		$this->assertSame( 'error', $second['status'] );
+		$this->assertTrue( $second['guard_rejected'] ?? false );
+		$this->assertSame( 1, $fake->chat_calls, 'the loser of the claim race must not execute the pending tool call again' );
+	}
+
+	/**
 	 * The ~70% elapsed-time guard hands the run off via mark_continuing(),
 	 * not finish() — so it lands in a non-terminal 'continuing' status that
 	 * survives the shutdown safety net at request end (simulated here by

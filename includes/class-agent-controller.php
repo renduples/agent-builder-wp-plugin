@@ -1347,6 +1347,28 @@ class Agent_Controller {
 				);
 			}
 
+			// The status/agent check above only inspects this process's
+			// in-memory copy of the loaded row — it is not atomic with the
+			// work that follows (calling the LLM, executing the pending tool
+			// call). Two concurrent resume attempts for the same run_id (a
+			// duplicate job dispatch, or a retry racing the original) could
+			// otherwise both pass that check and both execute the same
+			// pending tool call. claim_waiting() closes that window with a
+			// single compare-and-set UPDATE; only the request that wins it
+			// proceeds.
+			if ( ! $run->claim_waiting() ) {
+				return array(
+					'error'          => true,
+					'guard_rejected' => true,
+					'response'       => __( 'Cannot resume: this run was already claimed by another request.', 'agent-builder' ),
+					'agent_id'       => $agent_id,
+					'task_id'        => $task_id,
+					'run_id'         => $resume_run_id,
+					'status'         => 'error',
+					'cards'          => array(),
+				);
+			}
+
 			$run->make_current();
 			$owns_run = true; // Resuming a paused run in a fresh process; this leg owns it.
 
