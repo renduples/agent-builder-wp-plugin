@@ -292,9 +292,12 @@ class Test_Agent_Templates extends TestCase {
 	}
 
 	/**
-	 * export() writes the zip outside wp_upload_dir()'s public tree, so an
-	 * unauthenticated request that guesses the slug-based filename cannot
-	 * reach it the way it could under wp-content/uploads/.
+	 * export() writes the zip outside wp_upload_dir()'s public tree.
+	 *
+	 * This alone does not make the file unreachable (AGENT_BUILDER_EXPORTS_DIR
+	 * can still sit inside the document root on a stock host) — that is
+	 * covered separately by the non-guessable filename and export_for_download()
+	 * tests below — but it does rule out the uploads/ tree specifically.
 	 */
 	public function test_export_writes_outside_public_uploads_tree(): void {
 		$this->create_full_agent( 'exporter-security', 'ExporterSecurity', array( 'list_posts' ) );
@@ -307,6 +310,45 @@ class Test_Agent_Templates extends TestCase {
 		$uploads_basedir = trailingslashit( wp_upload_dir()['basedir'] );
 		$this->assertFalse( str_starts_with( $path, $uploads_basedir ), 'Export path must not be inside the public uploads tree' );
 		$this->assertTrue( str_starts_with( $path, trailingslashit( AGENT_BUILDER_EXPORTS_DIR ) ) );
+	}
+
+	/**
+	 * export() names the on-disk zip randomly, never after the agent's own
+	 * slug — an unauthenticated visitor who already knows the slug (it is
+	 * not a secret) must not be able to construct the export's filename.
+	 */
+	public function test_export_uses_non_guessable_filename(): void {
+		$this->create_full_agent( 'exporter-filename', 'ExporterFilename', array( 'list_posts' ) );
+		$this->track( 'exporter-filename' );
+
+		$path = Agent_Templates::export( 'exporter-filename' );
+
+		$this->assertIsString( $path );
+		$this->assertNotSame( trailingslashit( AGENT_BUILDER_EXPORTS_DIR ) . 'exporter-filename.zip', $path );
+		$this->assertStringNotContainsString( 'exporter-filename', basename( $path ) );
+		$this->assertMatchesRegularExpression( '/^[A-Za-z0-9]+\.zip$/', basename( $path ) );
+	}
+
+	/**
+	 * export_for_download() is the only path an export's bytes ever leave
+	 * the server by: it returns the zip content directly and deletes the
+	 * on-disk file it read it from, leaving nothing behind at any path —
+	 * guessable or not.
+	 */
+	public function test_export_for_download_deletes_file_after_read(): void {
+		$this->create_full_agent( 'exporter-download', 'ExporterDownload', array( 'list_posts' ) );
+		$this->track( 'exporter-download' );
+
+		$before = glob( trailingslashit( AGENT_BUILDER_EXPORTS_DIR ) . '*.zip' ) ?: array();
+
+		$result = Agent_Templates::export_for_download( 'exporter-download' );
+
+		$this->assertIsArray( $result );
+		$this->assertSame( 'exporter-download.zip', $result['filename'] );
+		$this->assertStringStartsWith( 'PK', $result['content'], 'Expected the returned bytes to be a zip archive' );
+
+		$after = glob( trailingslashit( AGENT_BUILDER_EXPORTS_DIR ) . '*.zip' ) ?: array();
+		$this->assertSame( $before, $after, 'Expected no export zip left on disk after download' );
 	}
 
 	/**
@@ -426,15 +468,22 @@ class Test_Agent_Templates extends TestCase {
 	 * A write_agent() failure partway through (here: the abilities.json
 	 * write step) removes the just-created agent directory instead of
 	 * leaving a malformed one behind that consumes the slug on retry.
+	 *
+	 * The failure is forced with a NAN risk value: wp_json_encode() inside
+	 * Abilities_Manifest::write_manifest() returns false for it (json_encode()
+	 * rejects NAN/INF outright, and WP's invalid-data fallback only rewrites
+	 * strings, so the retry fails identically) — so the abilities-write step
+	 * fails cleanly after write_agent() has already created the directory
+	 * itself and written agent.json and the system prompt into it,
+	 * deliberately not via a pre-existing directory at $agent_dir, which
+	 * test_write_agent_does_not_touch_preexisting_directory() covers as its
+	 * own, opposite case.
 	 */
 	public function test_write_agent_removes_partial_directory_on_abilities_failure(): void {
 		$slug = 'partial-fail-agent';
 		$this->track( $slug );
 
 		$agent_dir = AGENT_BUILDER_AGENTS_DIR . '/' . $slug;
-		// Occupy the abilities.json path with a directory so the real write
-		// fails cleanly after agent.json and the system prompt already wrote.
-		wp_mkdir_p( $agent_dir . '/abilities.json' );
 
 		$manifest = array(
 			'slug'         => $slug,
@@ -449,16 +498,60 @@ class Test_Agent_Templates extends TestCase {
 		);
 		$abilities = array(
 			'version'   => '1.0',
+			'abilities' => array( 'list_posts' => array( 'risk' => NAN ) ),
+		);
+
+		$method = new \ReflectionMethod( Agent_Templates::class, 'write_agent' );
+		$result = $method->invoke( null, $slug, $manifest, 'You are partial.', $abilities );
+
+		$this->assertWPError( $result );
+		$this->assertFalse( is_dir( $agent_dir ), 'Expected the partially-written agent directory to be removed on failure' );
+	}
+
+	/**
+	 * write_agent() must not touch a directory that already exists for its
+	 * slug — e.g. because a concurrent write raced ahead of it — instead of
+	 * proceeding to write into (and potentially delete on a later failure)
+	 * a directory it did not create. This is the concurrency bug the atomic
+	 * mkdir() in write_agent() closes.
+	 */
+	public function test_write_agent_does_not_touch_preexisting_directory(): void {
+		$slug = 'already-claimed-agent';
+		$this->track( $slug );
+
+		$agent_dir = AGENT_BUILDER_AGENTS_DIR . '/' . $slug;
+		wp_mkdir_p( $agent_dir );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture standing in for another writer's already-committed content.
+		file_put_contents( $agent_dir . '/agent.json', 'sentinel-from-another-write' );
+
+		$manifest = array(
+			'slug'         => $slug,
+			'name'         => 'Already Claimed',
+			'description'  => 'A test agent.',
+			'category'     => 'admin',
+			'icon'         => '🤖',
+			'version'      => '1.0.0',
+			'capabilities' => array( 'read' ),
+			'tools'        => array( 'list_posts' ),
+			'team'         => false,
+		);
+		$abilities = array(
+			'version'   => '1.0',
 			'abilities' => array( 'list_posts' => array( 'risk' => 'none' ) ),
 		);
 
 		$method = new \ReflectionMethod( Agent_Templates::class, 'write_agent' );
-
-		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- Test deliberately forces a native file_put_contents() warning (writing over a directory) to exercise the failure-cleanup path.
-		$result = @$method->invoke( null, $slug, $manifest, 'You are partial.', $abilities );
+		$result = $method->invoke( null, $slug, $manifest, 'You are a duplicate write.', $abilities );
 
 		$this->assertWPError( $result );
-		$this->assertFalse( is_dir( $agent_dir ), 'Expected the partially-written agent directory to be removed on failure' );
+		$this->assertSame( 'slug_taken', $result->get_error_code() );
+		$this->assertTrue( is_dir( $agent_dir ), 'Expected the pre-existing directory to be left alone' );
+		$this->assertSame(
+			'sentinel-from-another-write',
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Test assertion reading a fixture file back.
+			file_get_contents( $agent_dir . '/agent.json' ),
+			"Expected the other writer's content to survive untouched"
+		);
 	}
 
 	/**

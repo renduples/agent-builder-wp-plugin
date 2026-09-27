@@ -4,12 +4,16 @@
  *
  * Duplicating copies an agent (manifest, system prompt, abilities, profile and
  * locally-assigned skills) to a sibling slug. Exporting serialises the same
- * payload into a zip under wp-content/agentic-exports/ — deliberately a
- * sibling of, not inside, the web-accessible uploads/ tree, since the zip
- * carries the agent's system prompt and persona text and the filename is a
- * guessable slug — excluding provider keys/settings/credentials and the
- * site-specific avatar attachment id. Importing reverses that: it validates
- * the archive (including a bound on its extracted size before unpacking it),
+ * payload into a zip — excluding provider keys/settings/credentials and the
+ * site-specific avatar attachment id — under a random, non-guessable on-disk
+ * filename in wp-content/agentic-exports/. That location is never web-served
+ * on its own merits (a directory sibling of wp-content/uploads/ can still sit
+ * inside the document root, and Nginx ignores the .htaccess marker WordPress
+ * relies on elsewhere); the archive only ever leaves the server through
+ * export_for_download(), which is called exclusively from an authenticated,
+ * capability-gated admin-ajax handler and deletes the on-disk file the
+ * instant it has read it. Importing reverses export(): it validates the
+ * archive (including a bound on its extracted size before unpacking it),
  * refuses any abilities that would downgrade a tool below its risk floor, and
  * writes the agent in place (inactive until the owner activates it).
  *
@@ -115,6 +119,11 @@ class Agent_Templates {
 	 * provider keys, settings, credentials, the integrity signature, or the
 	 * site-specific avatar attachment id.
 	 *
+	 * The returned path uses a random on-disk filename, not the agent's slug:
+	 * this is a transient working file, never a stable download URL — see
+	 * export_for_download() and the class docblock for how it actually
+	 * reaches an admin.
+	 *
 	 * @param string $slug Agent slug.
 	 * @return string|\WP_Error Absolute path to the zip, or error.
 	 */
@@ -133,10 +142,7 @@ class Agent_Templates {
 			return new \WP_Error( 'mkdir_failed', __( 'Could not create the export directory.', 'agent-builder' ) );
 		}
 
-		$zip_path = $exports_dir . '/' . $slug . '.zip';
-		if ( file_exists( $zip_path ) ) {
-			wp_delete_file( $zip_path );
-		}
+		$zip_path = $exports_dir . '/' . wp_generate_password( 32, false ) . '.zip';
 
 		$zip = new \ZipArchive();
 		if ( true !== $zip->open( $zip_path, \ZipArchive::CREATE ) ) {
@@ -170,6 +176,35 @@ class Agent_Templates {
 		}
 
 		return $zip_path;
+	}
+
+	/**
+	 * Export an agent and return its zip bytes for an authenticated caller
+	 * to hand back to the browser — the sole path an export ever leaves the
+	 * server by (see the class docblock). The on-disk file export() wrote is
+	 * deleted before this returns, whether or not it could be read, so a
+	 * stale/uncleaned export is never left sitting at a discoverable path.
+	 *
+	 * @param string $slug Agent slug.
+	 * @return array{filename: string, content: string}|\WP_Error
+	 */
+	public static function export_for_download( string $slug ) {
+		$zip_path = self::export( $slug );
+		if ( is_wp_error( $zip_path ) ) {
+			return $zip_path;
+		}
+
+		$content = File_Manager::get_contents( $zip_path );
+		wp_delete_file( $zip_path );
+
+		if ( false === $content ) {
+			return new \WP_Error( 'read_failed', __( 'Could not read the export archive.', 'agent-builder' ) );
+		}
+
+		return array(
+			'filename' => $slug . '.zip',
+			'content'  => $content,
+		);
 	}
 
 	/**
@@ -354,6 +389,15 @@ class Agent_Templates {
 	 * Write a manifest agent (agent.json + templates/system-prompt.txt +
 	 * abilities.json with signature) into the user agents directory.
 	 *
+	 * import()/duplicate() pick $slug via unique_slug()/unique_copy_slug(),
+	 * whose collision check is not atomic with this write, so a concurrent
+	 * caller can win the same slug first. Every failure branch below removes
+	 * $agent_dir again — that is only safe because the mkdir() below is
+	 * itself an atomic create: if $agent_dir already exists (another writer
+	 * got there first, or a previous attempt left it behind), this call
+	 * bails immediately instead of writing into, and potentially later
+	 * deleting, a directory it does not own.
+	 *
 	 * @param string                    $slug          New agent slug.
 	 * @param array<string, mixed>      $manifest      Manifest (slug already set).
 	 * @param string                    $system_prompt System prompt text.
@@ -361,15 +405,19 @@ class Agent_Templates {
 	 * @return true|\WP_Error
 	 */
 	private static function write_agent( string $slug, array $manifest, string $system_prompt, ?array $abilities ) {
-		$agent_dir = AGENT_BUILDER_AGENTS_DIR . '/' . $slug;
-		if ( ! wp_mkdir_p( $agent_dir ) ) {
-			return new \WP_Error( 'mkdir_failed', __( 'Could not create the agent directory.', 'agent-builder' ) );
+		if ( ! wp_mkdir_p( AGENT_BUILDER_AGENTS_DIR ) ) {
+			return new \WP_Error( 'mkdir_failed', __( 'Could not create the agents directory.', 'agent-builder' ) );
 		}
 
-		// Remove any legacy agent.php so the declarative manifest is authoritative.
-		if ( file_exists( $agent_dir . '/agent.php' ) ) {
-			wp_delete_file( $agent_dir . '/agent.php' );
+		$agent_dir = AGENT_BUILDER_AGENTS_DIR . '/' . $slug;
+
+		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_system_operations_mkdir -- Deliberate: a plain mkdir() is an atomic create-or-fail, unlike wp_mkdir_p()'s "succeed either way"; its EEXIST warning is the race signal handled below.
+		$created = @mkdir( $agent_dir, self::agent_dir_mode() );
+		if ( ! $created ) {
+			return new \WP_Error( 'slug_taken', __( 'Another request is already writing an agent with this slug.', 'agent-builder' ) );
 		}
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- mkdir()'s mode argument is still subject to umask; pin it explicitly, same as File_Manager::mkdir().
+		chmod( $agent_dir, self::agent_dir_mode() );
 
 		unset( $manifest['system_prompt'] ); // Written to its own file below.
 		$manifest_json = wp_json_encode( $manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
@@ -402,6 +450,16 @@ class Agent_Templates {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Directory permission mode for a freshly-created agent directory,
+	 * matching what wp_mkdir_p()/File_Manager::mkdir() would have applied.
+	 *
+	 * @return int
+	 */
+	private static function agent_dir_mode(): int {
+		return defined( 'FS_CHMOD_DIR' ) ? FS_CHMOD_DIR : 0755;
 	}
 
 	/**
