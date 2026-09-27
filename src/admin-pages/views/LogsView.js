@@ -1,6 +1,6 @@
 import { useMemo, useState } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { Button, Notice, SearchControl } from '@wordpress/components';
 import TabBar from './TabBar';
 

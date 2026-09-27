@@ -73,7 +73,9 @@ class Skills_Payload {
 		// the client doesn't need a second round-trip just to render a header.
 		$assistant = null;
 		if ( ! $is_advanced ) {
-			$instance  = \Agentic_Agent_Registry::get_instance()->get_agent_instance( 'skills-assistant' );
+			$instance  = class_exists( '\Agentic_Agent_Registry' )
+				? \Agentic_Agent_Registry::get_instance()->get_agent_instance( 'skills-assistant' )
+				: null;
 			$assistant = $instance
 				? array(
 					'active'            => true,

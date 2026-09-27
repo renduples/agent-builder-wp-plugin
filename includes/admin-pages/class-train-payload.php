@@ -16,6 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Train_Payload {
 
 	public static function build( string $tab ): array {
+		$is_pro   = false;
 		$concepts = array();
 		if ( class_exists( \Agentic\Okf_Store::class ) ) {
 			foreach ( \Agentic\Okf_Store::list_concepts( '', true ) as $c ) {
