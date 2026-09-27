@@ -639,6 +639,46 @@ class Agent_Run {
 	}
 
 	/**
+	 * Atomically claim this run out of 'waiting'.
+	 *
+	 * Two concurrent approval/proposal resolutions for the same run (a
+	 * double-submit, a retried REST request, two admins racing the same
+	 * approval) must not both resume/stop it. This mirrors the
+	 * `UPDATE ... WHERE status = 'pending'` claim Job_Manager::process_job()
+	 * uses: only the caller whose UPDATE actually flips the row wins.
+	 *
+	 * @return bool True if this call performed the claim (exactly one row
+	 *              moved out of 'waiting'); false if the run was no longer
+	 *              'waiting' (already claimed, or resolved by something else).
+	 */
+	public function claim_waiting(): bool {
+		global $wpdb;
+		$table = $wpdb->prefix . 'agent_builder_runs';
+		$now   = current_time( 'mysql', true );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Atomic claim, keyed by run_id; %i quotes the table name.
+		$claimed = $wpdb->query(
+			$wpdb->prepare(
+				'UPDATE %i SET status = %s, updated_at = %s WHERE run_id = %s AND status = %s',
+				$table,
+				'running',
+				$now,
+				$this->run_id,
+				'waiting'
+			)
+		);
+
+		if ( 1 !== $claimed ) {
+			return false;
+		}
+
+		$this->status     = 'running';
+		$this->updated_at = $now;
+
+		return true;
+	}
+
+	/**
 	 * State needed to resume a waiting run's loop: transcript, scratchpad,
 	 * and what it was waiting on.
 	 *

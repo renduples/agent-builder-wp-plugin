@@ -134,7 +134,76 @@ class Test_Run_Resumer extends TestCase {
 			$request['resume']['messages']
 		);
 
-		$this->assertSame( $result, $request['tool_result'] );
+		$expected_tool_result         = $result;
+		$expected_tool_result['tool'] = 'db_update_post';
+		$this->assertSame( $expected_tool_result, $request['tool_result'] );
+	}
+
+	/**
+	 * The resumed run's tool message must carry the real tool name, not an
+	 * empty string — neither execute_approved_action() nor
+	 * Agent_Proposals::approve()'s return value carries a 'tool' key, so
+	 * Run_Resumer must add it before the result becomes tool_result. A
+	 * proposal row names its tool under 'tool', not 'action'.
+	 */
+	public function test_approve_adds_resolved_tool_name_for_proposal_rows(): void {
+		$run = $this->begin_waiting_run();
+
+		$row = array(
+			'run_id' => $run->get_run_id(),
+			'tool'   => 'delete_form',
+		);
+
+		do_action( 'agent_builder_approval_resolved', 'proposal', 'prop-1', 'approved', array( 'success' => true ), $row );
+
+		$job     = $this->the_pending_job();
+		$this->assertNotNull( $job );
+		$this->assertSame( 'delete_form', $job->request_data['tool_result']['tool'] );
+	}
+
+	/**
+	 * Two concurrent resolutions for the same run (a double-submit, a
+	 * retried REST request, two admins racing the same approval) must not
+	 * both dispatch a resume job — only the first to claim the run out of
+	 * 'waiting' may act; the second is a clean no-op.
+	 */
+	public function test_concurrent_approve_resolutions_dispatch_only_one_job(): void {
+		$run = $this->begin_waiting_run();
+
+		$row = array(
+			'run_id' => $run->get_run_id(),
+			'action' => 'db_update_post',
+		);
+
+		$waiting_before = did_action( 'agent_builder_run_waiting' );
+
+		do_action( 'agent_builder_approval_resolved', 'approval', 1, 'approved', array( 'success' => true ), $row );
+		do_action( 'agent_builder_approval_resolved', 'approval', 1, 'approved', array( 'success' => true ), $row );
+
+		$pending = Job_Manager::list_by_statuses( array( Job_Manager::STATUS_PENDING ) );
+		$this->assertCount( 1, $pending );
+		$this->assertSame( $waiting_before + 1, did_action( 'agent_builder_run_waiting' ) );
+	}
+
+	/**
+	 * The same race on the reject path: only the first resolution to claim
+	 * the run may finish() it; the second is a clean no-op (no second
+	 * finish, no duplicate agent_builder_run_finished).
+	 */
+	public function test_concurrent_reject_resolutions_finish_only_once(): void {
+		$run = $this->begin_waiting_run();
+
+		$row = array(
+			'run_id' => $run->get_run_id(),
+			'action' => 'db_delete_post',
+		);
+
+		$finished_before = did_action( 'agent_builder_run_finished' );
+
+		do_action( 'agent_builder_approval_resolved', 'approval', 1, 'rejected', null, $row );
+		do_action( 'agent_builder_approval_resolved', 'approval', 1, 'rejected', null, $row );
+
+		$this->assertSame( $finished_before + 1, did_action( 'agent_builder_run_finished' ) );
 	}
 
 	/**

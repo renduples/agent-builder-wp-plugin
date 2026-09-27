@@ -46,8 +46,9 @@ class Run_Resumer {
 	 * A clean no-op when: the row carries no run_id (a chat-originated
 	 * approval/proposal has nothing to resume — callers are expected to
 	 * only fire the action when run_id is set, but this is defensive), the
-	 * run_id doesn't load, or the run is no longer 'waiting' (already
-	 * resumed or resolved by something else).
+	 * run_id doesn't load, or the run can't be claimed out of 'waiting'
+	 * (already resumed/resolved by something else, or a concurrent
+	 * resolution for the same run won the claim first).
 	 *
 	 * @param string     $type     'approval' or 'proposal'.
 	 * @param int|string $id       Approval queue row id, or proposal UUID.
@@ -67,25 +68,36 @@ class Run_Resumer {
 			return;
 		}
 
-		if ( 'waiting' !== $run->to_array()['status'] ) {
+		// Atomically claim the run out of 'waiting': two concurrent
+		// resolutions for the same run must not both dispatch/finish it.
+		if ( ! $run->claim_waiting() ) {
 			return;
 		}
 
 		do_action( 'agent_builder_run_waiting', $run );
 
+		// Approval-queue rows and proposal rows name the tool differently
+		// ('action' vs 'tool').
+		$tool_name = (string) ( $row['action'] ?? ( $row['tool'] ?? 'action' ) );
+
 		if ( 'approved' === $decision ) {
-			$extra = array( 'resume' => $run->resume_state() );
-			if ( is_array( $result ) ) {
-				$extra['tool_result'] = $result;
-			}
+			// The controller's resume branch reads the tool name from
+			// tool_result['tool'] to reconstruct the tool message — neither
+			// execute_approved_action() nor Agent_Proposals::approve()'s
+			// return value carries that key, so it must be added here.
+			$tool_result         = is_array( $result ) ? $result : array();
+			$tool_result['tool'] = $tool_name;
+
+			$extra = array(
+				'resume'      => $run->resume_state(),
+				'tool_result' => $tool_result,
+			);
 
 			Agent_Task_Job_Processor::dispatch( $run, $extra );
 			return;
 		}
 
-		// Rejected: the run should stop, not resume. Approval-queue rows and
-		// proposal rows name the tool differently ('action' vs 'tool').
-		$tool_name = (string) ( $row['action'] ?? ( $row['tool'] ?? 'action' ) );
+		// Rejected: the run should stop, not resume.
 		$run->finish( 'completed', array( 'text' => "Stopped: you denied {$tool_name}" ) );
 
 		do_action( 'agent_builder_run_finished', $run );
