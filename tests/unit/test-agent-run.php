@@ -220,6 +220,54 @@ class Test_Agent_Run extends TestCase {
 	}
 
 	/**
+	 * mark_waiting() must still transition the run to 'waiting' (and persist the
+	 * awaiting pointer + transcript) when the awaiting_tool_call_id column does
+	 * not exist yet — a stale pre-migration schema on a cron/REST/frontend
+	 * request. Including the unknown column in the UPDATE would fail the whole
+	 * write and silently leave the run 'running'.
+	 */
+	public function test_mark_waiting_persists_waiting_without_awaiting_tool_call_id_column(): void {
+		$run = Agent_Run::begin( 'content-writer' );
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'agent_builder_runs';
+
+		// Simulate the stale schema: drop the column the migration hasn't added
+		// yet. DDL isn't rolled back by the per-test transaction, so restore it
+		// in the finally block below.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared -- Test-only schema change on a trusted internal table name.
+		$wpdb->query( "ALTER TABLE {$table} DROP COLUMN awaiting_tool_call_id" );
+
+		try {
+			$transcript = array(
+				array( 'role' => 'user', 'content' => 'Publish the draft.' ),
+				array( 'role' => 'assistant', 'content' => 'I need approval to publish.' ),
+			);
+
+			$run->mark_waiting( 'proposal', 'proposal-uuid-1', $transcript, 'call_abc123' );
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test assertion against the persisted row.
+			$row = $wpdb->get_row(
+				$wpdb->prepare( "SELECT * FROM {$table} WHERE run_id = %s", $run->get_run_id() ),
+				ARRAY_A
+			);
+
+			$this->assertSame( 'waiting', $row['status'], 'the run must transition to waiting even without the awaiting_tool_call_id column' );
+			$this->assertSame( 'proposal', $row['awaiting_type'] );
+			$this->assertSame( 'proposal-uuid-1', $row['awaiting_id'] );
+
+			// The transcript must still be persisted (so a resume can derive the
+			// original tool-call id from it when the column value is empty).
+			$reloaded = Agent_Run::load( $run->get_run_id() );
+			$this->assertSame( $transcript, $reloaded->resume_state()['messages'] );
+			$this->assertSame( '', $reloaded->resume_state()['awaiting_tool_call_id'] );
+		} finally {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared -- Restore the column so later tests see a full schema.
+			$wpdb->query( "ALTER TABLE {$table} ADD COLUMN awaiting_tool_call_id varchar(64) DEFAULT NULL AFTER awaiting_id" );
+		}
+	}
+
+	/**
 	 * record_iteration() sums iterations, tokens, cost, and unions tool names
 	 * across multiple calls.
 	 */

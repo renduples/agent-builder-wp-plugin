@@ -1376,12 +1376,18 @@ class Agent_Controller {
 			$iterations = max( 0, (int) ( $resume_state['iterations'] ?? 0 ) );
 
 			if ( null !== $resume_tool_result ) {
-				$messages[] = array(
-					'role'         => 'tool',
-					'tool_call_id' => (string) ( $resume_state['awaiting_tool_call_id'] ?? '' ),
-					'name'         => (string) ( $resume_tool_result['tool'] ?? '' ),
-					'content'      => wp_json_encode( $resume_tool_result ),
-				);
+				// The original LLM tool-call id lives in awaiting_tool_call_id.
+				// For a run that entered 'waiting' before that column existed
+				// (or whose mark_waiting() could not persist it on a stale
+				// schema), the value is empty — derive it from the checkpointed
+				// transcript's own assistant tool_calls[] entry instead of
+				// sending the provider an empty id it will reject.
+				$tool_call_id = (string) ( $resume_state['awaiting_tool_call_id'] ?? '' );
+				if ( '' === $tool_call_id ) {
+					$tool_call_id = $this->derive_pending_tool_call_id( $messages, $resume_tool_result );
+				}
+
+				$messages = $this->resolve_tool_message( $messages, $resume_tool_result, $tool_call_id );
 			}
 		} else {
 			$run = Agent_Run::begin(
@@ -1730,6 +1736,92 @@ class Agent_Controller {
 		 * @param string              $task_id Task identifier.
 		 */
 		do_action( 'agent_builder_run_needs_continuation', $run->get_run_id(), $agent, $prompt, $task_id );
+	}
+
+	/**
+	 * Recover the original LLM tool-call id for the pending call from a
+	 * checkpointed transcript, for runs that entered 'waiting' before the
+	 * `awaiting_tool_call_id` column existed (its value is then empty) or whose
+	 * mark_waiting() could not persist it on a stale schema.
+	 *
+	 * Matches the assistant message's tool_calls[] entry on the tool's function
+	 * name first; when the name is absent or doesn't match, falls back to the
+	 * last assistant tool-call id in the transcript — always better than an
+	 * empty id, which providers that validate tool-call pairing reject.
+	 *
+	 * @param array $messages    Checkpointed transcript.
+	 * @param array $tool_result Resolved tool result carrying the tool name.
+	 * @return string Original LLM tool-call id, or '' if none can be found.
+	 */
+	protected function derive_pending_tool_call_id( array $messages, array $tool_result ): string {
+		$tool_name = (string) ( $tool_result['tool'] ?? '' );
+
+		$last_tool_call_id = '';
+		for ( $i = count( $messages ) - 1; $i >= 0; $i-- ) {
+			$message = $messages[ $i ];
+			if ( 'assistant' !== ( $message['role'] ?? '' ) || empty( $message['tool_calls'] ) ) {
+				continue;
+			}
+
+			foreach ( $message['tool_calls'] as $tool_call ) {
+				$id = (string) ( $tool_call['id'] ?? '' );
+				if ( '' !== $id ) {
+					// Overwrite rather than keep the first, so the fallback is
+					// the *last* assistant tool-call id — the pending call is
+					// the final call the assistant made before the pause.
+					$last_tool_call_id = $id;
+				}
+				if ( '' !== $tool_name && (string) ( $tool_call['function']['name'] ?? '' ) === $tool_name ) {
+					return $id;
+				}
+			}
+		}
+
+		return $last_tool_call_id;
+	}
+
+	/**
+	 * Build the reconstructed tool-role message for a resumed run and splice it
+	 * into the transcript.
+	 *
+	 * The pause already checkpointed a *provisional* tool message carrying the
+	 * unresolved ("waiting") result for the same tool_calls[].id. Appending a
+	 * second tool message for that id would leave two tool results for one
+	 * call, which providers that validate tool-call pairing reject. So the
+	 * provisional message is replaced with the resolved one in place, falling
+	 * back to an append only when no provisional message exists to replace
+	 * (e.g. a legacy transcript that never carried one).
+	 *
+	 * @param array  $messages    Checkpointed transcript.
+	 * @param array  $tool_result Resolved tool result.
+	 * @param string $tool_call_id Original LLM tool-call id (already derived when empty).
+	 * @return array Transcript with the resolved tool message in place.
+	 */
+	protected function resolve_tool_message( array $messages, array $tool_result, string $tool_call_id ): array {
+		$tool_name   = (string) ( $tool_result['tool'] ?? '' );
+		$replacement = array(
+			'role'         => 'tool',
+			'tool_call_id' => $tool_call_id,
+			'name'         => $tool_name,
+			'content'      => wp_json_encode( $tool_result ),
+		);
+
+		for ( $i = count( $messages ) - 1; $i >= 0; $i-- ) {
+			$message = $messages[ $i ];
+			if ( 'tool' !== ( $message['role'] ?? '' ) ) {
+				continue;
+			}
+
+			$matches_id   = '' !== $tool_call_id && (string) ( $message['tool_call_id'] ?? '' ) === $tool_call_id;
+			$matches_name = '' !== $tool_name && (string) ( $message['name'] ?? '' ) === $tool_name;
+			if ( $matches_id || ( '' === $tool_call_id && $matches_name ) ) {
+				$messages[ $i ] = $replacement;
+				return $messages;
+			}
+		}
+
+		$messages[] = $replacement;
+		return $messages;
 	}
 
 	/**

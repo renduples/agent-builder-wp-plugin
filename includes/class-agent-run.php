@@ -649,17 +649,29 @@ class Agent_Run {
 
 		$now = current_time( 'mysql', true );
 
-		$this->persist(
-			array(
-				'status'                => $this->status,
-				'awaiting_type'         => $this->awaiting_type,
-				'awaiting_id'           => $this->awaiting_id,
-				'awaiting_tool_call_id' => $this->awaiting_tool_call_id,
-				'state'                 => $this->encode_state(),
-				'updated_at'            => $now,
-			),
-			array( '%s', '%s', '%s', '%s', '%s', '%s' )
+		$fields  = array(
+			'status'        => $this->status,
+			'awaiting_type' => $this->awaiting_type,
+			'awaiting_id'   => $this->awaiting_id,
+			'state'         => $this->encode_state(),
+			'updated_at'    => $now,
 		);
+		$formats = array( '%s', '%s', '%s', '%s', '%s' );
+
+		// The awaiting_tool_call_id column is added by a version-independent
+		// migration that only runs from admin_init (see Activator::maybe_upgrade()).
+		// A cron/REST/frontend request on a site that has not run it yet would
+		// otherwise include an unknown column in the UPDATE, failing the whole
+		// write and silently leaving the run 'running' when it should be
+		// 'waiting'. When the column is absent, persist the waiting transition
+		// without it — the transcript already carries the assistant tool_calls[]
+		// id, which resume_state()'s consumer derives when the value is empty.
+		if ( self::has_awaiting_tool_call_id_column() ) {
+			$fields['awaiting_tool_call_id'] = $this->awaiting_tool_call_id;
+			$formats[]                       = '%s';
+		}
+
+		$this->persist( $fields, $formats );
 
 		$this->updated_at = $now;
 
@@ -685,6 +697,27 @@ class Agent_Run {
 			'iterations'            => $this->iterations,
 			'tools_used'            => array_values( $this->tools_used ),
 		);
+	}
+
+	/**
+	 * Whether the runs table currently has the `awaiting_tool_call_id` column.
+	 *
+	 * The column is added by a version-independent migration that only runs
+	 * from admin_init (Activator::maybe_upgrade()), so a cron/REST/frontend
+	 * request on a not-yet-migrated site sees a table without it. mark_waiting()
+	 * uses this to skip the column in its UPDATE rather than fail the whole
+	 * write (and leave the run stuck at 'running') on an unknown column.
+	 *
+	 * @return bool True when the column exists.
+	 */
+	private static function has_awaiting_tool_call_id_column(): bool {
+		global $wpdb;
+		$table = $wpdb->prefix . 'agent_builder_runs';
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is $wpdb->prefix-derived internal name, not user input.
+		$column = $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM {$table} LIKE %s", 'awaiting_tool_call_id' ) );
+
+		return is_string( $column ) && '' !== $column;
 	}
 
 	/**

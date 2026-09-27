@@ -307,6 +307,133 @@ class Test_Agent_Controller_Autonomous extends TestCase {
 	}
 
 	/**
+	 * A resumed run must carry exactly one tool-role message for the pending
+	 * call — the provisional "waiting" tool message the pause checkpointed is
+	 * replaced by the resolved result, not left alongside a second appended
+	 * message (a provider that validates tool-call pairing rejects two results
+	 * for the same tool_calls[].id).
+	 */
+	public function test_resume_replaces_provisional_tool_message_without_duplicate(): void {
+		$agent_id = 'test-autonomous-resume-no-dup';
+		$fake     = new Fake_LLM_Client(
+			array(
+				Fake_LLM_Client::tool_call_response( 'purge_expired_transients', array(), array( 'prompt_tokens' => 20, 'completion_tokens' => 10, 'total_tokens' => 30 ) ),
+				Fake_LLM_Client::text_response( 'Transients purged.', array( 'prompt_tokens' => 7, 'completion_tokens' => 5, 'total_tokens' => 12 ) ),
+			)
+		);
+
+		$controller = new Agent_Controller( $fake );
+		$agent      = $this->make_agent( $agent_id );
+
+		$first = $controller->run_autonomous_task( $agent, 'Purge stale transients.', 'task-no-dup' );
+		$this->assertSame( 'waiting', $first['status'] );
+
+		$run          = Agent_Run::load( $first['run_id'] );
+		$state        = $run->resume_state();
+		$tool_call_id = $state['awaiting_tool_call_id'];
+
+		$controller->run_autonomous_task(
+			$agent,
+			'Purge stale transients.',
+			'task-no-dup',
+			array(
+				'run_id'       => $first['run_id'],
+				'resume_state' => $state,
+				'tool_result'  => array(
+					'tool'               => 'purge_expired_transients',
+					'status'             => 'completed',
+					'transients_deleted' => 0,
+				),
+			)
+		);
+
+		$resumed_messages = end( $fake->messages_seen );
+		$tool_messages    = array_values(
+			array_filter(
+				$resumed_messages,
+				static function ( $m ) use ( $tool_call_id ) {
+					return 'tool' === ( $m['role'] ?? '' ) && ( $m['tool_call_id'] ?? '' ) === $tool_call_id;
+				}
+			)
+		);
+
+		$this->assertCount( 1, $tool_messages, 'exactly one tool message for the pending call, not a duplicate' );
+
+		// The surviving message must be the resolved result, not the unresolved
+		// "waiting" placeholder the pause originally checkpointed.
+		$decoded = json_decode( (string) $tool_messages[0]['content'], true );
+		$this->assertSame( 'completed', $decoded['status'] ?? null );
+	}
+
+	/**
+	 * A run that entered 'waiting' before the awaiting_tool_call_id column
+	 * existed has an empty id in resume_state(). The resume must derive the
+	 * original id from the checkpointed transcript's own assistant tool_calls[]
+	 * entry rather than send the provider an empty tool_call_id.
+	 */
+	public function test_resume_derives_tool_call_id_from_transcript_when_column_empty(): void {
+		$agent_id = 'test-autonomous-resume-derive';
+		$fake     = new Fake_LLM_Client(
+			array(
+				Fake_LLM_Client::tool_call_response( 'purge_expired_transients', array(), array( 'prompt_tokens' => 20, 'completion_tokens' => 10, 'total_tokens' => 30 ) ),
+				Fake_LLM_Client::text_response( 'Transients purged.', array( 'prompt_tokens' => 7, 'completion_tokens' => 5, 'total_tokens' => 12 ) ),
+			)
+		);
+
+		$controller = new Agent_Controller( $fake );
+		$agent      = $this->make_agent( $agent_id );
+
+		$first = $controller->run_autonomous_task( $agent, 'Purge stale transients.', 'task-derive' );
+		$this->assertSame( 'waiting', $first['status'] );
+
+		$run = Agent_Run::load( $first['run_id'] );
+		$original_tool_call_id = $run->resume_state()['awaiting_tool_call_id'];
+		$this->assertNotSame( '', $original_tool_call_id );
+
+		// Wipe the column to simulate a pre-migration run: resume_state() now
+		// returns an empty id, but the transcript still carries the assistant
+		// tool_calls[] entry with the original id.
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Test-only column wipe on the run row.
+		$wpdb->update(
+			$wpdb->prefix . 'agent_builder_runs',
+			array( 'awaiting_tool_call_id' => '' ),
+			array( 'run_id' => $first['run_id'] ),
+			array( '%s' ),
+			array( '%s' )
+		);
+
+		$run   = Agent_Run::load( $first['run_id'] );
+		$state = $run->resume_state();
+		$this->assertSame( '', $state['awaiting_tool_call_id'] );
+
+		$controller->run_autonomous_task(
+			$agent,
+			'Purge stale transients.',
+			'task-derive',
+			array(
+				'run_id'       => $first['run_id'],
+				'resume_state' => $state,
+				'tool_result'  => array(
+					'tool'               => 'purge_expired_transients',
+					'status'             => 'completed',
+					'transients_deleted' => 0,
+				),
+			)
+		);
+
+		$resumed_messages = end( $fake->messages_seen );
+		$last_message     = end( $resumed_messages );
+
+		$this->assertSame( 'tool', $last_message['role'] ?? null );
+		$this->assertSame(
+			$original_tool_call_id,
+			$last_message['tool_call_id'] ?? null,
+			'the tool-call id must be derived from the transcript when the column value is empty'
+		);
+	}
+
+	/**
 	 * Two concurrent resume attempts for the same run_id must not both
 	 * execute the pending tool call, even when the race lands in the exact
 	 * window the atomic claim exists to close: a plain get_status() read
