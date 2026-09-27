@@ -162,9 +162,11 @@ class Approval_Queue {
 	 * @param string $risk_level Risk level.
 	 * @param string $mode       Agent operating mode.
 	 * @param string $invocation Invocation context (chat, cron, hook, cli).
+	 * @param string $run_id     Owning Agent_Run id, if this call happened inside a run.
+	 * @param int    $user_id    Run owner's user id, if known.
 	 * @return int|false Queue item ID or false.
 	 */
-	public function add( string $agent_id, string $action, array $params, string $reasoning = '', int $expires = 7, string $risk_level = 'high', string $mode = '', string $invocation = '' ): int|false {
+	public function add( string $agent_id, string $action, array $params, string $reasoning = '', int $expires = 7, string $risk_level = 'high', string $mode = '', string $invocation = '', string $run_id = '', int $user_id = 0 ): int|false {
 		global $wpdb;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table insert.
@@ -181,6 +183,8 @@ class Approval_Queue {
 				'invocation' => $invocation,
 				'created_at' => gmdate( 'Y-m-d H:i:s' ),
 				'expires_at' => gmdate( 'Y-m-d H:i:s', strtotime( "+{$expires} days" ) ),
+				'run_id'     => '' !== $run_id ? $run_id : null,
+				'user_id'    => $user_id > 0 ? $user_id : null,
 			)
 		);
 
