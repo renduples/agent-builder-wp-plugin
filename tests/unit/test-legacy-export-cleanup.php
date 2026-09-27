@@ -2,11 +2,12 @@
 /**
  * Unit tests for Activator::maybe_cleanup_legacy_agent_exports().
  *
- * Confirms the one-time migration removes agent-export zips left behind
+ * Confirms the one-time security sweep removes agent-export zips left behind
  * by the pre-fix exporter at wp_upload_dir()['basedir'] . '/agentic-exports/'
- * (predictable filename, inside the public uploads tree), runs only once,
- * requires manage_options, and never touches non-zip files in that same
- * directory — it is also used by unrelated document-export tools.
+ * (predictable filename, inside the public uploads tree), runs from an
+ * always-fires hook with no authenticated user, runs only once, does not mark
+ * itself done while a legacy zip remains, and never touches non-zip files in
+ * that same directory — it is also used by unrelated document-export tools.
  *
  * @package Agentic\Tests
  */
@@ -49,6 +50,7 @@ class Test_Legacy_Export_Cleanup extends TestCase {
 	 * Remove any files left in the legacy directory and restore state.
 	 */
 	public function tearDown(): void {
+		@chmod( $this->legacy_dir, 0755 ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- Restore writability.
 		foreach ( (array) glob( $this->legacy_dir . '/*' ) as $file ) {
 			if ( is_file( $file ) ) {
 				wp_delete_file( $file );
@@ -59,18 +61,36 @@ class Test_Legacy_Export_Cleanup extends TestCase {
 		} else {
 			update_option( 'agent_builder_legacy_exports_cleaned', $this->previous_flag );
 		}
+		delete_transient( 'agent_builder_legacy_exports_lock' );
 		wp_set_current_user( 0 );
 		parent::tearDown();
 	}
 
 	/**
-	 * An administrator's first admin_init removes a legacy zip and marks
-	 * the cleanup as done.
+	 * The sweep is hooked on init (which always fires, before auth), not on
+	 * admin_init (which never fires for unauthenticated, cron, or REST
+	 * requests and would leave the exposure standing until an admin visits).
 	 */
-	public function test_removes_legacy_zip_and_sets_flag(): void {
+	public function test_hooked_on_always_fires_init(): void {
+		$this->assertNotFalse(
+			has_action( 'init', array( Activator::class, 'maybe_cleanup_legacy_agent_exports' ) ),
+			'Expected the legacy cleanup to be hooked on init (always fires), not admin_init'
+		);
+		$this->assertFalse(
+			has_action( 'admin_init', array( Activator::class, 'maybe_cleanup_legacy_agent_exports' ) ),
+			'Expected the legacy cleanup to no longer be hooked on admin_init'
+		);
+	}
+
+	/**
+	 * The first run removes a legacy zip and marks the cleanup as done —
+	 * without any authenticated user, since the files are an unauthenticated
+	 * disclosure exposure and must be cleared even if nobody logs in.
+	 */
+	public function test_removes_legacy_zip_and_sets_flag_without_auth(): void {
 		$zip_path = $this->legacy_dir . '/content-writer.zip';
 		file_put_contents( $zip_path, 'zip-bytes' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_file_put_contents -- Test fixture.
-		$this->enter_admin_as_logged_in_user();
+		wp_set_current_user( 0 );
 
 		Activator::maybe_cleanup_legacy_agent_exports();
 
@@ -86,7 +106,6 @@ class Test_Legacy_Export_Cleanup extends TestCase {
 		update_option( 'agent_builder_legacy_exports_cleaned', true );
 		$zip_path = $this->legacy_dir . '/late-arrival.zip';
 		file_put_contents( $zip_path, 'zip-bytes' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_file_put_contents -- Test fixture.
-		$this->enter_admin_as_logged_in_user();
 
 		Activator::maybe_cleanup_legacy_agent_exports();
 
@@ -94,14 +113,38 @@ class Test_Legacy_Export_Cleanup extends TestCase {
 	}
 
 	/**
-	 * A non-admin request never deletes anything and never sets the flag,
-	 * so a later admin visit still gets to run the cleanup.
+	 * The sweep must not mark itself done while a legacy zip is still on disk:
+	 * if a delete fails the flag stays unset so a later request retries, and a
+	 * retry after the failure is cleared completes the job.
 	 */
-	public function test_requires_manage_options(): void {
+	public function test_does_not_mark_done_when_a_delete_fails(): void {
+		$zip_path = $this->legacy_dir . '/stubborn.zip';
+		file_put_contents( $zip_path, 'zip-bytes' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_file_put_contents -- Test fixture.
+		wp_set_current_user( 0 );
+		// Read-only directory makes unlink() fail (this process is unprivileged),
+		// simulating a real delete failure rather than a mocked one.
+		chmod( $this->legacy_dir, 0500 ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- Simulate delete failure.
+
+		Activator::maybe_cleanup_legacy_agent_exports();
+
+		$this->assertFileExists( $zip_path, 'Delete failed, so the zip must remain' );
+		$this->assertFalse( get_option( 'agent_builder_legacy_exports_cleaned' ), 'Migration must not mark itself done while a legacy zip remains' );
+
+		// Restore writability and confirm a retry then finishes and flags done.
+		chmod( $this->legacy_dir, 0755 ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- Restore writability.
+		Activator::maybe_cleanup_legacy_agent_exports();
+		$this->assertFileDoesNotExist( $zip_path );
+		$this->assertTrue( (bool) get_option( 'agent_builder_legacy_exports_cleaned' ) );
+	}
+
+	/**
+	 * A concurrent request holding the lock skips the sweep and leaves the
+	 * flag unset so it is retried once the lock clears.
+	 */
+	public function test_respects_concurrent_lock(): void {
 		$zip_path = $this->legacy_dir . '/content-writer.zip';
 		file_put_contents( $zip_path, 'zip-bytes' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_file_put_contents -- Test fixture.
-		$subscriber_id = self::factory()->user->create( array( 'role' => 'subscriber' ) );
-		wp_set_current_user( $subscriber_id );
+		set_transient( 'agent_builder_legacy_exports_lock', 1, 30 );
 
 		Activator::maybe_cleanup_legacy_agent_exports();
 
@@ -117,19 +160,10 @@ class Test_Legacy_Export_Cleanup extends TestCase {
 	public function test_does_not_touch_non_zip_files(): void {
 		$docx_path = $this->legacy_dir . '/report.docx';
 		file_put_contents( $docx_path, 'docx-bytes' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_file_put_contents -- Test fixture.
-		$this->enter_admin_as_logged_in_user();
+		wp_set_current_user( 0 );
 
 		Activator::maybe_cleanup_legacy_agent_exports();
 
 		$this->assertFileExists( $docx_path );
-	}
-
-	/**
-	 * Create and switch to a logged-in administrator, matching the
-	 * capability the migration is gated on.
-	 */
-	private function enter_admin_as_logged_in_user(): void {
-		$user_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
-		wp_set_current_user( $user_id );
 	}
 }

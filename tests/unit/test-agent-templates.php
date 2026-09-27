@@ -12,6 +12,7 @@ use Agentic\Agent_Library;
 use Agentic\Agent_Profile;
 use Agentic\Agent_Settings;
 use Agentic\Agent_Templates;
+use Agentic\Risk_Level;
 use Agentic\Skills_Registry;
 
 /**
@@ -313,6 +314,56 @@ class Test_Agent_Templates extends TestCase {
 	}
 
 	/**
+	 * export() of a DB-backed manifest agent (no on-disk abilities.json)
+	 * synthesizes a valid abilities.json from the agent's declared tools at
+	 * their risk floors, so the export round-trips through import() instead of
+	 * being rejected for a missing abilities manifest.
+	 */
+	public function test_export_db_backed_agent_round_trips(): void {
+		Agent_Library::upsert(
+			array(
+				'slug'     => 'db-export-agent',
+				'name'     => 'DB Export Agent',
+				'manifest' => array(
+					'slug'         => 'db-export-agent',
+					'name'         => 'DB Export Agent',
+					'description'  => 'A DB-backed agent with no directory.',
+					'category'     => 'admin',
+					'icon'         => '📚',
+					'version'      => '1.0.0',
+					'capabilities' => array( 'read' ),
+					'tools'        => array( 'list_posts' ),
+					'team'         => false,
+				),
+				'kind'     => 'manifest',
+				'source'   => 'user',
+				'enabled'  => true,
+			)
+		);
+		\Agentic_Agent_Registry::get_instance()->get_installed_agents( true );
+
+		$path = Agent_Templates::export( 'db-export-agent' );
+
+		$this->assertIsString( $path );
+		$this->assertFileExists( $path );
+
+		$entries = $this->zip_entries( $path );
+		$this->assertContains( 'abilities.json', $entries, 'Expected a synthesized abilities.json for a DB-backed agent' );
+
+		$abilities = json_decode( $this->zip_read( $path, 'abilities.json' ), true );
+		$this->assertIsArray( $abilities );
+		$this->assertArrayHasKey( 'list_posts', $abilities['abilities'] );
+		$this->assertSame( Risk_Level::get_tool_default( 'list_posts' ), $abilities['abilities']['list_posts']['risk'] );
+
+		// Round-trip: the synthesized manifest must import as a valid agent
+		// (slug resolves to -2 because the DB row still owns 'db-export-agent').
+		$slug = Agent_Templates::import( $this->upload_entry( $path, 'db-export-agent.zip' ) );
+		$this->track( $slug );
+
+		$this->assertSame( 'db-export-agent-2', $slug );
+	}
+
+	/**
 	 * export() names the on-disk zip randomly, never after the agent's own
 	 * slug — an unauthenticated visitor who already knows the slug (it is
 	 * not a secret) must not be able to construct the export's filename.
@@ -552,6 +603,54 @@ class Test_Agent_Templates extends TestCase {
 			file_get_contents( $agent_dir . '/agent.json' ),
 			"Expected the other writer's content to survive untouched"
 		);
+	}
+
+	/**
+	 * write_agent() reports a plain mkdir() failure as mkdir_failed, not as
+	 * slug_taken: only a directory that already exists is a collision, while a
+	 * failure for any other reason (permissions, a missing parent, …) must
+	 * surface its own code so the real error is not masked by a false
+	 * "already taken" report. The failure is forced with a read-only agents
+	 * directory, so @mkdir() fails without $agent_dir ever existing.
+	 */
+	public function test_write_agent_reports_mkdir_failure_not_slug_taken(): void {
+		$slug = 'mkdir-fail-agent';
+		$this->track( $slug );
+
+		$agent_dir  = AGENT_BUILDER_AGENTS_DIR . '/' . $slug;
+		$agents_dir = AGENT_BUILDER_AGENTS_DIR;
+		wp_mkdir_p( $agents_dir );
+
+		$manifest = array(
+			'slug'         => $slug,
+			'name'         => 'Mkdir Fail',
+			'description'  => 'A test agent.',
+			'category'     => 'admin',
+			'icon'         => '🤖',
+			'version'      => '1.0.0',
+			'capabilities' => array( 'read' ),
+			'tools'        => array( 'list_posts' ),
+			'team'         => false,
+		);
+		$abilities = array(
+			'version'   => '1.0',
+			'abilities' => array( 'list_posts' => array( 'risk' => 'none' ) ),
+		);
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- Simulate an unwritable parent so @mkdir() fails.
+		chmod( $agents_dir, 0500 );
+
+		try {
+			$method = new \ReflectionMethod( Agent_Templates::class, 'write_agent' );
+			$result = $method->invoke( null, $slug, $manifest, 'You are a failed write.', $abilities );
+		} finally {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- Restore writability for subsequent tests.
+			chmod( $agents_dir, 0755 );
+		}
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'mkdir_failed', $result->get_error_code() );
+		$this->assertFalse( is_dir( $agent_dir ) );
 	}
 
 	/**

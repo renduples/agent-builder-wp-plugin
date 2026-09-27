@@ -82,7 +82,11 @@ define( 'AGENT_BUILDER_BACKUPS_DIR', WP_CONTENT_DIR . '/agentic-backups' );
 // carries a random, non-guessable on-disk filename (never the agent's
 // slug) and is deleted the moment Agent_Templates::export_for_download()
 // reads it — the *only* code path that ever returns its bytes, gated on the
-// manage_agents/manage_options capability. See class-agent-templates.php.
+// manage_agents/manage_options capability and an AJAX nonce. Those two
+// mechanisms — an unguessable filename and an authenticated, self-deleting
+// download handler — are what keep the archive from ever being served as a
+// static file; the directory markers are defence-in-depth only. See
+// class-agent-templates.php.
 define( 'AGENT_BUILDER_EXPORTS_DIR', WP_CONTENT_DIR . '/agentic-exports' );
 
 // AGENT_BUILDER_SAFE_MODE (not defined by this plugin — a site owner opts in
@@ -139,6 +143,12 @@ final class Plugin {
 	private function init_hooks(): void {
 		// --- Hooks needed on every request (frontend, REST, cron) ---.
 		add_action( 'init', array( $this, 'init' ) );
+
+		// One-time legacy agent-export cleanup. Deliberately on init (which
+		// fires on frontend/REST/cron, not just admin) and before any auth
+		// check — see Activator::maybe_cleanup_legacy_agent_exports() for why
+		// this security sweep must not wait for an admin to visit wp-admin.
+		add_action( 'init', array( Activator::class, 'maybe_cleanup_legacy_agent_exports' ), 1 );
 
 		// Admin bar agent menu — front-end only. The 'wp' action does not fire in
 		// wp-admin, so this naturally skips the backend. Deferred until 'wp' so
@@ -273,7 +283,6 @@ final class Plugin {
 		add_action( 'admin_init', array( Activator::class, 'maybe_handle_retry_request' ), 1 );
 		add_action( 'admin_init', array( Activator::class, 'maybe_disable_cron_for_safe_mode' ) );
 		add_action( 'admin_init', array( Activator::class, 'maybe_run_deferred_seed' ) );
-		add_action( 'admin_init', array( Activator::class, 'maybe_cleanup_legacy_agent_exports' ) );
 		add_action( 'admin_menu', array( $menu, 'register' ) );
 		add_action( 'admin_page_access_denied', array( $menu, 'maybe_show_access_notice' ) );
 		add_action( 'admin_footer', array( $menu, 'render_admin_page_links' ) );

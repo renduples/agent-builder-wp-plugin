@@ -331,31 +331,64 @@ final class Activator {
 	 * accumulated at the old path is still directly downloadable and
 	 * none of that fix touches it.
 	 *
-	 * Runs once, tracked by agent_builder_legacy_exports_cleaned, and
-	 * only ever deletes *.zip files sitting directly in that legacy
-	 * directory. The same uploads/agentic-exports directory is also
-	 * used by unrelated document tools (create_docx, create_pdf,
-	 * create_spreadsheet, merge_pdfs, html_to_docx) — none of which
-	 * ever write a .zip there — so this cannot remove their output.
+	 * This is a security cleanup, not a schema migration, so it runs from an
+	 * early, always-fires hook (init — see agent-builder.php) rather than
+	 * waiting for an admin to visit wp-admin: an unremediated legacy zip is
+	 * exploitable every second it sits there, including on cron/REST/frontend
+	 * requests where admin_init never fires. It is a filesystem delete, not a
+	 * privileged UI action, so it is deliberately NOT gated on
+	 * current_user_can() — it must also run for anonymous visitors. A short
+	 * transient lock prevents concurrent/overlapping sweeps.
+	 *
+	 * Only marks itself done when every matching *.zip is actually gone: if
+	 * any delete fails (permissions, in-use), the flag is left unset so the
+	 * next request retries instead of silently leaving a still-downloadable
+	 * file exposed forever. Only *.zip files sitting directly in that legacy
+	 * directory are ever touched — the same uploads/agentic-exports directory
+	 * is also used by unrelated document tools (create_docx, create_pdf,
+	 * create_spreadsheet, merge_pdfs, html_to_docx), none of which write a
+	 * .zip there, so this cannot remove their output.
 	 *
 	 * @return void
 	 */
 	public static function maybe_cleanup_legacy_agent_exports(): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			return;
-		}
-
 		if ( get_option( 'agent_builder_legacy_exports_cleaned' ) ) {
 			return;
 		}
 
-		$legacy_dir = untrailingslashit( wp_upload_dir()['basedir'] ) . '/agentic-exports';
-		$zips       = glob( $legacy_dir . '/*.zip' );
-		foreach ( (array) $zips as $zip ) {
-			wp_delete_file( $zip );
+		$lock_key = 'agent_builder_legacy_exports_lock';
+		if ( get_transient( $lock_key ) ) {
+			return; // Another request is already running this one-time sweep.
 		}
+		set_transient( $lock_key, 1, 30 );
 
-		update_option( 'agent_builder_legacy_exports_cleaned', true );
+		try {
+			$legacy_dir  = untrailingslashit( wp_upload_dir()['basedir'] ) . '/agentic-exports';
+			$all_removed = true;
+			$zips        = glob( $legacy_dir . '/*.zip' );
+			if ( false === $zips ) {
+				// The directory could not be scanned at all (unreadable). Treat
+				// that as "not done" rather than "no zips": if the process can't
+				// see into the directory it cannot have deleted its contents, and
+				// the flag must stay unset so a later request retries.
+				$all_removed = false;
+			} else {
+				foreach ( $zips as $zip ) {
+					if ( ! wp_delete_file( $zip ) ) {
+						$all_removed = false;
+					}
+				}
+			}
+
+			// Only mark the migration done once every legacy zip is actually
+			// gone — a single failed delete leaves the flag unset so the next
+			// request retries rather than abandoning a still-exposed file.
+			if ( $all_removed ) {
+				update_option( 'agent_builder_legacy_exports_cleaned', true );
+			}
+		} finally {
+			delete_transient( $lock_key );
+		}
 	}
 
 	/**

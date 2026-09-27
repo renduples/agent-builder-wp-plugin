@@ -6,13 +6,14 @@
  * locally-assigned skills) to a sibling slug. Exporting serialises the same
  * payload into a zip — excluding provider keys/settings/credentials and the
  * site-specific avatar attachment id — under a random, non-guessable on-disk
- * filename in wp-content/agentic-exports/. That location is never web-served
- * on its own merits (a directory sibling of wp-content/uploads/ can still sit
- * inside the document root, and Nginx ignores the .htaccess marker WordPress
- * relies on elsewhere); the archive only ever leaves the server through
- * export_for_download(), which is called exclusively from an authenticated,
- * capability-gated admin-ajax handler and deletes the on-disk file the
- * instant it has read it. Importing reverses export(): it validates the
+ * filename in AGENT_BUILDER_EXPORTS_DIR (wp-content/agentic-exports/, a
+ * directory sibling of uploads/ that can still sit inside the document root,
+ * and whose .htaccess/web.config markers Nginx ignores outright). The archive
+ * therefore never leaves the server as a static file: its on-disk name is
+ * random (never the agent's slug), and it is read — and deleted the instant it
+ * has been read — only by export_for_download(), which is called exclusively
+ * from an authenticated, capability- and nonce-gated admin-ajax handler.
+ * Importing reverses export(): it validates the
  * archive (including a bound on its extracted size before unpacking it),
  * refuses any abilities that would downgrade a tool below its risk floor, and
  * writes the agent in place (inactive until the owner activates it).
@@ -152,15 +153,23 @@ class Agent_Templates {
 		$manifest = $payload['manifest'];
 		unset( $manifest['system_prompt'] ); // Carried by system-prompt.txt instead.
 
+		$abilities = $payload['abilities'];
+		if ( ! is_array( $abilities ) ) {
+			// A DB-backed manifest agent has no on-disk abilities.json
+			// (Abilities_Manifest::load() only reads files, never the library
+			// table). Synthesize a valid manifest from the agent's declared
+			// tools at their risk floors so the export round-trips through
+			// import(), which requires abilities.json.
+			$abilities = self::synthesize_abilities( (array) ( $manifest['tools'] ?? array() ) );
+		}
+
 		$zip->addFromString( 'agent.json', (string) wp_json_encode( $manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) );
 
 		if ( '' !== $payload['system_prompt'] ) {
 			$zip->addFromString( 'system-prompt.txt', $payload['system_prompt'] );
 		}
 
-		if ( is_array( $payload['abilities'] ) ) {
-			$zip->addFromString( 'abilities.json', (string) wp_json_encode( $payload['abilities'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) );
-		}
+		$zip->addFromString( 'abilities.json', (string) wp_json_encode( $abilities, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) );
 
 		if ( ! empty( $payload['profile'] ) ) {
 			$zip->addFromString( 'profile.json', (string) wp_json_encode( $payload['profile'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) );
@@ -172,6 +181,8 @@ class Agent_Templates {
 		}
 
 		if ( ! $zip->close() ) {
+			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- Cleanup; failure is non-fatal.
+			@wp_delete_file( $zip_path );
 			return new \WP_Error( 'zip_failed', __( 'Could not finalize the export archive.', 'agent-builder' ) );
 		}
 
@@ -343,6 +354,33 @@ class Agent_Templates {
 	}
 
 	/**
+	 * Build a valid abilities manifest for an agent that has no on-disk
+	 * abilities.json (a DB-backed manifest agent), declaring each of its tools
+	 * at that tool's risk floor. A floor declaration is the lowest-risk
+	 * statement that is still valid, so the synthesized manifest is both
+	 * importable (import() requires abilities.json) and never a downgrade.
+	 *
+	 * @param string[] $tools Tool names declared by the agent.
+	 * @return array<string, mixed>
+	 */
+	private static function synthesize_abilities( array $tools ): array {
+		$abilities = array(
+			'version'   => '1.0',
+			'abilities' => array(),
+		);
+		foreach ( $tools as $tool ) {
+			$tool = (string) $tool;
+			if ( '' === $tool ) {
+				continue;
+			}
+			$abilities['abilities'][ $tool ] = array(
+				'risk' => Risk_Level::get_tool_default( $tool ),
+			);
+		}
+		return $abilities;
+	}
+
+	/**
 	 * Resolve an agent's system prompt (file first, then inline manifest field).
 	 *
 	 * @param array<string, mixed> $info     Installed-agent record.
@@ -414,7 +452,15 @@ class Agent_Templates {
 		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_system_operations_mkdir -- Deliberate: a plain mkdir() is an atomic create-or-fail, unlike wp_mkdir_p()'s "succeed either way"; its EEXIST warning is the race signal handled below.
 		$created = @mkdir( $agent_dir, self::agent_dir_mode() );
 		if ( ! $created ) {
-			return new \WP_Error( 'slug_taken', __( 'Another request is already writing an agent with this slug.', 'agent-builder' ) );
+			// If the directory now exists, the mkdir failed because another
+			// writer won the race (or a previous attempt left it behind) — a
+			// real collision. Otherwise the failure is something else
+			// (permissions, a missing parent, …) and must not be reported as a
+			// taken slug, which would silently suppress the real error.
+			if ( is_dir( $agent_dir ) ) {
+				return new \WP_Error( 'slug_taken', __( 'Another request is already writing an agent with this slug.', 'agent-builder' ) );
+			}
+			return new \WP_Error( 'mkdir_failed', __( 'Could not create the agent directory.', 'agent-builder' ) );
 		}
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- mkdir()'s mode argument is still subject to umask; pin it explicitly, same as File_Manager::mkdir().
 		chmod( $agent_dir, self::agent_dir_mode() );
