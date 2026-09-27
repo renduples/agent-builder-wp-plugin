@@ -1252,10 +1252,13 @@ class Agent_Controller {
 	 * @param array               $options {
 	 *     Optional.
 	 *
-	 *     @type string $run_id       Id of a previously paused run to resume (required with resume_state).
-	 *     @type array  $resume_state Value previously returned by Agent_Run::resume_state().
-	 *     @type array  $tool_result  Resolved outcome of the tool call the run was waiting on, appended
-	 *                                as a tool-role message before the loop continues.
+	 *     @type string $run_id        Id of a previously paused run to resume (required with resume_state).
+	 *     @type array  $resume_state  Value previously returned by Agent_Run::resume_state().
+	 *     @type array  $tool_result   Resolved outcome of the tool call the run was waiting on, appended
+	 *                                 as a tool-role message before the loop continues.
+	 *     @type string $kind          Run kind for a newly begun run (default 'task').
+	 *     @type string $source_ref    Origin reference for a newly begun run (default 'task:<task_id>').
+	 *     @type string $parent_run_id Parent run id for a newly begun run (default '').
 	 * }
 	 * @return array|null Response data, or null if LLM is not configured or the run errored.
 	 */
@@ -1332,10 +1335,11 @@ class Agent_Controller {
 			$run = Agent_Run::begin(
 				$agent_id,
 				array(
-					'kind'       => 'task',
-					'task_text'  => $prompt,
-					'invocation' => '' !== $this->invocation_context ? $this->invocation_context : 'cron',
-					'source_ref' => '' !== $task_id ? ( 'task:' . $task_id ) : '',
+					'kind'          => (string) ( $options['kind'] ?? 'task' ),
+					'task_text'     => $prompt,
+					'invocation'    => '' !== $this->invocation_context ? $this->invocation_context : 'cron',
+					'source_ref'    => (string) ( $options['source_ref'] ?? ( '' !== $task_id ? ( 'task:' . $task_id ) : '' ) ),
+					'parent_run_id' => (string) ( $options['parent_run_id'] ?? '' ),
 				)
 			);
 

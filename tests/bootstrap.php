@@ -196,3 +196,4 @@ require $_tests_dir . '/includes/bootstrap.php';
 require_once __DIR__ . '/helpers/TestCase.php';
 require_once __DIR__ . '/helpers/MockWPFunctions.php';
 require_once __DIR__ . '/helpers/TestDataFactory.php';
+require_once __DIR__ . '/helpers/Fake_LLM_Client.php';
