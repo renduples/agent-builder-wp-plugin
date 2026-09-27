@@ -436,6 +436,24 @@ class Agent_Run {
 	}
 
 	/**
+	 * Get the run kind (task, routine, event, delegation, prompt_test, workflow, chat).
+	 *
+	 * @return string
+	 */
+	public function get_kind(): string {
+		return $this->kind;
+	}
+
+	/**
+	 * Get the owning user id, or 0 when the run has none.
+	 *
+	 * @return int
+	 */
+	public function get_user_id(): int {
+		return $this->user_id;
+	}
+
+	/**
 	 * Current active delegation depth.
 	 *
 	 * @return int
