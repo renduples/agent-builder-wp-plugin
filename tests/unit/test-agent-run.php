@@ -341,13 +341,11 @@ class Test_Agent_Run extends TestCase {
 
 	/**
 	 * A run whose state column holds the current {scratchpad, messages} wrapper
-	 * but was written before the agent_builder_state_version marker existed
-	 * (the shipped m10-foundation code) must still load its scratchpad AND its
-	 * resume transcript. The marker is the primary signal, but a shape heuristic
-	 * is the fallback for unmarked rows — otherwise an already-'waiting' run in
-	 * a real deployment would lose its resume transcript on the next load.
+	 * loads both its scratchpad and its resume transcript — the shape-based
+	 * signal from_row() uses to tell the wrapper apart from a legacy flat
+	 * scratchpad.
 	 */
-	public function test_load_recovers_current_wrapper_shape_without_version_marker(): void {
+	public function test_load_recovers_current_wrapper_shape(): void {
 		$run    = Agent_Run::begin( 'content-writer' );
 		$run_id = $run->get_run_id();
 
@@ -357,7 +355,7 @@ class Test_Agent_Run extends TestCase {
 		);
 
 		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Simulating a pre-marker (but current-wrapper) row shape for the test.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Simulating the current wrapper row shape for the test.
 		$wpdb->update(
 			$wpdb->prefix . 'agent_builder_runs',
 			array(
