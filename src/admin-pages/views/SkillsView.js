@@ -1,7 +1,7 @@
 import { useMemo, useState } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import { __ } from '@wordpress/i18n';
-import { Button, ExternalLink, Notice, SearchControl, Spinner } from '@wordpress/components';
+import { Button, Notice, SearchControl } from '@wordpress/components';
 
 function SkillsView( { data, reload } ) {
 	const [ q, setQ ] = useState( '' );

@@ -3,10 +3,8 @@ import apiFetch from '@wordpress/api-fetch';
 import { __, sprintf } from '@wordpress/i18n';
 import {
 	Button,
-	ExternalLink,
 	Modal,
 	Notice,
-	Spinner,
 	ToggleControl,
 	SearchControl,
 } from '@wordpress/components';

@@ -1,7 +1,7 @@
-import { useMemo, useState } from '@wordpress/element';
+import { useState } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import { __, sprintf } from '@wordpress/i18n';
-import { Button, Notice, Spinner } from '@wordpress/components';
+import { Button, Notice } from '@wordpress/components';
 import { InfoTip } from '../../shared/components';
 
 function SafetyRiskInventory( { inventory, urls } ) {

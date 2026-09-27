@@ -1,5 +1,4 @@
 import { __ } from '@wordpress/i18n';
-import { ExternalLink } from '@wordpress/components';
 
 function DeploymentView( { data } ) {
 	return (
