@@ -63,6 +63,38 @@ class Test_Job_Manager extends TestCase {
 	}
 
 	/**
+	 * A job with no _processor at all is also rejected and audited: a missing
+	 * processor must not skip the job_processor_not_allowed audit entry the way
+	 * an empty-string processor value would.
+	 */
+	public function test_missing_processor_fails_and_is_audited(): void {
+		$job_id = Job_Manager::create_job( array() );
+
+		$this->assertNotSame( '', $job_id );
+
+		Job_Manager::process_job( $job_id );
+
+		$job = Job_Manager::get_job( $job_id );
+		$this->assertNotNull( $job );
+		$this->assertSame( Job_Manager::STATUS_FAILED, $job->status );
+		$this->assertSame( 'processor not allowed: (missing)', $job->error_message );
+
+		global $wpdb;
+		$audit_row = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT details FROM {$wpdb->prefix}agent_builder_audit_log WHERE action = %s AND target_id = %s ORDER BY id DESC LIMIT 1",
+				'job_processor_not_allowed',
+				$job_id
+			)
+		);
+		$this->assertNotNull( $audit_row );
+
+		$details = json_decode( $audit_row->details, true );
+		$this->assertSame( $job_id, $details['id'] );
+		$this->assertSame( '(missing)', $details['processor'] );
+	}
+
+	/**
 	 * A filter callback adding a processor class makes that processor runnable.
 	 */
 	public function test_allowlist_filter_makes_processor_runnable(): void {

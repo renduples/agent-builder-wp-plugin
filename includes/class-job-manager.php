@@ -314,7 +314,11 @@ class Job_Manager {
 			if ( '' === $processor_class || ! class_exists( $processor_class )
 				|| ! in_array( __NAMESPACE__ . '\\Job_Processor_Interface', class_implements( $processor_class ), true )
 				|| ! in_array( $processor_class, $allowed, true ) ) {
-				self::fail_job( $job_id, 'processor not allowed: ' . $processor_class, $processor_class );
+				// A missing _processor is as much a rejected request as a wrong class:
+				// use a non-empty sentinel so fail_job() still writes the audit entry
+				// (which it skips when the processor value is an empty string).
+				$audited_processor = '' === $processor_class ? '(missing)' : $processor_class;
+				self::fail_job( $job_id, 'processor not allowed: ' . $audited_processor, $audited_processor );
 				return;
 			}
 
