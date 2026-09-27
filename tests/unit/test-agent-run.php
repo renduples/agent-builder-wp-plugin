@@ -340,32 +340,31 @@ class Test_Agent_Run extends TestCase {
 	}
 
 	/**
-	 * A genuinely ambiguous legacy row — a flat scratchpad that happens to hold
-	 * BOTH a "scratchpad" key (an array) AND a "messages" key that is a list of
-	 * role-bearing message objects (the exact shape the old heuristic would
-	 * misread as the current wrapper) — is still recovered as the whole legacy
-	 * scratchpad. The current-shape signal is now an explicit
-	 * agent_builder_state_version marker written by encode_state(), not a shape
-	 * heuristic, so a row that merely *looks* like the {scratchpad, messages}
-	 * wrapper but lacks the marker can no longer be misclassified, which would
-	 * otherwise silently discard its other legacy keys.
+	 * A run whose state column holds the current {scratchpad, messages} wrapper
+	 * but was written before the agent_builder_state_version marker existed
+	 * (the shipped m10-foundation code) must still load its scratchpad AND its
+	 * resume transcript. The marker is the primary signal, but a shape heuristic
+	 * is the fallback for unmarked rows — otherwise an already-'waiting' run in
+	 * a real deployment would lose its resume transcript on the next load.
 	 */
-	public function test_load_recovers_ambiguous_legacy_state_without_version_marker(): void {
+	public function test_load_recovers_current_wrapper_shape_without_version_marker(): void {
 		$run    = Agent_Run::begin( 'content-writer' );
 		$run_id = $run->get_run_id();
 
+		$transcript = array(
+			array( 'role' => 'user', 'content' => 'resume me' ),
+			array( 'role' => 'assistant', 'content' => 'working on it' ),
+		);
+
 		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Simulating a pre-2.15.0 row shape for the test.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Simulating a pre-marker (but current-wrapper) row shape for the test.
 		$wpdb->update(
 			$wpdb->prefix . 'agent_builder_runs',
 			array(
 				'state' => wp_json_encode(
 					array(
-						'scratchpad'    => array( 'legacy' => 'nested' ),
-						'messages'      => array(
-							array( 'role' => 'user', 'content' => 'a coincidental role-bearing list' ),
-						),
-						'delegated_key' => 'delegated_value',
+						'scratchpad' => array( 'delegated_key' => 'delegated_value' ),
+						'messages'   => $transcript,
 					)
 				),
 			),
@@ -374,15 +373,8 @@ class Test_Agent_Run extends TestCase {
 
 		$reloaded = Agent_Run::load( $run_id );
 
-		// The whole decoded value is the legacy scratchpad, including the two
-		// coincidental keys — not just whatever sat under "scratchpad".
 		$this->assertSame( 'delegated_value', $reloaded->scratch_get( 'delegated_key' ) );
-		$this->assertSame( array( 'legacy' => 'nested' ), $reloaded->scratch_get( 'scratchpad' ) );
-		$this->assertSame(
-			array( array( 'role' => 'user', 'content' => 'a coincidental role-bearing list' ) ),
-			$reloaded->scratch_get( 'messages' )
-		);
-		$this->assertSame( array(), $reloaded->resume_state()['messages'] );
+		$this->assertSame( $transcript, $reloaded->resume_state()['messages'] );
 
 		$run->finish( 'completed' );
 	}

@@ -389,6 +389,88 @@ class Test_Schema_Upgrade extends TestCase {
 	}
 
 	/**
+	 * When a successful write drains the fallback store, log() must still return
+	 * the id of the row it just submitted — not the id of the last recovered
+	 * fallback row (which drain_fallback() inserts afterwards and would otherwise
+	 * overwrite $wpdb->insert_id, corrupting log()'s int|false return).
+	 */
+	public function test_audit_log_returns_own_insert_id_after_draining_fallback_store(): void {
+		$previous_schema = get_option( 'agent_builder_db_schema_version', false );
+		delete_option( 'agent_builder_audit_fallback_rows' );
+
+		try {
+			// Request 1: schema stale, a row is deferred and stashed at shutdown.
+			update_option( 'agent_builder_db_schema_version', '2.14.2' );
+			$audit = new Audit_Log();
+			$audit->log( 'test-agent', 'tool_call', 'list_posts', array( 'id' => 1 ) );
+			$shutdown = new \ReflectionMethod( Audit_Log::class, 'flush_and_stash_on_shutdown' );
+			$shutdown->invoke( null );
+			$this->assertCount( 1, get_option( 'agent_builder_audit_fallback_rows', array() ) );
+
+			// New request: pending buffer empty again, schema current.
+			Audit_Log::reset_pending_for_tests();
+			update_option( 'agent_builder_db_schema_version', AGENT_BUILDER_DB_VERSION );
+			$this->assertFalse( Activator::schema_is_stale() );
+
+			// This write drains the stashed 'list_posts' row, but must return the
+			// id of its own 'get_post_content' row.
+			$new_id = $audit->log( 'test-agent', 'tool_call', 'get_post_content', array( 'id' => 2 ) );
+			$this->assertNotFalse( $new_id, 'log() must return its own row id, not false' );
+
+			global $wpdb;
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test assertion.
+			$target_type = $wpdb->get_var( $wpdb->prepare( "SELECT target_type FROM {$wpdb->prefix}agent_builder_audit_log WHERE id = %d", $new_id ) );
+			$this->assertSame( 'get_post_content', $target_type, 'the returned id must point at the row this call submitted, not the drained fallback row' );
+		} finally {
+			if ( false === $previous_schema ) {
+				delete_option( 'agent_builder_db_schema_version' );
+			} else {
+				update_option( 'agent_builder_db_schema_version', $previous_schema );
+			}
+			Audit_Log::reset_pending_for_tests();
+			delete_option( 'agent_builder_audit_fallback_rows' );
+		}
+	}
+
+	/**
+	 * Two stashes (e.g. two concurrent shutdowns) must both survive: the atomic
+	 * merge folds each batch into the store rather than one overwriting the
+	 * other's rows. Exercised sequentially here — the compare-and-swap in
+	 * merge_fallback_rows() is what makes the true concurrent case safe.
+	 */
+	public function test_audit_fallback_stash_merges_across_multiple_shutdowns(): void {
+		$previous_schema = get_option( 'agent_builder_db_schema_version', false );
+		delete_option( 'agent_builder_audit_fallback_rows' );
+
+		try {
+			update_option( 'agent_builder_db_schema_version', '2.14.2' );
+			$audit = new Audit_Log();
+
+			$audit->log( 'test-agent', 'tool_call', 'list_posts', array( 'id' => 1 ) );
+			$shutdown = new \ReflectionMethod( Audit_Log::class, 'flush_and_stash_on_shutdown' );
+			$shutdown->invoke( null );
+
+			// A second, independent request buffers and stashes its own row.
+			Audit_Log::reset_pending_for_tests();
+			$audit->log( 'test-agent', 'tool_call', 'get_post_content', array( 'id' => 2 ) );
+			$shutdown->invoke( null );
+
+			$fallback = get_option( 'agent_builder_audit_fallback_rows', array() );
+			$this->assertCount( 2, $fallback, 'both stashes must survive the merge, not one overwrite the other' );
+			$this->assertSame( 'list_posts', $fallback[0]['target_type'] );
+			$this->assertSame( 'get_post_content', $fallback[1]['target_type'] );
+		} finally {
+			if ( false === $previous_schema ) {
+				delete_option( 'agent_builder_db_schema_version' );
+			} else {
+				update_option( 'agent_builder_db_schema_version', $previous_schema );
+			}
+			Audit_Log::reset_pending_for_tests();
+			delete_option( 'agent_builder_audit_fallback_rows' );
+		}
+	}
+
+	/**
 	 * Agent_Run::persist() — the shared UPDATE used by finish(),
 	 * mark_waiting(), etc. — must also skip while the schema is stale, not
 	 * just persist_start()'s insert. A run resumed via Agent_Run::load() in a

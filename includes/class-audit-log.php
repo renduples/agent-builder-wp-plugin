@@ -173,15 +173,17 @@ class Audit_Log {
 		// once the schema is current, closing the data-loss gap a plain
 		// schema_is_stale() early-return would leave open for the rest of the
 		// request.
-		self::merge_pending( $data );
+		$insert_id = self::merge_pending( $data );
 
 		// The flush wrote the whole queue (so this row is durable) exactly when
-		// the buffer emptied; $wpdb->insert_id is then this row's id, since it
-		// was appended last. A false return signals "not durable yet" — callers
-		// ignore it (none check log()'s return), but the queued row retries on
-		// the next flush rather than vanishing.
+		// the buffer emptied. merge_pending() returns this row's own insert id,
+		// captured inside flush_pending() before drain_fallback() runs — so a
+		// recovered fallback row's insert can't overwrite $wpdb->insert_id and
+		// make us return the wrong row's id. A false return signals "not durable
+		// yet": callers ignore it (none check log()'s return), but the queued
+		// row retries on the next flush rather than vanishing.
 		if ( empty( self::$pending_rows ) ) {
-			return (int) $wpdb->insert_id;
+			return false !== $insert_id ? $insert_id : false;
 		}
 
 		return false;
@@ -246,12 +248,14 @@ class Audit_Log {
 	 * Queue one fully-built row and try to flush the whole buffer now.
 	 *
 	 * @param array<string, mixed> $data Column => value, ready for $wpdb->insert().
-	 * @return void
+	 * @return int|false This row's insert id when the flush made it durable, or
+	 *                   false when it is still pending (stale schema or a write
+	 *                   failure).
 	 */
-	private static function merge_pending( array $data ): void {
+	private static function merge_pending( array $data ): int|false {
 		self::$pending_rows[] = $data;
 		self::register_shutdown_guard();
-		self::flush_pending();
+		return self::flush_pending();
 	}
 
 	/**
@@ -262,26 +266,33 @@ class Audit_Log {
 	 * run rows, so a stale-schema audit write retries on the next flush instead
 	 * of silently vanishing.
 	 *
-	 * @return void
+	 * Returns the insert id of the last queued row written by this flush —
+	 * captured before drain_fallback() runs, so the fallback rows a successful
+	 * flush opportunistically recovers can't overwrite $wpdb->insert_id and
+	 * corrupt log()'s return — or false when no row was written this flush
+	 * (schema still stale, or every row failed).
+	 *
+	 * @return int|false
 	 */
-	private static function flush_pending(): void {
+	private static function flush_pending(): int|false {
 		if ( empty( self::$pending_rows ) ) {
-			return;
+			return false;
 		}
 
 		if ( Activator::schema_is_stale() ) {
 			self::$dirty = true;
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Intentional, rare (schema-repair-failure only) debug output; rows stay pending for the next flush attempt.
 			error_log( '[Agent Builder] Audit_Log: write deferred, schema is stale (a prior repair attempt this request did not succeed); ' . count( self::$pending_rows ) . ' row(s) queued' );
-			return;
+			return false;
 		}
 
 		global $wpdb;
 		$table = $wpdb->prefix . 'agent_builder_audit_log';
 
-		$still_pending = array();
-		$inserted_any  = false;
-		$failed        = false;
+		$still_pending  = array();
+		$inserted_any   = false;
+		$failed         = false;
+		$last_insert_id = null;
 
 		foreach ( self::$pending_rows as $row ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table insert.
@@ -292,11 +303,17 @@ class Audit_Log {
 				continue;
 			}
 
+			// Capture this row's id before anything else (record(), drain_fallback())
+			// can move $wpdb->insert_id on, so flush_pending() can hand log() the
+			// id of the row *it* just queued rather than some later insert's.
+			$inserted_id = (int) $wpdb->insert_id;
+
 			// Snapshot the chain hash in the same request as the insert, using
 			// the exact $row just written — see Audit_Log_Integrity for why
 			// this can't be deferred to a later read of the row.
-			Audit_Log_Integrity::record( (int) $wpdb->insert_id, $row );
-			$inserted_any = true;
+			Audit_Log_Integrity::record( $inserted_id, $row );
+			$last_insert_id = $inserted_id;
+			$inserted_any   = true;
 		}
 
 		self::$pending_rows = $still_pending;
@@ -308,7 +325,7 @@ class Audit_Log {
 			if ( $inserted_any ) {
 				self::bust_query_cache();
 			}
-			return;
+			return false;
 		}
 
 		self::$dirty = false;
@@ -317,6 +334,8 @@ class Audit_Log {
 		// A successful write means the schema is current — opportunistically
 		// retry any rows a prior request stashed in the fallback store.
 		self::drain_fallback();
+
+		return null !== $last_insert_id ? $last_insert_id : false;
 	}
 
 	/**
@@ -364,35 +383,35 @@ class Audit_Log {
 	 * disappear with the process. Best-effort: called at shutdown, so the DB
 	 * connection may already be gone; a failure here is tolerated.
 	 *
+	 * The merge is done atomically (compare-and-swap), so two concurrent
+	 * shutdowns can't each read the same stored value and overwrite the other's
+	 * rows — see merge_fallback_rows().
+	 *
 	 * @return void
 	 */
 	private static function stash_pending_to_fallback(): void {
-		$stored = get_option( self::FALLBACK_OPTION, array() );
-		if ( ! is_array( $stored ) ) {
-			$stored = array();
+		if ( empty( self::$pending_rows ) ) {
+			return;
 		}
 
-		$merged = array_merge( $stored, self::$pending_rows );
-
-		// Cap the store so a permanently-broken schema can't grow it unbounded.
-		if ( count( $merged ) > self::FALLBACK_CAP ) {
-			$merged = array_slice( $merged, -self::FALLBACK_CAP );
-		}
-
-		update_option( self::FALLBACK_OPTION, $merged, false );
+		self::merge_fallback_rows( self::$pending_rows );
 	}
 
 	/**
 	 * Opportunistically insert rows previously stashed in the fallback store,
 	 * called from a later request's successful flush (so the schema is known
-	 * current here). Rows that still fail to insert stay in the store; when all
-	 * land, the store is cleared.
+	 * current here). Rows that still fail to insert are merged back into the
+	 * store; when all land, the store stays empty.
+	 *
+	 * The read is an atomic read-and-clear (compare-and-swap), so two concurrent
+	 * drains can't both claim the same rows and double-insert them — see
+	 * claim_fallback_rows().
 	 *
 	 * @return void
 	 */
 	private static function drain_fallback(): void {
-		$stored = get_option( self::FALLBACK_OPTION, array() );
-		if ( ! is_array( $stored ) || empty( $stored ) ) {
+		$stored = self::claim_fallback_rows();
+		if ( empty( $stored ) ) {
 			return;
 		}
 
@@ -415,10 +434,133 @@ class Audit_Log {
 			Audit_Log_Integrity::record( (int) $wpdb->insert_id, $row );
 		}
 
-		if ( empty( $remaining ) ) {
-			delete_option( self::FALLBACK_OPTION );
-		} else {
-			update_option( self::FALLBACK_OPTION, $remaining, false );
+		if ( ! empty( $remaining ) ) {
+			self::merge_fallback_rows( $remaining );
+		}
+	}
+
+	/**
+	 * Atomically read-and-clear the fallback store, returning whatever rows it
+	 * held (or an empty array when it was empty, absent, or the claim was lost
+	 * to a concurrent caller).
+	 *
+	 * The clear is a compare-and-swap: the UPDATE only matches when option_value
+	 * still equals the exact serialized value we just read, so at most one
+	 * caller ever claims a given set of rows. A second concurrent drain reads a
+	 * different (already-cleared) value, its WHERE clause matches nothing, and
+	 * it returns empty instead of double-inserting the same rows.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	private static function claim_fallback_rows(): array {
+		global $wpdb;
+		$option = self::FALLBACK_OPTION;
+		$empty  = maybe_serialize( array() );
+
+		for ( $attempt = 0; $attempt < 5; ++$attempt ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom option, bypasses the WP options cache on purpose.
+			$old_raw = $wpdb->get_var(
+				$wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", $option )
+			);
+
+			if ( null === $old_raw || $empty === $old_raw ) {
+				return array();
+			}
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom option, bypasses the WP options cache on purpose.
+			$swapped = $wpdb->query(
+				$wpdb->prepare(
+					"UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s AND option_value = %s",
+					$empty,
+					$option,
+					$old_raw
+				)
+			);
+
+			if ( 1 === $swapped ) {
+				wp_cache_delete( $option, 'options' );
+				$rows = maybe_unserialize( $old_raw );
+				return is_array( $rows ) ? $rows : array();
+			}
+			// Lost the compare-and-swap race — retry against the fresh value.
+		}
+
+		return array();
+	}
+
+	/**
+	 * Atomically append $rows to the fallback store, capping it at FALLBACK_CAP.
+	 *
+	 * The append is a compare-and-swap loop: read the current value, merge, and
+	 * write the merged value back only if the stored value is still the one we
+	 * read. Two concurrent writers therefore fold each other's rows in rather
+	 * than one silently overwriting the other (lost rows). The only non-CAS case
+	 * is the very first write, when the option does not exist yet — an INSERT
+	 * creates it, and a concurrent creator's duplicate-key failure just falls
+	 * through to the next CAS attempt against their value.
+	 *
+	 * @param array<int, array<string, mixed>> $rows Rows to append.
+	 * @return void
+	 */
+	private static function merge_fallback_rows( array $rows ): void {
+		if ( empty( $rows ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$option = self::FALLBACK_OPTION;
+
+		for ( $attempt = 0; $attempt < 5; ++$attempt ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom option, bypasses the WP options cache on purpose.
+			$old_raw = $wpdb->get_var(
+				$wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", $option )
+			);
+
+			$stored = ( null !== $old_raw ) ? maybe_unserialize( $old_raw ) : array();
+			if ( ! is_array( $stored ) ) {
+				$stored = array();
+			}
+
+			$merged = array_merge( $stored, $rows );
+			if ( count( $merged ) > self::FALLBACK_CAP ) {
+				$merged = array_slice( $merged, -self::FALLBACK_CAP );
+			}
+			$new_raw = maybe_serialize( $merged );
+
+			if ( null === $old_raw ) {
+				// Option absent: create it atomically. A concurrent creator makes
+				// this INSERT fail on the duplicate primary key; retry then folds
+				// our rows into their value via the CAS path below.
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom option, bypasses the WP options cache on purpose.
+				$inserted = $wpdb->query(
+					$wpdb->prepare(
+						"INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')",
+						$option,
+						$new_raw
+					)
+				);
+				if ( false !== $inserted ) {
+					wp_cache_delete( $option, 'options' );
+					return;
+				}
+				continue;
+			}
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom option, bypasses the WP options cache on purpose.
+			$updated = $wpdb->query(
+				$wpdb->prepare(
+					"UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s AND option_value = %s",
+					$new_raw,
+					$option,
+					$old_raw
+				)
+			);
+
+			if ( 1 === $updated ) {
+				wp_cache_delete( $option, 'options' );
+				return;
+			}
+			// Lost the compare-and-swap race — retry against the fresh value.
 		}
 	}
 
