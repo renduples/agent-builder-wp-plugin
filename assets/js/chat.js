@@ -1358,11 +1358,12 @@
             if (summaryKeys.length) {
                 const summaryDiv = document.createElement('div');
                 summaryDiv.className = 'agentic-proposal-summary';
+                const i18n = agenticChat.i18n || {};
                 const labels = {
-                    title: 'Title',
-                    status: 'Status',
-                    post_type: 'Post type',
-                    post_id: 'Post'
+                    title: i18n.summaryTitle || 'Title',
+                    status: i18n.summaryStatus || 'Status',
+                    post_type: i18n.summaryPostType || 'Post type',
+                    post_id: i18n.summaryPost || 'Post'
                 };
                 summaryKeys.forEach(function (key) {
                     const value = proposal.summary[key];

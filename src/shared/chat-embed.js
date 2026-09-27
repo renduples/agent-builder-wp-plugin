@@ -12,6 +12,15 @@ import apiFetch from '@wordpress/api-fetch';
 import { __ } from '@wordpress/i18n';
 import { Notice } from '@wordpress/components';
 
+// Human labels for the key-argument summary rows on a Proposed Change card.
+// Mirrors the summary labels in assets/js/chat.js and assets/js/chat-overlay.js.
+const PROPOSAL_SUMMARY_LABELS = {
+	title: __( 'Title', 'agent-builder' ),
+	status: __( 'Status', 'agent-builder' ),
+	post_type: __( 'Post type', 'agent-builder' ),
+	post_id: __( 'Post', 'agent-builder' ),
+};
+
 function generateChatSessionId() {
 	return Math.random().toString( 36 ).slice( 2, 10 );
 }
@@ -112,6 +121,32 @@ export function ProposalCard( { proposal, sessionId } ) {
 						'agent-builder'
 					) }
 			</div>
+			{ proposal.summary &&
+				typeof proposal.summary === 'object' &&
+				Object.keys( proposal.summary ).length > 0 && (
+					<div className="agentic-proposal-summary">
+						{ Object.entries( proposal.summary )
+							.filter(
+								( [ , value ] ) =>
+									value !== null &&
+									value !== undefined &&
+									value !== ''
+							)
+							.map( ( [ key, value ] ) => (
+								<div
+									className="agentic-proposal-summary-row"
+									key={ key }
+								>
+									<strong>
+										{ PROPOSAL_SUMMARY_LABELS[ key ] ||
+											key.replace( /_/g, ' ' ) }
+										:{ ' ' }
+									</strong>
+									{ String( value ) }
+								</div>
+							) ) }
+					</div>
+				) }
 			{ proposal.diff && (
 				<>
 					<button

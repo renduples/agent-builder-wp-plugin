@@ -332,6 +332,36 @@
         });
         card.appendChild(desc);
 
+        // Key arguments (title/status/post type) so the user sees what they're
+        // approving, not just the generic tool description. Rendered as text
+        // nodes, never innerHTML, so a title with &, quotes or dashes shows as-is.
+        if (proposal.summary && typeof proposal.summary === 'object') {
+            const summaryKeys = Object.keys(proposal.summary);
+            if (summaryKeys.length) {
+                const summaryDiv = document.createElement('div');
+                summaryDiv.className = 'agentic-overlay-proposal-summary';
+                const i18n = (typeof agenticChat !== 'undefined' && agenticChat.i18n) || {};
+                const labels = {
+                    title: i18n.summaryTitle || 'Title',
+                    status: i18n.summaryStatus || 'Status',
+                    post_type: i18n.summaryPostType || 'Post type',
+                    post_id: i18n.summaryPost || 'Post'
+                };
+                summaryKeys.forEach(function (key) {
+                    const value = proposal.summary[key];
+                    if (value === null || value === undefined || value === '') return;
+                    const row = document.createElement('div');
+                    row.className = 'agentic-overlay-proposal-summary-row';
+                    const label = document.createElement('strong');
+                    label.textContent = (labels[key] || key.replace(/_/g, ' ')) + ': ';
+                    row.appendChild(label);
+                    row.appendChild(document.createTextNode(String(value)));
+                    summaryDiv.appendChild(row);
+                });
+                card.appendChild(summaryDiv);
+            }
+        }
+
         if (proposal.diff) {
             const diffToggle = el('button', {
                 type: 'button',
