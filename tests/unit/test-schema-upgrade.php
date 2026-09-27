@@ -197,6 +197,32 @@ class Test_Schema_Upgrade extends TestCase {
 	}
 
 	/**
+	 * admin-ajax.php sets is_admin() true but never fires admin_init, so a
+	 * logged-in admin's first post-auto-update request being a wp_ajax_* call
+	 * (heartbeat, autosave, a frontend AJAX action) must still repair the schema
+	 * here — maybe_upgrade_schema() must not defer to the (never-run) admin_init
+	 * path for AJAX requests, or that whole request silently drops every
+	 * Agent_Run/Audit_Log write against the stale table.
+	 */
+	public function test_maybe_upgrade_schema_repairs_for_admin_ajax_requests(): void {
+		update_option( 'agent_builder_db_schema_version', '2.14.2' );
+		$this->enter_admin_as_logged_in_user();
+		$this->recreate_pre_m10_tables();
+
+		add_filter( 'wp_doing_ajax', '__return_true' );
+		try {
+			Activator::maybe_upgrade_schema();
+		} finally {
+			remove_filter( 'wp_doing_ajax', '__return_true' );
+		}
+
+		$this->assertSame(
+			AGENT_BUILDER_DB_VERSION,
+			(string) get_option( 'agent_builder_db_schema_version' )
+		);
+	}
+
+	/**
 	 * A failed repair leaves a short-TTL backoff transient that gates repeated
 	 * full-dbDelta attempts, so a persistent migration failure doesn't turn
 	 * into multi-table DDL + error-log writes on every public request. Once the

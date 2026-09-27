@@ -662,4 +662,107 @@ class Test_Agent_Run extends TestCase {
 
 		$run_c->finish( 'completed' );
 	}
+
+	/**
+	 * A run whose shutdown retry still finds the schema stale is stashed into a
+	 * bounded fallback store — the same cross-request durability bridge
+	 * Audit_Log already has — rather than vanishing with the process. This is
+	 * the data-loss case the in-request pending buffer alone can't close: a cron
+	 * or REST request that begins and finishes a run while a schema repair has
+	 * failed for the whole request (schema_is_stale() never clears) must not
+	 * silently lose the row.
+	 */
+	public function test_run_row_is_stashed_to_fallback_store_when_shutdown_retry_fails(): void {
+		$previous_schema = get_option( 'agent_builder_db_schema_version', false );
+		delete_option( 'agent_builder_run_fallback_rows' );
+
+		try {
+			update_option( 'agent_builder_db_schema_version', '2.14.2' );
+			$this->assertTrue( Activator::schema_is_stale() );
+
+			$run    = Agent_Run::begin( 'content-writer' );
+			$run_id = $run->get_run_id();
+			$run->finish( 'completed', array( 'text' => 'done' ) );
+
+			// The insert was deferred from begin() onward, so the run never landed.
+			$this->assertFalse( $run->is_persisted() );
+
+			// Simulate the shutdown retry: it still finds the schema stale, so the
+			// still-pending row is stashed to the fallback store.
+			$shutdown = new \ReflectionMethod( Agent_Run::class, 'flush_and_stash_on_shutdown' );
+			$shutdown->invoke( $run );
+
+			$fallback = get_option( 'agent_builder_run_fallback_rows', array() );
+			$this->assertIsArray( $fallback, 'the fallback store must exist after a failed shutdown retry' );
+			$this->assertCount( 1, $fallback, 'the still-pending run must be stashed, not dropped' );
+			$this->assertSame( $run_id, $fallback[0]['run_id'] );
+			$this->assertTrue( $fallback[0]['insert'], 'a run whose insert never landed must be stashed as an INSERT record' );
+			$this->assertSame( 'completed', $fallback[0]['fields']['status'] );
+			$this->assertSame( 'content-writer', $fallback[0]['fields']['root_agent'] );
+		} finally {
+			if ( false === $previous_schema ) {
+				delete_option( 'agent_builder_db_schema_version' );
+			} else {
+				update_option( 'agent_builder_db_schema_version', $previous_schema );
+			}
+			Agent_Run::reset_current_for_tests();
+			delete_option( 'agent_builder_run_fallback_rows' );
+		}
+	}
+
+	/**
+	 * The next successful write in any later request drains the fallback store:
+	 * the stashed run row is inserted together with the new run's own row, and
+	 * the store is cleared — closing the loop for the best-effort durability
+	 * bridge.
+	 */
+	public function test_run_fallback_store_is_drained_on_next_successful_write(): void {
+		$previous_schema = get_option( 'agent_builder_db_schema_version', false );
+		delete_option( 'agent_builder_run_fallback_rows' );
+
+		try {
+			// Request 1: schema stale, a run is deferred and stashed at shutdown.
+			update_option( 'agent_builder_db_schema_version', '2.14.2' );
+			$run             = Agent_Run::begin( 'content-writer' );
+			$stashed_run_id  = $run->get_run_id();
+			$run->finish( 'completed' );
+			$shutdown = new \ReflectionMethod( Agent_Run::class, 'flush_and_stash_on_shutdown' );
+			$shutdown->invoke( $run );
+			$this->assertCount( 1, get_option( 'agent_builder_run_fallback_rows', array() ) );
+
+			Agent_Run::reset_current_for_tests();
+
+			// New request: the schema is current again.
+			update_option( 'agent_builder_db_schema_version', AGENT_BUILDER_DB_VERSION );
+			$this->assertFalse( Activator::schema_is_stale() );
+
+			// A healthy begin() flushes its own row successfully and drains the
+			// stashed row alongside it.
+			$run2 = Agent_Run::begin( 'seo-optimizer' );
+
+			global $wpdb;
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test assertion.
+			$stashed_row = $wpdb->get_row(
+				$wpdb->prepare( "SELECT * FROM {$wpdb->prefix}agent_builder_runs WHERE run_id = %s", $stashed_run_id ),
+				ARRAY_A
+			);
+			$this->assertIsArray( $stashed_row, 'the stashed run row must land on the next successful write' );
+			$this->assertSame( 'completed', $stashed_row['status'] );
+			$this->assertSame(
+				array(),
+				get_option( 'agent_builder_run_fallback_rows', array() ),
+				'the fallback store must be cleared once drained'
+			);
+
+			$run2->finish( 'completed' );
+		} finally {
+			if ( false === $previous_schema ) {
+				delete_option( 'agent_builder_db_schema_version' );
+			} else {
+				update_option( 'agent_builder_db_schema_version', $previous_schema );
+			}
+			Agent_Run::reset_current_for_tests();
+			delete_option( 'agent_builder_run_fallback_rows' );
+		}
+	}
 }

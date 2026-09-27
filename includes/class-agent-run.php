@@ -81,6 +81,27 @@ class Agent_Run {
 	private const TRANSCRIPT_CAP_BYTES = 200 * 1024;
 
 	/**
+	 * Option key for the bounded fallback store of run rows whose shutdown
+	 * retry still could not persist them (a persistently stale schema, or a
+	 * write error). A best-effort bridge — not a full guarantee — so a run row
+	 * survives the request and is retried by a later request's next successful
+	 * write, rather than vanishing with the PHP process. An option is used (not
+	 * a transient) because it lives in the always-present wp_options table,
+	 * unaffected by a stale agent_builder_* schema.
+	 *
+	 * @var string
+	 */
+	private const FALLBACK_OPTION = 'agent_builder_run_fallback_rows';
+
+	/**
+	 * Maximum number of run rows the fallback store keeps, so a permanently-
+	 * broken schema can't grow it unbounded across requests.
+	 *
+	 * @var int
+	 */
+	private const FALLBACK_CAP = 50;
+
+	/**
 	 * The current in-process run, if any.
 	 *
 	 * @var Agent_Run|null
@@ -1055,19 +1076,35 @@ class Agent_Run {
 
 		register_shutdown_function(
 			function (): void {
-				if ( ! $this->finished ) {
-					$this->finish( 'aborted' );
-					return;
-				}
-
-				// A settled run whose last write(s) were deferred (schema was
-				// stale at the time) gets one more flush attempt here, in case
-				// something else this request repaired the schema afterwards.
-				if ( $this->dirty ) {
-					$this->flush_pending();
-				}
+				$this->flush_and_stash_on_shutdown();
 			}
 		);
+	}
+
+	/**
+	 * The shutdown safety net's body, split out so a test can drive it directly:
+	 * a settled run gets one more flush attempt, then whatever still could not
+	 * land is stashed to the fallback store (see stash_pending_to_fallback()).
+	 *
+	 * @return void
+	 */
+	private function flush_and_stash_on_shutdown(): void {
+		if ( ! $this->finished ) {
+			$this->finish( 'aborted' );
+		} elseif ( $this->dirty ) {
+			// A settled run whose last write(s) were deferred (schema was stale at
+			// the time) gets one more flush attempt here, in case something else
+			// this request repaired the schema afterwards.
+			$this->flush_pending();
+		}
+
+		// Whatever still could not land — the finish() above deferred, or the
+		// flush retry found the schema still stale — is stashed to a bounded
+		// fallback store so it survives the process and is retried by a later
+		// request's next successful write (see drain_fallback()).
+		if ( ! empty( $this->pending_fields ) ) {
+			$this->stash_pending_to_fallback();
+		}
 	}
 
 	/**
@@ -1412,6 +1449,227 @@ class Agent_Run {
 		$this->pending_fields  = array();
 		$this->pending_formats = array();
 		$this->dirty           = false;
+
+		// A successful write means the schema is current — opportunistically
+		// retry any run rows a prior request stashed in the fallback store.
+		self::drain_fallback();
+	}
+
+	/**
+	 * Move this run's still-pending write into the bounded fallback store, so a
+	 * persistently-stale schema (or a shutdown write error) can't make it
+	 * disappear with the process. Best-effort: called at shutdown, so the DB
+	 * connection may already be gone; a failure here is tolerated.
+	 *
+	 * The record carries the accumulated fields (plus their formats and whether
+	 * this is the run's first INSERT or a later UPDATE) so drain_fallback() can
+	 * reproduce the exact write in a later request.
+	 *
+	 * @return void
+	 */
+	private function stash_pending_to_fallback(): void {
+		if ( empty( $this->pending_fields ) ) {
+			return;
+		}
+
+		self::merge_fallback_rows(
+			array(
+				array(
+					'run_id'  => $this->run_id,
+					'insert'  => ! $this->row_inserted,
+					'fields'  => $this->pending_fields,
+					'formats' => array_values( $this->pending_formats ),
+				),
+			)
+		);
+	}
+
+	/**
+	 * Opportunistically write run rows previously stashed in the fallback store,
+	 * called from a later request's successful flush (so the schema is known
+	 * current here). A stashed INSERT is reproduced with $wpdb->insert(); a
+	 * stashed UPDATE with $wpdb->update() keyed on run_id. Rows that still fail
+	 * to land are merged back into the store; when all land, the store empties.
+	 *
+	 * The read is an atomic read-and-clear (compare-and-swap), so two concurrent
+	 * drains can't both claim the same rows and double-write them — see
+	 * claim_fallback_rows().
+	 *
+	 * @return void
+	 */
+	private static function drain_fallback(): void {
+		$stored = self::claim_fallback_rows();
+		if ( empty( $stored ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'agent_builder_runs';
+
+		$remaining = array();
+		foreach ( $stored as $entry ) {
+			if ( ! is_array( $entry ) ) {
+				continue;
+			}
+
+			$run_id  = (string) ( $entry['run_id'] ?? '' );
+			$fields  = $entry['fields'] ?? array();
+			$formats = is_array( $entry['formats'] ?? null ) ? $entry['formats'] : array();
+
+			if ( '' === $run_id || ! is_array( $fields ) || empty( $fields ) ) {
+				continue;
+			}
+
+			if ( ! empty( $entry['insert'] ) ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table insert from the fallback store.
+				$result = empty( $formats ) ? $wpdb->insert( $table, $fields ) : $wpdb->insert( $table, $fields, $formats );
+				if ( ! $result ) {
+					$remaining[] = $entry;
+				}
+				continue;
+			}
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table update from the fallback store.
+			$result = empty( $formats )
+				? $wpdb->update( $table, $fields, array( 'run_id' => $run_id ) )
+				: $wpdb->update( $table, $fields, array( 'run_id' => $run_id ), $formats, array( '%s' ) );
+
+			// A 0-row UPDATE is the benign "already held these values" case (or
+			// a row that vanished, whose data is unrecoverable either way) — only
+			// a query error (false) means the write must be retried.
+			if ( false === $result ) {
+				$remaining[] = $entry;
+			}
+		}
+
+		if ( ! empty( $remaining ) ) {
+			self::merge_fallback_rows( $remaining );
+		}
+	}
+
+	/**
+	 * Atomically read-and-clear the fallback store, returning whatever rows it
+	 * held (or an empty array when it was empty, absent, or the claim was lost
+	 * to a concurrent caller).
+	 *
+	 * The clear is a compare-and-swap: the UPDATE only matches when option_value
+	 * still equals the exact serialized value we just read, so at most one
+	 * caller ever claims a given set of rows. A second concurrent drain reads a
+	 * different (already-cleared) value, its WHERE clause matches nothing, and
+	 * it returns empty instead of double-writing the same rows.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	private static function claim_fallback_rows(): array {
+		global $wpdb;
+		$option = self::FALLBACK_OPTION;
+		$empty  = maybe_serialize( array() );
+
+		for ( $attempt = 0; $attempt < 5; ++$attempt ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom option, bypasses the WP options cache on purpose.
+			$old_raw = $wpdb->get_var(
+				$wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", $option )
+			);
+
+			if ( null === $old_raw || $empty === $old_raw ) {
+				return array();
+			}
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom option, bypasses the WP options cache on purpose.
+			$swapped = $wpdb->query(
+				$wpdb->prepare(
+					"UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s AND option_value = %s",
+					$empty,
+					$option,
+					$old_raw
+				)
+			);
+
+			if ( 1 === $swapped ) {
+				wp_cache_delete( $option, 'options' );
+				$rows = maybe_unserialize( $old_raw );
+				return is_array( $rows ) ? $rows : array();
+			}
+			// Lost the compare-and-swap race — retry against the fresh value.
+		}
+
+		return array();
+	}
+
+	/**
+	 * Atomically append $rows to the fallback store, capping it at FALLBACK_CAP.
+	 *
+	 * The append is a compare-and-swap loop: read the current value, merge, and
+	 * write the merged value back only if the stored value is still the one we
+	 * read. Two concurrent writers therefore fold each other's rows in rather
+	 * than one silently overwriting the other (lost rows). The only non-CAS case
+	 * is the very first write, when the option does not exist yet — an INSERT
+	 * creates it, and a concurrent creator's duplicate-key failure just falls
+	 * through to the next CAS attempt against their value.
+	 *
+	 * @param array<int, array<string, mixed>> $rows Rows to append.
+	 * @return void
+	 */
+	private static function merge_fallback_rows( array $rows ): void {
+		if ( empty( $rows ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$option = self::FALLBACK_OPTION;
+
+		for ( $attempt = 0; $attempt < 5; ++$attempt ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom option, bypasses the WP options cache on purpose.
+			$old_raw = $wpdb->get_var(
+				$wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", $option )
+			);
+
+			$stored = ( null !== $old_raw ) ? maybe_unserialize( $old_raw ) : array();
+			if ( ! is_array( $stored ) ) {
+				$stored = array();
+			}
+
+			$merged = array_merge( $stored, $rows );
+			if ( count( $merged ) > self::FALLBACK_CAP ) {
+				$merged = array_slice( $merged, -self::FALLBACK_CAP );
+			}
+			$new_raw = maybe_serialize( $merged );
+
+			if ( null === $old_raw ) {
+				// Option absent: create it atomically. A concurrent creator makes
+				// this INSERT fail on the duplicate primary key; retry then folds
+				// our rows into their value via the CAS path below.
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom option, bypasses the WP options cache on purpose.
+				$inserted = $wpdb->query(
+					$wpdb->prepare(
+						"INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')",
+						$option,
+						$new_raw
+					)
+				);
+				if ( false !== $inserted ) {
+					wp_cache_delete( $option, 'options' );
+					return;
+				}
+				continue;
+			}
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom option, bypasses the WP options cache on purpose.
+			$updated = $wpdb->query(
+				$wpdb->prepare(
+					"UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s AND option_value = %s",
+					$new_raw,
+					$option,
+					$old_raw
+				)
+			);
+
+			if ( 1 === $updated ) {
+				wp_cache_delete( $option, 'options' );
+				return;
+			}
+			// Lost the compare-and-swap race — retry against the fresh value.
+		}
 	}
 
 	/**

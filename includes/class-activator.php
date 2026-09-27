@@ -301,7 +301,22 @@ final class Activator {
 	 * @return void
 	 */
 	public static function maybe_upgrade_schema(): void {
-		if ( is_admin() && is_user_logged_in() ) {
+		// A genuine wp-admin page load (is_admin() true, not AJAX, logged in)
+		// is owned by maybe_upgrade() on admin_init, which also surfaces the
+		// admin-only degraded notice — defer to it rather than racing it.
+		//
+		// admin-ajax.php sets is_admin() true but never fires admin_init, so a
+		// logged-in admin's first post-auto-update request being a wp_ajax_* call
+		// (heartbeat, autosave, any frontend AJAX action) would otherwise fall
+		// through this early-return and never run either repair — the exact
+		// "first request doesn't get migrated" gap this path exists to close,
+		// just for AJAX. Excluding wp_doing_ajax() lets that request repair here
+		// instead. This also means the idempotent dbDelta DDL below can now run
+		// from a fully unauthenticated frontend/REST/cron request — an
+		// intentional, accepted trust-boundary change: dbDelta takes no
+		// user-controlled input and is idempotent, and the 60s backoff transient
+		// bounds repetition.
+		if ( is_admin() && ! wp_doing_ajax() && is_user_logged_in() ) {
 			return; // maybe_upgrade() (admin_init) owns this case.
 		}
 
