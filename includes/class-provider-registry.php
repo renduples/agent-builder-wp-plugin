@@ -438,18 +438,52 @@ class Provider_Registry {
 	}
 
 	/**
+	 * Whether the emergency stop ("Disable All Agents") is currently active.
+	 *
+	 * Centralizes the class-existence guard so callers don't repeat it. The stop
+	 * is a runtime halt, not an unconfiguration: enable() disconnects providers
+	 * into a restorable snapshot, so while it is active a site has no *usable*
+	 * provider even though it is still *configured*.
+	 *
+	 * @return bool
+	 */
+	public static function is_emergency_stop_active(): bool {
+		return class_exists( __NAMESPACE__ . '\\Emergency_Stop' ) && Emergency_Stop::is_active();
+	}
+
+	/**
 	 * Whether at least one provider is fully usable for chat right now.
 	 *
 	 * Stricter than get_active(): the hosted "agentic" provider also needs a
 	 * billing identity (see get_license_key()) so the proxy can meter usage.
 	 * Without one the proxy rejects the request, so it is not counted here and
-	 * the admin funnels the user back to setup.
+	 * the admin funnels the user back to setup. A provider disconnected by the
+	 * emergency stop is not usable (see has_configured_provider()).
 	 *
 	 * @return bool
 	 */
 	public static function has_usable_provider(): bool {
-		if ( class_exists( __NAMESPACE__ . '\\Emergency_Stop' ) && Emergency_Stop::is_active() ) {
+		if ( self::is_emergency_stop_active() ) {
 			return false;
+		}
+		return self::has_configured_provider();
+	}
+
+	/**
+	 * Whether the site has a provider set up — usable right now, or held behind
+	 * the emergency stop.
+	 *
+	 * The emergency stop disconnects providers into a restorable snapshot rather
+	 * than removing them, so has_usable_provider() correctly reports false while
+	 * it is active. Callers that gate the admin *menu* or "connect a provider"
+	 * prompts must use this instead, so a stopped site still shows its full menu
+	 * and the administrator can reach Interface Settings to disable the stop.
+	 *
+	 * @return bool
+	 */
+	public static function has_configured_provider(): bool {
+		if ( self::is_emergency_stop_active() ) {
+			return true;
 		}
 		$ollama_url = get_option( 'agent_builder_ollama_url', '' );
 		foreach ( self::get_all() as $p ) {

@@ -1813,10 +1813,15 @@ class Admin_Menu_Handler {
 	 * Used to gate the full admin menu: when nothing is configured the user is
 	 * funnelled to the Quick Start / signup page.
 	 *
+	 * Uses has_configured_provider() rather than has_usable_provider() so that a
+	 * site sitting behind the emergency stop still registers its full menu: the
+	 * stop disconnects providers (has_usable_provider() is then false) but the
+	 * administrator must be able to reach Interface Settings to disable it.
+	 *
 	 * @return bool
 	 */
 	private function any_llm_configured(): bool {
-		return \Agentic\Provider_Registry::has_usable_provider();
+		return \Agentic\Provider_Registry::has_configured_provider();
 	}
 
 	/**

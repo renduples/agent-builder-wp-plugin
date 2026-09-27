@@ -155,6 +155,37 @@ class Test_Admin_Menu_Handler extends TestCase {
 	}
 
 	/**
+	 * The emergency stop disconnects providers, but a stopped site is still
+	 * *configured*: has_usable_provider() must read false (nothing can run) while
+	 * has_configured_provider() reads true, so any_llm_configured() keeps the full
+	 * menu registered and the administrator can reach Interface Settings to
+	 * disable the stop instead of being funnelled to Quick Start.
+	 */
+	public function test_emergency_stop_is_distinct_from_no_provider(): void {
+		// Configure a usable hosted provider first.
+		Provider_Registry::save_api_key( 'agentic', 'relay-key-abc123' );
+		Provider_Registry::invalidate();
+		update_option( 'agent_builder_license_key', 'AGNT-TEST-KEY' );
+
+		$this->assertTrue(
+			Provider_Registry::has_usable_provider(),
+			'precondition: a configured provider is usable before the stop.'
+		);
+
+		// Flip the emergency stop on.
+		update_option( 'agent_builder_disable_all_agents', '1' );
+
+		$this->assertFalse(
+			Provider_Registry::has_usable_provider(),
+			'The stop disconnects providers, so nothing is usable while it is active.'
+		);
+		$this->assertTrue(
+			Provider_Registry::has_configured_provider(),
+			'A stopped site is still configured and must keep its full admin menu.'
+		);
+	}
+
+	/**
 	 * Reset per-test globals so one denial test can't leak into the next.
 	 */
 	public function tearDown(): void {
@@ -162,6 +193,8 @@ class Test_Admin_Menu_Handler extends TestCase {
 		unset( $_GET['page'] );
 		Provider_Registry::save_api_key( 'agentic', '' );
 		Provider_Registry::invalidate();
+		delete_option( 'agent_builder_license_key' );
+		delete_option( 'agent_builder_disable_all_agents' );
 
 		parent::tearDown();
 	}

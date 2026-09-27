@@ -259,7 +259,7 @@ class Dashboard_REST {
 		$has_knowledge = class_exists( Okf_Store::class )
 			? Okf_Store::has_active_knowledge()
 			: (bool) get_option( 'agent_builder_has_knowledge', false );
-		$is_configured = $llm->is_configured() && ! Emergency_Stop::is_active();
+		$is_configured = Provider_Registry::has_configured_provider();
 		// Chat comes first: WordPress Assistant works out of the box on the
 		// bundled default provider, so a brand-new user can start talking to it
 		// with zero setup — before "connect a provider" (bring your own key/model)
