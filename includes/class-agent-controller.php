@@ -1179,6 +1179,7 @@ class Agent_Controller {
 					'description' => $tr['result']['description'] ?? $tr['result']['reason'] ?? '',
 					'diff'        => $tr['result']['diff'] ?? '',
 					'tool'        => $tr['tool'],
+					'summary'     => $tr['result']['summary'] ?? array(),
 				);
 				break; // One proposal per response.
 			}

@@ -793,6 +793,10 @@
         // For short messages this matches scrolling to bottom; for long replies
         // the user reads from the start rather than landing mid-message.
         messages.scrollTop = div.offsetTop - messages.offsetTop;
+        // A proposal card sits below the message text; make sure its approve/reject
+        // buttons are visible rather than left below the fold.
+        const proposalCard = div.querySelector('.agentic-proposal-card');
+        if (proposalCard) proposalCard.scrollIntoView({ block: 'end' });
         return div;
     }
 
@@ -969,7 +973,9 @@
                                     }
                                 // Pending confirmation -> render approve/reject buttons (streaming parity).
                                 if (streamBubble && evt.pending_proposal && evt.proposal) {
-                                    streamBubble.appendChild(renderProposalCard(evt.proposal));
+                                    const proposalCard = renderProposalCard(evt.proposal);
+                                    streamBubble.appendChild(proposalCard);
+                                    proposalCard.scrollIntoView({ block: 'end' });
                                 }
                                 } else if (evt.type === 'error') {
                                     const errText = evt.message || agenticChat.i18n.errorGeneric;
@@ -1344,6 +1350,35 @@
         desc.textContent = proposal.description || agenticChat.i18n.proposalDefault;
         card.appendChild(desc);
 
+        // Key arguments (title/status/post type) so the user sees what they're
+        // approving, not just the generic tool description. Rendered as text
+        // nodes, never innerHTML, so a title with &, quotes or dashes shows as-is.
+        if (proposal.summary && typeof proposal.summary === 'object') {
+            const summaryKeys = Object.keys(proposal.summary);
+            if (summaryKeys.length) {
+                const summaryDiv = document.createElement('div');
+                summaryDiv.className = 'agentic-proposal-summary';
+                const labels = {
+                    title: 'Title',
+                    status: 'Status',
+                    post_type: 'Post type',
+                    post_id: 'Post'
+                };
+                summaryKeys.forEach(function (key) {
+                    const value = proposal.summary[key];
+                    if (value === null || value === undefined || value === '') return;
+                    const row = document.createElement('div');
+                    row.className = 'agentic-proposal-summary-row';
+                    const label = document.createElement('strong');
+                    label.textContent = (labels[key] || key.replace(/_/g, ' ')) + ': ';
+                    row.appendChild(label);
+                    row.appendChild(document.createTextNode(String(value)));
+                    summaryDiv.appendChild(row);
+                });
+                card.appendChild(summaryDiv);
+            }
+        }
+
         // Diff view
         if (proposal.diff) {
             const diffToggle = document.createElement('button');
@@ -1651,7 +1686,12 @@
         // Lists
         html = html.replace(/^\s*[-*]\s+(.*)$/gm, '<li>$1</li>');
         html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
-        
+        // Drop the newline the <ul> wrapper leaves between items, so a later
+        // single-newline pass doesn't inject a stray <br> between <li>s — both
+        // between items and between the last item and the closing </ul>.
+        html = html.replace(/<\/li>\n<li>/g, '</li><li>');
+        html = html.replace(/(<\/li>)\n(<\/ul>)/g, '$1$2');
+
         // Numbered lists
         html = html.replace(/^\s*\d+\.\s+(.*)$/gm, '<li>$1</li>');
         
@@ -1676,6 +1716,24 @@
         html = html.replace(/(<\/table>)<\/p>/g, '$1');
         html = html.replace(/<p>(<hr>)/g, '$1');
         html = html.replace(/(<hr>)<\/p>/g, '$1');
+
+        // Preserve single line breaks inside a paragraph (the model's "line1\n
+        // line2" and "- item" lists after a colon). Blank lines were already
+        // turned into paragraph breaks above; only lone newlines remain.
+        // Code blocks are held aside first so their inner newlines survive as
+        // real newlines — the copy button reads textContent, which drops <br>.
+        var codeBlocks = [];
+        html = html.replace(/<div class="agentic-code-wrap">[\s\S]*?<\/div>/g, function (block) {
+            codeBlocks.push(block);
+            return '\u0000agentic_code_' + (codeBlocks.length - 1) + '\u0000';
+        });
+        html = html.replace(/\n/g, '<br>');
+        html = html.replace(/\u0000agentic_code_(\d+)\u0000/g, function (m, i) {
+            var restored = codeBlocks[parseInt(i, 10)];
+            // Leave a stray placeholder untouched (e.g. agent text that literally
+            // contains the sentinel) rather than collapsing it to "undefined".
+            return restored === undefined ? m : restored;
+        });
 
         return html;
     }
