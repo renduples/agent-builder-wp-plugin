@@ -268,6 +268,47 @@ class Test_Agent_Run extends TestCase {
 	}
 
 	/**
+	 * mark_waiting() must not settle the in-process instance when its DB write
+	 * fails: a transient error leaves the row still 'running', so the shutdown
+	 * safety net must still be able to mark it 'aborted' rather than strand it
+	 * forever (mirrors test_mark_continuing_write_failure_leaves_run_unsettled).
+	 */
+	public function test_mark_waiting_write_failure_leaves_run_unsettled(): void {
+		global $wpdb;
+		$run   = Agent_Run::begin( 'content-writer' );
+		$table = $wpdb->prefix . 'agent_builder_runs';
+
+		// Force mark_waiting()'s UPDATE to fail (as a transient DB error would),
+		// without touching any other query the request makes.
+		$mangle = static function ( $query ) {
+			if ( is_string( $query ) && false !== stripos( $query, "'waiting'" ) ) {
+				return false;
+			}
+			return $query;
+		};
+		add_filter( 'query', $mangle );
+
+		try {
+			$run->mark_waiting( 'approval', '42', array() );
+		} finally {
+			remove_filter( 'query', $mangle );
+		}
+
+		// The write never landed: the row is still 'running', not 'waiting'.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test assertion against the persisted row.
+		$row = $wpdb->get_row(
+			$wpdb->prepare( "SELECT status FROM {$table} WHERE run_id = %s", $run->get_run_id() ),
+			ARRAY_A
+		);
+		$this->assertSame( 'running', $row['status'] );
+
+		// Because the instance stayed unsettled, a later finish() — standing in
+		// for the shutdown guard — is NOT a no-op and can still abort the run.
+		$run->finish( 'aborted' );
+		$this->assertSame( 'aborted', $run->to_array()['status'] );
+	}
+
+	/**
 	 * record_iteration() sums iterations, tokens, cost, and unions tool names
 	 * across multiple calls.
 	 */

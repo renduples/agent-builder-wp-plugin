@@ -671,13 +671,21 @@ class Agent_Run {
 			$formats[]                       = '%s';
 		}
 
-		$this->persist( $fields, $formats );
+		$persisted = $this->persist( $fields, $formats );
 
 		$this->updated_at = $now;
 
 		// A waiting run has handed off to an external event; this in-process
 		// instance is settled and must not have the shutdown safety net
-		// overwrite it with 'aborted' when the current request ends.
+		// overwrite it with 'aborted' when the current request ends. Only
+		// settle it once the DB write has actually landed — a transient
+		// failure leaves the row 'running', and keeping $finished false lets
+		// the shutdown net mark it 'aborted' at request end instead of
+		// stranding it (mirrors mark_continuing()).
+		if ( ! $persisted ) {
+			return;
+		}
+
 		$this->finished = true;
 
 		// The instance is settled; release the current-run pointer so a later
