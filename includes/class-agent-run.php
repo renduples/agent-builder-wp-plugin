@@ -679,6 +679,13 @@ class Agent_Run {
 		// instance is settled and must not have the shutdown safety net
 		// overwrite it with 'aborted' when the current request ends.
 		$this->finished = true;
+
+		// The instance is settled; release the current-run pointer so a later
+		// begin() in the same request starts a fresh run rather than handing
+		// back this settled one (mirrors finish()).
+		if ( self::$current === $this ) {
+			self::$current = null;
+		}
 	}
 
 	/**
@@ -736,7 +743,7 @@ class Agent_Run {
 
 		$now = current_time( 'mysql', true );
 
-		$this->persist(
+		$persisted = $this->persist(
 			array(
 				'status'     => $this->status,
 				'updated_at' => $now,
@@ -745,7 +752,20 @@ class Agent_Run {
 		);
 
 		$this->updated_at = $now;
-		$this->finished   = true;
+
+		// Only settle this in-process instance once the DB write has actually
+		// landed. A transient write failure leaves the row still 'running';
+		// keeping $finished false lets the shutdown safety net mark it
+		// 'aborted' at request end instead of stranding it.
+		if ( ! $persisted ) {
+			return;
+		}
+
+		$this->finished = true;
+
+		if ( self::$current === $this ) {
+			self::$current = null;
+		}
 	}
 
 	/**
@@ -1281,13 +1301,17 @@ class Agent_Run {
 	 *
 	 * @param array $fields  Column => value.
 	 * @param array $formats Matching %s/%d/%f formats.
-	 * @return void
+	 * @return bool True when the write actually landed, false on a DB error
+	 *              (a $wpdb->update() false return). Callers that settle the
+	 *              in-process instance (mark_continuing()) must gate on this,
+	 *              so a transient failure does not disable the shutdown net
+	 *              while the row is still 'running' in storage.
 	 */
-	private function persist( array $fields, array $formats ): void {
+	private function persist( array $fields, array $formats ): bool {
 		global $wpdb;
 		$table = $wpdb->prefix . 'agent_builder_runs';
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table update, keyed by run_id.
-		$wpdb->update( $table, $fields, array( 'run_id' => $this->run_id ), $formats, array( '%s' ) );
+		return false !== $wpdb->update( $table, $fields, array( 'run_id' => $this->run_id ), $formats, array( '%s' ) );
 	}
 
 	/**

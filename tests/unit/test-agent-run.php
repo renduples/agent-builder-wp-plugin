@@ -402,6 +402,84 @@ class Test_Agent_Run extends TestCase {
 	}
 
 	/**
+	 * mark_continuing() must not settle the in-process instance when its DB
+	 * write fails: a transient error leaves the row still 'running', so the
+	 * shutdown safety net must still be able to mark it 'aborted' rather than
+	 * strand it forever.
+	 */
+	public function test_mark_continuing_write_failure_leaves_run_unsettled(): void {
+		global $wpdb;
+		$run   = Agent_Run::begin( 'content-writer' );
+		$table = $wpdb->prefix . 'agent_builder_runs';
+
+		// Force mark_continuing()'s UPDATE to fail (as a transient DB error
+		// would), without touching any other query the request makes.
+		$mangle = static function ( $query ) {
+			if ( is_string( $query ) && false !== stripos( $query, "'continuing'" ) ) {
+				return false;
+			}
+			return $query;
+		};
+		add_filter( 'query', $mangle );
+
+		try {
+			$run->mark_continuing();
+		} finally {
+			remove_filter( 'query', $mangle );
+		}
+
+		// The write never landed: the row is still 'running', not 'continuing'.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test assertion against the persisted row.
+		$row = $wpdb->get_row(
+			$wpdb->prepare( "SELECT status FROM {$table} WHERE run_id = %s", $run->get_run_id() ),
+			ARRAY_A
+		);
+		$this->assertSame( 'running', $row['status'] );
+
+		// Because the instance stayed unsettled, a later finish() — standing in
+		// for the shutdown guard — is NOT a no-op and can still abort the run.
+		$run->finish( 'aborted' );
+		$this->assertSame( 'aborted', $run->to_array()['status'] );
+	}
+
+	/**
+	 * mark_waiting() settles the run and releases the current-run pointer, so a
+	 * later begin() in the same request starts a genuinely new run instead of
+	 * returning the already-waiting one.
+	 */
+	public function test_begin_after_mark_waiting_returns_a_fresh_run(): void {
+		$run    = Agent_Run::begin( 'content-writer' );
+		$run_id = $run->get_run_id();
+
+		$run->mark_waiting( 'approval', '1', array() );
+
+		$this->assertNull( Agent_Run::current() );
+
+		$fresh = Agent_Run::begin( 'seo-optimizer' );
+		$this->assertNotSame( $run, $fresh );
+		$this->assertNotSame( $run_id, $fresh->get_run_id() );
+		$this->assertSame( 'seo-optimizer', $fresh->get_root_agent() );
+	}
+
+	/**
+	 * mark_continuing() likewise settles the run and releases the current-run
+	 * pointer, so a later begin() starts a fresh run rather than returning the
+	 * handed-off one.
+	 */
+	public function test_begin_after_mark_continuing_returns_a_fresh_run(): void {
+		$run    = Agent_Run::begin( 'content-writer' );
+		$run_id = $run->get_run_id();
+
+		$run->mark_continuing();
+
+		$this->assertNull( Agent_Run::current() );
+
+		$fresh = Agent_Run::begin( 'seo-optimizer' );
+		$this->assertNotSame( $run, $fresh );
+		$this->assertNotSame( $run_id, $fresh->get_run_id() );
+	}
+
+	/**
 	 * get_status() and get_root_agent() expose the fields resume validation
 	 * needs to reject replaying a terminal or mismatched-agent run.
 	 */
