@@ -19,6 +19,7 @@ use Agentic\Agent_Proposals;
 use Agentic\Agent_Run;
 use Agentic\Agent_Task_Job_Processor;
 use Agentic\Approval_Queue;
+use Agentic\Emergency_Stop;
 use Agentic\Job_Manager;
 use Agentic\REST_API;
 
@@ -41,6 +42,7 @@ class Test_Run_Resumer extends TestCase {
 	 */
 	public function tearDown(): void {
 		Agent_Run::reset_current_for_tests();
+		update_option( Emergency_Stop::OPTION_ENABLED, '0' );
 		parent::tearDown();
 	}
 
@@ -71,16 +73,21 @@ class Test_Run_Resumer extends TestCase {
 	}
 
 	/**
-	 * Begin a run and immediately mark it waiting on an approval, returning it.
+	 * Begin a run and immediately mark it waiting on an approval/proposal,
+	 * returning it. $type/$id default to 'approval'/'42' and must match
+	 * whatever the test later fires `agent_builder_approval_resolved` with —
+	 * claim_waiting() matches on both, not just run_id.
 	 *
-	 * @param array $opts Agent_Run::begin() opts.
+	 * @param array  $opts Agent_Run::begin() opts.
+	 * @param string $type 'approval' or 'proposal'.
+	 * @param string $id   Id of the approval/proposal being awaited.
 	 * @return Agent_Run
 	 */
-	private function begin_waiting_run( array $opts = array() ): Agent_Run {
+	private function begin_waiting_run( array $opts = array(), string $type = 'approval', string $id = '42' ): Agent_Run {
 		$run = Agent_Run::begin( 'wordpress-assistant', $opts );
 		$run->mark_waiting(
-			'approval',
-			'42',
+			$type,
+			$id,
 			array(
 				array(
 					'role'    => 'user',
@@ -147,7 +154,7 @@ class Test_Run_Resumer extends TestCase {
 	 * proposal row names its tool under 'tool', not 'action'.
 	 */
 	public function test_approve_adds_resolved_tool_name_for_proposal_rows(): void {
-		$run = $this->begin_waiting_run();
+		$run = $this->begin_waiting_run( array(), 'proposal', 'prop-1' );
 
 		$row = array(
 			'run_id' => $run->get_run_id(),
@@ -162,13 +169,94 @@ class Test_Run_Resumer extends TestCase {
 	}
 
 	/**
+	 * A real approve can carry no execution result (`$result` is null) — the
+	 * resume payload must not fabricate a `tool_result` key in that case,
+	 * only 'resume'.
+	 */
+	public function test_approve_with_null_result_does_not_fabricate_tool_result(): void {
+		$run = $this->begin_waiting_run();
+
+		$row = array(
+			'run_id' => $run->get_run_id(),
+			'action' => 'db_update_post',
+		);
+
+		do_action( 'agent_builder_approval_resolved', 'approval', 42, 'approved', null, $row );
+
+		$job = $this->the_pending_job();
+		$this->assertNotNull( $job );
+		$this->assertArrayNotHasKey( 'tool_result', $job->request_data );
+		$this->assertIsArray( $job->request_data['resume'] );
+	}
+
+	/**
+	 * A stale/duplicate resolution for a pending item the run has already
+	 * moved past (it is now waiting on something newer) must not hijack the
+	 * newer wait — claim_waiting() matches on awaiting_type/awaiting_id, not
+	 * just run_id/status.
+	 */
+	public function test_stale_resolution_for_a_superseded_wait_is_a_clean_noop(): void {
+		$run = $this->begin_waiting_run( array(), 'approval', '1' );
+
+		// The run has since moved on to waiting on a different approval.
+		$run->mark_waiting( 'approval', '2', array() );
+
+		$row = array(
+			'run_id' => $run->get_run_id(),
+			'action' => 'db_update_post',
+		);
+
+		$waiting_before = did_action( 'agent_builder_run_waiting' );
+
+		// A late resolution for the old (superseded) approval id '1' arrives.
+		do_action( 'agent_builder_approval_resolved', 'approval', 1, 'approved', array( 'success' => true ), $row );
+
+		$this->assertNull( $this->the_pending_job() );
+		$this->assertSame( $waiting_before, did_action( 'agent_builder_run_waiting' ) );
+
+		$reloaded = Agent_Run::load( $run->get_run_id() );
+		$data     = $reloaded->to_array();
+		$this->assertSame( 'waiting', $data['status'] );
+		$this->assertSame( '2', $data['awaiting_id'] );
+	}
+
+	/**
+	 * A refused dispatch (e.g. Emergency Stop active) must not leave the run
+	 * stuck 'running' forever — claim_waiting() already flipped it out of
+	 * 'waiting', so Run_Resumer must finish() it as failed and fire
+	 * agent_builder_run_finished exactly once instead of silently orphaning it.
+	 */
+	public function test_failed_dispatch_finishes_run_as_failed_instead_of_orphaning_it(): void {
+		$run = $this->begin_waiting_run();
+
+		$row = array(
+			'run_id' => $run->get_run_id(),
+			'action' => 'db_update_post',
+		);
+
+		$finished_before = did_action( 'agent_builder_run_finished' );
+
+		update_option( Emergency_Stop::OPTION_ENABLED, '1' );
+
+		do_action( 'agent_builder_approval_resolved', 'approval', 42, 'approved', array( 'success' => true ), $row );
+
+		update_option( Emergency_Stop::OPTION_ENABLED, '0' );
+
+		$this->assertNull( $this->the_pending_job() );
+		$this->assertSame( $finished_before + 1, did_action( 'agent_builder_run_finished' ) );
+
+		$reloaded = Agent_Run::load( $run->get_run_id() );
+		$this->assertSame( 'failed', $reloaded->to_array()['status'] );
+	}
+
+	/**
 	 * Two concurrent resolutions for the same run (a double-submit, a
 	 * retried REST request, two admins racing the same approval) must not
 	 * both dispatch a resume job — only the first to claim the run out of
 	 * 'waiting' may act; the second is a clean no-op.
 	 */
 	public function test_concurrent_approve_resolutions_dispatch_only_one_job(): void {
-		$run = $this->begin_waiting_run();
+		$run = $this->begin_waiting_run( array(), 'approval', '1' );
 
 		$row = array(
 			'run_id' => $run->get_run_id(),
@@ -191,7 +279,7 @@ class Test_Run_Resumer extends TestCase {
 	 * finish, no duplicate agent_builder_run_finished).
 	 */
 	public function test_concurrent_reject_resolutions_finish_only_once(): void {
-		$run = $this->begin_waiting_run();
+		$run = $this->begin_waiting_run( array(), 'approval', '1' );
 
 		$row = array(
 			'run_id' => $run->get_run_id(),
@@ -212,7 +300,7 @@ class Test_Run_Resumer extends TestCase {
 	 * row.
 	 */
 	public function test_reject_finishes_run_with_denied_message_and_dispatches_no_job(): void {
-		$run = $this->begin_waiting_run();
+		$run = $this->begin_waiting_run( array(), 'approval', '99' );
 
 		$row = array(
 			'run_id' => $run->get_run_id(),
@@ -234,7 +322,7 @@ class Test_Run_Resumer extends TestCase {
 	 * message must still name the right tool.
 	 */
 	public function test_reject_uses_tool_column_for_proposal_rows(): void {
-		$run = $this->begin_waiting_run();
+		$run = $this->begin_waiting_run( array(), 'proposal', 'prop-1' );
 
 		$row = array(
 			'run_id' => $run->get_run_id(),
@@ -326,7 +414,7 @@ class Test_Run_Resumer extends TestCase {
 	 * fires exactly once, only on the reject path.
 	 */
 	public function test_run_waiting_and_run_finished_fire_once_on_reject(): void {
-		$run = $this->begin_waiting_run();
+		$run = $this->begin_waiting_run( array(), 'approval', '1' );
 
 		$waiting_before  = did_action( 'agent_builder_run_waiting' );
 		$finished_before = did_action( 'agent_builder_run_finished' );
@@ -347,7 +435,7 @@ class Test_Run_Resumer extends TestCase {
 	 * does not — the run is still going, handed off to the resume job.
 	 */
 	public function test_run_waiting_fires_but_not_run_finished_on_approve(): void {
-		$run = $this->begin_waiting_run();
+		$run = $this->begin_waiting_run( array(), 'approval', '1' );
 
 		$waiting_before  = did_action( 'agent_builder_run_waiting' );
 		$finished_before = did_action( 'agent_builder_run_finished' );

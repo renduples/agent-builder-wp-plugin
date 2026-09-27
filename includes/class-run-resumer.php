@@ -68,9 +68,11 @@ class Run_Resumer {
 			return;
 		}
 
-		// Atomically claim the run out of 'waiting': two concurrent
-		// resolutions for the same run must not both dispatch/finish it.
-		if ( ! $run->claim_waiting() ) {
+		// Atomically claim the run out of 'waiting' on this specific item:
+		// two concurrent resolutions for the same run must not both
+		// dispatch/finish it, and a stale/duplicate resolution for a wait
+		// the run has already moved past must not hijack a newer one.
+		if ( ! $run->claim_waiting( $type, (string) $id ) ) {
 			return;
 		}
 
@@ -81,25 +83,40 @@ class Run_Resumer {
 		$tool_name = (string) ( $row['action'] ?? ( $row['tool'] ?? 'action' ) );
 
 		if ( 'approved' === $decision ) {
-			// The controller's resume branch reads the tool name from
-			// tool_result['tool'] to reconstruct the tool message — neither
-			// execute_approved_action() nor Agent_Proposals::approve()'s
-			// return value carries that key, so it must be added here.
-			$tool_result         = is_array( $result ) ? $result : array();
-			$tool_result['tool'] = $tool_name;
-
 			$extra = array(
-				'resume'      => $run->resume_state(),
-				'tool_result' => $tool_result,
+				'resume' => $run->resume_state(),
 			);
 
-			Agent_Task_Job_Processor::dispatch( $run, $extra );
+			// Only a real execution result becomes a tool message on resume —
+			// fabricating one when $result is null (a real approve can still
+			// carry no execution result) would put a bogus tool reply in the
+			// model's transcript.
+			if ( is_array( $result ) ) {
+				// The controller's resume branch reads the tool name from
+				// tool_result['tool'] to reconstruct the tool message —
+				// neither execute_approved_action() nor
+				// Agent_Proposals::approve()'s return value carries that key,
+				// so it must be added here.
+				$result['tool']       = $tool_name;
+				$extra['tool_result'] = $result;
+			}
+
+			$job_id = Agent_Task_Job_Processor::dispatch( $run, $extra );
+
+			if ( '' === $job_id ) {
+				// claim_waiting() already flipped the run to 'running'; a
+				// refused dispatch (e.g. Emergency Stop) must not leave it
+				// stuck there forever with nothing left to resume it.
+				$run->finish(
+					'failed',
+					array( 'error' => "Could not resume: dispatching the continuation for {$tool_name} was refused." )
+				);
+			}
+
 			return;
 		}
 
 		// Rejected: the run should stop, not resume.
 		$run->finish( 'completed', array( 'text' => "Stopped: you denied {$tool_name}" ) );
-
-		do_action( 'agent_builder_run_finished', $run );
 	}
 }
