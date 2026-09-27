@@ -667,6 +667,34 @@ class Agent_Run {
 	}
 
 	/**
+	 * Persist the current transcript into state.messages without changing the
+	 * run's status — called by the controller after every loop iteration so
+	 * a run can be resumed from its last-known state if the process dies
+	 * before finish() or mark_waiting() runs (e.g. a PHP time-limit kill).
+	 *
+	 * Reuses the same cap/strip logic as mark_waiting() — callers must not
+	 * reimplement transcript capping themselves.
+	 *
+	 * @param array $transcript Conversation messages so far.
+	 * @return void
+	 */
+	public function checkpoint_transcript( array $transcript ): void {
+		$this->messages = self::sanitize_transcript( $transcript );
+
+		$now = current_time( 'mysql', true );
+
+		$this->persist(
+			array(
+				'state'      => $this->encode_state(),
+				'updated_at' => $now,
+			),
+			array( '%s', '%s' )
+		);
+
+		$this->updated_at = $now;
+	}
+
+	/**
 	 * Ask this run to stop cooperatively. Persists immediately so any
 	 * process holding a different instance of the same run sees the request
 	 * the next time it calls cancel_requested().
