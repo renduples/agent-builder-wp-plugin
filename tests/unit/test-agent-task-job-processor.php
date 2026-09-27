@@ -110,6 +110,58 @@ class Test_Agent_Task_Job_Processor extends TestCase {
 	}
 
 	/**
+	 * A misbehaving earlier-priority agent_builder_job_processors callback that
+	 * returns a non-array does not crash this processor's own callback (which
+	 * would previously throw a TypeError from its `array` type hint before
+	 * Job_Manager's fallback could run): the value is cast back to an array and
+	 * self::class is still appended.
+	 */
+	public function test_init_callback_survives_non_array_from_earlier_filter(): void {
+		$callback = function () {
+			return 'not-an-array';
+		};
+		add_filter( 'agent_builder_job_processors', $callback, 5 );
+
+		try {
+			$allowed = apply_filters(
+				'agent_builder_job_processors',
+				array( \Agentic\Agent_Builder_Job_Processor::class )
+			);
+		} finally {
+			remove_filter( 'agent_builder_job_processors', $callback, 5 );
+		}
+
+		$this->assertIsArray( $allowed );
+		$this->assertContains( Agent_Task_Job_Processor::class, $allowed );
+	}
+
+	/**
+	 * Regression: when an earlier-priority filter returns a non-array, the
+	 * callback restores the built-in default allowlist entry rather than an
+	 * empty array, so Agent_Builder_Job_Processor's own jobs are not dropped
+	 * and later rejected as "processor not allowed".
+	 */
+	public function test_init_callback_preserves_default_allowlist_on_non_array_from_earlier_filter(): void {
+		$callback = function () {
+			return 'not-an-array';
+		};
+		add_filter( 'agent_builder_job_processors', $callback, 5 );
+
+		try {
+			$allowed = apply_filters(
+				'agent_builder_job_processors',
+				array( \Agentic\Agent_Builder_Job_Processor::class )
+			);
+		} finally {
+			remove_filter( 'agent_builder_job_processors', $callback, 5 );
+		}
+
+		$this->assertIsArray( $allowed );
+		$this->assertContains( \Agentic\Agent_Builder_Job_Processor::class, $allowed );
+		$this->assertContains( Agent_Task_Job_Processor::class, $allowed );
+	}
+
+	/**
 	 * The processor resolves the Agent_Run by run_id before doing anything
 	 * else: a missing run fails the job cleanly (status failed, "Run not
 	 * found"), and does not crash or get rejected by the allowlist.
