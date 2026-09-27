@@ -14,6 +14,7 @@
 namespace Agentic\Tests;
 
 use Agentic\Admin_Menu_Handler;
+use Agentic\Provider_Registry;
 
 /**
  * Test case for Admin_Menu_Handler page-slug detection.
@@ -67,19 +68,112 @@ class Test_Admin_Menu_Handler extends TestCase {
 
 	/**
 	 * known_admin_pages() is filterable (Pro can register its own screens).
+	 *
+	 * The callback is kept in a variable so it can be removed by identity,
+	 * rather than remove_all_filters() tearing down every other callback on
+	 * the shared hook.
 	 */
 	public function test_known_pages_list_is_filterable(): void {
-		add_filter(
-			'agentic_known_admin_pages',
-			static function ( array $pages ): array {
-				$pages[] = 'agentic-pro-extra';
-				return $pages;
-			}
-		);
+		$add_pro_page = static function ( array $pages ): array {
+			$pages[] = 'agentic-pro-extra';
+			return $pages;
+		};
+		add_filter( 'agentic_known_admin_pages', $add_pro_page );
 
 		$this->assertTrue( Admin_Menu_Handler::is_known_admin_page( 'agentic-pro-extra' ) );
 
-		remove_all_filters( 'agentic_known_admin_pages' );
+		remove_filter( 'agentic_known_admin_pages', $add_pro_page );
 		$this->assertFalse( Admin_Menu_Handler::is_known_admin_page( 'agentic-pro-extra' ) );
+	}
+
+	/**
+	 * A mistyped (or removed) `agentic-*` slug renders the not-found notice (404)
+	 * for everyone — including a full administrator — never a permissions message.
+	 */
+	public function test_access_notice_unknown_slug_is_not_found(): void {
+		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $admin );
+		$_GET['page'] = 'agentic-does-not-exist';
+
+		$handler = new Admin_Menu_Handler();
+
+		try {
+			$handler->maybe_show_access_notice();
+			$this->fail( 'Expected maybe_show_access_notice() to wp_die() on an unknown slug.' );
+		} catch ( \WPDieException $e ) {
+			$this->assertSame( 404, $e->getCode() );
+			$this->assertStringContainsString( "This Agent Builder page doesn", $e->getMessage() );
+			$this->assertStringContainsString( 'page=agent-builder', $e->getMessage() );
+		}
+	}
+
+	/**
+	 * An administrator denied only because no provider is configured is shown the
+	 * "connect a provider" notice (403) with a primary link to Quick Start — not
+	 * the misleading "Administrator access required" screen.
+	 */
+	public function test_access_notice_admin_without_provider_gets_connect_notice(): void {
+		$this->force_no_provider();
+
+		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $admin );
+		$_GET['page'] = 'agentic-settings';
+
+		$handler = new Admin_Menu_Handler();
+
+		try {
+			$handler->maybe_show_access_notice();
+			$this->fail( 'Expected maybe_show_access_notice() to wp_die() with the connect-provider notice.' );
+		} catch ( \WPDieException $e ) {
+			$this->assertSame( 403, $e->getCode() );
+			$this->assertStringContainsString( 'Connect an AI provider to unlock this screen', $e->getMessage() );
+			$this->assertStringContainsString( 'Go to Quick Start', $e->getMessage() );
+			$this->assertStringContainsString( 'page=agentic-signup', $e->getMessage() );
+		}
+	}
+
+	/**
+	 * A non-admin denied on a real page still gets the existing access-denied
+	 * screen (403), regardless of provider state.
+	 */
+	public function test_access_notice_non_admin_still_gets_denial(): void {
+		$this->force_no_provider();
+
+		$subscriber = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		wp_set_current_user( $subscriber );
+		$_GET['page'] = 'agentic-settings';
+
+		$handler = new Admin_Menu_Handler();
+
+		try {
+			$handler->maybe_show_access_notice();
+			$this->fail( 'Expected maybe_show_access_notice() to wp_die() with the access-denied notice.' );
+		} catch ( \WPDieException $e ) {
+			$this->assertSame( 403, $e->getCode() );
+			$this->assertStringContainsString( 'Administrator access required', $e->getMessage() );
+		}
+	}
+
+	/**
+	 * Reset per-test globals so one denial test can't leak into the next.
+	 */
+	public function tearDown(): void {
+		wp_set_current_user( 0 );
+		unset( $_GET['page'] );
+		Provider_Registry::save_api_key( 'agentic', '' );
+		Provider_Registry::invalidate();
+
+		parent::tearDown();
+	}
+
+	/**
+	 * Force has_usable_provider() to report false by clearing every configured
+	 * credential, mirroring the no-provider funnel state register() bails on.
+	 */
+	private function force_no_provider(): void {
+		delete_option( 'agent_builder_license_key' );
+		delete_option( 'agent_builder_ollama_url' );
+		Provider_Registry::save_api_key( 'agentic', '' );
+		Provider_Registry::invalidate();
 	}
 }
