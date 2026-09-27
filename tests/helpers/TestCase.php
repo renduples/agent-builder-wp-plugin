@@ -65,6 +65,16 @@ class TestCase extends WP_UnitTestCase {
 		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$security_table}'" ) === $security_table ) {
 			$wpdb->query( "DELETE FROM {$security_table}" );
 		}
+
+		$settings_table = $wpdb->prefix . 'agent_builder_agent_settings';
+		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$settings_table}'" ) === $settings_table ) {
+			$wpdb->query( "DELETE FROM {$settings_table}" );
+		}
+
+		$skills_table = $wpdb->prefix . 'agent_builder_skills';
+		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$skills_table}'" ) === $skills_table ) {
+			$wpdb->query( "DELETE FROM {$skills_table}" );
+		}
 	}
 
 	/**
