@@ -9032,6 +9032,14 @@ msgstr "この画面にのみ適用されます。他の画面やサイト全体
 msgid "More info"
 msgstr "詳細情報"
 
+#: includes/functions.php:63 src/shared/chat-embed.js:20
+msgid "Post type"
+msgstr ""
+
+#: includes/functions.php:64 src/shared/chat-embed.js:21
+msgid "Post"
+msgstr ""
+
 #~ msgid "AI Assistants"
 #~ msgstr "AI アシスタント"
 

@@ -175,7 +175,7 @@
 }
 
 .agentic-status {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 0.35rem;
     font-size: 0.75rem;
@@ -1187,6 +1187,22 @@
     font-size: 13px;
     color: var(--ac-proposal-desc);
     line-height: 1.5;
+}
+
+.agentic-proposal-summary {
+    padding: 0 14px 10px;
+    font-size: 13px;
+    color: var(--ac-proposal-desc);
+    line-height: 1.6;
+}
+
+.agentic-proposal-summary-row {
+    word-break: break-word;
+}
+
+.agentic-proposal-summary-row strong {
+    font-weight: 600;
+    color: var(--ac-header-label);
 }
 
 .agentic-proposal-toggle {

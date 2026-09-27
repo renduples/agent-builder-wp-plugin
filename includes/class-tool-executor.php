@@ -169,6 +169,48 @@ class Tool_Executor {
 	}
 
 	/**
+	 * Reduce a tool's arguments to the small set of scalar fields worth showing
+	 * on a confirmation card (title, status, post type). Never includes large
+	 * free-text payloads like post content — the full argument set stays in the
+	 * proposal transient, not in the chat payload.
+	 *
+	 * @param array $arguments Decoded tool arguments from the LLM.
+	 * @return array Key => string summary, empty when nothing worth showing.
+	 */
+	private static function summarize_arguments( array $arguments ): array {
+		$summary = array();
+
+		// A friendly name for the thing being created/updated. Create tools pass
+		// "title"; duplicate tools pass "new_title".
+		foreach ( array( 'title', 'new_title' ) as $key ) {
+			if ( isset( $arguments[ $key ] ) && is_scalar( $arguments[ $key ] ) && '' !== (string) $arguments[ $key ] ) {
+				$summary['title'] = (string) $arguments[ $key ];
+				break;
+			}
+		}
+
+		if ( isset( $arguments['status'] ) && is_scalar( $arguments['status'] ) && '' !== (string) $arguments['status'] ) {
+			$summary['status'] = (string) $arguments['status'];
+		}
+
+		// "post_type" on create tools, "new_type" on switch_post_type.
+		foreach ( array( 'post_type', 'new_type' ) as $key ) {
+			if ( isset( $arguments[ $key ] ) && is_scalar( $arguments[ $key ] ) && '' !== (string) $arguments[ $key ] ) {
+				$summary['post_type'] = (string) $arguments[ $key ];
+				break;
+			}
+		}
+
+		// Update tools identify the target by post_id; surface it only when no
+		// friendlier field was present, so the card isn't entirely opaque.
+		if ( empty( $summary ) && isset( $arguments['post_id'] ) && is_scalar( $arguments['post_id'] ) ) {
+			$summary['post_id'] = (string) $arguments['post_id'];
+		}
+
+		return $summary;
+	}
+
+	/**
 	 * Execute a tool call with full risk-level enforcement.
 	 *
 	 * @param string          $tool_name          Tool name.
@@ -353,6 +395,7 @@ class Tool_Executor {
 						: sprintf( '“%s” needs your approval first: %s', $label, $reason )
 				),
 				'reason'      => $reason,
+				'summary'     => self::summarize_arguments( $arguments ),
 			);
 		}
 
