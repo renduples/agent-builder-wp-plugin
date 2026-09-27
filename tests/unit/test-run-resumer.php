@@ -1,0 +1,364 @@
+<?php
+/**
+ * Unit Tests for Run_Resumer (M10e).
+ *
+ * Covers the `agent_builder_approval_resolved` action fired from both
+ * REST_API::handle_approval() and Agent_Proposals::approve()/reject() (only
+ * when the row carries a run_id), and Run_Resumer's response to it: approve
+ * dispatches a resume job with the correct payload shape, reject stops the
+ * run, non-waiting/unknown/missing-run_id rows are a clean no-op, and the
+ * `agent_builder_run_started|waiting|finished` observability hooks fire
+ * exactly once at the right moments.
+ *
+ * @package Agentic\Tests
+ */
+
+namespace Agentic\Tests;
+
+use Agentic\Agent_Proposals;
+use Agentic\Agent_Run;
+use Agentic\Agent_Task_Job_Processor;
+use Agentic\Approval_Queue;
+use Agentic\Job_Manager;
+use Agentic\REST_API;
+
+/**
+ * Test case for Run_Resumer.
+ */
+class Test_Run_Resumer extends TestCase {
+
+	/**
+	 * Reset the in-process run and clear the jobs table before each test.
+	 */
+	public function setUp(): void {
+		parent::setUp();
+		Agent_Run::reset_current_for_tests();
+		$this->clear_jobs_table();
+	}
+
+	/**
+	 * Teardown: reset the in-process run so it never leaks into the next test.
+	 */
+	public function tearDown(): void {
+		Agent_Run::reset_current_for_tests();
+		parent::tearDown();
+	}
+
+	/**
+	 * Delete every row from the jobs table.
+	 *
+	 * @return void
+	 */
+	private function clear_jobs_table(): void {
+		global $wpdb;
+		$jobs_table = $wpdb->prefix . 'agent_builder_jobs';
+		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$jobs_table}'" ) === $jobs_table ) {
+			$wpdb->query( "DELETE FROM {$jobs_table}" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test cleanup.
+		}
+	}
+
+	/**
+	 * The single pending job row, or null if there isn't exactly one.
+	 *
+	 * @return object|null
+	 */
+	private function the_pending_job(): ?object {
+		$pending = Job_Manager::list_by_statuses( array( Job_Manager::STATUS_PENDING ) );
+		if ( 1 !== count( $pending ) ) {
+			return null;
+		}
+		return Job_Manager::get_job( (string) $pending[0]['id'] );
+	}
+
+	/**
+	 * Begin a run and immediately mark it waiting on an approval, returning it.
+	 *
+	 * @param array $opts Agent_Run::begin() opts.
+	 * @return Agent_Run
+	 */
+	private function begin_waiting_run( array $opts = array() ): Agent_Run {
+		$run = Agent_Run::begin( 'wordpress-assistant', $opts );
+		$run->mark_waiting(
+			'approval',
+			'42',
+			array(
+				array(
+					'role'    => 'user',
+					'content' => 'Publish the draft.',
+				),
+				array(
+					'role'    => 'assistant',
+					'content' => 'I need approval to publish.',
+				),
+			)
+		);
+		return $run;
+	}
+
+	/**
+	 * Approving a waiting run dispatches a resume job whose request_data
+	 * carries the run's resume_state() and the passed-through tool result.
+	 */
+	public function test_approve_dispatches_resume_job_with_correct_payload(): void {
+		$run = $this->begin_waiting_run( array( 'user_id' => 7, 'task_text' => 'Publish the draft' ) );
+
+		$result = array(
+			'ran'     => true,
+			'success' => true,
+			'message' => 'Published.',
+		);
+		$row = array(
+			'run_id' => $run->get_run_id(),
+			'action' => 'db_update_post',
+		);
+
+		do_action( 'agent_builder_approval_resolved', 'approval', 42, 'approved', $result, $row );
+
+		$job = $this->the_pending_job();
+		$this->assertNotNull( $job );
+
+		$request = $job->request_data;
+		$this->assertSame( Agent_Task_Job_Processor::class, $request['_processor'] );
+		$this->assertSame( $run->get_run_id(), $request['run_id'] );
+		$this->assertSame( 'wordpress-assistant', $request['agent_id'] );
+		$this->assertSame( 7, $request['user_id'] );
+
+		$this->assertIsArray( $request['resume'] );
+		$this->assertSame( 'approval', $request['resume']['awaiting_type'] );
+		$this->assertSame( '42', $request['resume']['awaiting_id'] );
+		$this->assertSame(
+			array(
+				array( 'role' => 'user', 'content' => 'Publish the draft.' ),
+				array( 'role' => 'assistant', 'content' => 'I need approval to publish.' ),
+			),
+			$request['resume']['messages']
+		);
+
+		$this->assertSame( $result, $request['tool_result'] );
+	}
+
+	/**
+	 * Rejecting a waiting run finishes it (as stopped/denied) and dispatches
+	 * no resume job. The 'action' column names the tool for an approval-queue
+	 * row.
+	 */
+	public function test_reject_finishes_run_with_denied_message_and_dispatches_no_job(): void {
+		$run = $this->begin_waiting_run();
+
+		$row = array(
+			'run_id' => $run->get_run_id(),
+			'action' => 'db_delete_post',
+		);
+
+		do_action( 'agent_builder_approval_resolved', 'approval', 99, 'rejected', null, $row );
+
+		$this->assertNull( $this->the_pending_job() );
+
+		$reloaded = Agent_Run::load( $run->get_run_id() );
+		$data     = $reloaded->to_array();
+		$this->assertSame( 'completed', $data['status'] );
+		$this->assertSame( 'Stopped: you denied db_delete_post', $data['result_summary']['text'] );
+	}
+
+	/**
+	 * A proposal row names its tool under 'tool', not 'action' — the denied
+	 * message must still name the right tool.
+	 */
+	public function test_reject_uses_tool_column_for_proposal_rows(): void {
+		$run = $this->begin_waiting_run();
+
+		$row = array(
+			'run_id' => $run->get_run_id(),
+			'tool'   => 'delete_form',
+		);
+
+		do_action( 'agent_builder_approval_resolved', 'proposal', 'prop-1', 'rejected', null, $row );
+
+		$reloaded = Agent_Run::load( $run->get_run_id() );
+		$this->assertSame( 'Stopped: you denied delete_form', $reloaded->to_array()['result_summary']['text'] );
+	}
+
+	/**
+	 * A run_id that resolves but is not 'waiting' (already resumed, or
+	 * finished by something else) is a clean no-op: no crash, no job, no
+	 * second finish().
+	 */
+	public function test_non_waiting_run_is_a_clean_noop(): void {
+		$run = Agent_Run::begin( 'wordpress-assistant' );
+		// Status stays 'running' — never marked waiting.
+
+		$row = array(
+			'run_id' => $run->get_run_id(),
+			'action' => 'db_update_post',
+		);
+
+		do_action( 'agent_builder_approval_resolved', 'approval', 1, 'approved', array( 'success' => true ), $row );
+
+		$this->assertNull( $this->the_pending_job() );
+		$this->assertSame( 'running', Agent_Run::load( $run->get_run_id() )->to_array()['status'] );
+	}
+
+	/**
+	 * An already-terminal run (completed/aborted) is also a clean no-op —
+	 * a stale or duplicate resolution must not re-finish or re-dispatch it.
+	 */
+	public function test_already_terminal_run_is_a_clean_noop(): void {
+		// Deliberately not begin_waiting_run(): mark_waiting() settles the
+		// in-process instance (so the shutdown guard leaves it alone), which
+		// makes a same-instance finish() call afterwards a no-op. A run that
+		// reached a terminal status without ever waiting exercises the
+		// "already terminal" no-op path for real.
+		$run = Agent_Run::begin( 'wordpress-assistant' );
+		$run->finish( 'aborted' );
+
+		$row = array(
+			'run_id' => $run->get_run_id(),
+			'action' => 'db_update_post',
+		);
+
+		do_action( 'agent_builder_approval_resolved', 'approval', 1, 'approved', array( 'success' => true ), $row );
+
+		$this->assertNull( $this->the_pending_job() );
+		$this->assertSame( 'aborted', Agent_Run::load( $run->get_run_id() )->to_array()['status'] );
+	}
+
+	/**
+	 * A row with no run_id at all (chat-originated approval/proposal) is a
+	 * clean no-op if the action is fired for it anyway.
+	 */
+	public function test_row_without_run_id_is_a_clean_noop(): void {
+		do_action( 'agent_builder_approval_resolved', 'approval', 1, 'approved', array( 'success' => true ), array( 'action' => 'db_update_post' ) );
+
+		$this->assertNull( $this->the_pending_job() );
+	}
+
+	/**
+	 * A run_id that does not resolve to any row is a clean no-op.
+	 */
+	public function test_unknown_run_id_is_a_clean_noop(): void {
+		do_action(
+			'agent_builder_approval_resolved',
+			'approval',
+			1,
+			'approved',
+			array( 'success' => true ),
+			array(
+				'run_id' => 'does-not-exist',
+				'action' => 'db_update_post',
+			)
+		);
+
+		$this->assertNull( $this->the_pending_job() );
+	}
+
+	/**
+	 * agent_builder_run_waiting fires exactly once when Run_Resumer confirms
+	 * the wait state, whichever way the decision resolves; agent_builder_run_finished
+	 * fires exactly once, only on the reject path.
+	 */
+	public function test_run_waiting_and_run_finished_fire_once_on_reject(): void {
+		$run = $this->begin_waiting_run();
+
+		$waiting_before  = did_action( 'agent_builder_run_waiting' );
+		$finished_before = did_action( 'agent_builder_run_finished' );
+
+		$row = array(
+			'run_id' => $run->get_run_id(),
+			'action' => 'db_update_post',
+		);
+		do_action( 'agent_builder_approval_resolved', 'approval', 1, 'rejected', null, $row );
+
+		$this->assertSame( $waiting_before + 1, did_action( 'agent_builder_run_waiting' ) );
+		$this->assertSame( $finished_before + 1, did_action( 'agent_builder_run_finished' ) );
+	}
+
+	/**
+	 * On approve, agent_builder_run_waiting still fires once (Run_Resumer
+	 * confirmed the wait state before dispatching), but agent_builder_run_finished
+	 * does not — the run is still going, handed off to the resume job.
+	 */
+	public function test_run_waiting_fires_but_not_run_finished_on_approve(): void {
+		$run = $this->begin_waiting_run();
+
+		$waiting_before  = did_action( 'agent_builder_run_waiting' );
+		$finished_before = did_action( 'agent_builder_run_finished' );
+
+		$row = array(
+			'run_id' => $run->get_run_id(),
+			'action' => 'db_update_post',
+		);
+		do_action( 'agent_builder_approval_resolved', 'approval', 1, 'approved', array( 'success' => true ), $row );
+
+		$this->assertSame( $waiting_before + 1, did_action( 'agent_builder_run_waiting' ) );
+		$this->assertSame( $finished_before, did_action( 'agent_builder_run_finished' ) );
+	}
+
+	/**
+	 * agent_builder_run_started fires exactly once for a genuinely new run,
+	 * and not again for a nested begin() (delegation) that returns the
+	 * already-active run.
+	 */
+	public function test_run_started_fires_once_for_a_new_run_not_for_nested_begin(): void {
+		$before = did_action( 'agent_builder_run_started' );
+
+		$outer = Agent_Run::begin( 'content-writer' );
+		$this->assertSame( $before + 1, did_action( 'agent_builder_run_started' ) );
+
+		Agent_Run::begin( 'seo-optimizer' );
+		$this->assertSame( $before + 1, did_action( 'agent_builder_run_started' ) );
+
+		$outer->finish( 'completed' );
+	}
+
+	/**
+	 * REST_API::handle_approval() fires agent_builder_approval_resolved only
+	 * when the approval row carries a run_id — verified at the call site,
+	 * not just inside Run_Resumer.
+	 */
+	public function test_handle_approval_fires_action_only_when_run_id_set(): void {
+		$api = ( new \ReflectionClass( REST_API::class ) )->newInstanceWithoutConstructor();
+
+		$queue         = new Approval_Queue();
+		$id_no_run     = $queue->add( 'wordpress-assistant', 'list_posts', array(), 'test', 7, 'low' );
+		$run           = Agent_Run::begin( 'wordpress-assistant' );
+		$id_with_run   = $queue->add( 'wordpress-assistant', 'list_posts', array(), 'test', 7, 'low', '', '', $run->get_run_id() );
+
+		$before = did_action( 'agent_builder_approval_resolved' );
+
+		$request = new \WP_REST_Request( 'POST', '/agentic/v1/approvals/handle' );
+		$request->set_param( 'id', $id_no_run );
+		$request->set_param( 'action', 'approve' );
+		$api->handle_approval( $request );
+
+		$this->assertSame( $before, did_action( 'agent_builder_approval_resolved' ) );
+
+		$request2 = new \WP_REST_Request( 'POST', '/agentic/v1/approvals/handle' );
+		$request2->set_param( 'id', $id_with_run );
+		$request2->set_param( 'action', 'approve' );
+		$api->handle_approval( $request2 );
+
+		$this->assertSame( $before + 1, did_action( 'agent_builder_approval_resolved' ) );
+
+		$run->finish( 'completed' );
+	}
+
+	/**
+	 * Agent_Proposals::approve()/reject() fire agent_builder_approval_resolved
+	 * only when the proposal carries a run_id.
+	 */
+	public function test_agent_proposals_fires_action_only_when_run_id_set(): void {
+		$no_run_proposal   = Agent_Proposals::create( 'list_posts', array(), 'wordpress-assistant', 'Test proposal (no run)' );
+		$run               = Agent_Run::begin( 'wordpress-assistant' );
+		$run_proposal      = Agent_Proposals::create( 'list_posts', array(), 'wordpress-assistant', 'Test proposal (run)', '', $run->get_run_id() );
+
+		$before = did_action( 'agent_builder_approval_resolved' );
+
+		Agent_Proposals::reject( $no_run_proposal['id'] );
+		$this->assertSame( $before, did_action( 'agent_builder_approval_resolved' ) );
+
+		Agent_Proposals::reject( $run_proposal['id'] );
+		$this->assertSame( $before + 1, did_action( 'agent_builder_approval_resolved' ) );
+
+		$run->finish( 'completed' );
+	}
+}

@@ -367,6 +367,8 @@ class Agent_Run {
 	 * A nested call (one made while a run is already active in this process)
 	 * always returns the existing run and ignores $opts — this is what keeps
 	 * delegation semantics unchanged: the outermost begin() owns the run.
+	 * Fires `agent_builder_run_started` for a genuinely new run (not a
+	 * nested return).
 	 *
 	 * @param string $root_agent Slug of the agent starting the run.
 	 * @param array  $opts       See __construct().
@@ -381,6 +383,8 @@ class Agent_Run {
 		self::$current = $run;
 		$run->persist_start();
 		$run->register_shutdown_guard();
+
+		do_action( 'agent_builder_run_started', $run );
 
 		return $run;
 	}
