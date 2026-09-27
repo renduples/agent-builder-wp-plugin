@@ -94,6 +94,34 @@ class Risk_Level {
 	);
 
 	/**
+	 * Valid enforcement decisions, as returned by `enforcement()`, the
+	 * `agent_builder_tool_enforcement` filter, and `clamp_enforcement()`.
+	 */
+	public const ENFORCEMENT_LEVELS = array( 'allow', 'confirm', 'queue', 'block' );
+
+	/**
+	 * Numeric weight for each enforcement decision, most restrictive first.
+	 * Used by clamp_enforcement() to detect any decision less restrictive
+	 * than baseline — not just a literal 'allow'.
+	 */
+	private const ENFORCEMENT_WEIGHTS = array(
+		'block'   => 3,
+		'queue'   => 2,
+		'confirm' => 1,
+		'allow'   => 0,
+	);
+
+	/**
+	 * Check if a given string is a valid enforcement decision.
+	 *
+	 * @param string $enforcement Enforcement decision to validate.
+	 * @return bool
+	 */
+	public static function is_valid_enforcement( string $enforcement ): bool {
+		return in_array( $enforcement, self::ENFORCEMENT_LEVELS, true );
+	}
+
+	/**
 	 * Check if a given string is a valid risk level.
 	 *
 	 * @param string $level Risk level to validate.
@@ -199,18 +227,23 @@ class Risk_Level {
 	 *    calls the filter when baseline enforcement is already 'block', but
 	 *    this still refuses to unblock if $ctx['risk'] is EXTREME, in case a
 	 *    future caller invokes it directly.
-	 *  - HIGH risk can only resolve to 'allow' when the filter's result is
-	 *    looser than $ctx['baseline'] (the enforcement decision computed
-	 *    before any filter ran) AND $ctx carries an explicit grant flag:
-	 *    $ctx['granted'] === true. Nothing in this codebase sets that flag
-	 *    yet — M12's Tool_Grants class is expected to, once it has verified
-	 *    a scoped, expiring grant for the call. Until then, a filter cannot
-	 *    talk a HIGH-risk queue/confirm decision down to 'allow' on its own
-	 *    say-so; the pre-filter baseline is restored instead.
+	 *  - HIGH risk can only resolve to anything less restrictive than
+	 *    $ctx['baseline'] (the enforcement decision computed before any
+	 *    filter ran — 'block' is most restrictive, then 'queue', then
+	 *    'confirm', then 'allow' is least restrictive) when $ctx carries an
+	 *    explicit grant flag: $ctx['granted'] === true. Nothing in this
+	 *    codebase sets that flag yet — M12's Tool_Grants class is expected
+	 *    to, once it has verified a scoped, expiring grant for the call.
+	 *    Until then, a filter cannot talk a HIGH-risk 'queue' decision down
+	 *    to 'confirm' (or 'allow'), or a 'confirm' decision down to 'allow',
+	 *    on its own say-so; the pre-filter baseline is restored instead. A
+	 *    literal 'allow' was never the only loosened value — a HIGH-risk
+	 *    tool's baseline is normally 'queue', so a filter returning 'confirm'
+	 *    is just as much a bypass of the admin approval queue.
 	 *
-	 * A baseline that was already 'allow' (e.g. the site's auto-approve
-	 * preference covers HIGH risk) is left alone — that is not a filter
-	 * loosening anything, so it isn't reclamped.
+	 * A baseline that was already less restrictive (e.g. the site's
+	 * auto-approve preference covers HIGH risk) is left alone — that is not
+	 * a filter loosening anything, so it isn't reclamped.
 	 *
 	 * Pure function: reads only its arguments, no side effects.
 	 *
@@ -229,11 +262,14 @@ class Risk_Level {
 			return 'block';
 		}
 
-		$baseline          = (string) ( $ctx['baseline'] ?? $enforcement );
-		$loosened_to_allow = 'allow' === $enforcement && 'allow' !== $baseline;
-		$has_grant         = true === ( $ctx['granted'] ?? false );
+		$baseline = (string) ( $ctx['baseline'] ?? $enforcement );
 
-		if ( self::HIGH === $risk && $loosened_to_allow && ! $has_grant ) {
+		$enforcement_weight = self::ENFORCEMENT_WEIGHTS[ $enforcement ] ?? 0;
+		$baseline_weight    = self::ENFORCEMENT_WEIGHTS[ $baseline ] ?? 0;
+		$loosened           = $enforcement_weight < $baseline_weight;
+		$has_grant          = true === ( $ctx['granted'] ?? false );
+
+		if ( self::HIGH === $risk && $loosened && ! $has_grant ) {
 			return $baseline;
 		}
 
