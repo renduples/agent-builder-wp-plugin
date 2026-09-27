@@ -676,4 +676,38 @@ class Abilities_Manifest {
 			self::$cache = array();
 		}
 	}
+
+	/**
+	 * Content signature over all bundled ability manifests.
+	 *
+	 * Lets a deploy that changes an abilities.json *without* bumping the plugin
+	 * version still be detected, so signatures are re-generated instead of going
+	 * stale (a stale signature blocks that agent's tools). Order-independent,
+	 * keyed by slug.
+	 *
+	 * @return string 64-char sha256 hex, or '' when there are no bundled manifests.
+	 */
+	public static function bundled_manifest_signature(): string {
+		$dirs  = apply_filters( 'agentic_library_dirs', array( AGENT_BUILDER_DIR . 'library/agents' ) );
+		$parts = array();
+		foreach ( (array) $dirs as $dir ) {
+			$manifests = glob( trailingslashit( $dir ) . '*/abilities.json' );
+			foreach ( ( false !== $manifests ? $manifests : array() ) as $path ) {
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_get_contents
+				$contents = file_get_contents( $path );
+				if ( false !== $contents ) {
+					$parts[ basename( dirname( $path ) ) ] = md5( $contents );
+				}
+			}
+		}
+		if ( empty( $parts ) ) {
+			return '';
+		}
+		ksort( $parts );
+		$flat = '';
+		foreach ( $parts as $slug => $sum ) {
+			$flat .= $slug . ':' . $sum . '|';
+		}
+		return hash( 'sha256', $flat );
+	}
 }
