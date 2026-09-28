@@ -153,6 +153,30 @@ class Test_Notifications_REST extends TestCase {
 	}
 
 	/**
+	 * An omitted or empty `ids` without `all` is a no-op — a bare `{}` body must
+	 * never clear the inbox (only an explicit `all: true` may do that).
+	 */
+	public function test_post_read_empty_ids_is_noop(): void {
+		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $admin );
+
+		Notifications::notify( $admin, 'run_finished', 'One', '' );
+		Notifications::notify( $admin, 'run_waiting', 'Two', '' );
+
+		// No body at all.
+		$resp = $this->request( 'POST', '/notifications/read' );
+		$this->assertSame( 200, $resp->get_status() );
+		$this->assertSame( 2, $resp->get_data()['unread'] );
+		$this->assertSame( 2, Notifications::unread_count( $admin ) );
+
+		// Explicit empty ids list.
+		$resp = $this->request( 'POST', '/notifications/read', array( 'ids' => array() ) );
+		$this->assertSame( 200, $resp->get_status() );
+		$this->assertSame( 2, $resp->get_data()['unread'] );
+		$this->assertSame( 2, Notifications::unread_count( $admin ) );
+	}
+
+	/**
 	 * POST /notifications/read is scoped to the current user: another user's ids
 	 * are never marked read.
 	 */

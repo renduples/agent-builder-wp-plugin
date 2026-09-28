@@ -1526,8 +1526,8 @@ class Admin_Menu_Handler {
 		// admin-pages bundle — it hosts a live, polling run list and a composer
 		// that POSTs straight to /runs, so it needs its own localize payload.
 		if ( 'tasks' === $file ) {
-			$this->mark_tasks_notifications_read();
 			if ( React_Admin::enqueue( 'tasks-app', $this->tasks_page_localize(), 'agenticTasksPage' ) ) {
+				$this->mark_tasks_notifications_read();
 				// The drawer reuses the shared ProposalCard, whose styles live in
 				// chat.css (not react-admin.css), so load it alongside the entry.
 				wp_enqueue_style(

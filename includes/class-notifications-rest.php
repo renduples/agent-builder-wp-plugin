@@ -131,8 +131,9 @@ class Notifications_REST {
 	/**
 	 * POST /notifications/read — mark specific rows, or everything, read.
 	 *
-	 * `all` (or an omitted/empty `ids`) marks every unread row read, mirroring
-	 * Notifications::mark_read()'s empty-list "all unread" behaviour.
+	 * Only an explicit `all: true` clears everything. An omitted/empty `ids`
+	 * with `all` false is a no-op (the unread count is returned unchanged), so
+	 * a bare `{}` body can never wipe the whole inbox by accident.
 	 *
 	 * @param \WP_REST_Request $request Request.
 	 * @return \WP_REST_Response
@@ -144,7 +145,10 @@ class Notifications_REST {
 		if ( $all ) {
 			Notifications::mark_read( $user_id );
 		} else {
-			Notifications::mark_read( $user_id, self::sanitize_ids( $request->get_param( 'ids' ) ) );
+			$ids = self::sanitize_ids( $request->get_param( 'ids' ) );
+			if ( ! empty( $ids ) ) {
+				Notifications::mark_read( $user_id, $ids );
+			}
 		}
 
 		return new \WP_REST_Response( array( 'unread' => Notifications::unread_count( $user_id ) ), 200 );
