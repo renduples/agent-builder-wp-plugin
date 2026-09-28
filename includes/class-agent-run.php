@@ -1214,6 +1214,63 @@ class Agent_Run {
 	}
 
 	/**
+	 * Count runs currently paused in 'waiting' (awaiting an approval/proposal).
+	 *
+	 * Used by the Tasks admin menu badge and the dashboard Tasks card. Pass a
+	 * user id to scope to that owner, or 0 for the global total (admins see
+	 * every user's waiting runs, mirroring the global Approvals badge).
+	 *
+	 * @param int $user_id Owning user id, or 0 for all users.
+	 * @return int Number of waiting runs.
+	 */
+	public static function count_waiting( int $user_id = 0 ): int {
+		global $wpdb;
+		$table = $wpdb->prefix . 'agent_builder_runs';
+
+		if ( $user_id > 0 ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Small aggregate, not worth caching.
+			$count = $wpdb->get_var(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is $wpdb->prefix-derived; only user_id is bound via prepare().
+				$wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE status = 'waiting' AND user_id = %d", $user_id )
+			);
+		} else {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is $wpdb->prefix-derived; no user input in the query.
+			$count = $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE status = 'waiting'" );
+		}
+
+		return (int) $count;
+	}
+
+	/**
+	 * Count runs currently active (queued, running, or continuing).
+	 *
+	 * Used by the dashboard Tasks card to report an exact active total that
+	 * is not capped by the paginated run listing. Pass a user id to scope to
+	 * that owner, or 0 for the global total (admins see every user's active
+	 * runs, mirroring the global Approvals badge).
+	 *
+	 * @param int $user_id Owning user id, or 0 for all users.
+	 * @return int Number of active runs.
+	 */
+	public static function count_active( int $user_id = 0 ): int {
+		global $wpdb;
+		$table = $wpdb->prefix . 'agent_builder_runs';
+
+		if ( $user_id > 0 ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Small aggregate, not worth caching.
+			$count = $wpdb->get_var(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is $wpdb->prefix-derived; only user_id is bound via prepare().
+				$wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE status IN ('queued','running','continuing') AND user_id = %d", $user_id )
+			);
+		} else {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is $wpdb->prefix-derived; no user input in the query.
+			$count = $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE status IN ('queued','running','continuing')" );
+		}
+
+		return (int) $count;
+	}
+
+	/**
 	 * Persist a progress update (called after each delegation completes).
 	 *
 	 * @return void
