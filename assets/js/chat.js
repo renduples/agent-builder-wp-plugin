@@ -1128,7 +1128,9 @@
                 conversationHistory = JSON.parse(saved);
                 // Replay messages to UI (skip initial greeting)
                 conversationHistory.forEach(msg => {
-                    addMessage(msg.content, msg.role === 'user' ? 'user' : 'agent');
+                    const role = msg.role === 'user' ? 'user' : 'agent';
+                    const content = role === 'agent' ? decodeHtmlEntities(msg.content) : msg.content;
+                    addMessage(content, role);
                 });
                 reconcileRestoredConversation();
             } catch (e) {
@@ -1312,7 +1314,8 @@
                 if (msg.tools_used && msg.tools_used.length) {
                     meta.tools = msg.tools_used;
                 }
-                addMessage(msg.content, role, meta);
+                const content = role === 'agent' ? decodeHtmlEntities(msg.content) : msg.content;
+                addMessage(content, role, meta);
                 conversationHistory.push({ role: msg.role, content: msg.content });
             });
 
@@ -1767,6 +1770,21 @@
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    // Decode HTML entities exactly once (e.g. a stored "&#8211;" → "–"). The
+    // server runs assistant responses through wptexturize before persisting
+    // them, so replayed history holds entities like "&#8211;" that renderMarkdown's
+    // escapeHtml step would otherwise double-escape back into literal "&#8211;"
+    // text. A <textarea> parses entities as raw text — never executing markup —
+    // so this is a safe single decode to plain text.
+    function decodeHtmlEntities(text) {
+        if (!text || typeof text !== 'string' || text.indexOf('&') === -1) {
+            return text;
+        }
+        const textarea = document.createElement('textarea');
+        textarea.innerHTML = text;
+        return textarea.value;
     }
 
     // Validate a link URL against a safe-scheme allowlist and make it safe to
