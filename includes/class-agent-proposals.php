@@ -170,9 +170,12 @@ class Agent_Proposals {
 			return array( 'error' => 'Proposal already processed.' );
 		}
 
-		// Mark as approved before executing, so a concurrent re-read sees the
-		// decision and cannot double-execute the same proposal.
-		self::mark_decided( $proposal_id, 'approved' );
+		// Atomically claim the pending row before executing. If a concurrent
+		// request won the race (0 affected rows), the proposal was already
+		// decided — refuse to execute rather than double-run the tool call.
+		if ( ! self::mark_decided( $proposal_id, 'approved' ) ) {
+			return array( 'error' => 'Proposal already processed.' );
+		}
 		$proposal['status'] = 'approved';
 
 		// Execute the change via Tool_Loader. This path bypasses Tool_Executor
@@ -240,9 +243,12 @@ class Agent_Proposals {
 			return array( 'error' => 'Proposal already processed.' );
 		}
 
-		// Mark as rejected before firing the resolution action, so the row is
-		// no longer readable as pending by a concurrent request.
-		self::mark_decided( $proposal_id, 'rejected' );
+		// Atomically claim the pending row before firing the resolution action.
+		// If a concurrent request already decided it, refuse rather than firing
+		// a second resolution for the same proposal.
+		if ( ! self::mark_decided( $proposal_id, 'rejected' ) ) {
+			return array( 'error' => 'Proposal already processed.' );
+		}
 		$proposal['status'] = 'rejected';
 
 		// Log rejection.
@@ -453,29 +459,34 @@ class Agent_Proposals {
 	}
 
 	/**
-	 * Persist a decision (approve/reject) against a proposal row.
+	 * Persist a decision (approve/reject) against a proposal row — atomically.
 	 *
-	 * Flips status and stamps the deciding user + timestamp. Used by approve()
-	 * and reject() before/around the side effects that follow, so a second
-	 * request reading the row never re-runs an already-decided proposal.
+	 * The conditional UPDATE only flips a still-'pending' row, so of two
+	 * concurrent approve()/reject() calls for the same id exactly one wins the
+	 * claim and proceeds to its side effects; the loser gets 0 affected rows
+	 * and must bail. Stamps the deciding user + timestamp.
 	 *
 	 * @param string $proposal_id Proposal UUID.
 	 * @param string $decision    'approved' or 'rejected'.
-	 * @return void
+	 * @return bool True when this call claimed the pending row (1 affected row).
 	 */
-	private static function mark_decided( string $proposal_id, string $decision ): void {
+	private static function mark_decided( string $proposal_id, string $decision ): bool {
 		global $wpdb;
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table update.
-		$wpdb->update(
-			$wpdb->prefix . self::TABLE,
-			array(
-				'status'     => $decision,
-				'decision'   => $decision,
-				'decided_by' => get_current_user_id(),
-				'decided_at' => gmdate( 'Y-m-d H:i:s' ),
-			),
-			array( 'id' => $proposal_id )
+		$table = $wpdb->prefix . self::TABLE;
+		$sql   = "UPDATE {$table} SET status = %s, decision = %s, decided_by = %d, decided_at = %s WHERE id = %s AND status = 'pending'";
+
+		// Atomic claim: the WHERE guard pins status = 'pending', so only the
+		// first of two concurrent requests to reach this UPDATE flips the row
+		// (1 affected row) and proceeds; the second sees 0 affected rows and
+		// bails, so the underlying tool call can never execute twice for the
+		// same proposal.
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- Custom table conditional claim.
+		$updated = $wpdb->query(
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Custom plugin table.
+			$wpdb->prepare( $sql, $decision, $decision, get_current_user_id(), gmdate( 'Y-m-d H:i:s' ), $proposal_id )
 		);
+
+		return 1 === (int) $updated;
 	}
 }

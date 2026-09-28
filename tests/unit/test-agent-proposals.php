@@ -239,6 +239,112 @@ class Test_Agent_Proposals extends TestCase {
 	}
 
 	/**
+	 * mark_decided() claims the pending row atomically: the first claim wins
+	 * (1 affected row), a second claim for an already-decided row loses (0 rows).
+	 */
+	public function test_mark_decided_claims_pending_row_atomically(): void {
+		$proposal = Agent_Proposals::create( 'list_posts', array(), 'wordpress-assistant', 'Claim me' );
+
+		$mark = new \ReflectionMethod( Agent_Proposals::class, 'mark_decided' );
+
+		$this->assertTrue( $mark->invoke( null, $proposal['id'], 'approved' ), 'The first claim must win the pending row.' );
+		$this->assertFalse( $mark->invoke( null, $proposal['id'], 'approved' ), 'A second claim must lose the already-decided row.' );
+
+		$row = $this->get_proposal_row( $proposal['id'] );
+		$this->assertSame( 'approved', $row['status'] );
+		$this->assertSame( 'approved', $row['decision'] );
+	}
+
+	/**
+	 * A losing concurrent approve() — whose get() read 'pending' but whose
+	 * mark_decided() UPDATE lands after a competing request already claimed the
+	 * row — must be refused and must NOT execute the tool. Simulated with the
+	 * 'query' filter: when approve()'s conditional UPDATE is about to run, a
+	 * competing request claims the row first, so the UPDATE affects 0 rows.
+	 */
+	public function test_approve_refuses_and_skips_execution_when_claim_lost(): void {
+		$proposal = Agent_Proposals::create( 'list_posts', array(), 'wordpress-assistant', 'Race', '', 'run-race', 1 );
+
+		$claimed = false;
+		$race    = static function ( string $query ) use ( &$claimed, $proposal ): string {
+			if ( ! $claimed && false !== stripos( $query, 'agent_builder_proposals' ) && false !== stripos( $query, "SET status = 'approved'" ) ) {
+				$claimed = true;
+				global $wpdb;
+				// The competing request claims the pending row first.
+				$wpdb->query(
+					$wpdb->prepare(
+						"UPDATE {$wpdb->prefix}agent_builder_proposals SET status = 'approved', decision = 'approved', decided_by = 1, decided_at = %s WHERE id = %s AND status = 'pending'",
+						gmdate( 'Y-m-d H:i:s' ),
+						$proposal['id']
+					)
+				);
+			}
+			return $query;
+		};
+
+		add_filter( 'query', $race );
+
+		try {
+			$result = Agent_Proposals::approve( $proposal['id'] );
+		} finally {
+			remove_filter( 'query', $race );
+		}
+
+		$this->assertArrayHasKey( 'error', $result );
+		$this->assertSame( 'Proposal already processed.', $result['error'] );
+
+		// The losing request must not have executed the tool: no 'proposal_approved'
+		// audit row was written for this proposal.
+		global $wpdb;
+		$approved = (int) $wpdb->get_var(
+			$wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}agent_builder_audit_log WHERE action = %s", 'proposal_approved' )
+		);
+		$this->assertSame( 0, $approved );
+	}
+
+	/**
+	 * The identical atomic-claim guard applies to reject(): a losing reject()
+	 * returns the already-processed error and writes no 'proposal_rejected'
+	 * audit row.
+	 */
+	public function test_reject_refuses_when_claim_lost(): void {
+		$proposal = Agent_Proposals::create( 'list_posts', array(), 'wordpress-assistant', 'Race reject', '', 'run-reject', 1 );
+
+		$claimed = false;
+		$race    = static function ( string $query ) use ( &$claimed, $proposal ): string {
+			if ( ! $claimed && false !== stripos( $query, 'agent_builder_proposals' ) && false !== stripos( $query, "SET status = 'rejected'" ) ) {
+				$claimed = true;
+				global $wpdb;
+				$wpdb->query(
+					$wpdb->prepare(
+						"UPDATE {$wpdb->prefix}agent_builder_proposals SET status = 'rejected', decision = 'rejected', decided_by = 1, decided_at = %s WHERE id = %s AND status = 'pending'",
+						gmdate( 'Y-m-d H:i:s' ),
+						$proposal['id']
+					)
+				);
+			}
+			return $query;
+		};
+
+		add_filter( 'query', $race );
+
+		try {
+			$result = Agent_Proposals::reject( $proposal['id'] );
+		} finally {
+			remove_filter( 'query', $race );
+		}
+
+		$this->assertArrayHasKey( 'error', $result );
+		$this->assertSame( 'Proposal already processed.', $result['error'] );
+
+		global $wpdb;
+		$rejected = (int) $wpdb->get_var(
+			$wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}agent_builder_audit_log WHERE action = %s", 'proposal_rejected' )
+		);
+		$this->assertSame( 0, $rejected );
+	}
+
+	/**
 	 * Fetch a raw proposals table row by id.
 	 *
 	 * @param string $proposal_id Proposal UUID.
