@@ -288,6 +288,42 @@ class Approval_Queue {
 		$body .= '<p style="margin:0 0 12px;"><a href="' . esc_url( $queue_url ) . '">' . esc_html__( 'Review approvals in WordPress admin', 'agent-builder' ) . '</a></p>';
 		$body .= '<p style="margin:0;font-size:12px;color:#646970;">' . esc_html__( 'You can turn these emails off under Approvals → Preferences.', 'agent-builder' ) . '</p>';
 
+		// Record the same notice in the notification inbox so it surfaces on the
+		// admin-bar count and Tasks screen, not just in email. The email below
+		// remains the single send (notify() never emails approval_pending).
+		$notify_user_id = 0;
+		$notify_user    = get_user_by( 'email', $to );
+		if ( $notify_user ) {
+			$notify_user_id = (int) $notify_user->ID;
+		}
+
+		$notify_body = sprintf(
+			/* translators: 1: action label, 2: agent name, 3: risk level */
+			__( '%1$s by %2$s (risk: %3$s)', 'agent-builder' ),
+			$label,
+			$agent,
+			$risk_level
+		);
+		if ( $reasoning ) {
+			$notify_body .= ' — ' . wp_strip_all_tags( $reasoning );
+		}
+
+		Notifications::notify(
+			$notify_user_id,
+			'approval_pending',
+			sprintf(
+				/* translators: %s: action label */
+				__( 'Approval needed: %s', 'agent-builder' ),
+				$label
+			),
+			$notify_body,
+			array(
+				'link'     => $queue_url,
+				'agent_id' => $agent_id,
+				'severity' => 'warning',
+			)
+		);
+
 		$sent = false;
 		if ( class_exists( '\Agentic_Email_Helper' ) ) {
 			$sent = (bool) \Agentic_Email_Helper::send(
