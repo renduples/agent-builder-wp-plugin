@@ -50,6 +50,8 @@ SHARED_TO_HANDLES = {
     ),
 }
 
+ADMIN_PAGES_SHARED_PREFIX = "src/admin-pages/"
+
 
 def main() -> int:
     lang = Path("languages")
@@ -94,8 +96,13 @@ def main() -> int:
             dest.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
             renamed += 1
 
+        shared_to_handles = dict(SHARED_TO_HANDLES)
+        for source in by_source:
+            if source.startswith(ADMIN_PAGES_SHARED_PREFIX) and source not in SOURCE_TO_HANDLE:
+                shared_to_handles[source] = ("agentic-admin-pages",)
+
         merged = 0
-        for source, handles in SHARED_TO_HANDLES.items():
+        for source, handles in shared_to_handles.items():
             extra = by_source.get(source)
             if not extra:
                 continue
@@ -119,7 +126,7 @@ def main() -> int:
                 continue
             jf.unlink(missing_ok=True)
 
-        unknown = [s for s in by_source if s not in SOURCE_TO_HANDLE and s not in SHARED_TO_HANDLES]
+        unknown = [s for s in by_source if s not in SOURCE_TO_HANDLE and s not in shared_to_handles]
         print(f"{loc:8} mo={mo.stat().st_size:6} json={renamed} merged_shared={merged} unknown={unknown}")
     return 0
 

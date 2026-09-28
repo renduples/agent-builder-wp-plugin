@@ -43,7 +43,16 @@ class Agent_Task_Job_Processor implements Job_Processor_Interface {
 	public static function init(): void {
 		add_filter(
 			'agent_builder_job_processors',
-			static function ( array $allowed ): array {
+			static function ( $allowed ): array {
+				// An earlier-priority callback may have returned a non-array;
+				// cast it back so appending self::class can't throw a TypeError
+				// from an `array` type hint before Job_Manager's own fallback runs.
+				// Restore the built-in default allowlist entry rather than an
+				// empty array, so Agent_Builder_Job_Processor's own jobs are not
+				// dropped and later rejected as "processor not allowed".
+				if ( ! is_array( $allowed ) ) {
+					$allowed = array( Agent_Builder_Job_Processor::class );
+				}
 				$allowed[] = self::class;
 				return $allowed;
 			}
@@ -137,8 +146,13 @@ class Agent_Task_Job_Processor implements Job_Processor_Interface {
 
 		// Only a non-terminal 'error' still needs finishing here: 'completed',
 		// 'cancelled' and 'aborted' were already finished by the controller, and
-		// 'waiting' / 'continuing' must stay in their hand-off state.
-		if ( 'error' === (string) ( $result['status'] ?? 'completed' ) ) {
+		// 'waiting' / 'continuing' must stay in their hand-off state. A
+		// 'guard_rejected' error means the resume attempt itself was refused
+		// (run not found, wrong status, or agent mismatch) — that is not this
+		// job's run to finalize: the target run may still be legitimately
+		// waiting/continuing, and forcing it to 'failed' here would destroy
+		// that state out from under whatever holds it.
+		if ( 'error' === (string) ( $result['status'] ?? 'completed' ) && empty( $result['guard_rejected'] ) ) {
 			$run->finish( 'failed', array( 'error' => (string) ( $result['response'] ?? 'Autonomous task errored.' ) ) );
 		}
 

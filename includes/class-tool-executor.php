@@ -261,6 +261,17 @@ class Tool_Executor {
 		 * @param array  $ctx         Gate context — see Tool_Executor::execute().
 		 */
 		$enforcement = apply_filters( 'agent_builder_tool_enforcement', $baseline, $ctx );
+
+		// A filter (or a bug in one) can return anything — a typo, a stray
+		// value, null, an int, an array. Validate the type and value here,
+		// before it ever reaches the strictly-typed clamp_enforcement() —
+		// passing a non-string there would throw a TypeError instead of
+		// failing closed. Never let an unrecognized value fall through to
+		// the 'allow' path; treat it as the pre-filter baseline instead.
+		if ( ! is_string( $enforcement ) || ! Risk_Level::is_valid_enforcement( $enforcement ) ) {
+			$enforcement = $baseline;
+		}
+
 		$enforcement = Risk_Level::clamp_enforcement( $enforcement, $ctx );
 
 		/**
@@ -281,7 +292,7 @@ class Tool_Executor {
 					'risk_level' => $risk,
 				)
 			);
-			return array( 'error' => 'This action is classified as extreme risk and cannot be performed.' );
+			return array( 'error' => 'This action was blocked by policy and cannot be performed.' );
 		}
 
 		if ( 'queue' === $enforcement ) {
@@ -456,8 +467,9 @@ class Tool_Executor {
 
 		// Execute via Tool_Loader (all standalone tools), falling back to
 		// agent-inline tools, then third-party abilities (WP 6.9+). Exactly
-		// one of these produces the result — do_action() below fires exactly
-		// once, regardless of which path (or none) resolved it.
+		// one of these produces the result — $resolved tracks whether any of
+		// them actually did, so the synthesized "Unknown tool" case below
+		// never gets reported as a real execution.
 		$result = $this->tool_loader->execute( $tool_name, $arguments );
 
 		if ( null !== $result ) {
@@ -471,15 +483,18 @@ class Tool_Executor {
 			if ( null === $result && $this->abilities_bridge ) {
 				$result = $this->abilities_bridge->execute_ability( $tool_name, $arguments );
 			}
+		}
 
-			if ( null === $result ) {
-				$result = array( 'error' => sprintf( 'Unknown tool: %s', $tool_name ) );
-			}
+		$resolved = null !== $result;
+
+		if ( ! $resolved ) {
+			$result = array( 'error' => sprintf( 'Unknown tool: %s', $tool_name ) );
 		}
 
 		/**
 		 * Fires once, after a tool call actually executed (never for a
-		 * blocked/queued/confirm-pending return).
+		 * blocked/queued/confirm-pending return, and never for an unresolved
+		 * "Unknown tool" call that no dispatcher handled).
 		 *
 		 * @param string $tool_name Tool name.
 		 * @param array  $arguments Arguments the tool actually ran with (may differ
@@ -488,7 +503,9 @@ class Tool_Executor {
 		 * @param array  $result    Tool result.
 		 * @param array  $ctx       Gate context — see Tool_Executor::execute().
 		 */
-		do_action( 'agent_builder_tool_executed', $tool_name, $arguments, $result, $ctx );
+		if ( $resolved ) {
+			do_action( 'agent_builder_tool_executed', $tool_name, $arguments, $result, $ctx );
+		}
 
 		return $result;
 	}
