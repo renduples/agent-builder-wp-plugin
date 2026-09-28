@@ -273,7 +273,7 @@ class Logs_Payload {
 
 		$kind  = 'other';
 		$icon  = '•';
-		$title = self::friendly_action_title( $action, $target, $details );
+		$title = self::friendly_action_title( $action );
 
 		if ( str_starts_with( $action, 'chat_' ) || 'conversation' === $target ) {
 			$kind = 'chat';
@@ -349,7 +349,7 @@ class Logs_Payload {
 	}
 
 
-	private static function friendly_action_title( string $action, string $target, array $details ): string {
+	private static function friendly_action_title( string $action ): string {
 		$map = array(
 			'chat_start'                 => __( 'Started a chat', 'agent-builder' ),
 			'chat_complete'              => __( 'Finished a chat', 'agent-builder' ),
@@ -442,5 +442,4 @@ class Logs_Payload {
 			human_time_diff( $ts, time() )
 		);
 	}
-
 }

@@ -513,7 +513,8 @@ class Approval_Queue {
 	 * @return string
 	 */
 	public static function canonicalize_params( array $params ): string {
-		return wp_json_encode( self::ksort_recursive( $params ) ) ?: '';
+		$json = wp_json_encode( self::ksort_recursive( $params ) );
+		return false === $json ? '' : $json;
 	}
 
 	/**

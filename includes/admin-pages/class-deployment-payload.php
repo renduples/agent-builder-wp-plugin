@@ -40,5 +40,4 @@ class Deployment_Payload {
 			'legacy_note' => __( 'Full deployment editor (shortcode builder, CLI, modals) remains available when you open a deployment action from here.', 'agent-builder' ),
 		);
 	}
-
 }
