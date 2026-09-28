@@ -239,6 +239,11 @@ class Runs_REST {
 		$args['per_page'] = max( 1, min( 200, (int) $request->get_param( 'per_page' ) ) );
 		$args['page']     = max( 1, (int) $request->get_param( 'page' ) );
 
+		// Opportunistic self-heal: a pending run whose backing job lost its
+		// WP-Cron event would otherwise sit 'pending' forever. The Tasks screen
+		// polls this endpoint, so re-arming the event here recovers it promptly.
+		Job_Manager::reschedule_stale_pending_jobs();
+
 		$runs = Agent_Run::query( $args );
 
 		/**

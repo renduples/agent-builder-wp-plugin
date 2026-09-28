@@ -10,6 +10,7 @@
 
 namespace Agentic\Tests;
 
+use Agentic\Agent_Run;
 use Agentic\Notifications;
 
 /**
@@ -517,5 +518,97 @@ class Test_Notifications extends TestCase {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Test assertion against the custom table.
 		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT emailed_at FROM %i WHERE id = %d', $wpdb->prefix . 'agent_builder_notifications', $id ), ARRAY_A );
 		$this->assertNull( $row['emailed_at'], 'A bad recipient must not stamp rows emailed.' );
+	}
+
+	/**
+	 * A finished background run notifies its owner with a run_finished row whose
+	 * body is the first line of the result summary (the "comes back to you"
+	 * promise for finished runs).
+	 */
+	public function test_on_run_finished_creates_run_finished_notification(): void {
+		$admin_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+
+		$run = Agent_Run::begin(
+			'wordpress-assistant',
+			array(
+				'kind'      => 'task',
+				'user_id'   => $admin_id,
+				'task_text' => 'Summarise the posts.',
+			)
+		);
+		$run->finish( 'completed', array( 'text' => "First line of result.\nSecond line." ) );
+
+		$rows = Notifications::list( $admin_id );
+		$this->assertCount( 1, $rows );
+		$this->assertSame( 'run_finished', $rows[0]['type'] );
+		$this->assertSame( 'First line of result.', $rows[0]['body'] );
+		$this->assertSame( $run->get_run_id(), $rows[0]['run_id'] );
+	}
+
+	/**
+	 * A failed background run notifies its owner with a run_error row whose body
+	 * is the first line of the error.
+	 */
+	public function test_on_run_finished_creates_run_error_notification_on_failure(): void {
+		$admin_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+
+		$run = Agent_Run::begin(
+			'wordpress-assistant',
+			array(
+				'kind'      => 'task',
+				'user_id'   => $admin_id,
+				'task_text' => 'Publish a post.',
+			)
+		);
+		$run->finish( 'failed', array( 'error' => "Run failed: the provider errored.\nRetry later." ) );
+
+		$rows = Notifications::list( $admin_id );
+		$this->assertCount( 1, $rows );
+		$this->assertSame( 'run_error', $rows[0]['type'] );
+		$this->assertSame( 'Run failed: the provider errored.', $rows[0]['body'] );
+		$this->assertSame( 'error', $rows[0]['severity'] );
+	}
+
+	/**
+	 * A run that pauses on an approval notifies its owner with a run_waiting row.
+	 */
+	public function test_on_run_waiting_creates_run_waiting_notification(): void {
+		$admin_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+
+		$run = Agent_Run::begin(
+			'wordpress-assistant',
+			array(
+				'kind'      => 'task',
+				'user_id'   => $admin_id,
+				'task_text' => 'Publish a post.',
+			)
+		);
+		$run->mark_waiting( 'approval', '42', array(), 'call_abc' );
+
+		$rows = Notifications::list( $admin_id );
+		$this->assertCount( 1, $rows );
+		$this->assertSame( 'run_waiting', $rows[0]['type'] );
+		$this->assertSame( 'warning', $rows[0]['severity'] );
+		$this->assertSame( $run->get_run_id(), $rows[0]['run_id'] );
+	}
+
+	/**
+	 * Chat runs have no owner-facing "come back to you" expectation, so neither
+	 * finishing nor waiting on one produces a notification.
+	 */
+	public function test_chat_runs_do_not_notify(): void {
+		$admin_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+
+		$run = Agent_Run::begin(
+			'wordpress-assistant',
+			array(
+				'kind'      => 'chat',
+				'user_id'   => $admin_id,
+				'task_text' => 'Hello.',
+			)
+		);
+		$run->finish( 'completed', array( 'text' => 'Hi there.' ) );
+
+		$this->assertCount( 0, Notifications::list( $admin_id ) );
 	}
 }
