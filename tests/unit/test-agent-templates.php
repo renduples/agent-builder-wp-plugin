@@ -515,10 +515,11 @@ class Test_Agent_Templates extends TestCase {
 
 	/**
 	 * A crafted archive with two entries sharing one name — the first small,
-	 * the second expanding past the cap — is rejected. check_archive_bounds()
-	 * must measure each entry by *index* (getStreamIndex()), not by name
-	 * (getStream() returns only the first matching entry), or the large
-	 * duplicate is silently skipped and the archive slips past the size bound.
+	 * the second expanding past the cap — is rejected outright. name-based
+	 * resolution (getStream()) can only ever open the first matching entry, and
+	 * the declared sizes are attacker-forgeable, so a duplicate name can never be
+	 * safely disambiguated; the whole archive is rejected as soon as any two
+	 * entries collide, before any size accounting runs.
 	 */
 	public function test_import_rejects_duplicate_name_zip_bomb(): void {
 		$zip = $this->build_zip_with_duplicate_names(
@@ -532,7 +533,7 @@ class Test_Agent_Templates extends TestCase {
 		$result = Agent_Templates::import( $this->upload_entry( $zip, 'duplicate.zip' ) );
 
 		$this->assertWPError( $result );
-		$this->assertSame( 'zip_too_large', $result->get_error_code() );
+		$this->assertSame( 'zip_duplicate_entry', $result->get_error_code() );
 		$this->assertSame( $before, $this->import_temp_dirs(), 'Expected no leftover import temp directory' );
 	}
 
@@ -840,6 +841,117 @@ class Test_Agent_Templates extends TestCase {
 
 		$this->assertWPError( $result );
 		$this->assertSame( 'risk_downgrade', $result->get_error_code() );
+	}
+
+	/**
+	 * import() rejects an archive whose abilities.json does not declare a tool
+	 * that agent.json lists — importing it would hand back a slug that can never
+	 * be activated (activate_agent() cross-checks the same set).
+	 */
+	public function test_import_rejects_undeclared_tool(): void {
+		$zip = $this->build_zip(
+			array(
+				'agent.json'     => wp_json_encode(
+					array(
+						'slug'         => 'undeclared-tool-agent',
+						'name'         => 'Undeclared',
+						'description' => 'Declares a tool its abilities omit.',
+						'category'     => 'admin',
+						'icon'         => '🕳️',
+						'version'      => '1.0.0',
+						'capabilities' => array( 'read' ),
+						'tools'        => array( 'list_posts', 'create_post_content' ),
+						'team'         => false,
+					)
+				),
+				'abilities.json' => wp_json_encode(
+					array(
+						'version'   => '1.0',
+						'abilities' => array( 'list_posts' => array( 'risk' => 'none' ) ),
+					)
+				),
+			)
+		);
+
+		$result = Agent_Templates::import( $this->upload_entry( $zip, 'undeclared.zip' ) );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'risk_downgrade', $result->get_error_code() );
+	}
+
+	/**
+	 * duplicate() removes the copy's directory, settings and skill assignments
+	 * when activation fails after write_agent() — no debris is left behind.
+	 */
+	public function test_duplicate_cleans_up_on_activation_failure(): void {
+		// Source declares a tool its abilities.json omits, so write_agent()
+		// succeeds but activate_agent() fails the manifest cross-check.
+		$source_dir = AGENT_BUILDER_AGENTS_DIR . '/broken-source';
+		wp_mkdir_p( $source_dir . '/templates' );
+
+		$manifest = array(
+			'slug'         => 'broken-source',
+			'name'         => 'Broken',
+			'description'  => 'A source that cannot be activated.',
+			'category'     => 'admin',
+			'icon'         => '⚠️',
+			'version'      => '1.0.0',
+			'capabilities' => array( 'read' ),
+			'tools'        => array( 'list_posts', 'create_post_content' ),
+			'suggested_prompts' => array(),
+			'team'         => false,
+		);
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture write.
+		file_put_contents( $source_dir . '/agent.json', wp_json_encode( $manifest, JSON_PRETTY_PRINT ) );
+		// abilities.json omits create_post_content.
+		Abilities_Manifest::write_manifest(
+			$source_dir,
+			'broken-source',
+			array(
+				'version'   => '1.0',
+				'abilities' => array( 'list_posts' => array( 'risk' => 'none' ) ),
+			)
+		);
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture write.
+		file_put_contents( $source_dir . '/templates/system-prompt.txt', "You are Broken.\n" );
+		\Agentic_Agent_Registry::get_instance()->get_installed_agents( true );
+
+		$this->track( 'broken-source' );
+
+		Agent_Settings::update( 'broken-source', 'some_key', 'some_value' );
+		Skills_Registry::create(
+			array(
+				'name'        => 'broken-skill',
+				'description' => 'A skill to copy',
+				'content'     => "# Broken skill\n",
+				'agent_slug'  => array( 'broken-source' ),
+				'enabled'     => true,
+			)
+		);
+
+		$result = Agent_Templates::duplicate( 'broken-source' );
+
+		$this->assertWPError( $result );
+
+		$copy = 'broken-source-copy';
+		$this->assertFalse(
+			is_dir( AGENT_BUILDER_AGENTS_DIR . '/' . $copy ),
+			'Expected the failed duplicate directory to be removed'
+		);
+		$this->assertNotContains(
+			$copy,
+			\Agentic_Agent_Registry::get_instance()->get_active_agents(),
+			'Expected the failed duplicate to not be active'
+		);
+		$this->assertSame(
+			array(),
+			Agent_Settings::get_all( $copy ),
+			'Expected the failed duplicate settings to be removed'
+		);
+
+		// The copied skill assignment must not survive: the only skills under
+		// the copy slug are the source's own (none reference the copy).
+		$this->assertSame( array(), Skills_Registry::get_for_agent( $copy ) );
 	}
 
 	// -------------------------------------------------------------------------
