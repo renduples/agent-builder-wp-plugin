@@ -55,5 +55,4 @@ class Train_Payload {
 			'manage_url'  => admin_url( 'admin.php?page=agentic-train-data&tab=wiki' ),
 		);
 	}
-
 }

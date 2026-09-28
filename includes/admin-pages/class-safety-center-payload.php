@@ -168,9 +168,9 @@ class Safety_Center_Payload {
 			);
 		}
 
-		$max_risk          = class_exists( \Agentic\Risk_Level::class ) ? \Agentic\Risk_Level::NONE : 'none';
-		$highest_enabled   = array();
-		$high_w            = class_exists( \Agentic\Risk_Level::class ) ? \Agentic\Risk_Level::weight( \Agentic\Risk_Level::HIGH ) : 3;
+		$max_risk        = class_exists( \Agentic\Risk_Level::class ) ? \Agentic\Risk_Level::NONE : 'none';
+		$highest_enabled = array();
+		$high_w          = class_exists( \Agentic\Risk_Level::class ) ? \Agentic\Risk_Level::weight( \Agentic\Risk_Level::HIGH ) : 3;
 
 		foreach ( $all_tools as $name => $tool ) {
 			$name = (string) ( is_string( $name ) && '' !== $name ? $name : ( $tool['name'] ?? '' ) );
@@ -263,7 +263,7 @@ class Safety_Center_Payload {
 
 
 	private static function safety_center_tier_examples(): array {
-		$baseline = class_exists( \Agentic\Risk_Level::class ) ? \Agentic\Risk_Level::get_baseline_risks() : array();
+		$baseline  = class_exists( \Agentic\Risk_Level::class ) ? \Agentic\Risk_Level::get_baseline_risks() : array();
 		$preferred = array(
 			'none'    => array(),
 			'low'     => array( 'request_human_help', 'wc_add_to_cart', 'manage_agent_shortcode' ),
@@ -358,7 +358,7 @@ class Safety_Center_Payload {
 					'risk'       => $risk,
 					'risk_label' => $risk_labels[ $risk ] ?? $risk,
 				);
-				$w = class_exists( \Agentic\Risk_Level::class ) ? \Agentic\Risk_Level::weight( $risk ) : 0;
+				$w   = class_exists( \Agentic\Risk_Level::class ) ? \Agentic\Risk_Level::weight( $risk ) : 0;
 				if ( $w >= $high_w ) {
 					$high_tools[] = $row;
 				} else {
@@ -410,5 +410,4 @@ class Safety_Center_Payload {
 	private static function safety_center_tool_label( string $name ): string {
 		return str_replace( array( '_', '-' ), ' ', $name );
 	}
-
 }

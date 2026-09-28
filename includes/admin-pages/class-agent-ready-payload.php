@@ -37,5 +37,4 @@ class Agent_Ready_Payload {
 
 		return $payload;
 	}
-
 }
