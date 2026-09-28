@@ -159,6 +159,22 @@ class Agent_Task_Job_Processor implements Job_Processor_Interface {
 			throw new \Exception( 'Run not found: ' . esc_html( $run_id ) );
 		}
 
+		// Refuse to run when the owner is gone or no longer authorised: this job
+		// will set the current user to the owner for the task's duration, so a
+		// deleted or de-privileged owner must fail the run here rather than be
+		// silently impersonated. Admins always hold this capability (the dynamic
+		// user_has_cap filter grants it to manage_options holders), so the normal
+		// administrator-owned background run passes unchanged.
+		$owner_id = (int) $run->get_user_id();
+		$owner    = get_userdata( $owner_id );
+		if ( ! $owner || ! user_can( $owner_id, 'agent_builder_run_tasks_manually' ) ) {
+			$message = ! $owner
+				? sprintf( 'Run owner (user %d) no longer exists; the run cannot be executed.', $owner_id )
+				: sprintf( 'Run owner (user %d) lacks the agent_builder_run_tasks_manually capability.', $owner_id );
+			$run->finish( 'failed', array( 'error' => $message ) );
+			throw new \Exception( $message );
+		}
+
 		$agent_id = (string) ( $request_data['agent_id'] ?? '' );
 		$agent    = \Agentic_Agent_Registry::get_instance()->get_agent_instance( $agent_id );
 
@@ -189,28 +205,40 @@ class Agent_Task_Job_Processor implements Job_Processor_Interface {
 
 		$progress_callback( 20, 'Running autonomous task…' );
 
-		$controller = $controller ?? new Agent_Controller();
-		$result     = $controller->run_autonomous_task( $agent, $prompt, $run_id, $options );
+		// Run as the owner for the task's duration: tool grants, proposal
+		// attribution and user_can() checks inside the controller must act as the
+		// assigning user even under cron (where get_current_user_id() is 0). The
+		// previous user — usually 0 in a cron worker, but never assumed — is
+		// restored in every path via finally.
+		$previous_user_id = get_current_user_id();
+		wp_set_current_user( $owner_id );
 
-		if ( null === $result ) {
-			$run->finish( 'failed', array( 'error' => 'Autonomous task failed to start.' ) );
-			throw new \Exception( 'Autonomous task failed to start.' );
+		try {
+			$controller = $controller ?? new Agent_Controller();
+			$result     = $controller->run_autonomous_task( $agent, $prompt, $run_id, $options );
+
+			if ( null === $result ) {
+				$run->finish( 'failed', array( 'error' => 'Autonomous task failed to start.' ) );
+				throw new \Exception( 'Autonomous task failed to start.' );
+			}
+
+			// Only a non-terminal 'error' still needs finishing here: 'completed',
+			// 'cancelled' and 'aborted' were already finished by the controller, and
+			// 'waiting' / 'continuing' must stay in their hand-off state. A
+			// 'guard_rejected' error means the resume attempt itself was refused
+			// (run not found, wrong status, or agent mismatch) — that is not this
+			// job's run to finalize: the target run may still be legitimately
+			// waiting/continuing, and forcing it to 'failed' here would destroy
+			// that state out from under whatever holds it.
+			if ( 'error' === (string) ( $result['status'] ?? 'completed' ) && empty( $result['guard_rejected'] ) ) {
+				$run->finish( 'failed', array( 'error' => (string) ( $result['response'] ?? 'Autonomous task errored.' ) ) );
+			}
+
+			$progress_callback( 100, 'Completed' );
+
+			return $result;
+		} finally {
+			wp_set_current_user( $previous_user_id );
 		}
-
-		// Only a non-terminal 'error' still needs finishing here: 'completed',
-		// 'cancelled' and 'aborted' were already finished by the controller, and
-		// 'waiting' / 'continuing' must stay in their hand-off state. A
-		// 'guard_rejected' error means the resume attempt itself was refused
-		// (run not found, wrong status, or agent mismatch) — that is not this
-		// job's run to finalize: the target run may still be legitimately
-		// waiting/continuing, and forcing it to 'failed' here would destroy
-		// that state out from under whatever holds it.
-		if ( 'error' === (string) ( $result['status'] ?? 'completed' ) && empty( $result['guard_rejected'] ) ) {
-			$run->finish( 'failed', array( 'error' => (string) ( $result['response'] ?? 'Autonomous task errored.' ) ) );
-		}
-
-		$progress_callback( 100, 'Completed' );
-
-		return $result;
 	}
 }

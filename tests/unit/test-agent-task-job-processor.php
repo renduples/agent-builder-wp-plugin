@@ -217,6 +217,7 @@ class Test_Agent_Task_Job_Processor extends TestCase {
 		Provider_Registry::save_api_key( 'agentic', 'test-relay-key' );
 		Provider_Registry::invalidate();
 
+		$admin_id    = self::factory()->user->create( array( 'role' => 'administrator' ) );
 		$owner_id    = 'test-job-processor-guard-owner';
 		$mismatch_id = 'test-job-processor-guard-mismatched';
 		$registry    = \Agentic_Agent_Registry::get_instance();
@@ -227,6 +228,7 @@ class Test_Agent_Task_Job_Processor extends TestCase {
 			$owner_id,
 			array(
 				'kind'      => 'task',
+				'user_id'   => $admin_id,
 				'task_text' => 'Do something.',
 			)
 		);
@@ -269,6 +271,8 @@ class Test_Agent_Task_Job_Processor extends TestCase {
 	 * and finish 'completed'.
 	 */
 	public function test_fresh_dispatch_adopts_dispatched_run_and_completes(): void {
+		$admin_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+
 		$agent_id = 'wordpress-assistant';
 		$registry = \Agentic_Agent_Registry::get_instance();
 		$registry->register( $this->make_agent( $agent_id ) );
@@ -280,7 +284,7 @@ class Test_Agent_Task_Job_Processor extends TestCase {
 			$agent_id,
 			array(
 				'kind'      => 'task',
-				'user_id'   => 7,
+				'user_id'   => $admin_id,
 				'task_text' => 'Summarise the newest posts',
 			)
 		);
@@ -309,7 +313,7 @@ class Test_Agent_Task_Job_Processor extends TestCase {
 
 		$reloaded = Agent_Run::load( $run_id );
 		$this->assertSame( 'completed', $reloaded->to_array()['status'] );
-		$this->assertSame( 7, $reloaded->to_array()['user_id'], 'the assigning admin user id must be preserved' );
+		$this->assertSame( $admin_id, $reloaded->to_array()['user_id'], 'the assigning admin user id must be preserved' );
 
 		// Exactly one run row for this agent: the dispatched row was adopted,
 		// not stranded while a second begin() row was created.
@@ -321,6 +325,137 @@ class Test_Agent_Task_Job_Processor extends TestCase {
 			)
 		);
 		$this->assertSame( 1, $count, 'the dispatched run must be adopted, not stranded beside a second begin() row' );
+	}
+
+	/**
+	 * execute() runs as the run owner for the task's duration and restores the
+	 * previous user afterwards: under cron get_current_user_id() is 0, so a
+	 * capability-gated tool would otherwise be refused. The owner (an admin) is
+	 * set as the current user for the run, so current_user_can('edit_posts') is
+	 * true mid-run, and the previous (cron) user is restored in every path.
+	 */
+	public function test_execute_runs_as_owner_and_restores_current_user(): void {
+		$admin_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+
+		$agent_id = 'wordpress-assistant';
+		$registry = \Agentic_Agent_Registry::get_instance();
+		$registry->register( $this->make_agent( $agent_id ) );
+
+		$run = Agent_Run::create_queued(
+			$agent_id,
+			array(
+				'kind'      => 'task',
+				'user_id'   => $admin_id,
+				'task_text' => 'Publish a post.',
+			)
+		);
+		$job_id = Agent_Task_Job_Processor::dispatch( $run );
+		$job    = Job_Manager::get_job( $job_id );
+		Agent_Run::reset_current_for_tests();
+
+		$fake = new Recording_LLM_Client( array( Fake_LLM_Client::text_response( 'Done.' ) ) );
+
+		// Simulate cron: no current user.
+		wp_set_current_user( 0 );
+
+		$result = ( new Agent_Task_Job_Processor() )->execute(
+			$job->request_data,
+			static function ( $progress, $message ) {},
+			new Agent_Controller( $fake )
+		);
+
+		$this->assertSame( 'completed', $result['status'] );
+		$this->assertSame( $admin_id, $fake->seen_user_id, 'the run must execute as its owner' );
+		$this->assertTrue( $fake->seen_edit_posts, 'an admin owner must pass a capability-gated check mid-run' );
+		$this->assertSame( 0, get_current_user_id(), 'the previous (cron) user must be restored after the run' );
+	}
+
+	/**
+	 * A background run whose owner has been deleted must fail cleanly rather
+	 * than be silently impersonated: execute() refuses to run, finishes the run
+	 * 'failed' with a clear error, and throws so the job records the failure.
+	 */
+	public function test_execute_fails_cleanly_when_owner_deleted(): void {
+		$admin_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+
+		$agent_id = 'wordpress-assistant';
+		$registry = \Agentic_Agent_Registry::get_instance();
+		$registry->register( $this->make_agent( $agent_id ) );
+
+		$run = Agent_Run::create_queued(
+			$agent_id,
+			array(
+				'kind'      => 'task',
+				'user_id'   => $admin_id,
+				'task_text' => 'Do something.',
+			)
+		);
+		$run_id = $run->get_run_id();
+		$job_id = Agent_Task_Job_Processor::dispatch( $run );
+		$job    = Job_Manager::get_job( $job_id );
+		Agent_Run::reset_current_for_tests();
+
+		wp_delete_user( $admin_id );
+
+		$thrown = null;
+		try {
+			( new Agent_Task_Job_Processor() )->execute(
+				$job->request_data,
+				static function ( $progress, $message ) {},
+				new Agent_Controller( new Fake_LLM_Client( array( Fake_LLM_Client::text_response( 'Done.' ) ) ) )
+			);
+		} catch ( \Exception $e ) {
+			$thrown = $e->getMessage();
+		}
+
+		$this->assertNotNull( $thrown, 'execute() must refuse to run an ownerless run' );
+		$this->assertStringContainsString( 'no longer exists', $thrown );
+
+		$reloaded = Agent_Run::load( $run_id );
+		$this->assertSame( 'failed', $reloaded->to_array()['status'] );
+		$this->assertStringContainsString( 'no longer exists', $reloaded->to_array()['error'] );
+	}
+
+	/**
+	 * A background run whose owner is no longer authorised (a non-admin without
+	 * the run_tasks_manually privilege) must also fail cleanly rather than run.
+	 */
+	public function test_execute_fails_cleanly_when_owner_lacks_capability(): void {
+		$subscriber_id = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+
+		$agent_id = 'wordpress-assistant';
+		$registry = \Agentic_Agent_Registry::get_instance();
+		$registry->register( $this->make_agent( $agent_id ) );
+
+		$run = Agent_Run::create_queued(
+			$agent_id,
+			array(
+				'kind'      => 'task',
+				'user_id'   => $subscriber_id,
+				'task_text' => 'Do something.',
+			)
+		);
+		$run_id = $run->get_run_id();
+		$job_id = Agent_Task_Job_Processor::dispatch( $run );
+		$job    = Job_Manager::get_job( $job_id );
+		Agent_Run::reset_current_for_tests();
+
+		$thrown = null;
+		try {
+			( new Agent_Task_Job_Processor() )->execute(
+				$job->request_data,
+				static function ( $progress, $message ) {},
+				new Agent_Controller( new Fake_LLM_Client( array( Fake_LLM_Client::text_response( 'Done.' ) ) ) )
+			);
+		} catch ( \Exception $e ) {
+			$thrown = $e->getMessage();
+		}
+
+		$this->assertNotNull( $thrown );
+		$this->assertStringContainsString( 'lacks the agent_builder_run_tasks_manually capability', $thrown );
+
+		$reloaded = Agent_Run::load( $run_id );
+		$this->assertSame( 'failed', $reloaded->to_array()['status'] );
 	}
 
 	/**
@@ -424,5 +559,41 @@ class Test_Agent_Task_Job_Processor extends TestCase {
 			),
 			''
 		);
+	}
+}
+
+/**
+ * A Fake_LLM_Client that records the current user (and a capability check) at
+ * the moment the model is called, so tests can assert a background run is
+ * executing as its owner rather than as the cron context (user 0).
+ */
+class Recording_LLM_Client extends Fake_LLM_Client {
+
+	/**
+	 * Current user id observed at the first chat() call.
+	 *
+	 * @var int
+	 */
+	public int $seen_user_id = 0;
+
+	/**
+	 * Whether current_user_can('edit_posts') passed at the first chat() call.
+	 *
+	 * @var bool
+	 */
+	public bool $seen_edit_posts = false;
+
+	/**
+	 * Record the current user, then delegate to the scripted response queue.
+	 *
+	 * @param array $messages      Conversation messages.
+	 * @param array $tools         Available tools.
+	 * @param bool  $force_tool_use Force-tool-use flag.
+	 * @return array|\WP_Error
+	 */
+	public function chat( array $messages, array $tools = array(), bool $force_tool_use = false ): array|\WP_Error {
+		$this->seen_user_id    = get_current_user_id();
+		$this->seen_edit_posts = current_user_can( 'edit_posts' );
+		return parent::chat( $messages, $tools, $force_tool_use );
 	}
 }

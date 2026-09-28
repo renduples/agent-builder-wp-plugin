@@ -76,8 +76,6 @@ class Run_Resumer {
 			return;
 		}
 
-		do_action( 'agent_builder_run_waiting', $run );
-
 		// Approval-queue rows and proposal rows name the tool differently
 		// ('action' vs 'tool').
 		$tool_name = (string) ( $row['action'] ?? ( $row['tool'] ?? 'action' ) );

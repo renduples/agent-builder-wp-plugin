@@ -162,8 +162,11 @@ function TasksApp() {
 	const [ loadError, setLoadError ] = useState( '' );
 	const [ activeTab, setActiveTab ] = useState( 'active' );
 
-	// Composer state.
-	const [ assignAgent, setAssignAgent ] = useState( '' );
+	// Composer state. Default the selected agent to the first accessible one so
+	// the Assign button is usable without the user re-picking an agent that is
+	// already on screen (the drawer previously opened with an empty select, which
+	// left the button disabled).
+	const [ assignAgent, setAssignAgent ] = useState( agents[0]?.id || '' );
 	const [ assignTask, setAssignTask ] = useState( '' );
 	const [ assigning, setAssigning ] = useState( false );
 	const [ assignError, setAssignError ] = useState( '' );
@@ -192,6 +195,15 @@ function TasksApp() {
 	useEffect( () => {
 		drawerRunIdRef.current = drawerRunId;
 	}, [ drawerRunId ] );
+
+	// Open the drawer for a run named in the URL (`?run=<id>`), so notification
+	// links can deep-link straight into the run's detail view.
+	useEffect( () => {
+		const runId = new URLSearchParams( window.location.search ).get( 'run' );
+		if ( runId ) {
+			setDrawerRunId( runId );
+		}
+	}, [] );
 
 	const loadRuns = useCallback( ( silent ) => {
 		if ( ! silent ) {

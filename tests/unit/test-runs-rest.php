@@ -13,6 +13,7 @@
 namespace Agentic\Tests;
 
 use Agentic\Agent_Run;
+use Agentic\Job_Manager;
 use Agentic\Manifest_Agent;
 use Agentic\User_Roles;
 
@@ -382,6 +383,48 @@ class Test_Runs_REST extends TestCase {
 		$this->assertSame( 'forbidden', $retry->as_error()->get_error_code() );
 
 		\Agentic_Agent_Registry::get_instance()->unregister( $slug );
+	}
+
+	/**
+	 * A pending job whose WP-Cron event was lost is re-armed by the GET /runs
+	 * endpoint (which calls reschedule_stale_pending_jobs() before querying).
+	 */
+	public function test_get_runs_reschedules_stale_pending_job(): void {
+		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $admin );
+
+		$job_id = Job_Manager::create_job(
+			array(
+				'user_id'      => $admin,
+				'agent_id'     => self::AGENT,
+				'request_data' => array( 'run_id' => 'r-stale' ),
+				'processor'    => \Agentic\Agent_Task_Job_Processor::class,
+			)
+		);
+
+		// create_job() schedules the event immediately.
+		$this->assertNotFalse( wp_next_scheduled( 'agent_builder_process_job', array( $job_id ) ) );
+
+		// Simulate the event disappearing out from under the still-pending job.
+		wp_clear_scheduled_hook( 'agent_builder_process_job', array( $job_id ) );
+		$this->assertFalse( wp_next_scheduled( 'agent_builder_process_job', array( $job_id ) ) );
+
+		// Age the pending job past the 60s grace window so it qualifies.
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test back-dates the job so it is "stale".
+		$wpdb->update(
+			$wpdb->prefix . 'agent_builder_jobs',
+			array( 'created_at' => gmdate( 'Y-m-d H:i:s', time() - 120 ) ),
+			array( 'id' => $job_id ),
+			array( '%s' ),
+			array( '%s' )
+		);
+
+		$resp = $this->request( 'GET', '/runs' );
+		$this->assertSame( 200, $resp->get_status() );
+
+		// The GET /runs endpoint re-armed the lost cron event for the stale job.
+		$this->assertNotFalse( wp_next_scheduled( 'agent_builder_process_job', array( $job_id ) ) );
 	}
 
 	// -------------------------------------------------------------------------
