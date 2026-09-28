@@ -378,6 +378,8 @@ class Agent_Run {
 	 * A nested call (one made while a run is already active in this process)
 	 * always returns the existing run and ignores $opts — this is what keeps
 	 * delegation semantics unchanged: the outermost begin() owns the run.
+	 * Fires `agent_builder_run_started` for a genuinely new run (not a
+	 * nested return).
 	 *
 	 * @param string $root_agent Slug of the agent starting the run.
 	 * @param array  $opts       See __construct().
@@ -392,6 +394,8 @@ class Agent_Run {
 		self::$current = $run;
 		$run->persist_start();
 		$run->register_shutdown_guard();
+
+		do_action( 'agent_builder_run_started', $run );
 
 		return $run;
 	}
@@ -697,6 +701,56 @@ class Agent_Run {
 	}
 
 	/**
+	 * Atomically claim this run out of 'waiting' on a specific pending item.
+	 *
+	 * Two concurrent approval/proposal resolutions for the same run (a
+	 * double-submit, a retried REST request, two admins racing the same
+	 * approval) must not both resume/stop it. This mirrors the
+	 * `UPDATE ... WHERE status = 'pending'` claim Job_Manager::process_job()
+	 * uses: only the caller whose UPDATE actually flips the row wins.
+	 *
+	 * The claim also matches on `awaiting_type`/`awaiting_id`: if the run has
+	 * already moved on to waiting on a *different* proposal/approval by the
+	 * time a stale or duplicate resolution for the old one arrives, that
+	 * resolution must not hijack the new wait.
+	 *
+	 * @param string $type 'approval' or 'proposal' — must match what this run is awaiting.
+	 * @param string $id   Id of the approval/proposal — must match what this run is awaiting.
+	 * @return bool True if this call performed the claim (exactly one row
+	 *              moved out of 'waiting'); false if the run was no longer
+	 *              'waiting' on this specific item (already claimed, resolved
+	 *              by something else, or waiting on something newer).
+	 */
+	public function claim_waiting( string $type, string $id ): bool {
+		global $wpdb;
+		$table = $wpdb->prefix . 'agent_builder_runs';
+		$now   = current_time( 'mysql', true );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Atomic claim, keyed by run_id + the specific pending item; %i quotes the table name.
+		$claimed = $wpdb->query(
+			$wpdb->prepare(
+				'UPDATE %i SET status = %s, updated_at = %s WHERE run_id = %s AND status = %s AND awaiting_type = %s AND awaiting_id = %s',
+				$table,
+				'running',
+				$now,
+				$this->run_id,
+				'waiting',
+				$type,
+				$id
+			)
+		);
+
+		if ( 1 !== $claimed ) {
+			return false;
+		}
+
+		$this->status     = 'running';
+		$this->updated_at = $now;
+
+		return true;
+	}
+
+	/**
 	 * State needed to resume a waiting run's loop: transcript, scratchpad,
 	 * and what it was waiting on.
 	 *
@@ -794,7 +848,7 @@ class Agent_Run {
 	 *              process already claimed it (or it is no longer in a
 	 *              resumable status).
 	 */
-	public function claim_waiting(): bool {
+	public function claim_resume(): bool {
 		global $wpdb;
 		$table = $wpdb->prefix . 'agent_builder_runs';
 		$now   = current_time( 'mysql', true );
@@ -914,7 +968,11 @@ class Agent_Run {
 	}
 
 	/**
-	 * Finish the run and persist the final state. Idempotent.
+	 * Finish the run and persist the final state. Idempotent — also fires
+	 * `agent_builder_run_finished` exactly once, guarded by the same
+	 * `$this->finished` check so every terminal path (normal completion,
+	 * failure, abort, or Run_Resumer's reject/failed-resume paths) notifies
+	 * subscribers without double-firing.
 	 *
 	 * @param string $status  Final status ('completed', 'failed', 'aborted', 'cancelled').
 	 * @param array  $summary {
@@ -948,6 +1006,8 @@ class Agent_Run {
 		if ( self::$current === $this ) {
 			self::$current = null;
 		}
+
+		do_action( 'agent_builder_run_finished', $this );
 	}
 
 	/**

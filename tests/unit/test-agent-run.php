@@ -561,13 +561,13 @@ class Test_Agent_Run extends TestCase {
 	}
 
 	/**
-	 * claim_waiting() atomically flips a 'waiting'/'continuing' run to
+	 * claim_resume() atomically flips a 'waiting'/'continuing' run to
 	 * 'running' and reports success — the normal, uncontested path.
 	 */
-	public function test_claim_waiting_succeeds_from_waiting_or_continuing(): void {
+	public function test_claim_resume_succeeds_from_waiting_or_continuing(): void {
 		$waiting = Agent_Run::begin( 'content-writer' );
 		$waiting->mark_waiting( 'approval', '1', array() );
-		$this->assertTrue( $waiting->claim_waiting() );
+		$this->assertTrue( $waiting->claim_resume() );
 		$this->assertSame( 'running', $waiting->get_status() );
 		$this->assertSame( 'running', Agent_Run::load( $waiting->get_run_id() )->get_status() );
 
@@ -575,17 +575,17 @@ class Test_Agent_Run extends TestCase {
 
 		$continuing = Agent_Run::begin( 'content-writer' );
 		$continuing->mark_continuing();
-		$this->assertTrue( $continuing->claim_waiting() );
+		$this->assertTrue( $continuing->claim_resume() );
 		$this->assertSame( 'running', $continuing->get_status() );
 	}
 
 	/**
 	 * Two concurrent resume attempts for the same run_id must not both win:
-	 * once one caller's claim_waiting() has flipped the row to 'running',
+	 * once one caller's claim_resume() has flipped the row to 'running',
 	 * a second, separately-loaded instance racing it must fail the claim
 	 * even though its own in-memory get_status() still reads 'waiting'.
 	 */
-	public function test_claim_waiting_rejects_a_second_concurrent_claimant(): void {
+	public function test_claim_resume_rejects_a_second_concurrent_claimant(): void {
 		$run = Agent_Run::begin( 'content-writer' );
 		$run->mark_waiting( 'approval', '1', array() );
 
@@ -595,20 +595,20 @@ class Test_Agent_Run extends TestCase {
 		$this->assertSame( 'waiting', $first_claimant->get_status() );
 		$this->assertSame( 'waiting', $second_claimant->get_status() );
 
-		$this->assertTrue( $first_claimant->claim_waiting(), 'the first claimant must win the race' );
-		$this->assertFalse( $second_claimant->claim_waiting(), 'a second concurrent claimant must lose the race' );
+		$this->assertTrue( $first_claimant->claim_resume(), 'the first claimant must win the race' );
+		$this->assertFalse( $second_claimant->claim_resume(), 'a second concurrent claimant must lose the race' );
 	}
 
 	/**
 	 * A run that is not in 'waiting'/'continuing' (e.g. still 'running', or
 	 * already terminal) can never be claimed.
 	 */
-	public function test_claim_waiting_rejects_a_non_resumable_status(): void {
+	public function test_claim_resume_rejects_a_non_resumable_status(): void {
 		$run = Agent_Run::begin( 'content-writer' );
-		$this->assertFalse( $run->claim_waiting(), 'a plain running run has nothing to claim' );
+		$this->assertFalse( $run->claim_resume(), 'a plain running run has nothing to claim' );
 
 		$run->finish( 'completed' );
-		$this->assertFalse( $run->claim_waiting(), 'a terminal run must never be claimed for resume' );
+		$this->assertFalse( $run->claim_resume(), 'a terminal run must never be claimed for resume' );
 	}
 
 	/**

@@ -1328,7 +1328,20 @@ class Agent_Controller {
 			// that belongs to a different agent than the one making this
 			// call, so a stale or mismatched run_id can never be hijacked into
 			// another agent's context.
-			if ( ! in_array( $run->get_status(), array( 'waiting', 'continuing' ), true ) || $run->get_root_agent() !== $agent_id ) {
+			//
+			// A run already in 'running' is the approval/proposal path: the
+			// resume job was dispatched by Run_Resumer, which atomically
+			// claimed the run out of 'waiting' on that specific item (matching
+			// awaiting_type/awaiting_id) before dispatching. That claim is the
+			// duplicate/stale-resolution guard, so this leg must not re-claim
+			// (the status is no longer 'waiting'/'continuing') — it just
+			// proceeds to run the resumed loop. Only a still-'waiting' or
+			// 'continuing' run (a direct resume, or an elapsed-time hand-off)
+			// is claimable here.
+			$resume_status   = $run->get_status();
+			$already_claimed = 'running' === $resume_status;
+
+			if ( ( ! $already_claimed && ! in_array( $resume_status, array( 'waiting', 'continuing' ), true ) ) || $run->get_root_agent() !== $agent_id ) {
 				return array(
 					'error'          => true,
 					// Marks this as a rejected resume *attempt*, not a task
@@ -1353,10 +1366,10 @@ class Agent_Controller {
 			// call). Two concurrent resume attempts for the same run_id (a
 			// duplicate job dispatch, or a retry racing the original) could
 			// otherwise both pass that check and both execute the same
-			// pending tool call. claim_waiting() closes that window with a
+			// pending tool call. claim_resume() closes that window with a
 			// single compare-and-set UPDATE; only the request that wins it
 			// proceeds.
-			if ( ! $run->claim_waiting() ) {
+			if ( ! $already_claimed && ! $run->claim_resume() ) {
 				return array(
 					'error'          => true,
 					'guard_rejected' => true,

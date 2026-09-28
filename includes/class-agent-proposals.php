@@ -160,6 +160,12 @@ class Agent_Proposals {
 			)
 		);
 
+		// Only a run-backed proposal has a paused run waiting on this decision —
+		// a chat-originated proposal (no run_id) has nothing to resume.
+		if ( ! empty( $proposal['run_id'] ) ) {
+			do_action( 'agent_builder_approval_resolved', 'proposal', $proposal_id, 'approved', $result, $proposal );
+		}
+
 		// Clean up transient.
 		delete_transient( self::TRANSIENT_PREFIX . $proposal_id );
 
@@ -193,6 +199,12 @@ class Agent_Proposals {
 				'proposal_id' => $proposal_id,
 			)
 		);
+
+		// Only a run-backed proposal has a paused run waiting on this decision —
+		// a chat-originated proposal (no run_id) has nothing to stop.
+		if ( ! empty( $proposal['run_id'] ) ) {
+			do_action( 'agent_builder_approval_resolved', 'proposal', $proposal_id, 'rejected', null, $proposal );
+		}
 
 		// Clean up.
 		delete_transient( self::TRANSIENT_PREFIX . $proposal_id );

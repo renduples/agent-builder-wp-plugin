@@ -537,7 +537,7 @@ class Test_Agent_Controller_Autonomous extends TestCase {
 	 * window the atomic claim exists to close: a plain get_status() read
 	 * both attempts would see 'waiting' still passes for both, since the
 	 * row hasn't moved yet at that point. This intercepts the moment
-	 * run_autonomous_task()'s resume branch issues its claim_waiting()
+	 * run_autonomous_task()'s resume branch issues its claim_resume()
 	 * UPDATE and races a second, separately-loaded claim in ahead of it —
 	 * proving the atomic claim itself (not just the earlier status check,
 	 * which alone cannot see this interleaving) rejects the loser.
@@ -564,16 +564,16 @@ class Test_Agent_Controller_Autonomous extends TestCase {
 		$run_id       = $first['run_id'];
 		$table        = $wpdb->prefix . 'agent_builder_runs';
 
-		// The row is still 'waiting' right up until claim_waiting()'s own
+		// The row is still 'waiting' right up until claim_resume()'s own
 		// UPDATE runs. Intercept that exact statement the first time it is
 		// about to execute and win the race with a separately-issued claim
-		// of the same row, so the real claim_waiting() call finds 0 rows
+		// of the same row, so the real claim_resume() call finds 0 rows
 		// left to update.
 		$armed = false;
 		$racer = static function ( $query ) use ( &$armed, $table, $run_id, $wpdb ) {
 			if ( ! $armed && false !== stripos( (string) $query, "SET status = 'running'" ) && false !== stripos( (string) $query, "'waiting','continuing'" ) ) {
 				$armed = true;
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared -- test-only concurrent claimant simulating another process; mirrors claim_waiting()'s own prepared UPDATE.
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared -- test-only concurrent claimant simulating another process; mirrors claim_resume()'s own prepared UPDATE.
 				$wpdb->query( $wpdb->prepare( "UPDATE {$table} SET status = 'running' WHERE run_id = %s AND status IN ('waiting','continuing')", $run_id ) );
 			}
 			return $query;
@@ -599,7 +599,7 @@ class Test_Agent_Controller_Autonomous extends TestCase {
 			remove_filter( 'query', $racer );
 		}
 
-		$this->assertTrue( $armed, 'the race must actually intercept claim_waiting()\'s UPDATE for this test to prove anything' );
+		$this->assertTrue( $armed, 'the race must actually intercept claim_resume()\'s UPDATE for this test to prove anything' );
 		$this->assertIsArray( $second );
 		$this->assertTrue( $second['error'] ?? false );
 		$this->assertSame( 'error', $second['status'] );
