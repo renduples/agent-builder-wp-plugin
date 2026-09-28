@@ -388,6 +388,32 @@ class Runs_REST {
 			return new \WP_Error( 'empty_task', __( 'This run has no task text to retry.', 'agent-builder' ), array( 'status' => 400 ) );
 		}
 
+		// A still-active run must not be retried: cloning a queued/running run
+		// would spawn a second concurrent run against the same task_text.
+		if ( 'queued' === $data['status'] || 'running' === $data['status'] ) {
+			return new \WP_Error( 'already_active', __( 'This run is still active and cannot be retried.', 'agent-builder' ), array( 'status' => 409 ) );
+		}
+
+		// Validate the agent against the real registry before creating the retry
+		// (the original run's agent may have been removed since it ran).
+		$instance = \Agentic_Agent_Registry::get_instance()->get_agent_instance( (string) $data['root_agent'] );
+		if ( null === $instance ) {
+			return new \WP_Error(
+				'invalid_agent',
+				/* translators: %s: agent slug. */
+				sprintf( __( 'Unknown agent "%s".', 'agent-builder' ), (string) $data['root_agent'] ),
+				array( 'status' => 400 )
+			);
+		}
+
+		// Carry the original run's skill_slug forward so a retry is dispatched
+		// with the same Pro-boundary extra the original had.
+		$extra = array();
+		$skill = self::recover_skill_slug( (string) $data['run_id'] );
+		if ( '' !== $skill ) {
+			$extra['skill_slug'] = $skill;
+		}
+
 		// A retry is a brand-new queued run, never a resume of the old row.
 		$retry = Agent_Run::create_queued(
 			(string) $data['root_agent'],
@@ -400,7 +426,7 @@ class Runs_REST {
 			)
 		);
 
-		$job_id = Agent_Task_Job_Processor::dispatch( $retry );
+		$job_id = Agent_Task_Job_Processor::dispatch( $retry, $extra );
 
 		return new \WP_REST_Response(
 			array(
@@ -440,17 +466,55 @@ class Runs_REST {
 
 	/**
 	 * Whether the current user may cancel or retry this run: the owner, or
-	 * anyone with run_tasks_manually / manage_agents.
+	 * anyone with manage_agents.
+	 *
+	 * run_tasks_manually alone does not grant cross-user access — a caller with
+	 * that capability may still cancel/retry their *own* runs (they are the
+	 * owner), but only manage_agents reaches another user's run, matching
+	 * get_run()'s owner-or-manage_agents gate.
 	 *
 	 * @param Agent_Run $run Run.
 	 * @return bool
 	 */
 	private static function can_cancel( Agent_Run $run ): bool {
-		if ( self::can_run() || self::can_manage_agents() ) {
+		if ( self::can_manage_agents() ) {
 			return true;
 		}
 
 		return self::is_owner( $run->to_array() );
+	}
+
+	/**
+	 * Recover the skill_slug the original run was dispatched with, from its
+	 * backing job's request_data (skill_slug is not a column on the run row, so
+	 * it can only be read back out of the dispatched job).
+	 *
+	 * @param string $run_id Run identifier.
+	 * @return string Sanitized skill slug, or '' when none was recorded.
+	 */
+	private static function recover_skill_slug( string $run_id ): string {
+		global $wpdb;
+		$table = $wpdb->prefix . 'agent_builder_jobs';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Single-row lookup to recover the run's dispatch extra.
+		$request = $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT request_data FROM %i WHERE request_data LIKE %s ORDER BY created_at ASC, id ASC LIMIT 1',
+				$table,
+				'%"run_id":"' . $wpdb->esc_like( $run_id ) . '"%'
+			)
+		);
+
+		if ( ! is_string( $request ) || '' === $request ) {
+			return '';
+		}
+
+		$decoded = json_decode( $request, true );
+		if ( ! is_array( $decoded ) ) {
+			return '';
+		}
+
+		return sanitize_key( (string) ( $decoded['skill_slug'] ?? '' ) );
 	}
 
 	/**

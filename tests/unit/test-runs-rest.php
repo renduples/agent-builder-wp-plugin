@@ -36,9 +36,11 @@ class Test_Runs_REST extends TestCase {
 	}
 
 	/**
-	 * Drop any role grants so they never leak into the next test.
+	 * Drop any role grants and the registered test agent so they never leak into
+	 * the next test.
 	 */
 	public function tearDown(): void {
+		\Agentic_Agent_Registry::get_instance()->unregister( self::AGENT );
 		delete_option( User_Roles::OPTION_KEY );
 		parent::tearDown();
 	}
@@ -97,6 +99,9 @@ class Test_Runs_REST extends TestCase {
 		$cancel = $this->request( 'POST', '/runs/' . $run_id . '/cancel' );
 		$this->assertSame( 200, $cancel->get_status() );
 		$this->assertTrue( $cancel->get_data()['run']['cancel_requested'] );
+
+		// A retry is refused while the run is still active, so settle it first.
+		$this->set_run_status( $run_id, 'cancelled' );
 
 		// Retry own run spawns a brand-new row, never resuming the old one.
 		$retry = $this->request( 'POST', '/runs/' . $run_id . '/retry' );
@@ -183,6 +188,101 @@ class Test_Runs_REST extends TestCase {
 		$runs = $resp->get_data()['runs'];
 		$this->assertCount( 1, $runs );
 		$this->assertSame( $editor, (int) $runs[0]['user_id'] );
+	}
+
+	/**
+	 * A run_tasks_manually-only user (no manage_agents) is 403 on cancel/retry
+	 * of another user's run — the capability gates create on your own runs, but
+	 * only ownership or manage_agents reaches a specific run.
+	 */
+	public function test_run_tasks_manually_user_cannot_cancel_or_retry_others_run(): void {
+		$this->grant_plugin_privilege( 'run_tasks_manually', 'editor' );
+
+		$editor = self::factory()->user->create( array( 'role' => 'editor' ) );
+		$other  = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+
+		$other_run = Agent_Run::create_queued(
+			self::AGENT,
+			array( 'kind' => 'task', 'user_id' => $other, 'task_text' => 'Other user task' )
+		);
+
+		wp_set_current_user( $editor );
+
+		$cancel = $this->request( 'POST', '/runs/' . $other_run->get_run_id() . '/cancel' );
+		$this->assertSame( 403, $cancel->get_status() );
+
+		$retry = $this->request( 'POST', '/runs/' . $other_run->get_run_id() . '/retry' );
+		$this->assertSame( 403, $retry->get_status() );
+	}
+
+	/**
+	 * Retrying a run whose agent is no longer registered returns the same
+	 * invalid_agent error POST /runs would, instead of cloning a doomed run.
+	 */
+	public function test_retry_unknown_agent_returns_invalid_agent(): void {
+		$this->grant_plugin_privilege( 'run_tasks_manually', 'editor' );
+
+		$editor = self::factory()->user->create( array( 'role' => 'editor' ) );
+		wp_set_current_user( $editor );
+
+		// create_queued() does not validate the agent, so this run references an
+		// agent that is absent from the registry.
+		$run = Agent_Run::create_queued(
+			'nonexistent-agent',
+			array( 'kind' => 'task', 'user_id' => $editor, 'task_text' => 'Do a thing' )
+		);
+		$this->set_run_status( $run->get_run_id(), 'failed' );
+
+		$retry = $this->request( 'POST', '/runs/' . $run->get_run_id() . '/retry' );
+		$this->assertSame( 400, $retry->get_status() );
+		$this->assertSame( 'invalid_agent', $retry->as_error()->get_error_code() );
+	}
+
+	/**
+	 * A retry carries the original run's skill_slug forward into the new job.
+	 */
+	public function test_retry_carries_forward_skill_slug(): void {
+		$this->grant_plugin_privilege( 'run_tasks_manually', 'editor' );
+
+		$editor = self::factory()->user->create( array( 'role' => 'editor' ) );
+		wp_set_current_user( $editor );
+
+		$create = $this->request(
+			'POST',
+			'/runs',
+			array( 'agent_id' => self::AGENT, 'task' => 'My task', 'skill_slug' => 'pro-brief' )
+		);
+		$this->assertSame( 201, $create->get_status() );
+		$run_id = $create->get_data()['run']['run_id'];
+
+		$this->set_run_status( $run_id, 'completed' );
+
+		$retry = $this->request( 'POST', '/runs/' . $run_id . '/retry' );
+		$this->assertSame( 201, $retry->get_status() );
+
+		$retry_job = \Agentic\Job_Manager::get_job( $retry->get_data()['job_id'] );
+		$this->assertNotNull( $retry_job );
+		$this->assertSame( 'pro-brief', (string) ( $retry_job->request_data['skill_slug'] ?? '' ) );
+	}
+
+	/**
+	 * Retrying a still-queued or still-running run is refused with 409 so a
+	 * second concurrent run is never spawned against the same task_text.
+	 */
+	public function test_retry_active_run_returns_conflict(): void {
+		$this->grant_plugin_privilege( 'run_tasks_manually', 'editor' );
+
+		$editor = self::factory()->user->create( array( 'role' => 'editor' ) );
+		wp_set_current_user( $editor );
+
+		$run = Agent_Run::create_queued(
+			self::AGENT,
+			array( 'kind' => 'task', 'user_id' => $editor, 'task_text' => 'Do a thing' )
+		);
+
+		$retry = $this->request( 'POST', '/runs/' . $run->get_run_id() . '/retry' );
+		$this->assertSame( 409, $retry->get_status() );
+		$this->assertSame( 'already_active', $retry->as_error()->get_error_code() );
 	}
 
 	// -------------------------------------------------------------------------
