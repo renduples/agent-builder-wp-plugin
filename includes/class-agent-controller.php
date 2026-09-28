@@ -598,7 +598,8 @@ class Agent_Controller {
 			$this->current_agent_mode,
 			$this->invocation_context,
 			$this->current_agent,
-			$this->current_session_id
+			$this->current_session_id,
+			Agent_Run::current()
 		);
 	}
 
