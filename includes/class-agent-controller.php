@@ -114,9 +114,12 @@ class Agent_Controller {
 
 	/**
 	 * Constructor
+	 *
+	 * @param LLM_Client|null $llm Optional LLM client to inject (tests); a
+	 *                             production client is created when omitted.
 	 */
-	public function __construct() {
-		$this->llm         = new LLM_Client();
+	public function __construct( ?LLM_Client $llm = null ) {
+		$this->llm         = $llm ?? new LLM_Client();
 		$this->tool_loader = Tool_Loader::get_instance();
 		$this->audit       = new Audit_Log();
 
@@ -595,7 +598,8 @@ class Agent_Controller {
 			$this->current_agent_mode,
 			$this->invocation_context,
 			$this->current_agent,
-			$this->current_session_id
+			$this->current_session_id,
+			Agent_Run::current()
 		);
 	}
 
@@ -862,27 +866,29 @@ class Agent_Controller {
 		);
 
 		// Process with potential tool calls.
-		$response       = null;
-		$total_tokens   = 0;
-		$iterations     = 0;
-		$tool_retries   = 0;   // Separate counter for tool error feedback retries (P0 Item 3).
-		$tool_results   = array();
-		$usage          = array(
+		$response                = null;
+		$total_tokens            = 0;
+		$total_prompt_tokens     = 0;
+		$total_completion_tokens = 0;
+		$iterations              = 0;
+		$tool_retries            = 0;   // Separate counter for tool error feedback retries (P0 Item 3).
+		$tool_results            = array();
+		$usage                   = array(
 			'prompt_tokens'     => 0,
 			'completion_tokens' => 0,
 		);
-		$agent_id       = $this->current_agent ? $this->current_agent->get_id() : '';
-		$max_iterations = (int) apply_filters( 'agentic_max_tool_iterations', self::MAX_ITERATIONS_DEFAULT, $agent_id );
+		$agent_id                = $this->current_agent ? $this->current_agent->get_id() : '';
+		$max_iterations          = (int) apply_filters( 'agentic_max_tool_iterations', self::MAX_ITERATIONS_DEFAULT, $agent_id );
 		// Resolve max tool retries with per-agent > global > default (P0 Item 3)
 		$default_retries = 3;
 		if ( $agent_id ) {
 			$per_agent_retries = Agent_Settings::get( $agent_id, 'max_tool_retries', '' );
-			if ( $per_agent_retries !== '' ) {
+			if ( '' !== $per_agent_retries ) {
 				$default_retries = max( 1, (int) $per_agent_retries );
 			}
 		}
 		$global_retries = get_option( 'agent_builder_max_tool_retries', '' );
-		if ( $global_retries !== '' ) {
+		if ( '' !== $global_retries ) {
 			$default_retries = max( 1, (int) $global_retries );
 		}
 
@@ -928,8 +934,10 @@ class Agent_Controller {
 				);
 			}
 
-			$usage         = $this->llm->get_usage( $result );
-			$total_tokens += $usage['total_tokens'];
+			$usage                    = $this->llm->get_usage( $result );
+			$total_tokens            += $usage['total_tokens'];
+			$total_prompt_tokens     += $usage['prompt_tokens'] ?? 0;
+			$total_completion_tokens += $usage['completion_tokens'] ?? 0;
 
 			$choice = $result['choices'][0] ?? null;
 			if ( ! $choice ) {
@@ -998,7 +1006,7 @@ class Agent_Controller {
 							'role'    => 'user',
 							'content' => "[SYSTEM NOTICE — internal, not from the user] Your previous tool call to '{$function_name}' failed because the arguments were not valid JSON.\n" .
 										"Error: {$error_msg}\n" .
-										"Correct the arguments and call the tool again. Do not mention this notice, the error, or the retry to the user — just answer their actual question once you have what you need.",
+										'Correct the arguments and call the tool again. Do not mention this notice, the error, or the retry to the user — just answer their actual question once you have what you need.',
 						);
 
 						// Record the failure for observability (will appear in Audit Log).
@@ -1055,7 +1063,7 @@ class Agent_Controller {
 						$messages[]          = array(
 							'role'    => 'user',
 							'content' => "[SYSTEM NOTICE — internal, not from the user] The tool '{$function_name}' failed with this error:\n{$error_message}\n" .
-										"Analyze the error and try calling the tool again with corrected arguments. Do not mention this notice, the error, or the retry to the user — just answer their actual question once you have what you need.",
+										'Analyze the error and try calling the tool again with corrected arguments. Do not mention this notice, the error, or the retry to the user — just answer their actual question once you have what you need.',
 						);
 
 						$this->audit->log(
@@ -1125,11 +1133,14 @@ class Agent_Controller {
 			$response = 'I reached the maximum number of tool iterations. Please try a simpler request.';
 		}
 
-		// Estimate cost using per-model pricing from the providers table.
+		// Estimate cost using per-model pricing from the providers table, summed
+		// across every iteration's usage — not just the final turn's (a request
+		// that took several tool-calling round trips previously under-reported
+		// cost/tokens down to whatever the last LLM call alone used).
 		$current_provider = $this->llm->get_provider();
 		$current_model    = $this->llm->get_model();
 		$estimated_cost   = class_exists( '\Agentic\Costs_Manager' )
-			? \Agentic\Costs_Manager::estimate_cost( $current_provider, $usage['prompt_tokens'], $usage['completion_tokens'], $current_model )
+			? \Agentic\Costs_Manager::estimate_cost( $current_provider, $total_prompt_tokens, $total_completion_tokens, $current_model )
 			: 0.0;
 
 		// Log completion with real reasoning from the final assistant turn (P0 observability).
@@ -1231,93 +1242,279 @@ class Agent_Controller {
 	 *
 	 * Bypasses user access checks since this is system-initiated.
 	 *
+	 * Backed by {@see Agent_Run} for iteration/cost bookkeeping, cooperative
+	 * cancellation, and resumable transcript checkpoints — except when this
+	 * call is itself a nested delegation (delegate_to_agent already owns the
+	 * shared run and accumulates this call's totals into it via add_usage();
+	 * recording them again here would double-count).
+	 *
 	 * @param \Agentic\Agent_Base $agent   Agent instance.
 	 * @param string              $prompt  Task prompt describing what to do.
 	 * @param string              $task_id Task identifier for logging.
-	 * @return array|null Response data, or null if LLM is not configured.
+	 * @param array               $options {
+	 *     Optional.
+	 *
+	 *     @type string $run_id        Id of a previously paused run to resume (required with resume_state).
+	 *     @type array  $resume_state  Value previously returned by Agent_Run::resume_state().
+	 *     @type array  $tool_result   Resolved outcome of the tool call the run was waiting on, appended
+	 *                                 as a tool-role message before the loop continues.
+	 *     @type string $kind          Run kind for a newly begun run (default 'task').
+	 *     @type string $source_ref    Origin reference for a newly begun run (default 'task:<task_id>').
+	 *     @type string $parent_run_id Parent run id for a newly begun run (default '').
+	 * }
+	 * @return array|null Response data, or null if LLM is not configured or the run errored.
 	 */
-	public function run_autonomous_task( \Agentic\Agent_Base $agent, string $prompt, string $task_id = '' ): ?array {
+	public function run_autonomous_task( \Agentic\Agent_Base $agent, string $prompt, string $task_id = '', array $options = array() ): ?array {
+		$this->current_agent = $agent;
+		$agent_id            = $agent->get_id();
+
+		// Fail fast — before any LLM call — when this agent has been explicitly
+		// disabled via its per-agent override. Autonomous tasks otherwise ignore
+		// the global/agent-default confirmation mode entirely (MODE_AUTO below
+		// forces no-confirmation execution), so this is the only mode check that
+		// can stop a scheduled run from starting.
+		if ( 'disabled' === Agent_Settings::get( $agent_id, 'override_mode' ) ) {
+			return array(
+				'error'    => true,
+				'response' => __( 'This agent is disabled and cannot run autonomous tasks.', 'agent-builder' ),
+				'agent_id' => $agent_id,
+				'task_id'  => $task_id,
+				'run_id'   => '',
+				'status'   => 'error',
+				'cards'    => array(),
+			);
+		}
+
 		if ( ! $this->llm->is_configured() ) {
 			return null; // Caller will fall back to direct callback.
 		}
 
-		// Set agent directly — bypass capability check for system tasks.
-		$this->current_agent = $agent;
-
-		// Apply per-agent provider/model overrides (mode is always autonomous for scheduled tasks).
+		// Apply per-agent provider/model overrides (confirmation mode is always
+		// bypassed for scheduled tasks, regardless of the resolved mode).
 		$this->apply_agent_overrides();
-		// Autonomous tasks always run without confirmation regardless of mode setting.
+		$this->current_agent_mode = 'autonomous';
 		Agent_Permissions::set_mode_override( Agent_Permissions::MODE_AUTO );
 		Audit_Log::set_mode_context( 'autonomous' );
 
-		$agent_id = $agent->get_id();
+		// A run is already active when this call is a nested delegation —
+		// delegate_to_agent begins/owns the shared run itself and accumulates
+		// this call's returned totals into it via add_usage(). In that case we
+		// must not also record iterations or finish the run ourselves.
+		$owns_run = ! ( Agent_Run::current() instanceof Agent_Run );
 
-		// Build autonomous system prompt.
-		$autonomous_context = "\n\n[AUTONOMOUS MODE]\n"
-			. "You are running autonomously as a scheduled task (task: {$task_id}). "
-			. "There is no human user in this conversation.\n"
-			. 'Execute the requested task using your available tools, then provide '
-			. "a concise summary of what you did and any findings.\n";
+		$resume_state       = isset( $options['resume_state'] ) && is_array( $options['resume_state'] ) ? $options['resume_state'] : null;
+		$resume_tool_result = isset( $options['tool_result'] ) && is_array( $options['tool_result'] ) ? $options['tool_result'] : null;
+		$resume_run_id      = (string) ( $options['run_id'] ?? '' );
 
-		$use_weak_guidance = $this->should_use_weak_model_tool_guidance();
-		$system_prompt     = Agent_Prompt_Builder::build( $agent, $autonomous_context, '', '', $use_weak_guidance );
+		if ( null !== $resume_state && '' !== $resume_run_id ) {
+			$run = Agent_Run::load( $resume_run_id );
+			if ( ! $run ) {
+				return array(
+					'error'          => true,
+					'guard_rejected' => true,
+					'response'       => __( 'Cannot resume: run not found.', 'agent-builder' ),
+					'agent_id'       => $agent_id,
+					'task_id'        => $task_id,
+					'run_id'         => $resume_run_id,
+					'status'         => 'error',
+					'cards'          => array(),
+				);
+			}
 
-		$messages = array(
-			array(
-				'role'    => 'system',
-				'content' => $system_prompt,
-			),
-			array(
-				'role'    => 'user',
-				'content' => $prompt,
-			),
-		);
+			// A run can only be resumed from one of its non-terminal hand-off
+			// states — 'waiting' (paused on an approval/proposal) or
+			// 'continuing' (handed off by the elapsed-time guard) — a terminal
+			// run (completed/aborted/cancelled/failed) must never be replayed,
+			// since finish() on an already-finished run silently no-ops and
+			// would let tool calls execute a second time. Also refuse a run
+			// that belongs to a different agent than the one making this
+			// call, so a stale or mismatched run_id can never be hijacked into
+			// another agent's context.
+			//
+			// A run already in 'running' is the approval/proposal path: the
+			// resume job was dispatched by Run_Resumer, which atomically
+			// claimed the run out of 'waiting' on that specific item (matching
+			// awaiting_type/awaiting_id) before dispatching. That claim is the
+			// duplicate/stale-resolution guard, so this leg must not re-claim
+			// (the status is no longer 'waiting'/'continuing') — it just
+			// proceeds to run the resumed loop. Only a still-'waiting' or
+			// 'continuing' run (a direct resume, or an elapsed-time hand-off)
+			// is claimable here.
+			$resume_status   = $run->get_status();
+			$already_claimed = 'running' === $resume_status;
+
+			if ( ( ! $already_claimed && ! in_array( $resume_status, array( 'waiting', 'continuing' ), true ) ) || $run->get_root_agent() !== $agent_id ) {
+				return array(
+					'error'          => true,
+					// Marks this as a rejected resume *attempt*, not a task
+					// failure — the caller (Agent_Task_Job_Processor::execute())
+					// must not finish() the target run over this: that run may
+					// still be legitimately waiting/continuing elsewhere, and
+					// this guard tripping (stale job data, a race, a mismatched
+					// caller) is not this call's run to finalize.
+					'guard_rejected' => true,
+					'response'       => __( 'Cannot resume: this run is not in a resumable state.', 'agent-builder' ),
+					'agent_id'       => $agent_id,
+					'task_id'        => $task_id,
+					'run_id'         => $resume_run_id,
+					'status'         => 'error',
+					'cards'          => array(),
+				);
+			}
+
+			// The status/agent check above only inspects this process's
+			// in-memory copy of the loaded row — it is not atomic with the
+			// work that follows (calling the LLM, executing the pending tool
+			// call). Two concurrent resume attempts for the same run_id (a
+			// duplicate job dispatch, or a retry racing the original) could
+			// otherwise both pass that check and both execute the same
+			// pending tool call. claim_resume() closes that window with a
+			// single compare-and-set UPDATE; only the request that wins it
+			// proceeds.
+			if ( ! $already_claimed && ! $run->claim_resume() ) {
+				return array(
+					'error'          => true,
+					'guard_rejected' => true,
+					'response'       => __( 'Cannot resume: this run was already claimed by another request.', 'agent-builder' ),
+					'agent_id'       => $agent_id,
+					'task_id'        => $task_id,
+					'run_id'         => $resume_run_id,
+					'status'         => 'error',
+					'cards'          => array(),
+				);
+			}
+
+			$run->make_current();
+			$owns_run = true; // Resuming a paused run in a fresh process; this leg owns it.
+
+			$messages   = is_array( $resume_state['messages'] ?? null ) ? $resume_state['messages'] : array();
+			$iterations = max( 0, (int) ( $resume_state['iterations'] ?? 0 ) );
+
+			if ( null !== $resume_tool_result ) {
+				// The original LLM tool-call id lives in awaiting_tool_call_id.
+				// For a run that entered 'waiting' before that column existed
+				// (or whose mark_waiting() could not persist it on a stale
+				// schema), the value is empty — derive it from the checkpointed
+				// transcript's own assistant tool_calls[] entry instead of
+				// sending the provider an empty id it will reject.
+				$tool_call_id = (string) ( $resume_state['awaiting_tool_call_id'] ?? '' );
+				if ( '' === $tool_call_id ) {
+					$tool_call_id = $this->derive_pending_tool_call_id( $messages, $resume_tool_result );
+				}
+
+				$messages = $this->resolve_tool_message( $messages, $resume_tool_result, $tool_call_id );
+			}
+		} else {
+			$run = Agent_Run::begin(
+				$agent_id,
+				array(
+					'kind'          => (string) ( $options['kind'] ?? 'task' ),
+					'task_text'     => $prompt,
+					'invocation'    => '' !== $this->invocation_context ? $this->invocation_context : 'cron',
+					'source_ref'    => (string) ( $options['source_ref'] ?? ( '' !== $task_id ? ( 'task:' . $task_id ) : '' ) ),
+					'parent_run_id' => (string) ( $options['parent_run_id'] ?? '' ),
+				)
+			);
+
+			// Build autonomous system prompt.
+			$autonomous_context = "\n\n[AUTONOMOUS MODE]\n"
+				. "You are running autonomously as a scheduled task (task: {$task_id}). "
+				. "There is no human user in this conversation.\n"
+				. 'Execute the requested task using your available tools, then provide '
+				. "a concise summary of what you did and any findings.\n";
+
+			$use_weak_guidance = $this->should_use_weak_model_tool_guidance();
+			$system_prompt     = Agent_Prompt_Builder::build( $agent, $autonomous_context, '', '', $use_weak_guidance );
+
+			$messages   = array(
+				array(
+					'role'    => 'system',
+					'content' => $system_prompt,
+				),
+				array(
+					'role'    => 'user',
+					'content' => $prompt,
+				),
+			);
+			$iterations = 0;
+		}
+
+		// Distinguishable session id for this autonomous run (mirrors chat(),
+		// which uses the chat session id) — fixes autonomous runs previously
+		// sharing whatever current_session_id a prior chat() call left behind.
+		$this->current_session_id = $run->get_run_id();
+		$session_id               = $run->get_run_id();
 
 		$tools = $this->get_tools_for_agent();
 
-		$session_id = 'autonomous_' . $task_id . '_' . gmdate( 'Ymd_His' );
-
-		// Log autonomous start.
 		$this->audit->log(
 			$agent_id,
-			'autonomous_chat_start',
+			$iterations > 0 ? 'autonomous_chat_resume' : 'autonomous_chat_start',
 			'scheduled_task',
 			array(
 				'task_id'    => $task_id,
 				'session_id' => $session_id,
+				'run_id'     => $run->get_run_id(),
 				'prompt'     => substr( $prompt, 0, 500 ),
 			)
 		);
 
-		// Process with tool calls (same loop as chat()).
-		$response       = null;
-		$total_tokens   = 0;
-		$iterations     = 0;
-		$tool_retries   = 0;
-		$tool_results   = array();
-		$usage          = array(
+		// Process with tool calls (same loop shape as chat()).
+		$response                = null;
+		$total_tokens            = 0;
+		$total_prompt_tokens     = 0;
+		$total_completion_tokens = 0;
+		$tool_results            = array();
+		$usage                   = array(
 			'prompt_tokens'     => 0,
 			'completion_tokens' => 0,
 		);
-		$agent_id       = $this->current_agent ? $this->current_agent->get_id() : '';
-		$max_iterations = (int) apply_filters( 'agentic_max_tool_iterations', self::MAX_ITERATIONS_DEFAULT, $agent_id );
-		// Resolve max tool retries with per-agent > global > default (P0 Item 3)
-		$default_retries = 3;
-		if ( $agent_id ) {
-			$per_agent_retries = Agent_Settings::get( $agent_id, 'max_tool_retries', '' );
-			if ( $per_agent_retries !== '' ) {
-				$default_retries = max( 1, (int) $per_agent_retries );
-			}
-		}
-		$global_retries = get_option( 'agent_builder_max_tool_retries', '' );
-		if ( $global_retries !== '' ) {
-			$default_retries = max( 1, (int) $global_retries );
-		}
-
-		$max_tool_retries = (int) apply_filters( 'agent_builder_max_tool_retries', $default_retries, $agent_id );
+		$assistant_message       = array( 'content' => '' );
+		$max_iterations          = (int) apply_filters( 'agentic_max_tool_iterations', self::MAX_ITERATIONS_DEFAULT, $agent_id );
+		$final_status            = 'completed';
+		$loop_start              = microtime( true );
+		// The elapsed-time guard only applies when this call owns the run: a
+		// nested delegation shares the outer loop's own time budget instead.
+		$max_execution_time = $owns_run ? $this->get_autonomous_time_budget() : 0;
 
 		while ( $iterations < $max_iterations ) {
 			++$iterations;
+
+			if ( class_exists( __NAMESPACE__ . '\\Emergency_Stop' ) && Emergency_Stop::is_active() ) {
+				$final_status = 'aborted';
+				$response     = Emergency_Stop::blocked_message();
+				break;
+			}
+
+			if ( $run->cancel_requested() ) {
+				$final_status = 'cancelled';
+				$response     = __( 'This task was cancelled.', 'agent-builder' );
+				break;
+			}
+
+			if ( $max_execution_time > 0 && ( microtime( true ) - $loop_start ) >= 0.7 * $max_execution_time ) {
+				$run->checkpoint_transcript( $messages );
+				$this->dispatch_continuation( $run, $agent, $prompt, $task_id );
+
+				$estimated_cost = class_exists( '\Agentic\Costs_Manager' )
+					? \Agentic\Costs_Manager::estimate_cost( $this->llm->get_provider(), $total_prompt_tokens, $total_completion_tokens, $this->llm->get_model() )
+					: 0.0;
+
+				return array(
+					'response'    => __( 'This task is taking a while and will continue in the background.', 'agent-builder' ),
+					'agent_id'    => $agent_id,
+					'task_id'     => $task_id,
+					'mode'        => 'autonomous',
+					'run_id'      => $run->get_run_id(),
+					'status'      => 'continuing',
+					'session_id'  => $session_id,
+					'tokens_used' => $total_tokens,
+					'cost'        => round( $estimated_cost, 6 ),
+					'tools_used'  => array_column( $tool_results, 'tool' ),
+					'iterations'  => $iterations - 1,
+					'cards'       => array(),
+				);
+			}
 
 			$force_tools = ( 1 === $iterations )
 				&& ! empty( $tools )
@@ -1336,14 +1533,22 @@ class Agent_Controller {
 						'error'   => $result->get_error_message(),
 					)
 				);
+				if ( $owns_run ) {
+					$run->finish( 'failed', array( 'error' => $result->get_error_message() ) );
+				}
 				return null;
 			}
 
-			$usage         = $this->llm->get_usage( $result );
-			$total_tokens += $usage['total_tokens'];
+			$usage                    = $this->llm->get_usage( $result );
+			$total_tokens            += $usage['total_tokens'] ?? 0;
+			$total_prompt_tokens     += $usage['prompt_tokens'] ?? 0;
+			$total_completion_tokens += $usage['completion_tokens'] ?? 0;
 
 			$choice = $result['choices'][0] ?? null;
 			if ( ! $choice ) {
+				if ( $owns_run ) {
+					$run->finish( 'failed', array( 'error' => 'Invalid response from AI.' ) );
+				}
 				return null;
 			}
 
@@ -1355,6 +1560,13 @@ class Agent_Controller {
 
 			// Capture reasoning for observability (P0) — autonomous path.
 			$step_reasoning = $this->extract_reasoning( $assistant_message );
+
+			$iter_tools        = array();
+			$has_pending       = false;
+			$pending_msg       = '';
+			$pending_type      = '';
+			$pending_id        = '';
+			$pending_tool_call = '';
 
 			if ( ! empty( $assistant_message['tool_calls'] ) ) {
 				$this->audit->log(
@@ -1373,14 +1585,11 @@ class Agent_Controller {
 					0.0,
 					$this->llm->get_provider()
 				);
-			}
 
-			if ( ! empty( $assistant_message['tool_calls'] ) ) {
-				$has_pending = false;
-				$pending_msg = '';
 				foreach ( $assistant_message['tool_calls'] as $tool_call ) {
 					$function_name = $tool_call['function']['name'];
 					$arguments     = json_decode( $tool_call['function']['arguments'], true ) ?? array();
+					$iter_tools[]  = $function_name;
 
 					$tool_result = $this->execute_tool( $function_name, $arguments );
 
@@ -1400,25 +1609,60 @@ class Agent_Controller {
 					// autonomous turns do not fan out multiple pending approvals.
 					$tool_status = $tool_result['status'] ?? '';
 					if ( 'confirmation_required' === $tool_status || 'queued_for_approval' === $tool_status ) {
-						$has_pending = true;
+						$has_pending       = true;
+						$pending_type      = 'confirmation_required' === $tool_status ? 'proposal' : 'approval';
+						$pending_id        = (string) ( $tool_result['proposal_id'] ?? $tool_result['approval_id'] ?? '' );
+						$pending_tool_call = (string) $tool_call['id'];
 						if ( ! empty( $tool_result['message'] ) ) {
 							$pending_msg = (string) $tool_result['message'];
 						}
 						break;
 					}
 				}
-				if ( $has_pending ) {
-					$response = '' !== $pending_msg
-						? $pending_msg
-						: __( 'A tool action is waiting for approval before this task can continue.', 'agent-builder' );
-					break;
-				}
 			} else {
 				$response = $assistant_message['content'];
 				if ( 'length' === ( $choice['finish_reason'] ?? '' ) ) {
 					$response .= "\n\n" . __( '[Note: this result was cut short — the model hit its token limit before finishing.]', 'agent-builder' );
 				}
-				break;
+			}
+
+			if ( $owns_run ) {
+				$iter_cost = class_exists( '\Agentic\Costs_Manager' )
+					? \Agentic\Costs_Manager::estimate_cost( $this->llm->get_provider(), $usage['prompt_tokens'] ?? 0, $usage['completion_tokens'] ?? 0, $this->llm->get_model() )
+					: 0.0;
+				$run->record_iteration( $iter_tools, $usage['total_tokens'] ?? 0, $iter_cost );
+				$run->checkpoint_transcript( $messages );
+			}
+
+			if ( $has_pending ) {
+				if ( $owns_run ) {
+					$run->mark_waiting( $pending_type, $pending_id, $messages, $pending_tool_call );
+				}
+
+				$estimated_cost = class_exists( '\Agentic\Costs_Manager' )
+					? \Agentic\Costs_Manager::estimate_cost( $this->llm->get_provider(), $total_prompt_tokens, $total_completion_tokens, $this->llm->get_model() )
+					: 0.0;
+
+				return array(
+					'response'    => '' !== $pending_msg
+						? $pending_msg
+						: __( 'A tool action is waiting for approval before this task can continue.', 'agent-builder' ),
+					'agent_id'    => $agent_id,
+					'task_id'     => $task_id,
+					'mode'        => 'autonomous',
+					'run_id'      => $run->get_run_id(),
+					'status'      => 'waiting',
+					'session_id'  => $session_id,
+					'tokens_used' => $total_tokens,
+					'cost'        => round( $estimated_cost, 6 ),
+					'tools_used'  => array_column( $tool_results, 'tool' ),
+					'iterations'  => $iterations,
+					'cards'       => array(),
+				);
+			}
+
+			if ( null !== $response ) {
+				break; // Final answer reached.
 			}
 		}
 
@@ -1426,11 +1670,12 @@ class Agent_Controller {
 			$response = 'Reached maximum tool iterations for autonomous task.';
 		}
 
-		// Estimate cost using per-model pricing from the providers table.
+		// Estimate cost using per-model pricing from the providers table, summed
+		// across every iteration's usage.
 		$current_provider = $this->llm->get_provider();
 		$current_model    = $this->llm->get_model();
 		$estimated_cost   = class_exists( '\Agentic\Costs_Manager' )
-			? \Agentic\Costs_Manager::estimate_cost( $current_provider, $usage['prompt_tokens'], $usage['completion_tokens'], $current_model )
+			? \Agentic\Costs_Manager::estimate_cost( $current_provider, $total_prompt_tokens, $total_completion_tokens, $current_model )
 			: 0.0;
 
 		// Log autonomous completion with real reasoning (P0 observability).
@@ -1452,18 +1697,168 @@ class Agent_Controller {
 			$current_provider
 		);
 
+		if ( $owns_run ) {
+			$run->finish( $final_status, array( 'text' => (string) $response ) );
+		}
+
 		return array(
 			'response'    => $response,
 			'agent_id'    => $agent_id,
 			'task_id'     => $task_id,
 			'mode'        => 'autonomous',
+			'run_id'      => $run->get_run_id(),
+			'status'      => $final_status,
 			'session_id'  => $session_id,
 			'tokens_used' => $total_tokens,
 			'cost'        => round( $estimated_cost, 6 ),
 			'tools_used'  => array_column( $tool_results, 'tool' ),
 			'iterations'  => $iterations,
 			'reasoning'   => $final_reasoning,  // P0 observability.
+			'cards'       => array(),
 		);
+	}
+
+	/**
+	 * Fire the continuation seam for a run that has used ~70% of its
+	 * execution-time budget.
+	 *
+	 * Does not itself dispatch a background job — Agent_Task_Job_Processor
+	 * (10d2) hooks this action to schedule one that resumes the run via
+	 * run_autonomous_task()'s $options['run_id']/['resume_state']. Until that
+	 * processor exists, this just stops the loop cleanly instead of letting
+	 * it run into the PHP time limit.
+	 *
+	 * @param Agent_Run           $run     Run being checkpointed.
+	 * @param \Agentic\Agent_Base $agent   Agent instance.
+	 * @param string              $prompt  Original task prompt.
+	 * @param string              $task_id Task identifier.
+	 * @return void
+	 */
+	protected function dispatch_continuation( Agent_Run $run, \Agentic\Agent_Base $agent, string $prompt, string $task_id ): void {
+		// Hand off to a non-terminal 'continuing' status before firing the
+		// hook — without this, the shutdown safety net (armed for every run)
+		// sees $finished still false at request end and overwrites this
+		// hand-off with 'aborted', defeating the continuation mechanism.
+		$run->mark_continuing();
+
+		/**
+		 * Fires when an autonomous run has used ~70% of its execution-time
+		 * budget and must hand off to a background continuation job.
+		 *
+		 * @param string              $run_id  Run id to resume.
+		 * @param \Agentic\Agent_Base $agent   Agent instance.
+		 * @param string              $prompt  Original task prompt.
+		 * @param string              $task_id Task identifier.
+		 */
+		do_action( 'agent_builder_run_needs_continuation', $run->get_run_id(), $agent, $prompt, $task_id );
+	}
+
+	/**
+	 * Recover the original LLM tool-call id for the pending call from a
+	 * checkpointed transcript, for runs that entered 'waiting' before the
+	 * `awaiting_tool_call_id` column existed (its value is then empty) or whose
+	 * mark_waiting() could not persist it on a stale schema.
+	 *
+	 * Matches the assistant message's tool_calls[] entry on the tool's function
+	 * name first; when the name is absent or doesn't match, falls back to the
+	 * last assistant tool-call id in the transcript — always better than an
+	 * empty id, which providers that validate tool-call pairing reject.
+	 *
+	 * @param array $messages    Checkpointed transcript.
+	 * @param array $tool_result Resolved tool result carrying the tool name.
+	 * @return string Original LLM tool-call id, or '' if none can be found.
+	 */
+	protected function derive_pending_tool_call_id( array $messages, array $tool_result ): string {
+		$tool_name = (string) ( $tool_result['tool'] ?? '' );
+
+		$last_tool_call_id = '';
+		for ( $i = count( $messages ) - 1; $i >= 0; $i-- ) {
+			$message = $messages[ $i ];
+			if ( 'assistant' !== ( $message['role'] ?? '' ) || empty( $message['tool_calls'] ) ) {
+				continue;
+			}
+
+			// Within the newest qualifying message, the fallback is the *last*
+			// tool_call in that message's own tool_calls array (the final call
+			// the assistant made before the pause). Older messages must never
+			// overwrite it, since the outer walk is already newest -> oldest.
+			$message_fallback = '';
+			foreach ( $message['tool_calls'] as $tool_call ) {
+				$id = (string) ( $tool_call['id'] ?? '' );
+				if ( '' !== $id ) {
+					$message_fallback = $id;
+				}
+				if ( '' !== $tool_name && (string) ( $tool_call['function']['name'] ?? '' ) === $tool_name ) {
+					return $id;
+				}
+			}
+
+			if ( '' === $last_tool_call_id && '' !== $message_fallback ) {
+				$last_tool_call_id = $message_fallback;
+			}
+		}
+
+		return $last_tool_call_id;
+	}
+
+	/**
+	 * Build the reconstructed tool-role message for a resumed run and splice it
+	 * into the transcript.
+	 *
+	 * The pause already checkpointed a *provisional* tool message carrying the
+	 * unresolved ("waiting") result for the same tool_calls[].id. Appending a
+	 * second tool message for that id would leave two tool results for one
+	 * call, which providers that validate tool-call pairing reject. So the
+	 * provisional message is replaced with the resolved one in place, falling
+	 * back to an append only when no provisional message exists to replace
+	 * (e.g. a legacy transcript that never carried one).
+	 *
+	 * @param array  $messages    Checkpointed transcript.
+	 * @param array  $tool_result Resolved tool result.
+	 * @param string $tool_call_id Original LLM tool-call id (already derived when empty).
+	 * @return array Transcript with the resolved tool message in place.
+	 */
+	protected function resolve_tool_message( array $messages, array $tool_result, string $tool_call_id ): array {
+		$tool_name   = (string) ( $tool_result['tool'] ?? '' );
+		$replacement = array(
+			'role'         => 'tool',
+			'tool_call_id' => $tool_call_id,
+			'name'         => $tool_name,
+			'content'      => wp_json_encode( $tool_result ),
+		);
+
+		for ( $i = count( $messages ) - 1; $i >= 0; $i-- ) {
+			$message = $messages[ $i ];
+			if ( 'tool' !== ( $message['role'] ?? '' ) ) {
+				continue;
+			}
+
+			$matches_id   = '' !== $tool_call_id && (string) ( $message['tool_call_id'] ?? '' ) === $tool_call_id;
+			$matches_name = '' !== $tool_name && (string) ( $message['name'] ?? '' ) === $tool_name;
+			if ( $matches_id || ( '' === $tool_call_id && $matches_name ) ) {
+				$messages[ $i ] = $replacement;
+				return $messages;
+			}
+		}
+
+		$messages[] = $replacement;
+		return $messages;
+	}
+
+	/**
+	 * Resolve the execution-time budget (in seconds) an autonomous run should
+	 * treat as its ceiling, for the ~70% elapsed-time guard.
+	 *
+	 * Falls back to a filterable default when max_execution_time is 0
+	 * (unlimited — the common case on CLI/WP-Cron).
+	 *
+	 * @return int Seconds, or 0 to disable the guard entirely.
+	 */
+	protected function get_autonomous_time_budget(): int {
+		$ini_limit = (int) ini_get( 'max_execution_time' );
+		$default   = $ini_limit > 0 ? $ini_limit : 300;
+
+		return (int) apply_filters( 'agent_builder_autonomous_max_execution_time', $default );
 	}
 
 	/**
@@ -1503,18 +1898,18 @@ class Agent_Controller {
 	private function should_use_weak_model_tool_guidance(): bool {
 		$agent_id = $this->current_agent ? $this->current_agent->get_id() : '';
 
-		// Per-agent override (highest priority)
+		// Per-agent override (highest priority).
 		if ( $agent_id ) {
 			$per_agent = Agent_Settings::get( $agent_id, 'weak_model_tool_guidance', '' );
-			if ( $per_agent !== '' ) {
-				return $per_agent === '1';
+			if ( '' !== $per_agent ) {
+				return '1' === $per_agent;
 			}
 		}
 
-		// Global option
+		// Global option.
 		$global = get_option( 'agent_builder_enable_weak_model_tool_guidance', '' );
-		if ( $global !== '' ) {
-			return $global === '1';
+		if ( '' !== $global ) {
+			return '1' === $global;
 		}
 
 		if ( ! $this->llm ) {
