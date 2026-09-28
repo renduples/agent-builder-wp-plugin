@@ -45,11 +45,12 @@ class Test_Notifications extends TestCase {
 		}
 
 		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test cleanup of cooldown transients; underscores escaped for LIKE.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test cleanup of cooldown rows (transient leftovers + the atomic-claim option row); underscores escaped for LIKE.
 		$wpdb->query(
 			"DELETE FROM {$wpdb->options}
 			WHERE option_name LIKE '\_transient\_agentic\_notification\_email\_cooldown\_%'
-			   OR option_name LIKE '\_transient\_timeout\_agentic\_notification\_email\_cooldown\_%'"
+			   OR option_name LIKE '\_transient\_timeout\_agentic\_notification\_email\_cooldown\_%'
+			   OR option_name LIKE 'agentic\_notification\_email\_cooldown\_%'"
 		);
 
 		parent::tearDown();
@@ -92,6 +93,20 @@ class Test_Notifications extends TestCase {
 			}
 		}
 		return $recipients;
+	}
+
+	/**
+	 * Invoke a private static Notifications method (mirrors the existing
+	 * test-schema-upgrade seam: the cooldown claim stays private and is
+	 * exercised through the same reflection path).
+	 *
+	 * @param string $method Method name.
+	 * @param array  $args   Positional arguments.
+	 * @return mixed
+	 */
+	private static function invoke_private( string $method, array $args = array() ) {
+		$ref = new \ReflectionMethod( Notifications::class, $method );
+		return $ref->invokeArgs( null, $args );
 	}
 
 	/**
@@ -323,6 +338,82 @@ class Test_Notifications extends TestCase {
 		$mailer = tests_retrieve_phpmailer_instance();
 		$this->assertCount( 1, $mailer->mock_sent );
 		$this->assertContains( 'instant-admin@example.com', $this->sent_recipients() );
+	}
+
+	/**
+	 * Two notify() calls for the same user racing in the same instant produce
+	 * exactly one instant email: the per-user cooldown is claimed atomically
+	 * before the email is composed, so the loser of the claim backs off instead
+	 * of sending a duplicate.
+	 *
+	 * The race is simulated by intercepting the outer call's cooldown claim
+	 * INSERT through the `query` filter and running a second notify() for the
+	 * same user inside it — the concurrent call wins the claim (and sends),
+	 * leaving the outer call's own INSERT to fail on the unique option_name key.
+	 *
+	 * The filter matches on the claim's option value (a leading quote followed
+	 * by the cooldown key) rather than the bare prefix, so it only ever fires on
+	 * the atomic-claim INSERT and never on a legacy `_transient_*` option name.
+	 */
+	public function test_concurrent_notifications_send_a_single_instant_email(): void {
+		update_option( 'agent_builder_notify_email', 'instant' );
+		reset_phpmailer_instance();
+
+		$user_id = $this->make_admin( 'race-instant@example.com' );
+
+		$armed = false;
+		$racer = static function ( $query ) use ( &$armed, $user_id ) {
+			if ( ! $armed && false !== stripos( (string) $query, "'agentic_notification_email_cooldown_" ) ) {
+				$armed = true;
+				// The concurrent process sends its own notification, claiming the
+				// cooldown and sending the single email, before the outer claim
+				// lands. ($armed stays true, so this callback cannot re-enter.)
+				Notifications::notify( $user_id, 'run_finished', 'Concurrent', 'Concurrent run finished.' );
+			}
+			return $query;
+		};
+		add_filter( 'query', $racer );
+
+		try {
+			Notifications::notify( $user_id, 'run_finished', 'Outer', 'Outer run finished.' );
+		} finally {
+			remove_filter( 'query', $racer );
+		}
+
+		$this->assertTrue( $armed, 'the race must actually intercept the cooldown claim INSERT for this test to prove anything' );
+
+		$mailer = tests_retrieve_phpmailer_instance();
+		$this->assertCount( 1, $mailer->mock_sent, 'two concurrent notify() calls must produce exactly one instant email' );
+		$this->assertContains( 'race-instant@example.com', $this->sent_recipients() );
+	}
+
+	/**
+	 * A cooldown whose 5-minute window has elapsed is taken over by the next
+	 * send via the compare-and-swap path, and the stale expiry is overwritten
+	 * with a fresh one — so a cooldown never strands the user permanently.
+	 */
+	public function test_expired_instant_email_cooldown_is_taken_over(): void {
+		$user_id = $this->make_admin( 'expired-instant@example.com' );
+
+		global $wpdb;
+		$key   = 'agentic_notification_email_cooldown_' . $user_id;
+		$stale = (string) ( time() - 10 );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Test seeds a stale cooldown row directly, mirroring the production INSERT.
+		$wpdb->query(
+			$wpdb->prepare(
+				"INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')",
+				$key,
+				$stale
+			)
+		);
+
+		$claimed = self::invoke_private( 'claim_instant_email_cooldown', array( $user_id ) );
+		$this->assertTrue( $claimed, 'an expired cooldown must be taken over' );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Test assertion against the raw cooldown row.
+		$stored = $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", $key ) );
+		$this->assertNotSame( $stale, $stored, 'the takeover must overwrite the stale expiry' );
+		$this->assertGreaterThan( time(), (int) $stored, 'the new expiry must be in the future' );
 	}
 
 	/**
