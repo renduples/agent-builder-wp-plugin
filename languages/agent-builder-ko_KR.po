@@ -9032,6 +9032,14 @@ msgstr "이 화면에만 적용됩니다. 다른 화면과 사이트 전체 기�
 msgid "More info"
 msgstr "자세히 보기"
 
+#: includes/functions.php:63 src/shared/chat-embed.js:20
+msgid "Post type"
+msgstr ""
+
+#: includes/functions.php:64 src/shared/chat-embed.js:21
+msgid "Post"
+msgstr ""
+
 #~ msgid "AI Assistants"
 #~ msgstr "AI 어시스턴트"
 

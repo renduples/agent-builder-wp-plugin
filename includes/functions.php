@@ -57,6 +57,11 @@ function agent_builder_chat_i18n(): array {
 		'reasoningTools'      => __( 'Tools used:', 'agent-builder' ),
 		/* translators: %s is the number of reasoning iterations */
 		'reasoningIterations' => __( 'Iterations: %s', 'agent-builder' ),
+		// Labels for the key-argument summary rows on a Proposed Change card.
+		'summaryTitle'        => __( 'Title', 'agent-builder' ),
+		'summaryStatus'       => __( 'Status', 'agent-builder' ),
+		'summaryPostType'     => __( 'Post type', 'agent-builder' ),
+		'summaryPost'         => __( 'Post', 'agent-builder' ),
 	);
 }
 
