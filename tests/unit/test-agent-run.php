@@ -612,6 +612,46 @@ class Test_Agent_Run extends TestCase {
 	}
 
 	/**
+	 * create_queued() inserts a 'queued' row without making it current or arming
+	 * the shutdown guard; claim_queued() atomically flips it to 'running'.
+	 * query()/counts() see the 'queued' row.
+	 */
+	public function test_create_queued_and_claim_queued_lifecycle(): void {
+		$run = Agent_Run::create_queued(
+			'content-writer',
+			array(
+				'kind'      => 'task',
+				'user_id'   => 31,
+				'task_text' => 'Write a post.',
+			)
+		);
+		$run_id = $run->get_run_id();
+
+		// Not current: the creating request's shutdown guard is never armed.
+		$this->assertNull( Agent_Run::current() );
+		$this->assertSame( 'queued', $run->to_array()['status'] );
+		$this->assertSame( 31, $run->to_array()['user_id'] );
+
+		$reloaded = Agent_Run::load( $run_id );
+		$this->assertSame( 'queued', $reloaded->to_array()['status'] );
+
+		// query()/counts() include the queued row.
+		$queued = Agent_Run::query( array( 'status' => 'queued' ) );
+		$this->assertContains( $run_id, array_column( $queued, 'run_id' ) );
+		$this->assertSame( 1, Agent_Run::counts( 31 )['queued'] );
+
+		// The worker claims the row out of 'queued'.
+		$this->assertTrue( $reloaded->claim_queued() );
+		$this->assertSame( 'running', $reloaded->to_array()['status'] );
+		$this->assertSame( 'running', Agent_Run::load( $run_id )->to_array()['status'] );
+
+		// A second claimant loses the race.
+		$this->assertFalse( Agent_Run::load( $run_id )->claim_queued() );
+
+		$reloaded->finish( 'completed' );
+	}
+
+	/**
 	 * A single message that alone exceeds the 200KB transcript cap is dropped
 	 * rather than left in the persisted transcript over the declared bound.
 	 */
