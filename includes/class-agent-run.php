@@ -1205,9 +1205,30 @@ class Agent_Run {
 		$run->result_text  = (string) ( $summary['text'] ?? '' );
 		$run->result_cards = is_array( $summary['cards'] ?? null ) ? $summary['cards'] : array();
 
-		$state           = self::decode_assoc( $row['state'] ?? '' );
-		$run->scratchpad = is_array( $state['scratchpad'] ?? null ) ? $state['scratchpad'] : array();
-		$run->messages   = is_array( $state['messages'] ?? null ) ? $state['messages'] : array();
+		$state = self::decode_assoc( $row['state'] ?? '' );
+
+		// Two shapes have ever been written to this column: the current
+		// (>= 2.15.0) {scratchpad, messages} wrapper, and the legacy
+		// pre-2.15.0 shape where the whole decoded value *is* the scratchpad
+		// (with no transcript). Tell them apart by shape alone — exactly two
+		// keys, a 'scratchpad' array plus a 'messages' list of role-bearing
+		// message objects — and treat anything else (a legacy flat scratchpad
+		// that happens to hold similarly-named keys, or an empty/garbled
+		// value) as the legacy scratchpad with no transcript.
+		$has_wrapper = 2 === count( $state )
+			&& array_key_exists( 'scratchpad', $state )
+			&& is_array( $state['scratchpad'] )
+			&& array_key_exists( 'messages', $state )
+			&& is_array( $state['messages'] )
+			&& self::is_transcript_list( $state['messages'] );
+
+		if ( $has_wrapper ) {
+			$run->scratchpad = $state['scratchpad'];
+			$run->messages   = $state['messages'];
+		} else {
+			$run->scratchpad = $state;
+			$run->messages   = array();
+		}
 
 		$run->finished = in_array( $run->status, self::TERMINAL_STATUSES, true );
 
@@ -1226,6 +1247,39 @@ class Agent_Run {
 		}
 		$decoded = json_decode( $raw, true );
 		return is_array( $decoded ) ? $decoded : array();
+	}
+
+	/**
+	 * Whether a decoded state's "messages" value has the current (>= 2.15.0)
+	 * transcript shape: a list of message objects, each carrying a `role` key.
+	 *
+	 * The current shape's messages are always produced by sanitize_transcript(),
+	 * which re-indexes with array_values() (so always a list) over message
+	 * objects built with a `role` key. This is what distinguishes the current
+	 * {scratchpad, messages} wrapper from a legacy flat scratchpad that happens
+	 * to hold a "messages"-shaped key of its own (see from_row()) — which
+	 * scratch_set() never writes.
+	 *
+	 * @param array $messages Candidate messages value.
+	 * @return bool
+	 */
+	private static function is_transcript_list( array $messages ): bool {
+		if ( array() === $messages ) {
+			return true;
+		}
+
+		$expected = 0;
+		foreach ( $messages as $index => $message ) {
+			if ( $index !== $expected ) {
+				return false; // Not a list.
+			}
+			if ( ! is_array( $message ) || ! array_key_exists( 'role', $message ) ) {
+				return false;
+			}
+			++$expected;
+		}
+
+		return true;
 	}
 
 	/**
@@ -1265,7 +1319,9 @@ class Agent_Run {
 		$stripped  = array_values( array_map( array( self::class, 'strip_message_images' ), $messages ) );
 		$remaining = count( $stripped );
 
-		while ( $remaining > 1 ) {
+		// $remaining > 0 (not > 1): a single oversized message must be
+		// dropped too, rather than left over the declared cap.
+		while ( $remaining > 0 ) {
 			$encoded = wp_json_encode( $stripped );
 			if ( is_string( $encoded ) && strlen( $encoded ) <= self::TRANSCRIPT_CAP_BYTES ) {
 				break;
