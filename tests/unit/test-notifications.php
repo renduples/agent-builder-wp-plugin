@@ -18,6 +18,44 @@ use Agentic\Notifications;
 class Test_Notifications extends TestCase {
 
 	/**
+	 * Previous email-mode option value, restored in tearDown.
+	 *
+	 * @var mixed
+	 */
+	private $previous_email_mode;
+
+	/**
+	 * Snapshot the email-mode option so a test that flips it to "instant" can't
+	 * leak instant mode (and its armed cooldown) into a later test.
+	 */
+	public function setUp(): void {
+		parent::setUp();
+		$this->previous_email_mode = get_option( 'agent_builder_notify_email', false );
+	}
+
+	/**
+	 * Restore the email-mode option and clear any instant-email cooldown
+	 * transients armed during the test.
+	 */
+	public function tearDown(): void {
+		if ( false === $this->previous_email_mode ) {
+			delete_option( 'agent_builder_notify_email' );
+		} else {
+			update_option( 'agent_builder_notify_email', $this->previous_email_mode );
+		}
+
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test cleanup of cooldown transients; underscores escaped for LIKE.
+		$wpdb->query(
+			"DELETE FROM {$wpdb->options}
+			WHERE option_name LIKE '\_transient\_agentic\_notification\_email\_cooldown\_%'
+			   OR option_name LIKE '\_transient\_timeout\_agentic\_notification\_email\_cooldown\_%'"
+		);
+
+		parent::tearDown();
+	}
+
+	/**
 	 * Create an administrator user with a deterministic email.
 	 *
 	 * @param string $email Email address.

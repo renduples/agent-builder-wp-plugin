@@ -291,38 +291,43 @@ class Approval_Queue {
 		// Record the same notice in the notification inbox so it surfaces on the
 		// admin-bar count and Tasks screen, not just in email. The email below
 		// remains the single send (notify() never emails approval_pending).
+		// Skip entirely when the recipient has no matching user account (a role
+		// address or distribution list) — a user_id of 0 would write a row no
+		// inbox ever reads, never emails and never marks read.
 		$notify_user_id = 0;
 		$notify_user    = get_user_by( 'email', $to );
 		if ( $notify_user ) {
 			$notify_user_id = (int) $notify_user->ID;
 		}
 
-		$notify_body = sprintf(
-			/* translators: 1: action label, 2: agent name, 3: risk level */
-			__( '%1$s by %2$s (risk: %3$s)', 'agent-builder' ),
-			$label,
-			$agent,
-			$risk_level
-		);
-		if ( $reasoning ) {
-			$notify_body .= ' — ' . wp_strip_all_tags( $reasoning );
-		}
+		if ( $notify_user_id > 0 ) {
+			$notify_body = sprintf(
+				/* translators: 1: action label, 2: agent name, 3: risk level */
+				__( '%1$s by %2$s (risk: %3$s)', 'agent-builder' ),
+				$label,
+				$agent,
+				$risk_level
+			);
+			if ( $reasoning ) {
+				$notify_body .= ' — ' . wp_strip_all_tags( $reasoning );
+			}
 
-		Notifications::notify(
-			$notify_user_id,
-			'approval_pending',
-			sprintf(
-				/* translators: %s: action label */
-				__( 'Approval needed: %s', 'agent-builder' ),
-				$label
-			),
-			$notify_body,
-			array(
-				'link'     => $queue_url,
-				'agent_id' => $agent_id,
-				'severity' => 'warning',
-			)
-		);
+			Notifications::notify(
+				$notify_user_id,
+				'approval_pending',
+				sprintf(
+					/* translators: %s: action label */
+					__( 'Approval needed: %s', 'agent-builder' ),
+					$label
+				),
+				$notify_body,
+				array(
+					'link'     => $queue_url,
+					'agent_id' => $agent_id,
+					'severity' => 'warning',
+				)
+			);
+		}
 
 		$sent = false;
 		if ( class_exists( '\Agentic_Email_Helper' ) ) {

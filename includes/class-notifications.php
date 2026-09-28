@@ -79,6 +79,15 @@ class Notifications {
 	 * @return void
 	 */
 	public static function maybe_schedule_digest(): void {
+		// Never (re)schedule while safe mode is on: the digest is background
+		// work, and safe mode is the escape hatch that disables all of it. A
+		// separate admin_init cleanup clears the hook when safe mode flips on,
+		// but that hook only fires on admin requests — this check must live
+		// here too so a cron/REST/frontend hit can't silently re-schedule it.
+		if ( Activator::is_safe_mode() ) {
+			return;
+		}
+
 		if ( ! wp_next_scheduled( self::DIGEST_HOOK ) ) {
 			wp_schedule_event( time(), 'daily', self::DIGEST_HOOK );
 		}
@@ -282,6 +291,49 @@ class Notifications {
 			return;
 		}
 
+		// Claim these rows *before* composing or sending, so two overlapping
+		// digest invocations for the same user (WP-Cron's double-fire, or a
+		// system cron racing a request-triggered spawn_cron()) cannot both email
+		// the same rows. The `emailed_at IS NULL` guard makes the claim atomic
+		// per row: only rows still un-emailed are taken, and the affected-row
+		// count below is how many this invocation actually owns.
+		$ids          = array_map( 'absint', array_column( $rows, 'id' ) );
+		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		$claimed_at   = gmdate( 'Y-m-d H:i:s' );
+		$claim_args   = array_merge( array( $table, $claimed_at ), $ids );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table update.
+		$claimed = (int) $wpdb->query(
+			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Dynamic IN (%d…) count matches $ids; table %i + emailed_at %s via $claim_args.
+			$wpdb->prepare(
+				"UPDATE %i SET emailed_at = %s WHERE id IN ({$placeholders}) AND emailed_at IS NULL", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- $placeholders is only %d tokens; $claim_args is table+timestamp+ids.
+				...$claim_args // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+			)
+		);
+
+		// A concurrent invocation already emailed every candidate row.
+		if ( 0 === $claimed ) {
+			return;
+		}
+
+		// Re-read only the rows this invocation actually claimed (a concurrent
+		// run may have taken a subset in the meantime), so the email never
+		// repeats a row another invocation already sent.
+		$select_args = array_merge( array( $table ), $ids, array( $claimed_at ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table read.
+		$rows = $wpdb->get_results(
+			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Dynamic IN (%d…) count matches $ids; table %i + emailed_at %s via $select_args.
+			$wpdb->prepare(
+				"SELECT * FROM %i WHERE id IN ({$placeholders}) AND emailed_at = %s ORDER BY created_at ASC, id ASC", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- $placeholders is only %d tokens; $select_args is table+timestamp+ids.
+				...$select_args // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+			),
+			ARRAY_A
+		);
+
+		if ( empty( $rows ) ) {
+			return;
+		}
+
 		$user = get_userdata( $user_id );
 		if ( ! $user || ! is_email( $user->user_email ) ) {
 			return;
@@ -320,20 +372,19 @@ class Notifications {
 			)
 		);
 
-		if ( ! $sent ) {
+		if ( $sent ) {
 			return;
 		}
 
-		$ids          = array_map( 'absint', array_column( $rows, 'id' ) );
-		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
-		$args         = array_merge( array( $table, gmdate( 'Y-m-d H:i:s' ) ), $ids );
-
+		// Release the claim so a transient send failure is retried by the next
+		// digest rather than silently dropping these rows.
+		$release_args = array_merge( array( $table ), $ids, array( $claimed_at ) );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table update.
 		$wpdb->query(
-			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Dynamic IN (%d…) count matches $ids; table %i + emailed_at %s via $args.
+			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Dynamic IN (%d…) count matches $ids; table %i + emailed_at %s via $release_args.
 			$wpdb->prepare(
-				"UPDATE %i SET emailed_at = %s WHERE id IN ({$placeholders})", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- $placeholders is only %d tokens; $args is table+timestamp+ids.
-				...$args // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+				"UPDATE %i SET emailed_at = NULL WHERE id IN ({$placeholders}) AND emailed_at = %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- $placeholders is only %d tokens; $release_args is table+ids+timestamp.
+				...$release_args // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
 			)
 		);
 	}
