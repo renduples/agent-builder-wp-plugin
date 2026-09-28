@@ -66,7 +66,7 @@ Prompt Tests never run by themselves. They call your AI provider only when you s
 ### ⚡ Built for Developers
 
 * **WebMCP Bridge:** Expose low-risk tools to visitors' own AI browser agents, same risk gates as the backend.
-* **MCP Ready:** Connect Claude Desktop, Cursor, and VS Code via secure credentials.
+* **MCP Ready:** Connect Grok Bot, Claude Desktop, Cursor, and VS Code via secure credentials.
 * **WordPress Abilities API (WP 6.9+):** Exposes tools as native abilities; imports other plugins' abilities.
 * **Multi-LLM BYOK:** OpenAI, Anthropic, Google Gemini, DeepSeek, xAI, Kimi, Mistral, Cohere, or local Ollama.
 * **Prompt Tests (evals):** `wp agent prompt-test --dry-run` validates the catalog for free; `--agent=`, `--rank=` and `--max-cost=` choose what to spend on. Point it at a staging site from CI.
@@ -131,7 +131,7 @@ No. The plugin includes a **Basic interface mode** designed for non-technical si
 WebMCP (Web-based Model Context Protocol) lets your visitors' own AI browser agents interact with your site safely. For example, if a visitor has Claude in their browser, their Claude can search your content, browse your WooCommerce store, and add items to their cart—all protected by the same risk gates and per-visitor scoping that guard your backend. It's agent-to-agent communication, not user-to-user.
 
 = What is MCP? =
-MCP (Model Context Protocol) is an open standard that lets external AI clients like Claude Desktop, Cursor, and VS Code connect directly to your WordPress site as a tool provider. You create a secure MCP credential in Settings → MCP, and external clients can then access safe tools on your site under your approval gate, with full audit logging.
+MCP (Model Context Protocol) is an open standard that lets external AI clients like Grok Bot, Claude Desktop, Cursor, and VS Code connect directly to your WordPress site as a tool provider. You create a secure MCP credential in Settings → MCP, and external clients can then access safe tools on your site under your approval gate, with full audit logging.
 
 = Is Agent Builder free? =
 Yes. The free core plugin includes all 12 bundled agents, the complete tools/skills hub, the Approvals queue, the local OKF Knowledge wiki, multi-provider BYOK support, and cloud AI image/video generation (via the optional Agentic AI connection, which includes daily free credits — no purchase required). Advanced hosted vector embeddings and semantic search across large document sets are available via optional Agent Builder Pro add-ons.
@@ -143,6 +143,12 @@ PDF and Word document generation are not bundled in this WordPress.org package (
 
 = Can I run agents on a schedule? =
 Yes. The Agent Orchestrator agent can deploy other agents as background cron jobs or triggered by site events. You can also use the REST API to orchestrate agents programmatically.
+
+= What is a task? =
+A task is a job you hand to an agent to run in the background. From the Tasks screen you pick an agent, describe what you want, and start it. The agent works on its own — low-risk steps run automatically, while anything that needs your judgement waits for you in Tasks under "Waiting on you". You get a notification when a task is waiting on your OK or has finished, so you only check back when there is something to act on.
+
+= Does Agent Builder send me email? =
+Yes — a daily activity digest that summarizes what your agents did. It is sent only to site administrators, uses WordPress's own mail function (`wp_mail`, no external email service), and is on by default. You can switch it to instant run notifications or turn email off entirely from Settings → Security, and each administrator can opt out of the digest individually.
 
 = Where is my data sent? =
 When using cloud LLM providers, conversation context and tool parameters are sent directly to your chosen provider via their official API (see External Services below). If you use Ollama or a local endpoint, 100% of your data stays on your local server.
@@ -330,6 +336,12 @@ This plugin connects to external AI APIs to process prompts and tool executions 
 
 == Changelog ==
 
+= 4.1.0 =
+* New Tasks screen: hand a job to an agent and it runs in the background — low-risk steps happen automatically, anything that needs your judgement waits under "Waiting on you".
+* Autonomous tasks: agents now run approved low-risk tools on their own, pausing only when a step needs your OK.
+* New notifications: an inbox and admin-bar badge keep you informed when a task finishes, is waiting, or fails.
+* Optional daily activity digest email for administrators summarizing what your agents did — on by default, configurable from Settings → Security.
+
 = 4.0.2 - 2026-09-27 =
 * Maintenance: version alignment across the WordPress.org, self-hosted, and Pro editions. Ensures clean compatibility with Agent Builder Pro 4.0.2. No functional changes to this edition.
 
@@ -389,6 +401,9 @@ Major release. The safety-first way to run AI agents on WordPress — agents tha
 For the full version history, visit [agentic-plugin.com/changelog](https://agentic-plugin.com/changelog/).
 
 == Upgrade Notice ==
+
+= 4.1.0 =
+Creates new database tables and adds the Tasks screen. Autonomous tasks now run low-risk tools automatically and surface medium/high-risk ones for your review under Tasks → Waiting on you. Administrators receive a daily activity digest by default (toggle in Settings → Security).
 
 = 3.3.0 =
 React Settings, Tools, Approvals, and Knowledge hubs. No breaking changes for existing agents or API keys.
