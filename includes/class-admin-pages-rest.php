@@ -183,16 +183,37 @@ class Admin_Pages_REST {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public static function get_page( \WP_REST_Request $request ) {
-		$page = sanitize_key( (string) $request->get_param( 'page' ) );
-		$tab  = sanitize_key( (string) $request->get_param( 'tab' ) );
+		$page          = sanitize_key( (string) $request->get_param( 'page' ) );
+		$tab           = sanitize_key( (string) $request->get_param( 'tab' ) );
 		$page_builders = array(
-			'tools'         => array( 'class' => Tools_Payload::class, 'args' => array( $tab ?: 'all' ) ),
-			'skills'        => array( 'class' => Skills_Payload::class, 'args' => array() ),
-			'approvals'     => array( 'class' => Approvals_Payload::class, 'args' => array( $tab ?: 'approvals' ) ),
-			'deployment'    => array( 'class' => Deployment_Payload::class, 'args' => array() ),
-			'train-data'    => array( 'class' => Train_Payload::class, 'args' => array( $tab ?: 'wiki' ) ),
-			'agent-ready'   => array( 'class' => Agent_Ready_Payload::class, 'args' => array() ),
-			'safety-center' => array( 'class' => Safety_Center_Payload::class, 'args' => array() ),
+			'tools'         => array(
+				'class' => Tools_Payload::class,
+				'args'  => array( $tab ? $tab : 'all' ),
+			),
+			'skills'        => array(
+				'class' => Skills_Payload::class,
+				'args'  => array(),
+			),
+			'approvals'     => array(
+				'class' => Approvals_Payload::class,
+				'args'  => array( $tab ? $tab : 'approvals' ),
+			),
+			'deployment'    => array(
+				'class' => Deployment_Payload::class,
+				'args'  => array(),
+			),
+			'train-data'    => array(
+				'class' => Train_Payload::class,
+				'args'  => array( $tab ? $tab : 'wiki' ),
+			),
+			'agent-ready'   => array(
+				'class' => Agent_Ready_Payload::class,
+				'args'  => array(),
+			),
+			'safety-center' => array(
+				'class' => Safety_Center_Payload::class,
+				'args'  => array(),
+			),
 			'agents'        => array(
 				'class' => Agents_Payload::class,
 				'args'  => array(),
@@ -204,7 +225,7 @@ class Admin_Pages_REST {
 			if ( ! in_array( $period, array( 'day', 'week', 'month' ), true ) ) {
 				$period = 'week';
 			}
-			return new \WP_REST_Response( Logs_Payload::build( $tab ?: 'audit', $period ), 200 );
+			return new \WP_REST_Response( Logs_Payload::build( $tab ? $tab : 'audit', $period ), 200 );
 		}
 
 		if ( isset( $page_builders[ $page ] ) ) {
