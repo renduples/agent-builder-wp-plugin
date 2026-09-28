@@ -1,6 +1,5 @@
 /**
- * Multi-page React admin surfaces (tools, skills list, approvals, logs, etc.).
- * Agents list intentionally excluded (WordPress plugins-style UI later).
+ * Multi-page React admin surfaces (tools, skills list, approvals, logs, agents).
  */
 import { createRoot } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -19,6 +18,7 @@ import DeploymentView from './views/DeploymentView';
 import TrainView from './views/TrainView';
 import AgentReadyView from './views/AgentReadyView';
 import SafetyCenterView from './views/SafetyCenterView';
+import AgentsView from './views/AgentsView';
 
 function AdminPagesApp() {
 	const cfg = bootConfig();
@@ -102,6 +102,9 @@ function AdminPagesApp() {
 			body = (
 				<SafetyCenterView data={ data } reload={ reload } />
 			);
+			break;
+		case 'agents':
+			body = <AgentsView data={ data } reload={ reload } />;
 			break;
 		default:
 			body = (
