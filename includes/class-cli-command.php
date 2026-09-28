@@ -121,6 +121,54 @@ class CLI_Command extends \WP_CLI_Command {
 		// TODO: Expand with tools, abilities, etc. in follow-up
 	}
 
+	/**
+	 * Re-sign every bundled agent ability manifest.
+	 *
+	 * Recomputes the integrity signature for each bundled
+	 * library/agents/<slug>/abilities.json so signatures stay valid after a
+	 * deploy that changed a manifest without bumping the plugin version. The
+	 * deploy step calls this; it is safe to run repeatedly.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp agent resign-all
+	 *
+	 * @subcommand resign-all
+	 *
+	 * @param array $args       Positional args (unused).
+	 * @param array $assoc_args Associative args (unused).
+	 */
+	public function resign_all( array $args, array $assoc_args ): void {
+		$library_dir = AGENT_BUILDER_DIR . 'library/agents';
+		$manifests   = is_dir( $library_dir ) ? glob( $library_dir . '/*/abilities.json' ) : array();
+		if ( empty( $manifests ) ) {
+			\WP_CLI::warning( 'No bundled ability manifests found.' );
+			return;
+		}
+
+		$signed = 0;
+		$failed = 0;
+		foreach ( $manifests as $manifest_path ) {
+			$slug = basename( dirname( $manifest_path ) );
+			Abilities_Manifest::clear_cache( $slug );
+			if ( Abilities_Manifest::save_integrity_hash( $slug ) ) {
+				\WP_CLI::log( "  signed: {$slug}" );
+				++$signed;
+			} else {
+				\WP_CLI::warning( "  failed: {$slug}" );
+				++$failed;
+			}
+		}
+
+		update_option( 'agent_builder_abilities_signed_version', AGENT_BUILDER_VERSION );
+		update_option( 'agent_builder_abilities_signed_hash', Abilities_Manifest::bundled_manifest_signature() );
+
+		if ( $failed > 0 ) {
+			\WP_CLI::error( sprintf( 'Re-signed %d manifest(s); %d failed.', $signed, $failed ) );
+		}
+		\WP_CLI::success( sprintf( 'Re-signed %d bundled ability manifest(s).', $signed ) );
+	}
+
 	// Note: WP7 AI substrate commands (wp-ai status/abilities/test-execute and abilities list/test)
 	// have been moved to dedicated classes in includes/cli/ for maintainability.
 	// See: WP_AI_Command and Abilities_Command. Registered via WP_CLI::add_command( 'agent wp-ai', ... )

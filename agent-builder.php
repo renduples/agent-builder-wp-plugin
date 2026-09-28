@@ -66,7 +66,7 @@ spl_autoload_register(
 // wp-content/agentic-agents/ (or -knowledge/, -backups/) needs to move.
 define( 'AGENT_BUILDER_FILE', __FILE__ );
 define( 'AGENT_BUILDER_VERSION', '4.0.2' );
-define( 'AGENT_BUILDER_DB_VERSION', '2.14.2' );
+define( 'AGENT_BUILDER_DB_VERSION', '2.15.0' );
 define( 'AGENT_BUILDER_DIR', plugin_dir_path( __FILE__ ) );
 define( 'AGENT_BUILDER_URL', plugin_dir_url( __FILE__ ) );
 define( 'AGENT_BUILDER_BASENAME', plugin_basename( __FILE__ ) );
@@ -127,6 +127,16 @@ final class Plugin {
 	 */
 	private function init_hooks(): void {
 		// --- Hooks needed on every request (frontend, REST, cron) ---.
+
+		// Schema migration: a WP.org auto-update never re-fires the activation
+		// hook, so the stored schema version can lag the code until an admin
+		// next visits wp-admin — leaving cron, REST and frontend requests
+		// hitting an old table shape in the meantime. Run the upgrade on every
+		// request, at plugins_loaded priority 20, so the first hit of any kind
+		// brings the schema current. Cheap (a single get_option short-circuit)
+		// when already current. See Activator::maybe_upgrade().
+		add_action( 'plugins_loaded', array( Activator::class, 'maybe_upgrade' ), 20 );
+
 		add_action( 'init', array( $this, 'init' ) );
 
 		// One-time legacy agent-export cleanup. Deliberately on init (which
@@ -348,7 +358,9 @@ final class Plugin {
 
 		// Re-sign whenever the stored signing version differs from the current one.
 		$signed_version = get_option( 'agent_builder_abilities_signed_version', '' );
-		if ( AGENT_BUILDER_VERSION !== $signed_version ) {
+		$signed_hash    = get_option( 'agent_builder_abilities_signed_hash', '' );
+		$current_hash   = Abilities_Manifest::bundled_manifest_signature();
+		if ( AGENT_BUILDER_VERSION !== $signed_version || $current_hash !== $signed_hash ) {
 			$library_dir = AGENT_BUILDER_DIR . 'library/agents';
 			if ( is_dir( $library_dir ) ) {
 				$agentic_manifests = glob( $library_dir . '/*/abilities.json' );
@@ -359,6 +371,7 @@ final class Plugin {
 				}
 			}
 			update_option( 'agent_builder_abilities_signed_version', AGENT_BUILDER_VERSION );
+			update_option( 'agent_builder_abilities_signed_hash', $current_hash );
 		}
 	}
 
@@ -698,6 +711,8 @@ final class Plugin {
 require_once AGENT_BUILDER_DIR . 'includes/class-job-manager.php';
 require_once AGENT_BUILDER_DIR . 'includes/interface-job-processor.php';
 require_once AGENT_BUILDER_DIR . 'includes/class-agent-job-processor.php';
+require_once AGENT_BUILDER_DIR . 'includes/class-agent-task-job-processor.php';
+require_once AGENT_BUILDER_DIR . 'includes/class-run-resumer.php';
 require_once AGENT_BUILDER_DIR . 'includes/class-jobs-api.php';
 require_once AGENT_BUILDER_DIR . 'includes/class-ui-settings-rest.php';
 require_once AGENT_BUILDER_DIR . 'includes/class-dashboard-rest.php';
@@ -744,6 +759,8 @@ Ability_Provider_Registry::register(
 );
 
 Job_Manager::init();
+Agent_Task_Job_Processor::init();
+Run_Resumer::init();
 Provider_Registry::init();
 Jobs_API::init();
 UI_Settings_REST::init();

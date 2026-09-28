@@ -12,6 +12,7 @@
 namespace Agentic\Tests;
 
 use Agentic\Abilities_Manifest;
+use Agentic\Agent_Run;
 use Agentic\Approval_Queue;
 use Agentic\Audit_Log;
 use Agentic\Risk_Level;
@@ -40,6 +41,7 @@ class Test_Tool_Executor extends TestCase {
 		parent::setUp();
 		Risk_Level::bust_cache();
 		delete_option( 'agent_builder_approval_auto_max_risk' );
+		Agent_Run::reset_current_for_tests();
 		$this->clear_backup_dir();
 	}
 
@@ -49,6 +51,7 @@ class Test_Tool_Executor extends TestCase {
 	 */
 	public function tearDown(): void {
 		delete_option( 'agent_builder_approval_auto_max_risk' );
+		Agent_Run::reset_current_for_tests();
 		$this->clear_backup_dir();
 		parent::tearDown();
 	}
@@ -173,6 +176,64 @@ class Test_Tool_Executor extends TestCase {
 	}
 
 	/**
+	 * The confirmation payload carries a reduced summary of the scalar tool
+	 * arguments worth surfacing on the card. duplicate_post is MEDIUM risk, so
+	 * in supervised mode it routes to the confirm branch; its new_title maps to
+	 * "title", and a post_id-only call falls back to the raw id so the card is
+	 * never entirely opaque.
+	 */
+	public function test_confirm_summary_payload(): void {
+		$result = $this->make_executor()->execute(
+			'duplicate_post',
+			array( 'post_id' => 123, 'new_title' => 'Fresh copy' ),
+			'test-agent',
+			'supervised',
+			'chat'
+		);
+
+		$this->assertSame( 'confirmation_required', $result['status'] );
+		$this->assertArrayHasKey( 'summary', $result );
+		$this->assertSame( 'Fresh copy', $result['summary']['title'] );
+		$this->assertArrayNotHasKey( 'post_id', $result['summary'], 'a friendly field suppresses the post_id fallback' );
+
+		$fallback = $this->make_executor()->execute(
+			'duplicate_post',
+			array( 'post_id' => 123 ),
+			'test-agent',
+			'supervised',
+			'chat'
+		);
+		$this->assertSame( array( 'post_id' => '123' ), $fallback['summary'] );
+	}
+
+	/**
+	 * new_type (switch_post_type) has no MEDIUM-risk tool, so it can't reach the
+	 * confirm branch through execute(). Exercise the private mapping directly
+	 * instead, covering the alternate keys the confirm summary resolves.
+	 */
+	public function test_summarize_arguments_maps_alternate_keys(): void {
+		$method = new \ReflectionMethod( Tool_Executor::class, 'summarize_arguments' );
+
+		// new_title (duplicate tools) surfaces under "title".
+		$this->assertSame(
+			array( 'title' => 'Fresh copy' ),
+			$method->invoke( null, array( 'new_title' => 'Fresh copy' ) )
+		);
+
+		// new_type (switch_post_type) surfaces under "post_type".
+		$this->assertSame(
+			array( 'post_type' => 'page' ),
+			$method->invoke( null, array( 'new_type' => 'page' ) )
+		);
+
+		// post_id is surfaced only as a last-resort fallback.
+		$this->assertSame(
+			array( 'post_id' => '123' ),
+			$method->invoke( null, array( 'post_id' => 123 ) )
+		);
+	}
+
+	/**
 	 * When enforcement resolves to 'allow' (the site's auto-approve
 	 * preference raises the ceiling to HIGH here), a non-readonly tool
 	 * actually executes, AND Tool_Helpers::backup_tables_for_tool() must
@@ -224,6 +285,404 @@ class Test_Tool_Executor extends TestCase {
 
 		$after = glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*_options.json' ) ?: array();
 		$this->assertSame( count( $before ), count( $after ) );
+	}
+
+	/**
+	 * A filter on `agent_builder_tool_enforcement` can tighten enforcement —
+	 * forcing `queue` on a call that would otherwise resolve to `allow`.
+	 */
+	public function test_gate_filter_can_tighten_a_normally_allowed_call(): void {
+		update_option(
+			'agent_builder_risk_overrides',
+			array( 'test-agent:m10c_fake_low_tool' => Risk_Level::LOW )
+		);
+
+		$filter = static function () {
+			return 'queue';
+		};
+		add_filter( 'agent_builder_tool_enforcement', $filter );
+
+		$result = $this->make_executor()->execute(
+			'm10c_fake_low_tool',
+			array(),
+			'test-agent',
+			'autonomous', // Ceiling is LOW, so baseline enforcement here is 'allow'.
+			'chat'
+		);
+
+		remove_filter( 'agent_builder_tool_enforcement', $filter );
+		delete_option( 'agent_builder_risk_overrides' );
+
+		$this->assertSame( 'queued_for_approval', $result['status'] );
+	}
+
+	/**
+	 * A filter on `agent_builder_tool_enforcement` cannot resurrect an
+	 * EXTREME-risk call that baseline enforcement already blocked — the
+	 * seam is skipped entirely once baseline is 'block'.
+	 */
+	public function test_gate_filter_cannot_unblock_extreme_risk(): void {
+		update_option(
+			'agent_builder_risk_overrides',
+			array( 'test-agent:add_custom_css' => Risk_Level::EXTREME )
+		);
+
+		$filter = static function () {
+			return 'allow';
+		};
+		add_filter( 'agent_builder_tool_enforcement', $filter );
+
+		$result = $this->make_executor()->execute(
+			'add_custom_css',
+			array( 'css' => 'body{color:red}' ),
+			'test-agent',
+			'autonomous',
+			'chat'
+		);
+
+		remove_filter( 'agent_builder_tool_enforcement', $filter );
+		delete_option( 'agent_builder_risk_overrides' );
+
+		$this->assertArrayHasKey( 'error', $result );
+		$this->assertStringContainsString( 'extreme risk', $result['error'] );
+	}
+
+	/**
+	 * Risk_Level::clamp_enforcement() as a pure function: EXTREME risk
+	 * always resolves to 'block', regardless of what a filter returned.
+	 */
+	public function test_clamp_enforcement_never_unblocks_extreme(): void {
+		$ctx = array( 'risk' => Risk_Level::EXTREME, 'baseline' => 'block' );
+
+		$this->assertSame( 'block', Risk_Level::clamp_enforcement( 'allow', $ctx ) );
+		$this->assertSame( 'block', Risk_Level::clamp_enforcement( 'confirm', $ctx ) );
+		$this->assertSame( 'block', Risk_Level::clamp_enforcement( 'queue', $ctx ) );
+	}
+
+	/**
+	 * Risk_Level::clamp_enforcement(): a HIGH-risk decision cannot be
+	 * loosened to 'allow' unless $ctx carries the documented grant flag.
+	 */
+	public function test_clamp_enforcement_high_risk_needs_grant_flag_to_loosen(): void {
+		$ctx_no_grant = array( 'risk' => Risk_Level::HIGH, 'baseline' => 'queue' );
+		$this->assertSame(
+			'queue',
+			Risk_Level::clamp_enforcement( 'allow', $ctx_no_grant ),
+			'without the grant flag, a filter-loosened HIGH decision must be reclamped to baseline'
+		);
+
+		$ctx_with_grant = array( 'risk' => Risk_Level::HIGH, 'baseline' => 'queue', 'granted' => true );
+		$this->assertSame(
+			'allow',
+			Risk_Level::clamp_enforcement( 'allow', $ctx_with_grant ),
+			'with the grant flag present, loosening to allow is permitted'
+		);
+
+		// A baseline that was already 'allow' (e.g. the site's auto-approve
+		// preference covers HIGH) is not a filter loosening anything, so it
+		// is left alone even with no grant flag.
+		$ctx_already_allowed = array( 'risk' => Risk_Level::HIGH, 'baseline' => 'allow' );
+		$this->assertSame( 'allow', Risk_Level::clamp_enforcement( 'allow', $ctx_already_allowed ) );
+	}
+
+	/**
+	 * A HIGH-risk call cannot be loosened to 'allow' by a real filter on the
+	 * `agent_builder_tool_enforcement` hook unless it supplies the grant
+	 * flag — and nothing in this codebase sets that flag yet (M12's
+	 * Tool_Grants is the intended future setter), so today's filters can
+	 * never actually execute a HIGH-risk call this way.
+	 */
+	public function test_high_risk_filter_cannot_loosen_to_allow_without_grant_flag(): void {
+		$filter = static function () {
+			return 'allow';
+		};
+		add_filter( 'agent_builder_tool_enforcement', $filter );
+
+		$result = $this->make_executor()->execute(
+			'db_update_option',
+			array( 'name' => 'agent_builder_test_high_grant_opt', 'value' => 'should-not-be-set' ),
+			'test-agent',
+			'autonomous',
+			'chat'
+		);
+
+		remove_filter( 'agent_builder_tool_enforcement', $filter );
+
+		$this->assertSame( 'queued_for_approval', $result['status'] );
+		$this->assertFalse( get_option( 'agent_builder_test_high_grant_opt' ) );
+	}
+
+	/**
+	 * A HIGH-risk tool's baseline is 'queue'. A filter that loosens it to
+	 * 'confirm' (not literally 'allow') must still be reclamped back to
+	 * 'queue' without the grant flag — the gate-bypass bug this fix targets.
+	 * Before the fix, 'confirm' passed clamp_enforcement() unchanged and the
+	 * call was routed through Agent_Proposals (chat confirmation) instead of
+	 * the admin Approval_Queue, with no grant check at all.
+	 */
+	public function test_high_risk_filter_loosen_to_confirm_is_reclamped_to_queue(): void {
+		$filter = static function () {
+			return 'confirm';
+		};
+		add_filter( 'agent_builder_tool_enforcement', $filter );
+
+		$result = $this->make_executor()->execute(
+			'db_update_option',
+			array( 'name' => 'agent_builder_test_confirm_bypass_opt', 'value' => 'should-not-be-set' ),
+			'test-agent',
+			'autonomous',
+			'chat'
+		);
+
+		remove_filter( 'agent_builder_tool_enforcement', $filter );
+
+		$this->assertSame( 'queued_for_approval', $result['status'], 'must be reclamped to the queue path, not left as confirm' );
+		$this->assertArrayNotHasKey( 'proposal_id', $result, 'the chat confirmation (proposal) path must never be reached' );
+		$this->assertFalse( get_option( 'agent_builder_test_confirm_bypass_opt' ) );
+	}
+
+	/**
+	 * A filter returning an unrecognized enforcement value (typo, stray
+	 * string, anything not one of allow/confirm/queue/block) must never fall
+	 * through to the 'allow' execution path — it is treated as the pre-filter
+	 * baseline instead.
+	 */
+	public function test_unrecognized_enforcement_value_falls_back_to_baseline_not_allow(): void {
+		$filter = static function () {
+			return 'totally-bogus-value';
+		};
+		add_filter( 'agent_builder_tool_enforcement', $filter );
+
+		$result = $this->make_executor()->execute(
+			'add_custom_css',
+			array( 'css' => 'body{color:blue}' ),
+			'test-agent',
+			'supervised',
+			'chat'
+		);
+
+		remove_filter( 'agent_builder_tool_enforcement', $filter );
+
+		$this->assertSame(
+			'confirmation_required',
+			$result['status'] ?? null,
+			'an unrecognized enforcement value must fall back to baseline (confirm here), not silently execute'
+		);
+		$this->assertArrayNotHasKey( 'success', $result );
+	}
+
+	/**
+	 * A filter returning a non-string value (null, an array, an int) must be
+	 * validated and rejected *before* it reaches the strictly-typed
+	 * Risk_Level::clamp_enforcement(), which would otherwise throw a
+	 * TypeError instead of failing closed to the pre-filter baseline.
+	 *
+	 * @dataProvider provide_non_string_enforcement_values
+	 */
+	public function test_non_string_enforcement_value_fails_closed_to_baseline_not_typeerror( $bogus_value ): void {
+		$filter = static function () use ( $bogus_value ) {
+			return $bogus_value;
+		};
+		add_filter( 'agent_builder_tool_enforcement', $filter );
+
+		$result = $this->make_executor()->execute(
+			'add_custom_css',
+			array( 'css' => 'body{color:blue}' ),
+			'test-agent',
+			'supervised',
+			'chat'
+		);
+
+		remove_filter( 'agent_builder_tool_enforcement', $filter );
+
+		$this->assertSame(
+			'confirmation_required',
+			$result['status'] ?? null,
+			'a non-string enforcement value must fail closed to baseline (confirm here), not throw or silently execute'
+		);
+		$this->assertArrayNotHasKey( 'success', $result );
+	}
+
+	public function provide_non_string_enforcement_values(): array {
+		return array(
+			'null'  => array( null ),
+			'array' => array( array( 'allow' ) ),
+			'int'   => array( 1 ),
+		);
+	}
+
+	/**
+	 * A filter-driven block on a tool that is not itself extreme risk gets a
+	 * generic policy-denial message, not the "classified as extreme risk"
+	 * wording — that phrasing is reserved for the baseline-extreme-risk
+	 * branch above it.
+	 */
+	public function test_filter_driven_block_on_non_extreme_tool_gets_generic_message(): void {
+		$filter = static function () {
+			return 'block';
+		};
+		add_filter( 'agent_builder_tool_enforcement', $filter );
+
+		$result = $this->make_executor()->execute(
+			'add_custom_css',
+			array( 'css' => 'body{color:green}' ),
+			'test-agent',
+			'supervised',
+			'chat'
+		);
+
+		remove_filter( 'agent_builder_tool_enforcement', $filter );
+
+		$this->assertArrayHasKey( 'error', $result );
+		$this->assertStringNotContainsString( 'extreme risk', $result['error'] );
+		$this->assertStringContainsString( 'policy', $result['error'] );
+	}
+
+	/**
+	 * $ctx['run_id'] and $ctx['run_kind'] are populated from the passed
+	 * Agent_Run, and $ctx['user_id'] resolves to the run's owner.
+	 */
+	public function test_ctx_run_fields_populated_when_run_is_passed(): void {
+		$run = Agent_Run::begin( 'test-agent', array( 'kind' => 'routine', 'user_id' => 42 ) );
+
+		$captured = null;
+		$capture  = static function ( $enforcement, $ctx ) use ( &$captured ) {
+			$captured = $ctx;
+		};
+		add_action( 'agent_builder_tool_gate_decision', $capture, 10, 2 );
+
+		$this->make_executor()->execute(
+			'list_posts',
+			array(),
+			'test-agent',
+			'supervised',
+			'chat',
+			null,
+			'',
+			$run
+		);
+
+		remove_action( 'agent_builder_tool_gate_decision', $capture, 10 );
+
+		$this->assertIsArray( $captured );
+		$this->assertSame( $run->get_run_id(), $captured['run_id'] );
+		$this->assertSame( 'routine', $captured['run_kind'] );
+		$this->assertSame( 42, $captured['user_id'] );
+	}
+
+	/**
+	 * With no Agent_Run (an interactive chat call), $ctx['run_id'] and
+	 * $ctx['run_kind'] are empty rather than null or missing.
+	 */
+	public function test_ctx_run_fields_empty_without_a_run(): void {
+		$captured = null;
+		$capture  = static function ( $enforcement, $ctx ) use ( &$captured ) {
+			$captured = $ctx;
+		};
+		add_action( 'agent_builder_tool_gate_decision', $capture, 10, 2 );
+
+		$this->make_executor()->execute(
+			'list_posts',
+			array(),
+			'test-agent',
+			'supervised',
+			'chat'
+		);
+
+		remove_action( 'agent_builder_tool_gate_decision', $capture, 10 );
+
+		$this->assertIsArray( $captured );
+		$this->assertSame( '', $captured['run_id'] );
+		$this->assertSame( '', $captured['run_kind'] );
+	}
+
+	/**
+	 * `agent_builder_tool_executed` fires exactly once for a call that
+	 * actually executes — not zero, not twice.
+	 */
+	public function test_tool_executed_fires_exactly_once_on_execution(): void {
+		$calls    = 0;
+		$listener = static function () use ( &$calls ) {
+			++$calls;
+		};
+		add_action( 'agent_builder_tool_executed', $listener, 10, 4 );
+
+		$this->make_executor()->execute(
+			'list_posts',
+			array(),
+			'test-agent',
+			'supervised',
+			'chat'
+		);
+
+		remove_action( 'agent_builder_tool_executed', $listener, 10 );
+
+		$this->assertSame( 1, $calls );
+	}
+
+	/**
+	 * `agent_builder_tool_executed` never fires for a call that was blocked
+	 * or queued — only an actual execution should raise it.
+	 */
+	public function test_tool_executed_does_not_fire_when_blocked_or_queued(): void {
+		$calls    = 0;
+		$listener = static function () use ( &$calls ) {
+			++$calls;
+		};
+		add_action( 'agent_builder_tool_executed', $listener, 10, 4 );
+
+		update_option(
+			'agent_builder_risk_overrides',
+			array( 'test-agent:add_custom_css' => Risk_Level::EXTREME )
+		);
+		$this->make_executor()->execute(
+			'add_custom_css',
+			array( 'css' => 'body{color:red}' ),
+			'test-agent',
+			'autonomous',
+			'chat'
+		);
+		delete_option( 'agent_builder_risk_overrides' );
+
+		$this->make_executor()->execute(
+			'db_update_option',
+			array( 'name' => 'agent_builder_test_no_fire_opt', 'value' => 'x' ),
+			'test-agent',
+			'autonomous',
+			'chat'
+		);
+
+		remove_action( 'agent_builder_tool_executed', $listener, 10 );
+
+		$this->assertSame( 0, $calls );
+	}
+
+	/**
+	 * `agent_builder_tool_executed` must not fire for a call that resolves to
+	 * the synthesized "Unknown tool" error — none of Tool_Loader, the
+	 * agent-inline fallback, or the abilities bridge actually produced a
+	 * result, so nothing "executed."
+	 */
+	public function test_tool_executed_does_not_fire_for_unresolved_unknown_tool(): void {
+		$calls    = 0;
+		$listener = static function () use ( &$calls ) {
+			++$calls;
+		};
+		add_action( 'agent_builder_tool_executed', $listener, 10, 4 );
+
+		$result = $this->make_executor()->execute(
+			'no_such_tool_does_not_exist',
+			array(),
+			'test-agent',
+			'autonomous',
+			'chat'
+		);
+
+		remove_action( 'agent_builder_tool_executed', $listener, 10 );
+
+		$this->assertArrayHasKey( 'error', $result );
+		$this->assertStringContainsString( 'Unknown tool', $result['error'] );
+		$this->assertSame( 0, $calls );
 	}
 
 	/**

@@ -422,7 +422,15 @@ class Agent_Lifecycle {
 			if ( ! empty( $task['prompt'] ) ) {
 				$controller = new Agent_Controller();
 				$controller->set_invocation_context( 'cron' );
-				$result = $controller->run_autonomous_task( $agent, $task['prompt'], $task['id'] );
+				$result = $controller->run_autonomous_task(
+					$agent,
+					$task['prompt'],
+					$task['id'],
+					array(
+						'kind'       => 'routine',
+						'source_ref' => 'routine:' . $task['id'],
+					)
+				);
 			}
 
 			// Fallback 1: declarative tool mode — run one reviewed tool directly
@@ -841,7 +849,15 @@ class Agent_Lifecycle {
 		try {
 			$controller = new Agent_Controller();
 			$controller->set_invocation_context( 'hook' );
-			$result = $controller->run_autonomous_task( $agent, $full_prompt, 'event_' . $listener_id );
+			$result = $controller->run_autonomous_task(
+				$agent,
+				$full_prompt,
+				'event_' . $listener_id,
+				array(
+					'kind'       => 'event',
+					'source_ref' => 'listener:' . $listener_id,
+				)
+			);
 
 			// If LLM not configured, try direct fallback.
 			if ( null === $result ) {

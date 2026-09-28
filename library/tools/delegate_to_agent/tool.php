@@ -86,7 +86,7 @@ class Delegate_To_Agent extends Tool_Base {
 		$created = false;
 		$run     = Agent_Run::current();
 		if ( ! $run instanceof Agent_Run ) {
-			$run     = Agent_Run::begin( '' !== $caller ? $caller : $target );
+			$run     = Agent_Run::begin( '' !== $caller ? $caller : $target, array( 'kind' => 'delegation' ) );
 			$created = true;
 		}
 

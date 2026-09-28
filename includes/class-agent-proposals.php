@@ -47,9 +47,14 @@ class Agent_Proposals {
 	 * @param string $agent_id    Agent that proposed the change.
 	 * @param string $description Human-readable description of the change.
 	 * @param string $diff        Diff between current and proposed content.
+	 * @param string $run_id      Owning Agent_Run id, if this call happened inside a run.
+	 * @param int    $created_by  User id to attribute the proposal to. Defaults to
+	 *                            the current user when 0 (e.g. a background run
+	 *                            acting on behalf of its owner should pass that
+	 *                            owner's id explicitly instead).
 	 * @return array Proposal data with ID.
 	 */
-	public static function create( string $tool_name, array $params, string $agent_id, string $description, string $diff = '' ): array {
+	public static function create( string $tool_name, array $params, string $agent_id, string $description, string $diff = '', string $run_id = '', int $created_by = 0 ): array {
 		$proposal_id = wp_generate_uuid4();
 
 		$proposal = array(
@@ -61,7 +66,8 @@ class Agent_Proposals {
 			'diff'        => $diff,
 			'status'      => 'pending',
 			'created_at'  => gmdate( 'Y-m-d H:i:s' ),
-			'created_by'  => get_current_user_id(),
+			'created_by'  => $created_by > 0 ? $created_by : get_current_user_id(),
+			'run_id'      => $run_id,
 		);
 
 		set_transient( self::TRANSIENT_PREFIX . $proposal_id, $proposal, self::EXPIRY );
@@ -154,6 +160,12 @@ class Agent_Proposals {
 			)
 		);
 
+		// Only a run-backed proposal has a paused run waiting on this decision —
+		// a chat-originated proposal (no run_id) has nothing to resume.
+		if ( ! empty( $proposal['run_id'] ) ) {
+			do_action( 'agent_builder_approval_resolved', 'proposal', $proposal_id, 'approved', $result, $proposal );
+		}
+
 		// Clean up transient.
 		delete_transient( self::TRANSIENT_PREFIX . $proposal_id );
 
@@ -187,6 +199,12 @@ class Agent_Proposals {
 				'proposal_id' => $proposal_id,
 			)
 		);
+
+		// Only a run-backed proposal has a paused run waiting on this decision —
+		// a chat-originated proposal (no run_id) has nothing to stop.
+		if ( ! empty( $proposal['run_id'] ) ) {
+			do_action( 'agent_builder_approval_resolved', 'proposal', $proposal_id, 'rejected', null, $proposal );
+		}
 
 		// Clean up.
 		delete_transient( self::TRANSIENT_PREFIX . $proposal_id );

@@ -1229,13 +1229,22 @@ function QuickActionsCard( { data, onSaveQuickActions, mutate, dnd } ) {
 				</button>
 			}
 		>
-			{ ! data.is_configured && (
+			{ data.emergency_stop ? (
 				<p className="agentic-mb-12">
-					{ __( 'Chatbot offline —', 'agent-builder' ) }{ ' ' }
-					<a href={ data.urls?.settings }>
-						{ __( 'Configure now', 'agent-builder' ) }
+					{ __( 'All agents are stopped —', 'agent-builder' ) }{ ' ' }
+					<a href={ data.urls?.safety_center }>
+						{ __( 'resume in Safety Center', 'agent-builder' ) }
 					</a>
 				</p>
+			) : (
+				! data.is_configured && (
+					<p className="agentic-mb-12">
+						{ __( 'Chat agent offline —', 'agent-builder' ) }{ ' ' }
+						<a href={ data.urls?.signup }>
+							{ __( 'Configure now', 'agent-builder' ) }
+						</a>
+					</p>
+				)
 			) }
 
 			{ manage && (

@@ -298,6 +298,22 @@
     line-height: 1.5;
 }
 
+.agentic-overlay-proposal-summary {
+    padding: 8px 12px;
+    font-size: 12px;
+    color: var(--aco-text);
+    line-height: 1.6;
+}
+
+.agentic-overlay-proposal-summary-row {
+    word-break: break-word;
+}
+
+.agentic-overlay-proposal-summary-row strong {
+    font-weight: 600;
+    color: var(--aco-text-muted);
+}
+
 .agentic-overlay-proposal-toggle {
     display: block;
     width: 100%;

@@ -37,6 +37,10 @@ class TestCase extends WP_UnitTestCase {
 	 */
 	public function tearDown(): void {
 		$this->cleanup_test_data();
+		// PHPUnit runs many tests in one process — an Agent_Run left "current"
+		// by one test (e.g. a delegation that never called finish()) must not
+		// leak into the next test's begin()/current() calls.
+		\Agentic\Agent_Run::reset_current_for_tests();
 		parent::tearDown();
 	}
 
@@ -80,6 +84,11 @@ class TestCase extends WP_UnitTestCase {
 		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$agent_library_table}'" ) === $agent_library_table ) {
 			$wpdb->query( "DELETE FROM {$agent_library_table}" );
 			\Agentic\Agent_Library::bust_cache();
+		}
+
+		$runs_table = $wpdb->prefix . 'agent_builder_runs';
+		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$runs_table}'" ) === $runs_table ) {
+			$wpdb->query( "DELETE FROM {$runs_table}" );
 		}
 	}
 

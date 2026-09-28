@@ -754,8 +754,16 @@ class Admin_Menu_Handler {
 
 	/**
 	 * Replace WordPress's bare "Sorry, you are not allowed to access this page."
-	 * with a branded, actionable notice when a logged-in user without the
-	 * required permissions lands on an Agent Builder admin page.
+	 * with a branded, actionable notice when a logged-in user lands on an Agent
+	 * Builder admin page they cannot see.
+	 *
+	 * Three distinct outcomes, so a full administrator is never shown a
+	 * misleading "Administrator access required" screen:
+	 *  1. Unknown `agentic-*` slug → "page doesn't exist" (not a permission issue).
+	 *  2. Administrator + no provider configured → the page is hidden only by the
+	 *     no-provider funnel (register() bails to Quick Start), so explain how to
+	 *     connect a provider instead of blaming their role.
+	 *  3. Anything else → genuine denial (non-admin, or a cap the user lacks).
 	 *
 	 * Hooked to 'admin_page_access_denied', which WordPress fires immediately
 	 * before it wp_die()s in wp-admin/admin.php. We only take over for our own
@@ -772,6 +780,121 @@ class Admin_Menu_Handler {
 			return;
 		}
 
+		// A mistyped (or removed) slug is not a permissions problem.
+		if ( ! self::is_known_admin_page( $page ) ) {
+			$this->render_unknown_page_notice();
+			return;
+		}
+
+		// A full administrator can reach every screen once a provider is
+		// connected. Being denied here therefore means the page is hidden only
+		// by the no-provider funnel, not by their capabilities.
+		if ( current_user_can( 'manage_options' ) && ! $this->any_llm_configured() ) {
+			$this->render_connect_provider_notice();
+			return;
+		}
+
+		$this->render_access_denied_notice();
+	}
+
+	/**
+	 * Slugs of every Agent Builder admin page this (free / wp.org) edition can
+	 * register — both the pages that always exist and those register() adds only
+	 * once a provider is configured.
+	 *
+	 * Used to tell a real-but-hidden page apart from a mistyped slug in
+	 * maybe_show_access_notice(). Keep in sync with register() above.
+	 *
+	 * @return string[]
+	 */
+	public static function known_admin_pages(): array {
+		$pages = array(
+			'agent-builder',
+			'agentic-signup',
+			'agentic-setup',
+			'agentic-chat',
+			'agentic-agents',
+			'agentic-deployment',
+			'agentic-run-task',
+			'agentic-agent-wizard',
+			'agentic-knowledge-wizard',
+			'agentic-deploy-wizard',
+			'agentic-train-data',
+			'agentic-tools',
+			'agentic-skills',
+			'agentic-approvals',
+			'agentic-safety-center',
+			'agentic-agent-ready',
+			'agentic-audit-log',
+			'agentic-settings',
+		);
+
+		/**
+		 * Filter the Agent Builder admin page slugs treated as "known" for the
+		 * access-denied notice (e.g. so a Pro build can add its own screens).
+		 *
+		 * @param string[] $pages Page slugs.
+		 */
+		return apply_filters( 'agentic_known_admin_pages', $pages );
+	}
+
+	/**
+	 * Whether a slug names an Agent Builder admin page this edition knows about.
+	 *
+	 * @param string $page Page slug (value of ?page=).
+	 * @return bool
+	 */
+	public static function is_known_admin_page( string $page ): bool {
+		return in_array( $page, self::known_admin_pages(), true );
+	}
+
+	/**
+	 * Render the "this page doesn't exist" denial for an unknown Agentic slug.
+	 *
+	 * @return void
+	 */
+	private function render_unknown_page_notice(): void {
+		$parts   = array();
+		$parts[] = '<h1>' . esc_html__( 'This Agent Builder page doesn\'t exist', 'agent-builder' ) . '</h1>';
+		$parts[] = '<p>' . esc_html__( 'That page is not part of Agent Builder. It may have been removed or renamed.', 'agent-builder' ) . '</p>';
+		$parts[] = '<p><a href="' . esc_url( admin_url( 'admin.php?page=agent-builder' ) ) . '">' . esc_html__( 'Back to the Agent Builder dashboard', 'agent-builder' ) . '</a></p>';
+
+		wp_die(
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- each $parts fragment is individually escaped (esc_html__/esc_url) above.
+			implode( '', $parts ),
+			esc_html__( 'Page not found', 'agent-builder' ),
+			array( 'response' => 404 )
+		);
+	}
+
+	/**
+	 * Render the "connect a provider" denial shown to an administrator when the
+	 * requested screen is hidden only because no LLM provider is configured yet.
+	 *
+	 * @return void
+	 */
+	private function render_connect_provider_notice(): void {
+		$parts   = array();
+		$parts[] = '<h1>' . esc_html__( 'Connect an AI provider to unlock this screen', 'agent-builder' ) . '</h1>';
+		$parts[] = '<p>' . esc_html__( 'This Agent Builder screen becomes available once an AI provider is connected. Connecting takes about a minute and unlocks agents, chat, and knowledge.', 'agent-builder' ) . '</p>';
+		$parts[] = '<p><a class="button button-primary" href="' . esc_url( admin_url( 'admin.php?page=agentic-signup' ) ) . '">' . esc_html__( 'Go to Quick Start', 'agent-builder' ) . '</a></p>';
+		$parts[] = '<p><a href="' . esc_url( admin_url( 'admin.php?page=agent-builder' ) ) . '">' . esc_html__( 'Back to the Agent Builder dashboard', 'agent-builder' ) . '</a></p>';
+
+		wp_die(
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- each $parts fragment is individually escaped (esc_html__/esc_url) above.
+			implode( '', $parts ),
+			esc_html__( 'Connect an AI provider', 'agent-builder' ),
+			array( 'response' => 403 )
+		);
+	}
+
+	/**
+	 * Render the administrator-access denial (non-admin, or a cap the current
+	 * user lacks).
+	 *
+	 * @return void
+	 */
+	private function render_access_denied_notice(): void {
 		$admin_email = get_option( 'admin_email', '' );
 
 		$parts   = array();
@@ -1214,6 +1337,13 @@ class Admin_Menu_Handler {
 		$doc_url     = $this->get_page_doc_url( $page, $tab );
 		$support_url = 'https://agentic-plugin.com/support/';
 
+		// The "Upgrade to Pro" footer link was stripped for the WP.org build,
+		// but the shared footer payload still reads these keys — keep them empty
+		// so get_admin_footer_data() never references undefined variables.
+		$promo_url      = '';
+		$promo_label    = '';
+		$promo_external = false;
+
 		// Short policy blurb — contextual by page/tab.
 		$policy = __( 'Settings control how agents behave on this site. Changes are stored locally and take effect for new conversations.', 'agent-builder' );
 		if ( 'agent-builder' === $page ) {
@@ -1493,7 +1623,7 @@ class Admin_Menu_Handler {
 		}
 
 		echo '<div class="wrap">';
-		echo '<h1>' . esc_html__( 'Agent Chat', 'agent-builder' ) . ' <span class="agentic-status" style="font-size: 14px; font-weight: normal; vertical-align: middle;"><span class="agentic-status-dot"></span>' . esc_html__( 'Online', 'agent-builder' ) . '</span></h1>';
+		echo '<h1>' . esc_html__( 'Agent Chat', 'agent-builder' ) . ' <span class="agentic-status"><span class="agentic-status-dot" aria-hidden="true"></span>' . esc_html__( 'Online', 'agent-builder' ) . '</span></h1>';
 		if ( $agentic_playground ) {
 			echo '<div class="agentic-playground">';
 			echo '<div class="agentic-playground__thread">';
@@ -1690,10 +1820,15 @@ class Admin_Menu_Handler {
 	 * Used to gate the full admin menu: when nothing is configured the user is
 	 * funnelled to the Quick Start / signup page.
 	 *
+	 * Uses has_configured_provider() rather than has_usable_provider() so that a
+	 * site sitting behind the emergency stop still registers its full menu: the
+	 * stop disconnects providers (has_usable_provider() is then false) but the
+	 * administrator must be able to reach Interface Settings to disable it.
+	 *
 	 * @return bool
 	 */
 	private function any_llm_configured(): bool {
-		return \Agentic\Provider_Registry::has_usable_provider();
+		return \Agentic\Provider_Registry::has_configured_provider();
 	}
 
 	/**

@@ -169,15 +169,73 @@ class Tool_Executor {
 	}
 
 	/**
+	 * Reduce a tool's arguments to the small set of scalar fields worth showing
+	 * on a confirmation card (title, status, post type). Never includes large
+	 * free-text payloads like post content — the full argument set stays in the
+	 * proposal transient, not in the chat payload.
+	 *
+	 * @param array $arguments Decoded tool arguments from the LLM.
+	 * @return array Key => string summary, empty when nothing worth showing.
+	 */
+	private static function summarize_arguments( array $arguments ): array {
+		$summary = array();
+
+		// A friendly name for the thing being created/updated. Create tools pass
+		// "title"; duplicate tools pass "new_title".
+		foreach ( array( 'title', 'new_title' ) as $key ) {
+			if ( isset( $arguments[ $key ] ) && is_scalar( $arguments[ $key ] ) && '' !== (string) $arguments[ $key ] ) {
+				$summary['title'] = (string) $arguments[ $key ];
+				break;
+			}
+		}
+
+		if ( isset( $arguments['status'] ) && is_scalar( $arguments['status'] ) && '' !== (string) $arguments['status'] ) {
+			$summary['status'] = (string) $arguments['status'];
+		}
+
+		// "post_type" on create tools, "new_type" on switch_post_type.
+		foreach ( array( 'post_type', 'new_type' ) as $key ) {
+			if ( isset( $arguments[ $key ] ) && is_scalar( $arguments[ $key ] ) && '' !== (string) $arguments[ $key ] ) {
+				$summary['post_type'] = (string) $arguments[ $key ];
+				break;
+			}
+		}
+
+		// Update tools identify the target by post_id; surface it only when no
+		// friendlier field was present, so the card isn't entirely opaque.
+		if ( empty( $summary ) && isset( $arguments['post_id'] ) && is_scalar( $arguments['post_id'] ) ) {
+			$summary['post_id'] = (string) $arguments['post_id'];
+		}
+
+		return $summary;
+	}
+
+	/**
 	 * Execute a tool call with full risk-level enforcement.
+	 *
+	 * Builds a `$ctx` array describing the call before the enforcement
+	 * decision is finalised, then — unless baseline enforcement is already
+	 * 'block' — runs it through the `agent_builder_tool_enforcement` filter
+	 * and `Risk_Level::clamp_enforcement()`. This is the seam M12's rules
+	 * layer and Pro's governance hook into: a filter can tighten enforcement
+	 * (e.g. force `queue` on a normally-`allow` call) but can never resurrect
+	 * a call baseline already blocked, and can only loosen a HIGH-risk
+	 * decision to `allow` via the explicit grant flag `clamp_enforcement()`
+	 * documents. `agent_builder_tool_gate_decision` then fires with the final
+	 * decision, and `agent_builder_tool_executed` fires exactly once, after
+	 * execution actually happens (never for a blocked/queued/confirm-pending
+	 * return).
 	 *
 	 * @param string          $tool_name          Tool name.
 	 * @param array           $arguments          Decoded tool arguments from the LLM.
 	 * @param string          $agent_id           Calling agent identifier.
 	 * @param string          $mode               Agent operating mode ('disabled'|'supervised'|'autonomous').
 	 * @param string          $invocation_context How this run was triggered ('chat'|'cron'|'hook'|'cli'|'mcp').
-	 * @param Agent_Base|null $agent             Agent instance for inline tool fallback, or null.
+	 * @param Agent_Base|null $agent              Agent instance for inline tool fallback, or null.
 	 * @param string          $session_id         Browser-tab session ID for session-scoped grants.
+	 * @param Agent_Run|null  $run                Owning run, when this call happened inside one (background
+	 *                                            task, routine, delegation, …). Null for interactive chat
+	 *                                            calls with no run.
 	 * @return array Tool result.
 	 */
 	public function execute(
@@ -187,7 +245,8 @@ class Tool_Executor {
 		string $mode,
 		string $invocation_context,
 		?Agent_Base $agent = null,
-		string $session_id = ''
+		string $session_id = '',
+		?Agent_Run $run = null
 	): array {
 		// Block disabled tools (defense-in-depth: LLM may hallucinate calls to tools
 		// that were already filtered from definitions sent to the LLM).
@@ -200,9 +259,26 @@ class Tool_Executor {
 		$tool_instance = $this->tool_loader->get( $tool_name );
 		$call_action   = is_string( $arguments['action'] ?? null ) ? $arguments['action'] : '';
 		$risk          = Abilities_Manifest::get_effective_risk( $agent_id, $tool_name, $tool_instance, $call_action );
-		$enforcement   = Risk_Level::enforcement( $risk, $mode );
+		$baseline      = Risk_Level::enforcement( $risk, $mode );
 
-		if ( 'block' === $enforcement ) {
+		$ctx = array(
+			'tool'       => $tool_name,
+			'action'     => $call_action,
+			'arguments'  => $arguments,
+			'agent_id'   => $agent_id,
+			'mode'       => $mode,
+			'invocation' => $invocation_context,
+			'session_id' => $session_id,
+			'run_id'     => $run instanceof Agent_Run ? $run->get_run_id() : '',
+			'run_kind'   => $run instanceof Agent_Run ? $run->get_kind() : '',
+			'user_id'    => $run instanceof Agent_Run ? $run->get_user_id() : get_current_user_id(),
+			'risk'       => $risk,
+			'baseline'   => $baseline,
+		);
+
+		// Never let a filter resurrect a call baseline enforcement already
+		// blocked — the seam is skipped entirely in that case.
+		if ( 'block' === $baseline ) {
 			$this->audit->log(
 				$agent_id,
 				'tool_blocked',
@@ -215,13 +291,59 @@ class Tool_Executor {
 			return array( 'error' => 'This action is classified as extreme risk and cannot be performed.' );
 		}
 
+		/**
+		 * Filter the tool enforcement decision before it is acted on.
+		 *
+		 * Reserved for M12's rules layer and Pro's governance: a callback can
+		 * tighten enforcement (e.g. queue a normally-allowed call) freely.
+		 * Loosening is bounded by Risk_Level::clamp_enforcement(), which runs
+		 * immediately after this filter and cannot be bypassed.
+		 *
+		 * @param string $enforcement Enforcement decision ('allow'|'confirm'|'queue'|'block').
+		 * @param array  $ctx         Gate context — see Tool_Executor::execute().
+		 */
+		$enforcement = apply_filters( 'agent_builder_tool_enforcement', $baseline, $ctx );
+
+		// A filter (or a bug in one) can return anything — a typo, a stray
+		// value, null, an int, an array. Validate the type and value here,
+		// before it ever reaches the strictly-typed clamp_enforcement() —
+		// passing a non-string there would throw a TypeError instead of
+		// failing closed. Never let an unrecognized value fall through to
+		// the 'allow' path; treat it as the pre-filter baseline instead.
+		if ( ! is_string( $enforcement ) || ! Risk_Level::is_valid_enforcement( $enforcement ) ) {
+			$enforcement = $baseline;
+		}
+
+		$enforcement = Risk_Level::clamp_enforcement( $enforcement, $ctx );
+
+		/**
+		 * Fires once the gate decision for this tool call is final.
+		 *
+		 * @param string $enforcement Final enforcement decision.
+		 * @param array  $ctx         Gate context — see Tool_Executor::execute().
+		 */
+		do_action( 'agent_builder_tool_gate_decision', $enforcement, $ctx );
+
+		if ( 'block' === $enforcement ) {
+			$this->audit->log(
+				$agent_id,
+				'tool_blocked',
+				$tool_name,
+				array(
+					'reason'     => 'Blocked by tool gate policy',
+					'risk_level' => $risk,
+				)
+			);
+			return array( 'error' => 'This action was blocked by policy and cannot be performed.' );
+		}
+
 		if ( 'queue' === $enforcement ) {
 			// --- Always-grant fast-path for admin users ---
 			// If the admin has declared "Always Allow" for this tool in the chat,
 			// they are authoritative: skip the approval queue entirely.
-			$user_id = get_current_user_id();
-			if ( $user_id && current_user_can( 'manage_options' ) ) {
-				$always_grants = get_user_meta( $user_id, 'agentic_tool_grants_always', true );
+			$grant_user_id = $ctx['user_id'];
+			if ( $grant_user_id && user_can( $grant_user_id, 'manage_options' ) ) {
+				$always_grants = get_user_meta( $grant_user_id, 'agentic_tool_grants_always', true );
 				if ( is_array( $always_grants ) && in_array( $tool_name, $always_grants, true ) ) {
 					$this->audit->log(
 						$agent_id,
@@ -261,7 +383,7 @@ class Tool_Executor {
 			} else {
 				$manifest = Abilities_Manifest::load( $agent_id );
 				$reason   = $manifest['abilities'][ $tool_name ]['reason'] ?? 'High-risk operation requires admin approval.';
-				$queue_id = $queue->add( $agent_id, $tool_name, $arguments, $reason, 7, $risk, $mode, $invocation_context );
+				$queue_id = $queue->add( $agent_id, $tool_name, $arguments, $reason, 7, $risk, $mode, $invocation_context, $ctx['run_id'], $ctx['user_id'] );
 
 				$this->audit->log(
 					$agent_id,
@@ -288,9 +410,9 @@ class Tool_Executor {
 
 		if ( 'confirm' === $enforcement ) {
 			// --- Grant fast-path: "Always Allow" (persisted in admin user_meta) ---
-			$user_id = get_current_user_id();
-			if ( $user_id && current_user_can( 'manage_options' ) ) {
-				$always_grants = get_user_meta( $user_id, 'agentic_tool_grants_always', true );
+			$grant_user_id = $ctx['user_id'];
+			if ( $grant_user_id && user_can( $grant_user_id, 'manage_options' ) ) {
+				$always_grants = get_user_meta( $grant_user_id, 'agentic_tool_grants_always', true );
 				if ( is_array( $always_grants ) && in_array( $tool_name, $always_grants, true ) ) {
 					$this->audit->log(
 						$agent_id,
@@ -330,7 +452,7 @@ class Tool_Executor {
 			$description = '' === $reason
 				? sprintf( '%s — can change your site, so it needs your approval.', $label )
 				: sprintf( '%s — %s', $label, $reason );
-			$proposal    = Agent_Proposals::create( $tool_name, $arguments, $agent_id, $description );
+			$proposal    = Agent_Proposals::create( $tool_name, $arguments, $agent_id, $description, '', $ctx['run_id'], $ctx['user_id'] );
 
 			$this->audit->log(
 				$agent_id,
@@ -353,6 +475,7 @@ class Tool_Executor {
 						: sprintf( '“%s” needs your approval first: %s', $label, $reason )
 				),
 				'reason'      => $reason,
+				'summary'     => self::summarize_arguments( $arguments ),
 			);
 		}
 
@@ -385,32 +508,48 @@ class Tool_Executor {
 			}
 		}
 
-		// Execute via Tool_Loader (all standalone tools).
+		// Execute via Tool_Loader (all standalone tools), falling back to
+		// agent-inline tools, then third-party abilities (WP 6.9+). Exactly
+		// one of these produces the result — $resolved tracks whether any of
+		// them actually did, so the synthesized "Unknown tool" case below
+		// never gets reported as a real execution.
 		$result = $this->tool_loader->execute( $tool_name, $arguments );
+
 		if ( null !== $result ) {
 			if ( ! $is_readonly ) {
 				$queue = new Approval_Queue();
 				$queue->log_executed( $agent_id, $tool_name, $arguments, $risk, $mode, $invocation_context );
 			}
-			return $result;
-		}
+		} else {
+			$result = $agent ? $agent->execute_tool( $tool_name, $arguments ) : null;
 
-		// Try agent-inline tools.
-		if ( $agent ) {
-			$agent_result = $agent->execute_tool( $tool_name, $arguments );
-			if ( null !== $agent_result ) {
-				return $agent_result;
+			if ( null === $result && $this->abilities_bridge ) {
+				$result = $this->abilities_bridge->execute_ability( $tool_name, $arguments );
 			}
 		}
 
-		// Try third-party abilities (WP 6.9+).
-		if ( $this->abilities_bridge ) {
-			$ability_result = $this->abilities_bridge->execute_ability( $tool_name, $arguments );
-			if ( null !== $ability_result ) {
-				return $ability_result;
-			}
+		$resolved = null !== $result;
+
+		if ( ! $resolved ) {
+			$result = array( 'error' => sprintf( 'Unknown tool: %s', $tool_name ) );
 		}
 
-		return array( 'error' => sprintf( 'Unknown tool: %s', $tool_name ) );
+		/**
+		 * Fires once, after a tool call actually executed (never for a
+		 * blocked/queued/confirm-pending return, and never for an unresolved
+		 * "Unknown tool" call that no dispatcher handled).
+		 *
+		 * @param string $tool_name Tool name.
+		 * @param array  $arguments Arguments the tool actually ran with (may differ
+		 *                          from the LLM's call if an approval-queue entry
+		 *                          substituted its stored params).
+		 * @param array  $result    Tool result.
+		 * @param array  $ctx       Gate context — see Tool_Executor::execute().
+		 */
+		if ( $resolved ) {
+			do_action( 'agent_builder_tool_executed', $tool_name, $arguments, $result, $ctx );
+		}
+
+		return $result;
 	}
 }

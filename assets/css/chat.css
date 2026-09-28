@@ -175,17 +175,22 @@
 }
 
 .agentic-status {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
-    font-size: 0.75rem;
-    color: var(--ac-text-muted);
+    gap: 0.4rem;
+    margin-left: 0.4rem;
+    font-size: 14px;
+    font-weight: normal;
+    line-height: 1;
+    vertical-align: middle;
+    color: var(--ac-text-muted, #646970);
 }
 
 .agentic-status-dot {
     width: 8px;
     height: 8px;
-    background: var(--ac-status-dot);
+    flex: 0 0 auto;
+    background: var(--ac-status-dot, #00a32a);
     border-radius: 50%;
     animation: pulse 2s infinite;
 }
@@ -1187,6 +1192,22 @@
     font-size: 13px;
     color: var(--ac-proposal-desc);
     line-height: 1.5;
+}
+
+.agentic-proposal-summary {
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--ac-proposal-desc);
+    line-height: 1.6;
+}
+
+.agentic-proposal-summary-row {
+    word-break: break-word;
+}
+
+.agentic-proposal-summary-row strong {
+    font-weight: 600;
+    color: var(--ac-header-label);
 }
 
 .agentic-proposal-toggle {

@@ -9037,6 +9037,14 @@ msgstr "Solo cambia esta pantalla. Las demás pantallas y su valor predeterminad
 msgid "More info"
 msgstr "Más información"
 
+#: includes/functions.php:63 src/shared/chat-embed.js:20
+msgid "Post type"
+msgstr ""
+
+#: includes/functions.php:64 src/shared/chat-embed.js:21
+msgid "Post"
+msgstr ""
+
 #~ msgid "AI Assistants"
 #~ msgstr "Asistentes de IA"
 
