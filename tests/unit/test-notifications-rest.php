@@ -4,9 +4,11 @@
  *
  * Covers the view_dashboard gate on /agentic/v1/notifications and
  * /agentic/v1/notifications/read (subscriber is 403 everywhere), the unread
- * filter and per-user scoping of the list, marking read by ids or all, and the
- * Tasks-screen integration that finally gives mark_read() a production caller
- * (opening the screen clears the badge).
+ * filter and per-user scoping of the list, and marking read by ids or all.
+ *
+ * Also locks in the M11 §7 gate fix: opening the Tasks screen must NOT mark
+ * notifications read as a GET side effect — only POST /notifications/read (with
+ * a REST nonce) does, once the user is actually looking at the inbox.
  *
  * @package Agentic\Tests
  */
@@ -195,35 +197,18 @@ class Test_Notifications_REST extends TestCase {
 	}
 
 	/**
-	 * Opening the Tasks screen marks the current user's notifications read, so
-	 * the badge the admin-bar/submenu read from unread_count() actually shrinks.
+	 * Opening the Tasks screen must NOT mark notifications read as a GET side
+	 * effect. The auto-mark-read-on-render method has been removed; the only way
+	 * to clear the badge is POST /notifications/read (covered above).
 	 *
-	 * Regression for the M11 gate: mark_read() previously had no production
-	 * caller outside tests, so the badge could only ever grow.
+	 * Regression for the M11 gate: a GET that mutates state has no nonce, so
+	 * rendering the page silently cleared the inbox. Lock that out for good.
 	 */
-	public function test_opening_tasks_screen_marks_notifications_read(): void {
-		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
-		wp_set_current_user( $admin );
-
-		Notifications::notify( $admin, 'run_finished', 'One', '' );
-		Notifications::notify( $admin, 'run_waiting', 'Two', '' );
-		$this->assertSame( 2, Notifications::unread_count( $admin ) );
-
-		( new Admin_Menu_Handler() )->mark_tasks_notifications_read();
-
-		$this->assertSame( 0, Notifications::unread_count( $admin ) );
-	}
-
-	/**
-	 * The Tasks-screen read action is a no-op when no user is logged in.
-	 */
-	public function test_opening_tasks_screen_without_user_is_noop(): void {
-		wp_set_current_user( 0 );
-
-		( new Admin_Menu_Handler() )->mark_tasks_notifications_read();
-
-		// Nothing to assert beyond that it does not error/fatal.
-		$this->assertTrue( true );
+	public function test_tasks_screen_has_no_get_side_effect(): void {
+		$this->assertFalse(
+			method_exists( Admin_Menu_Handler::class, 'mark_tasks_notifications_read' ),
+			'The Tasks screen must not auto-mark notifications read on GET render.'
+		);
 	}
 
 	// -------------------------------------------------------------------------

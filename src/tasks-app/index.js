@@ -31,6 +31,7 @@ import { AdminPage, Panel } from '../shared/components';
 import { ProposalCard } from '../shared/chat-embed';
 
 const RUNS_PATH = 'agentic/v1/runs';
+const NOTIFICATIONS_PATH = 'agentic/v1/notifications';
 
 // Statuses grouped into the three tabs. "Active" = still progressing in the
 // background; "Waiting on you" = paused on an approval/proposal; "Done" = any
@@ -56,6 +57,15 @@ const STATUS_LABELS = {
 	aborted: __( 'Aborted', 'agent-builder' ),
 	cancelled: __( 'Cancelled', 'agent-builder' ),
 	error: __( 'Error', 'agent-builder' ),
+};
+
+// Human labels for the tool-argument summary rows on the approval card. Mirrors
+// the proposal-card summary labels in shared/chat-embed.js.
+const APPROVAL_SUMMARY_LABELS = {
+	title: __( 'Title', 'agent-builder' ),
+	status: __( 'Status', 'agent-builder' ),
+	post_type: __( 'Post type', 'agent-builder' ),
+	post_id: __( 'Post', 'agent-builder' ),
 };
 
 function statusGroup( status ) {
@@ -167,6 +177,14 @@ function TasksApp() {
 	const [ drawerBusy, setDrawerBusy ] = useState( '' );
 	const [ drawerActionError, setDrawerActionError ] = useState( '' );
 
+	// Notification centre state — the Tasks screen is the inbox (M11 §7), so it
+	// lists the user's notifications and marks them read via the nonce-protected
+	// POST once the user is actually looking at them (never on a bare GET).
+	const [ notifications, setNotifications ] = useState( [] );
+	const [ notifLoading, setNotifLoading ] = useState( true );
+	const [ notifError, setNotifError ] = useState( '' );
+	const [ unreadCount, setUnreadCount ] = useState( 0 );
+
 	// Track the currently-open run in a ref so in-flight drawer fetches can
 	// tell whether they're still the run on screen (see loadDrawer's
 	// out-of-order guard).
@@ -231,6 +249,46 @@ function TasksApp() {
 	useEffect( () => {
 		loadRuns( false );
 	}, [ loadRuns ] );
+
+	// Load the inbox and, once the user is actually looking at it (the Tasks
+	// screen is the notification centre), mark everything read via the
+	// nonce-protected POST. A bare page GET must never mark read (M11 §7).
+	const notifMarkedRef = useRef( false );
+	const loadNotifications = useCallback( () => {
+		setNotifLoading( true );
+		apiFetch( { path: `${ NOTIFICATIONS_PATH }?per_page=50` } )
+			.then( ( res ) => {
+				const rows = Array.isArray( res.notifications )
+					? res.notifications
+					: [];
+				setNotifications( rows );
+				setUnreadCount(
+					rows.filter( ( n ) => ! n.read_at ).length
+				);
+				setNotifError( '' );
+				if ( ! notifMarkedRef.current ) {
+					notifMarkedRef.current = true;
+					apiFetch( {
+						path: `${ NOTIFICATIONS_PATH }/read`,
+						method: 'POST',
+						data: { all: true },
+					} )
+						.then( () => setUnreadCount( 0 ) )
+						.catch( () => {} );
+				}
+			} )
+			.catch( ( err ) => {
+				setNotifError(
+					err.message ||
+						__( 'Could not load notifications.', 'agent-builder' )
+				);
+			} )
+			.finally( () => setNotifLoading( false ) );
+	}, [] );
+
+	useEffect( () => {
+		loadNotifications();
+	}, [ loadNotifications ] );
 
 	const visibleRuns = useMemo(
 		() => runs.filter( ( r ) => statusGroup( r.status ) === activeTab ),
@@ -465,6 +523,50 @@ function TasksApp() {
 					) }
 				</Panel>
 
+				<Panel
+					title={
+						unreadCount > 0
+							? `${ __( 'Notifications', 'agent-builder' ) } (${ unreadCount })`
+							: __( 'Notifications', 'agent-builder' )
+					}
+				>
+					{ notifError && (
+						<Notice status="error" isDismissible={ false }>
+							{ notifError }
+						</Notice>
+					) }
+					{ notifLoading ? (
+						<p>
+							<Spinner />{ ' ' }
+							{ __( 'Loading notifications…', 'agent-builder' ) }
+						</p>
+					) : ! notifications.length ? (
+						<p className="agentic-react-muted">
+							{ __( 'No notifications yet.', 'agent-builder' ) }
+						</p>
+					) : (
+						<div className="agentic-tasks-list">
+							{ notifications.slice( 0, 20 ).map( ( n ) => (
+								<div key={ n.id } className="agentic-tasks-row">
+									<div className="agentic-tasks-row__main">
+										<strong>{ n.title }</strong>
+										{ n.body && (
+											<span className="agentic-tasks-row__excerpt">
+												{ n.body }
+											</span>
+										) }
+									</div>
+									<div className="agentic-tasks-row__meta">
+										<span className="agentic-tasks-row__elapsed">
+											{ formatTime( n.created_at ) }
+										</span>
+									</div>
+								</div>
+							) ) }
+						</div>
+					) }
+				</Panel>
+
 				<Panel title={ __( 'Runs', 'agent-builder' ) }>
 					<div className="agentic-react-tabs agentic-tasks-tabs">
 						{ TABS.map( ( t ) => {
@@ -672,6 +774,16 @@ function TasksApp() {
  * to the same /approvals/{id} endpoint ProposalCard uses.
  */
 function ApprovalCard( { approval, busy, onDecide } ) {
+	const [ showArgs, setShowArgs ] = useState( false );
+
+	const summary =
+		approval.summary && typeof approval.summary === 'object'
+			? approval.summary
+			: {};
+	const params = approval.params;
+	const hasArgs =
+		params && typeof params === 'object' && Object.keys( params ).length > 0;
+
 	return (
 		<div className="agentic-proposal-card agentic-tasks-approval">
 			<div className="agentic-proposal-header">
@@ -690,10 +802,52 @@ function ApprovalCard( { approval, busy, onDecide } ) {
 					</span>
 				) }
 			</div>
+			{ Object.keys( summary ).length > 0 && (
+				<div className="agentic-proposal-summary">
+					{ Object.entries( summary )
+						.filter(
+							( [ , value ] ) =>
+								value !== null &&
+								value !== undefined &&
+								value !== ''
+						)
+						.map( ( [ key, value ] ) => (
+							<div
+								className="agentic-proposal-summary-row"
+								key={ key }
+							>
+								<strong>
+									{ APPROVAL_SUMMARY_LABELS[ key ] ||
+										key.replace( /_/g, ' ' ) }
+									:{ ' ' }
+								</strong>
+								{ String( value ) }
+							</div>
+						) ) }
+				</div>
+			) }
 			{ approval.reasoning && (
 				<p className="agentic-tasks-approval__reasoning">
 					{ approval.reasoning }
 				</p>
+			) }
+			{ hasArgs && (
+				<>
+					<button
+						type="button"
+						className="agentic-proposal-toggle"
+						onClick={ () => setShowArgs( ! showArgs ) }
+					>
+						{ showArgs
+							? '▼ ' + __( 'Hide arguments', 'agent-builder' )
+							: '▶ ' + __( 'Show arguments', 'agent-builder' ) }
+					</button>
+					{ showArgs && (
+						<pre className="agentic-proposal-diff">
+							{ JSON.stringify( params, null, 2 ) }
+						</pre>
+					) }
+				</>
 			) }
 			<div className="agentic-proposal-actions">
 				<button

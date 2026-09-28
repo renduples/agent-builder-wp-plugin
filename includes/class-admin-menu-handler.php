@@ -1495,27 +1495,6 @@ class Admin_Menu_Handler {
 	}
 
 	/**
-	 * Mark the current user's unread notifications read when the Tasks screen
-	 * opens — the screen is the notification centre, so reading it is the read
-	 * action (see M11 §7). Without this the admin-bar/submenu badge can only
-	 * grow, never shrink.
-	 *
-	 * @return void
-	 */
-	public function mark_tasks_notifications_read(): void {
-		if ( ! class_exists( '\Agentic\Notifications' ) ) {
-			return;
-		}
-
-		$user_id = get_current_user_id();
-		if ( ! $user_id ) {
-			return;
-		}
-
-		\Agentic\Notifications::mark_read( $user_id );
-	}
-
-	/**
 	 * Include a simple admin page template.
 	 *
 	 * @param string $file Template filename (without .php extension) inside admin/.
@@ -1525,9 +1504,13 @@ class Admin_Menu_Handler {
 		// Tasks is its own React entry (tasks-app) rather than the shared
 		// admin-pages bundle — it hosts a live, polling run list and a composer
 		// that POSTs straight to /runs, so it needs its own localize payload.
+		//
+		// Note: opening the Tasks screen must NOT mark notifications read on this
+		// GET (that would be a side effect without a nonce). The tasks-app marks
+		// them read client-side via POST /notifications/read once the user is
+		// actually looking at the inbox (M11 §7).
 		if ( 'tasks' === $file ) {
 			if ( React_Admin::enqueue( 'tasks-app', $this->tasks_page_localize(), 'agenticTasksPage' ) ) {
-				$this->mark_tasks_notifications_read();
 				// The drawer reuses the shared ProposalCard, whose styles live in
 				// chat.css (not react-admin.css), so load it alongside the entry.
 				wp_enqueue_style(

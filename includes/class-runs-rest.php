@@ -272,15 +272,12 @@ class Runs_REST {
 			return new \WP_Error( 'missing_task', __( 'A task description is required.', 'agent-builder' ), array( 'status' => 400 ) );
 		}
 
-		// Validate the agent against the real registry before creating anything.
-		$instance = \Agentic_Agent_Registry::get_instance()->get_agent_instance( $agent_id );
-		if ( null === $instance ) {
-			return new \WP_Error(
-				'invalid_agent',
-				/* translators: %s: agent slug. */
-				sprintf( __( 'Unknown agent "%s".', 'agent-builder' ), $agent_id ),
-				array( 'status' => 400 )
-			);
+		// Validate the agent against the real registry before creating anything,
+		// and that the current user may actually reach it (the Tasks composer
+		// only lists accessible agents, so an out-of-list slug must be refused).
+		$error = self::validate_agent_access( $agent_id );
+		if ( null !== $error ) {
+			return $error;
 		}
 
 		// create_queued() (not begin()): the run must survive the creating
@@ -400,21 +397,19 @@ class Runs_REST {
 		}
 
 		// A still-active run must not be retried: cloning a queued/running run
-		// would spawn a second concurrent run against the same task_text.
-		if ( 'queued' === $data['status'] || 'running' === $data['status'] ) {
+		// would spawn a second concurrent run against the same task_text. The
+		// same holds for a run paused on the user (`waiting`) or mid-resume
+		// (`continuing`) — none of the non-terminal states may be retried.
+		if ( in_array( $data['status'], array( 'queued', 'running', 'continuing', 'waiting' ), true ) ) {
 			return new \WP_Error( 'already_active', __( 'This run is still active and cannot be retried.', 'agent-builder' ), array( 'status' => 409 ) );
 		}
 
 		// Validate the agent against the real registry before creating the retry
-		// (the original run's agent may have been removed since it ran).
-		$instance = \Agentic_Agent_Registry::get_instance()->get_agent_instance( (string) $data['root_agent'] );
-		if ( null === $instance ) {
-			return new \WP_Error(
-				'invalid_agent',
-				/* translators: %s: agent slug. */
-				sprintf( __( 'Unknown agent "%s".', 'agent-builder' ), (string) $data['root_agent'] ),
-				array( 'status' => 400 )
-			);
+		// (the original run's agent may have been removed since it ran), and that
+		// the current user may still reach it.
+		$error = self::validate_agent_access( (string) $data['root_agent'] );
+		if ( null !== $error ) {
+			return $error;
 		}
 
 		// Carry the original run's skill_slug forward so a retry is dispatched
@@ -529,6 +524,37 @@ class Runs_REST {
 	}
 
 	/**
+	 * Validate an agent slug for create/retry: it must exist in the registry and
+	 * be in the current user's accessible list (the same list the Tasks composer
+	 * renders). An unknown slug is 400; a known-but-inaccessible slug is 403.
+	 *
+	 * @param string $agent_id Agent slug.
+	 * @return \WP_Error|null Error to return, or null when the agent is usable.
+	 */
+	private static function validate_agent_access( string $agent_id ): ?\WP_Error {
+		$registry = \Agentic_Agent_Registry::get_instance();
+
+		if ( null === $registry->get_agent_instance( $agent_id ) ) {
+			return new \WP_Error(
+				'invalid_agent',
+				/* translators: %s: agent slug. */
+				sprintf( __( 'Unknown agent "%s".', 'agent-builder' ), $agent_id ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( ! isset( $registry->get_accessible_instances()[ $agent_id ] ) ) {
+			return new \WP_Error(
+				'forbidden',
+				__( 'You do not have access to this agent.', 'agent-builder' ),
+				array( 'status' => 403 )
+			);
+		}
+
+		return null;
+	}
+
+	/**
 	 * Build the "awaiting" payload when the run is paused on an approval or
 	 * proposal, reusing the same shapes the approval-queue REST already serves.
 	 *
@@ -558,6 +584,11 @@ class Runs_REST {
 
 			// Mirrors Approval_Queue::get_pending()'s decoded `params`.
 			$row['params'] = json_decode( (string) ( $row['params'] ?? '[]' ), true );
+
+			// A title/status/type summary of the tool arguments, matching the
+			// chat proposal card's summary, so the Tasks approval card is not
+			// blind about *what* the tool is about to touch.
+			$row['summary'] = Tool_Executor::summarize_arguments( is_array( $row['params'] ) ? $row['params'] : array() );
 
 			return $row;
 		}
