@@ -1408,21 +1408,30 @@ class Agent_Controller {
 			}
 		} else {
 			// A background job (Agent_Task_Job_Processor::dispatch()) creates
-			// its run up front — before the job is enqueued — so the Tasks
-			// screen can track it by id before it starts. When the caller
-			// passes that run_id (fresh jobs now always do), adopt the
-			// existing, not-yet-started run instead of begin() creating a
-			// second row that would strand the dispatched one at 'running'
-			// forever. Only a run that still belongs to this agent and has not
-			// advanced past its initial 'running' state is adoptable; anything
-			// else falls back to begin() (mismatched/terminal run_ids are the
-			// resume guard's concern, handled above).
+			// its run up front — before the job is enqueued — via
+			// create_queued(), so the Tasks screen can track it by id before it
+			// starts. When the caller passes that run_id (fresh jobs now always
+			// do), adopt the existing, not-yet-started run instead of begin()
+			// creating a second row that would strand the dispatched one at
+			// 'queued'/'running' forever. A 'queued' run is claimed out of
+			// 'queued' atomically (claim_queued()); a run already 'running'
+			// (the dispatch caller used begin()) is adopted directly. Only a run
+			// that still belongs to this agent and is in 'queued'/'running' is
+			// adoptable; anything else falls back to begin()
+			// (mismatched/terminal run_ids are the resume guard's concern,
+			// handled above).
 			$run = null;
 			if ( '' !== $resume_run_id ) {
 				$existing = Agent_Run::load( $resume_run_id );
-				if ( null !== $existing && $existing->get_root_agent() === $agent_id && 'running' === $existing->get_status() ) {
-					$run = $existing;
-					$run->make_current();
+				if ( null !== $existing && $existing->get_root_agent() === $agent_id ) {
+					$status = $existing->get_status();
+					if ( 'running' === $status ) {
+						$run = $existing;
+						$run->make_current();
+					} elseif ( 'queued' === $status && $existing->claim_queued() ) {
+						$run = $existing;
+						$run->make_current();
+					}
 				}
 			}
 

@@ -101,6 +101,13 @@ class Agent_Task_Job_Processor implements Job_Processor_Interface {
 	/**
 	 * Create and schedule a background job for an agent run.
 	 *
+	 * Callers that create the run from a web/REST request (the M11 POST /runs
+	 * path) must build it with Agent_Run::create_queued() rather than begin():
+	 * begin() arms a shutdown guard that aborts the run when the creating
+	 * request ends, before the WP-Cron worker adopts it. A resumed run (a
+	 * continuation or approval resolution) is dispatched from an already-claimed
+	 * run and needs no such change.
+	 *
 	 * @param Agent_Run $run   Run to dispatch.
 	 * @param array     $extra Optional extra payload keys (resume, tool_result,
 	 *                         or any override for the base request shape).
@@ -163,12 +170,12 @@ class Agent_Task_Job_Processor implements Job_Processor_Interface {
 		$prompt = (string) ( $request_data['prompt'] ?? '' );
 
 		// Hand the controller the dispatched run id in every case — fresh or
-		// resume. A fresh job must adopt the run created by dispatch() (the
-		// controller's fresh branch would otherwise begin() a second run and
-		// strand the dispatched row at 'running' forever). The assigning user
-		// is carried too, so tool grants, proposal attribution and user_can()
-		// checks act as that admin even under cron (where get_current_user_id()
-		// is 0).
+		// resume. A fresh job must adopt the run created with create_queued()
+		// (the controller's fresh branch would otherwise begin() a second run
+		// and strand the dispatched row at 'queued' forever). The assigning
+		// user is carried too, so tool grants, proposal attribution and
+		// user_can() checks act as that admin even under cron (where
+		// get_current_user_id() is 0).
 		$options = array(
 			'run_id'  => $run_id,
 			'user_id' => (int) ( $request_data['user_id'] ?? 0 ),
