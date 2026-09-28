@@ -36,7 +36,9 @@ class Agent_Task_Job_Processor implements Job_Processor_Interface {
 
 	/**
 	 * Register this processor on the Job_Manager allowlist so
-	 * Job_Manager::process_job() will instantiate and run it.
+	 * Job_Manager::process_job() will instantiate and run it, and listen for
+	 * the elapsed-time continuation seam so a run that hands off does not stop
+	 * forever.
 	 *
 	 * @return void
 	 */
@@ -57,6 +59,43 @@ class Agent_Task_Job_Processor implements Job_Processor_Interface {
 				return $allowed;
 			}
 		);
+
+		add_action( 'agent_builder_run_needs_continuation', array( self::class, 'handle_continuation' ), 10, 1 );
+	}
+
+	/**
+	 * Resume a run handed off by the ~70% elapsed-time guard.
+	 *
+	 * The controller fires `agent_builder_run_needs_continuation` after
+	 * mark_continuing(); this listener atomically claims the run out of its
+	 * non-terminal hand-off state and dispatches a fresh job that resumes it
+	 * via run_autonomous_task()'s resume branch. Without it, a run persisted
+	 * 'continuing' would stop forever, since nothing else listens.
+	 *
+	 * @param string $run_id Run id to resume.
+	 * @return void
+	 */
+	public static function handle_continuation( string $run_id ): void {
+		$run = Agent_Run::load( $run_id );
+		if ( null === $run ) {
+			return;
+		}
+
+		// Atomically claim the run out of 'continuing'/'waiting' before
+		// dispatching: a duplicate continuation (or a retry racing the
+		// original) must not enqueue a second job for the same run.
+		if ( ! $run->claim_resume() ) {
+			return;
+		}
+
+		$job_id = self::dispatch( $run, array( 'resume' => $run->resume_state() ) );
+
+		if ( '' === $job_id ) {
+			// claim_resume() already flipped the run to 'running'; a refused
+			// dispatch (e.g. Emergency Stop) must not leave it stuck there
+			// with nothing left to resume it.
+			$run->finish( 'failed', array( 'error' => 'Could not continue: dispatching the continuation job was refused.' ) );
+		}
 	}
 
 	/**
@@ -95,12 +134,14 @@ class Agent_Task_Job_Processor implements Job_Processor_Interface {
 	/**
 	 * Execute the job.
 	 *
-	 * @param array    $request_data      Job input data (run_id, agent_id, prompt, user_id, kind, source_ref, resume?, tool_result?).
-	 * @param callable $progress_callback Progress update callback.
+	 * @param array           $request_data      Job input data (run_id, agent_id, prompt, user_id, kind, source_ref, resume?, tool_result?).
+	 * @param callable        $progress_callback Progress update callback.
+	 * @param Agent_Controller|null $controller Optional controller to inject (tests); a
+	 *                                          production controller is created when omitted.
 	 * @return array Job result data.
 	 * @throws \Exception If the run or agent cannot be resolved, or the autonomous task fails to start.
 	 */
-	public function execute( array $request_data, callable $progress_callback ): array {
+	public function execute( array $request_data, callable $progress_callback, ?Agent_Controller $controller = null ): array {
 		$progress_callback( 5, 'Loading run…' );
 
 		$run_id = (string) ( $request_data['run_id'] ?? '' );
@@ -121,13 +162,18 @@ class Agent_Task_Job_Processor implements Job_Processor_Interface {
 
 		$prompt = (string) ( $request_data['prompt'] ?? '' );
 
-		// Resuming a waiting run: hand the controller the run id, its saved
-		// resume state, and (when present) the resolved tool result so its
-		// resume branch takes over. A fresh run needs no options — the
-		// controller begins and owns the run's lifecycle itself.
-		$options = array();
+		// Hand the controller the dispatched run id in every case — fresh or
+		// resume. A fresh job must adopt the run created by dispatch() (the
+		// controller's fresh branch would otherwise begin() a second run and
+		// strand the dispatched row at 'running' forever). The assigning user
+		// is carried too, so tool grants, proposal attribution and user_can()
+		// checks act as that admin even under cron (where get_current_user_id()
+		// is 0).
+		$options = array(
+			'run_id'  => $run_id,
+			'user_id' => (int) ( $request_data['user_id'] ?? 0 ),
+		);
 		if ( isset( $request_data['resume'] ) && is_array( $request_data['resume'] ) ) {
-			$options['run_id']       = $run_id;
 			$options['resume_state'] = $request_data['resume'];
 			if ( isset( $request_data['tool_result'] ) && is_array( $request_data['tool_result'] ) ) {
 				$options['tool_result'] = $request_data['tool_result'];
@@ -136,7 +182,7 @@ class Agent_Task_Job_Processor implements Job_Processor_Interface {
 
 		$progress_callback( 20, 'Running autonomous task…' );
 
-		$controller = new Agent_Controller();
+		$controller = $controller ?? new Agent_Controller();
 		$result     = $controller->run_autonomous_task( $agent, $prompt, $run_id, $options );
 
 		if ( null === $result ) {

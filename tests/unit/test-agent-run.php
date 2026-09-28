@@ -803,4 +803,100 @@ class Test_Agent_Run extends TestCase {
 
 		$run->finish( 'completed' );
 	}
+
+	/**
+	 * sanitize_transcript() must never drop the system message, even when the
+	 * rest of the transcript is oversized and every other message is dropped.
+	 */
+	public function test_sanitize_transcript_never_drops_system_message(): void {
+		$transcript = array(
+			array( 'role' => 'system', 'content' => 'System prompt.' ),
+			array( 'role' => 'assistant', 'content' => str_repeat( 'x', 250 * 1024 ) ),
+		);
+
+		$result = $this->sanitize( $transcript );
+
+		$this->assertCount( 1, $result );
+		$this->assertSame( 'system', $result[0]['role'] );
+	}
+
+	/**
+	 * When capping drops an oversized assistant tool-call turn, its tool-result
+	 * messages are dropped together with it — a tool message must never survive
+	 * without the assistant call it belongs to, which a provider rejects on
+	 * resume.
+	 */
+	public function test_sanitize_transcript_never_orphans_a_tool_message(): void {
+		$transcript = array(
+			array( 'role' => 'system', 'content' => 'System prompt.' ),
+			array( 'role' => 'user', 'content' => 'Go.' ),
+			array(
+				'role'       => 'assistant',
+				'content'    => '',
+				'tool_calls' => array(
+					array(
+						'id'       => 'call_1',
+						'type'     => 'function',
+						'function' => array( 'name' => 'list_posts', 'arguments' => str_repeat( 'x', 205 * 1024 ) ),
+					),
+				),
+			),
+			array( 'role' => 'tool', 'tool_call_id' => 'call_1', 'name' => 'list_posts', 'content' => '[]' ),
+		);
+
+		$result = $this->sanitize( $transcript );
+
+		$this->assertCount( 1, $result, 'the whole assistant turn (assistant + tool result) must be dropped together' );
+		$this->assertSame( 'system', $result[0]['role'] );
+		$this->assert_no_orphaned_tool_messages( $result );
+	}
+
+	/**
+	 * A leading orphan tool message (no preceding assistant call) is dropped
+	 * even when the transcript is small enough to fit the cap — the capped
+	 * transcript must never start with a tool message.
+	 */
+	public function test_sanitize_transcript_sweeps_a_leading_orphan_tool_message(): void {
+		$transcript = array(
+			array( 'role' => 'system', 'content' => 'System prompt.' ),
+			array( 'role' => 'tool', 'tool_call_id' => 'orphan', 'name' => 'list_posts', 'content' => '[]' ),
+			array( 'role' => 'user', 'content' => 'Go.' ),
+		);
+
+		$result = $this->sanitize( $transcript );
+
+		$this->assertSame( 'user', $result[1]['role'] );
+		$this->assert_no_orphaned_tool_messages( $result );
+	}
+
+	/**
+	 * Invoke the private sanitize_transcript() for a direct cap test.
+	 *
+	 * @param array $messages Raw transcript.
+	 * @return array Sanitized, capped transcript.
+	 */
+	private function sanitize( array $messages ): array {
+		$method = new \ReflectionMethod( Agent_Run::class, 'sanitize_transcript' );
+		return $method->invoke( null, $messages );
+	}
+
+	/**
+	 * Assert no tool message appears without the assistant tool_calls it belongs
+	 * to: after an assistant-with-tool_calls, tool messages are valid; a system,
+	 * user or plain-assistant message closes the turn.
+	 *
+	 * @param array $messages Transcript to check.
+	 * @return void
+	 */
+	private function assert_no_orphaned_tool_messages( array $messages ): void {
+		$pending_tool_call = false;
+		foreach ( $messages as $message ) {
+			$role = $message['role'] ?? '';
+			if ( 'tool' === $role ) {
+				$this->assertTrue( $pending_tool_call, 'a tool message must never appear without its assistant call' );
+				continue;
+			}
+			$pending_tool_call = 'assistant' === $role && ! empty( $message['tool_calls'] );
+		}
+	}
 }

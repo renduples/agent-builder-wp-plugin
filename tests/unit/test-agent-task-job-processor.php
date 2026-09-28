@@ -14,6 +14,7 @@
 
 namespace Agentic\Tests;
 
+use Agentic\Agent_Controller;
 use Agentic\Agent_Run;
 use Agentic\Agent_Task_Job_Processor;
 use Agentic\Job_Manager;
@@ -258,6 +259,123 @@ class Test_Agent_Task_Job_Processor extends TestCase {
 			'waiting',
 			$run_after->to_array()['status'],
 			'a guard-rejected resume must not finish() the target run'
+		);
+	}
+
+	/**
+	 * A fresh dispatch → execute round trip must adopt the run dispatch()
+	 * created (not begin() a second row that strands the dispatched one at
+	 * 'running'), carry the assigning user id through to the completed run,
+	 * and finish 'completed'.
+	 */
+	public function test_fresh_dispatch_adopts_dispatched_run_and_completes(): void {
+		$agent_id = 'wordpress-assistant';
+		$registry = \Agentic_Agent_Registry::get_instance();
+		$registry->register( $this->make_agent( $agent_id ) );
+
+		// dispatch() creates the run up front (as the Tasks screen does) so the
+		// job's run_id refers to a real, not-yet-started 'running' row.
+		$run = Agent_Run::begin(
+			$agent_id,
+			array(
+				'kind'      => 'task',
+				'user_id'   => 7,
+				'task_text' => 'Summarise the newest posts',
+			)
+		);
+		$run_id = $run->get_run_id();
+
+		$job_id = Agent_Task_Job_Processor::dispatch( $run );
+		$job    = Job_Manager::get_job( $job_id );
+
+		// Simulate a separate background process: the run is not "current" here.
+		Agent_Run::reset_current_for_tests();
+
+		$controller = new Agent_Controller(
+			new Fake_LLM_Client(
+				array( Fake_LLM_Client::text_response( 'Done.' ) )
+			)
+		);
+
+		$result = ( new Agent_Task_Job_Processor() )->execute(
+			$job->request_data,
+			static function ( $progress, $message ) {},
+			$controller
+		);
+
+		$this->assertSame( $run_id, $result['run_id'] );
+		$this->assertSame( 'completed', $result['status'] );
+
+		$reloaded = Agent_Run::load( $run_id );
+		$this->assertSame( 'completed', $reloaded->to_array()['status'] );
+		$this->assertSame( 7, $reloaded->to_array()['user_id'], 'the assigning admin user id must be preserved' );
+
+		// Exactly one run row for this agent: the dispatched row was adopted,
+		// not stranded while a second begin() row was created.
+		global $wpdb;
+		$count = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->prefix}agent_builder_runs WHERE root_agent = %s",
+				$agent_id
+			)
+		);
+		$this->assertSame( 1, $count, 'the dispatched run must be adopted, not stranded beside a second begin() row' );
+	}
+
+	/**
+	 * handle_continuation() — the listener on
+	 * agent_builder_run_needs_continuation — atomically claims a run out of
+	 * 'continuing' and dispatches a resume job carrying its resume state, so a
+	 * run handed off by the elapsed-time guard does not stop forever.
+	 */
+	public function test_handle_continuation_dispatches_a_resume_job(): void {
+		$agent_id = 'wordpress-assistant';
+		$run      = Agent_Run::begin(
+			$agent_id,
+			array(
+				'kind'      => 'task',
+				'user_id'   => 7,
+				'task_text' => 'Long-running task.',
+			)
+		);
+		$run->checkpoint_transcript(
+			array(
+				array( 'role' => 'system', 'content' => 'System prompt.' ),
+				array( 'role' => 'user', 'content' => 'Long-running task.' ),
+			)
+		);
+		$run->mark_continuing();
+		$run_id       = $run->get_run_id();
+		$resume_state = $run->resume_state();
+		Agent_Run::reset_current_for_tests();
+
+		Agent_Task_Job_Processor::handle_continuation( $run_id );
+
+		// The run is claimed out of 'continuing' into 'running'.
+		$run_after = Agent_Run::load( $run_id );
+		$this->assertSame( 'running', $run_after->to_array()['status'], 'the continuation listener must claim the run out of continuing' );
+
+		// A single pending resume job was dispatched carrying the run id and
+		// resume state.
+		global $wpdb;
+		$row = $wpdb->get_row( "SELECT request_data FROM {$wpdb->prefix}agent_builder_jobs ORDER BY created_at DESC LIMIT 1" );
+		$this->assertNotNull( $row );
+
+		$request = json_decode( $row->request_data, true );
+		$this->assertSame( Agent_Task_Job_Processor::class, $request['_processor'] );
+		$this->assertSame( $run_id, $request['run_id'] );
+		$this->assertSame( 7, $request['user_id'] );
+		$this->assertSame( $resume_state, $request['resume'] );
+	}
+
+	/**
+	 * init() registers a listener on agent_builder_run_needs_continuation, so
+	 * the controller's elapsed-time hand-off actually schedules a continuation.
+	 */
+	public function test_init_registers_continuation_listener(): void {
+		$this->assertNotFalse(
+			has_action( 'agent_builder_run_needs_continuation', array( Agent_Task_Job_Processor::class, 'handle_continuation' ) ),
+			'the continuation seam must have a registered listener'
 		);
 	}
 
