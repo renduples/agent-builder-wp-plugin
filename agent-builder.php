@@ -350,7 +350,9 @@ final class Plugin {
 
 		// Re-sign whenever the stored signing version differs from the current one.
 		$signed_version = get_option( 'agent_builder_abilities_signed_version', '' );
-		if ( AGENT_BUILDER_VERSION !== $signed_version ) {
+		$signed_hash    = get_option( 'agent_builder_abilities_signed_hash', '' );
+		$current_hash   = Abilities_Manifest::bundled_manifest_signature();
+		if ( AGENT_BUILDER_VERSION !== $signed_version || $current_hash !== $signed_hash ) {
 			$library_dir = AGENT_BUILDER_DIR . 'library/agents';
 			if ( is_dir( $library_dir ) ) {
 				$agentic_manifests = glob( $library_dir . '/*/abilities.json' );
@@ -361,6 +363,7 @@ final class Plugin {
 				}
 			}
 			update_option( 'agent_builder_abilities_signed_version', AGENT_BUILDER_VERSION );
+			update_option( 'agent_builder_abilities_signed_hash', $current_hash );
 		}
 	}
 

@@ -188,7 +188,7 @@ $agentic_schedule_label = $agentic_schedules[ $agentic_task_def['schedule'] ]['d
 			<a href="<?php echo esc_url( $agentic_back_url ); ?>" class="button button-primary">
 				&#8592; <?php esc_html_e( 'Back to Scheduled Tasks', 'agent-builder' ); ?>
 			</a>
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-audit' ) ); ?>" class="button agentic-ml-8">
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-audit-log' ) ); ?>" class="button agentic-ml-8">
 				<?php esc_html_e( 'View Audit Log', 'agent-builder' ); ?>
 			</a>
 		</p>

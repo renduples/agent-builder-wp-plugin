@@ -9032,6 +9032,14 @@ msgstr "仅更改当前页面。其他页面以及您的站点全局默认设置
 msgid "More info"
 msgstr "了解更多"
 
+#: includes/functions.php:63 src/shared/chat-embed.js:20
+msgid "Post type"
+msgstr ""
+
+#: includes/functions.php:64 src/shared/chat-embed.js:21
+msgid "Post"
+msgstr ""
+
 #~ msgid "AI Assistants"
 #~ msgstr "AI 助手"
 

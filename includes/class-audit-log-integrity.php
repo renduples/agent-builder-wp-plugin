@@ -146,17 +146,36 @@ class Audit_Log_Integrity {
 	public static function record( int $id, array $data ): void {
 		global $wpdb;
 
-		$previous_hash = self::get_chain_tip( $id );
-		$hash          = self::compute_hash( $id, $data, $previous_hash );
+		// Serialize the read-tip + write-hash pair. Without this, two
+		// near-simultaneous record() calls (concurrent cron / agent activity,
+		// or several log writes in one turn) can both read the same chain tip
+		// before either writes, so the later row chains onto a stale tip and
+		// verify_chain() reports a false tamper break. A MySQL named lock makes
+		// the pair atomic across the separate DB connections of concurrent PHP
+		// requests. Best-effort: if the lock can't be taken we still record the
+		// row (a possible false break is better than a dropped audit entry).
+		$lock_name = 'ab_audit_' . substr( md5( DB_NAME . '|' . $wpdb->prefix ), 0, 20 );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Advisory lock, not a data query.
+		$got_lock = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, %d)', $lock_name, 5 ) );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Single-row update immediately after insert.
-		$wpdb->update(
-			$wpdb->prefix . 'agent_builder_audit_log',
-			array( 'integrity_hash' => $hash ),
-			array( 'id' => $id ),
-			array( '%s' ),
-			array( '%d' )
-		);
+		try {
+			$previous_hash = self::get_chain_tip( $id );
+			$hash          = self::compute_hash( $id, $data, $previous_hash );
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Single-row update immediately after insert.
+			$wpdb->update(
+				$wpdb->prefix . 'agent_builder_audit_log',
+				array( 'integrity_hash' => $hash ),
+				array( 'id' => $id ),
+				array( '%s' ),
+				array( '%d' )
+			);
+		} finally {
+			if ( 1 === $got_lock ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Releasing the advisory lock.
+				$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock_name ) );
+			}
+		}
 	}
 
 	/**

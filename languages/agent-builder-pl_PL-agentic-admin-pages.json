@@ -549,6 +549,15 @@
       ],
       "Ask": [
         "Zapytaj"
+      ],
+      "Title": [
+        "Tytuł"
+      ],
+      "Post type": [
+        ""
+      ],
+      "Post": [
+        ""
       ]
     }
   }

@@ -166,7 +166,11 @@ class Create_Post_Content extends \Agentic\Tool_Base {
 			'success'  => true,
 			'post_id'  => $post_id,
 			'status'   => $status,
-			'title'    => get_the_title( $post_id ),
+			// The sanitized input, not get_the_title(): get_the_title() runs the
+			// the_title filter (wptexturize), which turns " - ", quotes and "&"
+			// into HTML entities. The chat UI HTML-escapes the result a second
+			// time, so those entities surfaced literally (e.g. "&#8211;").
+			'title'    => $post_data['post_title'],
 			'url'      => get_permalink( $post_id ),
 			'edit_url' => get_edit_post_link( $post_id, 'raw' ),
 			'message'  => match ( $status ) {

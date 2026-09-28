@@ -793,6 +793,10 @@
         // For short messages this matches scrolling to bottom; for long replies
         // the user reads from the start rather than landing mid-message.
         messages.scrollTop = div.offsetTop - messages.offsetTop;
+        // A proposal card sits below the message text; make sure its approve/reject
+        // buttons are visible rather than left below the fold.
+        const proposalCard = div.querySelector('.agentic-proposal-card');
+        if (proposalCard) proposalCard.scrollIntoView({ block: 'end' });
         return div;
     }
 
@@ -969,7 +973,9 @@
                                     }
                                 // Pending confirmation -> render approve/reject buttons (streaming parity).
                                 if (streamBubble && evt.pending_proposal && evt.proposal) {
-                                    streamBubble.appendChild(renderProposalCard(evt.proposal));
+                                    const proposalCard = renderProposalCard(evt.proposal);
+                                    streamBubble.appendChild(proposalCard);
+                                    proposalCard.scrollIntoView({ block: 'end' });
                                 }
                                 } else if (evt.type === 'error') {
                                     const errText = evt.message || agenticChat.i18n.errorGeneric;
@@ -1344,6 +1350,36 @@
         desc.textContent = proposal.description || agenticChat.i18n.proposalDefault;
         card.appendChild(desc);
 
+        // Key arguments (title/status/post type) so the user sees what they're
+        // approving, not just the generic tool description. Rendered as text
+        // nodes, never innerHTML, so a title with &, quotes or dashes shows as-is.
+        if (proposal.summary && typeof proposal.summary === 'object') {
+            const summaryKeys = Object.keys(proposal.summary);
+            if (summaryKeys.length) {
+                const summaryDiv = document.createElement('div');
+                summaryDiv.className = 'agentic-proposal-summary';
+                const i18n = agenticChat.i18n || {};
+                const labels = {
+                    title: i18n.summaryTitle || 'Title',
+                    status: i18n.summaryStatus || 'Status',
+                    post_type: i18n.summaryPostType || 'Post type',
+                    post_id: i18n.summaryPost || 'Post'
+                };
+                summaryKeys.forEach(function (key) {
+                    const value = proposal.summary[key];
+                    if (value === null || value === undefined || value === '') return;
+                    const row = document.createElement('div');
+                    row.className = 'agentic-proposal-summary-row';
+                    const label = document.createElement('strong');
+                    label.textContent = (labels[key] || key.replace(/_/g, ' ')) + ': ';
+                    row.appendChild(label);
+                    row.appendChild(document.createTextNode(String(value)));
+                    summaryDiv.appendChild(row);
+                });
+                card.appendChild(summaryDiv);
+            }
+        }
+
         // Diff view
         if (proposal.diff) {
             const diffToggle = document.createElement('button');
@@ -1587,8 +1623,16 @@
         // Escape HTML first
         let html = escapeHtml(text);
 
-        // Code blocks
-        html = html.replace(/```(\w*)\n([\s\S]*?)```/g, '<div class="agentic-code-wrap"><button class="agentic-copy-btn" title="Copy">Copy</button><pre><code class="language-$1">$2</code></pre></div>');
+        // Extract fenced code blocks into placeholders FIRST — before any other
+        // substitution (headers, lists, bold, links, tables) — so the raw code is
+        // never rewritten into markdown markup, and the single-newline pass below
+        // can't turn the code's own line breaks into <br>. Restored at the very end.
+        var codeNonce = 'agentic_code_' + Math.random().toString(36).slice(2) + Date.now().toString(36) + '_';
+        var codeBlocks = [];
+        html = html.replace(/```(\w*)\n([\s\S]*?)```/g, function (block, lang, code) {
+            codeBlocks.push({ lang: lang, code: code });
+            return codeNonce + (codeBlocks.length - 1);
+        });
         
         // Inline code
         html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
@@ -1645,16 +1689,34 @@
         html = html.replace(/\[([^\]]+)\]\(agentic-delegate:([a-z0-9-]+)\)/g,
             '<button class="agentic-delegate-btn" data-agent="$2">$1</button>');
 
-        // Standard links
-        html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+        // Standard links — scheme-validated and attribute-escaped.
+        html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, function (match, label, url) {
+            var href = safeLinkHref(url);
+            if (href === null) return label; // unsafe scheme — plain text
+            return '<a href="' + href + '" target="_blank" rel="noopener">' + label + '</a>';
+        });
         
         // Lists
         html = html.replace(/^\s*[-*]\s+(.*)$/gm, '<li>$1</li>');
         html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
-        
-        // Numbered lists
-        html = html.replace(/^\s*\d+\.\s+(.*)$/gm, '<li>$1</li>');
-        
+        // Drop the newline the <ul> wrapper leaves between items, so a later
+        // single-newline pass doesn't inject a stray <br> between <li>s — both
+        // between items and between the last item and the closing </ul>.
+        html = html.replace(/<\/li>\n<li>/g, '</li><li>');
+        html = html.replace(/(<\/li>)\n(<\/ul>)/g, '$1$2');
+
+        // Numbered lists — wrap each run of "1. item" lines in an <ol> directly,
+        // mirroring the <ul> handling above, so the items are never left as bare
+        // <li> that the later single-newline pass would join with a stray <br>.
+        html = html.replace(/(?:^[ \t]*\d+\.\s+.*(?:\n|$))+/gm, function (block) {
+            const items = block.split('\n').filter(function (line) {
+                return /^[ \t]*\d+\.\s+/.test(line);
+            });
+            return '<ol>' + items.map(function (line) {
+                return '<li>' + line.replace(/^[ \t]*\d+\.\s+/, '') + '</li>';
+            }).join('') + '</ol>';
+        });
+
         // Blockquotes
         html = html.replace(/^>\s+(.*)$/gm, '<blockquote>$1</blockquote>');
         
@@ -1666,16 +1728,36 @@
         html = html.replace(/(<\/h[1-6]>)<\/p>/g, '$1');
         html = html.replace(/<p>(<ul>)/g, '$1');
         html = html.replace(/(<\/ul>)<\/p>/g, '$1');
-        html = html.replace(/<p>(<pre>)/g, '$1');
-        html = html.replace(/(<\/pre>)<\/p>/g, '$1');
-        html = html.replace(/<p>(<div class="agentic-code-wrap">)/g, '$1');
-        html = html.replace(/(<\/div>)<\/p>/g, '$1');
+        html = html.replace(/<p>(<ol>)/g, '$1');
+        html = html.replace(/(<\/ol>)<\/p>/g, '$1');
+        // Unwrap the code placeholder from its paragraph — the real
+        // <div class="agentic-code-wrap"> block is restored after the newline
+        // pass below, so it is the token, not the block, that must escape <p>.
+        html = html.replace(new RegExp('<p>(' + codeNonce + '\\d+)</p>', 'g'), '$1');
         html = html.replace(/<p>(<blockquote>)/g, '$1');
         html = html.replace(/(<\/blockquote>)<\/p>/g, '$1');
         html = html.replace(/<p>(<table>)/g, '$1');
         html = html.replace(/(<\/table>)<\/p>/g, '$1');
         html = html.replace(/<p>(<hr>)/g, '$1');
         html = html.replace(/(<hr>)<\/p>/g, '$1');
+
+        // Preserve single line breaks inside a paragraph (the model's "line1\n
+        // line2" and "- item" lists after a colon). Blank lines were already
+        // turned into paragraph breaks above; only lone newlines remain. Code
+        // blocks are still held aside as placeholders, so their inner newlines
+        // survive as real newlines — the copy button reads textContent, which
+        // drops <br>.
+        html = html.replace(/\n/g, '<br>');
+
+        // Restore the code blocks now that every substitution and the newline
+        // pass have run, so none of them ever saw the raw code content.
+        html = html.replace(new RegExp(codeNonce + '(\\d+)', 'g'), function (m, i) {
+            var b = codeBlocks[parseInt(i, 10)];
+            // A token this render could only have inserted, so a match is always
+            // one of our own; keep the guard anyway against index drift.
+            return b === undefined ? m :
+                '<div class="agentic-code-wrap"><button class="agentic-copy-btn" title="Copy">Copy</button><pre><code class="language-' + b.lang + '">' + b.code + '</code></pre></div>';
+        });
 
         return html;
     }
@@ -1685,6 +1767,24 @@
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    // Validate a link URL against a safe-scheme allowlist and make it safe to
+    // interpolate into href="…". Returns the attribute-safe URL, or null when
+    // the scheme is disallowed (javascript:, data:, vbscript:, etc.).
+    // The URL argument is already HTML-escaped by escapeHtml() — which escapes
+    // &, <, > but NOT the quote characters — so this only needs to escape " and
+    // ' on top of that. Scheme detection mirrors the URL Standard: strip ASCII
+    // tab/newline/CR and surrounding C0 control + space first, so a
+    // "java\tscript:"-style obfuscation can't masquerade as a relative URL.
+    function safeLinkHref(url) {
+        var stripped = url.replace(/[\t\n\r]/g, '').replace(/^[\x00-\x20]+|[\x00-\x20]+$/g, '');
+        var scheme = stripped.match(/^([a-z][a-z0-9+.\-]*):/i);
+        if (scheme) {
+            var name = scheme[1].toLowerCase();
+            if (name !== 'http' && name !== 'https' && name !== 'mailto') return null;
+        }
+        return url.replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
 
     // Generate UUID

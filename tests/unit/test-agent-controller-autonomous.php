@@ -16,6 +16,7 @@ namespace Agentic\Tests;
 
 use Agentic\Agent_Controller;
 use Agentic\Agent_Permissions;
+use Agentic\Agent_Proposals;
 use Agentic\Agent_Run;
 use Agentic\Manifest_Agent;
 
@@ -117,6 +118,13 @@ class Test_Agent_Controller_Autonomous extends TestCase {
 		$this->assertNotEmpty( $resume['messages'] );
 		$this->assertSame( 'proposal', $resume['awaiting_type'] );
 		$this->assertSame( $state['awaiting_id'], $resume['awaiting_id'] );
+
+		// The proposal itself must carry this run's id — execute_tool() must
+		// thread Agent_Run::current() through to Tool_Executor::execute() so
+		// the Tasks/Approvals UI can link the pending item back to its run.
+		$proposal = Agent_Proposals::get( $state['awaiting_id'] );
+		$this->assertNotNull( $proposal );
+		$this->assertSame( $result['run_id'], $proposal['run_id'] );
 	}
 
 	/**

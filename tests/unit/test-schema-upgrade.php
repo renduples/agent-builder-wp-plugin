@@ -23,6 +23,13 @@ class Test_Schema_Upgrade extends TestCase {
 	private $previous_schema;
 
 	/**
+	 * Previous stored agent_builder_needs_seed value, restored in tearDown.
+	 *
+	 * @var mixed
+	 */
+	private $previous_needs_seed;
+
+	/**
 	 * Snapshot the stored schema option.
 	 */
 	public function setUp(): void {
@@ -31,7 +38,8 @@ class Test_Schema_Upgrade extends TestCase {
 		// commits MySQL transactions, so a lock set in a prior test can leak
 		// as a committed row. Clear it so each test starts with the lock free.
 		delete_option( 'agent_builder_upgrade_lock' );
-		$this->previous_schema = get_option( 'agent_builder_db_schema_version', false );
+		$this->previous_schema     = get_option( 'agent_builder_db_schema_version', false );
+		$this->previous_needs_seed = get_option( 'agent_builder_needs_seed', false );
 	}
 
 	/**
@@ -45,6 +53,11 @@ class Test_Schema_Upgrade extends TestCase {
 			delete_option( 'agent_builder_db_schema_version' );
 		} else {
 			update_option( 'agent_builder_db_schema_version', $this->previous_schema );
+		}
+		if ( false === $this->previous_needs_seed ) {
+			delete_option( 'agent_builder_needs_seed' );
+		} else {
+			update_option( 'agent_builder_needs_seed', $this->previous_needs_seed );
 		}
 		parent::tearDown();
 	}
