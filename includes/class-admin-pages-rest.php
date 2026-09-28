@@ -108,6 +108,13 @@ class Admin_Pages_REST {
 		$page   = sanitize_key( (string) $request->get_param( 'page' ) );
 		$action = sanitize_key( (string) $request->get_param( 'action_name' ) );
 
+		// Resolve the required capability from the ACTION first, not the page:
+		// the action a caller is performing is what grants access, never the
+		// `page` param it happens to send alongside. Checking `page` before the
+		// action let a user holding only agent_builder_manage_tools POST
+		// page=tools&action_name=agent_duplicate|agent_export|agent_delete|
+		// agent_toggle|agent_profile_save|agent_reorder and clear the tools
+		// branch before the agent_* branch ever ran.
 		$tools_actions  = array( 'toggle_tool', 'apply_tools_profile', 'delete_skill' );
 		$agents_actions = array(
 			'save_approval_prefs',
@@ -118,22 +125,24 @@ class Admin_Pages_REST {
 			'agent_duplicate',
 			'agent_reorder',
 			'agent_export',
-			'agent_delete',
 		);
 
-		if ( 'tools' === $page || 'skills' === $page || in_array( $action, $tools_actions, true ) ) {
+		if ( in_array( $action, $tools_actions, true ) ) {
 			return current_user_can( 'agent_builder_manage_tools' );
 		}
 
-		if ( 'approvals' === $page || 'deployment' === $page || 'agents' === $page || in_array( $action, $agents_actions, true ) ) {
+		if ( in_array( $action, $agents_actions, true ) ) {
 			return current_user_can( 'agent_builder_manage_agents' );
 		}
 
-		if ( 'logs' === $page ) {
-			return current_user_can( 'agent_builder_view_audit_log' );
+		// Deleting an agent (or a whole bundled agent's files) is a higher bar
+		// than everyday manage-agents, matching the manage_options guard inside
+		// agent_delete() itself.
+		if ( 'agent_delete' === $action ) {
+			return current_user_can( 'manage_options' );
 		}
 
-		if ( 'agent-ready' === $page || in_array( $action, array( 'apply_free_fix', 'confirm_agent_ready_proposal', 'toggle_webmcp_expose', 'submit_to_directory' ), true ) ) {
+		if ( in_array( $action, array( 'apply_free_fix', 'confirm_agent_ready_proposal', 'toggle_webmcp_expose', 'submit_to_directory' ), true ) ) {
 			// submit_to_directory is the one deliberate phone-home this feature
 			// makes — require manage_options explicitly rather than the page's
 			// normal agent_builder_manage_settings, even though the current_user_can(
@@ -168,6 +177,24 @@ class Admin_Pages_REST {
 			if ( 'logs' === $screen ) {
 				return current_user_can( 'agent_builder_view_audit_log' );
 			}
+			return current_user_can( 'agent_builder_manage_settings' );
+		}
+
+		// GET page payloads (no action_name) and any action without an explicit
+		// mapping above fall back to the page-level capability.
+		if ( 'tools' === $page || 'skills' === $page ) {
+			return current_user_can( 'agent_builder_manage_tools' );
+		}
+
+		if ( 'approvals' === $page || 'deployment' === $page || 'agents' === $page ) {
+			return current_user_can( 'agent_builder_manage_agents' );
+		}
+
+		if ( 'logs' === $page ) {
+			return current_user_can( 'agent_builder_view_audit_log' );
+		}
+
+		if ( 'agent-ready' === $page ) {
 			return current_user_can( 'agent_builder_manage_settings' );
 		}
 

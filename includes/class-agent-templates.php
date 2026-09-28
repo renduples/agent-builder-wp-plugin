@@ -57,8 +57,8 @@ class Agent_Templates {
 
 	/**
 	 * Maximum total decompressed size (bytes) an import archive may expand to,
-	 * enforced against the *actual* bytes streamed out of each entry's
-	 * inflater — never the zip's own, attacker-forgeable per-entry size fields.
+	 * enforced against the *actual* bytes each entry inflates to — never the
+	 * zip's own, attacker-forgeable per-entry size fields.
 	 */
 	private const MAX_IMPORT_UNCOMPRESSED_BYTES = 5 * 1024 * 1024; // 5 MB.
 
@@ -101,16 +101,18 @@ class Agent_Templates {
 		}
 		Agent_Profile::save( $new_slug, array( 'profile_display_name' => $display_name . ' (copy)' ) );
 
-		self::copy_skills( $new_slug, $payload['skills'] );
+		$skill_ids = self::copy_skills( $new_slug, $payload['skills'] );
 
 		$registry = \Agentic_Agent_Registry::get_instance();
 		$registry->get_installed_agents( true );
 		$activated = $registry->activate_agent( $new_slug );
 		if ( is_wp_error( $activated ) ) {
+			self::cleanup_duplicate( $new_slug, $skill_ids );
 			return $activated;
 		}
 
 		if ( ! Abilities_Manifest::verify_integrity( $new_slug ) ) {
+			self::cleanup_duplicate( $new_slug, $skill_ids );
 			return new \WP_Error( 'integrity_failed', __( 'The duplicated agent failed its integrity check.', 'agent-builder' ) );
 		}
 
@@ -285,7 +287,7 @@ class Agent_Templates {
 			return $manifest;
 		}
 
-		$abilities = self::read_abilities( $tmp_dir );
+		$abilities = self::read_abilities( $tmp_dir, $manifest );
 		if ( is_wp_error( $abilities ) ) {
 			self::cleanup_dir( $tmp_dir );
 			return $abilities;
@@ -541,14 +543,15 @@ class Agent_Templates {
 	 *
 	 * @param string                     $slug   New agent slug.
 	 * @param array<int, array<string, mixed>> $skills Source skills.
-	 * @return void
+	 * @return int[] IDs of the created skill rows, for cleanup on a later failure.
 	 */
-	private static function copy_skills( string $slug, array $skills ): void {
+	private static function copy_skills( string $slug, array $skills ): array {
+		$ids = array();
 		if ( ! class_exists( Skills_Registry::class ) ) {
-			return;
+			return $ids;
 		}
 		foreach ( $skills as $skill ) {
-			Skills_Registry::create(
+			$id = Skills_Registry::create(
 				array(
 					'name'        => (string) ( $skill['name'] ?? $skill['slug'] ?? 'Skill' ),
 					'description' => (string) ( $skill['description'] ?? '' ),
@@ -561,7 +564,44 @@ class Agent_Templates {
 					'enabled'     => ! empty( $skill['enabled'] ),
 				)
 			);
+			if ( is_int( $id ) && $id > 0 ) {
+				$ids[] = $id;
+			}
 		}
+		return $ids;
+	}
+
+	/**
+	 * Remove every trace of a duplicated agent after a late failure (activation
+	 * or integrity check): deactivate it if it was activated, delete the copied
+	 * skill rows and settings, and remove the agent directory (which also drops
+	 * the abilities signature alongside it). Best-effort — the original error is
+	 * still returned to the caller.
+	 *
+	 * @param string $slug      The failed duplicate's slug.
+	 * @param int[]  $skill_ids Skill-row ids created for the duplicate.
+	 * @return void
+	 */
+	private static function cleanup_duplicate( string $slug, array $skill_ids ): void {
+		$registry = \Agentic_Agent_Registry::get_instance();
+		if ( $registry->is_agent_active( $slug ) ) {
+			$registry->deactivate_agent( $slug );
+		}
+
+		foreach ( $skill_ids as $id ) {
+			Skills_Registry::delete( (int) $id );
+		}
+
+		Agent_Settings::delete_agent( $slug );
+		Agent_Profile::bust( $slug );
+
+		$dir = AGENT_BUILDER_AGENTS_DIR . '/' . $slug;
+		if ( is_dir( $dir ) ) {
+			File_Manager::rmdir( $dir, true );
+		}
+
+		Abilities_Manifest::clear_cache( $slug );
+		$registry->get_installed_agents( true );
 	}
 
 	// -------------------------------------------------------------------------
@@ -639,12 +679,30 @@ class Agent_Templates {
 			if ( false === $name || str_ends_with( $name, '/' ) ) {
 				continue; // Unnamed or directory entry — no decompressed payload.
 			}
-			// Resolve by index, not by name: getStream() returns the first
-			// entry matching a name, so a crafted archive with two entries
-			// sharing one name would have the larger one skipped here and
-			// slip past the cap. getStreamIndex() measures every entry the
-			// way unzip_file() will actually extract it.
-			$stream = $zip->getStreamIndex( $i );
+
+			// Quick reject on the central-directory size fields where they are
+			// already over the cap. A single entry whose declared size exceeds
+			// the whole-archive cap is over the limit no matter what the other
+			// entries hold, and — crucially — this catches a duplicate-name
+			// entry: getStream() below resolves by name and only ever sees the
+			// first matching entry, so a second, larger entry sharing the name
+			// would otherwise slip past the streamed count.
+			$stat = $zip->statIndex( $i );
+			if ( is_array( $stat ) ) {
+				$declared   = (int) ( $stat['size'] ?? 0 );
+				$compressed = (int) ( $stat['comp_size'] ?? 0 );
+				if ( $declared > self::MAX_IMPORT_UNCOMPRESSED_BYTES || $compressed > self::MAX_IMPORT_UNCOMPRESSED_BYTES ) {
+					$zip->close();
+					return new \WP_Error( 'zip_too_large', __( 'The archive expands to more data than allowed.', 'agent-builder' ) );
+				}
+			}
+
+			// Stream the entry's *actual* decompressed bytes. getStream() is
+			// name-based and inflates on the fly, so a single DEFLATE entry that
+			// forges a small declared size still streams its true inflated size
+			// here. It needs only PHP 5.2+, unlike getStreamIndex() (PHP 8.2),
+			// so it stays within the plugin's declared floor of PHP 8.1.
+			$stream = $zip->getStream( $name );
 			if ( false === $stream ) {
 				continue;
 			}
@@ -695,10 +753,11 @@ class Agent_Templates {
 	/**
 	 * Read and risk-check abilities.json from an unpacked archive.
 	 *
-	 * @param string $tmp_dir Unpacked archive directory.
+	 * @param string               $tmp_dir  Unpacked archive directory.
+	 * @param array<string, mixed> $manifest Validated agent.json manifest (for its `tools` list).
 	 * @return array<string, mixed>|\WP_Error Decoded abilities, or error.
 	 */
-	private static function read_abilities( string $tmp_dir ) {
+	private static function read_abilities( string $tmp_dir, array $manifest ) {
 		$abilities_json = $tmp_dir . '/abilities.json';
 		if ( ! file_exists( $abilities_json ) ) {
 			// Agentic_Agent_Registry::activate_agent() refuses to activate an
@@ -711,7 +770,7 @@ class Agent_Templates {
 			return new \WP_Error( 'invalid_abilities', __( 'abilities.json is not valid JSON.', 'agent-builder' ) );
 		}
 
-		$downgrades = self::risk_downgrade_errors( $raw );
+		$downgrades = self::risk_downgrade_errors( $raw, (array) ( $manifest['tools'] ?? array() ) );
 		if ( ! empty( $downgrades ) ) {
 			return new \WP_Error(
 				'risk_downgrade',
@@ -801,17 +860,30 @@ class Agent_Templates {
 	}
 
 	/**
-	 * List ability declarations that would lower a tool below its risk floor.
+	 * List ability declarations that would lower a tool below its risk floor, or
+	 * that are missing entirely for a tool the agent.json manifest declares.
 	 *
 	 * @param array<string, mixed> $abilities Decoded abilities.json.
+	 * @param string[]             $tools     Tool names declared in agent.json.
 	 * @return string[]
 	 */
-	private static function risk_downgrade_errors( array $abilities ): array {
+	private static function risk_downgrade_errors( array $abilities, array $tools = array() ): array {
 		$errors = array();
 		$map    = $abilities['abilities'] ?? array();
 		if ( ! is_array( $map ) ) {
-			return $errors;
+			$map = array();
 		}
+
+		// Every tool agent.json declares must be declared in abilities.json
+		// with a risk — an import that omits one would write an agent that
+		// activate_agent() later refuses, so reject it here instead.
+		foreach ( $tools as $tool ) {
+			$tool = (string) $tool;
+			if ( '' !== $tool && ! isset( $map[ $tool ] ) ) {
+				$errors[] = sprintf( /* translators: %s: tool name */ __( '%s is declared in agent.json but not in abilities.json', 'agent-builder' ), $tool );
+			}
+		}
+
 		foreach ( $map as $tool => $entry ) {
 			if ( ! is_array( $entry ) || empty( $entry['risk'] ) ) {
 				// An entry with no risk field would otherwise import as

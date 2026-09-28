@@ -179,7 +179,7 @@ class Test_Legacy_Export_Cleanup extends TestCase {
 	public function test_does_not_mark_done_when_a_delete_fails(): void {
 		$this->skip_when_root();
 
-		$zip_path = $this->legacy_dir . '/stubborn.zip';
+		$zip_path = $this->legacy_dir . '/content-writer.zip';
 		file_put_contents( $zip_path, 'zip-bytes' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_file_put_contents -- Test fixture.
 		wp_set_current_user( 0 );
 		// Read-only directory makes unlink() fail (this process is unprivileged),
@@ -277,15 +277,55 @@ class Test_Legacy_Export_Cleanup extends TestCase {
 	}
 
 	/**
+	 * A slug-shaped .zip in the shared uploads/agentic-exports/ directory that
+	 * does not match any installed agent and was written after the streaming
+	 * exports release (e.g. a manual client backup) survives: the sweep no
+	 * longer deletes every slug-shaped .zip it finds there.
+	 */
+	public function test_does_not_touch_unrelated_slug_zip(): void {
+		$backup_path = $this->legacy_dir . '/client-backup.zip';
+		file_put_contents( $backup_path, 'zip-bytes' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_file_put_contents -- Test fixture.
+		wp_set_current_user( 0 );
+
+		Activator::maybe_cleanup_legacy_agent_exports();
+
+		$this->assertFileExists( $backup_path, 'An unrelated client backup must survive the legacy sweep' );
+		$this->assertTrue( (bool) get_option( 'agent_builder_legacy_exports_cleaned' ), 'A non-legacy zip must not block completion' );
+	}
+
+	/**
+	 * A slug-shaped .zip whose mtime predates the streaming-exports release is
+	 * still removed even when its slug no longer matches an installed agent —
+	 * the pre-fix exporter named output after agents that have since been
+	 * deleted, and those must still be swept.
+	 */
+	public function test_removes_old_uninstalled_slug_zip(): void {
+		$old_path = $this->legacy_dir . '/deleted-agent.zip';
+		file_put_contents( $old_path, 'zip-bytes' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_file_put_contents -- Test fixture.
+		// Backdate the file to before the streaming-exports release (epoch
+		// 1790467200, 2026-09-27 UTC — mirrors Activator::LEGACY_EXPORT_STREAMING_CUTOFF).
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_touch -- Test fixture.
+		touch( $old_path, 1790467200 - 3600 );
+		wp_set_current_user( 0 );
+
+		Activator::maybe_cleanup_legacy_agent_exports();
+
+		$this->assertFileDoesNotExist( $old_path );
+		$this->assertTrue( (bool) get_option( 'agent_builder_legacy_exports_cleaned' ) );
+	}
+
+	/**
 	 * A permanently-stuck cleanup (a legacy "zip" that can never be deleted)
 	 * stops retrying automatically after a short run of failed attempts: the
 	 * failure counter crosses LEGACY_EXPORT_CLEANUP_MAX_FAILURES, the give-up
 	 * flag is set, and further requests short-circuit instead of re-running the
 	 * sweep forever. The stuck entry is simulated with a non-empty directory
-	 * named <slug>.zip, which wp_delete_file() cannot remove even as root.
+	 * named <slug>.zip — for an installed agent slug (content-writer), so the
+	 * sweep still recognises it as legacy — which wp_delete_file() cannot remove
+	 * even as root.
 	 */
 	public function test_gives_up_after_repeated_failures(): void {
-		$stuck = $this->legacy_dir . '/stuck.zip';
+		$stuck = $this->legacy_dir . '/content-writer.zip';
 		wp_mkdir_p( $stuck . '/inner' );
 		file_put_contents( $stuck . '/inner/keep.txt', 'x' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_file_put_contents -- Test fixture making the directory non-empty.
 		wp_set_current_user( 0 );
