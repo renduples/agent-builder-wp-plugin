@@ -302,7 +302,10 @@ class Test_Run_Resumer extends TestCase {
 
 		$pending = Job_Manager::list_by_statuses( array( Job_Manager::STATUS_PENDING ) );
 		$this->assertCount( 1, $pending );
-		$this->assertSame( $waiting_before + 1, did_action( 'agent_builder_run_waiting' ) );
+
+		// agent_builder_run_waiting now fires in mark_waiting() (once, when the
+		// run handed off) — the two resolutions must not re-fire it.
+		$this->assertSame( $waiting_before, did_action( 'agent_builder_run_waiting' ) );
 	}
 
 	/**
@@ -441,15 +444,18 @@ class Test_Run_Resumer extends TestCase {
 	}
 
 	/**
-	 * agent_builder_run_waiting fires exactly once when Run_Resumer confirms
-	 * the wait state, whichever way the decision resolves; agent_builder_run_finished
-	 * fires exactly once, only on the reject path.
+	 * agent_builder_run_waiting fires once when the run hands off to a wait
+	 * (mark_waiting()); agent_builder_run_finished fires exactly once, only on
+	 * the reject path.
 	 */
 	public function test_run_waiting_and_run_finished_fire_once_on_reject(): void {
-		$run = $this->begin_waiting_run( array(), 'approval', '1' );
-
 		$waiting_before  = did_action( 'agent_builder_run_waiting' );
 		$finished_before = did_action( 'agent_builder_run_finished' );
+
+		$run = $this->begin_waiting_run( array(), 'approval', '1' );
+
+		// The hand-off fired agent_builder_run_waiting once, in mark_waiting().
+		$this->assertSame( $waiting_before + 1, did_action( 'agent_builder_run_waiting' ) );
 
 		$row = array(
 			'run_id' => $run->get_run_id(),
@@ -457,20 +463,24 @@ class Test_Run_Resumer extends TestCase {
 		);
 		do_action( 'agent_builder_approval_resolved', 'approval', 1, 'rejected', null, $row );
 
+		// Rejecting finishes the run; the resolution itself does not re-fire
+		// agent_builder_run_waiting (that now belongs to mark_waiting()).
 		$this->assertSame( $waiting_before + 1, did_action( 'agent_builder_run_waiting' ) );
 		$this->assertSame( $finished_before + 1, did_action( 'agent_builder_run_finished' ) );
 	}
 
 	/**
-	 * On approve, agent_builder_run_waiting still fires once (Run_Resumer
-	 * confirmed the wait state before dispatching), but agent_builder_run_finished
-	 * does not — the run is still going, handed off to the resume job.
+	 * On approve, agent_builder_run_waiting fires once (in mark_waiting(), when
+	 * the run handed off), but agent_builder_run_finished does not — the run is
+	 * still going, handed off to the resume job.
 	 */
 	public function test_run_waiting_fires_but_not_run_finished_on_approve(): void {
-		$run = $this->begin_waiting_run( array(), 'approval', '1' );
-
 		$waiting_before  = did_action( 'agent_builder_run_waiting' );
 		$finished_before = did_action( 'agent_builder_run_finished' );
+
+		$run = $this->begin_waiting_run( array(), 'approval', '1' );
+
+		$this->assertSame( $waiting_before + 1, did_action( 'agent_builder_run_waiting' ) );
 
 		$row = array(
 			'run_id' => $run->get_run_id(),

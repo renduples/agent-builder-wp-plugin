@@ -99,6 +99,11 @@ class Notifications {
 		add_action( 'edit_user_profile', array( __CLASS__, 'render_profile_optout' ) );
 		add_action( 'personal_options_update', array( __CLASS__, 'save_profile_optout' ) );
 		add_action( 'edit_user_profile_update', array( __CLASS__, 'save_profile_optout' ) );
+
+		// Run-lifecycle listeners: notify the run owner when a background run
+		// finishes, errors, or pauses on them (the "comes back to you" promise).
+		add_action( 'agent_builder_run_finished', array( __CLASS__, 'on_run_finished' ), 10, 1 );
+		add_action( 'agent_builder_run_waiting', array( __CLASS__, 'on_run_waiting' ), 10, 1 );
 	}
 
 	/**
@@ -156,6 +161,121 @@ class Notifications {
 		self::maybe_send_instant_email( $id, $user_id, $type, $title, $body, $extra );
 
 		return $id;
+	}
+
+	/**
+	 * Listener on `agent_builder_run_finished` — notify the run owner that a
+	 * background run finished (success or cancel) or failed, unless the run is a
+	 * chat run (which has no owner-facing "come back to you" expectation).
+	 *
+	 * The body is the first line of the run's result text, or its error — so the
+	 * notification reads as a one-line summary, not a transcript dump.
+	 *
+	 * @param Agent_Run $run The finished run.
+	 * @return void
+	 */
+	public static function on_run_finished( Agent_Run $run ): void {
+		$user_id = (int) $run->get_user_id();
+		if ( $user_id <= 0 || 'chat' === $run->get_kind() ) {
+			return;
+		}
+
+		$data   = $run->to_array();
+		$status = $run->get_status();
+
+		if ( in_array( $status, array( 'failed', 'error', 'aborted' ), true ) ) {
+			$error = (string) ( $data['error'] ?? '' );
+			$body  = self::first_line( '' !== $error ? $error : (string) ( $data['result_summary']['text'] ?? '' ) );
+			if ( '' === $body ) {
+				$body = __( 'Your agent run failed.', 'agent-builder' );
+			}
+
+			self::notify(
+				$user_id,
+				'run_error',
+				__( 'Agent run failed', 'agent-builder' ),
+				$body,
+				array(
+					'link'     => self::tasks_link( $run ),
+					'run_id'   => $run->get_run_id(),
+					'agent_id' => $run->get_root_agent(),
+					'severity' => 'error',
+				)
+			);
+			return;
+		}
+
+		$body = self::first_line( (string) ( $data['result_summary']['text'] ?? '' ) );
+		self::notify(
+			$user_id,
+			'run_finished',
+			__( 'Agent run finished', 'agent-builder' ),
+			$body,
+			array(
+				'link'     => self::tasks_link( $run ),
+				'run_id'   => $run->get_run_id(),
+				'agent_id' => $run->get_root_agent(),
+			)
+		);
+	}
+
+	/**
+	 * Listener on `agent_builder_run_waiting` — notify the run owner that a
+	 * background run has paused on an approval/proposal and needs their input.
+	 *
+	 * @param Agent_Run $run The run that just entered 'waiting'.
+	 * @return void
+	 */
+	public static function on_run_waiting( Agent_Run $run ): void {
+		$user_id = (int) $run->get_user_id();
+		if ( $user_id <= 0 || 'chat' === $run->get_kind() ) {
+			return;
+		}
+
+		self::notify(
+			$user_id,
+			'run_waiting',
+			__( 'Agent run needs you', 'agent-builder' ),
+			__( 'Your agent run is waiting for your approval.', 'agent-builder' ),
+			array(
+				'link'     => self::tasks_link( $run ),
+				'run_id'   => $run->get_run_id(),
+				'agent_id' => $run->get_root_agent(),
+				'severity' => 'warning',
+			)
+		);
+	}
+
+	/**
+	 * Deep link to the Tasks drawer for a specific run.
+	 *
+	 * @param Agent_Run $run Run to link to.
+	 * @return string Admin URL with the run deep-link query arg.
+	 */
+	private static function tasks_link( Agent_Run $run ): string {
+		return add_query_arg(
+			array(
+				'page' => 'agentic-tasks',
+				'run'  => $run->get_run_id(),
+			),
+			admin_url( 'admin.php' )
+		);
+	}
+
+	/**
+	 * First non-empty line of a (possibly multi-line) string.
+	 *
+	 * @param string $text Text to trim to its first line.
+	 * @return string First line, or '' when the text is empty.
+	 */
+	private static function first_line( string $text ): string {
+		$text = trim( $text );
+		if ( '' === $text ) {
+			return '';
+		}
+
+		$lines = preg_split( '/\r\n|\r|\n/', $text );
+		return trim( (string) $lines[0] );
 	}
 
 	/**

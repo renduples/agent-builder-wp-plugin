@@ -59,6 +59,14 @@ class Job_Manager {
 	public const ABANDONED_PENDING_MAX_HOURS        = 6;
 
 	/**
+	 * A pending job older than this with no WP-Cron event is re-scheduled (see
+	 * reschedule_stale_pending_jobs()). Short enough that a lost event is
+	 * recovered promptly, long enough to not fight a just-created job whose
+	 * single event is still being registered.
+	 */
+	public const PENDING_RESCHEDULE_GRACE_SECONDS = 60;
+
+	/**
 	 * Initialize
 	 */
 	public static function init(): void {
@@ -167,8 +175,12 @@ class Job_Manager {
 			array( '%s', '%d', '%s', '%s', '%d', '%s', '%s', '%s', '%s' )
 		);
 
-		// Schedule async processing.
+		// Schedule async processing, then ask WP-Cron to fire now. Without the
+		// spawn, a single event can sit un-fired on a low-traffic site (or one
+		// with DISABLE_WP_CRON) until the next unrelated page load — the
+		// "pending job never starts" failure this closes.
 		wp_schedule_single_event( time(), 'agent_builder_process_job', array( $job_id ) );
+		spawn_cron();
 
 		// Invalidate list cache.
 		self::invalidate_list_cache();
@@ -611,6 +623,53 @@ class Job_Manager {
 	}
 
 	/**
+	 * Re-schedule pending jobs whose WP-Cron single event was lost.
+	 *
+	 * A pending job older than the grace window with no matching
+	 * wp_next_scheduled() event has had its trigger disappear (a failed or
+	 * interrupted spawn_cron(), an object-cache flush of the cron option, or a
+	 * site that disabled WP-Cron before the event could fire). Re-arm it and
+	 * spawn cron so it runs now instead of waiting for an unrelated page load.
+	 *
+	 * Shared by GET /runs (Runs_REST) and the hourly health check.
+	 *
+	 * @param int $older_than_seconds Only consider jobs at least this old.
+	 * @return int Number of jobs re-scheduled.
+	 */
+	public static function reschedule_stale_pending_jobs( int $older_than_seconds = self::PENDING_RESCHEDULE_GRACE_SECONDS ): int {
+		global $wpdb;
+		$table  = self::get_table_name();
+		$cutoff = gmdate( 'Y-m-d H:i:s', time() - max( 0, $older_than_seconds ) );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table read; %i quotes the table name.
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT id FROM %i WHERE status = %s AND created_at < %s LIMIT 200',
+				$table,
+				self::STATUS_PENDING,
+				$cutoff
+			)
+		);
+
+		$rescheduled = 0;
+		foreach ( (array) $rows as $row ) {
+			$job_id = (string) $row->id;
+			if ( wp_next_scheduled( 'agent_builder_process_job', array( $job_id ) ) ) {
+				continue;
+			}
+
+			wp_schedule_single_event( time(), 'agent_builder_process_job', array( $job_id ) );
+			++$rescheduled;
+		}
+
+		if ( $rescheduled > 0 ) {
+			spawn_cron();
+		}
+
+		return $rescheduled;
+	}
+
+	/**
 	 * Run periodic health check for stuck / abandoned jobs (P0 stabilization).
 	 *
 	 * Detects:
@@ -620,7 +679,7 @@ class Job_Manager {
 	 * Marks them failed with clear error so UIs (e.g. agent trainer) don't hang forever.
 	 * This is lightweight recovery — no auto-retry (advanced retry/replay is Pro territory).
 	 *
-	 * @return array{stuck_marked: int, abandoned_marked: int}
+	 * @return array{stuck_marked: int, abandoned_marked: int, rescheduled: int}
 	 */
 	public static function run_health_check(): array {
 		global $wpdb;
@@ -636,6 +695,11 @@ class Job_Manager {
 			'stuck_marked'     => 0,
 			'abandoned_marked' => 0,
 		);
+
+		// Re-arm any pending job whose WP-Cron event was lost before the stuck /
+		// abandoned marking below, so a just-stalled (but not yet abandoned) job
+		// gets picked up again rather than left to age into the 6 h abandon mark.
+		$results['rescheduled'] = self::reschedule_stale_pending_jobs();
 
 		// 1. Stuck processing jobs (updated_at too old while still processing).
 		$stuck_threshold = gmdate( 'Y-m-d H:i:s', time() - ( self::STUCK_PROCESSING_THRESHOLD_MINUTES * 60 ) );
