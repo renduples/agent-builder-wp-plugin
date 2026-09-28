@@ -177,7 +177,7 @@ class Tool_Executor {
 	 * @param array $arguments Decoded tool arguments from the LLM.
 	 * @return array Key => string summary, empty when nothing worth showing.
 	 */
-	private static function summarize_arguments( array $arguments ): array {
+	public static function summarize_arguments( array $arguments ): array {
 		$summary = array();
 
 		// A friendly name for the thing being created/updated. Create tools pass

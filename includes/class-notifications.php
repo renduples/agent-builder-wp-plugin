@@ -4,7 +4,7 @@
  *
  * Inbox-backed notifications for run results, routine failures and approvals,
  * with an optional daily email digest for administrators and instant email for
- * run results.
+ * run results and approvals.
  *
  * @package    Agent_Builder
  * @subpackage Includes
@@ -26,8 +26,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * Rows live in wp_agent_builder_notifications; the admin-bar inbox and (later)
  * the Tasks screen read them via unread_count()/list()/mark_read(). Email
- * delivery has two paths: an immediate email for run results (instant mode) and
- * a batched daily digest sent to every non-opted-out administrator.
+ * delivery has two paths: an immediate email for run results and approvals
+ * (instant mode) and a batched daily digest sent to every non-opted-out
+ * administrator.
  */
 class Notifications {
 
@@ -44,8 +45,12 @@ class Notifications {
 
 	/**
 	 * Types eligible for an immediate email when instant mode is on.
+	 *
+	 * `approval_pending` is included deliberately: an approval pause is exactly
+	 * the moment the recipient must act, and in instant mode there is no daily
+	 * digest to batch it into, so it has to email here or be silently dropped.
 	 */
-	private const RUN_TYPES = array( 'run_finished', 'run_waiting', 'run_error' );
+	private const INSTANT_TYPES = array( 'run_finished', 'run_waiting', 'run_error', 'approval_pending' );
 
 	/**
 	 * Notification email mode option key (off|instant|daily).
@@ -63,6 +68,16 @@ class Notifications {
 	private const DIGEST_HOOK = 'agent_builder_notification_digest';
 
 	/**
+	 * Per-user opt-out user-meta key.
+	 */
+	public const OPTOUT_META = 'agent_builder_notify_optout';
+
+	/**
+	 * Nonce action for the profile-screen opt-out checkbox.
+	 */
+	private const OPTOUT_NONCE = 'agent_builder_notify_optout_nonce';
+
+	/**
 	 * Register hooks.
 	 *
 	 * @return void
@@ -71,6 +86,13 @@ class Notifications {
 		// Schedule the digest if it is not already scheduled (safety net for
 		// sites that upgraded without re-firing the activation hook).
 		add_action( 'init', array( __CLASS__, 'maybe_schedule_digest' ) );
+
+		// Per-user opt-out checkbox on the profile screen (own profile + others
+		// an administrator edits), with a nonce on the save path.
+		add_action( 'show_user_profile', array( __CLASS__, 'render_profile_optout' ) );
+		add_action( 'edit_user_profile', array( __CLASS__, 'render_profile_optout' ) );
+		add_action( 'personal_options_update', array( __CLASS__, 'save_profile_optout' ) );
+		add_action( 'edit_user_profile_update', array( __CLASS__, 'save_profile_optout' ) );
 	}
 
 	/**
@@ -250,8 +272,11 @@ class Notifications {
 	 * @return void
 	 */
 	public static function send_daily_digest(): void {
-		// "off" disables all notification email, including the digest.
-		if ( 'off' === (string) get_option( self::EMAIL_OPTION, 'daily' ) ) {
+		// The digest runs only in "daily" mode. In "instant" mode each run email
+		// is sent (and marked emailed) as it happens, so there is nothing left to
+		// batch; "off" disables all notification email. Running the digest in
+		// instant mode would re-email rows instant mode already sent.
+		if ( 'daily' !== (string) get_option( self::EMAIL_OPTION, 'daily' ) ) {
 			return;
 		}
 
@@ -275,6 +300,14 @@ class Notifications {
 		global $wpdb;
 
 		$table = $wpdb->prefix . 'agent_builder_notifications';
+
+		// Validate the recipient *before* claiming any rows: a bad (missing or
+		// malformed) address must not stamp rows as emailed and then bail,
+		// silently dropping them from every future digest.
+		$user = get_userdata( $user_id );
+		if ( ! $user || ! is_email( $user->user_email ) ) {
+			return;
+		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table read.
 		$rows = $wpdb->get_results(
@@ -331,11 +364,6 @@ class Notifications {
 		);
 
 		if ( empty( $rows ) ) {
-			return;
-		}
-
-		$user = get_userdata( $user_id );
-		if ( ! $user || ! is_email( $user->user_email ) ) {
 			return;
 		}
 
@@ -402,12 +430,18 @@ class Notifications {
 	 * @return void
 	 */
 	private static function maybe_send_instant_email( int $id, int $user_id, string $type, string $title, string $body, array $extra ): void {
-		if ( ! in_array( $type, self::RUN_TYPES, true ) ) {
+		if ( ! in_array( $type, self::INSTANT_TYPES, true ) ) {
 			return;
 		}
 
 		$mode = (string) get_option( self::EMAIL_OPTION, 'daily' );
 		if ( 'instant' !== $mode ) {
+			return;
+		}
+
+		// Per-user opt-out must override the site-wide mode: an opted-out user
+		// receives no instant email even when the site default is instant.
+		if ( self::is_opted_out( $user_id ) ) {
 			return;
 		}
 
@@ -475,20 +509,78 @@ class Notifications {
 	 * @param int $user_id User id.
 	 * @return bool
 	 */
-	private static function is_opted_out( int $user_id ): bool {
-		return (bool) get_user_meta( $user_id, 'agent_builder_notify_optout', true );
+	public static function is_opted_out( int $user_id ): bool {
+		return (bool) get_user_meta( $user_id, self::OPTOUT_META, true );
+	}
+
+	/**
+	 * Render the per-user opt-out checkbox on the profile screen.
+	 *
+	 * Shown on both the current user's own profile ("show_user_profile") and an
+	 * administrator editing someone else's ("edit_user_profile").
+	 *
+	 * @param \WP_User $user User being edited.
+	 * @return void
+	 */
+	public static function render_profile_optout( \WP_User $user ): void {
+		wp_nonce_field( self::OPTOUT_NONCE, self::OPTOUT_NONCE . '_field' );
+
+		$opted = self::is_opted_out( (int) $user->ID );
+		?>
+		<h2><?php esc_html_e( 'Agent activity email', 'agent-builder' ); ?></h2>
+		<table class="form-table" role="presentation">
+			<tr>
+				<th scope="row"><?php esc_html_e( 'Email notifications', 'agent-builder' ); ?></th>
+				<td>
+					<label for="agent_builder_notify_optout">
+						<input type="checkbox" name="agent_builder_notify_optout" id="agent_builder_notify_optout" value="1" <?php checked( $opted ); ?> />
+						<?php esc_html_e( "Don't email me agent activity", 'agent-builder' ); ?>
+					</label>
+					<p class="description"><?php esc_html_e( 'Turns off agent activity emails for this account, regardless of the site-wide setting.', 'agent-builder' ); ?></p>
+				</td>
+			</tr>
+		</table>
+		<?php
+	}
+
+	/**
+	 * Save the per-user opt-out checkbox on profile update.
+	 *
+	 * @param int $user_id User being saved.
+	 * @return void
+	 */
+	public static function save_profile_optout( int $user_id ): void {
+		if ( ! isset( $_POST[ self::OPTOUT_NONCE . '_field' ] ) ) {
+			return;
+		}
+
+		if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST[ self::OPTOUT_NONCE . '_field' ] ) ), self::OPTOUT_NONCE ) ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'edit_user', $user_id ) ) {
+			return;
+		}
+
+		$optout = isset( $_POST['agent_builder_notify_optout'] ) ? '1' : '0';
+		update_user_meta( $user_id, self::OPTOUT_META, $optout );
 	}
 
 	/**
 	 * Standard email footer telling recipients how to turn notifications off.
 	 *
+	 * Links both the site-wide Settings → Security control (mode) and the
+	 * per-user profile opt-out, so an administrator reading an email always has
+	 * a one-click path to silence them (Renier's §11 decision).
+	 *
 	 * @return string
 	 */
 	private static function email_footer(): string {
 		return sprintf(
-			/* translators: %s: Settings → Security admin URL */
-			__( 'You are receiving these notifications as a site administrator. To manage or turn them off, go to Settings → Security: %s', 'agent-builder' ),
-			admin_url( 'admin.php?page=agentic-settings&tab=security' )
+			/* translators: 1: Settings → Security admin URL, 2: user profile admin URL */
+			__( 'You are receiving these notifications as a site administrator. Manage the site-wide setting under Settings → Security: %1$s, or turn off email for your own account on your profile: %2$s', 'agent-builder' ),
+			admin_url( 'admin.php?page=agentic-settings&tab=security' ),
+			admin_url( 'profile.php' )
 		);
 	}
 }

@@ -841,6 +841,23 @@ function SecurityTab( {
 				</div>
 			) }
 			<div style={ { height: 16 } } />
+			<SelectControl
+				label={ __( 'Agent activity email', 'agent-builder' ) }
+				value={ data.notify_email || 'daily' }
+				options={ [
+					{ label: __( 'Off', 'agent-builder' ), value: 'off' },
+					{ label: __( 'Daily digest', 'agent-builder' ), value: 'daily' },
+					{ label: __( 'Instant', 'agent-builder' ), value: 'instant' },
+				] }
+				onChange={ ( v ) => setData( { ...data, notify_email: v } ) }
+				help={ __(
+					'How administrators are emailed about agent activity. Users can opt out individually from their own profile.',
+					'agent-builder'
+				) }
+				__nextHasNoMarginBottom
+				__next40pxDefaultSize
+			/>
+			<div style={ { height: 16 } } />
 			<TextControl
 				label={ __(
 					'Conversation retention (days)',

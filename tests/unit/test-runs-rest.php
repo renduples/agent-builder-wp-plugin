@@ -309,6 +309,81 @@ class Test_Runs_REST extends TestCase {
 		$this->assertSame( 'already_active', $retry->as_error()->get_error_code() );
 	}
 
+	/**
+	 * Retrying a run paused on the user (`waiting`) or mid-resume (`continuing`)
+	 * is refused with 409, just like `queued`/`running` — none of the non-terminal
+	 * states may be retried, or a second concurrent run is spawned.
+	 */
+	public function test_retry_refuses_waiting_and_continuing(): void {
+		$this->grant_plugin_privilege( 'run_tasks_manually', 'editor' );
+
+		$editor = self::factory()->user->create( array( 'role' => 'editor' ) );
+		wp_set_current_user( $editor );
+
+		foreach ( array( 'waiting', 'continuing' ) as $status ) {
+			$run = Agent_Run::create_queued(
+				self::AGENT,
+				array( 'kind' => 'task', 'user_id' => $editor, 'task_text' => 'Do a thing' )
+			);
+			$this->set_run_status( $run->get_run_id(), $status );
+
+			$retry = $this->request( 'POST', '/runs/' . $run->get_run_id() . '/retry' );
+			$this->assertSame( 409, $retry->get_status(), "retry of {$status} should conflict" );
+			$this->assertSame( 'already_active', $retry->as_error()->get_error_code() );
+		}
+	}
+
+	/**
+	 * POST /runs rejects an agent the current user cannot reach: an agent that
+	 * exists in the registry but is absent from their accessible list is 403
+	 * (not 400), with a clear message.
+	 */
+	public function test_create_run_rejects_agent_outside_accessible_list(): void {
+		$this->grant_plugin_privilege( 'run_tasks_manually', 'editor' );
+
+		$slug = 'admin-only-agent';
+		\Agentic_Agent_Registry::get_instance()->register( $this->make_restricted_agent( $slug ) );
+
+		$editor = self::factory()->user->create( array( 'role' => 'editor' ) );
+		wp_set_current_user( $editor );
+
+		$create = $this->request( 'POST', '/runs', array( 'agent_id' => $slug, 'task' => 'Do a thing' ) );
+		$this->assertSame( 403, $create->get_status() );
+		$this->assertSame( 'forbidden', $create->as_error()->get_error_code() );
+
+		\Agentic_Agent_Registry::get_instance()->unregister( $slug );
+	}
+
+	/**
+	 * POST /runs/{id}/retry also rejects an agent the current user cannot reach:
+	 * even though the user owns the (failed) run, the agent behind it is outside
+	 * their accessible list, so the retry is 403 rather than spawning a doomed
+	 * clone.
+	 */
+	public function test_retry_rejects_agent_outside_accessible_list(): void {
+		$this->grant_plugin_privilege( 'run_tasks_manually', 'editor' );
+
+		$slug = 'admin-only-agent';
+		\Agentic_Agent_Registry::get_instance()->register( $this->make_restricted_agent( $slug ) );
+
+		$editor = self::factory()->user->create( array( 'role' => 'editor' ) );
+		wp_set_current_user( $editor );
+
+		// create_queued() does not validate agent access, so this run references
+		// an agent the editor cannot reach.
+		$run = Agent_Run::create_queued(
+			$slug,
+			array( 'kind' => 'task', 'user_id' => $editor, 'task_text' => 'Do a thing' )
+		);
+		$this->set_run_status( $run->get_run_id(), 'failed' );
+
+		$retry = $this->request( 'POST', '/runs/' . $run->get_run_id() . '/retry' );
+		$this->assertSame( 403, $retry->get_status() );
+		$this->assertSame( 'forbidden', $retry->as_error()->get_error_code() );
+
+		\Agentic_Agent_Registry::get_instance()->unregister( $slug );
+	}
+
 	// -------------------------------------------------------------------------
 	// Helpers
 	// -------------------------------------------------------------------------
@@ -370,6 +445,24 @@ class Test_Runs_REST extends TestCase {
 			array(
 				'slug' => $slug,
 				'name' => 'Test Agent',
+			),
+			''
+		);
+	}
+
+	/**
+	 * A Manifest_Agent test double requiring manage_options, so an editor (even
+	 * one granted run_tasks_manually) is excluded from its accessible list.
+	 *
+	 * @param string $slug Agent slug.
+	 * @return Manifest_Agent
+	 */
+	private function make_restricted_agent( string $slug ): Manifest_Agent {
+		return new Manifest_Agent(
+			array(
+				'slug'         => $slug,
+				'name'         => 'Admin Only Agent',
+				'capabilities' => array( 'manage_options' ),
 			),
 			''
 		);

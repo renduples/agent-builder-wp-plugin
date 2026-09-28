@@ -202,6 +202,67 @@ class Test_Notifications extends TestCase {
 	}
 
 	/**
+	 * The per-user opt-out checkbox renders on the profile screen.
+	 */
+	public function test_profile_optout_render_outputs_checkbox(): void {
+		$user_id = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		$user    = get_userdata( $user_id );
+
+		ob_start();
+		Notifications::render_profile_optout( $user );
+		$html = ob_get_clean();
+
+		$this->assertStringContainsString( 'agent_builder_notify_optout', $html );
+	}
+
+	/**
+	 * Saving the profile opt-out with a valid nonce writes the meta.
+	 */
+	public function test_profile_optout_save_with_nonce_writes_meta(): void {
+		$user_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $user_id );
+
+		$_POST['agent_builder_notify_optout_nonce_field'] = wp_create_nonce( 'agent_builder_notify_optout_nonce' );
+		$_POST['agent_builder_notify_optout']             = '1';
+
+		Notifications::save_profile_optout( $user_id );
+
+		$this->assertSame( '1', get_user_meta( $user_id, 'agent_builder_notify_optout', true ) );
+
+		unset( $_POST['agent_builder_notify_optout_nonce_field'], $_POST['agent_builder_notify_optout'] );
+	}
+
+	/**
+	 * Saving without the nonce field is a no-op (the meta is left untouched).
+	 */
+	public function test_profile_optout_save_without_nonce_is_noop(): void {
+		$user_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $user_id );
+
+		Notifications::save_profile_optout( $user_id );
+
+		$this->assertSame( '', get_user_meta( $user_id, 'agent_builder_notify_optout', true ) );
+	}
+
+	/**
+	 * A user without edit_user capability cannot set someone else's opt-out.
+	 */
+	public function test_profile_optout_save_requires_capability(): void {
+		$editor = self::factory()->user->create( array( 'role' => 'editor' ) );
+		$other  = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		wp_set_current_user( $editor );
+
+		$_POST['agent_builder_notify_optout_nonce_field'] = wp_create_nonce( 'agent_builder_notify_optout_nonce' );
+		$_POST['agent_builder_notify_optout']             = '1';
+
+		Notifications::save_profile_optout( $other );
+
+		$this->assertSame( '', get_user_meta( $other, 'agent_builder_notify_optout', true ) );
+
+		unset( $_POST['agent_builder_notify_optout_nonce_field'], $_POST['agent_builder_notify_optout'] );
+	}
+
+	/**
 	 * The daily digest emails only non-opted-out administrators.
 	 */
 	public function test_daily_digest_sends_only_to_non_opted_out_admins(): void {
@@ -265,17 +326,105 @@ class Test_Notifications extends TestCase {
 	}
 
 	/**
-	 * Non-run types never trigger an instant email.
+	 * An `approval_pending` notification under instant mode emails immediately.
+	 *
+	 * Regression for the M11 gate follow-up: approval pauses were excluded from
+	 * the instant-email type set, so under instant mode an approval-needed
+	 * notification was created but never emailed — no instant email (wrong type),
+	 * and no digest (digest is a no-op in instant mode).
 	 */
-	public function test_instant_mode_ignores_non_run_types(): void {
+	public function test_instant_mode_emails_approval_pending(): void {
 		update_option( 'agent_builder_notify_email', 'instant' );
 		reset_phpmailer_instance();
 
-		$user_id = $this->make_admin( 'approval-admin@example.com' );
+		$user_id = $this->make_admin( 'approval-instant@example.com' );
 
 		Notifications::notify( $user_id, 'approval_pending', 'Approval needed', 'Something needs you.' );
 
 		$mailer = tests_retrieve_phpmailer_instance();
+		$this->assertCount( 1, $mailer->mock_sent );
+		$this->assertContains( 'approval-instant@example.com', $this->sent_recipients() );
+	}
+
+	/**
+	 * Types outside the instant-email set never trigger an immediate email.
+	 * `routine_failed` is the one type that is digest-eligible but not
+	 * instant-eligible, so it is the right probe for the instant-type gate.
+	 */
+	public function test_instant_mode_ignores_routine_failed(): void {
+		update_option( 'agent_builder_notify_email', 'instant' );
+		reset_phpmailer_instance();
+
+		$user_id = $this->make_admin( 'routine-admin@example.com' );
+
+		Notifications::notify( $user_id, 'routine_failed', 'Routine failed', 'Something broke.' );
+
+		$mailer = tests_retrieve_phpmailer_instance();
 		$this->assertCount( 0, $mailer->mock_sent );
+	}
+
+	/**
+	 * The daily digest is a no-op when the mode is "instant": instant mode emails
+	 * (and marks emailed) run/approval notifications as they happen, so the digest
+	 * must not batch anything — running it would re-email rows instant mode sent.
+	 */
+	public function test_digest_does_not_run_in_instant_mode(): void {
+		update_option( 'agent_builder_notify_email', 'instant' );
+		reset_phpmailer_instance();
+
+		$admin = $this->make_admin( 'instant-digest@example.com' );
+
+		// routine_failed is digest-eligible but never instant-eligible, so the only
+		// thing that could email this row is the (disabled) daily digest.
+		Notifications::notify( $admin, 'routine_failed', 'Routine failed', 'Something broke.' );
+
+		Notifications::send_daily_digest();
+
+		$mailer = tests_retrieve_phpmailer_instance();
+		$this->assertCount( 0, $mailer->mock_sent );
+	}
+
+	/**
+	 * Instant mode honours the per-user opt-out: an opted-out user receives no
+	 * instant email even when the site-wide mode is instant.
+	 */
+	public function test_instant_mode_honours_optout(): void {
+		update_option( 'agent_builder_notify_email', 'instant' );
+		reset_phpmailer_instance();
+
+		$user_id = $this->make_admin( 'optout-instant@example.com' );
+		update_user_meta( $user_id, 'agent_builder_notify_optout', '1' );
+
+		Notifications::notify( $user_id, 'run_finished', 'Run finished', 'Your run finished.' );
+
+		$mailer = tests_retrieve_phpmailer_instance();
+		$this->assertCount( 0, $mailer->mock_sent );
+	}
+
+	/**
+	 * The digest validates the recipient before claiming rows: a bad (malformed)
+	 * address returns early, so the rows stay un-emailed and are retried later
+	 * rather than silently dropped.
+	 */
+	public function test_digest_skips_bad_recipient_without_claiming_rows(): void {
+		reset_phpmailer_instance();
+
+		$bad = self::factory()->user->create(
+			array(
+				'role'       => 'administrator',
+				'user_email' => 'not-an-email',
+			)
+		);
+		$id = Notifications::notify( $bad, 'run_finished', 'Digest', 'Body' );
+
+		Notifications::send_daily_digest();
+
+		$mailer = tests_retrieve_phpmailer_instance();
+		$this->assertCount( 0, $mailer->mock_sent );
+
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Test assertion against the custom table.
+		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT emailed_at FROM %i WHERE id = %d', $wpdb->prefix . 'agent_builder_notifications', $id ), ARRAY_A );
+		$this->assertNull( $row['emailed_at'], 'A bad recipient must not stamp rows emailed.' );
 	}
 }
