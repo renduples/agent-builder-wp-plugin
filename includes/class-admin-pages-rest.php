@@ -19,6 +19,7 @@ namespace Agentic;
 
 use Agentic\Admin_Pages\Admin_Profiles;
 use Agentic\Admin_Pages\Agent_Ready_Payload;
+use Agentic\Admin_Pages\Agents_Payload;
 use Agentic\Admin_Pages\Approvals_Payload;
 use Agentic\Admin_Pages\Deployment_Payload;
 use Agentic\Admin_Pages\Logs_Payload;
@@ -48,6 +49,7 @@ class Admin_Pages_REST {
 		add_action( 'admin_post_agentic_export_skill', array( __CLASS__, 'export_skill' ) );
 		add_action( 'admin_post_agentic_import_skill', array( __CLASS__, 'import_skill' ) );
 		add_action( 'admin_post_agentic_export_agent', array( __CLASS__, 'export_agent_download' ) );
+		add_action( 'admin_post_agentic_import_agent', array( __CLASS__, 'import_agent' ) );
 	}
 
 	/**
@@ -107,13 +109,23 @@ class Admin_Pages_REST {
 		$action = sanitize_key( (string) $request->get_param( 'action_name' ) );
 
 		$tools_actions  = array( 'toggle_tool', 'apply_tools_profile', 'delete_skill' );
-		$agents_actions = array( 'save_approval_prefs', 'approval_decide', 'approval_decide_bulk' );
+		$agents_actions = array(
+			'save_approval_prefs',
+			'approval_decide',
+			'approval_decide_bulk',
+			'agent_profile_save',
+			'agent_toggle',
+			'agent_duplicate',
+			'agent_reorder',
+			'agent_export',
+			'agent_delete',
+		);
 
 		if ( 'tools' === $page || 'skills' === $page || in_array( $action, $tools_actions, true ) ) {
 			return current_user_can( 'agent_builder_manage_tools' );
 		}
 
-		if ( 'approvals' === $page || 'deployment' === $page || in_array( $action, $agents_actions, true ) ) {
+		if ( 'approvals' === $page || 'deployment' === $page || 'agents' === $page || in_array( $action, $agents_actions, true ) ) {
 			return current_user_can( 'agent_builder_manage_agents' );
 		}
 
@@ -181,6 +193,10 @@ class Admin_Pages_REST {
 			'train-data'    => array( 'class' => Train_Payload::class, 'args' => array( $tab ?: 'wiki' ) ),
 			'agent-ready'   => array( 'class' => Agent_Ready_Payload::class, 'args' => array() ),
 			'safety-center' => array( 'class' => Safety_Center_Payload::class, 'args' => array() ),
+			'agents'        => array(
+				'class' => Agents_Payload::class,
+				'args'  => array(),
+			),
 		);
 
 		if ( 'logs' === $page ) {
@@ -393,6 +409,30 @@ class Admin_Pages_REST {
 
 		if ( 'set_emergency_stop' === $action ) {
 			return self::set_emergency_stop( $request );
+		}
+
+		if ( 'agent_profile_save' === $action ) {
+			return self::agent_profile_save( $request );
+		}
+
+		if ( 'agent_toggle' === $action ) {
+			return self::agent_toggle( $request );
+		}
+
+		if ( 'agent_duplicate' === $action ) {
+			return self::agent_duplicate( $request );
+		}
+
+		if ( 'agent_reorder' === $action ) {
+			return self::agent_reorder( $request );
+		}
+
+		if ( 'agent_export' === $action ) {
+			return self::agent_export( $request );
+		}
+
+		if ( 'agent_delete' === $action ) {
+			return self::agent_delete( $request );
 		}
 
 		return new \WP_Error( 'unknown_action', __( 'Unknown action.', 'agent-builder' ), array( 'status' => 400 ) );
@@ -1168,5 +1208,290 @@ class Admin_Pages_REST {
 			),
 			200
 		);
+	}
+
+	/**
+	 * Resolve an agent slug to its installed record, or return a 404 error.
+	 *
+	 * @param string $slug Agent slug.
+	 * @return array<string, mixed>|\WP_Error
+	 */
+	private static function resolve_agent( string $slug ) {
+		if ( '' === $slug || ! class_exists( '\Agentic_Agent_Registry' ) ) {
+			return new \WP_Error( 'invalid', __( 'Unknown agent.', 'agent-builder' ), array( 'status' => 404 ) );
+		}
+		$installed = \Agentic_Agent_Registry::get_instance()->get_installed_agents( true );
+		if ( ! isset( $installed[ $slug ] ) ) {
+			return new \WP_Error( 'invalid', __( 'Unknown agent.', 'agent-builder' ), array( 'status' => 404 ) );
+		}
+		return $installed[ $slug ];
+	}
+
+	/**
+	 * Save profile overrides for one agent (name, title, standing description,
+	 * avatar, pin/hide). Returns the merged profile read back.
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	private static function agent_profile_save( \WP_REST_Request $request ) {
+		$slug = sanitize_key( (string) $request->get_param( 'slug' ) );
+		$info = self::resolve_agent( $slug );
+		if ( is_wp_error( $info ) ) {
+			return $info;
+		}
+
+		// Every param other than the action/slug is a candidate profile key;
+		// Agent_Profile::save() sanitises and silently drops unknown keys.
+		$fields = array();
+		foreach ( $request->get_params() as $key => $value ) {
+			if ( in_array( (string) $key, array( 'action_name', 'slug' ), true ) ) {
+				continue;
+			}
+			$fields[ (string) $key ] = $value;
+		}
+
+		Agent_Profile::save( $slug, $fields );
+
+		if ( class_exists( Audit_Log::class ) ) {
+			Audit_Log::log_admin(
+				'agent_profile_saved',
+				$slug,
+				array(
+					'id'     => $slug,
+					'slug'   => $slug,
+					'fields' => $fields,
+				),
+				(string) ( $info['name'] ?? $slug )
+			);
+		}
+
+		return new \WP_REST_Response(
+			array(
+				'ok'    => true,
+				'agent' => Agent_Profile::get( $slug ),
+			),
+			200
+		);
+	}
+
+	/**
+	 * Activate or deactivate one agent via the registry (same path the classic
+	 * agents page uses).
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	private static function agent_toggle( \WP_REST_Request $request ) {
+		$slug   = sanitize_key( (string) $request->get_param( 'slug' ) );
+		$active = rest_sanitize_boolean( $request->get_param( 'active' ) );
+		$info   = self::resolve_agent( $slug );
+		if ( is_wp_error( $info ) ) {
+			return $info;
+		}
+
+		$registry = \Agentic_Agent_Registry::get_instance();
+		$result   = $active ? $registry->activate_agent( $slug ) : $registry->deactivate_agent( $slug );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		if ( class_exists( Audit_Log::class ) ) {
+			Audit_Log::log_admin(
+				$active ? 'agent_activated' : 'agent_deactivated',
+				$slug,
+				array(
+					'id'     => $slug,
+					'slug'   => $slug,
+					'active' => $active,
+				),
+				(string) ( $info['name'] ?? $slug )
+			);
+		}
+		if ( class_exists( Security_Log::class ) ) {
+			Security_Log::log_system(
+				$active ? 'agent_activated' : 'agent_deactivated',
+				'agents',
+				array( 'slug' => $slug )
+			);
+		}
+
+		return new \WP_REST_Response(
+			array(
+				'ok'     => true,
+				'slug'   => $slug,
+				'active' => $registry->is_agent_active( $slug ),
+			),
+			200
+		);
+	}
+
+	/**
+	 * Duplicate an agent via Agent_Templates.
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	private static function agent_duplicate( \WP_REST_Request $request ) {
+		$slug = sanitize_key( (string) $request->get_param( 'slug' ) );
+		$info = self::resolve_agent( $slug );
+		if ( is_wp_error( $info ) ) {
+			return $info;
+		}
+
+		$copy = Agent_Templates::duplicate( $slug );
+		if ( is_wp_error( $copy ) ) {
+			return $copy;
+		}
+
+		return new \WP_REST_Response(
+			array(
+				'ok'   => true,
+				'slug' => $copy,
+			),
+			200
+		);
+	}
+
+	/**
+	 * Persist a new roster order for a list of slugs.
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	private static function agent_reorder( \WP_REST_Request $request ) {
+		$slugs = array_map( 'sanitize_key', (array) $request->get_param( 'slugs' ) );
+		if ( empty( $slugs ) ) {
+			return new \WP_Error( 'invalid', __( 'No agents to reorder.', 'agent-builder' ), array( 'status' => 400 ) );
+		}
+
+		Agent_Profile::order( $slugs );
+
+		return new \WP_REST_Response(
+			array(
+				'ok'    => true,
+				'slugs' => $slugs,
+			),
+			200
+		);
+	}
+
+	/**
+	 * Return a download URL for one agent's template zip, pointing at the
+	 * already-registered export_agent_download admin-post handler (which owns
+	 * the zip-building + streaming). No zip logic is duplicated here.
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	private static function agent_export( \WP_REST_Request $request ) {
+		$slug = sanitize_key( (string) $request->get_param( 'slug' ) );
+		$info = self::resolve_agent( $slug );
+		if ( is_wp_error( $info ) ) {
+			return $info;
+		}
+
+		$url = add_query_arg(
+			array(
+				'action'   => 'agentic_export_agent',
+				'slug'     => $slug,
+				'_wpnonce' => wp_create_nonce( 'agentic_export_agent' ),
+			),
+			admin_url( 'admin-post.php' )
+		);
+
+		return new \WP_REST_Response(
+			array(
+				'ok'  => true,
+				'url' => $url,
+			),
+			200
+		);
+	}
+
+	/**
+	 * Delete one agent. Admin-only — deleting agent files (or a whole bundled
+	 * agent) is a higher bar than the everyday manage-agents capability.
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	private static function agent_delete( \WP_REST_Request $request ) {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return new \WP_Error( 'forbidden', __( 'Permission denied.', 'agent-builder' ), array( 'status' => 403 ) );
+		}
+
+		$slug = sanitize_key( (string) $request->get_param( 'slug' ) );
+		$info = self::resolve_agent( $slug );
+		if ( is_wp_error( $info ) ) {
+			return $info;
+		}
+
+		$result = \Agentic_Agent_Registry::get_instance()->delete_agent( $slug );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return new \WP_REST_Response(
+			array(
+				'ok'   => true,
+				'slug' => $slug,
+			),
+			200
+		);
+	}
+
+	/**
+	 * Import an agent template zip uploaded from the Agents page. Plain
+	 * admin-post handler (not REST) so a multipart form submission reaches
+	 * $_FILES directly — the same pattern import_skill() established. Admin-only.
+	 *
+	 * @return void
+	 */
+	public static function import_agent(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You do not have permission to import agents.', 'agent-builder' ), '', array( 'response' => 403 ) );
+		}
+
+		if ( ! isset( $_POST['agentic_agent_import_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['agentic_agent_import_nonce'] ) ), 'agentic_import_agent' ) ) {
+			wp_die( esc_html__( 'Security check failed. Please reload the Agents page and try importing again.', 'agent-builder' ), '', array( 'response' => 403 ) );
+		}
+
+		$redirect_base = admin_url( 'admin.php?page=agentic-agents' );
+
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- $_FILES[...]['error'] is a PHP-generated integer upload-error code.
+		if ( empty( $_FILES['agentic_agent_file']['tmp_name'] ) || UPLOAD_ERR_OK !== ( $_FILES['agentic_agent_file']['error'] ?? UPLOAD_ERR_NO_FILE ) ) {
+			wp_safe_redirect( add_query_arg( array( 'import_error' => 1 ), $redirect_base ) );
+			exit;
+		}
+
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitize_file_name() below is the actual sanitizer; this just extracts the extension for the allowlist.
+		$uploaded_name      = wp_unslash( $_FILES['agentic_agent_file']['name'] ?? '' );
+		$uploaded_extension = strtolower( pathinfo( sanitize_file_name( $uploaded_name ), PATHINFO_EXTENSION ) );
+		if ( 'zip' !== $uploaded_extension ) {
+			wp_safe_redirect( add_query_arg( array( 'import_error' => 1 ), $redirect_base ) );
+			exit;
+		}
+
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Agent_Templates::import() expects a raw $_FILES entry and sanitises via wp_handle_sideload().
+		$slug = Agent_Templates::import( $_FILES['agentic_agent_file'] );
+		if ( is_wp_error( $slug ) ) {
+			wp_safe_redirect( add_query_arg( array( 'import_error' => 1 ), $redirect_base ) );
+			exit;
+		}
+
+		if ( class_exists( Security_Log::class ) ) {
+			Security_Log::log_system(
+				'settings_changed',
+				'agents',
+				array(
+					'action' => 'imported_file',
+					'slug'   => $slug,
+				)
+			);
+		}
+
+		wp_safe_redirect( add_query_arg( array( 'imported' => $slug ), $redirect_base ) );
+		exit;
 	}
 }
