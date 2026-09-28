@@ -1057,6 +1057,12 @@ class REST_API {
 		$audit = new Audit_Log();
 		$audit->log( 'human', "approval_{$new_status}", 'approval', array( 'request_id' => $id ) );
 
+		// Only a run-backed approval has a paused run waiting on this decision —
+		// a chat-originated approval (no run_id) has nothing to resume.
+		if ( ! empty( $approval['run_id'] ) ) {
+			do_action( 'agent_builder_approval_resolved', 'approval', $id, $new_status, $execution, $approval );
+		}
+
 		$ok_message = 'reject' === $action
 			? sprintf(
 				/* translators: %s: action name */
