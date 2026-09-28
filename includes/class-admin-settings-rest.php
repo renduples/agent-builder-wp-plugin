@@ -847,6 +847,7 @@ class Admin_Settings_REST {
 			'message_scanning'         => (bool) get_option( 'agent_builder_message_scanning', true ),
 			'chat_consent_enabled'     => (bool) get_option( 'agent_builder_chat_consent_enabled', false ),
 			'chat_consent_text'        => (string) get_option( 'agent_builder_chat_consent_text', '' ),
+			'notify_email'             => (string) get_option( 'agent_builder_notify_email', 'daily' ),
 			'retention_conversations'  => (int) get_option( 'agent_builder_retention_conversations', 30 ),
 			'retention_audit_log'      => (int) get_option( 'agent_builder_retention_audit_log', 30 ),
 			'rate_limit_authenticated' => (int) get_option( 'agent_builder_rate_limit_authenticated', 30 ),
@@ -1252,6 +1253,12 @@ class Admin_Settings_REST {
 		}
 		if ( isset( $data['chat_consent_text'] ) ) {
 			update_option( 'agent_builder_chat_consent_text', sanitize_textarea_field( (string) $data['chat_consent_text'] ) );
+		}
+		if ( isset( $data['notify_email'] ) ) {
+			$notify = sanitize_key( (string) $data['notify_email'] );
+			if ( in_array( $notify, array( 'off', 'daily', 'instant' ), true ) ) {
+				update_option( 'agent_builder_notify_email', $notify );
+			}
 		}
 		if ( isset( $data['retention_conversations'] ) ) {
 			update_option( 'agent_builder_retention_conversations', max( 0, absint( $data['retention_conversations'] ) ) );

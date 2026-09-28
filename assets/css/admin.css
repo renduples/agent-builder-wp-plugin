@@ -5036,3 +5036,80 @@ body.agent-builder_page_agentic-train-data #agentic-global-mode-switch {
 		height: calc(100vh - 230px);
 	}
 }
+
+/* ---- Dashboard Tasks card ---- */
+.agentic-tasks-card-list {
+	list-style: none;
+	margin: 12px 0 0;
+	padding: 0;
+}
+
+.agentic-tasks-card-list li {
+	margin: 0;
+	border-top: 1px solid #f0f0f1;
+}
+
+.agentic-tasks-card-list li:first-child {
+	border-top: 0;
+}
+
+.agentic-tasks-card-list a {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 0;
+	text-decoration: none;
+	color: #2c3338;
+}
+
+.agentic-tasks-card-list a strong {
+	flex-shrink: 0;
+	font-size: 12px;
+}
+
+.agentic-tasks-card-excerpt {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: #646970;
+	font-size: 12px;
+}
+
+.agentic-tasks-card-status {
+	flex-shrink: 0;
+	padding: 1px 8px;
+	border-radius: 999px;
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: capitalize;
+}
+
+.agentic-tasks-card-status--queued,
+.agentic-tasks-card-status--continuing {
+	background: #f0f6fc;
+	color: #2271b1;
+}
+
+.agentic-tasks-card-status--running,
+.agentic-tasks-card-status--completed {
+	background: #e7f4e8;
+	color: #1a7a1a;
+}
+
+.agentic-tasks-card-status--waiting {
+	background: #fcf9e8;
+	color: #996800;
+}
+
+.agentic-tasks-card-status--failed,
+.agentic-tasks-card-status--error {
+	background: #fcf0f1;
+	color: #b32d2e;
+}
+
+.agentic-tasks-card-status--aborted,
+.agentic-tasks-card-status--cancelled {
+	background: #f6f7f7;
+	color: #646970;
+}

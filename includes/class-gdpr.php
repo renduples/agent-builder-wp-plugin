@@ -119,6 +119,18 @@ class GDPR {
 			'exporter_friendly_name' => __( 'Agent Builder – Jobs', 'agent-builder' ),
 			'callback'               => array( __CLASS__, 'export_jobs' ),
 		);
+		$exporters[] = array(
+			'exporter_friendly_name' => __( 'Agent Builder – Notifications', 'agent-builder' ),
+			'callback'               => array( __CLASS__, 'export_notifications' ),
+		);
+		$exporters[] = array(
+			'exporter_friendly_name' => __( 'Agent Builder – Email Preferences', 'agent-builder' ),
+			'callback'               => array( __CLASS__, 'export_notify_optout' ),
+		);
+		$exporters[] = array(
+			'exporter_friendly_name' => __( 'Agent Builder – Runs', 'agent-builder' ),
+			'callback'               => array( __CLASS__, 'export_runs' ),
+		);
 		return $exporters;
 	}
 
@@ -310,6 +322,18 @@ class GDPR {
 		$erasers[] = array(
 			'eraser_friendly_name' => __( 'Agent Builder – Jobs', 'agent-builder' ),
 			'callback'             => array( __CLASS__, 'erase_jobs' ),
+		);
+		$erasers[] = array(
+			'eraser_friendly_name' => __( 'Agent Builder – Notifications', 'agent-builder' ),
+			'callback'             => array( __CLASS__, 'erase_notifications' ),
+		);
+		$erasers[] = array(
+			'eraser_friendly_name' => __( 'Agent Builder – Email Preferences', 'agent-builder' ),
+			'callback'             => array( __CLASS__, 'erase_notify_optout' ),
+		);
+		$erasers[] = array(
+			'eraser_friendly_name' => __( 'Agent Builder – Runs', 'agent-builder' ),
+			'callback'             => array( __CLASS__, 'erase_runs' ),
 		);
 		return $erasers;
 	}
@@ -668,6 +692,352 @@ class GDPR {
 	// -------------------------------------------------------------------------
 	// Data Retention
 	// -------------------------------------------------------------------------
+
+	/**
+	 * Export agent-activity notifications for a user.
+	 *
+	 * @param string $email Email address of the data subject.
+	 * @param int    $page  Page number.
+	 * @return array{data: array<int, array<string, mixed>>, done: bool}
+	 */
+	public static function export_notifications( string $email, int $page = 1 ): array {
+		global $wpdb;
+
+		$user = get_user_by( 'email', $email );
+		if ( ! $user ) {
+			return array(
+				'data' => array(),
+				'done' => true,
+			);
+		}
+
+		$per_page = 50;
+		$offset   = ( $page - 1 ) * $per_page;
+		$table    = $wpdb->prefix . 'agent_builder_notifications';
+
+		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" ) !== $table ) { // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			return array(
+				'data' => array(),
+				'done' => true,
+			);
+		}
+
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT id, type, severity, title, body, link, run_id, agent_id, read_at, emailed_at, created_at FROM {$table} WHERE user_id = %d ORDER BY created_at DESC LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$user->ID,
+				$per_page,
+				$offset
+			)
+		);
+
+		if ( empty( $rows ) ) {
+			return array(
+				'data' => array(),
+				'done' => true,
+			);
+		}
+
+		$export_items = array();
+		foreach ( $rows as $row ) {
+			$export_items[] = array(
+				'group_id'    => 'agent_builder_notifications',
+				'group_label' => __( 'Agent Activity Notifications', 'agent-builder' ),
+				'item_id'     => 'notif-' . $row->id,
+				'data'        => array(
+					array(
+						'name'  => __( 'Type', 'agent-builder' ),
+						'value' => $row->type,
+					),
+					array(
+						'name'  => __( 'Severity', 'agent-builder' ),
+						'value' => $row->severity,
+					),
+					array(
+						'name'  => __( 'Title', 'agent-builder' ),
+						'value' => $row->title,
+					),
+					array(
+						'name'  => __( 'Body', 'agent-builder' ),
+						'value' => $row->body,
+					),
+					array(
+						'name'  => __( 'Link', 'agent-builder' ),
+						'value' => $row->link,
+					),
+					array(
+						'name'  => __( 'Agent', 'agent-builder' ),
+						'value' => $row->agent_id ?? '',
+					),
+					array(
+						'name'  => __( 'Run', 'agent-builder' ),
+						'value' => $row->run_id ?? '',
+					),
+					array(
+						'name'  => __( 'Read', 'agent-builder' ),
+						'value' => $row->read_at ?? '',
+					),
+					array(
+						'name'  => __( 'Date', 'agent-builder' ),
+						'value' => $row->created_at,
+					),
+				),
+			);
+		}
+
+		return array(
+			'data' => $export_items,
+			'done' => count( $rows ) < $per_page,
+		);
+	}
+
+	/**
+	 * Export the agent-activity email opt-out preference for a user.
+	 *
+	 * @param string $email Email address of the data subject.
+	 * @param int    $page  Page number.
+	 * @return array{data: array<int, array<string, mixed>>, done: bool}
+	 */
+	public static function export_notify_optout( string $email, int $page = 1 ): array {
+		$user = get_user_by( 'email', $email );
+		if ( ! $user || $page > 1 ) {
+			return array(
+				'data' => array(),
+				'done' => true,
+			);
+		}
+
+		$value = get_user_meta( $user->ID, Notifications::OPTOUT_META, true );
+		if ( '' === $value ) {
+			return array(
+				'data' => array(),
+				'done' => true,
+			);
+		}
+
+		return array(
+			'data' => array(
+				array(
+					'group_id'    => 'agent_builder_email_prefs',
+					'group_label' => __( 'Agent Activity Email Preferences', 'agent-builder' ),
+					'item_id'     => 'notify-optout',
+					'data'        => array(
+						array(
+							'name'  => __( 'Opted out of agent activity email', 'agent-builder' ),
+							'value' => '1' === (string) $value ? __( 'Yes', 'agent-builder' ) : __( 'No', 'agent-builder' ),
+						),
+					),
+				),
+			),
+			'done' => true,
+		);
+	}
+
+	/**
+	 * Export background runs for a user.
+	 *
+	 * @param string $email Email address of the data subject.
+	 * @param int    $page  Page number.
+	 * @return array{data: array<int, array<string, mixed>>, done: bool}
+	 */
+	public static function export_runs( string $email, int $page = 1 ): array {
+		global $wpdb;
+
+		$user = get_user_by( 'email', $email );
+		if ( ! $user ) {
+			return array(
+				'data' => array(),
+				'done' => true,
+			);
+		}
+
+		$per_page = 50;
+		$offset   = ( $page - 1 ) * $per_page;
+		$table    = $wpdb->prefix . 'agent_builder_runs';
+
+		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" ) !== $table ) { // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			return array(
+				'data' => array(),
+				'done' => true,
+			);
+		}
+
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT run_id, root_agent, kind, status, task_text, result_summary, error, started_at, finished_at FROM {$table} WHERE user_id = %d ORDER BY started_at DESC LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$user->ID,
+				$per_page,
+				$offset
+			)
+		);
+
+		if ( empty( $rows ) ) {
+			return array(
+				'data' => array(),
+				'done' => true,
+			);
+		}
+
+		$export_items = array();
+		foreach ( $rows as $row ) {
+			$export_items[] = array(
+				'group_id'    => 'agent_builder_runs',
+				'group_label' => __( 'Agent Background Runs', 'agent-builder' ),
+				'item_id'     => 'run-' . $row->run_id,
+				'data'        => array(
+					array(
+						'name'  => __( 'Run ID', 'agent-builder' ),
+						'value' => $row->run_id,
+					),
+					array(
+						'name'  => __( 'Agent', 'agent-builder' ),
+						'value' => $row->root_agent,
+					),
+					array(
+						'name'  => __( 'Status', 'agent-builder' ),
+						'value' => $row->status,
+					),
+					array(
+						'name'  => __( 'Task', 'agent-builder' ),
+						'value' => $row->task_text ?? '',
+					),
+					array(
+						'name'  => __( 'Result', 'agent-builder' ),
+						'value' => $row->result_summary ?? '',
+					),
+					array(
+						'name'  => __( 'Error', 'agent-builder' ),
+						'value' => $row->error ?? '',
+					),
+					array(
+						'name'  => __( 'Started', 'agent-builder' ),
+						'value' => $row->started_at ?? '',
+					),
+					array(
+						'name'  => __( 'Finished', 'agent-builder' ),
+						'value' => $row->finished_at ?? '',
+					),
+				),
+			);
+		}
+
+		return array(
+			'data' => $export_items,
+			'done' => count( $rows ) < $per_page,
+		);
+	}
+
+	/**
+	 * Erase agent-activity notifications linked to a user.
+	 *
+	 * @param string $email Email address.
+	 * @param int    $page  Page (unused).
+	 * @return array{items_removed: int, items_retained: int, messages: string[], done: bool}
+	 */
+	public static function erase_notifications( string $email, int $page = 1 ): array { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- WP eraser callback signature.
+		global $wpdb;
+
+		$user = get_user_by( 'email', $email );
+		if ( ! $user ) {
+			return array(
+				'items_removed'  => 0,
+				'items_retained' => 0,
+				'messages'       => array(),
+				'done'           => true,
+			);
+		}
+
+		$table = $wpdb->prefix . 'agent_builder_notifications';
+		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" ) !== $table ) { // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			return array(
+				'items_removed'  => 0,
+				'items_retained' => 0,
+				'messages'       => array(),
+				'done'           => true,
+			);
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$deleted = (int) $wpdb->delete( $table, array( 'user_id' => $user->ID ), array( '%d' ) );
+
+		return array(
+			'items_removed'  => $deleted,
+			'items_retained' => 0,
+			'messages'       => array(),
+			'done'           => true,
+		);
+	}
+
+	/**
+	 * Erase the agent-activity email opt-out preference for a user.
+	 *
+	 * @param string $email Email address.
+	 * @param int    $page  Page (unused).
+	 * @return array{items_removed: int, items_retained: int, messages: string[], done: bool}
+	 */
+	public static function erase_notify_optout( string $email, int $page = 1 ): array { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- WP eraser callback signature.
+		$user = get_user_by( 'email', $email );
+		if ( ! $user ) {
+			return array(
+				'items_removed'  => 0,
+				'items_retained' => 0,
+				'messages'       => array(),
+				'done'           => true,
+			);
+		}
+
+		$removed = delete_user_meta( $user->ID, Notifications::OPTOUT_META ) ? 1 : 0;
+
+		return array(
+			'items_removed'  => $removed,
+			'items_retained' => 0,
+			'messages'       => array(),
+			'done'           => true,
+		);
+	}
+
+	/**
+	 * Erase background runs linked to a user.
+	 *
+	 * @param string $email Email address.
+	 * @param int    $page  Page (unused).
+	 * @return array{items_removed: int, items_retained: int, messages: string[], done: bool}
+	 */
+	public static function erase_runs( string $email, int $page = 1 ): array { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- WP eraser callback signature.
+		global $wpdb;
+
+		$user = get_user_by( 'email', $email );
+		if ( ! $user ) {
+			return array(
+				'items_removed'  => 0,
+				'items_retained' => 0,
+				'messages'       => array(),
+				'done'           => true,
+			);
+		}
+
+		$table = $wpdb->prefix . 'agent_builder_runs';
+		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" ) !== $table ) { // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			return array(
+				'items_removed'  => 0,
+				'items_retained' => 0,
+				'messages'       => array(),
+				'done'           => true,
+			);
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$deleted = (int) $wpdb->delete( $table, array( 'user_id' => $user->ID ), array( '%d' ) );
+
+		return array(
+			'items_removed'  => $deleted,
+			'items_retained' => 0,
+			'messages'       => array(),
+			'done'           => true,
+		);
+	}
 
 	/**
 	 * Cron callback: delete records older than the configured retention period.

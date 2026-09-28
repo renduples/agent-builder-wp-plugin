@@ -555,6 +555,9 @@ final class Activator {
 		if ( wp_next_scheduled( 'agent_builder_costs_check_alerts' ) ) {
 			wp_clear_scheduled_hook( 'agent_builder_costs_check_alerts' );
 		}
+		if ( wp_next_scheduled( 'agent_builder_notification_digest' ) ) {
+			wp_clear_scheduled_hook( 'agent_builder_notification_digest' );
+		}
 	}
 
 	/**
@@ -1065,6 +1068,8 @@ final class Activator {
 			'agent_builder_allow_platform_sync'     => '0',
 			'agent_builder_retention_conversations' => 30,
 			'agent_builder_retention_audit_log'     => 30,
+			// Notification email mode: off | instant | daily (digest default).
+			'agent_builder_notify_email'            => 'daily',
 			\Agentic\Usage_Limits::OPTION_KEY       => \Agentic\Usage_Limits::get_install_defaults(),
 			// Gutenberg sidebar: enabled by default so new installs have it working out of the box.
 			'agent_builder_editor_sidebar_settings' => array(
@@ -1926,6 +1931,28 @@ final class Activator {
         ) $charset_collate;";
 		$run_delta( 'agent_builder_agent_library', $sql_agent_library );
 
+		// Notifications table — one row per inbox notification (run results,
+		// routine failures, approvals). `read_at`/`emailed_at` track inbox and
+		// email delivery state; the daily digest sends rows still at NULL.
+		$sql_notifications = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agent_builder_notifications (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            user_id bigint(20) unsigned NOT NULL DEFAULT 0,
+            type varchar(32) NOT NULL DEFAULT '',
+            severity varchar(16) NOT NULL DEFAULT 'info',
+            title varchar(255) NOT NULL DEFAULT '',
+            body text NOT NULL,
+            link varchar(2048) NOT NULL DEFAULT '',
+            run_id varchar(36) DEFAULT NULL,
+            agent_id varchar(64) DEFAULT NULL,
+            read_at datetime DEFAULT NULL,
+            emailed_at datetime DEFAULT NULL,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY user_read (user_id, read_at),
+            KEY created_at (created_at)
+        ) $charset_collate;";
+		$run_delta( 'agent_builder_notifications', $sql_notifications );
+
 		// Ensure Job_Manager, Security_Log, and Deployments are available (activation fires early).
 		include_once AGENT_BUILDER_DIR . 'includes/class-job-manager.php';
 		include_once AGENT_BUILDER_DIR . 'includes/class-security-log.php';
@@ -2110,6 +2137,13 @@ final class Activator {
 			$results['agent_builder_costs_check_alerts'] = 'scheduled';
 		} else {
 			$results['agent_builder_costs_check_alerts'] = 'already_scheduled';
+		}
+
+		if ( ! wp_next_scheduled( 'agent_builder_notification_digest' ) ) {
+			wp_schedule_event( time(), 'daily', 'agent_builder_notification_digest' );
+			$results['agent_builder_notification_digest'] = 'scheduled';
+		} else {
+			$results['agent_builder_notification_digest'] = 'already_scheduled';
 		}
 
 		self::record( 'schedule_cron_events', 'ok', $results );

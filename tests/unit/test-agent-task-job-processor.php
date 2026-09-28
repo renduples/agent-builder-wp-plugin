@@ -54,7 +54,7 @@ class Test_Agent_Task_Job_Processor extends TestCase {
 	 * request shape derived from the run.
 	 */
 	public function test_dispatch_creates_job_with_processor_and_request_shape(): void {
-		$run = Agent_Run::begin(
+		$run = Agent_Run::create_queued(
 			'wordpress-assistant',
 			array(
 				'kind'       => 'routine',
@@ -87,7 +87,7 @@ class Test_Agent_Task_Job_Processor extends TestCase {
 	 * tool_result (and any override) reach the processor.
 	 */
 	public function test_dispatch_merges_extra_payload(): void {
-		$run = Agent_Run::begin(
+		$run = Agent_Run::create_queued(
 			'wordpress-assistant',
 			array(
 				'kind'      => 'task',
@@ -273,9 +273,10 @@ class Test_Agent_Task_Job_Processor extends TestCase {
 		$registry = \Agentic_Agent_Registry::get_instance();
 		$registry->register( $this->make_agent( $agent_id ) );
 
-		// dispatch() creates the run up front (as the Tasks screen does) so the
-		// job's run_id refers to a real, not-yet-started 'running' row.
-		$run = Agent_Run::begin(
+		// dispatch() creates the run up front via create_queued() (as the Tasks
+		// screen does) so the job's run_id refers to a real, not-yet-started
+		// 'queued' row that the worker adopts.
+		$run = Agent_Run::create_queued(
 			$agent_id,
 			array(
 				'kind'      => 'task',
@@ -320,6 +321,34 @@ class Test_Agent_Task_Job_Processor extends TestCase {
 			)
 		);
 		$this->assertSame( 1, $count, 'the dispatched run must be adopted, not stranded beside a second begin() row' );
+	}
+
+	/**
+	 * A queued run whose job is never processed stays 'queued': create_queued()
+	 * must not make it current or arm a shutdown guard that would abort it when
+	 * the creating request ends. The 6 h abandoned-pending health check that
+	 * eventually flags the stale job is Job_Manager's concern; here we assert
+	 * only the run side.
+	 */
+	public function test_queued_run_with_unprocessed_job_stays_queued(): void {
+		$agent_id = 'wordpress-assistant';
+
+		$run    = Agent_Run::create_queued(
+			$agent_id,
+			array(
+				'kind'      => 'task',
+				'user_id'   => 7,
+				'task_text' => 'Summarise the newest posts',
+			)
+		);
+		$run_id = $run->get_run_id();
+
+		// A pending job exists, but the worker never runs it.
+		$job_id = Agent_Task_Job_Processor::dispatch( $run );
+		$this->assertNotSame( '', $job_id );
+
+		$reloaded = Agent_Run::load( $run_id );
+		$this->assertSame( 'queued', $reloaded->to_array()['status'], 'a queued run whose job never runs must stay queued' );
 	}
 
 	/**
