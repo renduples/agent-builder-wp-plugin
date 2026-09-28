@@ -1506,6 +1506,7 @@ class Agent_Controller {
 				'task_id'    => $task_id,
 				'session_id' => $session_id,
 				'run_id'     => $run->get_run_id(),
+				'user_id'    => $run->get_user_id(),
 				'prompt'     => substr( $prompt, 0, 500 ),
 			)
 		);

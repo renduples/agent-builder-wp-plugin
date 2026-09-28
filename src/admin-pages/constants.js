@@ -19,6 +19,7 @@ const SCREENS_WITH_MODE = [
 	'logs',
 	'agent-ready',
 	'safety-center',
+	'agents',
 ];
 
 export { RISK_EXPLANATIONS, SCREENS_WITH_MODE };

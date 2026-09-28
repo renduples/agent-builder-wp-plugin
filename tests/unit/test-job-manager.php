@@ -271,6 +271,45 @@ class Test_Job_Manager extends TestCase {
 	}
 
 	/**
+	 * A pending job whose WP-Cron single event was lost (cron option flushed,
+	 * DISABLE_WP_CRON, an interrupted spawn_cron()) is re-armed by
+	 * reschedule_stale_pending_jobs() once it is past the grace window.
+	 */
+	public function test_reschedule_stale_pending_jobs_recreates_lost_cron_event(): void {
+		$job_id = Job_Manager::create_job(
+			array(
+				'user_id'      => 1,
+				'agent_id'     => 'test-agent',
+				'request_data' => array( 'run_id' => 'r-1' ),
+				'processor'    => Runnable_Test_Processor::class,
+			)
+		);
+
+		// create_job() schedules the event immediately.
+		$this->assertNotFalse( wp_next_scheduled( 'agent_builder_process_job', array( $job_id ) ) );
+
+		// Simulate the event disappearing out from under the pending job.
+		wp_clear_scheduled_hook( 'agent_builder_process_job', array( $job_id ) );
+		$this->assertFalse( wp_next_scheduled( 'agent_builder_process_job', array( $job_id ) ) );
+
+		// Age the pending job past the 60s grace window so it qualifies.
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test back-dates the job so it is "stale".
+		$wpdb->update(
+			$wpdb->prefix . 'agent_builder_jobs',
+			array( 'created_at' => gmdate( 'Y-m-d H:i:s', time() - 120 ) ),
+			array( 'id' => $job_id ),
+			array( '%s' ),
+			array( '%s' )
+		);
+
+		$rescheduled = Job_Manager::reschedule_stale_pending_jobs();
+
+		$this->assertSame( 1, $rescheduled );
+		$this->assertNotFalse( wp_next_scheduled( 'agent_builder_process_job', array( $job_id ) ) );
+	}
+
+	/**
 	 * Register a processor class as allowlisted for the current test.
 	 *
 	 * @param string $class Processor class FQN.

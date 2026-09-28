@@ -213,6 +213,41 @@ class Admin_Notice_Manager {
 	}
 
 	/**
+	 * Warn when the one-time legacy agent-export cleanup gave up after repeated
+	 * failed delete attempts — a still-exposed legacy export zip that cannot be
+	 * deleted automatically (bad permissions/ownership) and needs a human to
+	 * remove it. Persistent (not dismissible): it clears only once the sweep
+	 * succeeds again after "Retry now".
+	 *
+	 * @return void
+	 */
+	public function show_legacy_exports_stuck_notice(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		if ( ! get_option( 'agent_builder_legacy_exports_gave_up' ) ) {
+			return;
+		}
+
+		$retry_url = wp_nonce_url(
+			add_query_arg( 'agentic_retry_legacy_exports', '1' ),
+			'agentic_retry_legacy_exports',
+			'agentic_retry_legacy_exports_nonce'
+		);
+		?>
+		<div class="notice notice-error" id="agentic-legacy-exports-stuck-notice">
+			<p>
+				<strong><?php esc_html_e( 'Agent Builder could not remove an old agent export file.', 'agent-builder' ); ?></strong>
+				<?php esc_html_e( 'A file left behind by an earlier version is still in wp-content/uploads/agentic-exports/ (or wp-content/agentic-exports/) and could not be deleted automatically — usually a permissions or file-ownership problem. Please remove it yourself, then retry.', 'agent-builder' ); ?>
+				&nbsp;
+				<a href="<?php echo esc_url( $retry_url ); ?>" class="button"><?php esc_html_e( 'Retry now', 'agent-builder' ); ?></a>
+			</p>
+		</div>
+		<?php
+	}
+
+	/**
 	 * Warn when a directory in agentic-agents/ is shadowing a bundled agent.
 	 *
 	 * The registry loads agentic-agents/ before any plugin library, so a copy

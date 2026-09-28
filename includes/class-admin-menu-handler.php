@@ -1531,19 +1531,19 @@ class Admin_Menu_Handler {
 		// React admin pages (skip agents — plugins-style list later).
 		// Deployment stays on classic PHP (multi-tab shortcodes/tasks/events UI).
 		$react_map = array(
-			'tools'       => array(
+			'tools'         => array(
 				'page' => 'tools',
 				'tab'  => '',
 			),
-			'skills'      => array(
+			'skills'        => array(
 				'page' => 'skills',
 				'tab'  => '',
 			),
-			'approvals'   => array(
+			'approvals'     => array(
 				'page' => 'approvals',
 				'tab'  => '',
 			),
-			'logs'        => array(
+			'logs'          => array(
 				'page' => 'logs',
 				'tab'  => '',
 			),
@@ -1553,6 +1553,10 @@ class Admin_Menu_Handler {
 			),
 			'safety-center' => array(
 				'page' => 'safety-center',
+				'tab'  => '',
+			),
+			'agents'        => array(
+				'page' => 'agents',
 				'tab'  => '',
 			),
 		);
@@ -1584,6 +1588,11 @@ class Admin_Menu_Handler {
 				);
 				Chat_Assets::maybe_add_chat_theme_overrides();
 			}
+			// The Agents profile drawer opens the WP media library for the
+			// avatar field, so its scripts must be present on this screen.
+			if ( 'agents' === $file ) {
+				wp_enqueue_media();
+			}
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : $react_map[ $file ]['tab'];
 			// Classic tools.php used ?category= — keep bookmarks working (read-only routing).
@@ -1607,6 +1616,7 @@ class Admin_Menu_Handler {
 				'logs'           => 'agentic-audit-log',
 				'train-data'     => 'agentic-train-data',
 				'safety-center'  => 'agentic-safety-center',
+				'agents'         => 'agentic-agents',
 				default          => 'agentic-' . $file,
 			};
 			wp_localize_script(

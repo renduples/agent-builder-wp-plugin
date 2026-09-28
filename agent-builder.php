@@ -139,6 +139,12 @@ final class Plugin {
 
 		add_action( 'init', array( $this, 'init' ) );
 
+		// One-time legacy agent-export cleanup. Deliberately on init (which
+		// fires on frontend/REST/cron, not just admin) and before any auth
+		// check — see Activator::maybe_cleanup_legacy_agent_exports() for why
+		// this security sweep must not wait for an admin to visit wp-admin.
+		add_action( 'init', array( Activator::class, 'maybe_cleanup_legacy_agent_exports' ), 1 );
+
 		// Admin bar agent menu — front-end only. The 'wp' action does not fire in
 		// wp-admin, so this naturally skips the backend. Deferred until 'wp' so
 		// is_admin_bar_showing() is reliable; also skips REST, cron, and
@@ -292,6 +298,8 @@ final class Plugin {
 		add_action( 'admin_notices', array( $notices, 'show_quota_reached_notice' ) );
 		add_action( 'admin_notices', array( $notices, 'show_shadowed_agent_notice' ) );
 		add_action( 'admin_notices', array( $notices, 'show_activation_degraded_notice' ) );
+		add_action( 'admin_notices', array( $notices, 'show_legacy_exports_stuck_notice' ) );
+		add_action( 'admin_init', array( Activator::class, 'maybe_handle_legacy_exports_retry_request' ), 1 );
 
 		// Agent update checks — free / WPorg never phone home, Pro users may opt in.
 		add_action( 'admin_init', array( Agent_Updates::class, 'maybe_check_on_agents_page' ) );

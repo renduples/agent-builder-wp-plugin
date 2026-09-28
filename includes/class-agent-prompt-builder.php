@@ -52,7 +52,8 @@ class Agent_Prompt_Builder {
 		// In those runs no human recipient is present, so addressing is suppressed.
 		$is_autonomous = ( false !== strpos( $extra_context, '[AUTONOMOUS MODE]' ) );
 
-		$output = $agent->get_system_prompt()
+		$output = Agent_Profile::identity_line( $slug )
+			. $agent->get_system_prompt()
 			. self::knowledge_block( $slug )
 			. self::okf_index_block( $slug )
 			. self::skills_index_block( $slug )
@@ -127,7 +128,8 @@ class Agent_Prompt_Builder {
 			if ( ! $instance instanceof Agent_Base ) {
 				continue;
 			}
-			$lines[] = sprintf( '- %s (%s): %s', $instance->get_name(), $slug, $instance->get_description() );
+			$profile = Agent_Profile::get( $slug );
+			$lines[] = sprintf( '- %s (%s): %s', $profile['display_name'], $slug, $profile['description'] );
 		}
 
 		if ( empty( $lines ) ) {

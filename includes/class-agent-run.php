@@ -722,6 +722,11 @@ class Agent_Run {
 		if ( self::$current === $this ) {
 			self::$current = null;
 		}
+
+		// Announce the hand-off after the DB write has landed (mirrors finish()
+		// firing agent_builder_run_finished only once the row is settled), so
+		// notification listeners observe a persisted 'waiting' run.
+		do_action( 'agent_builder_run_waiting', $this );
 	}
 
 	/**
