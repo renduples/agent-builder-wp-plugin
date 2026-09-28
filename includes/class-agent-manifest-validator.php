@@ -280,6 +280,22 @@ final class Agent_Manifest_Validator {
 				continue;
 			}
 
+			// Rate limit: at most one execution per listener per `min_interval`
+			// seconds (0 disables; negative coerced to the default of 60).
+			$min_interval = (int) ( $listener['min_interval'] ?? 60 );
+			if ( $min_interval < 0 ) {
+				$min_interval = 60;
+			}
+			$entry['min_interval'] = min( $min_interval, 86400 );
+
+			// Argument filter: run the listener only when hook argument `arg`
+			// matches `pattern` (PCRE). Invalid patterns are dropped, so a typo
+			// can't silently disable the listener — it falls back to every event.
+			$arg_filter = self::clean_arg_filter( $listener['arg_filter'] ?? null );
+			if ( null !== $arg_filter ) {
+				$entry['arg_filter'] = $arg_filter;
+			}
+
 			$clean[ $id ] = $entry;
 			if ( count( $clean ) >= self::MAX_LISTENERS ) {
 				break;
@@ -287,6 +303,35 @@ final class Agent_Manifest_Validator {
 		}
 
 		return array_values( $clean );
+	}
+
+	/**
+	 * Sanitize a listener's `arg_filter` (positional hook argument + PCRE pattern).
+	 *
+	 * @param mixed $filter Raw arg_filter input.
+	 * @return array{arg:int, pattern:string}|null Sanitized filter, or null when absent/invalid.
+	 */
+	private static function clean_arg_filter( $filter ): ?array {
+		if ( ! is_array( $filter ) ) {
+			return null;
+		}
+
+		$arg     = (int) ( $filter['arg'] ?? 0 );
+		$pattern = trim( (string) ( $filter['pattern'] ?? '' ) );
+		if ( '' === $pattern ) {
+			return null;
+		}
+
+		// Drop patterns that don't compile — the listener then runs on every
+		// event rather than being silently broken by an invalid regex.
+		if ( false === @preg_match( '/' . $pattern . '/', '' ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- A pattern that fails to compile is "drop it", never a fatal.
+			return null;
+		}
+
+		return array(
+			'arg'     => max( 0, min( 10, $arg ) ),
+			'pattern' => substr( $pattern, 0, 500 ),
+		);
 	}
 
 	/**

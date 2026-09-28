@@ -203,6 +203,40 @@ library/agents/my-agent/
 
 `category` must be one of the values `Agent_Manifest_Validator::ALLOWED_CATEGORIES` declares: `content`, `admin`, `ecommerce`, `frontend`, `developer`, `seo`, `security`, `media`, `support`. `tools` must name tools that actually exist under `library/tools/` (or WordPress core abilities) — an agent can only ever call what it lists here.
 
+#### `event_listeners` — reacting to WordPress hooks
+
+`agent.json` may also carry an `event_listeners` array. Each entry binds a WordPress action hook and runs either an autonomous LLM prompt or a single reviewed tool when that hook fires:
+
+```json
+{
+  "event_listeners": [
+    {
+      "id": "on-woocommerce-order",
+      "name": "New WooCommerce order",
+      "hook": "woocommerce_checkout_order_processed",
+      "tool": "create_post_content",
+      "args": [ "order_id", "posted_data" ],
+      "min_interval": 60,
+      "arg_filter": { "arg": 0, "pattern": "^[0-9]+$" }
+    }
+  ]
+}
+```
+
+| Key | Required | Meaning |
+|-----|----------|---------|
+| `id` | yes | Unique slug for this listener. |
+| `hook` | yes | WordPress action hook name (`updated_option`, `save_post`, …). |
+| `prompt` **or** `tool` | one of | `prompt` routes the event through the LLM; `tool` invokes one reviewed tool directly through the same risk gate as chat. A PHP `callback` is never accepted from a manifest. |
+| `args` | no | Maps positional hook arguments to named tool parameters, in hook-argument order (only for `tool` listeners). |
+| `priority` | no | `add_action()` priority, default `10`. |
+| `accepted_args` | no | Number of hook arguments to pass, default `1`. |
+| `name` / `description` | no | Display name (defaults to `id`) and a short description. |
+| `min_interval` | no | Rate limit in seconds — at most one execution per listener per window (default `60`; `0` disables; negative coerces to `60`; capped at `86400`). Fires skipped by the rate limit are counted, not audit-logged. |
+| `arg_filter` | no | `{ "arg": n, "pattern": "…" }` — run the listener only when hook argument `n` matches the PCRE `pattern`. A high-frequency hook like `updated_option` **must** declare one, or it would otherwise hit the approval gate for every unrelated option write. Invalid patterns are dropped, so a typo falls back to running on every event rather than silently never running. |
+
+Event listeners are guarded against the feedback loop that once let a listener on `updated_option` hang a site: they never fire for options/transients Agent Builder writes itself (the `agentic_*` and `agent_builder_*` prefixes), and a gated listener that keeps firing the same tool reuses its one pending proposal instead of minting a new one per event.
+
 ### `abilities.json` — the security boundary
 
 Every tool the agent can call needs a `risk` level, which controls whether a call runs immediately or pauses in the Approvals Queue for the site owner to review:
