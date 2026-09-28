@@ -164,6 +164,31 @@ function _agentic_create_test_tables() {
 		KEY enabled (enabled)
 	) {$charset_collate};";
 	dbDelta( $sql );
+
+	$sql = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agent_builder_agent_library (
+		id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+		slug varchar(128) NOT NULL,
+		name varchar(255) NOT NULL,
+		description text,
+		manifest longtext NOT NULL,
+		kind varchar(16) NOT NULL DEFAULT 'manifest',
+		path varchar(255) NOT NULL DEFAULT '',
+		source varchar(32) NOT NULL DEFAULT 'user',
+		origin varchar(64) NOT NULL DEFAULT '',
+		source_id varchar(255) NOT NULL DEFAULT '',
+		version varchar(32) NOT NULL DEFAULT '1.0.0',
+		author varchar(255) NOT NULL DEFAULT '',
+		hash char(64) NOT NULL DEFAULT '',
+		enabled tinyint(1) NOT NULL DEFAULT 1,
+		created_at datetime DEFAULT CURRENT_TIMESTAMP,
+		updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+		PRIMARY KEY (id),
+		UNIQUE KEY slug (slug),
+		KEY source (source),
+		KEY origin (origin),
+		KEY enabled (enabled)
+	) {$charset_collate};";
+	dbDelta( $sql );
 }
 
 /**

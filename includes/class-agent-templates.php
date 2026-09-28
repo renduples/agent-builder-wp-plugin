@@ -4,11 +4,18 @@
  *
  * Duplicating copies an agent (manifest, system prompt, abilities, profile and
  * locally-assigned skills) to a sibling slug. Exporting serialises the same
- * payload into a zip under uploads/agentic-exports/, deliberately excluding
- * provider keys/settings/credentials and the site-specific avatar attachment
- * id. Importing reverses that: it validates the archive, refuses any abilities
- * that would downgrade a tool below its risk floor, and writes the agent in
- * place (inactive until the owner activates it).
+ * payload into a zip — excluding provider keys/settings/credentials and the
+ * site-specific avatar attachment id — into a transient file in the system
+ * temp directory (wp_tempnam()), never anywhere under wp-content/ or the
+ * uploads tree, so no exported archive is ever reachable by a direct,
+ * unauthenticated HTTP request to a guessable path. The archive only ever
+ * leaves the server as a byte stream: export_agent_download() (the sole
+ * caller) is an authenticated, capability- and nonce-gated admin-post handler
+ * that streams the temp file to the browser and deletes it in a finally block
+ * the moment it has been read. Importing reverses export(): it validates the
+ * archive (including a bound on its extracted size before unpacking it),
+ * refuses any abilities that would downgrade a tool below its risk floor, and
+ * writes the agent in place (inactive until the owner activates it).
  *
  * All three operate on the *portable* representation of an agent — a
  * declarative agent.json manifest plus templates/system-prompt.txt and
@@ -39,6 +46,27 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Duplicate/export/import of agents as local, portable templates.
  */
 class Agent_Templates {
+
+	/**
+	 * Maximum number of entries an import archive may contain. A template
+	 * agent is a handful of small text files (agent.json, abilities.json,
+	 * system-prompt.txt, profile.json, a few skills/*.SKILL.md) — generous
+	 * headroom, still low enough to reject a zip-bomb-style entry flood.
+	 */
+	private const MAX_IMPORT_ENTRIES = 100;
+
+	/**
+	 * Maximum total decompressed size (bytes) an import archive may expand to,
+	 * enforced against the *actual* bytes streamed out of each entry's
+	 * inflater — never the zip's own, attacker-forgeable per-entry size fields.
+	 */
+	private const MAX_IMPORT_UNCOMPRESSED_BYTES = 5 * 1024 * 1024; // 5 MB.
+
+	/**
+	 * Chunk size (bytes) used when streaming an entry's decompressed content to
+	 * count its true size against MAX_IMPORT_UNCOMPRESSED_BYTES.
+	 */
+	private const EXTRACT_CHUNK_BYTES = 64 * 1024;
 
 	/**
 	 * Duplicate an installed agent to a new sibling slug.
@@ -97,6 +125,13 @@ class Agent_Templates {
 	 * provider keys, settings, credentials, the integrity signature, or the
 	 * site-specific avatar attachment id.
 	 *
+	 * The archive is written to a transient file in the system temp directory
+	 * (via wp_tempnam()) — never anywhere under wp-content/ or the uploads
+	 * tree, so no exported agent is ever reachable by a direct, unauthenticated
+	 * HTTP request to a guessable path. The caller (export_agent_download(),
+	 * the sole path that streams its bytes to a browser) is responsible for
+	 * deleting the temp file once it has been streamed.
+	 *
 	 * @param string $slug Agent slug.
 	 * @return string|\WP_Error Absolute path to the zip, or error.
 	 */
@@ -110,28 +145,49 @@ class Agent_Templates {
 			return new \WP_Error( 'zip_unavailable', __( 'The ZipArchive extension is required to export agents.', 'agent-builder' ) );
 		}
 
-		$uploads = wp_upload_dir();
-		if ( empty( $uploads['basedir'] ) ) {
-			return new \WP_Error( 'no_uploads', __( 'The uploads directory is unavailable.', 'agent-builder' ) );
+		// A fresh, unique temp file outside the web root (WP_TEMP_DIR / sys_get_temp_dir),
+		// pre-created mode 0600 by wp_tempnam(); the archive is built over it.
+		$zip_path = wp_tempnam( $slug );
+		if ( is_wp_error( $zip_path ) ) {
+			return $zip_path;
+		}
+		if ( false === $zip_path || ! is_string( $zip_path ) ) {
+			// wp_tempnam() returns false (not a WP_Error) when it cannot create
+			// the temp file; a boolean false would otherwise be handed straight
+			// to ZipArchive::open(), whose string parameter raises a TypeError
+			// instead of a controlled export failure.
+			return new \WP_Error( 'zip_failed', __( 'Could not create a temporary export file.', 'agent-builder' ) );
 		}
 
-		$exports_dir = trailingslashit( $uploads['basedir'] ) . 'agentic-exports';
-		if ( ! File_Manager::ensure_protected_dir( $exports_dir ) ) {
-			return new \WP_Error( 'mkdir_failed', __( 'Could not create the export directory.', 'agent-builder' ) );
-		}
-
-		$zip_path = $exports_dir . '/' . $slug . '.zip';
-		if ( file_exists( $zip_path ) ) {
+		// wp_tempnam() prefers WP_TEMP_DIR / sys_get_temp_dir(), but get_temp_dir()
+		// can fall back to a directory WordPress itself serves (under wp-content/)
+		// when neither is writable. That fallback would silently defeat this whole
+		// fix, so validate the resolved path is outside the web root before writing
+		// a single byte to it: a broken export is acceptable, a silently
+		// web-servable one is not.
+		if ( self::is_under_web_root( $zip_path ) ) {
 			wp_delete_file( $zip_path );
+			return new \WP_Error( 'export_unsafe_path', __( 'The export location is not safely outside the web root.', 'agent-builder' ) );
 		}
 
 		$zip = new \ZipArchive();
-		if ( true !== $zip->open( $zip_path, \ZipArchive::CREATE ) ) {
+		if ( true !== $zip->open( $zip_path, \ZipArchive::CREATE | \ZipArchive::OVERWRITE ) ) {
+			wp_delete_file( $zip_path );
 			return new \WP_Error( 'zip_failed', __( 'Could not create the export archive.', 'agent-builder' ) );
 		}
 
 		$manifest = $payload['manifest'];
 		unset( $manifest['system_prompt'] ); // Carried by system-prompt.txt instead.
+
+		$abilities = $payload['abilities'];
+		if ( ! is_array( $abilities ) ) {
+			// A DB-backed manifest agent has no on-disk abilities.json
+			// (Abilities_Manifest::load() only reads files, never the library
+			// table). Synthesize a valid manifest from the agent's declared
+			// tools at their risk floors so the export round-trips through
+			// import(), which requires abilities.json.
+			$abilities = self::synthesize_abilities( (array) ( $manifest['tools'] ?? array() ) );
+		}
 
 		$zip->addFromString( 'agent.json', (string) wp_json_encode( $manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) );
 
@@ -139,9 +195,7 @@ class Agent_Templates {
 			$zip->addFromString( 'system-prompt.txt', $payload['system_prompt'] );
 		}
 
-		if ( is_array( $payload['abilities'] ) ) {
-			$zip->addFromString( 'abilities.json', (string) wp_json_encode( $payload['abilities'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) );
-		}
+		$zip->addFromString( 'abilities.json', (string) wp_json_encode( $abilities, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) );
 
 		if ( ! empty( $payload['profile'] ) ) {
 			$zip->addFromString( 'profile.json', (string) wp_json_encode( $payload['profile'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) );
@@ -153,10 +207,43 @@ class Agent_Templates {
 		}
 
 		if ( ! $zip->close() ) {
+			wp_delete_file( $zip_path );
 			return new \WP_Error( 'zip_failed', __( 'Could not finalize the export archive.', 'agent-builder' ) );
 		}
 
 		return $zip_path;
+	}
+
+	/**
+	 * Whether an absolute path resolves to somewhere inside the web-servable
+	 * tree (ABSPATH or WP_CONTENT_DIR), which a direct HTTP request can reach.
+	 *
+	 * realpath() resolves symlinks and relative segments first, so a path that
+	 * only *looks* outside cannot slip past by pointing back in. If the path
+	 * cannot be resolved, the answer is conservative (true): the temp file
+	 * should already exist (wp_tempnam() pre-creates it), so an unresolvable
+	 * path is itself a failure mode worth rejecting.
+	 *
+	 * @param string $path Absolute file path.
+	 * @return bool
+	 */
+	private static function is_under_web_root( string $path ): bool {
+		$real = realpath( $path );
+		if ( false === $real ) {
+			return true;
+		}
+
+		$abspath = realpath( ABSPATH );
+		if ( false !== $abspath && str_starts_with( $real, trailingslashit( $abspath ) ) ) {
+			return true;
+		}
+
+		$content_dir = realpath( WP_CONTENT_DIR );
+		if ( false !== $content_dir && str_starts_with( $real, trailingslashit( $content_dir ) ) ) {
+			return true;
+		}
+
+		return false;
 	}
 
 	/**
@@ -212,6 +299,11 @@ class Agent_Templates {
 			self::cleanup_dir( $tmp_dir );
 			return $written;
 		}
+
+		// Force-refresh so a caller that immediately activates $slug in the
+		// same request doesn't hit a stale pre-import cache (duplicate()
+		// already does this after its own write_agent() call).
+		\Agentic_Agent_Registry::get_instance()->get_installed_agents( true );
 
 		self::apply_profile( $slug, $tmp_dir );
 		self::import_skills( $slug, $tmp_dir );
@@ -290,6 +382,33 @@ class Agent_Templates {
 	}
 
 	/**
+	 * Build a valid abilities manifest for an agent that has no on-disk
+	 * abilities.json (a DB-backed manifest agent), declaring each of its tools
+	 * at that tool's risk floor. A floor declaration is the lowest-risk
+	 * statement that is still valid, so the synthesized manifest is both
+	 * importable (import() requires abilities.json) and never a downgrade.
+	 *
+	 * @param string[] $tools Tool names declared by the agent.
+	 * @return array<string, mixed>
+	 */
+	private static function synthesize_abilities( array $tools ): array {
+		$abilities = array(
+			'version'   => '1.0',
+			'abilities' => array(),
+		);
+		foreach ( $tools as $tool ) {
+			$tool = (string) $tool;
+			if ( '' === $tool ) {
+				continue;
+			}
+			$abilities['abilities'][ $tool ] = array(
+				'risk' => Risk_Level::get_tool_default( $tool ),
+			);
+		}
+		return $abilities;
+	}
+
+	/**
 	 * Resolve an agent's system prompt (file first, then inline manifest field).
 	 *
 	 * @param array<string, mixed> $info     Installed-agent record.
@@ -336,6 +455,15 @@ class Agent_Templates {
 	 * Write a manifest agent (agent.json + templates/system-prompt.txt +
 	 * abilities.json with signature) into the user agents directory.
 	 *
+	 * import()/duplicate() pick $slug via unique_slug()/unique_copy_slug(),
+	 * whose collision check is not atomic with this write, so a concurrent
+	 * caller can win the same slug first. Every failure branch below removes
+	 * $agent_dir again — that is only safe because the mkdir() below is
+	 * itself an atomic create: if $agent_dir already exists (another writer
+	 * got there first, or a previous attempt left it behind), this call
+	 * bails immediately instead of writing into, and potentially later
+	 * deleting, a directory it does not own.
+	 *
 	 * @param string                    $slug          New agent slug.
 	 * @param array<string, mixed>      $manifest      Manifest (slug already set).
 	 * @param string                    $system_prompt System prompt text.
@@ -343,30 +471,46 @@ class Agent_Templates {
 	 * @return true|\WP_Error
 	 */
 	private static function write_agent( string $slug, array $manifest, string $system_prompt, ?array $abilities ) {
-		$agent_dir = AGENT_BUILDER_AGENTS_DIR . '/' . $slug;
-		if ( ! wp_mkdir_p( $agent_dir ) ) {
-			return new \WP_Error( 'mkdir_failed', __( 'Could not create the agent directory.', 'agent-builder' ) );
+		if ( ! wp_mkdir_p( AGENT_BUILDER_AGENTS_DIR ) ) {
+			return new \WP_Error( 'mkdir_failed', __( 'Could not create the agents directory.', 'agent-builder' ) );
 		}
 
-		// Remove any legacy agent.php so the declarative manifest is authoritative.
-		if ( file_exists( $agent_dir . '/agent.php' ) ) {
-			wp_delete_file( $agent_dir . '/agent.php' );
+		$agent_dir = AGENT_BUILDER_AGENTS_DIR . '/' . $slug;
+
+		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_system_operations_mkdir -- Deliberate: a plain mkdir() is an atomic create-or-fail, unlike wp_mkdir_p()'s "succeed either way"; its EEXIST warning is the race signal handled below.
+		$created = @mkdir( $agent_dir, self::agent_dir_mode() );
+		if ( ! $created ) {
+			// If the directory now exists, the mkdir failed because another
+			// writer won the race (or a previous attempt left it behind) — a
+			// real collision. Otherwise the failure is something else
+			// (permissions, a missing parent, …) and must not be reported as a
+			// taken slug, which would silently suppress the real error.
+			if ( is_dir( $agent_dir ) ) {
+				return new \WP_Error( 'slug_taken', __( 'Another request is already writing an agent with this slug.', 'agent-builder' ) );
+			}
+			return new \WP_Error( 'mkdir_failed', __( 'Could not create the agent directory.', 'agent-builder' ) );
 		}
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- mkdir()'s mode argument is still subject to umask; pin it explicitly, same as File_Manager::mkdir().
+		chmod( $agent_dir, self::agent_dir_mode() );
 
 		unset( $manifest['system_prompt'] ); // Written to its own file below.
 		$manifest_json = wp_json_encode( $manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 		if ( false === $manifest_json ) {
+			File_Manager::rmdir( $agent_dir, true );
 			return new \WP_Error( 'encode_failed', __( 'Could not encode the agent manifest.', 'agent-builder' ) );
 		}
 		if ( ! File_Manager::put_contents( $agent_dir . '/agent.json', $manifest_json ) ) {
+			File_Manager::rmdir( $agent_dir, true );
 			return new \WP_Error( 'write_failed', __( 'Could not write agent.json.', 'agent-builder' ) );
 		}
 
 		if ( '' !== $system_prompt ) {
 			if ( ! wp_mkdir_p( $agent_dir . '/templates' ) ) {
+				File_Manager::rmdir( $agent_dir, true );
 				return new \WP_Error( 'mkdir_failed', __( 'Could not create the agent templates directory.', 'agent-builder' ) );
 			}
 			if ( ! File_Manager::put_contents( $agent_dir . '/templates/system-prompt.txt', $system_prompt ) ) {
+				File_Manager::rmdir( $agent_dir, true );
 				return new \WP_Error( 'write_failed', __( 'Could not write the system prompt.', 'agent-builder' ) );
 			}
 		}
@@ -374,11 +518,22 @@ class Agent_Templates {
 		if ( is_array( $abilities ) ) {
 			$abilities['agent'] = $slug;
 			if ( ! Abilities_Manifest::write_manifest( $agent_dir, $slug, $abilities ) ) {
+				File_Manager::rmdir( $agent_dir, true );
 				return new \WP_Error( 'write_failed', __( 'Could not write abilities.json.', 'agent-builder' ) );
 			}
 		}
 
 		return true;
+	}
+
+	/**
+	 * Directory permission mode for a freshly-created agent directory,
+	 * matching what wp_mkdir_p()/File_Manager::mkdir() would have applied.
+	 *
+	 * @return int
+	 */
+	private static function agent_dir_mode(): int {
+		return defined( 'FS_CHMOD_DIR' ) ? FS_CHMOD_DIR : 0755;
 	}
 
 	/**
@@ -424,6 +579,11 @@ class Agent_Templates {
 			return new \WP_Error( 'zip_unavailable', __( 'The ZipArchive extension is required to import agents.', 'agent-builder' ) );
 		}
 
+		$bounds_error = self::check_archive_bounds( $zip_path );
+		if ( is_wp_error( $bounds_error ) ) {
+			return $bounds_error;
+		}
+
 		if ( ! function_exists( 'unzip_file' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/file.php';
 		}
@@ -445,6 +605,69 @@ class Agent_Templates {
 		}
 
 		return $tmp_dir;
+	}
+
+	/**
+	 * Reject an oversized or entry-flooded archive before any bytes are written
+	 * to disk. The entry count is checked up front, but the size bound is
+	 * enforced against the *actual decompressed byte count* — each non-directory
+	 * entry is read through ZipArchive's inflating stream in bounded chunks and
+	 * the running total is checked against the cap as it goes. This never
+	 * trusts the per-entry uncompressed-size fields in the central directory
+	 * (attacker-controlled metadata): a crafted archive that declares small
+	 * sizes while its DEFLATE streams expand to hundreds of MB is aborted here,
+	 * before unzip_file() extracts a single byte to disk.
+	 *
+	 * @param string $zip_path Absolute path to the zip.
+	 * @return true|\WP_Error
+	 */
+	private static function check_archive_bounds( string $zip_path ) {
+		$zip = new \ZipArchive();
+		if ( true !== $zip->open( $zip_path ) ) {
+			return new \WP_Error( 'zip_failed', __( 'Could not open the archive.', 'agent-builder' ) );
+		}
+
+		$count = $zip->numFiles; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Native ZipArchive property name.
+		if ( $count > self::MAX_IMPORT_ENTRIES ) {
+			$zip->close();
+			return new \WP_Error( 'zip_too_many_entries', __( 'The archive has too many entries.', 'agent-builder' ) );
+		}
+
+		$total = 0;
+		for ( $i = 0; $i < $count; $i++ ) {
+			$name = $zip->getNameIndex( $i );
+			if ( false === $name || str_ends_with( $name, '/' ) ) {
+				continue; // Unnamed or directory entry — no decompressed payload.
+			}
+			// Resolve by index, not by name: getStream() returns the first
+			// entry matching a name, so a crafted archive with two entries
+			// sharing one name would have the larger one skipped here and
+			// slip past the cap. getStreamIndex() measures every entry the
+			// way unzip_file() will actually extract it.
+			$stream = $zip->getStreamIndex( $i );
+			if ( false === $stream ) {
+				continue;
+			}
+			while ( ! feof( $stream ) ) {
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fread -- Streaming a ZipArchive inflater stream (getStream()); WP_Filesystem has no equivalent for chunked reads of an entry's decompressed bytes.
+				$chunk = fread( $stream, self::EXTRACT_CHUNK_BYTES );
+				if ( false === $chunk || '' === $chunk ) {
+					break;
+				}
+				$total += strlen( $chunk );
+				if ( $total > self::MAX_IMPORT_UNCOMPRESSED_BYTES ) {
+					// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Closing a ZipArchive inflater stream, not a filesystem handle.
+					fclose( $stream );
+					$zip->close();
+					return new \WP_Error( 'zip_too_large', __( 'The archive expands to more data than allowed.', 'agent-builder' ) );
+				}
+			}
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Closing a ZipArchive inflater stream, not a filesystem handle.
+			fclose( $stream );
+		}
+
+		$zip->close();
+		return true;
 	}
 
 	/**
@@ -473,12 +696,15 @@ class Agent_Templates {
 	 * Read and risk-check abilities.json from an unpacked archive.
 	 *
 	 * @param string $tmp_dir Unpacked archive directory.
-	 * @return array<string, mixed>|null|\WP_Error Decoded abilities, null when absent, or error.
+	 * @return array<string, mixed>|\WP_Error Decoded abilities, or error.
 	 */
 	private static function read_abilities( string $tmp_dir ) {
 		$abilities_json = $tmp_dir . '/abilities.json';
 		if ( ! file_exists( $abilities_json ) ) {
-			return null;
+			// Agentic_Agent_Registry::activate_agent() refuses to activate an
+			// agent with no abilities manifest, so accepting the import here
+			// would only hand back a slug that can never be activated.
+			return new \WP_Error( 'missing_abilities', __( 'The archive is missing abilities.json.', 'agent-builder' ) );
 		}
 		$raw = json_decode( (string) File_Manager::get_contents( $abilities_json ), true );
 		if ( ! is_array( $raw ) ) {
@@ -489,7 +715,7 @@ class Agent_Templates {
 		if ( ! empty( $downgrades ) ) {
 			return new \WP_Error(
 				'risk_downgrade',
-				__( 'The archive declares tools below their minimum risk:', 'agent-builder' ) . ' ' . implode( '; ', $downgrades )
+				__( 'The archive declares invalid or under-declared tool risk:', 'agent-builder' ) . ' ' . implode( '; ', $downgrades )
 			);
 		}
 
@@ -588,6 +814,10 @@ class Agent_Templates {
 		}
 		foreach ( $map as $tool => $entry ) {
 			if ( ! is_array( $entry ) || empty( $entry['risk'] ) ) {
+				// An entry with no risk field would otherwise import as
+				// "fine" and then fail at activation for the same reason —
+				// flag it here instead, same as an explicitly-invalid risk.
+				$errors[] = sprintf( /* translators: %s: tool name */ __( '%s has no risk declared', 'agent-builder' ), (string) $tool );
 				continue;
 			}
 			$declared = (string) $entry['risk'];
@@ -645,6 +875,13 @@ class Agent_Templates {
 	/**
 	 * Whether a slug is already taken by an installed agent or directory.
 	 *
+	 * Agentic_Agent_Registry::is_agent_installed() only checks the writable
+	 * agents directory and bundled library directories — it never queries
+	 * the agent_builder_agent_library table, so a DB-backed (purchased or
+	 * Assistant-Trainer-built) agent would otherwise be wrongly treated as
+	 * free and silently shadowed. get_installed_agents() merges those rows
+	 * in, so it is checked here too.
+	 *
 	 * @param string $slug Agent slug.
 	 * @return bool
 	 */
@@ -653,7 +890,10 @@ class Agent_Templates {
 		if ( $registry->is_agent_installed( $slug ) ) {
 			return true;
 		}
-		return is_dir( AGENT_BUILDER_AGENTS_DIR . '/' . $slug );
+		if ( is_dir( AGENT_BUILDER_AGENTS_DIR . '/' . $slug ) ) {
+			return true;
+		}
+		return isset( $registry->get_installed_agents( true )[ $slug ] );
 	}
 
 	/**
