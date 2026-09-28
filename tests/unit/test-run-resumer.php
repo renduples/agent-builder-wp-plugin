@@ -78,12 +78,13 @@ class Test_Run_Resumer extends TestCase {
 	 * whatever the test later fires `agent_builder_approval_resolved` with —
 	 * claim_waiting() matches on both, not just run_id.
 	 *
-	 * @param array  $opts Agent_Run::begin() opts.
-	 * @param string $type 'approval' or 'proposal'.
-	 * @param string $id   Id of the approval/proposal being awaited.
+	 * @param array  $opts         Agent_Run::begin() opts.
+	 * @param string $type         'approval' or 'proposal'.
+	 * @param string $id           Id of the approval/proposal being awaited.
+	 * @param string $tool_call_id Original LLM tool-call id to persist (empty = none).
 	 * @return Agent_Run
 	 */
-	private function begin_waiting_run( array $opts = array(), string $type = 'approval', string $id = '42' ): Agent_Run {
+	private function begin_waiting_run( array $opts = array(), string $type = 'approval', string $id = '42', string $tool_call_id = '' ): Agent_Run {
 		$run = Agent_Run::begin( 'wordpress-assistant', $opts );
 		$run->mark_waiting(
 			$type,
@@ -97,7 +98,8 @@ class Test_Run_Resumer extends TestCase {
 					'role'    => 'assistant',
 					'content' => 'I need approval to publish.',
 				),
-			)
+			),
+			$tool_call_id
 		);
 		return $run;
 	}
@@ -144,6 +146,36 @@ class Test_Run_Resumer extends TestCase {
 		$expected_tool_result         = $result;
 		$expected_tool_result['tool'] = 'db_update_post';
 		$this->assertSame( $expected_tool_result, $request['tool_result'] );
+	}
+
+	/**
+	 * The resume payload must carry the original LLM tool_call_id (persisted
+	 * in awaiting_tool_call_id) through to the job, never the approval's own
+	 * business id — providers that validate tool-call pairing reject a
+	 * fabricated tool message whose id doesn't match the assistant message's
+	 * tool_calls[].id.
+	 */
+	public function test_approve_resume_carries_original_tool_call_id_not_business_id(): void {
+		// awaiting_tool_call_id is the LLM-issued id; '42' is the approval's
+		// business id. They must be distinct, and the resume payload must
+		// carry the former, not the latter.
+		$run = $this->begin_waiting_run( array(), 'approval', '42', 'call_abc123' );
+
+		$row = array(
+			'run_id' => $run->get_run_id(),
+			'action' => 'db_update_post',
+		);
+
+		do_action( 'agent_builder_approval_resolved', 'approval', 42, 'approved', array( 'success' => true ), $row );
+
+		$job = $this->the_pending_job();
+		$this->assertNotNull( $job );
+
+		$resume = $job->request_data['resume'];
+		$this->assertIsArray( $resume );
+		$this->assertSame( 'call_abc123', $resume['awaiting_tool_call_id'] );
+		$this->assertSame( '42', $resume['awaiting_id'] );
+		$this->assertNotSame( $resume['awaiting_id'], $resume['awaiting_tool_call_id'] );
 	}
 
 	/**

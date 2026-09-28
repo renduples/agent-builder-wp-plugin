@@ -848,7 +848,7 @@ class Agent_Run {
 	 *              process already claimed it (or it is no longer in a
 	 *              resumable status).
 	 */
-	public function claim_waiting(): bool {
+	public function claim_resume(): bool {
 		global $wpdb;
 		$table = $wpdb->prefix . 'agent_builder_runs';
 		$now   = current_time( 'mysql', true );
