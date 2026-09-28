@@ -39,8 +39,8 @@ require_once $_tests_dir . '/includes/functions.php';
  * _manually_load_plugin() before the plugin's own init-time code (e.g.
  * Provider_Registry::maybe_seed()) runs against tables that don't exist yet.
  *
- * The audit_log / approval_queue / runs / tools CREATE TABLE statements below are
- * copied verbatim from Activator::create_tables() (includes/class-activator.php)
+ * The audit_log / approval_queue / runs / tools / notifications CREATE TABLE
+ * statements below are copied verbatim from Activator::create_tables()
  * — kept in sync by hand, not by requiring the activator file directly, since
  * activation also fires a battery of migrations that assume a fully-booted
  * plugin. Job_Manager and Security_Log create their own tables via their
@@ -171,6 +171,25 @@ function _agentic_create_test_tables() {
 		KEY category (category),
 		KEY source (source),
 		KEY enabled (enabled)
+	) {$charset_collate};";
+	dbDelta( $sql );
+
+	$sql = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agent_builder_notifications (
+		id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+		user_id bigint(20) unsigned NOT NULL DEFAULT 0,
+		type varchar(32) NOT NULL DEFAULT '',
+		severity varchar(16) NOT NULL DEFAULT 'info',
+		title varchar(255) NOT NULL DEFAULT '',
+		body text NOT NULL,
+		link varchar(2048) NOT NULL DEFAULT '',
+		run_id varchar(36) DEFAULT NULL,
+		agent_id varchar(64) DEFAULT NULL,
+		read_at datetime DEFAULT NULL,
+		emailed_at datetime DEFAULT NULL,
+		created_at datetime DEFAULT CURRENT_TIMESTAMP,
+		PRIMARY KEY (id),
+		KEY user_read (user_id, read_at),
+		KEY created_at (created_at)
 	) {$charset_collate};";
 	dbDelta( $sql );
 }
