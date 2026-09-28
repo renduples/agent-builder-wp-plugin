@@ -712,6 +712,7 @@ require_once AGENT_BUILDER_DIR . 'includes/class-dashboard-rest.php';
 require_once AGENT_BUILDER_DIR . 'includes/class-agent-wizard-rest.php';
 require_once AGENT_BUILDER_DIR . 'includes/class-knowledge-wizard-rest.php';
 require_once AGENT_BUILDER_DIR . 'includes/class-deploy-wizard-rest.php';
+require_once AGENT_BUILDER_DIR . 'includes/class-runs-rest.php';
 require_once AGENT_BUILDER_DIR . 'includes/class-security-log.php';
 
 // WP 7.0+ AI Client adapter layer (the bridge).
@@ -761,6 +762,7 @@ Admin_Settings_REST::init();
 Admin_Pages_REST::init();
 React_Admin::init();
 Dashboard_REST::init();
+Runs_REST::init();
 \Agentic\Site_Brief\Site_Brief_Controller::init();
 \Agentic\Site_Brief\Agent_Matcher::init();
 Agent_Wizard_REST::init();
