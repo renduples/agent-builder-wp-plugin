@@ -58,7 +58,13 @@ class Notifications {
 	private const EMAIL_OPTION = 'agent_builder_notify_email';
 
 	/**
-	 * Per-user instant-email cooldown transient prefix.
+	 * Per-user instant-email cooldown option-key prefix.
+	 *
+	 * Stored as a plain wp_options row (claimed atomically via a duplicate-key
+	 * INSERT — see claim_instant_email_cooldown()) rather than a transient,
+	 * because a transient's read-then-set leaves a window in which two
+	 * concurrent notify() calls for the same user can both observe the cooldown
+	 * unset and both send.
 	 */
 	private const COOLDOWN_PREFIX = 'agentic_notification_email_cooldown_';
 
@@ -450,8 +456,12 @@ class Notifications {
 			return;
 		}
 
-		$cooldown = self::COOLDOWN_PREFIX . $user_id;
-		if ( get_transient( $cooldown ) ) {
+		// Claim the 5-minute cooldown atomically *before* composing or sending,
+		// so two notify() calls for the same user racing in the same instant
+		// cannot both observe an unset cooldown and both send an instant email.
+		// Only the request whose claim wins proceeds (see
+		// claim_instant_email_cooldown()).
+		if ( ! self::claim_instant_email_cooldown( $user_id ) ) {
 			return;
 		}
 
@@ -477,13 +487,97 @@ class Notifications {
 			)
 		);
 
-		// Match the existing 5-minute-cooldown shape: always arm the cooldown
-		// after an attempt so a burst of notifications cannot flood the inbox.
-		set_transient( $cooldown, 1, 5 * MINUTE_IN_SECONDS );
-
 		if ( $sent ) {
 			self::mark_emailed( $id );
 		}
+	}
+
+	/**
+	 * Atomically claim the per-user instant-email cooldown.
+	 *
+	 * The cooldown was previously a transient read-then-set: two notify() calls
+	 * for the same user racing in the same instant could both read the
+	 * transient unset before either armed it, so both sent an instant email.
+	 * Claiming here — before the email is composed or sent — closes that window
+	 * with a single duplicate-key INSERT (the same shape as
+	 * Activator::acquire_upgrade_lock()): only the request whose INSERT lands
+	 * owns the cooldown; everyone else's fails on wp_options' unique key on
+	 * option_name and backs off.
+	 *
+	 * @param int $user_id Owning user id.
+	 * @return bool True if this call won the cooldown and may send; false if a
+	 *              send within the 5-minute window already owns it.
+	 */
+	private static function claim_instant_email_cooldown( int $user_id ): bool {
+		global $wpdb;
+
+		$key    = self::COOLDOWN_PREFIX . $user_id;
+		$expiry = time() + 5 * MINUTE_IN_SECONDS;
+
+		// Atomic acquire: a duplicate-key INSERT fails, which is the "someone
+		// else already owns the cooldown" signal. Suppress the expected
+		// duplicate-key error so it never reaches the log.
+		$suppressed = $wpdb->suppress_errors( true );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Raw write: this is a cooldown row, not an option read through the options API.
+		$inserted = $wpdb->query(
+			$wpdb->prepare(
+				"INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')",
+				$key,
+				(string) $expiry
+			)
+		);
+		$wpdb->suppress_errors( $suppressed );
+
+		if ( $inserted ) {
+			return true;
+		}
+
+		// The row already exists. Read it directly, bypassing get_option() so
+		// the alloptions cache can't serve a stale copy of a raw-written row.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Raw read: get_option() may serve a stale cached value for a raw-written row.
+		$existing = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT option_value FROM {$wpdb->options} WHERE option_name = %s",
+				$key
+			)
+		);
+
+		if ( null === $existing ) {
+			// The row vanished between our failed INSERT and this read. Retry the
+			// INSERT once; if it still fails, someone else won it.
+			$suppressed = $wpdb->suppress_errors( true );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Raw write.
+			$inserted = $wpdb->query(
+				$wpdb->prepare(
+					"INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')",
+					$key,
+					(string) $expiry
+				)
+			);
+			$wpdb->suppress_errors( $suppressed );
+
+			return (bool) $inserted;
+		}
+
+		// Live cooldown — another send within the window already owns it.
+		if ( time() < (int) $existing ) {
+			return false;
+		}
+
+		// Stale cooldown: compare-and-swap takeover. The WHERE clause pins the
+		// exact value just read, so the UPDATE only lands if nobody else took the
+		// row over first (0 affected rows = lost the race).
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Raw write.
+		$taken = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s AND option_value = %s",
+				(string) $expiry,
+				$key,
+				$existing
+			)
+		);
+
+		return 1 === (int) $taken;
 	}
 
 	/**
