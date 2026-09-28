@@ -95,6 +95,21 @@ final class Activator {
 	);
 
 	/**
+	 * Option name and TTL (seconds) for the atomic schema-upgrade lock. See
+	 * acquire_upgrade_lock()/release_upgrade_lock().
+	 *
+	 * The TTL is how long a lock is held before it is treated as abandoned and
+	 * eligible for compare-and-swap takeover. It is deliberately conservative:
+	 * dbDelta() can run an ALTER against a large, populated table that takes
+	 * minutes, and a short TTL would let a second request mistake a slow-but-
+	 * alive migration for a dead owner and run DDL against the same tables
+	 * concurrently. Ten minutes is far longer than any real migration, so an
+	 * expired lock almost always means the owning process actually died.
+	 */
+	private const UPGRADE_LOCK_KEY = 'agent_builder_upgrade_lock';
+	private const UPGRADE_LOCK_TTL = 600;
+
+	/**
 	 * Whether the site owner has thrown the safe-mode breaker.
 	 *
 	 * Defining AGENT_BUILDER_SAFE_MODE as true in wp-config.php disables all
@@ -219,13 +234,18 @@ final class Activator {
 	 * agent_builder_db_schema_version would otherwise stay on the previous
 	 * value and the dashboard Schema tile would never catch up.
 	 *
-	 * Admin + logged-in only. No-op (no DB writes) when the stored option
-	 * already equals AGENT_BUILDER_DB_VERSION. When behind, re-runs
+	 * Runs on every request (hooked on plugins_loaded) so the first cron,
+	 * REST or frontend hit after an auto-update brings the schema current —
+	 * not just the first admin visit. No-op (no DB writes) when the stored
+	 * option already equals AGENT_BUILDER_DB_VERSION. When behind, re-runs
 	 * create_tables() (dbDelta, idempotent, no data loss) then writes the
-	 * current constant. Table creation is guarded the same way as a fresh
-	 * activation — a failure here is logged and leaves the stored version
-	 * behind so it retries on the next admin_init, instead of silently
-	 * marking a failed upgrade as complete.
+	 * current constant. An atomic lock (see acquire_upgrade_lock()) keeps
+	 * near-simultaneous requests (a cron run and a REST hit landing
+	 * together) from racing into create_tables(); on failure the lock row is
+	 * left in place so a broken site backs off for the lock's TTL instead
+	 * of re-running the full dbDelta pass on every request. A failure is
+	 * logged and leaves the stored version behind so it retries later,
+	 * instead of silently marking a failed upgrade complete.
 	 *
 	 * Also flips agent_builder_needs_seed so the deferred/chunked seeder
 	 * fills in any bundled tools/skills/agents added since the site's last
@@ -234,10 +254,6 @@ final class Activator {
 	 * @return void
 	 */
 	public static function maybe_upgrade(): void {
-		if ( ! is_admin() || ! is_user_logged_in() ) {
-			return;
-		}
-
 		// Version-independent: runs regardless of whether the stored schema
 		// version already equals AGENT_BUILDER_DB_VERSION. See
 		// maybe_add_awaiting_tool_call_id_column() for why this can't ride
@@ -249,6 +265,16 @@ final class Activator {
 			return;
 		}
 
+		// Atomic lock: a cron run and a REST request landing together during the
+		// upgrade window must not both race into create_tables()/dbDelta().
+		// Released only on success; left in place on failure so the retry backs
+		// off — the TTL is both the backoff window and the safety net if the
+		// process dies mid-upgrade.
+		$lock_value = self::acquire_upgrade_lock();
+		if ( null === $lock_value ) {
+			return; // Another request is already running (or recently failed).
+		}
+
 		self::$activation_log = array();
 		self::guarded_step( 'maybe_upgrade_create_tables', array( __CLASS__, 'create_tables' ) );
 		$tables_ok = 'ok' === self::last_log_status( 'create_tables' );
@@ -258,7 +284,7 @@ final class Activator {
 		self::flush_deferred_log( AGENT_BUILDER_DB_VERSION );
 
 		if ( ! $tables_ok ) {
-			return; // Leave stored version behind — retried on the next admin_init.
+			return; // Leave the lock as a 60s backoff and the version behind for retry.
 		}
 
 		self::set_db_schema_version( AGENT_BUILDER_DB_VERSION );
@@ -266,6 +292,129 @@ final class Activator {
 		if ( ! self::is_safe_mode() ) {
 			update_option( 'agent_builder_needs_seed', true );
 		}
+
+		self::release_upgrade_lock( $lock_value );
+	}
+
+	/**
+	 * Atomically acquire the schema-upgrade lock.
+	 *
+	 * The lock is a single wp_options row named agent_builder_upgrade_lock whose
+	 * value is a JSON blob carrying this request's unique owner token plus its
+	 * expiry time. Acquisition is atomic, unlike a transient's get-then-set
+	 * (which has a read-then-write window): the INSERT relies on wp_options'
+	 * unique key on option_name, so a duplicate-key failure IS the "someone else
+	 * already holds it" signal. A stale lock — one whose expiry has passed,
+	 * meaning its owner is no longer renewing it and is presumed dead — is taken
+	 * over with a compare-and-swap UPDATE that includes the old value in its
+	 * WHERE clause, so two requests racing to take over the same expired lock
+	 * cannot both win. The TTL is deliberately long (UPGRADE_LOCK_TTL, 10
+	 * minutes): a dbDelta() ALTER against a large table can legitimately run
+	 * for minutes, and a shorter expiry would let a second request mistake a
+	 * slow-but-alive migration for a dead one and start concurrent DDL.
+	 *
+	 * @return string|null The exact option_value this request wrote (to be passed
+	 *                     back to release_upgrade_lock()), or null if another
+	 *                     request currently holds a live lock.
+	 */
+	private static function acquire_upgrade_lock(): ?string {
+		global $wpdb;
+
+		$new_value = wp_json_encode(
+			array(
+				'token'   => wp_generate_password( 12, false ),
+				'expires' => time() + self::UPGRADE_LOCK_TTL,
+			)
+		);
+
+		// Atomic acquire: a duplicate-key INSERT fails, which is the atomic
+		// "someone else holds it" signal. Suppress the expected duplicate-key
+		// error so it never reaches the log.
+		$suppressed = $wpdb->suppress_errors( true );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Raw write: this is a lock row, not an option read through the options API.
+		$inserted = $wpdb->query(
+			$wpdb->prepare(
+				"INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')",
+				self::UPGRADE_LOCK_KEY,
+				$new_value
+			)
+		);
+		$wpdb->suppress_errors( $suppressed );
+
+		if ( $inserted ) {
+			return $new_value;
+		}
+
+		// The row already exists. Read it directly, bypassing get_option() so
+		// the alloptions cache can't serve a stale copy of a raw-written row.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Raw read: get_option() may serve a stale cached value for a raw-written lock row.
+		$existing = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT option_value FROM {$wpdb->options} WHERE option_name = %s",
+				self::UPGRADE_LOCK_KEY
+			)
+		);
+
+		if ( null === $existing ) {
+			// The owner released the row between our failed INSERT and this read.
+			// Retry the INSERT once; if it still fails, someone else won it.
+			$suppressed = $wpdb->suppress_errors( true );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Raw write: this is a lock row, not an option read through the options API.
+			$inserted = $wpdb->query(
+				$wpdb->prepare(
+					"INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')",
+					self::UPGRADE_LOCK_KEY,
+					$new_value
+				)
+			);
+			$wpdb->suppress_errors( $suppressed );
+
+			return $inserted ? $new_value : null;
+		}
+
+		$decoded = json_decode( $existing, true );
+		$expires = is_array( $decoded ) && isset( $decoded['expires'] ) ? (int) $decoded['expires'] : 0;
+
+		if ( time() < $expires ) {
+			return null; // Live lock — another request owns it.
+		}
+
+		// Stale lock: compare-and-swap. The WHERE clause pins the exact value we
+		// just read, so the UPDATE only lands if nobody else took the row over
+		// first (0 affected rows = lost the race).
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Raw write: this is a lock row, not an option read through the options API.
+		$taken = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s AND option_value = %s",
+				$new_value,
+				self::UPGRADE_LOCK_KEY,
+				$existing
+			)
+		);
+
+		return ( 1 === (int) $taken ) ? $new_value : null;
+	}
+
+	/**
+	 * Release the schema-upgrade lock — but only if the row still holds this
+	 * request's exact value. If this request's TTL expired mid-migration and a
+	 * newer request took the lock over, the value no longer matches, so this
+	 * DELETE is a no-op and the newer request's lock is left intact. A request
+	 * can never release a lock it does not own.
+	 *
+	 * @param string $lock_value Exact option_value returned by acquire_upgrade_lock().
+	 * @return void
+	 */
+	private static function release_upgrade_lock( string $lock_value ): void {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Raw delete: this is a lock row, not an option deleted through the options API.
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$wpdb->options} WHERE option_name = %s AND option_value = %s",
+				self::UPGRADE_LOCK_KEY,
+				$lock_value
+			)
+		);
 	}
 
 	/**

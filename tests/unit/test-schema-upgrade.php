@@ -27,6 +27,10 @@ class Test_Schema_Upgrade extends TestCase {
 	 */
 	public function setUp(): void {
 		parent::setUp();
+		// The upgrade's create_tables()/dbDelta() runs DDL that implicitly
+		// commits MySQL transactions, so a lock set in a prior test can leak
+		// as a committed row. Clear it so each test starts with the lock free.
+		delete_option( 'agent_builder_upgrade_lock' );
 		$this->previous_schema = get_option( 'agent_builder_db_schema_version', false );
 	}
 
@@ -36,6 +40,7 @@ class Test_Schema_Upgrade extends TestCase {
 	public function tearDown(): void {
 		wp_set_current_user( 0 );
 		unset( $GLOBALS['current_screen'] );
+		delete_option( 'agent_builder_upgrade_lock' );
 		if ( false === $this->previous_schema ) {
 			delete_option( 'agent_builder_db_schema_version' );
 		} else {
@@ -85,22 +90,212 @@ class Test_Schema_Upgrade extends TestCase {
 	}
 
 	/**
-	 * Front-end / logged-out calls must not write even when stored is behind.
+	 * A logged-out, non-admin request — the shape of the first cron or REST
+	 * hit after an auto-update, where admin_init never fires — still brings
+	 * the stored schema version current. This is the acceptance case: no
+	 * admin visit is required for the migration to run.
 	 */
-	public function test_maybe_upgrade_skips_logged_out_and_non_admin(): void {
-		update_option( 'agent_builder_db_schema_version', '2.14.1' );
+	public function test_maybe_upgrade_runs_on_first_cron_or_rest_hit(): void {
+		// '2.14.2' is the last release before the 2.15.0 schema (the current
+		// AGENT_BUILDER_DB_VERSION), so it is genuinely behind and this exercises
+		// the full acquire → create_tables() → set-version path, not the version
+		// short-circuit.
+		update_option( 'agent_builder_db_schema_version', '2.14.2' );
 		wp_set_current_user( 0 );
 		unset( $GLOBALS['current_screen'] );
 
 		Activator::maybe_upgrade();
 
-		$this->assertSame( '2.14.1', (string) get_option( 'agent_builder_db_schema_version' ) );
+		$this->assertSame(
+			AGENT_BUILDER_DB_VERSION,
+			(string) get_option( 'agent_builder_db_schema_version' )
+		);
+	}
 
-		$this->enter_admin_as_logged_in_user();
-		wp_set_current_user( 0 );
+	/**
+	 * A near-simultaneous second request (a REST hit and a cron run landing
+	 * together) must not re-run the upgrade while the first still holds the
+	 * lock: the stored version stays behind until the lock clears, so
+	 * create_tables() is not double-invoked. The first "request" acquires the
+	 * lock through the real atomic acquire() path, so the second maybe_upgrade()
+	 * call actually hits the live-lock rejection branch rather than a hand-seeded
+	 * transient.
+	 */
+	public function test_concurrent_requests_do_not_double_run_upgrade(): void {
+		// Behind the current 2.15.0 constant, so the second maybe_upgrade() call
+		// below is rejected by the held lock, not by the version short-circuit.
+		update_option( 'agent_builder_db_schema_version', '2.14.2' );
+
+		// Simulate the first request acquiring the lock mid-upgrade.
+		$first = self::invoke_private( 'acquire_upgrade_lock' );
+		$this->assertIsString( $first, 'The first request should acquire the lock.' );
+
+		Activator::maybe_upgrade(); // Second request lands while the first is running.
+
+		$this->assertSame(
+			'2.14.2',
+			(string) get_option( 'agent_builder_db_schema_version' ),
+			'The second request must skip the upgrade while the lock is held.'
+		);
+
+		// First request finishes and releases — the next request completes it.
+		self::invoke_private( 'release_upgrade_lock', array( $first ) );
 		Activator::maybe_upgrade();
 
-		$this->assertSame( '2.14.1', (string) get_option( 'agent_builder_db_schema_version' ) );
+		$this->assertSame(
+			AGENT_BUILDER_DB_VERSION,
+			(string) get_option( 'agent_builder_db_schema_version' )
+		);
+	}
+
+	/**
+	 * The atomic acquire must reject a second holder while the first still owns
+	 * the lock — this is the read-then-write race the lock exists to close, so
+	 * it exercises the INSERT's duplicate-key path, not just a pre-seeded row.
+	 */
+	public function test_second_acquisition_is_rejected_while_first_holds_lock(): void {
+		$first = self::invoke_private( 'acquire_upgrade_lock' );
+		$this->assertIsString( $first, 'The first acquisition should succeed.' );
+
+		$second = self::invoke_private( 'acquire_upgrade_lock' );
+		$this->assertNull( $second, 'A second acquisition must be rejected while the lock is held.' );
+	}
+
+	/**
+	 * A stale lock (the owning process died, or its TTL passed) must be taken
+	 * over via the compare-and-swap path — and the takeover must overwrite the
+	 * row with the new owner's value.
+	 */
+	public function test_expired_lock_is_taken_over_via_compare_and_swap(): void {
+		$this->insert_lock( time() - 10, 'stale-token' );
+
+		$taken = self::invoke_private( 'acquire_upgrade_lock' );
+		$this->assertIsString( $taken, 'An expired lock should be taken over.' );
+
+		global $wpdb;
+		$stored = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT option_value FROM {$wpdb->options} WHERE option_name = %s",
+				'agent_builder_upgrade_lock'
+			)
+		);
+		$this->assertSame( $taken, $stored, 'The new owner must overwrite the stale lock value.' );
+	}
+
+	/**
+	 * A live (non-expired) lock must NOT be taken over: a second request must
+	 * observe the active lock and back off.
+	 */
+	public function test_live_lock_is_not_taken_over(): void {
+		$this->insert_lock( time() + 60, 'live-token' );
+
+		$taken = self::invoke_private( 'acquire_upgrade_lock' );
+		$this->assertNull( $taken, 'A live lock must not be taken over.' );
+	}
+
+	/**
+	 * A lock whose owner is still actively working must survive a second
+	 * request's takeover attempt. This is the exact failure the conservative TTL
+	 * closes: under a 60s TTL, a migration that had been running for just over a
+	 * minute (e.g. a slow ALTER on a large, populated table) would look
+	 * "expired" and be taken over by a concurrent request — two processes running
+	 * DDL against the same tables. Here the owner is 60s into its migration, so
+	 * under the new scheme its lease still has (UPGRADE_LOCK_TTL - 60s) to run
+	 * and the acquire must back off.
+	 */
+	public function test_slow_owner_within_ttl_is_not_taken_over(): void {
+		$ttl = self::upgrade_lock_ttl();
+		$this->insert_lock( time() + $ttl - 60, 'slow-owner-token' );
+
+		$taken = self::invoke_private( 'acquire_upgrade_lock' );
+		$this->assertNull( $taken, 'A slow-but-alive owner within the conservative TTL must not be taken over.' );
+	}
+
+	/**
+	 * A request must never release a lock it does not own: if request A's TTL
+	 * expires mid-migration and request B takes the row over, A's release must
+	 * be a no-op (the token-guarded DELETE matches only A's exact value).
+	 */
+	public function test_release_only_clears_its_own_lock(): void {
+		$value_a = self::invoke_private( 'acquire_upgrade_lock' );
+		$this->assertIsString( $value_a );
+
+		// A's lock "expires" and B takes the row over.
+		$value_b = $this->insert_lock( time() + 60, 'b-token' );
+
+		self::invoke_private( 'release_upgrade_lock', array( $value_a ) );
+
+		global $wpdb;
+		$stored = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT option_value FROM {$wpdb->options} WHERE option_name = %s",
+				'agent_builder_upgrade_lock'
+			)
+		);
+		$this->assertSame( $value_b, $stored, 'A request must not release a lock it does not own.' );
+
+		// B releases its own lock — the row is cleared.
+		self::invoke_private( 'release_upgrade_lock', array( $value_b ) );
+		$stored = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT option_value FROM {$wpdb->options} WHERE option_name = %s",
+				'agent_builder_upgrade_lock'
+			)
+		);
+		$this->assertNull( $stored );
+	}
+
+	/**
+	 * Invoke a private static Activator method (the existing suite already uses
+	 * ReflectionMethod for create_tables(); the lock helpers stay private for
+	 * the same reason and are exercised through the same seam).
+	 *
+	 * @param string $method Method name.
+	 * @param array  $args   Positional arguments.
+	 * @return mixed
+	 */
+	private static function invoke_private( string $method, array $args = array() ) {
+		$ref = new \ReflectionMethod( Activator::class, $method );
+		return $ref->invokeArgs( null, $args );
+	}
+
+	/**
+	 * Read Activator's private UPGRADE_LOCK_TTL constant so the slow-owner test
+	 * tracks the real lease rather than a hardcoded duration (a hardcoded value
+	 * would silently stop exercising the takeover path if the TTL ever shrank).
+	 *
+	 * @return int
+	 */
+	private static function upgrade_lock_ttl(): int {
+		$ref = new \ReflectionClassConstant( Activator::class, 'UPGRADE_LOCK_TTL' );
+		return (int) $ref->getValue();
+	}
+
+	/**
+	 * Write the raw lock row directly (mirroring the production INSERT) with a
+	 * caller-chosen token and expiry, returning the exact stored value.
+	 *
+	 * @param int    $expires Unix timestamp the lock expires at.
+	 * @param string $token   Owner token to embed.
+	 * @return string The exact option_value written.
+	 */
+	private function insert_lock( int $expires, string $token ): string {
+		global $wpdb;
+		$value = wp_json_encode(
+			array(
+				'token'   => $token,
+				'expires' => $expires,
+			)
+		);
+		$wpdb->query( $wpdb->prepare( 'DELETE FROM ' . $wpdb->options . ' WHERE option_name = %s', 'agent_builder_upgrade_lock' ) );
+		$wpdb->query(
+			$wpdb->prepare(
+				"INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')",
+				'agent_builder_upgrade_lock',
+				$value
+			)
+		);
+		return $value;
 	}
 
 	/**
