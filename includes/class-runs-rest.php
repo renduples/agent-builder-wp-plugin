@@ -63,7 +63,7 @@ class Runs_REST {
 			array(
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => array( __CLASS__, 'get_runs' ),
-				'permission_callback' => array( __CLASS__, 'can_view' ),
+				'permission_callback' => array( __CLASS__, 'can_list_runs' ),
 				'args'                => array(
 					'status'   => array(
 						'type'              => 'string',
@@ -159,6 +159,17 @@ class Runs_REST {
 	 */
 	public static function can_view(): bool {
 		return current_user_can( 'manage_options' ) || current_user_can( 'agent_builder_view_dashboard' );
+	}
+
+	/**
+	 * List capability — a user who can view the dashboard OR run tasks manually
+	 * may list runs. The handler still scopes non-admins to their own runs, so
+	 * run_tasks_manually alone never leaks another user's run.
+	 *
+	 * @return bool
+	 */
+	public static function can_list_runs(): bool {
+		return self::can_view() || self::can_run();
 	}
 
 	/**

@@ -20,5 +20,6 @@ module.exports = {
 		'settings-app': './src/settings-app/index.js',
 		'admin-list': './src/admin-list/index.js',
 		'admin-pages': './src/admin-pages/index.js',
+		'tasks-app': './src/tasks-app/index.js',
 	},
 };

@@ -892,6 +892,90 @@ function SafetyCard( { data, dnd } ) {
 	);
 }
 
+function TasksCard( { data, dnd } ) {
+	const tasks = data.tasks || {};
+	const runs = tasks.runs || [];
+	const total = Number( tasks.active || 0 ) + Number( tasks.waiting || 0 );
+	const waitingClass =
+		Number( tasks.waiting ) > 0
+			? 'agentic-status-expiring'
+			: 'agentic-status-active';
+
+	return (
+		<Card
+			cardId="tasks"
+			{ ...dnd }
+			title={ __( 'Tasks', 'agent-builder' ) }
+			headerLink={
+				<a
+					className="agentic-card-header-link"
+					href={ data.urls?.tasks }
+				>
+					{ __( 'Open Tasks →', 'agent-builder' ) }
+				</a>
+			}
+		>
+			<div className="agentic-status-grid">
+				<StatusTile label={ __( 'Active', 'agent-builder' ) }>
+					<a href={ data.urls?.tasks }>
+						<span className="agentic-status-active">●</span>{ ' ' }
+						{ formatInt( tasks.active ) }
+					</a>
+				</StatusTile>
+				<StatusTile label={ __( 'Waiting on you', 'agent-builder' ) }>
+					<a href={ data.urls?.tasks }>
+						<span className={ waitingClass }>●</span>{ ' ' }
+						{ formatInt( tasks.waiting ) }
+					</a>
+				</StatusTile>
+			</div>
+
+			{ ! runs.length ? (
+				<p className="agentic-text-muted">
+					{ __(
+						'No tasks running. Assign one and you’ll be pinged when it finishes.',
+						'agent-builder'
+					) }
+				</p>
+			) : (
+				<ul className="agentic-tasks-card-list">
+					{ runs.map( ( r ) => (
+						<li key={ r.run_id }>
+							<a href={ data.urls?.tasks }>
+								<strong>{ r.agent }</strong>
+								<span className="agentic-tasks-card-excerpt">
+									{ r.task_text }
+								</span>
+								<span
+									className={
+										'agentic-tasks-card-status agentic-tasks-card-status--' +
+										r.status
+									}
+								>
+									{ r.status }
+								</span>
+							</a>
+						</li>
+					) ) }
+				</ul>
+			) }
+
+			{ total > runs.length && (
+				<p className="agentic-text-muted">
+					{ sprintf(
+						/* translators: %s: number of additional tasks not shown */
+						__(
+							'%s more — open Tasks to see them all.',
+							'agent-builder'
+						),
+						formatInt( total - runs.length )
+					) }
+				</p>
+			) }
+		</Card>
+	);
+}
+
 function AgentReadyCard( { data, dnd } ) {
 	const ready = data.agent_ready || {};
 	const overall = Number( ready.overall || 0 );
@@ -1603,6 +1687,7 @@ function sprintf( format, ...args ) {
 const DEFAULT_LAYOUT = [
 	'status',
 	'safety',
+	'tasks',
 	'activity',
 	'providers',
 	'quick-actions',
@@ -1805,6 +1890,8 @@ function DashboardApp() {
 				return <SafetyCard key={ id } data={ data } dnd={ dnd } />;
 			case 'agent-ready':
 				return <AgentReadyCard key={ id } data={ data } dnd={ dnd } />;
+			case 'tasks':
+				return <TasksCard key={ id } data={ data } dnd={ dnd } />;
 			case 'activity':
 				return (
 					<ActivityCard

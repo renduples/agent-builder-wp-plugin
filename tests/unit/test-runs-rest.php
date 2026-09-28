@@ -110,6 +110,30 @@ class Test_Runs_REST extends TestCase {
 	}
 
 	/**
+	 * A run_tasks_manually-only user (no manage_agents, no view_dashboard) can
+	 * list runs — the Tasks screen is opened by exactly that capability, so its
+	 * list must not 403. The result is still scoped to their own runs.
+	 */
+	public function test_run_tasks_manually_user_can_list_own_runs(): void {
+		$this->grant_plugin_privilege( 'run_tasks_manually', 'editor' );
+
+		$editor = self::factory()->user->create( array( 'role' => 'editor' ) );
+		$other  = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+
+		Agent_Run::create_queued( self::AGENT, array( 'kind' => 'task', 'user_id' => $editor, 'task_text' => 'Editor task' ) );
+		Agent_Run::create_queued( self::AGENT, array( 'kind' => 'task', 'user_id' => $other, 'task_text' => 'Other task' ) );
+
+		wp_set_current_user( $editor );
+
+		$resp = $this->request( 'GET', '/runs' );
+		$this->assertSame( 200, $resp->get_status() );
+
+		$runs = $resp->get_data()['runs'];
+		$this->assertCount( 1, $runs );
+		$this->assertSame( $editor, (int) $runs[0]['user_id'] );
+	}
+
+	/**
 	 * A manage_agents user reads any run's detail, regardless of ownership.
 	 */
 	public function test_manage_agents_user_reads_any_run(): void {
