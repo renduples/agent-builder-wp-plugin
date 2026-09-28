@@ -337,27 +337,13 @@ class Tool_Executor {
 			return array( 'error' => 'This action was blocked by policy and cannot be performed.' );
 		}
 
-		if ( 'queue' === $enforcement ) {
-			// --- Always-grant fast-path for admin users ---
-			// If the admin has declared "Always Allow" for this tool in the chat,
-			// they are authoritative: skip the approval queue entirely.
-			$grant_user_id = $ctx['user_id'];
-			if ( $grant_user_id && user_can( $grant_user_id, 'manage_options' ) ) {
-				$always_grants = get_user_meta( $grant_user_id, 'agentic_tool_grants_always', true );
-				if ( is_array( $always_grants ) && in_array( $tool_name, $always_grants, true ) ) {
-					$this->audit->log(
-						$agent_id,
-						'tool_grant_always',
-						$tool_name,
-						array(
-							'risk_level' => $risk,
-							'bypassed'   => 'approval_queue',
-						)
-					);
-					$enforcement = 'allow';
-				}
-			}
-		}
+		// --- Grant fast-paths (always / session / run) ---
+		// Tool_Grants::resolve() is the single decision point for persisted
+		// grants: it downgrades a queued/confirm-pending call to 'allow' when any
+		// grant scope covers the tool, and leaves the decision untouched otherwise.
+		// The 'once' scope (Approval_Queue::find_approved()) stays a separate
+		// concern, handled below.
+		$enforcement = Tool_Grants::resolve( $enforcement, $ctx );
 
 		if ( 'queue' === $enforcement ) {
 			$queue    = new Approval_Queue();
@@ -405,37 +391,6 @@ class Tool_Executor {
 					),
 					'reason'      => $reason,
 				);
-			}
-		}
-
-		if ( 'confirm' === $enforcement ) {
-			// --- Grant fast-path: "Always Allow" (persisted in admin user_meta) ---
-			$grant_user_id = $ctx['user_id'];
-			if ( $grant_user_id && user_can( $grant_user_id, 'manage_options' ) ) {
-				$always_grants = get_user_meta( $grant_user_id, 'agentic_tool_grants_always', true );
-				if ( is_array( $always_grants ) && in_array( $tool_name, $always_grants, true ) ) {
-					$this->audit->log(
-						$agent_id,
-						'tool_grant_always',
-						$tool_name,
-						array( 'risk_level' => $risk )
-					);
-					$enforcement = 'allow';
-				}
-			}
-		}
-
-		if ( 'confirm' === $enforcement && '' !== $session_id ) {
-			// --- Grant fast-path: "Session Allow" (transient, browser-tab scoped) ---
-			$session_grants = get_transient( 'agentic_session_grants_' . sanitize_key( $session_id ) );
-			if ( is_array( $session_grants ) && in_array( $tool_name, $session_grants, true ) ) {
-				$this->audit->log(
-					$agent_id,
-					'tool_grant_session',
-					$tool_name,
-					array( 'risk_level' => $risk )
-				);
-				$enforcement = 'allow';
 			}
 		}
 
