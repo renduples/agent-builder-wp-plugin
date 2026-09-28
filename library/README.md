@@ -223,6 +223,15 @@ library/agents/my-agent/
 }
 ```
 
+`arg_filter` takes exactly one of two forms, both of which compare hook argument `arg` (its 0-based position) and only let a matching event reach the approval gate:
+
+```json
+{ "arg": 0, "pattern": "^[0-9]+$" }
+{ "arg": 0, "in": [ "publish", "pending", "draft" ] }
+```
+
+`pattern` is a PCRE matched against the argument as a string; `in` is an exact-match allowlist compared with strict string equality (an empty `in` list matches nothing, so the listener never runs).
+
 | Key | Required | Meaning |
 |-----|----------|---------|
 | `id` | yes | Unique slug for this listener. |
@@ -233,7 +242,7 @@ library/agents/my-agent/
 | `accepted_args` | no | Number of hook arguments to pass, default `1`. |
 | `name` / `description` | no | Display name (defaults to `id`) and a short description. |
 | `min_interval` | no | Rate limit in seconds — at most one execution per listener per window (default `60`; `0` disables; negative coerces to `60`; capped at `86400`). Fires skipped by the rate limit are counted, not audit-logged. |
-| `arg_filter` | no | `{ "arg": n, "pattern": "…" }` — run the listener only when hook argument `n` matches the PCRE `pattern`. A high-frequency hook like `updated_option` **must** declare one, or it would otherwise hit the approval gate for every unrelated option write. Invalid patterns are dropped, so a typo falls back to running on every event rather than silently never running. |
+| `arg_filter` | no | `{ "arg": n, "pattern": "…" }` or `{ "arg": n, "in": [ "…", … ] }` — run the listener only when hook argument `n` matches the PCRE `pattern`, or equals one of the `in` allowlist values (strict string comparison; an empty `in` matches nothing). A high-frequency hook like `updated_option` **must** declare one, or it would otherwise hit the approval gate for every unrelated option write. A filter with neither or both forms, a non-string `in` item, or an invalid pattern is dropped, so a typo falls back to running on every event rather than silently never running. |
 
 Event listeners are guarded against the feedback loop that once let a listener on `updated_option` hang a site: they never fire for options/transients Agent Builder writes itself (the `agentic_*` and `agent_builder_*` prefixes), and a gated listener that keeps firing the same tool reuses its one pending proposal instead of minting a new one per event.
 

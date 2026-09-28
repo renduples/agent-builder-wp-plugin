@@ -211,6 +211,55 @@ class Test_Event_Listener_Guards extends TestCase {
 	}
 
 	/**
+	 * The `in` allowlist form of `arg_filter` admits hook arguments by strict
+	 * string equality — a value outside the list never reaches the gate, a listed
+	 * value does.
+	 */
+	public function test_arg_filter_in_allowlist(): void {
+		$agent    = $this->make_agent( 'listener-filter-in-agent' );
+		$listener = array(
+			'id'           => 'l-filter-in',
+			'name'         => 'Allowlist listener',
+			'hook'         => 'updated_option',
+			'tool'         => 'add_custom_css',
+			'min_interval' => 0,
+			'arg_filter'   => array(
+				'arg' => 0,
+				'in'  => array( 'woocommerce_orders', 'woocommerce_customers' ),
+			),
+		);
+
+		// Non-listed option name — filtered out before the gate.
+		Agent_Lifecycle::execute_event_listener( $agent, $listener, array( 'posts_table_option', 'old', 'new' ) );
+		$this->assertSame( 0, $this->count_proposal_transients(), 'a value outside the allowlist never reaches the gate' );
+
+		// Allowlisted option name — reaches the gate and proposes.
+		Agent_Lifecycle::execute_event_listener( $agent, $listener, array( 'woocommerce_orders', 'old', 'new' ) );
+		$this->assertSame( 1, $this->count_proposal_transients(), 'an allowlisted value proposes once' );
+	}
+
+	/**
+	 * An empty `in` allowlist matches nothing, so the listener never runs.
+	 */
+	public function test_arg_filter_in_empty_matches_nothing(): void {
+		$agent    = $this->make_agent( 'listener-filter-in-empty-agent' );
+		$listener = array(
+			'id'           => 'l-filter-in-empty',
+			'name'         => 'Empty allowlist listener',
+			'hook'         => 'updated_option',
+			'tool'         => 'add_custom_css',
+			'min_interval' => 0,
+			'arg_filter'   => array(
+				'arg' => 0,
+				'in'  => array(),
+			),
+		);
+
+		Agent_Lifecycle::execute_event_listener( $agent, $listener, array( 'woocommerce_orders', 'old', 'new' ) );
+		$this->assertSame( 0, $this->count_proposal_transients(), 'an empty allowlist never reaches the gate' );
+	}
+
+	/**
 	 * Remove every option/transient this file's tests write, so a re-run of the
 	 * suite within the 60-second rate-limit window is not blocked by a stale claim
 	 * from a prior run (and proposal / pending-marker / audit-cache state never
