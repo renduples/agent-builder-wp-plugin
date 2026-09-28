@@ -507,10 +507,12 @@ class Dashboard_REST {
 	}
 
 	/**
-	 * Reduce the run list to what the dashboard Tasks card needs: a count of
-	 * active vs. waiting runs plus a short list of the most recent ones (with
-	 * the agent's display name resolved). Non-admins (no manage_agents) only
-	 * ever see their own runs, mirroring GET /runs' user clamp.
+	 * Reduce the run list to what the dashboard Tasks card needs: exact totals
+	 * of active vs. waiting runs (via dedicated count queries, so they are not
+	 * capped by the paginated listing below) plus a short list of the most
+	 * recent ones (with the agent's display name resolved). Non-admins (no
+	 * manage_agents) only ever see their own runs, mirroring GET /runs' user
+	 * clamp.
 	 *
 	 * @return array{active:int,waiting:int,runs:list<array<string,mixed>>}
 	 */
@@ -524,15 +526,21 @@ class Dashboard_REST {
 			return $empty;
 		}
 
-		$manage = current_user_can( 'manage_options' ) || current_user_can( 'agent_builder_manage_agents' );
-		$args   = array( 'per_page' => 50 );
+		$manage  = current_user_can( 'manage_options' ) || current_user_can( 'agent_builder_manage_agents' );
+		$user_id = $manage ? 0 : get_current_user_id();
+
+		// Exact totals across every matching run. Deriving these from the
+		// capped list below would undercount once more than `per_page` runs
+		// match, so use the model's dedicated, uncapped count queries.
+		$active  = Agent_Run::count_active( $user_id );
+		$waiting = Agent_Run::count_waiting( $user_id );
+
+		$args = array( 'per_page' => 50 );
 		if ( ! $manage ) {
 			$args['user_id'] = get_current_user_id();
 		}
 
 		$active_statuses = array( 'queued', 'running', 'continuing', 'waiting' );
-		$active          = 0;
-		$waiting         = 0;
 		$registry        = class_exists( '\Agentic_Agent_Registry' ) ? \Agentic_Agent_Registry::get_instance() : null;
 
 		$summary = array();
@@ -541,16 +549,9 @@ class Dashboard_REST {
 				continue;
 			}
 
-			if ( 'waiting' === $run['status'] ) {
-				++$waiting;
-			} else {
-				++$active;
-			}
-
-			// Counts are totals across every matching run; the short list is
-			// capped at five rows for the card.
+			// The short list is capped at five rows for the card.
 			if ( count( $summary ) >= 5 ) {
-				continue;
+				break;
 			}
 
 			$instance  = $registry ? $registry->get_agent_instance( (string) $run['root_agent'] ) : null;

@@ -86,12 +86,17 @@ class Admin_Menu_Handler {
 		);
 
 		// Tasks — assign an autonomous run, leave, and get pinged when it
-		// finishes or pauses on you. Badge = waiting runs (any user's, like the
-		// global Approvals badge) + this user's unread notifications.
+		// finishes or pauses on you. Badge = waiting runs (scoped to this user
+		// unless they can manage agents, like the global Approvals badge) +
+		// this user's unread notifications.
 		$agentic_tasks_title = __( 'Tasks', 'agent-builder' );
 		$agentic_tasks_badge = 0;
 		if ( class_exists( '\Agentic\Agent_Run' ) ) {
-			$agentic_tasks_badge += \Agentic\Agent_Run::count_waiting();
+			if ( current_user_can( 'manage_options' ) || current_user_can( 'agent_builder_manage_agents' ) ) {
+				$agentic_tasks_badge += \Agentic\Agent_Run::count_waiting();
+			} else {
+				$agentic_tasks_badge += \Agentic\Agent_Run::count_waiting( get_current_user_id() );
+			}
 		}
 		if ( class_exists( '\Agentic\Notifications' ) ) {
 			$agentic_tasks_badge += \Agentic\Notifications::unread_count( get_current_user_id() );
