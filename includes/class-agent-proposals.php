@@ -26,18 +26,27 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Manages pending change proposals for user-space operations.
+ *
+ * Proposals are stored in the agent_builder_proposals table (since schema
+ * 2.15.2 / M12). Before that they lived in transients; the move makes them
+ * durable, filterable via pending(), and cleanable via cleanup_expired().
  */
 class Agent_Proposals {
 
 	/**
-	 * Transient prefix for pending proposals.
+	 * Proposal table name (sans prefix).
 	 */
-	private const TRANSIENT_PREFIX = 'agentic_proposal_';
+	private const TABLE = 'agent_builder_proposals';
 
 	/**
-	 * Proposal expiry in seconds (1 hour).
+	 * Expiry for a chat-originated proposal (no run_id): 1 hour.
 	 */
-	private const EXPIRY = 3600;
+	private const EXPIRY_CHAT = 3600;
+
+	/**
+	 * Expiry for a run-backed proposal (run_id set): 7 days.
+	 */
+	private const EXPIRY_RUN = 7 * 24 * 3600;
 
 	/**
 	 * Create a new proposal.
@@ -55,7 +64,12 @@ class Agent_Proposals {
 	 * @return array Proposal data with ID.
 	 */
 	public static function create( string $tool_name, array $params, string $agent_id, string $description, string $diff = '', string $run_id = '', int $created_by = 0 ): array {
+		global $wpdb;
+
 		$proposal_id = wp_generate_uuid4();
+		$user_id     = $created_by > 0 ? $created_by : get_current_user_id();
+		$expiry      = ( '' === $run_id ) ? self::EXPIRY_CHAT : self::EXPIRY_RUN;
+		$expires_at  = gmdate( 'Y-m-d H:i:s', time() + $expiry );
 
 		$proposal = array(
 			'id'          => $proposal_id,
@@ -66,11 +80,30 @@ class Agent_Proposals {
 			'diff'        => $diff,
 			'status'      => 'pending',
 			'created_at'  => gmdate( 'Y-m-d H:i:s' ),
-			'created_by'  => $created_by > 0 ? $created_by : get_current_user_id(),
+			'created_by'  => $user_id,
 			'run_id'      => $run_id,
+			'session_id'  => null,
+			'expires_at'  => $expires_at,
 		);
 
-		set_transient( self::TRANSIENT_PREFIX . $proposal_id, $proposal, self::EXPIRY );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table insert.
+		$wpdb->insert(
+			$wpdb->prefix . self::TABLE,
+			array(
+				'id'          => $proposal_id,
+				'tool'        => $tool_name,
+				'params'      => wp_json_encode( $params ),
+				'agent_id'    => $agent_id,
+				'description' => $description,
+				'diff'        => $diff,
+				'status'      => 'pending',
+				'created_by'  => $user_id > 0 ? $user_id : null,
+				'run_id'      => '' !== $run_id ? $run_id : null,
+				'session_id'  => null,
+				'created_at'  => gmdate( 'Y-m-d H:i:s' ),
+				'expires_at'  => $expires_at,
+			)
+		);
 
 		// Log the proposal creation.
 		$audit = new Audit_Log();
@@ -88,14 +121,36 @@ class Agent_Proposals {
 	}
 
 	/**
-	 * Get a pending proposal by ID.
+	 * Get a proposal by ID.
+	 *
+	 * A still-pending proposal whose expires_at has lapsed is treated as
+	 * not found (its stored status is flipped to 'expired' by the daily
+	 * cleanup cron, not here).
 	 *
 	 * @param string $proposal_id Proposal UUID.
 	 * @return array|null Proposal data or null if not found/expired.
 	 */
 	public static function get( string $proposal_id ): ?array {
-		$proposal = get_transient( self::TRANSIENT_PREFIX . $proposal_id );
-		return is_array( $proposal ) ? $proposal : null;
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Single-row custom table lookup.
+		$row = $wpdb->get_row(
+			$wpdb->prepare( "SELECT * FROM {$wpdb->prefix}agent_builder_proposals WHERE id = %s", $proposal_id ),
+			ARRAY_A
+		);
+
+		if ( ! $row ) {
+			return null;
+		}
+
+		$proposal = self::normalize_row( $row );
+
+		// Expiry-on-read: a pending proposal whose window has lapsed is gone.
+		if ( 'pending' === $proposal['status'] && ! empty( $proposal['expires_at'] ) && strtotime( (string) $proposal['expires_at'] ) < time() ) {
+			return null;
+		}
+
+		return $proposal;
 	}
 
 	/**
@@ -115,11 +170,10 @@ class Agent_Proposals {
 			return array( 'error' => 'Proposal already processed.' );
 		}
 
-		// Mark as approved before executing.
-		$proposal['status']      = 'approved';
-		$proposal['approved_at'] = gmdate( 'Y-m-d H:i:s' );
-		$proposal['approved_by'] = get_current_user_id();
-		set_transient( self::TRANSIENT_PREFIX . $proposal_id, $proposal, self::EXPIRY );
+		// Mark as approved before executing, so a concurrent re-read sees the
+		// decision and cannot double-execute the same proposal.
+		self::mark_decided( $proposal_id, 'approved' );
+		$proposal['status'] = 'approved';
 
 		// Execute the change via Tool_Loader. This path bypasses Tool_Executor
 		// entirely, so the calling-agent context (needed by tools like
@@ -166,9 +220,6 @@ class Agent_Proposals {
 			do_action( 'agent_builder_approval_resolved', 'proposal', $proposal_id, 'approved', $result, $proposal );
 		}
 
-		// Clean up transient.
-		delete_transient( self::TRANSIENT_PREFIX . $proposal_id );
-
 		return $result;
 	}
 
@@ -189,6 +240,11 @@ class Agent_Proposals {
 			return array( 'error' => 'Proposal already processed.' );
 		}
 
+		// Mark as rejected before firing the resolution action, so the row is
+		// no longer readable as pending by a concurrent request.
+		self::mark_decided( $proposal_id, 'rejected' );
+		$proposal['status'] = 'rejected';
+
 		// Log rejection.
 		$audit = new Audit_Log();
 		$audit->log(
@@ -206,12 +262,83 @@ class Agent_Proposals {
 			do_action( 'agent_builder_approval_resolved', 'proposal', $proposal_id, 'rejected', null, $proposal );
 		}
 
-		// Clean up.
-		delete_transient( self::TRANSIENT_PREFIX . $proposal_id );
-
 		return array(
 			'success' => true,
 			'message' => 'Proposal rejected.',
+		);
+	}
+
+	/**
+	 * Filterable list of pending, non-expired proposals, newest first.
+	 *
+	 * This is what the M12 Approvals "Waiting on you" tab and the Approvals
+	 * badge count consume.
+	 *
+	 * @param array $args Optional filters: agent_id (string), run_id (string),
+	 *                    created_by (int).
+	 * @return array<int, array<string, mixed>> Pending proposals, newest first.
+	 */
+	public static function pending( array $args = array() ): array {
+		global $wpdb;
+
+		$table  = $wpdb->prefix . self::TABLE;
+		$where  = array( "status = 'pending'" );
+		$values = array();
+
+		if ( ! empty( $args['agent_id'] ) ) {
+			$where[]  = 'agent_id = %s';
+			$values[] = (string) $args['agent_id'];
+		}
+
+		if ( ! empty( $args['run_id'] ) ) {
+			$where[]  = 'run_id = %s';
+			$values[] = (string) $args['run_id'];
+		}
+
+		if ( ! empty( $args['created_by'] ) ) {
+			$where[]  = 'created_by = %d';
+			$values[] = (int) $args['created_by'];
+		}
+
+		// Non-expired only: a null expires_at (never set) is treated as
+		// non-expired rather than dropped.
+		$where[]  = '( expires_at IS NULL OR expires_at >= %s )';
+		$values[] = gmdate( 'Y-m-d H:i:s' );
+
+		$where_sql = implode( ' AND ', $where );
+		$query     = "SELECT * FROM {$table} WHERE {$where_sql} ORDER BY created_at DESC";
+
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- Custom table query with dynamic where clause.
+		$rows = $wpdb->get_results(
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Custom plugin table.
+			$wpdb->prepare( $query, ...$values ),
+			ARRAY_A
+		);
+
+		$proposals = array();
+		foreach ( $rows as $row ) {
+			$proposals[] = self::normalize_row( $row );
+		}
+
+		return $proposals;
+	}
+
+	/**
+	 * Expire stale pending proposals, mirroring Approval_Queue::cleanup_expired().
+	 *
+	 * The row is preserved and its status flipped to 'expired' (never silently
+	 * deleted), so an approval that raced the expiry is still auditable.
+	 *
+	 * @return int Number of rows marked expired.
+	 */
+	public static function cleanup_expired(): int {
+		global $wpdb;
+
+		$table = $wpdb->prefix . self::TABLE;
+
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- Custom table update.
+		return (int) $wpdb->query(
+			"UPDATE {$table} SET status = 'expired' WHERE status = 'pending' AND expires_at IS NOT NULL AND expires_at < NOW()" // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
 		);
 	}
 
@@ -231,8 +358,8 @@ class Agent_Proposals {
 	/**
 	 * Generate a simple unified diff between two strings.
 	 *
-	 * @param string $old     Original content.
-	 * @param string $new_content     New content.
+	 * @param string $old       Original content.
+	 * @param string $new_content New content.
 	 * @param string $label_old Label for original (e.g., filename).
 	 * @param string $label_new Label for new.
 	 * @return string Diff output.
@@ -308,5 +435,47 @@ class Agent_Proposals {
 		$diff .= implode( "\n", $output );
 
 		return $diff;
+	}
+
+	/**
+	 * Normalize a raw proposals table row into the public proposal shape:
+	 * decode params from its JSON storage back to an array and coerce the
+	 * numeric user-id columns to int (so callers can compare strictly).
+	 *
+	 * @param array<string, string> $row Raw ARRAY_A row from $wpdb.
+	 * @return array<string, mixed> Normalized proposal.
+	 */
+	private static function normalize_row( array $row ): array {
+		$decoded           = json_decode( (string) ( $row['params'] ?? '' ), true );
+		$row['params']     = is_array( $decoded ) ? $decoded : array();
+		$row['created_by'] = (int) ( $row['created_by'] ?? 0 );
+		return $row;
+	}
+
+	/**
+	 * Persist a decision (approve/reject) against a proposal row.
+	 *
+	 * Flips status and stamps the deciding user + timestamp. Used by approve()
+	 * and reject() before/around the side effects that follow, so a second
+	 * request reading the row never re-runs an already-decided proposal.
+	 *
+	 * @param string $proposal_id Proposal UUID.
+	 * @param string $decision    'approved' or 'rejected'.
+	 * @return void
+	 */
+	private static function mark_decided( string $proposal_id, string $decision ): void {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table update.
+		$wpdb->update(
+			$wpdb->prefix . self::TABLE,
+			array(
+				'status'     => $decision,
+				'decision'   => $decision,
+				'decided_by' => get_current_user_id(),
+				'decided_at' => gmdate( 'Y-m-d H:i:s' ),
+			),
+			array( 'id' => $proposal_id )
+		);
 	}
 }

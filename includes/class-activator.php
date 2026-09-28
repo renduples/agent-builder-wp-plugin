@@ -1756,6 +1756,54 @@ final class Activator {
         ) $charset_collate;";
 		$run_delta( 'agent_builder_notifications', $sql_notifications );
 
+		// Proposals table — one row per pending change proposal (the chat
+		// "Always Confirm" confirmation system). Moved off transients in M12
+		// (schema 2.15.2) so proposals are durable, filterable, and queryable.
+		$sql_proposals = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agent_builder_proposals (
+            id varchar(36) NOT NULL,
+            tool varchar(191),
+            params longtext,
+            agent_id varchar(64),
+            description text,
+            diff longtext,
+            status varchar(16) DEFAULT 'pending',
+            created_by bigint(20) unsigned,
+            run_id varchar(36) DEFAULT NULL,
+            session_id varchar(191) DEFAULT NULL,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            expires_at datetime,
+            decided_by bigint(20) unsigned DEFAULT NULL,
+            decided_at datetime DEFAULT NULL,
+            decision varchar(16) DEFAULT NULL,
+            PRIMARY KEY (id),
+            KEY status (status),
+            KEY run_id (run_id),
+            KEY created_by (created_by)
+        ) $charset_collate;";
+		$run_delta( 'agent_builder_proposals', $sql_proposals );
+
+		// Approval rules table — declarative risk-policy rules consumed by the
+		// M12 rules layer (class-approval-rules.php, a later task). Created here
+		// now so the schema lands in one place alongside its mirror in
+		// tests/bootstrap.php; no consumer exists yet in this task.
+		$sql_approval_rules = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agent_builder_approval_rules (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            agent_slug varchar(64) NOT NULL DEFAULT '',
+            rule_text text NOT NULL,
+            effect varchar(8) NOT NULL,
+            priority smallint NOT NULL DEFAULT 10,
+            enabled tinyint(1) NOT NULL DEFAULT 1,
+            compiled longtext,
+            created_by bigint(20) unsigned,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            last_matched_at datetime DEFAULT NULL,
+            match_count bigint(20) unsigned NOT NULL DEFAULT 0,
+            PRIMARY KEY (id),
+            KEY agent_enabled (agent_slug, enabled)
+        ) $charset_collate;";
+		$run_delta( 'agent_builder_approval_rules', $sql_approval_rules );
+
 		// Ensure Job_Manager, Security_Log, and Deployments are available (activation fires early).
 		include_once AGENT_BUILDER_DIR . 'includes/class-job-manager.php';
 		include_once AGENT_BUILDER_DIR . 'includes/class-security-log.php';
