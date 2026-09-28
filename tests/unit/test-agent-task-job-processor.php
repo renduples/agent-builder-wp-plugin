@@ -17,6 +17,8 @@ namespace Agentic\Tests;
 use Agentic\Agent_Run;
 use Agentic\Agent_Task_Job_Processor;
 use Agentic\Job_Manager;
+use Agentic\Manifest_Agent;
+use Agentic\Provider_Registry;
 
 /**
  * Test case for Agent_Task_Job_Processor.
@@ -35,6 +37,15 @@ class Test_Agent_Task_Job_Processor extends TestCase {
 		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$jobs_table}'" ) === $jobs_table ) {
 			$wpdb->query( "DELETE FROM {$jobs_table}" );
 		}
+	}
+
+	/**
+	 * Leave no provider API key behind for other tests.
+	 */
+	public function tearDown(): void {
+		Provider_Registry::save_api_key( 'agentic', '' );
+		Provider_Registry::invalidate();
+		parent::tearDown();
 	}
 
 	/**
@@ -193,5 +204,78 @@ class Test_Agent_Task_Job_Processor extends TestCase {
 		// It passed the allowlist and reached run resolution — it was not
 		// rejected as a disallowed processor.
 		$this->assertStringNotContainsString( 'processor not allowed', $job->error_message );
+	}
+
+	/**
+	 * A resume request the controller's ownership/status guard rejects
+	 * (here: agent mismatch) must not finish() the target run — it may
+	 * still be legitimately waiting elsewhere, and a guard tripping on a
+	 * stale/mismatched job is not this call's run to finalize.
+	 */
+	public function test_guard_rejected_resume_leaves_target_run_waiting(): void {
+		Provider_Registry::save_api_key( 'agentic', 'test-relay-key' );
+		Provider_Registry::invalidate();
+
+		$owner_id    = 'test-job-processor-guard-owner';
+		$mismatch_id = 'test-job-processor-guard-mismatched';
+		$registry    = \Agentic_Agent_Registry::get_instance();
+		$registry->register( $this->make_agent( $owner_id ) );
+		$registry->register( $this->make_agent( $mismatch_id ) );
+
+		$run = Agent_Run::begin(
+			$owner_id,
+			array(
+				'kind'      => 'task',
+				'task_text' => 'Do something.',
+			)
+		);
+		$run->mark_waiting( 'approval', 'appr-1', array(), 'call_abc' );
+		$run_id       = $run->get_run_id();
+		$resume_state = $run->resume_state();
+		Agent_Run::reset_current_for_tests();
+
+		$job_id = Job_Manager::create_job(
+			array(
+				'user_id'      => 1,
+				'agent_id'     => $mismatch_id,
+				'request_data' => array(
+					'run_id'     => $run_id,
+					'agent_id'   => $mismatch_id, // Deliberately not $owner_id.
+					'prompt'     => 'Do something.',
+					'user_id'    => 1,
+					'kind'       => 'task',
+					'source_ref' => '',
+					'resume'     => $resume_state,
+				),
+				'processor' => Agent_Task_Job_Processor::class,
+			)
+		);
+
+		Job_Manager::process_job( $job_id );
+
+		$run_after = Agent_Run::load( $run_id );
+		$this->assertSame(
+			'waiting',
+			$run_after->to_array()['status'],
+			'a guard-rejected resume must not finish() the target run'
+		);
+	}
+
+	/**
+	 * Minimal Manifest_Agent test double, registered with the shared
+	 * Agentic_Agent_Registry so Agent_Task_Job_Processor::execute() can
+	 * resolve it by slug the way it does in production.
+	 *
+	 * @param string $slug Agent slug.
+	 * @return Manifest_Agent
+	 */
+	private function make_agent( string $slug ): Manifest_Agent {
+		return new Manifest_Agent(
+			array(
+				'slug' => $slug,
+				'name' => 'Test Agent',
+			),
+			''
+		);
 	}
 }

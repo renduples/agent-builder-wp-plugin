@@ -172,6 +172,25 @@ class Test_Agent_Run extends TestCase {
 	}
 
 	/**
+	 * mark_waiting()'s optional tool_call_id is tracked separately from the
+	 * approval/proposal business id, and both round-trip through
+	 * resume_state() and a freshly loaded instance.
+	 */
+	public function test_mark_waiting_tracks_tool_call_id_separately_from_business_id(): void {
+		$run = Agent_Run::begin( 'content-writer' );
+
+		$run->mark_waiting( 'proposal', 'proposal-uuid-1', array(), 'call_abc123' );
+
+		$state = $run->resume_state();
+		$this->assertSame( 'proposal-uuid-1', $state['awaiting_id'] );
+		$this->assertSame( 'call_abc123', $state['awaiting_tool_call_id'] );
+		$this->assertNotSame( $state['awaiting_id'], $state['awaiting_tool_call_id'] );
+
+		$reloaded = Agent_Run::load( $run->get_run_id() );
+		$this->assertSame( 'call_abc123', $reloaded->resume_state()['awaiting_tool_call_id'] );
+	}
+
+	/**
 	 * mark_waiting() strips image parts out of the transcript before persisting.
 	 */
 	public function test_mark_waiting_strips_image_payloads(): void {
@@ -198,6 +217,95 @@ class Test_Agent_Run extends TestCase {
 		$stored = $run->resume_state()['messages'];
 		$this->assertArrayNotHasKey( 'image_url', $stored[0]['content'][1] );
 		$this->assertTrue( $stored[0]['content'][1]['omitted'] );
+	}
+
+	/**
+	 * mark_waiting() must still transition the run to 'waiting' (and persist the
+	 * awaiting pointer + transcript) when the awaiting_tool_call_id column does
+	 * not exist yet — a stale pre-migration schema on a cron/REST/frontend
+	 * request. Including the unknown column in the UPDATE would fail the whole
+	 * write and silently leave the run 'running'.
+	 */
+	public function test_mark_waiting_persists_waiting_without_awaiting_tool_call_id_column(): void {
+		$run = Agent_Run::begin( 'content-writer' );
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'agent_builder_runs';
+
+		// Simulate the stale schema: drop the column the migration hasn't added
+		// yet. DDL isn't rolled back by the per-test transaction, so restore it
+		// in the finally block below.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared -- Test-only schema change on a trusted internal table name.
+		$wpdb->query( "ALTER TABLE {$table} DROP COLUMN awaiting_tool_call_id" );
+
+		try {
+			$transcript = array(
+				array( 'role' => 'user', 'content' => 'Publish the draft.' ),
+				array( 'role' => 'assistant', 'content' => 'I need approval to publish.' ),
+			);
+
+			$run->mark_waiting( 'proposal', 'proposal-uuid-1', $transcript, 'call_abc123' );
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test assertion against the persisted row.
+			$row = $wpdb->get_row(
+				$wpdb->prepare( "SELECT * FROM {$table} WHERE run_id = %s", $run->get_run_id() ),
+				ARRAY_A
+			);
+
+			$this->assertSame( 'waiting', $row['status'], 'the run must transition to waiting even without the awaiting_tool_call_id column' );
+			$this->assertSame( 'proposal', $row['awaiting_type'] );
+			$this->assertSame( 'proposal-uuid-1', $row['awaiting_id'] );
+
+			// The transcript must still be persisted (so a resume can derive the
+			// original tool-call id from it when the column value is empty).
+			$reloaded = Agent_Run::load( $run->get_run_id() );
+			$this->assertSame( $transcript, $reloaded->resume_state()['messages'] );
+			$this->assertSame( '', $reloaded->resume_state()['awaiting_tool_call_id'] );
+		} finally {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared -- Restore the column so later tests see a full schema.
+			$wpdb->query( "ALTER TABLE {$table} ADD COLUMN awaiting_tool_call_id varchar(64) DEFAULT NULL AFTER awaiting_id" );
+		}
+	}
+
+	/**
+	 * mark_waiting() must not settle the in-process instance when its DB write
+	 * fails: a transient error leaves the row still 'running', so the shutdown
+	 * safety net must still be able to mark it 'aborted' rather than strand it
+	 * forever (mirrors test_mark_continuing_write_failure_leaves_run_unsettled).
+	 */
+	public function test_mark_waiting_write_failure_leaves_run_unsettled(): void {
+		global $wpdb;
+		$run   = Agent_Run::begin( 'content-writer' );
+		$table = $wpdb->prefix . 'agent_builder_runs';
+
+		// Force mark_waiting()'s UPDATE to fail (as a transient DB error would),
+		// without touching any other query the request makes.
+		$mangle = static function ( $query ) {
+			if ( is_string( $query ) && false !== stripos( $query, "'waiting'" ) ) {
+				return false;
+			}
+			return $query;
+		};
+		add_filter( 'query', $mangle );
+
+		try {
+			$run->mark_waiting( 'approval', '42', array() );
+		} finally {
+			remove_filter( 'query', $mangle );
+		}
+
+		// The write never landed: the row is still 'running', not 'waiting'.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test assertion against the persisted row.
+		$row = $wpdb->get_row(
+			$wpdb->prepare( "SELECT status FROM {$table} WHERE run_id = %s", $run->get_run_id() ),
+			ARRAY_A
+		);
+		$this->assertSame( 'running', $row['status'] );
+
+		// Because the instance stayed unsettled, a later finish() — standing in
+		// for the shutdown guard — is NOT a no-op and can still abort the run.
+		$run->finish( 'aborted' );
+		$this->assertSame( 'aborted', $run->to_array()['status'] );
 	}
 
 	/**
@@ -312,6 +420,125 @@ class Test_Agent_Run extends TestCase {
 	}
 
 	/**
+	 * mark_continuing() moves the run to a non-terminal 'continuing' status
+	 * and settles the in-process instance (mirroring mark_waiting()) so a
+	 * later finish() call — standing in for the shutdown safety net firing
+	 * at request end — is a no-op and never overwrites the hand-off with
+	 * 'aborted'.
+	 */
+	public function test_mark_continuing_is_non_terminal_and_blocks_later_finish(): void {
+		$run = Agent_Run::begin( 'content-writer' );
+
+		$run->mark_continuing();
+
+		$this->assertSame( 'continuing', $run->to_array()['status'] );
+
+		// Stand-in for register_shutdown_guard() firing at request end.
+		$run->finish( 'aborted' );
+
+		$this->assertSame( 'continuing', $run->to_array()['status'] );
+
+		$reloaded = Agent_Run::load( $run->get_run_id() );
+		$this->assertSame( 'continuing', $reloaded->to_array()['status'] );
+	}
+
+	/**
+	 * mark_continuing() must not settle the in-process instance when its DB
+	 * write fails: a transient error leaves the row still 'running', so the
+	 * shutdown safety net must still be able to mark it 'aborted' rather than
+	 * strand it forever.
+	 */
+	public function test_mark_continuing_write_failure_leaves_run_unsettled(): void {
+		global $wpdb;
+		$run   = Agent_Run::begin( 'content-writer' );
+		$table = $wpdb->prefix . 'agent_builder_runs';
+
+		// Force mark_continuing()'s UPDATE to fail (as a transient DB error
+		// would), without touching any other query the request makes.
+		$mangle = static function ( $query ) {
+			if ( is_string( $query ) && false !== stripos( $query, "'continuing'" ) ) {
+				return false;
+			}
+			return $query;
+		};
+		add_filter( 'query', $mangle );
+
+		try {
+			$run->mark_continuing();
+		} finally {
+			remove_filter( 'query', $mangle );
+		}
+
+		// The write never landed: the row is still 'running', not 'continuing'.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test assertion against the persisted row.
+		$row = $wpdb->get_row(
+			$wpdb->prepare( "SELECT status FROM {$table} WHERE run_id = %s", $run->get_run_id() ),
+			ARRAY_A
+		);
+		$this->assertSame( 'running', $row['status'] );
+
+		// Because the instance stayed unsettled, a later finish() — standing in
+		// for the shutdown guard — is NOT a no-op and can still abort the run.
+		$run->finish( 'aborted' );
+		$this->assertSame( 'aborted', $run->to_array()['status'] );
+	}
+
+	/**
+	 * mark_waiting() settles the run and releases the current-run pointer, so a
+	 * later begin() in the same request starts a genuinely new run instead of
+	 * returning the already-waiting one.
+	 */
+	public function test_begin_after_mark_waiting_returns_a_fresh_run(): void {
+		$run    = Agent_Run::begin( 'content-writer' );
+		$run_id = $run->get_run_id();
+
+		$run->mark_waiting( 'approval', '1', array() );
+
+		$this->assertNull( Agent_Run::current() );
+
+		$fresh = Agent_Run::begin( 'seo-optimizer' );
+		$this->assertNotSame( $run, $fresh );
+		$this->assertNotSame( $run_id, $fresh->get_run_id() );
+		$this->assertSame( 'seo-optimizer', $fresh->get_root_agent() );
+	}
+
+	/**
+	 * mark_continuing() likewise settles the run and releases the current-run
+	 * pointer, so a later begin() starts a fresh run rather than returning the
+	 * handed-off one.
+	 */
+	public function test_begin_after_mark_continuing_returns_a_fresh_run(): void {
+		$run    = Agent_Run::begin( 'content-writer' );
+		$run_id = $run->get_run_id();
+
+		$run->mark_continuing();
+
+		$this->assertNull( Agent_Run::current() );
+
+		$fresh = Agent_Run::begin( 'seo-optimizer' );
+		$this->assertNotSame( $run, $fresh );
+		$this->assertNotSame( $run_id, $fresh->get_run_id() );
+	}
+
+	/**
+	 * get_status() and get_root_agent() expose the fields resume validation
+	 * needs to reject replaying a terminal or mismatched-agent run.
+	 */
+	public function test_get_status_and_get_root_agent_accessors(): void {
+		$run = Agent_Run::begin( 'seo-optimizer', array( 'kind' => 'task' ) );
+
+		$this->assertSame( 'running', $run->get_status() );
+		$this->assertSame( 'seo-optimizer', $run->get_root_agent() );
+
+		$run->mark_waiting( 'approval', '1', array() );
+		$this->assertSame( 'waiting', $run->get_status() );
+
+		$reloaded = Agent_Run::load( $run->get_run_id() );
+		$this->assertSame( 'waiting', $reloaded->get_status() );
+		$this->assertSame( 'seo-optimizer', $reloaded->get_root_agent() );
+	}
+
+	/**
 	 * counts() returns per-status totals scoped to one user.
 	 */
 	public function test_counts_scopes_by_user_and_groups_by_status(): void {
@@ -331,5 +558,56 @@ class Test_Agent_Run extends TestCase {
 		$this->assertArrayNotHasKey( 'aborted', $counts );
 
 		$run_c->finish( 'completed' );
+	}
+
+	/**
+	 * claim_waiting() atomically flips a 'waiting'/'continuing' run to
+	 * 'running' and reports success — the normal, uncontested path.
+	 */
+	public function test_claim_waiting_succeeds_from_waiting_or_continuing(): void {
+		$waiting = Agent_Run::begin( 'content-writer' );
+		$waiting->mark_waiting( 'approval', '1', array() );
+		$this->assertTrue( $waiting->claim_waiting() );
+		$this->assertSame( 'running', $waiting->get_status() );
+		$this->assertSame( 'running', Agent_Run::load( $waiting->get_run_id() )->get_status() );
+
+		Agent_Run::reset_current_for_tests();
+
+		$continuing = Agent_Run::begin( 'content-writer' );
+		$continuing->mark_continuing();
+		$this->assertTrue( $continuing->claim_waiting() );
+		$this->assertSame( 'running', $continuing->get_status() );
+	}
+
+	/**
+	 * Two concurrent resume attempts for the same run_id must not both win:
+	 * once one caller's claim_waiting() has flipped the row to 'running',
+	 * a second, separately-loaded instance racing it must fail the claim
+	 * even though its own in-memory get_status() still reads 'waiting'.
+	 */
+	public function test_claim_waiting_rejects_a_second_concurrent_claimant(): void {
+		$run = Agent_Run::begin( 'content-writer' );
+		$run->mark_waiting( 'approval', '1', array() );
+
+		$first_claimant  = Agent_Run::load( $run->get_run_id() );
+		$second_claimant = Agent_Run::load( $run->get_run_id() );
+
+		$this->assertSame( 'waiting', $first_claimant->get_status() );
+		$this->assertSame( 'waiting', $second_claimant->get_status() );
+
+		$this->assertTrue( $first_claimant->claim_waiting(), 'the first claimant must win the race' );
+		$this->assertFalse( $second_claimant->claim_waiting(), 'a second concurrent claimant must lose the race' );
+	}
+
+	/**
+	 * A run that is not in 'waiting'/'continuing' (e.g. still 'running', or
+	 * already terminal) can never be claimed.
+	 */
+	public function test_claim_waiting_rejects_a_non_resumable_status(): void {
+		$run = Agent_Run::begin( 'content-writer' );
+		$this->assertFalse( $run->claim_waiting(), 'a plain running run has nothing to claim' );
+
+		$run->finish( 'completed' );
+		$this->assertFalse( $run->claim_waiting(), 'a terminal run must never be claimed for resume' );
 	}
 }

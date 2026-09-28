@@ -271,6 +271,17 @@ class Agent_Run {
 	private string $awaiting_id = '';
 
 	/**
+	 * The original LLM tool-call id (assistant message's tool_calls[].id) for
+	 * the pending tool call, kept separate from awaiting_id (the
+	 * proposal/approval queue's own business id) so a resumed request can
+	 * reconstruct a tool-role message that correctly pairs with the assistant
+	 * message a provider will validate it against.
+	 *
+	 * @var string
+	 */
+	private string $awaiting_tool_call_id = '';
+
+	/**
 	 * Whether a caller has asked this run to stop cooperatively.
 	 *
 	 * @var bool
@@ -463,6 +474,25 @@ class Agent_Run {
 	}
 
 	/**
+	 * Current status ('running', 'waiting', 'continuing', or a terminal
+	 * status such as 'completed'/'failed'/'aborted'/'cancelled').
+	 *
+	 * @return string
+	 */
+	public function get_status(): string {
+		return $this->status;
+	}
+
+	/**
+	 * Slug of the agent that started this run.
+	 *
+	 * @return string
+	 */
+	public function get_root_agent(): string {
+		return $this->root_agent;
+	}
+
+	/**
 	 * Whether another delegation is permitted under all configured budgets.
 	 *
 	 * @return bool
@@ -602,36 +632,68 @@ class Agent_Run {
 	 * Mark this run as waiting on an approval or proposal, persisting a
 	 * capped transcript so a later request can resume it.
 	 *
-	 * @param string $type       'approval' or 'proposal'.
-	 * @param string $id         Id of the approval/proposal.
-	 * @param array  $transcript Conversation messages to persist for resume.
+	 * @param string $type          'approval' or 'proposal'.
+	 * @param string $id            Id of the approval/proposal.
+	 * @param array  $transcript    Conversation messages to persist for resume.
+	 * @param string $tool_call_id  Original LLM tool-call id (assistant message's
+	 *                              tool_calls[].id) the resumed tool message must
+	 *                              reuse, kept separate from $id above.
 	 * @return void
 	 */
-	public function mark_waiting( string $type, string $id, array $transcript ): void {
-		$this->status        = 'waiting';
-		$this->awaiting_type = $type;
-		$this->awaiting_id   = $id;
-		$this->messages      = self::sanitize_transcript( $transcript );
+	public function mark_waiting( string $type, string $id, array $transcript, string $tool_call_id = '' ): void {
+		$this->status                = 'waiting';
+		$this->awaiting_type         = $type;
+		$this->awaiting_id           = $id;
+		$this->awaiting_tool_call_id = $tool_call_id;
+		$this->messages              = self::sanitize_transcript( $transcript );
 
 		$now = current_time( 'mysql', true );
 
-		$this->persist(
-			array(
-				'status'        => $this->status,
-				'awaiting_type' => $this->awaiting_type,
-				'awaiting_id'   => $this->awaiting_id,
-				'state'         => $this->encode_state(),
-				'updated_at'    => $now,
-			),
-			array( '%s', '%s', '%s', '%s', '%s' )
+		$fields  = array(
+			'status'        => $this->status,
+			'awaiting_type' => $this->awaiting_type,
+			'awaiting_id'   => $this->awaiting_id,
+			'state'         => $this->encode_state(),
+			'updated_at'    => $now,
 		);
+		$formats = array( '%s', '%s', '%s', '%s', '%s' );
+
+		// The awaiting_tool_call_id column is added by a version-independent
+		// migration that only runs from admin_init (see Activator::maybe_upgrade()).
+		// A cron/REST/frontend request on a site that has not run it yet would
+		// otherwise include an unknown column in the UPDATE, failing the whole
+		// write and silently leaving the run 'running' when it should be
+		// 'waiting'. When the column is absent, persist the waiting transition
+		// without it — the transcript already carries the assistant tool_calls[]
+		// id, which resume_state()'s consumer derives when the value is empty.
+		if ( self::has_awaiting_tool_call_id_column() ) {
+			$fields['awaiting_tool_call_id'] = $this->awaiting_tool_call_id;
+			$formats[]                       = '%s';
+		}
+
+		$persisted = $this->persist( $fields, $formats );
 
 		$this->updated_at = $now;
 
 		// A waiting run has handed off to an external event; this in-process
 		// instance is settled and must not have the shutdown safety net
-		// overwrite it with 'aborted' when the current request ends.
+		// overwrite it with 'aborted' when the current request ends. Only
+		// settle it once the DB write has actually landed — a transient
+		// failure leaves the row 'running', and keeping $finished false lets
+		// the shutdown net mark it 'aborted' at request end instead of
+		// stranding it (mirrors mark_continuing()).
+		if ( ! $persisted ) {
+			return;
+		}
+
 		$this->finished = true;
+
+		// The instance is settled; release the current-run pointer so a later
+		// begin() in the same request starts a fresh run rather than handing
+		// back this settled one (mirrors finish()).
+		if ( self::$current === $this ) {
+			self::$current = null;
+		}
 	}
 
 	/**
@@ -642,13 +704,121 @@ class Agent_Run {
 	 */
 	public function resume_state(): array {
 		return array(
-			'messages'      => $this->messages,
-			'scratchpad'    => $this->scratchpad,
-			'awaiting_type' => $this->awaiting_type,
-			'awaiting_id'   => $this->awaiting_id,
-			'iterations'    => $this->iterations,
-			'tools_used'    => array_values( $this->tools_used ),
+			'messages'              => $this->messages,
+			'scratchpad'            => $this->scratchpad,
+			'awaiting_type'         => $this->awaiting_type,
+			'awaiting_id'           => $this->awaiting_id,
+			'awaiting_tool_call_id' => $this->awaiting_tool_call_id,
+			'iterations'            => $this->iterations,
+			'tools_used'            => array_values( $this->tools_used ),
 		);
+	}
+
+	/**
+	 * Whether the runs table currently has the `awaiting_tool_call_id` column.
+	 *
+	 * The column is added by a version-independent migration that only runs
+	 * from admin_init (Activator::maybe_upgrade()), so a cron/REST/frontend
+	 * request on a not-yet-migrated site sees a table without it. mark_waiting()
+	 * uses this to skip the column in its UPDATE rather than fail the whole
+	 * write (and leave the run stuck at 'running') on an unknown column.
+	 *
+	 * @return bool True when the column exists.
+	 */
+	private static function has_awaiting_tool_call_id_column(): bool {
+		global $wpdb;
+		$table = $wpdb->prefix . 'agent_builder_runs';
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is $wpdb->prefix-derived internal name, not user input.
+		$column = $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM {$table} LIKE %s", 'awaiting_tool_call_id' ) );
+
+		return is_string( $column ) && '' !== $column;
+	}
+
+	/**
+	 * Mark this run as handed off to a background continuation job after the
+	 * ~70% elapsed-time guard fires, without transitioning to a terminal
+	 * status — so a resumed request can pick it back up.
+	 *
+	 * Like mark_waiting(), this settles the in-process instance so the
+	 * shutdown safety net does not overwrite the hand-off with 'aborted' when
+	 * the current request ends.
+	 *
+	 * @return void
+	 */
+	public function mark_continuing(): void {
+		$this->status = 'continuing';
+
+		$now = current_time( 'mysql', true );
+
+		$persisted = $this->persist(
+			array(
+				'status'     => $this->status,
+				'updated_at' => $now,
+			),
+			array( '%s', '%s' )
+		);
+
+		$this->updated_at = $now;
+
+		// Only settle this in-process instance once the DB write has actually
+		// landed. A transient write failure leaves the row still 'running';
+		// keeping $finished false lets the shutdown safety net mark it
+		// 'aborted' at request end instead of stranding it.
+		if ( ! $persisted ) {
+			return;
+		}
+
+		$this->finished = true;
+
+		if ( self::$current === $this ) {
+			self::$current = null;
+		}
+	}
+
+	/**
+	 * Atomically claim this run for resume, transitioning it from a
+	 * non-terminal hand-off status ('waiting' or 'continuing') to 'running'
+	 * in a single compare-and-set UPDATE.
+	 *
+	 * A caller resuming a run typically reads its status via get_status()
+	 * first, but that read and the subsequent work (calling the LLM,
+	 * executing the pending tool call) are not atomic with each other — two
+	 * concurrent resume attempts for the same run_id (a duplicate job
+	 * dispatch, or a retry racing the original) could otherwise both pass
+	 * that check and both execute the same pending tool call. This method
+	 * closes that window: only the request whose UPDATE actually matches a
+	 * row still in 'waiting'/'continuing' wins the claim.
+	 *
+	 * @return bool True if this call claimed the run, false if another
+	 *              process already claimed it (or it is no longer in a
+	 *              resumable status).
+	 */
+	public function claim_waiting(): bool {
+		global $wpdb;
+		$table = $wpdb->prefix . 'agent_builder_runs';
+		$now   = current_time( 'mysql', true );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Atomic compare-and-set keyed by run_id + current status; no caching benefit.
+		$updated = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE %i SET status = %s, updated_at = %s WHERE run_id = %s AND status IN ('waiting','continuing')",
+				$table,
+				'running',
+				$now,
+				$this->run_id
+			)
+		);
+
+		if ( 1 !== $updated ) {
+			return false;
+		}
+
+		$this->status     = 'running';
+		$this->updated_at = $now;
+		$this->finished   = false;
+
+		return true;
 	}
 
 	/**
@@ -787,35 +957,36 @@ class Agent_Run {
 	 */
 	public function to_array(): array {
 		return array(
-			'run_id'           => $this->run_id,
-			'root_agent'       => $this->root_agent,
-			'kind'             => $this->kind,
-			'status'           => $this->status,
-			'user_id'          => $this->user_id,
-			'task_text'        => $this->task_text,
-			'parent_run_id'    => $this->parent_run_id,
-			'job_id'           => $this->job_id,
-			'session_id'       => $this->session_id,
-			'invocation'       => $this->invocation,
-			'source_ref'       => $this->source_ref,
-			'depth'            => $this->depth,
-			'delegations'      => $this->delegations,
-			'max_depth'        => $this->max_depth_reached,
-			'iterations'       => $this->iterations,
-			'tokens_used'      => $this->tokens,
-			'cost'             => round( $this->cost, 6 ),
-			'tools_used'       => array_values( $this->tools_used ),
-			'result_summary'   => array(
+			'run_id'                => $this->run_id,
+			'root_agent'            => $this->root_agent,
+			'kind'                  => $this->kind,
+			'status'                => $this->status,
+			'user_id'               => $this->user_id,
+			'task_text'             => $this->task_text,
+			'parent_run_id'         => $this->parent_run_id,
+			'job_id'                => $this->job_id,
+			'session_id'            => $this->session_id,
+			'invocation'            => $this->invocation,
+			'source_ref'            => $this->source_ref,
+			'depth'                 => $this->depth,
+			'delegations'           => $this->delegations,
+			'max_depth'             => $this->max_depth_reached,
+			'iterations'            => $this->iterations,
+			'tokens_used'           => $this->tokens,
+			'cost'                  => round( $this->cost, 6 ),
+			'tools_used'            => array_values( $this->tools_used ),
+			'result_summary'        => array(
 				'text'  => $this->result_text,
 				'cards' => $this->result_cards,
 			),
-			'error'            => $this->error,
-			'awaiting_type'    => $this->awaiting_type,
-			'awaiting_id'      => $this->awaiting_id,
-			'cancel_requested' => $this->cancel_requested,
-			'started_at'       => $this->started_at,
-			'updated_at'       => $this->updated_at,
-			'finished_at'      => $this->finished_at,
+			'error'                 => $this->error,
+			'awaiting_type'         => $this->awaiting_type,
+			'awaiting_id'           => $this->awaiting_id,
+			'awaiting_tool_call_id' => $this->awaiting_tool_call_id,
+			'cancel_requested'      => $this->cancel_requested,
+			'started_at'            => $this->started_at,
+			'updated_at'            => $this->updated_at,
+			'finished_at'           => $this->finished_at,
 		);
 	}
 
@@ -1005,29 +1176,30 @@ class Agent_Run {
 	private static function from_row( array $row ): Agent_Run {
 		$run = new self( (string) ( $row['root_agent'] ?? '' ) );
 
-		$run->run_id            = (string) ( $row['run_id'] ?? $run->run_id );
-		$run->kind              = (string) ( $row['kind'] ?? 'task' );
-		$run->status            = (string) ( $row['status'] ?? 'running' );
-		$run->user_id           = (int) ( $row['user_id'] ?? 0 );
-		$run->task_text         = (string) ( $row['task_text'] ?? '' );
-		$run->parent_run_id     = (string) ( $row['parent_run_id'] ?? '' );
-		$run->job_id            = (string) ( $row['job_id'] ?? '' );
-		$run->session_id        = (string) ( $row['session_id'] ?? '' );
-		$run->invocation        = (string) ( $row['invocation'] ?? '' );
-		$run->source_ref        = (string) ( $row['source_ref'] ?? '' );
-		$run->delegations       = (int) ( $row['delegations'] ?? 0 );
-		$run->max_depth_reached = (int) ( $row['max_depth'] ?? 0 );
-		$run->iterations        = (int) ( $row['iterations'] ?? 0 );
-		$run->tokens            = (int) ( $row['tokens_used'] ?? 0 );
-		$run->cost              = (float) ( $row['cost'] ?? 0.0 );
-		$run->tools_used        = self::decode_list( $row['tools_used'] ?? '' );
-		$run->error             = (string) ( $row['error'] ?? '' );
-		$run->awaiting_type     = (string) ( $row['awaiting_type'] ?? '' );
-		$run->awaiting_id       = (string) ( $row['awaiting_id'] ?? '' );
-		$run->cancel_requested  = ! empty( $row['cancel_requested'] );
-		$run->started_at        = (string) ( $row['started_at'] ?? '' );
-		$run->updated_at        = (string) ( $row['updated_at'] ?? '' );
-		$run->finished_at       = (string) ( $row['finished_at'] ?? '' );
+		$run->run_id                = (string) ( $row['run_id'] ?? $run->run_id );
+		$run->kind                  = (string) ( $row['kind'] ?? 'task' );
+		$run->status                = (string) ( $row['status'] ?? 'running' );
+		$run->user_id               = (int) ( $row['user_id'] ?? 0 );
+		$run->task_text             = (string) ( $row['task_text'] ?? '' );
+		$run->parent_run_id         = (string) ( $row['parent_run_id'] ?? '' );
+		$run->job_id                = (string) ( $row['job_id'] ?? '' );
+		$run->session_id            = (string) ( $row['session_id'] ?? '' );
+		$run->invocation            = (string) ( $row['invocation'] ?? '' );
+		$run->source_ref            = (string) ( $row['source_ref'] ?? '' );
+		$run->delegations           = (int) ( $row['delegations'] ?? 0 );
+		$run->max_depth_reached     = (int) ( $row['max_depth'] ?? 0 );
+		$run->iterations            = (int) ( $row['iterations'] ?? 0 );
+		$run->tokens                = (int) ( $row['tokens_used'] ?? 0 );
+		$run->cost                  = (float) ( $row['cost'] ?? 0.0 );
+		$run->tools_used            = self::decode_list( $row['tools_used'] ?? '' );
+		$run->error                 = (string) ( $row['error'] ?? '' );
+		$run->awaiting_type         = (string) ( $row['awaiting_type'] ?? '' );
+		$run->awaiting_id           = (string) ( $row['awaiting_id'] ?? '' );
+		$run->awaiting_tool_call_id = (string) ( $row['awaiting_tool_call_id'] ?? '' );
+		$run->cancel_requested      = ! empty( $row['cancel_requested'] );
+		$run->started_at            = (string) ( $row['started_at'] ?? '' );
+		$run->updated_at            = (string) ( $row['updated_at'] ?? '' );
+		$run->finished_at           = (string) ( $row['finished_at'] ?? '' );
 
 		$summary           = self::decode_assoc( $row['result_summary'] ?? '' );
 		$run->result_text  = (string) ( $summary['text'] ?? '' );
@@ -1137,13 +1309,17 @@ class Agent_Run {
 	 *
 	 * @param array $fields  Column => value.
 	 * @param array $formats Matching %s/%d/%f formats.
-	 * @return void
+	 * @return bool True when the write actually landed, false on a DB error
+	 *              (a $wpdb->update() false return). Callers that settle the
+	 *              in-process instance (mark_continuing()) must gate on this,
+	 *              so a transient failure does not disable the shutdown net
+	 *              while the row is still 'running' in storage.
 	 */
-	private function persist( array $fields, array $formats ): void {
+	private function persist( array $fields, array $formats ): bool {
 		global $wpdb;
 		$table = $wpdb->prefix . 'agent_builder_runs';
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table update, keyed by run_id.
-		$wpdb->update( $table, $fields, array( 'run_id' => $this->run_id ), $formats, array( '%s' ) );
+		return false !== $wpdb->update( $table, $fields, array( 'run_id' => $this->run_id ), $formats, array( '%s' ) );
 	}
 
 	/**

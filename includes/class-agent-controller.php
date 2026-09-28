@@ -1308,15 +1308,67 @@ class Agent_Controller {
 			$run = Agent_Run::load( $resume_run_id );
 			if ( ! $run ) {
 				return array(
-					'error'    => true,
-					'response' => __( 'Cannot resume: run not found.', 'agent-builder' ),
-					'agent_id' => $agent_id,
-					'task_id'  => $task_id,
-					'run_id'   => $resume_run_id,
-					'status'   => 'error',
-					'cards'    => array(),
+					'error'          => true,
+					'guard_rejected' => true,
+					'response'       => __( 'Cannot resume: run not found.', 'agent-builder' ),
+					'agent_id'       => $agent_id,
+					'task_id'        => $task_id,
+					'run_id'         => $resume_run_id,
+					'status'         => 'error',
+					'cards'          => array(),
 				);
 			}
+
+			// A run can only be resumed from one of its non-terminal hand-off
+			// states — 'waiting' (paused on an approval/proposal) or
+			// 'continuing' (handed off by the elapsed-time guard) — a terminal
+			// run (completed/aborted/cancelled/failed) must never be replayed,
+			// since finish() on an already-finished run silently no-ops and
+			// would let tool calls execute a second time. Also refuse a run
+			// that belongs to a different agent than the one making this
+			// call, so a stale or mismatched run_id can never be hijacked into
+			// another agent's context.
+			if ( ! in_array( $run->get_status(), array( 'waiting', 'continuing' ), true ) || $run->get_root_agent() !== $agent_id ) {
+				return array(
+					'error'          => true,
+					// Marks this as a rejected resume *attempt*, not a task
+					// failure — the caller (Agent_Task_Job_Processor::execute())
+					// must not finish() the target run over this: that run may
+					// still be legitimately waiting/continuing elsewhere, and
+					// this guard tripping (stale job data, a race, a mismatched
+					// caller) is not this call's run to finalize.
+					'guard_rejected' => true,
+					'response'       => __( 'Cannot resume: this run is not in a resumable state.', 'agent-builder' ),
+					'agent_id'       => $agent_id,
+					'task_id'        => $task_id,
+					'run_id'         => $resume_run_id,
+					'status'         => 'error',
+					'cards'          => array(),
+				);
+			}
+
+			// The status/agent check above only inspects this process's
+			// in-memory copy of the loaded row — it is not atomic with the
+			// work that follows (calling the LLM, executing the pending tool
+			// call). Two concurrent resume attempts for the same run_id (a
+			// duplicate job dispatch, or a retry racing the original) could
+			// otherwise both pass that check and both execute the same
+			// pending tool call. claim_waiting() closes that window with a
+			// single compare-and-set UPDATE; only the request that wins it
+			// proceeds.
+			if ( ! $run->claim_waiting() ) {
+				return array(
+					'error'          => true,
+					'guard_rejected' => true,
+					'response'       => __( 'Cannot resume: this run was already claimed by another request.', 'agent-builder' ),
+					'agent_id'       => $agent_id,
+					'task_id'        => $task_id,
+					'run_id'         => $resume_run_id,
+					'status'         => 'error',
+					'cards'          => array(),
+				);
+			}
+
 			$run->make_current();
 			$owns_run = true; // Resuming a paused run in a fresh process; this leg owns it.
 
@@ -1324,12 +1376,18 @@ class Agent_Controller {
 			$iterations = max( 0, (int) ( $resume_state['iterations'] ?? 0 ) );
 
 			if ( null !== $resume_tool_result ) {
-				$messages[] = array(
-					'role'         => 'tool',
-					'tool_call_id' => (string) ( $resume_state['awaiting_id'] ?? '' ),
-					'name'         => (string) ( $resume_tool_result['tool'] ?? '' ),
-					'content'      => wp_json_encode( $resume_tool_result ),
-				);
+				// The original LLM tool-call id lives in awaiting_tool_call_id.
+				// For a run that entered 'waiting' before that column existed
+				// (or whose mark_waiting() could not persist it on a stale
+				// schema), the value is empty — derive it from the checkpointed
+				// transcript's own assistant tool_calls[] entry instead of
+				// sending the provider an empty id it will reject.
+				$tool_call_id = (string) ( $resume_state['awaiting_tool_call_id'] ?? '' );
+				if ( '' === $tool_call_id ) {
+					$tool_call_id = $this->derive_pending_tool_call_id( $messages, $resume_tool_result );
+				}
+
+				$messages = $this->resolve_tool_message( $messages, $resume_tool_result, $tool_call_id );
 			}
 		} else {
 			$run = Agent_Run::begin(
@@ -1488,11 +1546,12 @@ class Agent_Controller {
 			// Capture reasoning for observability (P0) — autonomous path.
 			$step_reasoning = $this->extract_reasoning( $assistant_message );
 
-			$iter_tools   = array();
-			$has_pending  = false;
-			$pending_msg  = '';
-			$pending_type = '';
-			$pending_id   = '';
+			$iter_tools        = array();
+			$has_pending       = false;
+			$pending_msg       = '';
+			$pending_type      = '';
+			$pending_id        = '';
+			$pending_tool_call = '';
 
 			if ( ! empty( $assistant_message['tool_calls'] ) ) {
 				$this->audit->log(
@@ -1535,9 +1594,10 @@ class Agent_Controller {
 					// autonomous turns do not fan out multiple pending approvals.
 					$tool_status = $tool_result['status'] ?? '';
 					if ( 'confirmation_required' === $tool_status || 'queued_for_approval' === $tool_status ) {
-						$has_pending  = true;
-						$pending_type = 'confirmation_required' === $tool_status ? 'proposal' : 'approval';
-						$pending_id   = (string) ( $tool_result['proposal_id'] ?? $tool_result['approval_id'] ?? '' );
+						$has_pending       = true;
+						$pending_type      = 'confirmation_required' === $tool_status ? 'proposal' : 'approval';
+						$pending_id        = (string) ( $tool_result['proposal_id'] ?? $tool_result['approval_id'] ?? '' );
+						$pending_tool_call = (string) $tool_call['id'];
 						if ( ! empty( $tool_result['message'] ) ) {
 							$pending_msg = (string) $tool_result['message'];
 						}
@@ -1561,7 +1621,7 @@ class Agent_Controller {
 
 			if ( $has_pending ) {
 				if ( $owns_run ) {
-					$run->mark_waiting( $pending_type, $pending_id, $messages );
+					$run->mark_waiting( $pending_type, $pending_id, $messages, $pending_tool_call );
 				}
 
 				$estimated_cost = class_exists( '\Agentic\Costs_Manager' )
@@ -1660,6 +1720,12 @@ class Agent_Controller {
 	 * @return void
 	 */
 	protected function dispatch_continuation( Agent_Run $run, \Agentic\Agent_Base $agent, string $prompt, string $task_id ): void {
+		// Hand off to a non-terminal 'continuing' status before firing the
+		// hook — without this, the shutdown safety net (armed for every run)
+		// sees $finished still false at request end and overwrites this
+		// hand-off with 'aborted', defeating the continuation mechanism.
+		$run->mark_continuing();
+
 		/**
 		 * Fires when an autonomous run has used ~70% of its execution-time
 		 * budget and must hand off to a background continuation job.
@@ -1670,6 +1736,98 @@ class Agent_Controller {
 		 * @param string              $task_id Task identifier.
 		 */
 		do_action( 'agent_builder_run_needs_continuation', $run->get_run_id(), $agent, $prompt, $task_id );
+	}
+
+	/**
+	 * Recover the original LLM tool-call id for the pending call from a
+	 * checkpointed transcript, for runs that entered 'waiting' before the
+	 * `awaiting_tool_call_id` column existed (its value is then empty) or whose
+	 * mark_waiting() could not persist it on a stale schema.
+	 *
+	 * Matches the assistant message's tool_calls[] entry on the tool's function
+	 * name first; when the name is absent or doesn't match, falls back to the
+	 * last assistant tool-call id in the transcript — always better than an
+	 * empty id, which providers that validate tool-call pairing reject.
+	 *
+	 * @param array $messages    Checkpointed transcript.
+	 * @param array $tool_result Resolved tool result carrying the tool name.
+	 * @return string Original LLM tool-call id, or '' if none can be found.
+	 */
+	protected function derive_pending_tool_call_id( array $messages, array $tool_result ): string {
+		$tool_name = (string) ( $tool_result['tool'] ?? '' );
+
+		$last_tool_call_id = '';
+		for ( $i = count( $messages ) - 1; $i >= 0; $i-- ) {
+			$message = $messages[ $i ];
+			if ( 'assistant' !== ( $message['role'] ?? '' ) || empty( $message['tool_calls'] ) ) {
+				continue;
+			}
+
+			// Within the newest qualifying message, the fallback is the *last*
+			// tool_call in that message's own tool_calls array (the final call
+			// the assistant made before the pause). Older messages must never
+			// overwrite it, since the outer walk is already newest -> oldest.
+			$message_fallback = '';
+			foreach ( $message['tool_calls'] as $tool_call ) {
+				$id = (string) ( $tool_call['id'] ?? '' );
+				if ( '' !== $id ) {
+					$message_fallback = $id;
+				}
+				if ( '' !== $tool_name && (string) ( $tool_call['function']['name'] ?? '' ) === $tool_name ) {
+					return $id;
+				}
+			}
+
+			if ( '' === $last_tool_call_id && '' !== $message_fallback ) {
+				$last_tool_call_id = $message_fallback;
+			}
+		}
+
+		return $last_tool_call_id;
+	}
+
+	/**
+	 * Build the reconstructed tool-role message for a resumed run and splice it
+	 * into the transcript.
+	 *
+	 * The pause already checkpointed a *provisional* tool message carrying the
+	 * unresolved ("waiting") result for the same tool_calls[].id. Appending a
+	 * second tool message for that id would leave two tool results for one
+	 * call, which providers that validate tool-call pairing reject. So the
+	 * provisional message is replaced with the resolved one in place, falling
+	 * back to an append only when no provisional message exists to replace
+	 * (e.g. a legacy transcript that never carried one).
+	 *
+	 * @param array  $messages    Checkpointed transcript.
+	 * @param array  $tool_result Resolved tool result.
+	 * @param string $tool_call_id Original LLM tool-call id (already derived when empty).
+	 * @return array Transcript with the resolved tool message in place.
+	 */
+	protected function resolve_tool_message( array $messages, array $tool_result, string $tool_call_id ): array {
+		$tool_name   = (string) ( $tool_result['tool'] ?? '' );
+		$replacement = array(
+			'role'         => 'tool',
+			'tool_call_id' => $tool_call_id,
+			'name'         => $tool_name,
+			'content'      => wp_json_encode( $tool_result ),
+		);
+
+		for ( $i = count( $messages ) - 1; $i >= 0; $i-- ) {
+			$message = $messages[ $i ];
+			if ( 'tool' !== ( $message['role'] ?? '' ) ) {
+				continue;
+			}
+
+			$matches_id   = '' !== $tool_call_id && (string) ( $message['tool_call_id'] ?? '' ) === $tool_call_id;
+			$matches_name = '' !== $tool_name && (string) ( $message['name'] ?? '' ) === $tool_name;
+			if ( $matches_id || ( '' === $tool_call_id && $matches_name ) ) {
+				$messages[ $i ] = $replacement;
+				return $messages;
+			}
+		}
+
+		$messages[] = $replacement;
+		return $messages;
 	}
 
 	/**
