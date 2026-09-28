@@ -610,4 +610,197 @@ class Test_Agent_Run extends TestCase {
 		$run->finish( 'completed' );
 		$this->assertFalse( $run->claim_waiting(), 'a terminal run must never be claimed for resume' );
 	}
+
+	/**
+	 * A single message that alone exceeds the 200KB transcript cap is dropped
+	 * rather than left in the persisted transcript over the declared bound.
+	 */
+	public function test_mark_waiting_drops_a_single_oversized_message(): void {
+		$run = Agent_Run::begin( 'content-writer' );
+
+		$oversized_transcript = array(
+			array(
+				'role'    => 'assistant',
+				'content' => str_repeat( 'x', 250 * 1024 ),
+			),
+		);
+
+		$run->mark_waiting( 'approval', '42', $oversized_transcript );
+
+		$this->assertSame( array(), $run->resume_state()['messages'] );
+	}
+
+	/**
+	 * A run whose state column was written before 2.15.0 (the bare
+	 * scratchpad object, with no {scratchpad, messages} wrapper) still loads
+	 * its scratchpad correctly instead of it being silently dropped.
+	 */
+	public function test_load_recovers_scratchpad_from_legacy_flat_state_shape(): void {
+		$run    = Agent_Run::begin( 'content-writer' );
+		$run_id = $run->get_run_id();
+
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Simulating a pre-2.15.0 row shape for the test.
+		$wpdb->update(
+			$wpdb->prefix . 'agent_builder_runs',
+			array( 'state' => wp_json_encode( array( 'delegated_key' => 'delegated_value' ) ) ),
+			array( 'run_id' => $run_id )
+		);
+
+		$reloaded = Agent_Run::load( $run_id );
+
+		$this->assertSame( 'delegated_value', $reloaded->scratch_get( 'delegated_key' ) );
+		$this->assertSame( array(), $reloaded->resume_state()['messages'] );
+
+		$run->finish( 'completed' );
+	}
+
+	/**
+	 * A legacy flat state shape that happens to contain a key literally named
+	 * "scratchpad" (but not also "messages") must still be recovered as the
+	 * whole legacy scratchpad, not misdetected as the current {scratchpad,
+	 * messages} wrapper — which would otherwise discard the real data and
+	 * keep only whatever sat under that one key.
+	 */
+	public function test_load_recovers_legacy_state_that_contains_a_scratchpad_shaped_key(): void {
+		$run    = Agent_Run::begin( 'content-writer' );
+		$run_id = $run->get_run_id();
+
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Simulating a pre-2.15.0 row shape for the test.
+		$wpdb->update(
+			$wpdb->prefix . 'agent_builder_runs',
+			array(
+				'state' => wp_json_encode(
+					array(
+						'scratchpad'    => 'not-an-array-just-a-legacy-field',
+						'delegated_key' => 'delegated_value',
+					)
+				),
+			),
+			array( 'run_id' => $run_id )
+		);
+
+		$reloaded = Agent_Run::load( $run_id );
+
+		$this->assertSame( 'delegated_value', $reloaded->scratch_get( 'delegated_key' ) );
+		$this->assertSame( 'not-an-array-just-a-legacy-field', $reloaded->scratch_get( 'scratchpad' ) );
+		$this->assertSame( array(), $reloaded->resume_state()['messages'] );
+
+		$run->finish( 'completed' );
+	}
+
+	/**
+	 * The current-shape signal is a "messages" value that is a list of
+	 * role-bearing message objects, not merely an array. A legacy flat
+	 * scratchpad that happens to hold BOTH a "scratchpad" key (an array) AND a
+	 * "messages" key (an array that is not a transcript, e.g. a list of plain
+	 * strings) must still be recovered as the whole legacy scratchpad — not
+	 * misdetected as the current {scratchpad, messages} wrapper, which would
+	 * discard everything under the other keys.
+	 */
+	public function test_load_recovers_legacy_state_with_both_keys_but_no_transcript(): void {
+		$run    = Agent_Run::begin( 'content-writer' );
+		$run_id = $run->get_run_id();
+
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Simulating a pre-2.15.0 row shape for the test.
+		$wpdb->update(
+			$wpdb->prefix . 'agent_builder_runs',
+			array(
+				'state' => wp_json_encode(
+					array(
+						'scratchpad'    => array( 'legacy' => 'nested' ),
+						'messages'      => array( 'not a transcript list' ),
+						'delegated_key' => 'delegated_value',
+					)
+				),
+			),
+			array( 'run_id' => $run_id )
+		);
+
+		$reloaded = Agent_Run::load( $run_id );
+
+		$this->assertSame( 'delegated_value', $reloaded->scratch_get( 'delegated_key' ) );
+		$this->assertSame( array( 'legacy' => 'nested' ), $reloaded->scratch_get( 'scratchpad' ) );
+		$this->assertSame( array( 'not a transcript list' ), $reloaded->scratch_get( 'messages' ) );
+		$this->assertSame( array(), $reloaded->resume_state()['messages'] );
+
+		$run->finish( 'completed' );
+	}
+
+	/**
+	 * A legacy flat scratchpad that happens to hold a "scratchpad" array AND
+	 * an empty "messages" array AND a third key must still be recovered as the
+	 * whole legacy scratchpad. The current wrapper is always exactly two keys
+	 * ({scratchpad, messages}), so a third key rules it out even though
+	 * is_transcript_list() would accept the empty messages list on its own.
+	 */
+	public function test_load_recovers_legacy_state_with_extra_keys(): void {
+		$run    = Agent_Run::begin( 'content-writer' );
+		$run_id = $run->get_run_id();
+
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Simulating a pre-2.15.0 row shape for the test.
+		$wpdb->update(
+			$wpdb->prefix . 'agent_builder_runs',
+			array(
+				'state' => wp_json_encode(
+					array(
+						'scratchpad'    => array( 'a' => 1 ),
+						'messages'      => array(),
+						'delegated_key' => 'x',
+					)
+				),
+			),
+			array( 'run_id' => $run_id )
+		);
+
+		$reloaded = Agent_Run::load( $run_id );
+
+		$this->assertSame( 'x', $reloaded->scratch_get( 'delegated_key' ) );
+		$this->assertSame( array( 'a' => 1 ), $reloaded->scratch_get( 'scratchpad' ) );
+		$this->assertSame( array(), $reloaded->scratch_get( 'messages' ) );
+		$this->assertSame( array(), $reloaded->resume_state()['messages'] );
+
+		$run->finish( 'completed' );
+	}
+
+	/**
+	 * A run whose state column holds the current {scratchpad, messages} wrapper
+	 * loads both its scratchpad and its resume transcript — the shape-based
+	 * signal from_row() uses to tell the wrapper apart from a legacy flat
+	 * scratchpad.
+	 */
+	public function test_load_recovers_current_wrapper_shape(): void {
+		$run    = Agent_Run::begin( 'content-writer' );
+		$run_id = $run->get_run_id();
+
+		$transcript = array(
+			array( 'role' => 'user', 'content' => 'resume me' ),
+			array( 'role' => 'assistant', 'content' => 'working on it' ),
+		);
+
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Simulating the current wrapper row shape for the test.
+		$wpdb->update(
+			$wpdb->prefix . 'agent_builder_runs',
+			array(
+				'state' => wp_json_encode(
+					array(
+						'scratchpad' => array( 'delegated_key' => 'delegated_value' ),
+						'messages'   => $transcript,
+					)
+				),
+			),
+			array( 'run_id' => $run_id )
+		);
+
+		$reloaded = Agent_Run::load( $run_id );
+
+		$this->assertSame( 'delegated_value', $reloaded->scratch_get( 'delegated_key' ) );
+		$this->assertSame( $transcript, $reloaded->resume_state()['messages'] );
+
+		$run->finish( 'completed' );
+	}
 }

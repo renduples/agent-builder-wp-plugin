@@ -308,16 +308,133 @@ class Test_Schema_Upgrade extends TestCase {
 	}
 
 	/**
+	 * Drop and recreate agent_builder_runs, agent_builder_approval_queue, and
+	 * agent_builder_audit_log in their genuine pre-M10 (2.14.2) column shape —
+	 * copied verbatim from Activator::create_tables() as it existed at that
+	 * version — so the tests below exercise the real dbDelta migration
+	 * instead of asserting against columns tests/bootstrap.php already
+	 * hand-creates in the current (M10) shape regardless of what
+	 * maybe_upgrade() actually does.
+	 */
+	private function recreate_pre_m10_tables(): void {
+		global $wpdb;
+		$charset_collate = $wpdb->get_charset_collate();
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test fixture setup.
+		$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}agent_builder_runs" );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test fixture setup.
+		$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}agent_builder_approval_queue" );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test fixture setup.
+		$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}agent_builder_audit_log" );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test fixture setup; pre-M10 shape, no run_id column.
+		$wpdb->query(
+			"CREATE TABLE {$wpdb->prefix}agent_builder_audit_log (
+	            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+	            agent_id varchar(64) NOT NULL,
+	            action varchar(128) NOT NULL,
+	            target_type varchar(64),
+	            target_id varchar(128),
+	            details longtext,
+	            reasoning text,
+	            mode varchar(32) DEFAULT '',
+	            provider varchar(64) DEFAULT '',
+	            tokens_used int unsigned DEFAULT 0,
+	            cost decimal(10,6) DEFAULT 0,
+	            user_id bigint(20) unsigned,
+	            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+	            agent_author varchar(191) DEFAULT '',
+	            agent_version varchar(32) DEFAULT '',
+	            integrity_hash char(64) DEFAULT NULL,
+	            PRIMARY KEY (id),
+	            KEY agent_id (agent_id),
+	            KEY action (action),
+	            KEY created_at (created_at),
+	            KEY user_created (user_id, created_at),
+	            KEY idx_agent_created (agent_id, created_at)
+	        ) {$charset_collate}"
+		);
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test fixture setup; pre-M10 shape, no run_id/user_id columns.
+		$wpdb->query(
+			"CREATE TABLE {$wpdb->prefix}agent_builder_approval_queue (
+	            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+	            agent_id varchar(64) NOT NULL,
+	            action varchar(128) NOT NULL,
+	            params longtext NOT NULL,
+	            reasoning text,
+	            risk_level varchar(32) DEFAULT 'none',
+	            status varchar(32) DEFAULT 'pending',
+	            approved_by bigint(20) unsigned,
+	            approved_at datetime,
+	            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+	            expires_at datetime,
+	            executed_at datetime DEFAULT NULL,
+	            mode varchar(32) DEFAULT '',
+	            invocation varchar(32) DEFAULT '',
+	            PRIMARY KEY (id),
+	            KEY status (status),
+	            KEY created_at (created_at),
+	            KEY idx_status_created (status, created_at),
+	            KEY idx_expires (expires_at)
+	        ) {$charset_collate}"
+		);
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test fixture setup; pre-M10 shape, missing every M10 column.
+		$wpdb->query(
+			"CREATE TABLE {$wpdb->prefix}agent_builder_runs (
+	            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+	            run_id varchar(36) NOT NULL,
+	            root_agent varchar(64) NOT NULL DEFAULT '',
+	            status varchar(16) NOT NULL DEFAULT 'running',
+	            delegations int unsigned NOT NULL DEFAULT 0,
+	            max_depth smallint unsigned NOT NULL DEFAULT 0,
+	            tokens_used int unsigned NOT NULL DEFAULT 0,
+	            cost decimal(10,6) NOT NULL DEFAULT 0,
+	            state longtext,
+	            started_at datetime DEFAULT CURRENT_TIMESTAMP,
+	            updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	            finished_at datetime DEFAULT NULL,
+	            PRIMARY KEY (id),
+	            UNIQUE KEY run_id (run_id),
+	            KEY root_agent (root_agent),
+	            KEY status (status),
+	            KEY started_at (started_at)
+	        ) {$charset_collate}"
+		);
+	}
+
+	/**
 	 * Every M10 column and key exists after upgrading from a 2.14.2-shaped
 	 * schema — and dbDelta is idempotent, so running it again adds nothing.
 	 */
 	public function test_upgrade_adds_every_m10_column_and_key_once(): void {
 		update_option( 'agent_builder_db_schema_version', '2.14.2' );
 		$this->enter_admin_as_logged_in_user();
-
-		Activator::maybe_upgrade();
+		$this->recreate_pre_m10_tables();
 
 		global $wpdb;
+
+		// Seed a genuinely pre-existing 2.14.2 row so the test proves dbDelta
+		// preserves existing data while it adds the M10 columns — a bare
+		// empty-table recreate would pass even if the migration dropped rows.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test fixture setup.
+		$wpdb->insert(
+			$wpdb->prefix . 'agent_builder_runs',
+			array(
+				'run_id'      => 'legacy-run-197',
+				'root_agent'  => 'legacy-agent',
+				'status'      => 'completed',
+				'delegations' => 3,
+				'max_depth'   => 2,
+				'tokens_used' => 1234,
+				'cost'        => 0.004200,
+				'state'       => '{"legacy":"scratchpad"}',
+			),
+			array( '%s', '%s', '%s', '%d', '%d', '%d', '%f', '%s' )
+		);
+
+		Activator::maybe_upgrade();
 
 		$runs_columns = $wpdb->get_col( "SHOW COLUMNS FROM {$wpdb->prefix}agent_builder_runs", 0 );
 		foreach (
@@ -358,6 +475,22 @@ class Test_Schema_Upgrade extends TestCase {
 		$this->assertContains( 'run_id', $audit_columns );
 		$audit_keys = $wpdb->get_col( "SHOW INDEX FROM {$wpdb->prefix}agent_builder_audit_log", 2 );
 		$this->assertContains( 'run_id', $audit_keys );
+
+		// The pre-existing 2.14.2 row must survive the migration intact — dbDelta
+		// adds columns without dropping rows, so its data (and the new columns'
+		// defaults) must come back unchanged.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test assertion against the pre-seeded row.
+		$legacy_row = $wpdb->get_row(
+			$wpdb->prepare( "SELECT run_id, root_agent, status, delegations, max_depth, tokens_used, state FROM {$wpdb->prefix}agent_builder_runs WHERE run_id = %s", 'legacy-run-197' ),
+			ARRAY_A
+		);
+		$this->assertIsArray( $legacy_row, 'A pre-existing 2.14.2 row must survive the M10 migration' );
+		$this->assertSame( 'legacy-agent', $legacy_row['root_agent'] );
+		$this->assertSame( 'completed', $legacy_row['status'] );
+		$this->assertSame( 3, (int) $legacy_row['delegations'] );
+		$this->assertSame( 2, (int) $legacy_row['max_depth'] );
+		$this->assertSame( 1234, (int) $legacy_row['tokens_used'] );
+		$this->assertSame( '{"legacy":"scratchpad"}', $legacy_row['state'] );
 
 		// Running the upgrade again against an already-current schema is a no-op
 		// (guarded by maybe_upgrade()'s own version check) and, more to the
