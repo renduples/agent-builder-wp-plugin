@@ -1376,21 +1376,68 @@ class Agent_Run {
 	 * @return array Sanitized, capped transcript.
 	 */
 	private static function sanitize_transcript( array $messages ): array {
-		$stripped  = array_values( array_map( array( self::class, 'strip_message_images' ), $messages ) );
-		$remaining = count( $stripped );
+		$stripped = array_values( array_map( array( self::class, 'strip_message_images' ), $messages ) );
 
-		// $remaining > 0 (not > 1): a single oversized message must be
-		// dropped too, rather than left over the declared cap.
-		while ( $remaining > 0 ) {
-			$encoded = wp_json_encode( $stripped );
+		// Never drop the system message: providers reject a conversation whose
+		// first message is not the system prompt, so it is held aside while the
+		// rest of the transcript is capped.
+		$system = array();
+		if ( ! empty( $stripped ) && 'system' === ( $stripped[0]['role'] ?? '' ) ) {
+			$system = array( array_shift( $stripped ) );
+		}
+
+		// Sweep any leading orphan tool messages (a tool message with no
+		// preceding assistant call) — invalid on their own, and a provider
+		// would reject them as the first message of a resumed conversation.
+		while ( ! empty( $stripped ) && 'tool' === ( $stripped[0]['role'] ?? '' ) ) {
+			array_shift( $stripped );
+		}
+
+		// Drop the oldest whole turns (an assistant message together with all
+		// its tool results) until the remaining transcript fits the cap.
+		// Dropping a turn as a unit — plus the leading orphan-tool sweep inside
+		// drop_oldest_turn() — guarantees no tool message survives its
+		// assistant call, which providers reject on resume.
+		while ( ! empty( $stripped ) ) {
+			$encoded = wp_json_encode( array_merge( $system, $stripped ) );
 			if ( is_string( $encoded ) && strlen( $encoded ) <= self::TRANSCRIPT_CAP_BYTES ) {
 				break;
 			}
-			array_shift( $stripped );
-			--$remaining;
+			$stripped = self::drop_oldest_turn( $stripped );
 		}
 
-		return $stripped;
+		return array_merge( $system, $stripped );
+	}
+
+	/**
+	 * Drop the oldest turn from the front of a transcript.
+	 *
+	 * A "turn" is an assistant message together with the tool-result messages
+	 * that immediately follow it (the results of its tool_calls). Leading
+	 * orphan tool messages — a tool message with no preceding assistant call —
+	 * are invalid on their own and are swept first, so they can never survive
+	 * as the first message of a resumed conversation.
+	 *
+	 * @param array $messages Transcript without its system message.
+	 * @return array Re-indexed transcript with one fewer turn.
+	 */
+	private static function drop_oldest_turn( array $messages ): array {
+		while ( ! empty( $messages ) && 'tool' === ( $messages[0]['role'] ?? '' ) ) {
+			array_shift( $messages );
+		}
+
+		if ( empty( $messages ) ) {
+			return array();
+		}
+
+		$first = array_shift( $messages );
+		if ( 'assistant' === ( $first['role'] ?? '' ) && ! empty( $first['tool_calls'] ) ) {
+			while ( ! empty( $messages ) && 'tool' === ( $messages[0]['role'] ?? '' ) ) {
+				array_shift( $messages );
+			}
+		}
+
+		return array_values( $messages );
 	}
 
 	/**

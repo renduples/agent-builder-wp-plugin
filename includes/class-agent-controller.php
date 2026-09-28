@@ -1254,11 +1254,13 @@ class Agent_Controller {
 	 * @param array               $options {
 	 *     Optional.
 	 *
-	 *     @type string $run_id        Id of a previously paused run to resume (required with resume_state).
+	 *     @type string $run_id        Id of a previously paused run to resume (required with resume_state), or an
+	 *                                 existing, not-yet-started run to adopt instead of beginning a new one.
 	 *     @type array  $resume_state  Value previously returned by Agent_Run::resume_state().
 	 *     @type array  $tool_result   Resolved outcome of the tool call the run was waiting on, appended
 	 *                                 as a tool-role message before the loop continues.
 	 *     @type string $kind          Run kind for a newly begun run (default 'task').
+	 *     @type int    $user_id       Owning user id for a newly begun run (default 0).
 	 *     @type string $source_ref    Origin reference for a newly begun run (default 'task:<task_id>').
 	 *     @type string $parent_run_id Parent run id for a newly begun run (default '').
 	 * }
@@ -1405,16 +1407,38 @@ class Agent_Controller {
 				$messages = $this->resolve_tool_message( $messages, $resume_tool_result, $tool_call_id );
 			}
 		} else {
-			$run = Agent_Run::begin(
-				$agent_id,
-				array(
-					'kind'          => (string) ( $options['kind'] ?? 'task' ),
-					'task_text'     => $prompt,
-					'invocation'    => '' !== $this->invocation_context ? $this->invocation_context : 'cron',
-					'source_ref'    => (string) ( $options['source_ref'] ?? ( '' !== $task_id ? ( 'task:' . $task_id ) : '' ) ),
-					'parent_run_id' => (string) ( $options['parent_run_id'] ?? '' ),
-				)
-			);
+			// A background job (Agent_Task_Job_Processor::dispatch()) creates
+			// its run up front — before the job is enqueued — so the Tasks
+			// screen can track it by id before it starts. When the caller
+			// passes that run_id (fresh jobs now always do), adopt the
+			// existing, not-yet-started run instead of begin() creating a
+			// second row that would strand the dispatched one at 'running'
+			// forever. Only a run that still belongs to this agent and has not
+			// advanced past its initial 'running' state is adoptable; anything
+			// else falls back to begin() (mismatched/terminal run_ids are the
+			// resume guard's concern, handled above).
+			$run = null;
+			if ( '' !== $resume_run_id ) {
+				$existing = Agent_Run::load( $resume_run_id );
+				if ( null !== $existing && $existing->get_root_agent() === $agent_id && 'running' === $existing->get_status() ) {
+					$run = $existing;
+					$run->make_current();
+				}
+			}
+
+			if ( null === $run ) {
+				$run = Agent_Run::begin(
+					$agent_id,
+					array(
+						'kind'          => (string) ( $options['kind'] ?? 'task' ),
+						'user_id'       => (int) ( $options['user_id'] ?? 0 ),
+						'task_text'     => $prompt,
+						'invocation'    => '' !== $this->invocation_context ? $this->invocation_context : 'cron',
+						'source_ref'    => (string) ( $options['source_ref'] ?? ( '' !== $task_id ? ( 'task:' . $task_id ) : '' ) ),
+						'parent_run_id' => (string) ( $options['parent_run_id'] ?? '' ),
+					)
+				);
+			}
 
 			// Build autonomous system prompt.
 			$autonomous_context = "\n\n[AUTONOMOUS MODE]\n"

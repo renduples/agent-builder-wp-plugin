@@ -759,4 +759,51 @@ class Test_Agent_Controller_Autonomous extends TestCase {
 		$this->assertSame( 100, $result['tokens_used'], 'chat tokens must sum across both turns (80 + 20)' );
 		$this->assertContains( 'list_posts', $result['tools_used'] );
 	}
+
+	/**
+	 * When a background job's fresh run is adopted (via $options run_id /
+	 * user_id), the proposal created by a MEDIUM-risk tool is attributed to the
+	 * assigning admin, not the cron user (get_current_user_id() === 0).
+	 */
+	public function test_adopted_run_attributes_proposal_to_assigning_user(): void {
+		$agent_id = 'test-autonomous-attribution';
+		$agent    = $this->make_agent( $agent_id );
+
+		$run = Agent_Run::begin(
+			$agent_id,
+			array(
+				'kind'      => 'task',
+				'user_id'   => 7,
+				'task_text' => 'Purge stale transients.',
+			)
+		);
+		$run_id = $run->get_run_id();
+		Agent_Run::reset_current_for_tests();
+
+		$fake = new Fake_LLM_Client(
+			array(
+				Fake_LLM_Client::tool_call_response( 'purge_expired_transients', array(), array( 'prompt_tokens' => 20, 'completion_tokens' => 10, 'total_tokens' => 30 ) ),
+			)
+		);
+
+		$controller = new Agent_Controller( $fake );
+		$result     = $controller->run_autonomous_task(
+			$agent,
+			'Purge stale transients.',
+			'task-attribution',
+			array(
+				'run_id'  => $run_id,
+				'user_id' => 7,
+			)
+		);
+
+		$this->assertSame( 'waiting', $result['status'] );
+
+		$run = Agent_Run::load( $run_id );
+		$this->assertSame( 7, $run->to_array()['user_id'], 'the adopted run must keep the assigning user id' );
+
+		$proposal = Agent_Proposals::get( $run->to_array()['awaiting_id'] );
+		$this->assertNotNull( $proposal );
+		$this->assertSame( 7, $proposal['created_by'], 'the proposal must be attributed to the assigning admin, not the cron user (0)' );
+	}
 }
