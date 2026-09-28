@@ -146,8 +146,13 @@ class Agent_Task_Job_Processor implements Job_Processor_Interface {
 
 		// Only a non-terminal 'error' still needs finishing here: 'completed',
 		// 'cancelled' and 'aborted' were already finished by the controller, and
-		// 'waiting' / 'continuing' must stay in their hand-off state.
-		if ( 'error' === (string) ( $result['status'] ?? 'completed' ) ) {
+		// 'waiting' / 'continuing' must stay in their hand-off state. A
+		// 'guard_rejected' error means the resume attempt itself was refused
+		// (run not found, wrong status, or agent mismatch) — that is not this
+		// job's run to finalize: the target run may still be legitimately
+		// waiting/continuing, and forcing it to 'failed' here would destroy
+		// that state out from under whatever holds it.
+		if ( 'error' === (string) ( $result['status'] ?? 'completed' ) && empty( $result['guard_rejected'] ) ) {
 			$run->finish( 'failed', array( 'error' => (string) ( $result['response'] ?? 'Autonomous task errored.' ) ) );
 		}
 

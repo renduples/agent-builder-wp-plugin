@@ -127,17 +127,17 @@ final class Plugin {
 	 */
 	private function init_hooks(): void {
 		// --- Hooks needed on every request (frontend, REST, cron) ---.
-		add_action( 'init', array( $this, 'init' ) );
 
-		// Schema-repair path for frontend/REST/cron requests: maybe_upgrade()
-		// only runs from admin_init, so a site whose first post-auto-update
-		// request is one of those — with no administrator having loaded
-		// wp-admin yet — kept a stale table (missing M10 columns) until an
-		// admin happened to visit, silently dropping every Agent_Run/Audit_Log
-		// insert made in the meantime. maybe_upgrade_schema() is a single cheap
-		// get_option() read once the schema is current, so this costs nothing
-		// on the common path.
-		add_action( 'init', array( Activator::class, 'maybe_upgrade_schema' ) );
+		// Schema migration: a WP.org auto-update never re-fires the activation
+		// hook, so the stored schema version can lag the code until an admin
+		// next visits wp-admin — leaving cron, REST and frontend requests
+		// hitting an old table shape in the meantime. Run the upgrade on every
+		// request, at plugins_loaded priority 20, so the first hit of any kind
+		// brings the schema current. Cheap (a single get_option short-circuit)
+		// when already current. See Activator::maybe_upgrade().
+		add_action( 'plugins_loaded', array( Activator::class, 'maybe_upgrade' ), 20 );
+
+		add_action( 'init', array( $this, 'init' ) );
 
 		// Admin bar agent menu — front-end only. The 'wp' action does not fire in
 		// wp-admin, so this naturally skips the backend. Deferred until 'wp' so

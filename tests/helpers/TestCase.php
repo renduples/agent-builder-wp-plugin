@@ -41,9 +41,6 @@ class TestCase extends WP_UnitTestCase {
 		// by one test (e.g. a delegation that never called finish()) must not
 		// leak into the next test's begin()/current() calls.
 		\Agentic\Agent_Run::reset_current_for_tests();
-		// Same for the Audit_Log pending-write buffer: a row deferred while the
-		// schema was stale in one test must not flush into a later test.
-		\Agentic\Audit_Log::reset_pending_for_tests();
 		parent::tearDown();
 	}
 

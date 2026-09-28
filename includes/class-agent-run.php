@@ -81,27 +81,6 @@ class Agent_Run {
 	private const TRANSCRIPT_CAP_BYTES = 200 * 1024;
 
 	/**
-	 * Option key for the bounded fallback store of run rows whose shutdown
-	 * retry still could not persist them (a persistently stale schema, or a
-	 * write error). A best-effort bridge — not a full guarantee — so a run row
-	 * survives the request and is retried by a later request's next successful
-	 * write, rather than vanishing with the PHP process. An option is used (not
-	 * a transient) because it lives in the always-present wp_options table,
-	 * unaffected by a stale agent_builder_* schema.
-	 *
-	 * @var string
-	 */
-	private const FALLBACK_OPTION = 'agent_builder_run_fallback_rows';
-
-	/**
-	 * Maximum number of run rows the fallback store keeps, so a permanently-
-	 * broken schema can't grow it unbounded across requests.
-	 *
-	 * @var int
-	 */
-	private const FALLBACK_CAP = 50;
-
-	/**
 	 * The current in-process run, if any.
 	 *
 	 * @var Agent_Run|null
@@ -292,6 +271,17 @@ class Agent_Run {
 	private string $awaiting_id = '';
 
 	/**
+	 * The original LLM tool-call id (assistant message's tool_calls[].id) for
+	 * the pending tool call, kept separate from awaiting_id (the
+	 * proposal/approval queue's own business id) so a resumed request can
+	 * reconstruct a tool-role message that correctly pairs with the assistant
+	 * message a provider will validate it against.
+	 *
+	 * @var string
+	 */
+	private string $awaiting_tool_call_id = '';
+
+	/**
 	 * Whether a caller has asked this run to stop cooperatively.
 	 *
 	 * @var bool
@@ -314,49 +304,6 @@ class Agent_Run {
 	 * @var bool
 	 */
 	private bool $shutdown_registered = false;
-
-	/**
-	 * Column => value for writes not yet durably persisted, accumulated
-	 * whenever a flush attempt found Activator::schema_is_stale() still true
-	 * (or hit a write error). Kept across calls so the *next* flush attempt —
-	 * triggered by whatever state-transition method runs next — writes the
-	 * full up-to-date row instead of just whatever that one call passed,
-	 * closing the gap where a run's in-memory state (e.g. after finish())
-	 * moved ahead of a DB row that a skipped write left behind or never
-	 * created at all.
-	 *
-	 * @var array<string, mixed>
-	 */
-	private array $pending_fields = array();
-
-	/**
-	 * Format specifiers for $pending_fields, same keys and key order.
-	 *
-	 * @var array<string, string>
-	 */
-	private array $pending_formats = array();
-
-	/**
-	 * Whether persist_start()'s insert has ever landed for this run. While
-	 * false, flush_pending() must INSERT the accumulated row rather than
-	 * UPDATE — a schema-stale skip at begin() means no row exists yet.
-	 *
-	 * @var bool
-	 */
-	private bool $row_inserted = false;
-
-	/**
-	 * Whether this instance's in-memory state is currently ahead of the DB
-	 * row — true whenever the last flush attempt found the schema stale or
-	 * the write itself failed. finish()/mark_waiting()/etc. still update
-	 * in-memory state immediately (every call site in this codebase treats
-	 * them as void), so is_persisted()/to_array()['persisted'] is how a
-	 * caller that does check can tell a genuinely durable terminal state
-	 * from one that only looks that way in this process.
-	 *
-	 * @var bool
-	 */
-	private bool $dirty = false;
 
 	/**
 	 * Timestamps (MySQL 'Y-m-d H:i:s', UTC), tracked in-memory so to_array()
@@ -527,6 +474,25 @@ class Agent_Run {
 	}
 
 	/**
+	 * Current status ('running', 'waiting', 'continuing', or a terminal
+	 * status such as 'completed'/'failed'/'aborted'/'cancelled').
+	 *
+	 * @return string
+	 */
+	public function get_status(): string {
+		return $this->status;
+	}
+
+	/**
+	 * Slug of the agent that started this run.
+	 *
+	 * @return string
+	 */
+	public function get_root_agent(): string {
+		return $this->root_agent;
+	}
+
+	/**
 	 * Whether another delegation is permitted under all configured budgets.
 	 *
 	 * @return bool
@@ -666,43 +632,65 @@ class Agent_Run {
 	 * Mark this run as waiting on an approval or proposal, persisting a
 	 * capped transcript so a later request can resume it.
 	 *
-	 * @param string $type       'approval' or 'proposal'.
-	 * @param string $id         Id of the approval/proposal.
-	 * @param array  $transcript Conversation messages to persist for resume.
+	 * @param string $type          'approval' or 'proposal'.
+	 * @param string $id            Id of the approval/proposal.
+	 * @param array  $transcript    Conversation messages to persist for resume.
+	 * @param string $tool_call_id  Original LLM tool-call id (assistant message's
+	 *                              tool_calls[].id) the resumed tool message must
+	 *                              reuse, kept separate from $id above.
 	 * @return void
 	 */
-	public function mark_waiting( string $type, string $id, array $transcript ): void {
-		$this->status        = 'waiting';
-		$this->awaiting_type = $type;
-		$this->awaiting_id   = $id;
-		$this->messages      = self::sanitize_transcript( $transcript );
+	public function mark_waiting( string $type, string $id, array $transcript, string $tool_call_id = '' ): void {
+		$this->status                = 'waiting';
+		$this->awaiting_type         = $type;
+		$this->awaiting_id           = $id;
+		$this->awaiting_tool_call_id = $tool_call_id;
+		$this->messages              = self::sanitize_transcript( $transcript );
 
 		$now = current_time( 'mysql', true );
 
-		$this->persist(
-			array(
-				'status'        => $this->status,
-				'awaiting_type' => $this->awaiting_type,
-				'awaiting_id'   => $this->awaiting_id,
-				'state'         => $this->encode_state(),
-				'updated_at'    => $now,
-			),
-			array( '%s', '%s', '%s', '%s', '%s' )
+		$fields  = array(
+			'status'        => $this->status,
+			'awaiting_type' => $this->awaiting_type,
+			'awaiting_id'   => $this->awaiting_id,
+			'state'         => $this->encode_state(),
+			'updated_at'    => $now,
 		);
+		$formats = array( '%s', '%s', '%s', '%s', '%s' );
+
+		// The awaiting_tool_call_id column is added by a version-independent
+		// migration that only runs from admin_init (see Activator::maybe_upgrade()).
+		// A cron/REST/frontend request on a site that has not run it yet would
+		// otherwise include an unknown column in the UPDATE, failing the whole
+		// write and silently leaving the run 'running' when it should be
+		// 'waiting'. When the column is absent, persist the waiting transition
+		// without it — the transcript already carries the assistant tool_calls[]
+		// id, which resume_state()'s consumer derives when the value is empty.
+		if ( self::has_awaiting_tool_call_id_column() ) {
+			$fields['awaiting_tool_call_id'] = $this->awaiting_tool_call_id;
+			$formats[]                       = '%s';
+		}
+
+		$persisted = $this->persist( $fields, $formats );
 
 		$this->updated_at = $now;
 
 		// A waiting run has handed off to an external event; this in-process
 		// instance is settled and must not have the shutdown safety net
-		// overwrite it with 'aborted' when the current request ends.
+		// overwrite it with 'aborted' when the current request ends. Only
+		// settle it once the DB write has actually landed — a transient
+		// failure leaves the row 'running', and keeping $finished false lets
+		// the shutdown net mark it 'aborted' at request end instead of
+		// stranding it (mirrors mark_continuing()).
+		if ( ! $persisted ) {
+			return;
+		}
+
 		$this->finished = true;
 
-		// Mirror finish()'s own self::$current clearing: a later begin() in
-		// this same process (e.g. a second lifecycle event in one cron batch)
-		// must start a fresh run rather than getting back this settled one.
-		// finish() can't do this for us — its clearing lives inside the
-		// `if ( ! $this->finished )` guard, which a waiting run's later
-		// finish() call never reaches since $finished is already true here.
+		// The instance is settled; release the current-run pointer so a later
+		// begin() in the same request starts a fresh run rather than handing
+		// back this settled one (mirrors finish()).
 		if ( self::$current === $this ) {
 			self::$current = null;
 		}
@@ -716,13 +704,121 @@ class Agent_Run {
 	 */
 	public function resume_state(): array {
 		return array(
-			'messages'      => $this->messages,
-			'scratchpad'    => $this->scratchpad,
-			'awaiting_type' => $this->awaiting_type,
-			'awaiting_id'   => $this->awaiting_id,
-			'iterations'    => $this->iterations,
-			'tools_used'    => array_values( $this->tools_used ),
+			'messages'              => $this->messages,
+			'scratchpad'            => $this->scratchpad,
+			'awaiting_type'         => $this->awaiting_type,
+			'awaiting_id'           => $this->awaiting_id,
+			'awaiting_tool_call_id' => $this->awaiting_tool_call_id,
+			'iterations'            => $this->iterations,
+			'tools_used'            => array_values( $this->tools_used ),
 		);
+	}
+
+	/**
+	 * Whether the runs table currently has the `awaiting_tool_call_id` column.
+	 *
+	 * The column is added by a version-independent migration that only runs
+	 * from admin_init (Activator::maybe_upgrade()), so a cron/REST/frontend
+	 * request on a not-yet-migrated site sees a table without it. mark_waiting()
+	 * uses this to skip the column in its UPDATE rather than fail the whole
+	 * write (and leave the run stuck at 'running') on an unknown column.
+	 *
+	 * @return bool True when the column exists.
+	 */
+	private static function has_awaiting_tool_call_id_column(): bool {
+		global $wpdb;
+		$table = $wpdb->prefix . 'agent_builder_runs';
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is $wpdb->prefix-derived internal name, not user input.
+		$column = $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM {$table} LIKE %s", 'awaiting_tool_call_id' ) );
+
+		return is_string( $column ) && '' !== $column;
+	}
+
+	/**
+	 * Mark this run as handed off to a background continuation job after the
+	 * ~70% elapsed-time guard fires, without transitioning to a terminal
+	 * status — so a resumed request can pick it back up.
+	 *
+	 * Like mark_waiting(), this settles the in-process instance so the
+	 * shutdown safety net does not overwrite the hand-off with 'aborted' when
+	 * the current request ends.
+	 *
+	 * @return void
+	 */
+	public function mark_continuing(): void {
+		$this->status = 'continuing';
+
+		$now = current_time( 'mysql', true );
+
+		$persisted = $this->persist(
+			array(
+				'status'     => $this->status,
+				'updated_at' => $now,
+			),
+			array( '%s', '%s' )
+		);
+
+		$this->updated_at = $now;
+
+		// Only settle this in-process instance once the DB write has actually
+		// landed. A transient write failure leaves the row still 'running';
+		// keeping $finished false lets the shutdown safety net mark it
+		// 'aborted' at request end instead of stranding it.
+		if ( ! $persisted ) {
+			return;
+		}
+
+		$this->finished = true;
+
+		if ( self::$current === $this ) {
+			self::$current = null;
+		}
+	}
+
+	/**
+	 * Atomically claim this run for resume, transitioning it from a
+	 * non-terminal hand-off status ('waiting' or 'continuing') to 'running'
+	 * in a single compare-and-set UPDATE.
+	 *
+	 * A caller resuming a run typically reads its status via get_status()
+	 * first, but that read and the subsequent work (calling the LLM,
+	 * executing the pending tool call) are not atomic with each other — two
+	 * concurrent resume attempts for the same run_id (a duplicate job
+	 * dispatch, or a retry racing the original) could otherwise both pass
+	 * that check and both execute the same pending tool call. This method
+	 * closes that window: only the request whose UPDATE actually matches a
+	 * row still in 'waiting'/'continuing' wins the claim.
+	 *
+	 * @return bool True if this call claimed the run, false if another
+	 *              process already claimed it (or it is no longer in a
+	 *              resumable status).
+	 */
+	public function claim_waiting(): bool {
+		global $wpdb;
+		$table = $wpdb->prefix . 'agent_builder_runs';
+		$now   = current_time( 'mysql', true );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Atomic compare-and-set keyed by run_id + current status; no caching benefit.
+		$updated = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE %i SET status = %s, updated_at = %s WHERE run_id = %s AND status IN ('waiting','continuing')",
+				$table,
+				'running',
+				$now,
+				$this->run_id
+			)
+		);
+
+		if ( 1 !== $updated ) {
+			return false;
+		}
+
+		$this->status     = 'running';
+		$this->updated_at = $now;
+		$this->finished   = false;
+
+		return true;
 	}
 
 	/**
@@ -855,54 +951,42 @@ class Agent_Run {
 	}
 
 	/**
-	 * Whether every write made so far on this instance has been durably
-	 * persisted to the DB row — false when a prior flush attempt found the
-	 * schema stale (or hit a write error) and in-memory state has since moved
-	 * ahead of what's actually stored.
-	 *
-	 * @return bool
-	 */
-	public function is_persisted(): bool {
-		return ! $this->dirty;
-	}
-
-	/**
 	 * Full snapshot of the run, for REST/return payloads.
 	 *
 	 * @return array<string, mixed>
 	 */
 	public function to_array(): array {
 		return array(
-			'run_id'           => $this->run_id,
-			'root_agent'       => $this->root_agent,
-			'kind'             => $this->kind,
-			'status'           => $this->status,
-			'user_id'          => $this->user_id,
-			'task_text'        => $this->task_text,
-			'parent_run_id'    => $this->parent_run_id,
-			'job_id'           => $this->job_id,
-			'session_id'       => $this->session_id,
-			'invocation'       => $this->invocation,
-			'source_ref'       => $this->source_ref,
-			'depth'            => $this->depth,
-			'delegations'      => $this->delegations,
-			'max_depth'        => $this->max_depth_reached,
-			'iterations'       => $this->iterations,
-			'tokens_used'      => $this->tokens,
-			'cost'             => round( $this->cost, 6 ),
-			'tools_used'       => array_values( $this->tools_used ),
-			'result_summary'   => array(
+			'run_id'                => $this->run_id,
+			'root_agent'            => $this->root_agent,
+			'kind'                  => $this->kind,
+			'status'                => $this->status,
+			'user_id'               => $this->user_id,
+			'task_text'             => $this->task_text,
+			'parent_run_id'         => $this->parent_run_id,
+			'job_id'                => $this->job_id,
+			'session_id'            => $this->session_id,
+			'invocation'            => $this->invocation,
+			'source_ref'            => $this->source_ref,
+			'depth'                 => $this->depth,
+			'delegations'           => $this->delegations,
+			'max_depth'             => $this->max_depth_reached,
+			'iterations'            => $this->iterations,
+			'tokens_used'           => $this->tokens,
+			'cost'                  => round( $this->cost, 6 ),
+			'tools_used'            => array_values( $this->tools_used ),
+			'result_summary'        => array(
 				'text'  => $this->result_text,
 				'cards' => $this->result_cards,
 			),
-			'error'            => $this->error,
-			'awaiting_type'    => $this->awaiting_type,
-			'awaiting_id'      => $this->awaiting_id,
-			'cancel_requested' => $this->cancel_requested,
-			'started_at'       => $this->started_at,
-			'updated_at'       => $this->updated_at,
-			'finished_at'      => $this->finished_at,
-			'persisted'        => ! $this->dirty,
+			'error'                 => $this->error,
+			'awaiting_type'         => $this->awaiting_type,
+			'awaiting_id'           => $this->awaiting_id,
+			'awaiting_tool_call_id' => $this->awaiting_tool_call_id,
+			'cancel_requested'      => $this->cancel_requested,
+			'started_at'            => $this->started_at,
+			'updated_at'            => $this->updated_at,
+			'finished_at'           => $this->finished_at,
 		);
 	}
 
@@ -1076,35 +1160,11 @@ class Agent_Run {
 
 		register_shutdown_function(
 			function (): void {
-				$this->flush_and_stash_on_shutdown();
+				if ( ! $this->finished ) {
+					$this->finish( 'aborted' );
+				}
 			}
 		);
-	}
-
-	/**
-	 * The shutdown safety net's body, split out so a test can drive it directly:
-	 * a settled run gets one more flush attempt, then whatever still could not
-	 * land is stashed to the fallback store (see stash_pending_to_fallback()).
-	 *
-	 * @return void
-	 */
-	private function flush_and_stash_on_shutdown(): void {
-		if ( ! $this->finished ) {
-			$this->finish( 'aborted' );
-		} elseif ( $this->dirty ) {
-			// A settled run whose last write(s) were deferred (schema was stale at
-			// the time) gets one more flush attempt here, in case something else
-			// this request repaired the schema afterwards.
-			$this->flush_pending();
-		}
-
-		// Whatever still could not land — the finish() above deferred, or the
-		// flush retry found the schema still stale — is stashed to a bounded
-		// fallback store so it survives the process and is retried by a later
-		// request's next successful write (see drain_fallback()).
-		if ( ! empty( $this->pending_fields ) ) {
-			$this->stash_pending_to_fallback();
-		}
 	}
 
 	/**
@@ -1116,63 +1176,40 @@ class Agent_Run {
 	private static function from_row( array $row ): Agent_Run {
 		$run = new self( (string) ( $row['root_agent'] ?? '' ) );
 
-		$run->run_id            = (string) ( $row['run_id'] ?? $run->run_id );
-		$run->kind              = (string) ( $row['kind'] ?? 'task' );
-		$run->status            = (string) ( $row['status'] ?? 'running' );
-		$run->user_id           = (int) ( $row['user_id'] ?? 0 );
-		$run->task_text         = (string) ( $row['task_text'] ?? '' );
-		$run->parent_run_id     = (string) ( $row['parent_run_id'] ?? '' );
-		$run->job_id            = (string) ( $row['job_id'] ?? '' );
-		$run->session_id        = (string) ( $row['session_id'] ?? '' );
-		$run->invocation        = (string) ( $row['invocation'] ?? '' );
-		$run->source_ref        = (string) ( $row['source_ref'] ?? '' );
-		$run->delegations       = (int) ( $row['delegations'] ?? 0 );
-		$run->max_depth_reached = (int) ( $row['max_depth'] ?? 0 );
-		$run->iterations        = (int) ( $row['iterations'] ?? 0 );
-		$run->tokens            = (int) ( $row['tokens_used'] ?? 0 );
-		$run->cost              = (float) ( $row['cost'] ?? 0.0 );
-		$run->tools_used        = self::decode_list( $row['tools_used'] ?? '' );
-		$run->error             = (string) ( $row['error'] ?? '' );
-		$run->awaiting_type     = (string) ( $row['awaiting_type'] ?? '' );
-		$run->awaiting_id       = (string) ( $row['awaiting_id'] ?? '' );
-		$run->cancel_requested  = ! empty( $row['cancel_requested'] );
-		$run->started_at        = (string) ( $row['started_at'] ?? '' );
-		$run->updated_at        = (string) ( $row['updated_at'] ?? '' );
-		$run->finished_at       = (string) ( $row['finished_at'] ?? '' );
+		$run->run_id                = (string) ( $row['run_id'] ?? $run->run_id );
+		$run->kind                  = (string) ( $row['kind'] ?? 'task' );
+		$run->status                = (string) ( $row['status'] ?? 'running' );
+		$run->user_id               = (int) ( $row['user_id'] ?? 0 );
+		$run->task_text             = (string) ( $row['task_text'] ?? '' );
+		$run->parent_run_id         = (string) ( $row['parent_run_id'] ?? '' );
+		$run->job_id                = (string) ( $row['job_id'] ?? '' );
+		$run->session_id            = (string) ( $row['session_id'] ?? '' );
+		$run->invocation            = (string) ( $row['invocation'] ?? '' );
+		$run->source_ref            = (string) ( $row['source_ref'] ?? '' );
+		$run->delegations           = (int) ( $row['delegations'] ?? 0 );
+		$run->max_depth_reached     = (int) ( $row['max_depth'] ?? 0 );
+		$run->iterations            = (int) ( $row['iterations'] ?? 0 );
+		$run->tokens                = (int) ( $row['tokens_used'] ?? 0 );
+		$run->cost                  = (float) ( $row['cost'] ?? 0.0 );
+		$run->tools_used            = self::decode_list( $row['tools_used'] ?? '' );
+		$run->error                 = (string) ( $row['error'] ?? '' );
+		$run->awaiting_type         = (string) ( $row['awaiting_type'] ?? '' );
+		$run->awaiting_id           = (string) ( $row['awaiting_id'] ?? '' );
+		$run->awaiting_tool_call_id = (string) ( $row['awaiting_tool_call_id'] ?? '' );
+		$run->cancel_requested      = ! empty( $row['cancel_requested'] );
+		$run->started_at            = (string) ( $row['started_at'] ?? '' );
+		$run->updated_at            = (string) ( $row['updated_at'] ?? '' );
+		$run->finished_at           = (string) ( $row['finished_at'] ?? '' );
 
 		$summary           = self::decode_assoc( $row['result_summary'] ?? '' );
 		$run->result_text  = (string) ( $summary['text'] ?? '' );
 		$run->result_cards = is_array( $summary['cards'] ?? null ) ? $summary['cards'] : array();
 
-		$state = self::decode_assoc( $row['state'] ?? '' );
-
-		// Two shapes have ever been written to this column: the current
-		// (>= 2.15.0) {scratchpad, messages} wrapper, and the legacy pre-2.15.0
-		// shape where the whole decoded value *is* the scratchpad (with no
-		// transcript). Tell them apart by shape alone — a 'scratchpad' array
-		// plus a 'messages' list of role-bearing message objects — and treat
-		// anything else (a legacy flat scratchpad that happens to hold
-		// similarly-named keys, or an empty/garbled value) as the legacy
-		// scratchpad with no transcript.
-		$has_wrapper = array_key_exists( 'scratchpad', $state )
-			&& is_array( $state['scratchpad'] )
-			&& array_key_exists( 'messages', $state )
-			&& is_array( $state['messages'] )
-			&& self::is_transcript_list( $state['messages'] );
-
-		if ( $has_wrapper ) {
-			$run->scratchpad = $state['scratchpad'];
-			$run->messages   = $state['messages'];
-		} else {
-			$run->scratchpad = $state;
-			$run->messages   = array();
-		}
+		$state           = self::decode_assoc( $row['state'] ?? '' );
+		$run->scratchpad = is_array( $state['scratchpad'] ?? null ) ? $state['scratchpad'] : array();
+		$run->messages   = is_array( $state['messages'] ?? null ) ? $state['messages'] : array();
 
 		$run->finished = in_array( $run->status, self::TERMINAL_STATUSES, true );
-
-		// A row was found, so persist_start()'s insert has already landed —
-		// any later write must UPDATE, never re-INSERT.
-		$run->row_inserted = true;
 
 		return $run;
 	}
@@ -1189,39 +1226,6 @@ class Agent_Run {
 		}
 		$decoded = json_decode( $raw, true );
 		return is_array( $decoded ) ? $decoded : array();
-	}
-
-	/**
-	 * Whether a decoded state's "messages" value has the current (>= 2.15.0)
-	 * transcript shape: a list of message objects, each carrying a `role` key.
-	 *
-	 * The current shape's messages are always produced by sanitize_transcript(),
-	 * which re-indexes with array_values() (so always a list) over message
-	 * objects built with a `role` key. This is what distinguishes the current
-	 * {scratchpad, messages} wrapper from a legacy flat scratchpad that happens
-	 * to hold a "messages"-shaped key of its own (see from_row()) — which
-	 * scratch_set() never writes.
-	 *
-	 * @param array $messages Candidate messages value.
-	 * @return bool
-	 */
-	private static function is_transcript_list( array $messages ): bool {
-		if ( array() === $messages ) {
-			return true;
-		}
-
-		$expected = 0;
-		foreach ( $messages as $index => $message ) {
-			if ( $index !== $expected ) {
-				return false; // Not a list.
-			}
-			if ( ! is_array( $message ) || ! array_key_exists( 'role', $message ) ) {
-				return false;
-			}
-			++$expected;
-		}
-
-		return true;
 	}
 
 	/**
@@ -1261,9 +1265,7 @@ class Agent_Run {
 		$stripped  = array_values( array_map( array( self::class, 'strip_message_images' ), $messages ) );
 		$remaining = count( $stripped );
 
-		// $remaining > 0 (not > 1): a single oversized message must be
-		// dropped too, rather than left over the declared cap.
-		while ( $remaining > 0 ) {
+		while ( $remaining > 1 ) {
 			$encoded = wp_json_encode( $stripped );
 			if ( is_string( $encoded ) && strlen( $encoded ) <= self::TRANSCRIPT_CAP_BYTES ) {
 				break;
@@ -1305,40 +1307,33 @@ class Agent_Run {
 	/**
 	 * Generic partial update of this run's row, keyed by run_id.
 	 *
-	 * Shared by every state-transition method (finish(), mark_waiting(),
-	 * checkpoint_transcript(), request_cancel(), record_iteration(), etc.),
-	 * including ones reached via Agent_Run::load() resuming a run that a
-	 * *different*, earlier (and possibly healthy-schema) request originally
-	 * inserted via persist_start(). Merges into the pending-write buffer and
-	 * immediately tries to flush it — see merge_pending()/flush_pending().
-	 *
 	 * @param array $fields  Column => value.
 	 * @param array $formats Matching %s/%d/%f formats.
-	 * @return void
+	 * @return bool True when the write actually landed, false on a DB error
+	 *              (a $wpdb->update() false return). Callers that settle the
+	 *              in-process instance (mark_continuing()) must gate on this,
+	 *              so a transient failure does not disable the shutdown net
+	 *              while the row is still 'running' in storage.
 	 */
-	private function persist( array $fields, array $formats ): void {
-		$this->merge_pending( $fields, $formats );
+	private function persist( array $fields, array $formats ): bool {
+		global $wpdb;
+		$table = $wpdb->prefix . 'agent_builder_runs';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table update, keyed by run_id.
+		return false !== $wpdb->update( $table, $fields, array( 'run_id' => $this->run_id ), $formats, array( '%s' ) );
 	}
 
 	/**
 	 * Insert the initial run row.
 	 *
-	 * Merges the initial columns into the pending-write buffer and tries to
-	 * flush immediately, same as every other state-transition method — see
-	 * merge_pending()/flush_pending(). When Activator::schema_is_stale()
-	 * reports the table shape is out of date (e.g. a prior
-	 * maybe_upgrade_schema()/maybe_upgrade() this same request already failed
-	 * to repair it — a transient DB error, a missing ALTER permission), the
-	 * flush is skipped and these columns stay pending: the next
-	 * state-transition call on this instance (or, failing that, the shutdown
-	 * safety net) gets another chance to insert the full accumulated row once
-	 * the schema is current. The run still works in-memory for the rest of
-	 * this request regardless of whether persistence has caught up.
-	 *
 	 * @return void
 	 */
 	private function persist_start(): void {
-		$this->merge_pending(
+		global $wpdb;
+		$table = $wpdb->prefix . 'agent_builder_runs';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table insert.
+		$wpdb->insert(
+			$table,
 			array(
 				'run_id'        => $this->run_id,
 				'root_agent'    => $this->root_agent,
@@ -1356,331 +1351,6 @@ class Agent_Run {
 			),
 			array( '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s' )
 		);
-	}
-
-	/**
-	 * Fold a set of column => value writes into the pending-write buffer
-	 * (later calls win on a shared key, same as a real UPDATE would apply
-	 * them in order) and attempt to flush.
-	 *
-	 * @param array $fields  Column => value.
-	 * @param array $formats Matching %s/%d/%f formats, same order as $fields.
-	 * @return void
-	 */
-	private function merge_pending( array $fields, array $formats ): void {
-		// Tolerate a short/long $formats array the way wpdb's
-		// process_field_formats() does — pad the shortfall with '%s', ignore the
-		// excess — rather than letting array_combine() throw a ValueError on a
-		// length mismatch. The old $wpdb->update()/insert() calls survived such a
-		// near-miss silently; a defensive check must not turn it into a fatal.
-		$keys = array_keys( $fields );
-		if ( count( $formats ) < count( $keys ) ) {
-			$formats = array_pad( $formats, count( $keys ), '%s' );
-		} elseif ( count( $formats ) > count( $keys ) ) {
-			$formats = array_slice( $formats, 0, count( $keys ) );
-		}
-		$format_map = array_combine( $keys, $formats );
-
-		$this->pending_fields  = array_merge( $this->pending_fields, $fields );
-		$this->pending_formats = array_merge( $this->pending_formats, $format_map );
-
-		$this->flush_pending();
-	}
-
-	/**
-	 * Try to write the accumulated pending fields to this run's row: INSERT
-	 * if persist_start()'s row has never landed, UPDATE otherwise. Leaves
-	 * $pending_fields/$pending_formats untouched (so nothing already
-	 * accumulated is lost) and marks the instance dirty when the schema is
-	 * still stale or the write itself fails — the data-loss bug this whole
-	 * fix-forward exists to close, now closed one layer up: a caller that
-	 * checks is_persisted()/to_array()['persisted'] can tell a genuinely
-	 * durable terminal state from one that only looks that way in-process,
-	 * and the next successful flush (from a later call on this instance, or
-	 * the shutdown safety net) writes the full up-to-date row.
-	 *
-	 * @return void
-	 */
-	private function flush_pending(): void {
-		if ( empty( $this->pending_fields ) ) {
-			return;
-		}
-
-		if ( Activator::schema_is_stale() ) {
-			$this->dirty = true;
-			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Intentional, rare (schema-repair-failure only) debug output; write stays pending for the next flush attempt.
-			error_log( '[Agent Builder] Agent_Run: write deferred for run ' . $this->run_id . ', schema is stale (a prior repair attempt this request did not succeed)' );
-			return;
-		}
-
-		global $wpdb;
-		$table  = $wpdb->prefix . 'agent_builder_runs';
-		$values = array_values( $this->pending_formats );
-
-		if ( $this->row_inserted ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table update, keyed by run_id.
-			$result = $wpdb->update( $table, $this->pending_fields, array( 'run_id' => $this->run_id ), $values, array( '%s' ) );
-
-			// $wpdb->update() returns 0 for BOTH "the row already held these exact
-			// values" (a benign no-op) and "no row matched". Only the latter means
-			// this write didn't land — e.g. a run loaded via from_row() whose row
-			// was deleted after the SELECT, or an insert that raced a concurrent
-			// delete. Treating it as success would let is_persisted() report
-			// durable for a row that no longer exists, so disambiguate with a cheap
-			// existence check and stay dirty when the row has vanished.
-			if ( 0 === $result ) {
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Single-row existence check, immediately after an update that reported no rows affected.
-				$still_there = $wpdb->get_var( $wpdb->prepare( 'SELECT run_id FROM %i WHERE run_id = %s', $table, $this->run_id ) );
-				if ( null === $still_there ) {
-					$this->dirty = true;
-					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Intentional debug output for an otherwise-silent write failure; write stays pending for the next flush attempt.
-					error_log( '[Agent Builder] Agent_Run: update matched no row for run ' . $this->run_id . ' (row vanished); write stays pending' );
-					return;
-				}
-			}
-		} else {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table insert.
-			$result = $wpdb->insert( $table, $this->pending_fields, $values );
-		}
-
-		// An UPDATE that returned 0 was already disambiguated above (benign no-op
-		// vs vanished row) and only falls through here as success when the row
-		// still exists. An INSERT that returns anything other than a positive row
-		// count — 0 (no row created) or false (query error) — means this run has
-		// still never landed, so both count as a failed flush and the write stays
-		// pending for the next attempt.
-		if ( ( $this->row_inserted && false === $result ) || ( ! $this->row_inserted && ! $result ) ) {
-			$this->dirty = true;
-			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Intentional debug output for an otherwise-silent write failure; write stays pending for the next flush attempt.
-			error_log( '[Agent Builder] Agent_Run: write failed for run ' . $this->run_id . ' against a current-looking schema' );
-			return;
-		}
-
-		$this->row_inserted    = true;
-		$this->pending_fields  = array();
-		$this->pending_formats = array();
-		$this->dirty           = false;
-
-		// A successful write means the schema is current — opportunistically
-		// retry any run rows a prior request stashed in the fallback store.
-		self::drain_fallback();
-	}
-
-	/**
-	 * Move this run's still-pending write into the bounded fallback store, so a
-	 * persistently-stale schema (or a shutdown write error) can't make it
-	 * disappear with the process. Best-effort: called at shutdown, so the DB
-	 * connection may already be gone; a failure here is tolerated.
-	 *
-	 * The record carries the accumulated fields (plus their formats and whether
-	 * this is the run's first INSERT or a later UPDATE) so drain_fallback() can
-	 * reproduce the exact write in a later request.
-	 *
-	 * @return void
-	 */
-	private function stash_pending_to_fallback(): void {
-		if ( empty( $this->pending_fields ) ) {
-			return;
-		}
-
-		self::merge_fallback_rows(
-			array(
-				array(
-					'run_id'  => $this->run_id,
-					'insert'  => ! $this->row_inserted,
-					'fields'  => $this->pending_fields,
-					'formats' => array_values( $this->pending_formats ),
-				),
-			)
-		);
-	}
-
-	/**
-	 * Opportunistically write run rows previously stashed in the fallback store,
-	 * called from a later request's successful flush (so the schema is known
-	 * current here). A stashed INSERT is reproduced with $wpdb->insert(); a
-	 * stashed UPDATE with $wpdb->update() keyed on run_id. Rows that still fail
-	 * to land are merged back into the store; when all land, the store empties.
-	 *
-	 * The read is an atomic read-and-clear (compare-and-swap), so two concurrent
-	 * drains can't both claim the same rows and double-write them — see
-	 * claim_fallback_rows().
-	 *
-	 * @return void
-	 */
-	private static function drain_fallback(): void {
-		$stored = self::claim_fallback_rows();
-		if ( empty( $stored ) ) {
-			return;
-		}
-
-		global $wpdb;
-		$table = $wpdb->prefix . 'agent_builder_runs';
-
-		$remaining = array();
-		foreach ( $stored as $entry ) {
-			if ( ! is_array( $entry ) ) {
-				continue;
-			}
-
-			$run_id  = (string) ( $entry['run_id'] ?? '' );
-			$fields  = $entry['fields'] ?? array();
-			$formats = is_array( $entry['formats'] ?? null ) ? $entry['formats'] : array();
-
-			if ( '' === $run_id || ! is_array( $fields ) || empty( $fields ) ) {
-				continue;
-			}
-
-			if ( ! empty( $entry['insert'] ) ) {
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table insert from the fallback store.
-				$result = empty( $formats ) ? $wpdb->insert( $table, $fields ) : $wpdb->insert( $table, $fields, $formats );
-				if ( ! $result ) {
-					$remaining[] = $entry;
-				}
-				continue;
-			}
-
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table update from the fallback store.
-			$result = empty( $formats )
-				? $wpdb->update( $table, $fields, array( 'run_id' => $run_id ) )
-				: $wpdb->update( $table, $fields, array( 'run_id' => $run_id ), $formats, array( '%s' ) );
-
-			// A 0-row UPDATE is the benign "already held these values" case (or
-			// a row that vanished, whose data is unrecoverable either way) — only
-			// a query error (false) means the write must be retried.
-			if ( false === $result ) {
-				$remaining[] = $entry;
-			}
-		}
-
-		if ( ! empty( $remaining ) ) {
-			self::merge_fallback_rows( $remaining );
-		}
-	}
-
-	/**
-	 * Atomically read-and-clear the fallback store, returning whatever rows it
-	 * held (or an empty array when it was empty, absent, or the claim was lost
-	 * to a concurrent caller).
-	 *
-	 * The clear is a compare-and-swap: the UPDATE only matches when option_value
-	 * still equals the exact serialized value we just read, so at most one
-	 * caller ever claims a given set of rows. A second concurrent drain reads a
-	 * different (already-cleared) value, its WHERE clause matches nothing, and
-	 * it returns empty instead of double-writing the same rows.
-	 *
-	 * @return array<int, array<string, mixed>>
-	 */
-	private static function claim_fallback_rows(): array {
-		global $wpdb;
-		$option = self::FALLBACK_OPTION;
-		$empty  = maybe_serialize( array() );
-
-		for ( $attempt = 0; $attempt < 5; ++$attempt ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom option, bypasses the WP options cache on purpose.
-			$old_raw = $wpdb->get_var(
-				$wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", $option )
-			);
-
-			if ( null === $old_raw || $empty === $old_raw ) {
-				return array();
-			}
-
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom option, bypasses the WP options cache on purpose.
-			$swapped = $wpdb->query(
-				$wpdb->prepare(
-					"UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s AND option_value = %s",
-					$empty,
-					$option,
-					$old_raw
-				)
-			);
-
-			if ( 1 === $swapped ) {
-				wp_cache_delete( $option, 'options' );
-				$rows = maybe_unserialize( $old_raw );
-				return is_array( $rows ) ? $rows : array();
-			}
-			// Lost the compare-and-swap race — retry against the fresh value.
-		}
-
-		return array();
-	}
-
-	/**
-	 * Atomically append $rows to the fallback store, capping it at FALLBACK_CAP.
-	 *
-	 * The append is a compare-and-swap loop: read the current value, merge, and
-	 * write the merged value back only if the stored value is still the one we
-	 * read. Two concurrent writers therefore fold each other's rows in rather
-	 * than one silently overwriting the other (lost rows). The only non-CAS case
-	 * is the very first write, when the option does not exist yet — an INSERT
-	 * creates it, and a concurrent creator's duplicate-key failure just falls
-	 * through to the next CAS attempt against their value.
-	 *
-	 * @param array<int, array<string, mixed>> $rows Rows to append.
-	 * @return void
-	 */
-	private static function merge_fallback_rows( array $rows ): void {
-		if ( empty( $rows ) ) {
-			return;
-		}
-
-		global $wpdb;
-		$option = self::FALLBACK_OPTION;
-
-		for ( $attempt = 0; $attempt < 5; ++$attempt ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom option, bypasses the WP options cache on purpose.
-			$old_raw = $wpdb->get_var(
-				$wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", $option )
-			);
-
-			$stored = ( null !== $old_raw ) ? maybe_unserialize( $old_raw ) : array();
-			if ( ! is_array( $stored ) ) {
-				$stored = array();
-			}
-
-			$merged = array_merge( $stored, $rows );
-			if ( count( $merged ) > self::FALLBACK_CAP ) {
-				$merged = array_slice( $merged, -self::FALLBACK_CAP );
-			}
-			$new_raw = maybe_serialize( $merged );
-
-			if ( null === $old_raw ) {
-				// Option absent: create it atomically. A concurrent creator makes
-				// this INSERT fail on the duplicate primary key; retry then folds
-				// our rows into their value via the CAS path below.
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom option, bypasses the WP options cache on purpose.
-				$inserted = $wpdb->query(
-					$wpdb->prepare(
-						"INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')",
-						$option,
-						$new_raw
-					)
-				);
-				if ( false !== $inserted ) {
-					wp_cache_delete( $option, 'options' );
-					return;
-				}
-				continue;
-			}
-
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom option, bypasses the WP options cache on purpose.
-			$updated = $wpdb->query(
-				$wpdb->prepare(
-					"UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s AND option_value = %s",
-					$new_raw,
-					$option,
-					$old_raw
-				)
-			);
-
-			if ( 1 === $updated ) {
-				wp_cache_delete( $option, 'options' );
-				return;
-			}
-			// Lost the compare-and-swap race — retry against the fresh value.
-		}
 	}
 
 	/**

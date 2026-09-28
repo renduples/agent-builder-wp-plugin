@@ -11,7 +11,6 @@
 
 namespace Agentic\Tests;
 
-use Agentic\Activator;
 use Agentic\Agent_Run;
 
 /**
@@ -173,6 +172,25 @@ class Test_Agent_Run extends TestCase {
 	}
 
 	/**
+	 * mark_waiting()'s optional tool_call_id is tracked separately from the
+	 * approval/proposal business id, and both round-trip through
+	 * resume_state() and a freshly loaded instance.
+	 */
+	public function test_mark_waiting_tracks_tool_call_id_separately_from_business_id(): void {
+		$run = Agent_Run::begin( 'content-writer' );
+
+		$run->mark_waiting( 'proposal', 'proposal-uuid-1', array(), 'call_abc123' );
+
+		$state = $run->resume_state();
+		$this->assertSame( 'proposal-uuid-1', $state['awaiting_id'] );
+		$this->assertSame( 'call_abc123', $state['awaiting_tool_call_id'] );
+		$this->assertNotSame( $state['awaiting_id'], $state['awaiting_tool_call_id'] );
+
+		$reloaded = Agent_Run::load( $run->get_run_id() );
+		$this->assertSame( 'call_abc123', $reloaded->resume_state()['awaiting_tool_call_id'] );
+	}
+
+	/**
 	 * mark_waiting() strips image parts out of the transcript before persisting.
 	 */
 	public function test_mark_waiting_strips_image_payloads(): void {
@@ -202,374 +220,92 @@ class Test_Agent_Run extends TestCase {
 	}
 
 	/**
-	 * A single message that alone exceeds the 200KB transcript cap is dropped
-	 * rather than left in the persisted transcript over the declared bound.
+	 * mark_waiting() must still transition the run to 'waiting' (and persist the
+	 * awaiting pointer + transcript) when the awaiting_tool_call_id column does
+	 * not exist yet — a stale pre-migration schema on a cron/REST/frontend
+	 * request. Including the unknown column in the UPDATE would fail the whole
+	 * write and silently leave the run 'running'.
 	 */
-	public function test_mark_waiting_drops_a_single_oversized_message(): void {
+	public function test_mark_waiting_persists_waiting_without_awaiting_tool_call_id_column(): void {
 		$run = Agent_Run::begin( 'content-writer' );
 
-		$oversized_transcript = array(
-			array(
-				'role'    => 'assistant',
-				'content' => str_repeat( 'x', 250 * 1024 ),
-			),
-		);
-
-		$run->mark_waiting( 'approval', '42', $oversized_transcript );
-
-		$this->assertSame( array(), $run->resume_state()['messages'] );
-	}
-
-	/**
-	 * mark_waiting() clears Agent_Run::current() the same way finish() does,
-	 * so a later begin() in the same process starts a fresh run rather than
-	 * getting back the already-settled waiting instance.
-	 */
-	public function test_mark_waiting_clears_current_run(): void {
-		$run = Agent_Run::begin( 'content-writer' );
-		$this->assertSame( $run, Agent_Run::current() );
-
-		$run->mark_waiting( 'approval', '42', array() );
-
-		$this->assertNull( Agent_Run::current() );
-
-		$next = Agent_Run::begin( 'seo-optimizer' );
-		$this->assertNotSame( $run, $next );
-		$this->assertNotSame( $run->get_run_id(), $next->get_run_id() );
-
-		$next->finish( 'completed' );
-	}
-
-	/**
-	 * A run whose state column was written before 2.15.0 (the bare
-	 * scratchpad object, with no {scratchpad, messages} wrapper) still loads
-	 * its scratchpad correctly instead of it being silently dropped.
-	 */
-	public function test_load_recovers_scratchpad_from_legacy_flat_state_shape(): void {
-		$run    = Agent_Run::begin( 'content-writer' );
-		$run_id = $run->get_run_id();
-
 		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Simulating a pre-2.15.0 row shape for the test.
-		$wpdb->update(
-			$wpdb->prefix . 'agent_builder_runs',
-			array( 'state' => wp_json_encode( array( 'delegated_key' => 'delegated_value' ) ) ),
-			array( 'run_id' => $run_id )
-		);
+		$table = $wpdb->prefix . 'agent_builder_runs';
 
-		$reloaded = Agent_Run::load( $run_id );
-
-		$this->assertSame( 'delegated_value', $reloaded->scratch_get( 'delegated_key' ) );
-		$this->assertSame( array(), $reloaded->resume_state()['messages'] );
-
-		$run->finish( 'completed' );
-	}
-
-	/**
-	 * A legacy flat state shape that happens to contain a key literally named
-	 * "scratchpad" (but not also "messages") must still be recovered as the
-	 * whole legacy scratchpad, not misdetected as the current {scratchpad,
-	 * messages} wrapper — which would otherwise discard the real data and
-	 * keep only whatever sat under that one key.
-	 */
-	public function test_load_recovers_legacy_state_that_contains_a_scratchpad_shaped_key(): void {
-		$run    = Agent_Run::begin( 'content-writer' );
-		$run_id = $run->get_run_id();
-
-		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Simulating a pre-2.15.0 row shape for the test.
-		$wpdb->update(
-			$wpdb->prefix . 'agent_builder_runs',
-			array(
-				'state' => wp_json_encode(
-					array(
-						'scratchpad'    => 'not-an-array-just-a-legacy-field',
-						'delegated_key' => 'delegated_value',
-					)
-				),
-			),
-			array( 'run_id' => $run_id )
-		);
-
-		$reloaded = Agent_Run::load( $run_id );
-
-		$this->assertSame( 'delegated_value', $reloaded->scratch_get( 'delegated_key' ) );
-		$this->assertSame( 'not-an-array-just-a-legacy-field', $reloaded->scratch_get( 'scratchpad' ) );
-		$this->assertSame( array(), $reloaded->resume_state()['messages'] );
-
-		$run->finish( 'completed' );
-	}
-
-	/**
-	 * The current-shape signal is a "messages" value that is a list of
-	 * role-bearing message objects, not merely an array. A legacy flat
-	 * scratchpad that happens to hold BOTH a "scratchpad" key (an array) AND a
-	 * "messages" key (an array that is not a transcript, e.g. a list of plain
-	 * strings) must still be recovered as the whole legacy scratchpad — not
-	 * misdetected as the current {scratchpad, messages} wrapper, which would
-	 * discard everything under the other keys.
-	 */
-	public function test_load_recovers_legacy_state_with_both_keys_but_no_transcript(): void {
-		$run    = Agent_Run::begin( 'content-writer' );
-		$run_id = $run->get_run_id();
-
-		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Simulating a pre-2.15.0 row shape for the test.
-		$wpdb->update(
-			$wpdb->prefix . 'agent_builder_runs',
-			array(
-				'state' => wp_json_encode(
-					array(
-						'scratchpad'    => array( 'legacy' => 'nested' ),
-						'messages'      => array( 'not a transcript list' ),
-						'delegated_key' => 'delegated_value',
-					)
-				),
-			),
-			array( 'run_id' => $run_id )
-		);
-
-		$reloaded = Agent_Run::load( $run_id );
-
-		$this->assertSame( 'delegated_value', $reloaded->scratch_get( 'delegated_key' ) );
-		$this->assertSame( array( 'legacy' => 'nested' ), $reloaded->scratch_get( 'scratchpad' ) );
-		$this->assertSame( array( 'not a transcript list' ), $reloaded->scratch_get( 'messages' ) );
-		$this->assertSame( array(), $reloaded->resume_state()['messages'] );
-
-		$run->finish( 'completed' );
-	}
-
-	/**
-	 * A run whose state column holds the current {scratchpad, messages} wrapper
-	 * loads both its scratchpad and its resume transcript — the shape-based
-	 * signal from_row() uses to tell the wrapper apart from a legacy flat
-	 * scratchpad.
-	 */
-	public function test_load_recovers_current_wrapper_shape(): void {
-		$run    = Agent_Run::begin( 'content-writer' );
-		$run_id = $run->get_run_id();
-
-		$transcript = array(
-			array( 'role' => 'user', 'content' => 'resume me' ),
-			array( 'role' => 'assistant', 'content' => 'working on it' ),
-		);
-
-		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Simulating the current wrapper row shape for the test.
-		$wpdb->update(
-			$wpdb->prefix . 'agent_builder_runs',
-			array(
-				'state' => wp_json_encode(
-					array(
-						'scratchpad' => array( 'delegated_key' => 'delegated_value' ),
-						'messages'   => $transcript,
-					)
-				),
-			),
-			array( 'run_id' => $run_id )
-		);
-
-		$reloaded = Agent_Run::load( $run_id );
-
-		$this->assertSame( 'delegated_value', $reloaded->scratch_get( 'delegated_key' ) );
-		$this->assertSame( $transcript, $reloaded->resume_state()['messages'] );
-
-		$run->finish( 'completed' );
-	}
-
-	/**
-	 * A write deferred while the schema is stale must not leave the run
-	 * looking done in-memory (to_array()['persisted']/is_persisted()) while
-	 * silently missing from the DB forever: once the schema is current again,
-	 * the very next state-transition call flushes the whole accumulated row,
-	 * not just its own fields.
-	 */
-	public function test_deferred_write_is_flushed_once_schema_is_current_again(): void {
-		$previous_schema = get_option( 'agent_builder_db_schema_version', false );
+		// Simulate the stale schema: drop the column the migration hasn't added
+		// yet. DDL isn't rolled back by the per-test transaction, so restore it
+		// in the finally block below.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared -- Test-only schema change on a trusted internal table name.
+		$wpdb->query( "ALTER TABLE {$table} DROP COLUMN awaiting_tool_call_id" );
 
 		try {
-			update_option( 'agent_builder_db_schema_version', '2.14.2' );
-			$this->assertTrue( Activator::schema_is_stale() );
+			$transcript = array(
+				array( 'role' => 'user', 'content' => 'Publish the draft.' ),
+				array( 'role' => 'assistant', 'content' => 'I need approval to publish.' ),
+			);
 
-			$run = Agent_Run::begin( 'content-writer' );
+			$run->mark_waiting( 'proposal', 'proposal-uuid-1', $transcript, 'call_abc123' );
 
-			// persist_start()'s insert was deferred: nothing in the DB yet, and
-			// the instance must admit it, not silently claim success.
-			$this->assertFalse( $run->is_persisted() );
-			$this->assertFalse( $run->to_array()['persisted'] );
-
-			global $wpdb;
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test assertion.
-			$row_before = $wpdb->get_row(
-				$wpdb->prepare( "SELECT * FROM {$wpdb->prefix}agent_builder_runs WHERE run_id = %s", $run->get_run_id() ),
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test assertion against the persisted row.
+			$row = $wpdb->get_row(
+				$wpdb->prepare( "SELECT * FROM {$table} WHERE run_id = %s", $run->get_run_id() ),
 				ARRAY_A
 			);
-			$this->assertNull( $row_before, 'the deferred insert must not have landed while the schema was stale' );
 
-			update_option( 'agent_builder_db_schema_version', AGENT_BUILDER_DB_VERSION );
-			$this->assertFalse( Activator::schema_is_stale() );
+			$this->assertSame( 'waiting', $row['status'], 'the run must transition to waiting even without the awaiting_tool_call_id column' );
+			$this->assertSame( 'proposal', $row['awaiting_type'] );
+			$this->assertSame( 'proposal-uuid-1', $row['awaiting_id'] );
 
-			$run->finish( 'completed', array( 'text' => 'done' ) );
-
-			// finish() flips in-memory status immediately either way; the
-			// point of this test is that the DB row now agrees with it.
-			$this->assertTrue( $run->is_persisted() );
-			$this->assertTrue( $run->to_array()['persisted'] );
-
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test assertion.
-			$row_after = $wpdb->get_row(
-				$wpdb->prepare( "SELECT * FROM {$wpdb->prefix}agent_builder_runs WHERE run_id = %s", $run->get_run_id() ),
-				ARRAY_A
-			);
-			$this->assertIsArray( $row_after, 'the whole accumulated row (begin() + finish()) must land in one flush' );
-			$this->assertSame( 'completed', $row_after['status'] );
-			$this->assertSame( 'content-writer', $row_after['root_agent'] );
+			// The transcript must still be persisted (so a resume can derive the
+			// original tool-call id from it when the column value is empty).
+			$reloaded = Agent_Run::load( $run->get_run_id() );
+			$this->assertSame( $transcript, $reloaded->resume_state()['messages'] );
+			$this->assertSame( '', $reloaded->resume_state()['awaiting_tool_call_id'] );
 		} finally {
-			if ( false === $previous_schema ) {
-				delete_option( 'agent_builder_db_schema_version' );
-			} else {
-				update_option( 'agent_builder_db_schema_version', $previous_schema );
-			}
-			Agent_Run::reset_current_for_tests();
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared -- Restore the column so later tests see a full schema.
+			$wpdb->query( "ALTER TABLE {$table} ADD COLUMN awaiting_tool_call_id varchar(64) DEFAULT NULL AFTER awaiting_id" );
 		}
 	}
 
 	/**
-	 * A run that never hits a stale schema stays reported as fully persisted
-	 * throughout its lifecycle — the dirty-tracking added above must not
-	 * regress the common (schema-current) path.
+	 * mark_waiting() must not settle the in-process instance when its DB write
+	 * fails: a transient error leaves the row still 'running', so the shutdown
+	 * safety net must still be able to mark it 'aborted' rather than strand it
+	 * forever (mirrors test_mark_continuing_write_failure_leaves_run_unsettled).
 	 */
-	public function test_healthy_path_stays_marked_persisted(): void {
-		$run = Agent_Run::begin( 'content-writer' );
-		$this->assertTrue( $run->is_persisted() );
-
-		$run->record_iteration( array( 'list_posts' ), 10, 0.001 );
-		$this->assertTrue( $run->is_persisted() );
-
-		$run->finish( 'completed' );
-		$this->assertTrue( $run->is_persisted() );
-		$this->assertTrue( $run->to_array()['persisted'] );
-	}
-
-	/**
-	 * A run whose row vanishes after insert (a concurrent delete, or a load()
-	 * whose row was removed before a later write) must not keep reporting
-	 * itself as persisted: $wpdb->update() returns 0 both for "values already
-	 * correct" (benign) and "no row matched" (the write didn't land). Only the
-	 * latter should leave the instance dirty, so is_persisted() stays honest.
-	 */
-	public function test_update_that_matches_no_row_stays_dirty(): void {
-		$run = Agent_Run::begin( 'content-writer' );
-		$this->assertTrue( $run->is_persisted() );
-
+	public function test_mark_waiting_write_failure_leaves_run_unsettled(): void {
 		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test setup: simulate the row being deleted out from under the run.
-		$wpdb->delete( $wpdb->prefix . 'agent_builder_runs', array( 'run_id' => $run->get_run_id() ), array( '%s' ) );
+		$run   = Agent_Run::begin( 'content-writer' );
+		$table = $wpdb->prefix . 'agent_builder_runs';
 
-		// record_iteration() flushes an UPDATE against the now-missing row.
-		$run->record_iteration( array( 'list_posts' ), 10, 0.001 );
-
-		$this->assertFalse( $run->is_persisted(), 'a run whose row is gone must not report persisted after a 0-row update' );
-		$this->assertFalse( $run->to_array()['persisted'] );
-
-		$run->finish( 'completed' );
-	}
-
-	/**
-	 * flush_pending()'s INSERT branch must treat a "0 rows affected" result the
-	 * same as a write error: $wpdb->insert() can report 0 (not just false) in
-	 * edge cases, and either way the run has still never landed — so it must
-	 * stay dirty rather than falsely report persisted via is_persisted().
-	 */
-	public function test_insert_reporting_zero_rows_is_treated_as_failed_flush(): void {
-		$previous_schema = get_option( 'agent_builder_db_schema_version', false );
-		$original_wpdb   = $GLOBALS['wpdb'];
-		// Short-circuit schema_is_stale()'s get_option() so the flush below never
-		// hits the stubbed $wpdb (which deliberately has no read methods).
-		$short_circuit   = static function () {
-			return AGENT_BUILDER_DB_VERSION;
+		// Force mark_waiting()'s UPDATE to fail (as a transient DB error would),
+		// without touching any other query the request makes.
+		$mangle = static function ( $query ) {
+			if ( is_string( $query ) && false !== stripos( $query, "'waiting'" ) ) {
+				return false;
+			}
+			return $query;
 		};
+		add_filter( 'query', $mangle );
 
 		try {
-			// Defer the initial insert so the run stays in INSERT mode: its row
-			// has never landed, so flush_pending() must INSERT, not UPDATE.
-			update_option( 'agent_builder_db_schema_version', '2.14.2' );
-			$run = Agent_Run::begin( 'content-writer' );
-			$this->assertFalse( $run->is_persisted() );
-
-			$stub          = new class {
-				public $prefix;
-
-				/**
-				 * Simulate a "no row created" insert result.
-				 *
-				 * @return int Always 0.
-				 */
-				public function insert() {
-					return 0;
-				}
-			};
-			$stub->prefix = $original_wpdb->prefix;
-
-			add_filter( 'pre_option_agent_builder_db_schema_version', $short_circuit );
-			$GLOBALS['wpdb'] = $stub;
-
-			$ref = new \ReflectionMethod( Agent_Run::class, 'flush_pending' );
-			$ref->invoke( $run );
-
-			$this->assertFalse( $run->is_persisted(), 'a 0-row insert must leave the run dirty, not report it persisted' );
+			$run->mark_waiting( 'approval', '42', array() );
 		} finally {
-			$GLOBALS['wpdb'] = $original_wpdb;
-			remove_filter( 'pre_option_agent_builder_db_schema_version', $short_circuit );
-			if ( false === $previous_schema ) {
-				delete_option( 'agent_builder_db_schema_version' );
-			} else {
-				update_option( 'agent_builder_db_schema_version', $previous_schema );
-			}
-			Agent_Run::reset_current_for_tests();
+			remove_filter( 'query', $mangle );
 		}
-	}
 
-	/**
-	 * merge_pending() must tolerate a short/long $formats array the way wpdb's
-	 * process_field_formats() does (pad the shortfall with '%s', ignore the
-	 * excess) rather than letting array_combine() throw a ValueError on a length
-	 * mismatch — a near-miss the old $wpdb->update()/insert() calls survived
-	 * silently and which must not regress into a fatal.
-	 */
-	public function test_merge_pending_tolerates_mismatched_formats(): void {
-		$previous_schema = get_option( 'agent_builder_db_schema_version', false );
+		// The write never landed: the row is still 'running', not 'waiting'.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test assertion against the persisted row.
+		$row = $wpdb->get_row(
+			$wpdb->prepare( "SELECT status FROM {$table} WHERE run_id = %s", $run->get_run_id() ),
+			ARRAY_A
+		);
+		$this->assertSame( 'running', $row['status'] );
 
-		try {
-			// Keep the schema stale so flush_pending() early-returns before touching
-			// $wpdb; the assertion here is only that merge_pending()'s array_combine()
-			// no longer fatals, and normalizes the formats instead.
-			update_option( 'agent_builder_db_schema_version', '2.14.2' );
-			$run = Agent_Run::begin( 'content-writer' );
-
-			$ref         = new \ReflectionMethod( Agent_Run::class, 'merge_pending' );
-			$formats_ref = new \ReflectionProperty( Agent_Run::class, 'pending_formats' );
-
-			// Short $formats: pad the shortfall with '%s'.
-			$ref->invoke( $run, array( 'status' => 'running', 'task_text' => 'hi' ), array( '%s' ) );
-
-			$pending = $formats_ref->getValue( $run );
-			$this->assertSame( '%s', $pending['status'], 'a missing format must be padded to %s' );
-			$this->assertSame( '%s', $pending['task_text'], 'a missing format must be padded to %s' );
-
-			// Long $formats: ignore the excess, keep only the first count($fields).
-			$ref->invoke( $run, array( 'status' => 'completed' ), array( '%d', '%f', '%s' ) );
-
-			$pending = $formats_ref->getValue( $run );
-			$this->assertSame( '%d', $pending['status'], 'the first format is used and the excess ignored' );
-		} finally {
-			if ( false === $previous_schema ) {
-				delete_option( 'agent_builder_db_schema_version' );
-			} else {
-				update_option( 'agent_builder_db_schema_version', $previous_schema );
-			}
-			Agent_Run::reset_current_for_tests();
-		}
+		// Because the instance stayed unsettled, a later finish() — standing in
+		// for the shutdown guard — is NOT a no-op and can still abort the run.
+		$run->finish( 'aborted' );
+		$this->assertSame( 'aborted', $run->to_array()['status'] );
 	}
 
 	/**
@@ -684,6 +420,125 @@ class Test_Agent_Run extends TestCase {
 	}
 
 	/**
+	 * mark_continuing() moves the run to a non-terminal 'continuing' status
+	 * and settles the in-process instance (mirroring mark_waiting()) so a
+	 * later finish() call — standing in for the shutdown safety net firing
+	 * at request end — is a no-op and never overwrites the hand-off with
+	 * 'aborted'.
+	 */
+	public function test_mark_continuing_is_non_terminal_and_blocks_later_finish(): void {
+		$run = Agent_Run::begin( 'content-writer' );
+
+		$run->mark_continuing();
+
+		$this->assertSame( 'continuing', $run->to_array()['status'] );
+
+		// Stand-in for register_shutdown_guard() firing at request end.
+		$run->finish( 'aborted' );
+
+		$this->assertSame( 'continuing', $run->to_array()['status'] );
+
+		$reloaded = Agent_Run::load( $run->get_run_id() );
+		$this->assertSame( 'continuing', $reloaded->to_array()['status'] );
+	}
+
+	/**
+	 * mark_continuing() must not settle the in-process instance when its DB
+	 * write fails: a transient error leaves the row still 'running', so the
+	 * shutdown safety net must still be able to mark it 'aborted' rather than
+	 * strand it forever.
+	 */
+	public function test_mark_continuing_write_failure_leaves_run_unsettled(): void {
+		global $wpdb;
+		$run   = Agent_Run::begin( 'content-writer' );
+		$table = $wpdb->prefix . 'agent_builder_runs';
+
+		// Force mark_continuing()'s UPDATE to fail (as a transient DB error
+		// would), without touching any other query the request makes.
+		$mangle = static function ( $query ) {
+			if ( is_string( $query ) && false !== stripos( $query, "'continuing'" ) ) {
+				return false;
+			}
+			return $query;
+		};
+		add_filter( 'query', $mangle );
+
+		try {
+			$run->mark_continuing();
+		} finally {
+			remove_filter( 'query', $mangle );
+		}
+
+		// The write never landed: the row is still 'running', not 'continuing'.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test assertion against the persisted row.
+		$row = $wpdb->get_row(
+			$wpdb->prepare( "SELECT status FROM {$table} WHERE run_id = %s", $run->get_run_id() ),
+			ARRAY_A
+		);
+		$this->assertSame( 'running', $row['status'] );
+
+		// Because the instance stayed unsettled, a later finish() — standing in
+		// for the shutdown guard — is NOT a no-op and can still abort the run.
+		$run->finish( 'aborted' );
+		$this->assertSame( 'aborted', $run->to_array()['status'] );
+	}
+
+	/**
+	 * mark_waiting() settles the run and releases the current-run pointer, so a
+	 * later begin() in the same request starts a genuinely new run instead of
+	 * returning the already-waiting one.
+	 */
+	public function test_begin_after_mark_waiting_returns_a_fresh_run(): void {
+		$run    = Agent_Run::begin( 'content-writer' );
+		$run_id = $run->get_run_id();
+
+		$run->mark_waiting( 'approval', '1', array() );
+
+		$this->assertNull( Agent_Run::current() );
+
+		$fresh = Agent_Run::begin( 'seo-optimizer' );
+		$this->assertNotSame( $run, $fresh );
+		$this->assertNotSame( $run_id, $fresh->get_run_id() );
+		$this->assertSame( 'seo-optimizer', $fresh->get_root_agent() );
+	}
+
+	/**
+	 * mark_continuing() likewise settles the run and releases the current-run
+	 * pointer, so a later begin() starts a fresh run rather than returning the
+	 * handed-off one.
+	 */
+	public function test_begin_after_mark_continuing_returns_a_fresh_run(): void {
+		$run    = Agent_Run::begin( 'content-writer' );
+		$run_id = $run->get_run_id();
+
+		$run->mark_continuing();
+
+		$this->assertNull( Agent_Run::current() );
+
+		$fresh = Agent_Run::begin( 'seo-optimizer' );
+		$this->assertNotSame( $run, $fresh );
+		$this->assertNotSame( $run_id, $fresh->get_run_id() );
+	}
+
+	/**
+	 * get_status() and get_root_agent() expose the fields resume validation
+	 * needs to reject replaying a terminal or mismatched-agent run.
+	 */
+	public function test_get_status_and_get_root_agent_accessors(): void {
+		$run = Agent_Run::begin( 'seo-optimizer', array( 'kind' => 'task' ) );
+
+		$this->assertSame( 'running', $run->get_status() );
+		$this->assertSame( 'seo-optimizer', $run->get_root_agent() );
+
+		$run->mark_waiting( 'approval', '1', array() );
+		$this->assertSame( 'waiting', $run->get_status() );
+
+		$reloaded = Agent_Run::load( $run->get_run_id() );
+		$this->assertSame( 'waiting', $reloaded->get_status() );
+		$this->assertSame( 'seo-optimizer', $reloaded->get_root_agent() );
+	}
+
+	/**
 	 * counts() returns per-status totals scoped to one user.
 	 */
 	public function test_counts_scopes_by_user_and_groups_by_status(): void {
@@ -706,105 +561,53 @@ class Test_Agent_Run extends TestCase {
 	}
 
 	/**
-	 * A run whose shutdown retry still finds the schema stale is stashed into a
-	 * bounded fallback store — the same cross-request durability bridge
-	 * Audit_Log already has — rather than vanishing with the process. This is
-	 * the data-loss case the in-request pending buffer alone can't close: a cron
-	 * or REST request that begins and finishes a run while a schema repair has
-	 * failed for the whole request (schema_is_stale() never clears) must not
-	 * silently lose the row.
+	 * claim_waiting() atomically flips a 'waiting'/'continuing' run to
+	 * 'running' and reports success — the normal, uncontested path.
 	 */
-	public function test_run_row_is_stashed_to_fallback_store_when_shutdown_retry_fails(): void {
-		$previous_schema = get_option( 'agent_builder_db_schema_version', false );
-		delete_option( 'agent_builder_run_fallback_rows' );
+	public function test_claim_waiting_succeeds_from_waiting_or_continuing(): void {
+		$waiting = Agent_Run::begin( 'content-writer' );
+		$waiting->mark_waiting( 'approval', '1', array() );
+		$this->assertTrue( $waiting->claim_waiting() );
+		$this->assertSame( 'running', $waiting->get_status() );
+		$this->assertSame( 'running', Agent_Run::load( $waiting->get_run_id() )->get_status() );
 
-		try {
-			update_option( 'agent_builder_db_schema_version', '2.14.2' );
-			$this->assertTrue( Activator::schema_is_stale() );
+		Agent_Run::reset_current_for_tests();
 
-			$run    = Agent_Run::begin( 'content-writer' );
-			$run_id = $run->get_run_id();
-			$run->finish( 'completed', array( 'text' => 'done' ) );
-
-			// The insert was deferred from begin() onward, so the run never landed.
-			$this->assertFalse( $run->is_persisted() );
-
-			// Simulate the shutdown retry: it still finds the schema stale, so the
-			// still-pending row is stashed to the fallback store.
-			$shutdown = new \ReflectionMethod( Agent_Run::class, 'flush_and_stash_on_shutdown' );
-			$shutdown->invoke( $run );
-
-			$fallback = get_option( 'agent_builder_run_fallback_rows', array() );
-			$this->assertIsArray( $fallback, 'the fallback store must exist after a failed shutdown retry' );
-			$this->assertCount( 1, $fallback, 'the still-pending run must be stashed, not dropped' );
-			$this->assertSame( $run_id, $fallback[0]['run_id'] );
-			$this->assertTrue( $fallback[0]['insert'], 'a run whose insert never landed must be stashed as an INSERT record' );
-			$this->assertSame( 'completed', $fallback[0]['fields']['status'] );
-			$this->assertSame( 'content-writer', $fallback[0]['fields']['root_agent'] );
-		} finally {
-			if ( false === $previous_schema ) {
-				delete_option( 'agent_builder_db_schema_version' );
-			} else {
-				update_option( 'agent_builder_db_schema_version', $previous_schema );
-			}
-			Agent_Run::reset_current_for_tests();
-			delete_option( 'agent_builder_run_fallback_rows' );
-		}
+		$continuing = Agent_Run::begin( 'content-writer' );
+		$continuing->mark_continuing();
+		$this->assertTrue( $continuing->claim_waiting() );
+		$this->assertSame( 'running', $continuing->get_status() );
 	}
 
 	/**
-	 * The next successful write in any later request drains the fallback store:
-	 * the stashed run row is inserted together with the new run's own row, and
-	 * the store is cleared — closing the loop for the best-effort durability
-	 * bridge.
+	 * Two concurrent resume attempts for the same run_id must not both win:
+	 * once one caller's claim_waiting() has flipped the row to 'running',
+	 * a second, separately-loaded instance racing it must fail the claim
+	 * even though its own in-memory get_status() still reads 'waiting'.
 	 */
-	public function test_run_fallback_store_is_drained_on_next_successful_write(): void {
-		$previous_schema = get_option( 'agent_builder_db_schema_version', false );
-		delete_option( 'agent_builder_run_fallback_rows' );
+	public function test_claim_waiting_rejects_a_second_concurrent_claimant(): void {
+		$run = Agent_Run::begin( 'content-writer' );
+		$run->mark_waiting( 'approval', '1', array() );
 
-		try {
-			// Request 1: schema stale, a run is deferred and stashed at shutdown.
-			update_option( 'agent_builder_db_schema_version', '2.14.2' );
-			$run             = Agent_Run::begin( 'content-writer' );
-			$stashed_run_id  = $run->get_run_id();
-			$run->finish( 'completed' );
-			$shutdown = new \ReflectionMethod( Agent_Run::class, 'flush_and_stash_on_shutdown' );
-			$shutdown->invoke( $run );
-			$this->assertCount( 1, get_option( 'agent_builder_run_fallback_rows', array() ) );
+		$first_claimant  = Agent_Run::load( $run->get_run_id() );
+		$second_claimant = Agent_Run::load( $run->get_run_id() );
 
-			Agent_Run::reset_current_for_tests();
+		$this->assertSame( 'waiting', $first_claimant->get_status() );
+		$this->assertSame( 'waiting', $second_claimant->get_status() );
 
-			// New request: the schema is current again.
-			update_option( 'agent_builder_db_schema_version', AGENT_BUILDER_DB_VERSION );
-			$this->assertFalse( Activator::schema_is_stale() );
+		$this->assertTrue( $first_claimant->claim_waiting(), 'the first claimant must win the race' );
+		$this->assertFalse( $second_claimant->claim_waiting(), 'a second concurrent claimant must lose the race' );
+	}
 
-			// A healthy begin() flushes its own row successfully and drains the
-			// stashed row alongside it.
-			$run2 = Agent_Run::begin( 'seo-optimizer' );
+	/**
+	 * A run that is not in 'waiting'/'continuing' (e.g. still 'running', or
+	 * already terminal) can never be claimed.
+	 */
+	public function test_claim_waiting_rejects_a_non_resumable_status(): void {
+		$run = Agent_Run::begin( 'content-writer' );
+		$this->assertFalse( $run->claim_waiting(), 'a plain running run has nothing to claim' );
 
-			global $wpdb;
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test assertion.
-			$stashed_row = $wpdb->get_row(
-				$wpdb->prepare( "SELECT * FROM {$wpdb->prefix}agent_builder_runs WHERE run_id = %s", $stashed_run_id ),
-				ARRAY_A
-			);
-			$this->assertIsArray( $stashed_row, 'the stashed run row must land on the next successful write' );
-			$this->assertSame( 'completed', $stashed_row['status'] );
-			$this->assertSame(
-				array(),
-				get_option( 'agent_builder_run_fallback_rows', array() ),
-				'the fallback store must be cleared once drained'
-			);
-
-			$run2->finish( 'completed' );
-		} finally {
-			if ( false === $previous_schema ) {
-				delete_option( 'agent_builder_db_schema_version' );
-			} else {
-				update_option( 'agent_builder_db_schema_version', $previous_schema );
-			}
-			Agent_Run::reset_current_for_tests();
-			delete_option( 'agent_builder_run_fallback_rows' );
-		}
+		$run->finish( 'completed' );
+		$this->assertFalse( $run->claim_waiting(), 'a terminal run must never be claimed for resume' );
 	}
 }

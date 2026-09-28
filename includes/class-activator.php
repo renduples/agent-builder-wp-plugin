@@ -95,13 +95,19 @@ final class Activator {
 	);
 
 	/**
-	 * How long (seconds) to wait before re-attempting a schema repair after one
-	 * fails. A full dbDelta pass is multi-table DDL — without a backoff, every
-	 * frontend/REST/cron request during a persistent repair-failure window
-	 * would re-run it (plus error-log writes) on each hit. Writes stay safely
-	 * queued in the Agent_Run/Audit_Log pending buffers in the meantime.
+	 * Option name and TTL (seconds) for the atomic schema-upgrade lock. See
+	 * acquire_upgrade_lock()/release_upgrade_lock().
+	 *
+	 * The TTL is how long a lock is held before it is treated as abandoned and
+	 * eligible for compare-and-swap takeover. It is deliberately conservative:
+	 * dbDelta() can run an ALTER against a large, populated table that takes
+	 * minutes, and a short TTL would let a second request mistake a slow-but-
+	 * alive migration for a dead owner and run DDL against the same tables
+	 * concurrently. Ten minutes is far longer than any real migration, so an
+	 * expired lock almost always means the owning process actually died.
 	 */
-	private const SCHEMA_REPAIR_BACKOFF_SECONDS = 60;
+	private const UPGRADE_LOCK_KEY = 'agent_builder_upgrade_lock';
+	private const UPGRADE_LOCK_TTL = 600;
 
 	/**
 	 * Whether the site owner has thrown the safe-mode breaker.
@@ -228,168 +234,251 @@ final class Activator {
 	 * agent_builder_db_schema_version would otherwise stay on the previous
 	 * value and the dashboard Schema tile would never catch up.
 	 *
-	 * Admin-only (current_user_can( 'manage_options' )). No-op (no DB writes)
-	 * when the stored option already equals AGENT_BUILDER_DB_VERSION. When behind, re-runs
+	 * Runs on every request (hooked on plugins_loaded) so the first cron,
+	 * REST or frontend hit after an auto-update brings the schema current —
+	 * not just the first admin visit. No-op (no DB writes) when the stored
+	 * option already equals AGENT_BUILDER_DB_VERSION. When behind, re-runs
 	 * create_tables() (dbDelta, idempotent, no data loss) then writes the
-	 * current constant. Table creation is guarded the same way as a fresh
-	 * activation — a failure here is logged and leaves the stored version
-	 * behind so it retries on the next admin_init, instead of silently
-	 * marking a failed upgrade as complete.
+	 * current constant. An atomic lock (see acquire_upgrade_lock()) keeps
+	 * near-simultaneous requests (a cron run and a REST hit landing
+	 * together) from racing into create_tables(); on failure the lock row is
+	 * left in place so a broken site backs off for the lock's TTL instead
+	 * of re-running the full dbDelta pass on every request. A failure is
+	 * logged and leaves the stored version behind so it retries later,
+	 * instead of silently marking a failed upgrade complete.
 	 *
 	 * Also flips agent_builder_needs_seed so the deferred/chunked seeder
 	 * fills in any bundled tools/skills/agents added since the site's last
 	 * seed — existing data is never touched, only gaps are filled.
 	 *
-	 * A cron/REST/frontend request that arrives before any admin has loaded
-	 * wp-admin post-upgrade is instead covered by maybe_upgrade_schema()
-	 * (hooked on 'init'), which repairs the table shape and, on success, arms
-	 * agent_builder_needs_seed itself too (guarded by safe mode, same as
-	 * here) — only the admin-only degraded notice stays exclusive to this,
-	 * the wp-admin path.
-	 *
 	 * @return void
 	 */
 	public static function maybe_upgrade(): void {
-		if ( ! is_admin() || ! current_user_can( 'manage_options' ) ) {
-			return;
-		}
+		// Version-independent: runs regardless of whether the stored schema
+		// version already equals AGENT_BUILDER_DB_VERSION. See
+		// maybe_add_awaiting_tool_call_id_column() for why this can't ride
+		// along with the version-gated path below.
+		self::maybe_add_awaiting_tool_call_id_column();
 
-		if ( ! self::schema_is_stale() ) {
-			return;
-		}
-
-		self::$activation_log = array();
-		$tables_ok            = self::run_schema_upgrade();
-		self::flush_deferred_log( AGENT_BUILDER_DB_VERSION );
-
-		if ( ! $tables_ok ) {
-			return; // Leave stored version behind — retried on the next admin_init.
-		}
-
-		if ( ! self::is_safe_mode() ) {
-			update_option( 'agent_builder_needs_seed', true );
-		}
-	}
-
-	/**
-	 * Broader entry point for the same idempotent dbDelta schema sync as
-	 * maybe_upgrade(), without the wp-admin + manage_options gate.
-	 *
-	 * maybe_upgrade() only runs from admin_init, so a site whose first
-	 * post-auto-update request is frontend/REST/WP-Cron — with no
-	 * administrator having loaded wp-admin yet — kept a stale table for the
-	 * whole time until an admin happened to visit, silently dropping every
-	 * Agent_Run/Audit_Log insert made in the meantime (a missing column fails
-	 * the insert outright). Hooked on 'init' so it runs on every request type.
-	 *
-	 * Kept deliberately minimal: it only re-runs create_tables(), bumps the
-	 * stored version, and (on success) arms the same agent_builder_needs_seed
-	 * flag as maybe_upgrade() — arming it here is safe because the seeder
-	 * itself (maybe_run_deferred_seed()) only ever executes from admin_init
-	 * while current_user_can( 'manage_options' ), so a stray cron/REST/
-	 * frontend hit still can't start background seeding on its own; it just
-	 * leaves the flag for the next wp-admin visit to pick up. Without this,
-	 * a site whose first post-update request bumped the version here would
-	 * have schema_is_stale() return false on every later admin_init, so
-	 * maybe_upgrade() would never arm the flag and newly bundled content
-	 * would never get seeded. The admin-only notice
-	 * (agent_builder_activation_degraded) stays exclusive to maybe_upgrade().
-	 *
-	 * The stored-version check is a single cheap get_option() call, so this
-	 * is a no-op read on every request once the schema is current.
-	 *
-	 * @return void
-	 */
-	public static function maybe_upgrade_schema(): void {
-		// A genuine wp-admin page load by an administrator (is_admin() true, not
-		// AJAX, manage_options) is owned by maybe_upgrade() on admin_init, which
-		// also surfaces the admin-only degraded notice — defer to it rather than
-		// racing it. The capability check must match maybe_upgrade()'s own gate:
-		// a logged-in *non-admin* (subscriber/editor) wp-admin page load would
-		// defer here only to have maybe_upgrade() early-return on the same
-		// capability, leaving NEITHER path to repair that request — keying the
-		// deferral on manage_options lets that request repair here instead.
-		//
-		// admin-ajax.php sets is_admin() true but never fires admin_init, so an
-		// admin's first post-auto-update request being a wp_ajax_* call
-		// (heartbeat, autosave, any frontend AJAX action) would otherwise fall
-		// through this early-return and never run either repair — the exact
-		// "first request doesn't get migrated" gap this path exists to close,
-		// just for AJAX. Excluding wp_doing_ajax() lets that request repair here
-		// instead. This also means the idempotent dbDelta DDL below can now run
-		// from a fully unauthenticated frontend/REST/cron request — an
-		// intentional, accepted trust-boundary change: dbDelta takes no
-		// user-controlled input and is idempotent, and the 60s backoff transient
-		// bounds repetition.
-		if ( is_admin() && ! wp_doing_ajax() && current_user_can( 'manage_options' ) ) {
-			return; // maybe_upgrade() (admin_init) owns this case.
-		}
-
-		if ( ! self::schema_is_stale() ) {
-			return;
-		}
-
-		self::$activation_log = array();
-		$tables_ok            = self::run_schema_upgrade();
-		self::flush_deferred_log( AGENT_BUILDER_DB_VERSION );
-
-		// Intentional: arm the deferred-seed flag here too, not just in the
-		// admin path. This non-admin call only leaves the flag for the next
-		// wp-admin visit (maybe_run_deferred_seed() is admin_init +
-		// manage_options-gated) to fill newly bundled content — it never starts
-		// seeding on its own.
-		if ( $tables_ok && ! self::is_safe_mode() ) {
-			update_option( 'agent_builder_needs_seed', true );
-		}
-	}
-
-	/**
-	 * Whether the stored schema version is behind the running plugin's.
-	 *
-	 * Public so a write path whose table columns a failed repair may have
-	 * left missing (Agent_Run::persist_start(), Audit_Log::log()) can gate
-	 * on it directly: run_schema_upgrade() only bumps the stored version on
-	 * success, so this keeps returning true — across every request, not just
-	 * the one where the repair failed — until a later attempt actually
-	 * succeeds, instead of the request silently inserting into a table
-	 * dbDelta never finished widening.
-	 *
-	 * @return bool
-	 */
-	public static function schema_is_stale(): bool {
 		$stored = (string) get_option( 'agent_builder_db_schema_version', '' );
-		return AGENT_BUILDER_DB_VERSION !== $stored;
-	}
-
-	/**
-	 * Re-run the idempotent dbDelta table creation and, on success, bump the
-	 * stored schema version. Shared by maybe_upgrade() and maybe_upgrade_schema().
-	 *
-	 * @return bool True when tables were created/upgraded successfully.
-	 */
-	private static function run_schema_upgrade(): bool {
-		// Backoff: gate repeated full-dbDelta attempts behind a short-TTL
-		// transient. The stored schema version only bumps on success, so
-		// schema_is_stale() keeps returning true across requests until a repair
-		// lands — meaning every request would otherwise re-run the multi-table
-		// DDL. Writes are queued in the Agent_Run/Audit_Log pending buffers
-		// between attempts, so nothing is lost while we wait. The transient is
-		// cleared on success so it never blocks a later, unrelated migration.
-		if ( false !== get_transient( 'agent_builder_schema_repair_backoff' ) ) {
-			return false;
+		if ( AGENT_BUILDER_DB_VERSION === $stored ) {
+			return;
 		}
-		set_transient( 'agent_builder_schema_repair_backoff', 1, self::SCHEMA_REPAIR_BACKOFF_SECONDS );
 
+		// Atomic lock: a cron run and a REST request landing together during the
+		// upgrade window must not both race into create_tables()/dbDelta().
+		// Released only on success; left in place on failure so the retry backs
+		// off — the TTL is both the backoff window and the safety net if the
+		// process dies mid-upgrade.
+		$lock_value = self::acquire_upgrade_lock();
+		if ( null === $lock_value ) {
+			return; // Another request is already running (or recently failed).
+		}
+
+		self::$activation_log = array();
 		self::guarded_step( 'maybe_upgrade_create_tables', array( __CLASS__, 'create_tables' ) );
 		$tables_ok = 'ok' === self::last_log_status( 'create_tables' );
 		if ( ! $tables_ok ) {
 			update_option( 'agent_builder_activation_degraded', true );
-			return false; // Backoff transient stays set — retried on a later request.
+		}
+		self::flush_deferred_log( AGENT_BUILDER_DB_VERSION );
+
+		if ( ! $tables_ok ) {
+			return; // Leave the lock as a 60s backoff and the version behind for retry.
 		}
 
 		self::set_db_schema_version( AGENT_BUILDER_DB_VERSION );
-		delete_transient( 'agent_builder_schema_repair_backoff' );
-		return true;
+
+		if ( ! self::is_safe_mode() ) {
+			update_option( 'agent_builder_needs_seed', true );
+		}
+
+		self::release_upgrade_lock( $lock_value );
+	}
+
+	/**
+	 * Atomically acquire the schema-upgrade lock.
+	 *
+	 * The lock is a single wp_options row named agent_builder_upgrade_lock whose
+	 * value is a JSON blob carrying this request's unique owner token plus its
+	 * expiry time. Acquisition is atomic, unlike a transient's get-then-set
+	 * (which has a read-then-write window): the INSERT relies on wp_options'
+	 * unique key on option_name, so a duplicate-key failure IS the "someone else
+	 * already holds it" signal. A stale lock — one whose expiry has passed,
+	 * meaning its owner is no longer renewing it and is presumed dead — is taken
+	 * over with a compare-and-swap UPDATE that includes the old value in its
+	 * WHERE clause, so two requests racing to take over the same expired lock
+	 * cannot both win. The TTL is deliberately long (UPGRADE_LOCK_TTL, 10
+	 * minutes): a dbDelta() ALTER against a large table can legitimately run
+	 * for minutes, and a shorter expiry would let a second request mistake a
+	 * slow-but-alive migration for a dead one and start concurrent DDL.
+	 *
+	 * @return string|null The exact option_value this request wrote (to be passed
+	 *                     back to release_upgrade_lock()), or null if another
+	 *                     request currently holds a live lock.
+	 */
+	private static function acquire_upgrade_lock(): ?string {
+		global $wpdb;
+
+		$new_value = wp_json_encode(
+			array(
+				'token'   => wp_generate_password( 12, false ),
+				'expires' => time() + self::UPGRADE_LOCK_TTL,
+			)
+		);
+
+		// Atomic acquire: a duplicate-key INSERT fails, which is the atomic
+		// "someone else holds it" signal. Suppress the expected duplicate-key
+		// error so it never reaches the log.
+		$suppressed = $wpdb->suppress_errors( true );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Raw write: this is a lock row, not an option read through the options API.
+		$inserted = $wpdb->query(
+			$wpdb->prepare(
+				"INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')",
+				self::UPGRADE_LOCK_KEY,
+				$new_value
+			)
+		);
+		$wpdb->suppress_errors( $suppressed );
+
+		if ( $inserted ) {
+			return $new_value;
+		}
+
+		// The row already exists. Read it directly, bypassing get_option() so
+		// the alloptions cache can't serve a stale copy of a raw-written row.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Raw read: get_option() may serve a stale cached value for a raw-written lock row.
+		$existing = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT option_value FROM {$wpdb->options} WHERE option_name = %s",
+				self::UPGRADE_LOCK_KEY
+			)
+		);
+
+		if ( null === $existing ) {
+			// The owner released the row between our failed INSERT and this read.
+			// Retry the INSERT once; if it still fails, someone else won it.
+			$suppressed = $wpdb->suppress_errors( true );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Raw write: this is a lock row, not an option read through the options API.
+			$inserted = $wpdb->query(
+				$wpdb->prepare(
+					"INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')",
+					self::UPGRADE_LOCK_KEY,
+					$new_value
+				)
+			);
+			$wpdb->suppress_errors( $suppressed );
+
+			return $inserted ? $new_value : null;
+		}
+
+		$decoded = json_decode( $existing, true );
+		$expires = is_array( $decoded ) && isset( $decoded['expires'] ) ? (int) $decoded['expires'] : 0;
+
+		if ( time() < $expires ) {
+			return null; // Live lock — another request owns it.
+		}
+
+		// Stale lock: compare-and-swap. The WHERE clause pins the exact value we
+		// just read, so the UPDATE only lands if nobody else took the row over
+		// first (0 affected rows = lost the race).
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Raw write: this is a lock row, not an option read through the options API.
+		$taken = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s AND option_value = %s",
+				$new_value,
+				self::UPGRADE_LOCK_KEY,
+				$existing
+			)
+		);
+
+		return ( 1 === (int) $taken ) ? $new_value : null;
+	}
+
+	/**
+	 * Release the schema-upgrade lock — but only if the row still holds this
+	 * request's exact value. If this request's TTL expired mid-migration and a
+	 * newer request took the lock over, the value no longer matches, so this
+	 * DELETE is a no-op and the newer request's lock is left intact. A request
+	 * can never release a lock it does not own.
+	 *
+	 * @param string $lock_value Exact option_value returned by acquire_upgrade_lock().
+	 * @return void
+	 */
+	private static function release_upgrade_lock( string $lock_value ): void {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Raw delete: this is a lock row, not an option deleted through the options API.
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$wpdb->options} WHERE option_name = %s AND option_value = %s",
+				self::UPGRADE_LOCK_KEY,
+				$lock_value
+			)
+		);
+	}
+
+	/**
+	 * One-time, version-independent migration for the awaiting_tool_call_id
+	 * column added to the runs table by the M10b resume-path fix.
+	 *
+	 * Deliberately decoupled from AGENT_BUILDER_DB_VERSION: the next value in
+	 * the programme's schema plan (2.15.1) is reserved for M11's own schema
+	 * work, so this column can't be folded into a version bump here — a site
+	 * that got 2.15.1 from this fix (with only this column added) would then
+	 * wrongly skip M11's real migration, since maybe_upgrade()'s
+	 * `AGENT_BUILDER_DB_VERSION === $stored` check would already match.
+	 *
+	 * Tracked by its own option so it runs at most once per site, checks the
+	 * column directly (never assumes anything about the stored schema
+	 * version), and is a safe no-op if the table doesn't exist yet (a fresh
+	 * activation's create_tables() already includes this column).
+	 *
+	 * @return void
+	 */
+	private static function maybe_add_awaiting_tool_call_id_column(): void {
+		if ( get_option( 'agent_builder_awaiting_tool_call_id_migrated' ) ) {
+			return;
+		}
+
+		try {
+			global $wpdb;
+			$table = $wpdb->prefix . 'agent_builder_runs';
+
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $table is an internal prefix + literal name, not user input.
+			if ( ! $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) ) {
+				return; // Table not created yet — nothing to migrate; leave unmigrated so this retries later.
+			}
+
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is an internal prefix + literal name, not user input.
+			$column_exists = (bool) $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM {$table} LIKE %s", 'awaiting_tool_call_id' ) );
+
+			if ( ! $column_exists ) {
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- schema migration; $table is trusted, no user input.
+				$altered = $wpdb->query( "ALTER TABLE {$table} ADD COLUMN awaiting_tool_call_id varchar(64) DEFAULT NULL AFTER awaiting_id" );
+
+				if ( false === $altered ) {
+					// ALTER reports failure via a false return + $wpdb->last_error,
+					// never a thrown exception — leave unmigrated so this retries
+					// on the next admin_init instead of permanently suppressing it.
+					return;
+				}
+
+				// Re-verify rather than trust a truthy query result: confirm the
+				// column is actually there before marking this migration done.
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is an internal prefix + literal name, not user input.
+				$column_exists = (bool) $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM {$table} LIKE %s", 'awaiting_tool_call_id' ) );
+
+				if ( ! $column_exists ) {
+					return; // Still missing — retry on the next admin_init.
+				}
+			}
+
+			update_option( 'agent_builder_awaiting_tool_call_id_migrated', true );
+		} catch ( \Throwable $e ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Intentional migration debug output.
+			error_log( '[Agent Builder] maybe_add_awaiting_tool_call_id_column failed: ' . $e->getMessage() );
+			// Leave unmigrated — retried on the next admin_init.
+		}
 	}
 
 	/**
@@ -515,6 +604,12 @@ final class Activator {
 			// still hit a DB error during setup, so this must still degrade
 			// and notify, per requirement 1.
 			update_option( 'agent_builder_activation_degraded', true );
+		} else {
+			// A fresh install's create_tables() already includes
+			// awaiting_tool_call_id in its dbDelta SQL, so the standalone
+			// migration in maybe_upgrade() would just be a no-op query on
+			// every admin_init until it flips this flag — set it now instead.
+			update_option( 'agent_builder_awaiting_tool_call_id_migrated', true );
 		}
 		self::guarded_step( 'set_default_options', array( __CLASS__, 'set_default_options' ) );
 
@@ -1585,6 +1680,7 @@ final class Activator {
             error text,
             awaiting_type varchar(16) DEFAULT NULL,
             awaiting_id varchar(36) DEFAULT NULL,
+            awaiting_tool_call_id varchar(64) DEFAULT NULL,
             cancel_requested tinyint(1) NOT NULL DEFAULT 0,
             state longtext,
             started_at datetime DEFAULT CURRENT_TIMESTAMP,
