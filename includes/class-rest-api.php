@@ -303,6 +303,17 @@ class REST_API {
 			)
 		);
 
+		// List the current user's always-allow tool grants (for a later Grants tab).
+		register_rest_route(
+			'agentic/v1',
+			'/tool-grants',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'handle_get_tool_grants' ),
+				'permission_callback' => array( $this, 'check_list_tool_grants' ),
+			)
+		);
+
 		// Revoke an always-allow tool grant for the current admin user.
 		register_rest_route(
 			'agentic/v1',
@@ -311,6 +322,24 @@ class REST_API {
 				'methods'             => 'DELETE',
 				'callback'            => array( $this, 'handle_tool_grant_revoke' ),
 				'permission_callback' => array( $this, 'check_admin' ),
+			)
+		);
+
+		// Grant a tool for the lifetime of a run (run-scoped "allow for this task").
+		register_rest_route(
+			'agentic/v1',
+			'/runs/(?P<run_id>[a-zA-Z0-9_.-]+)/grant',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'handle_run_grant' ),
+				'permission_callback' => array( $this, 'check_run_grant' ),
+				'args'                => array(
+					'tool' => array(
+						'required'          => true,
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_key',
+					),
+				),
 			)
 		);
 
@@ -1130,29 +1159,13 @@ class REST_API {
 			if ( ! $proposal ) {
 				return new \WP_REST_Response( array( 'error' => 'Proposal not found or expired.' ), 400 );
 			}
-			$user_id       = get_current_user_id();
-			$always_grants = get_user_meta( $user_id, 'agentic_tool_grants_always', true );
-			if ( ! is_array( $always_grants ) ) {
-				$always_grants = array();
-			}
-			if ( ! in_array( $proposal['tool'], $always_grants, true ) ) {
-				$always_grants[] = $proposal['tool'];
-				update_user_meta( $user_id, 'agentic_tool_grants_always', $always_grants );
-			}
+			Tool_Grants::grant( 'always', $proposal['tool'], array( 'user_id' => get_current_user_id() ) );
 		} elseif ( 'session' === $action && '' !== $session_id ) {
 			$proposal = Agent_Proposals::get( $proposal_id );
 			if ( ! $proposal ) {
 				return new \WP_REST_Response( array( 'error' => 'Proposal not found or expired.' ), 400 );
 			}
-			$transient_key  = 'agentic_session_grants_' . sanitize_key( $session_id );
-			$session_grants = get_transient( $transient_key );
-			if ( ! is_array( $session_grants ) ) {
-				$session_grants = array();
-			}
-			if ( ! in_array( $proposal['tool'], $session_grants, true ) ) {
-				$session_grants[] = $proposal['tool'];
-			}
-			set_transient( $transient_key, $session_grants, DAY_IN_SECONDS );
+			Tool_Grants::grant( 'session', $proposal['tool'], array( 'session_id' => $session_id ) );
 		}
 
 		// 'once' falls through straight to approve; session/always also approve after storing grant.
@@ -1172,16 +1185,63 @@ class REST_API {
 	 * @return \WP_REST_Response
 	 */
 	public function handle_tool_grant_revoke( \WP_REST_Request $request ): \WP_REST_Response {
-		$tool_name     = sanitize_key( $request->get_param( 'tool' ) );
-		$user_id       = get_current_user_id();
-		$always_grants = get_user_meta( $user_id, 'agentic_tool_grants_always', true );
+		$tool_name = sanitize_key( $request->get_param( 'tool' ) );
 
-		if ( is_array( $always_grants ) ) {
-			$always_grants = array_values( array_diff( $always_grants, array( $tool_name ) ) );
-			update_user_meta( $user_id, 'agentic_tool_grants_always', $always_grants );
-		}
+		Tool_Grants::revoke( 'always', $tool_name, array( 'user_id' => get_current_user_id() ) );
 
 		return new \WP_REST_Response( array( 'success' => true ), 200 );
+	}
+
+	/**
+	 * List the current user's always-allow tool grants.
+	 *
+	 * @param \WP_REST_Request $_request Request object (unused).
+	 * @return \WP_REST_Response
+	 */
+	public function handle_get_tool_grants( \WP_REST_Request $_request ): \WP_REST_Response { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+		return new \WP_REST_Response(
+			array( 'grants' => Tool_Grants::list_for_user( get_current_user_id() ) ),
+			200
+		);
+	}
+
+	/**
+	 * Grant a tool for the lifetime of a run (run-scoped "allow for this task").
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return \WP_REST_Response
+	 */
+	public function handle_run_grant( \WP_REST_Request $request ): \WP_REST_Response {
+		$run_id = sanitize_text_field( (string) $request->get_param( 'run_id' ) );
+		$tool   = sanitize_key( (string) $request->get_param( 'tool' ) );
+
+		if ( '' === $tool ) {
+			return new \WP_REST_Response( array( 'error' => 'A tool name is required.' ), 400 );
+		}
+
+		$run = Agent_Run::load( $run_id );
+		if ( null === $run ) {
+			return new \WP_REST_Response( array( 'error' => 'Run not found.' ), 404 );
+		}
+
+		// Fine-grained owner-or-manage_agents check, matching Runs_REST's
+		// cancel/retry gate: run_tasks_manually alone never reaches another
+		// user's run, only its owner (or someone with manage_agents) may grant.
+		if ( ! ( current_user_can( 'manage_options' ) || current_user_can( 'agent_builder_manage_agents' ) )
+			&& get_current_user_id() !== $run->get_user_id() ) {
+			return new \WP_REST_Response( array( 'error' => 'Insufficient permissions.' ), 403 );
+		}
+
+		Tool_Grants::grant( 'run', $tool, array( 'run_id' => $run_id ) );
+
+		return new \WP_REST_Response(
+			array(
+				'success' => true,
+				'tool'    => $tool,
+				'run_id'  => $run_id,
+			),
+			200
+		);
 	}
 
 	/**
@@ -1737,6 +1797,34 @@ class REST_API {
 	 */
 	public function check_admin(): bool {
 		return current_user_can( 'manage_options' );
+	}
+
+	/**
+	 * Check if the user may list their own always-allow tool grants.
+	 *
+	 * A real logged-in user only: the result is scoped by get_current_user_id(),
+	 * which is 0 for every anonymous visitor, so the anonymous-chat carve-out
+	 * must not apply here.
+	 *
+	 * @return bool
+	 */
+	public function check_list_tool_grants(): bool {
+		return is_user_logged_in();
+	}
+
+	/**
+	 * Check if the user may grant a tool for a run.
+	 *
+	 * Coarse gate admitting the three run-relevant capabilities; the handler
+	 * then applies the finer owner-or-manage_agents check against the specific
+	 * run, matching Runs_REST's run-scoped action pattern.
+	 *
+	 * @return bool
+	 */
+	public function check_run_grant(): bool {
+		return current_user_can( 'manage_options' )
+			|| current_user_can( 'agent_builder_run_tasks_manually' )
+			|| current_user_can( 'agent_builder_manage_agents' );
 	}
 
 	/**
