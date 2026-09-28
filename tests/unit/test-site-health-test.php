@@ -85,10 +85,10 @@ class Test_Site_Health_Test extends TestCase {
 	}
 
 	/**
-	 * A cron tick older than 10 minutes is flagged with the actionable cron copy.
+	 * A cron tick older than the 2-hour threshold is flagged with the actionable cron copy.
 	 */
 	public function test_stale_cron_tick_returns_recommended(): void {
-		update_option( 'agent_builder_cron_last_tick', time() - 3600 );
+		update_option( 'agent_builder_cron_last_tick', time() - ( 3 * HOUR_IN_SECONDS ) );
 
 		$result = Site_Health::test_background_runs();
 
@@ -97,6 +97,19 @@ class Test_Site_Health_Test extends TestCase {
 		$this->assertStringContainsString( 'DISABLE_WP_CRON', $result['actions'] );
 		$this->assertStringContainsString( 'system cron', $result['actions'] );
 		$this->assertStringContainsString( 'developer.wordpress.org', $result['actions'] );
+	}
+
+	/**
+	 * A cron tick well under the 2-hour threshold (a mid-cycle tick on the
+	 * hourly schedule) is not flagged. Guards against the false-`recommended`
+	 * regression where the threshold was below the schedule period.
+	 */
+	public function test_mid_cycle_cron_tick_is_not_stale(): void {
+		update_option( 'agent_builder_cron_last_tick', time() - HOUR_IN_SECONDS );
+
+		$result = Site_Health::test_background_runs();
+
+		$this->assertSame( 'good', $result['status'] );
 	}
 
 	/**

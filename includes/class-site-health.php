@@ -40,8 +40,14 @@ class Site_Health {
 
 	/**
 	 * WP-Cron is considered overdue after this many seconds without a tick.
+	 *
+	 * The only thing that stamps `agent_builder_cron_last_tick` is the hourly
+	 * `agent_builder_job_health_check` event (Job_Manager::run_health_check()),
+	 * so a healthy site's tick is 0–59 minutes old at any given moment. The
+	 * threshold must comfortably exceed that period (2× the hourly schedule),
+	 * or a healthy site would false-report `recommended` for most of every hour.
 	 */
-	private const CRON_OVERDUE_SECONDS = 10 * MINUTE_IN_SECONDS;
+	private const CRON_OVERDUE_SECONDS = 2 * HOUR_IN_SECONDS;
 
 	/**
 	 * A run is stuck after this many seconds in a running state.
@@ -132,6 +138,11 @@ class Site_Health {
 	/**
 	 * Count Agent_Run rows still in a running state longer than the stuck threshold.
 	 *
+	 * A COUNT(*) with the age predicate in SQL is cheaper and does not silently
+	 * undercount when more runs are running than Agent_Run::query()'s 200-row
+	 * page cap (that method clamps `per_page` to 200, so counting over a paged
+	 * result would miss stuck runs beyond the first page).
+	 *
 	 * @return int Number of stuck runs.
 	 */
 	private static function count_stuck_runs(): int {
@@ -139,21 +150,21 @@ class Site_Health {
 			return 0;
 		}
 
-		$stuck = 0;
-		$runs  = Agent_Run::query(
-			array(
-				'status'   => 'running',
-				'per_page' => 200,
+		global $wpdb;
+		$table    = $wpdb->prefix . 'agent_builder_runs';
+		$stuck_at = gmdate( 'Y-m-d H:i:s', time() - self::RUN_STUCK_SECONDS );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Aggregate count of stuck runs; runs only on the Site Health screen/REST/CLI.
+		$count = $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COUNT(*) FROM %i WHERE status = %s AND updated_at < %s',
+				$table,
+				'running',
+				$stuck_at
 			)
 		);
 
-		foreach ( $runs as $run ) {
-			if ( self::datetime_age_seconds( (string) ( $run['updated_at'] ?? '' ) ) > self::RUN_STUCK_SECONDS ) {
-				++$stuck;
-			}
-		}
-
-		return $stuck;
+		return (int) $count;
 	}
 
 	/**
