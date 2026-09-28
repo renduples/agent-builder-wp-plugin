@@ -1232,6 +1232,22 @@ class Agentic_Agent_Registry {
 	}
 
 	/**
+	 * Remove a registered agent instance by ID.
+	 *
+	 * @param string $agent_id Agent ID.
+	 * @return bool Whether the instance was present and removed.
+	 */
+	public function unregister( string $agent_id ): bool {
+		if ( ! isset( $this->agent_instances[ $agent_id ] ) ) {
+			return false;
+		}
+
+		unset( $this->agent_instances[ $agent_id ] );
+
+		return true;
+	}
+
+	/**
 	 * Get a registered agent instance by ID
 	 *
 	 * @param string $agent_id Agent ID.

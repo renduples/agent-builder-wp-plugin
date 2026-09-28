@@ -401,6 +401,30 @@ class Agent_Run {
 	}
 
 	/**
+	 * Create a queued run row without making it current or arming the shutdown
+	 * guard.
+	 *
+	 * For a run dispatched through a background job from a web/REST request (the
+	 * M11 POST /runs path): begin() would make the run current and register a
+	 * shutdown guard that calls finish('aborted') when the creating request
+	 * ends — before the WP-Cron worker can adopt it. create_queued() instead
+	 * inserts the row with status 'queued' and returns it inert, so the worker
+	 * adopts the row later (claim_queued() → make_current()) and arms the guard
+	 * there.
+	 *
+	 * @param string $agent_id Slug of the agent that will run the task.
+	 * @param array  $opts     See __construct().
+	 * @return Agent_Run
+	 */
+	public static function create_queued( string $agent_id, array $opts = array() ): Agent_Run {
+		$run         = new self( $agent_id, $opts );
+		$run->status = 'queued';
+		$run->persist_start();
+
+		return $run;
+	}
+
+	/**
 	 * Load a run by id from storage, independent of any in-process run.
 	 *
 	 * Does not make the loaded run current — call make_current() explicitly
@@ -478,8 +502,8 @@ class Agent_Run {
 	}
 
 	/**
-	 * Current status ('running', 'waiting', 'continuing', or a terminal
-	 * status such as 'completed'/'failed'/'aborted'/'cancelled').
+	 * Current status ('queued', 'running', 'waiting', 'continuing', or a
+	 * terminal status such as 'completed'/'failed'/'aborted'/'cancelled').
 	 *
 	 * @return string
 	 */
@@ -876,6 +900,45 @@ class Agent_Run {
 	}
 
 	/**
+	 * Atomically claim this queued run out of 'queued' into 'running'.
+	 *
+	 * The controller adopts a queued run when a fresh background job starts:
+	 * only the worker whose UPDATE actually flips the row from 'queued' to
+	 * 'running' wins. A duplicate dispatch, or a retry racing the original,
+	 * loses the claim and must not re-adopt the row.
+	 *
+	 * @return bool True if this call performed the claim (exactly one row
+	 *              moved out of 'queued'); false if the run was no longer
+	 *              'queued' (already claimed, or finished by something else).
+	 */
+	public function claim_queued(): bool {
+		global $wpdb;
+		$table = $wpdb->prefix . 'agent_builder_runs';
+		$now   = current_time( 'mysql', true );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Atomic compare-and-set keyed by run_id + status='queued'; no caching benefit.
+		$updated = $wpdb->query(
+			$wpdb->prepare(
+				'UPDATE %i SET status = %s, updated_at = %s WHERE run_id = %s AND status = %s',
+				$table,
+				'running',
+				$now,
+				$this->run_id,
+				'queued'
+			)
+		);
+
+		if ( 1 !== $updated ) {
+			return false;
+		}
+
+		$this->status     = 'running';
+		$this->updated_at = $now;
+
+		return true;
+	}
+
+	/**
 	 * Record one controller loop iteration: bump the iteration count, union
 	 * in the tools used, and add tokens/cost.
 	 *
@@ -1148,6 +1211,63 @@ class Agent_Run {
 		}
 
 		return $counts;
+	}
+
+	/**
+	 * Count runs currently paused in 'waiting' (awaiting an approval/proposal).
+	 *
+	 * Used by the Tasks admin menu badge and the dashboard Tasks card. Pass a
+	 * user id to scope to that owner, or 0 for the global total (admins see
+	 * every user's waiting runs, mirroring the global Approvals badge).
+	 *
+	 * @param int $user_id Owning user id, or 0 for all users.
+	 * @return int Number of waiting runs.
+	 */
+	public static function count_waiting( int $user_id = 0 ): int {
+		global $wpdb;
+		$table = $wpdb->prefix . 'agent_builder_runs';
+
+		if ( $user_id > 0 ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Small aggregate, not worth caching.
+			$count = $wpdb->get_var(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is $wpdb->prefix-derived; only user_id is bound via prepare().
+				$wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE status = 'waiting' AND user_id = %d", $user_id )
+			);
+		} else {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is $wpdb->prefix-derived; no user input in the query.
+			$count = $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE status = 'waiting'" );
+		}
+
+		return (int) $count;
+	}
+
+	/**
+	 * Count runs currently active (queued, running, or continuing).
+	 *
+	 * Used by the dashboard Tasks card to report an exact active total that
+	 * is not capped by the paginated run listing. Pass a user id to scope to
+	 * that owner, or 0 for the global total (admins see every user's active
+	 * runs, mirroring the global Approvals badge).
+	 *
+	 * @param int $user_id Owning user id, or 0 for all users.
+	 * @return int Number of active runs.
+	 */
+	public static function count_active( int $user_id = 0 ): int {
+		global $wpdb;
+		$table = $wpdb->prefix . 'agent_builder_runs';
+
+		if ( $user_id > 0 ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Small aggregate, not worth caching.
+			$count = $wpdb->get_var(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is $wpdb->prefix-derived; only user_id is bound via prepare().
+				$wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE status IN ('queued','running','continuing') AND user_id = %d", $user_id )
+			);
+		} else {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is $wpdb->prefix-derived; no user input in the query.
+			$count = $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE status IN ('queued','running','continuing')" );
+		}
+
+		return (int) $count;
 	}
 
 	/**

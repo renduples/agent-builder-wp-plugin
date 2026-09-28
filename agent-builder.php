@@ -66,7 +66,7 @@ spl_autoload_register(
 // wp-content/agentic-agents/ (or -knowledge/, -backups/) needs to move.
 define( 'AGENT_BUILDER_FILE', __FILE__ );
 define( 'AGENT_BUILDER_VERSION', '4.0.2' );
-define( 'AGENT_BUILDER_DB_VERSION', '2.15.0' );
+define( 'AGENT_BUILDER_DB_VERSION', '2.15.1' );
 define( 'AGENT_BUILDER_DIR', plugin_dir_path( __FILE__ ) );
 define( 'AGENT_BUILDER_URL', plugin_dir_url( __FILE__ ) );
 define( 'AGENT_BUILDER_BASENAME', plugin_basename( __FILE__ ) );
@@ -188,6 +188,7 @@ final class Plugin {
 			add_action( 'agentic_agents_loaded', array( '\Agentic\Agent_Lifecycle', 'bind_cron_hooks' ) );
 			add_action( 'agentic_async_event', array( '\Agentic\Agent_Lifecycle', 'handle_async_event' ), 10, 4 );
 			add_action( 'agent_builder_cleanup_audit_log', array( $this, 'run_audit_cleanup' ) );
+			add_action( 'agent_builder_notification_digest', array( '\Agentic\Notifications', 'send_daily_digest' ) );
 			if ( class_exists( '\Agentic\Costs_Manager' ) ) {
 				add_action( 'agent_builder_costs_check_alerts', array( '\Agentic\Costs_Manager', 'check_and_send_alerts' ) );
 			}
@@ -711,6 +712,8 @@ require_once AGENT_BUILDER_DIR . 'includes/class-dashboard-rest.php';
 require_once AGENT_BUILDER_DIR . 'includes/class-agent-wizard-rest.php';
 require_once AGENT_BUILDER_DIR . 'includes/class-knowledge-wizard-rest.php';
 require_once AGENT_BUILDER_DIR . 'includes/class-deploy-wizard-rest.php';
+require_once AGENT_BUILDER_DIR . 'includes/class-runs-rest.php';
+require_once AGENT_BUILDER_DIR . 'includes/class-notifications-rest.php';
 require_once AGENT_BUILDER_DIR . 'includes/class-security-log.php';
 
 // WP 7.0+ AI Client adapter layer (the bridge).
@@ -760,6 +763,7 @@ Admin_Settings_REST::init();
 Admin_Pages_REST::init();
 React_Admin::init();
 Dashboard_REST::init();
+Runs_REST::init();
 \Agentic\Site_Brief\Site_Brief_Controller::init();
 \Agentic\Site_Brief\Agent_Matcher::init();
 Agent_Wizard_REST::init();
@@ -770,6 +774,10 @@ Agent_Ready_Score::init();
 Score_REST::init();
 Webmcp_Bridge::init();
 Inventory_REST::init();
+Notifications_REST::init();
+Notifications::init();
+Admin_Bar_Inbox::init();
+Site_Health::init();
 
 // Activation/Deactivation hooks — must be registered at global scope in the main
 // plugin file so WordPress can locate them reliably, regardless of how/when the

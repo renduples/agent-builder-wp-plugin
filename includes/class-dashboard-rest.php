@@ -44,6 +44,7 @@ class Dashboard_REST {
 			'status',
 			'safety',
 			'agent-ready',
+			'tasks',
 			'activity',
 			'providers',
 			'quick-actions',
@@ -316,6 +317,7 @@ class Dashboard_REST {
 					'providers'     => admin_url( 'admin.php?page=agentic-settings&tab=providers' ),
 					'interface'     => admin_url( 'admin.php?page=agentic-settings&tab=interface' ),
 					'activity'      => admin_url( 'admin.php?page=agentic-audit-log' ),
+					'tasks'         => admin_url( 'admin.php?page=agentic-tasks' ),
 					'approvals'     => admin_url( 'admin.php?page=agentic-approvals' ),
 					'safety_center' => admin_url( 'admin.php?page=agentic-safety-center' ),
 					'agent_ready'   => admin_url( 'admin.php?page=agentic-agent-ready' ),
@@ -345,6 +347,7 @@ class Dashboard_REST {
 					'table_backups'       => $table_backups,
 				),
 				'agent_ready'             => self::agent_ready_summary(),
+				'tasks'                   => self::tasks_summary(),
 				'agents'                  => $agent_counts,
 				'providers'               => $providers,
 				'default_provider'        => $provider,
@@ -500,6 +503,71 @@ class Dashboard_REST {
 			'overall' => (int) ( $score['overall'] ?? 0 ),
 			'grade'   => (string) ( $score['grade'] ?? '' ),
 			'top_fix' => $top_fix,
+		);
+	}
+
+	/**
+	 * Reduce the run list to what the dashboard Tasks card needs: exact totals
+	 * of active vs. waiting runs (via dedicated count queries, so they are not
+	 * capped by the paginated listing below) plus a short list of the most
+	 * recent ones (with the agent's display name resolved). Non-admins (no
+	 * manage_agents) only ever see their own runs, mirroring GET /runs' user
+	 * clamp.
+	 *
+	 * @return array{active:int,waiting:int,runs:list<array<string,mixed>>}
+	 */
+	private static function tasks_summary(): array {
+		$empty = array(
+			'active'  => 0,
+			'waiting' => 0,
+			'runs'    => array(),
+		);
+		if ( ! class_exists( Agent_Run::class ) ) {
+			return $empty;
+		}
+
+		$manage  = current_user_can( 'manage_options' ) || current_user_can( 'agent_builder_manage_agents' );
+		$user_id = $manage ? 0 : get_current_user_id();
+
+		// Exact totals across every matching run. Deriving these from the
+		// capped list below would undercount once more than `per_page` runs
+		// match, so use the model's dedicated, uncapped count queries.
+		$active  = Agent_Run::count_active( $user_id );
+		$waiting = Agent_Run::count_waiting( $user_id );
+
+		$args = array( 'per_page' => 50 );
+		if ( ! $manage ) {
+			$args['user_id'] = get_current_user_id();
+		}
+
+		$active_statuses = array( 'queued', 'running', 'continuing', 'waiting' );
+		$registry        = class_exists( '\Agentic_Agent_Registry' ) ? \Agentic_Agent_Registry::get_instance() : null;
+
+		$summary = array();
+		foreach ( Agent_Run::query( $args ) as $run ) {
+			if ( ! in_array( $run['status'], $active_statuses, true ) ) {
+				continue;
+			}
+
+			// The short list is capped at five rows for the card.
+			if ( count( $summary ) >= 5 ) {
+				break;
+			}
+
+			$instance  = $registry ? $registry->get_agent_instance( (string) $run['root_agent'] ) : null;
+			$summary[] = array(
+				'run_id'     => (string) $run['run_id'],
+				'agent'      => $instance ? $instance->get_name() : (string) $run['root_agent'],
+				'status'     => (string) $run['status'],
+				'task_text'  => mb_substr( (string) $run['task_text'], 0, 80 ),
+				'started_at' => (string) $run['started_at'],
+			);
+		}
+
+		return array(
+			'active'  => $active,
+			'waiting' => $waiting,
+			'runs'    => $summary,
 		);
 	}
 

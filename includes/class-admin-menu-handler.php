@@ -85,6 +85,37 @@ class Admin_Menu_Handler {
 			array( $this, 'render_chat_page' )
 		);
 
+		// Tasks — assign an autonomous run, leave, and get pinged when it
+		// finishes or pauses on you. Badge = waiting runs (scoped to this user
+		// unless they can manage agents, like the global Approvals badge) +
+		// this user's unread notifications.
+		$agentic_tasks_title = __( 'Tasks', 'agent-builder' );
+		$agentic_tasks_badge = 0;
+		if ( class_exists( '\Agentic\Agent_Run' ) ) {
+			if ( current_user_can( 'manage_options' ) || current_user_can( 'agent_builder_manage_agents' ) ) {
+				$agentic_tasks_badge += \Agentic\Agent_Run::count_waiting();
+			} else {
+				$agentic_tasks_badge += \Agentic\Agent_Run::count_waiting( get_current_user_id() );
+			}
+		}
+		if ( class_exists( '\Agentic\Notifications' ) ) {
+			$agentic_tasks_badge += \Agentic\Notifications::unread_count( get_current_user_id() );
+		}
+		if ( $agentic_tasks_badge > 0 ) {
+			$agentic_tasks_title .= sprintf(
+				' <span class="awaiting-mod count-%1$d"><span class="pending-count">%1$d</span></span>',
+				$agentic_tasks_badge
+			);
+		}
+		add_submenu_page(
+			'agent-builder',
+			__( 'Agent Builder — Tasks', 'agent-builder' ),
+			$agentic_tasks_title,
+			'agent_builder_run_tasks_manually',
+			'agentic-tasks',
+			fn() => $this->render_page( 'tasks' )
+		);
+
 		$agentic_agents_menu_title = __( 'Agents', 'agent-builder' );
 		if ( class_exists( '\Agentic\Agent_Updates' ) ) {
 			$agentic_agents_update_count = \Agentic\Agent_Updates::count();
@@ -375,6 +406,12 @@ class Admin_Menu_Handler {
 			'chat'      => array(
 				'label'   => __( 'Agent Chat', 'agent-builder' ),
 				'url'     => admin_url( 'admin.php?page=agentic-chat' ),
+				'default' => true,
+				'group'   => 'primary',
+			),
+			'tasks'     => array(
+				'label'   => __( 'Assign a task', 'agent-builder' ),
+				'url'     => admin_url( 'admin.php?page=agentic-tasks' ),
 				'default' => true,
 				'group'   => 'primary',
 			),
@@ -1359,6 +1396,8 @@ class Admin_Menu_Handler {
 			}
 		} elseif ( 'agentic-approvals' === $page ) {
 			$policy = __( 'Approvals keep high-risk tool calls under human control before they change your site.', 'agent-builder' );
+		} elseif ( 'agentic-tasks' === $page ) {
+			$policy = __( 'Assign a task and the agent runs it in the background — you\'ll be pinged when it finishes or pauses for your OK.', 'agent-builder' );
 		} elseif ( 'agentic-safety-center' === $page ) {
 			$policy = __( 'Safety Center summarizes existing operator controls. It does not change how tools, approvals, or Emergency Stop work.', 'agent-builder' );
 		} elseif ( 'agentic-audit-log' === $page || 'agentic-logs' === $page ) {
@@ -1424,12 +1463,71 @@ class Admin_Menu_Handler {
 	}
 
 	/**
+	 * Localize payload for the Tasks React screen (tasks-app entry).
+	 *
+	 * Lists the agents the current user may assign a task to (mapped to
+	 * display name + icon), the mode/capability flags the composer needs, and
+	 * the shared footer policy bar. The run list itself is fetched live from
+	 * GET /runs via apiFetch (wpApiSettings nonce), so no run rows are baked in.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function tasks_page_localize(): array {
+		$agents = array();
+		if ( class_exists( '\Agentic_Agent_Registry' ) ) {
+			foreach ( \Agentic_Agent_Registry::get_instance()->get_accessible_instances() as $agent ) {
+				$agents[] = array(
+					'id'   => $agent->get_id(),
+					'name' => $agent->get_name(),
+					'icon' => $agent->get_icon(),
+				);
+			}
+		}
+
+		return array(
+			'restUrl'    => rest_url( 'agentic/v1/' ),
+			'nonce'      => wp_create_nonce( 'wp_rest' ),
+			'agents'     => $agents,
+			'isAdvanced' => $this->is_advanced_mode( 'tasks' ),
+			'canRun'     => current_user_can( 'agent_builder_run_tasks_manually' ) || current_user_can( 'manage_options' ),
+			'footer'     => $this->get_admin_footer_data( 'agentic-tasks' ),
+		);
+	}
+
+	/**
 	 * Include a simple admin page template.
 	 *
 	 * @param string $file Template filename (without .php extension) inside admin/.
 	 * @return void
 	 */
 	public function render_page( string $file ): void {
+		// Tasks is its own React entry (tasks-app) rather than the shared
+		// admin-pages bundle — it hosts a live, polling run list and a composer
+		// that POSTs straight to /runs, so it needs its own localize payload.
+		//
+		// Note: opening the Tasks screen must NOT mark notifications read on this
+		// GET (that would be a side effect without a nonce). The tasks-app marks
+		// them read client-side via POST /notifications/read once the user is
+		// actually looking at the inbox (M11 §7).
+		if ( 'tasks' === $file ) {
+			if ( React_Admin::enqueue( 'tasks-app', $this->tasks_page_localize(), 'agenticTasksPage' ) ) {
+				// The drawer reuses the shared ProposalCard, whose styles live in
+				// chat.css (not react-admin.css), so load it alongside the entry.
+				wp_enqueue_style(
+					'agentic-chat',
+					AGENT_BUILDER_URL . 'assets/css/chat.css',
+					array(),
+					AGENT_BUILDER_VERSION
+				);
+				printf( '<div class="wrap agentic-admin agentic-admin-page-tasks">' );
+				React_Admin::mount( 'agentic-tasks-app-root' );
+				echo '</div>';
+			} else {
+				React_Admin::missing_build_notice( 'tasks-app' );
+			}
+			return;
+		}
+
 		// React admin pages (skip agents — plugins-style list later).
 		// Deployment stays on classic PHP (multi-tab shortcodes/tasks/events UI).
 		$react_map = array(
