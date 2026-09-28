@@ -281,6 +281,14 @@ final class Activator {
 		if ( ! $tables_ok ) {
 			update_option( 'agent_builder_activation_degraded', true );
 		}
+
+		if ( $tables_ok ) {
+			// 2.15.2: sweep still-live legacy transient-backed proposals into the
+			// new table before they are lost. Best-effort — a per-row failure is
+			// logged and skipped, never fatal, and the version still advances.
+			self::guarded_step( 'migrate_legacy_proposal_transients', array( __CLASS__, 'migrate_legacy_proposal_transients' ) );
+		}
+
 		self::flush_deferred_log( AGENT_BUILDER_DB_VERSION );
 
 		if ( ! $tables_ok ) {
@@ -479,6 +487,118 @@ final class Activator {
 			error_log( '[Agent Builder] maybe_add_awaiting_tool_call_id_column failed: ' . $e->getMessage() );
 			// Leave unmigrated — retried on the next admin_init.
 		}
+	}
+
+	/**
+	 * Sweep still-live legacy transient-backed proposals into the new
+	 * agent_builder_proposals table (2.15.2 migration).
+	 *
+	 * Before M12, Agent_Proposals stored pending proposals as site transients
+	 * (agentic_proposal_{id}). On upgrade, a proposal still inside its TTL — an
+	 * open confirmation prompt the admin has not yet answered — would otherwise
+	 * be orphaned the moment get()/pending() switch to the new table. This is a
+	 * best-effort sweep: every live transient is decoded and inserted into the
+	 * new table with its original id/fields (and its remaining TTL preserved as
+	 * expires_at) before the transient pair is deleted. An already-expired
+	 * transient is skipped (get_transient() would already return false for it),
+	 * and a per-row failure is logged and skipped rather than fataling the
+	 * upgrade.
+	 *
+	 * @return void
+	 */
+	private static function migrate_legacy_proposal_transients(): void {
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'agent_builder_proposals';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Migration; custom table existence check.
+		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) !== $table ) {
+			self::record( 'migrate_legacy_proposal_transients', 'warning', 'proposals table missing — skipping transient sweep' );
+			return;
+		}
+
+		// Every site-transient proposal row. The LIKE prefix starts at
+		// '_transient_' so the '_transient_timeout_' shadow rows are excluded.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- One-shot migration read.
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name LIKE %s",
+				$wpdb->esc_like( '_transient_agentic_proposal_' ) . '%'
+			)
+		);
+
+		$migrated = 0;
+		$skipped  = 0;
+
+		foreach ( $rows as $row ) {
+			$key = substr( (string) $row->option_name, strlen( '_transient_' ) );
+
+			// Liveness is the timeout shadow row's unix timestamp.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- One-shot migration read.
+			$timeout = (int) $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT option_value FROM {$wpdb->options} WHERE option_name = %s",
+					'_transient_timeout_' . $key
+				)
+			);
+
+			// Already expired — get_transient() would return false for it, so
+			// there is nothing to migrate.
+			if ( $timeout > 0 && $timeout <= time() ) {
+				++$skipped;
+				continue;
+			}
+
+			$proposal = maybe_unserialize( (string) $row->option_value );
+			if ( ! is_array( $proposal ) || empty( $proposal['id'] ) ) {
+				++$skipped;
+				continue;
+			}
+
+			$params = isset( $proposal['params'] ) && is_array( $proposal['params'] ) ? $proposal['params'] : array();
+
+			try {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Migration; custom table insert.
+				$inserted = $wpdb->insert(
+					$table,
+					array(
+						'id'          => (string) $proposal['id'],
+						'tool'        => isset( $proposal['tool'] ) ? (string) $proposal['tool'] : '',
+						'params'      => wp_json_encode( $params ),
+						'agent_id'    => isset( $proposal['agent_id'] ) ? (string) $proposal['agent_id'] : '',
+						'description' => isset( $proposal['description'] ) ? (string) $proposal['description'] : '',
+						'diff'        => isset( $proposal['diff'] ) ? (string) $proposal['diff'] : '',
+						'status'      => isset( $proposal['status'] ) ? (string) $proposal['status'] : 'pending',
+						'created_by'  => isset( $proposal['created_by'] ) && (int) $proposal['created_by'] > 0 ? (int) $proposal['created_by'] : null,
+						'run_id'      => ! empty( $proposal['run_id'] ) ? (string) $proposal['run_id'] : null,
+						'session_id'  => null,
+						'created_at'  => isset( $proposal['created_at'] ) ? (string) $proposal['created_at'] : gmdate( 'Y-m-d H:i:s' ),
+						'expires_at'  => $timeout > 0 ? gmdate( 'Y-m-d H:i:s', $timeout ) : null,
+					)
+				);
+
+				if ( false === $inserted ) {
+					++$skipped;
+					continue;
+				}
+
+				// Migrated — remove the transient pair so this row is never swept again.
+				delete_transient( $key );
+				++$migrated;
+			} catch ( \Throwable $e ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Intentional migration debug output.
+				error_log( '[Agent Builder] migrate_legacy_proposal_transients failed for ' . $key . ': ' . $e->getMessage() );
+				++$skipped;
+			}
+		}
+
+		self::record(
+			'migrate_legacy_proposal_transients',
+			'ok',
+			array(
+				'migrated' => $migrated,
+				'skipped'  => $skipped,
+			)
+		);
 	}
 
 	/**
@@ -1755,6 +1875,54 @@ final class Activator {
             KEY created_at (created_at)
         ) $charset_collate;";
 		$run_delta( 'agent_builder_notifications', $sql_notifications );
+
+		// Proposals table — one row per pending change proposal (the chat
+		// "Always Confirm" confirmation system). Moved off transients in M12
+		// (schema 2.15.2) so proposals are durable, filterable, and queryable.
+		$sql_proposals = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agent_builder_proposals (
+            id varchar(36) NOT NULL,
+            tool varchar(191),
+            params longtext,
+            agent_id varchar(64),
+            description text,
+            diff longtext,
+            status varchar(16) DEFAULT 'pending',
+            created_by bigint(20) unsigned,
+            run_id varchar(36) DEFAULT NULL,
+            session_id varchar(191) DEFAULT NULL,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            expires_at datetime,
+            decided_by bigint(20) unsigned DEFAULT NULL,
+            decided_at datetime DEFAULT NULL,
+            decision varchar(16) DEFAULT NULL,
+            PRIMARY KEY (id),
+            KEY status (status),
+            KEY run_id (run_id),
+            KEY created_by (created_by)
+        ) $charset_collate;";
+		$run_delta( 'agent_builder_proposals', $sql_proposals );
+
+		// Approval rules table — declarative risk-policy rules consumed by the
+		// M12 rules layer (class-approval-rules.php, a later task). Created here
+		// now so the schema lands in one place alongside its mirror in
+		// tests/bootstrap.php; no consumer exists yet in this task.
+		$sql_approval_rules = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agent_builder_approval_rules (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            agent_slug varchar(64) NOT NULL DEFAULT '',
+            rule_text text NOT NULL,
+            effect varchar(8) NOT NULL,
+            priority smallint NOT NULL DEFAULT 10,
+            enabled tinyint(1) NOT NULL DEFAULT 1,
+            compiled longtext,
+            created_by bigint(20) unsigned,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            last_matched_at datetime DEFAULT NULL,
+            match_count bigint(20) unsigned NOT NULL DEFAULT 0,
+            PRIMARY KEY (id),
+            KEY agent_enabled (agent_slug, enabled)
+        ) $charset_collate;";
+		$run_delta( 'agent_builder_approval_rules', $sql_approval_rules );
 
 		// Ensure Job_Manager, Security_Log, and Deployments are available (activation fires early).
 		include_once AGENT_BUILDER_DIR . 'includes/class-job-manager.php';

@@ -259,6 +259,70 @@ class Test_Schema_Upgrade extends TestCase {
 	}
 
 	/**
+	 * The 2.15.2 migration sweeps still-live legacy transient-backed proposals
+	 * into the new agent_builder_proposals table before they are lost — and
+	 * leaves an already-expired transient alone (get_transient() would already
+	 * return false for it).
+	 */
+	public function test_migration_sweeps_live_legacy_proposal_transients_into_table(): void {
+		$live_id    = wp_generate_uuid4();
+		$expired_id = wp_generate_uuid4();
+
+		// The pre-2.15.2 transient shape (agentic_proposal_{id}): a PHP array,
+		// one hour TTL, no run_id for a chat-originated proposal.
+		$live_proposal = array(
+			'id'          => $live_id,
+			'tool'        => 'list_posts',
+			'params'      => array( 'post_type' => 'post' ),
+			'agent_id'    => 'wordpress-assistant',
+			'description' => 'Live legacy proposal',
+			'diff'        => "--- a\n+++ b\n",
+			'status'      => 'pending',
+			'created_at'  => gmdate( 'Y-m-d H:i:s' ),
+			'created_by'  => 7,
+			'run_id'      => '',
+		);
+		$expired_proposal = array(
+			'id'          => $expired_id,
+			'tool'        => 'list_posts',
+			'params'      => array( 'post_type' => 'page' ),
+			'agent_id'    => 'wordpress-assistant',
+			'description' => 'Expired legacy proposal',
+			'diff'        => '',
+			'status'      => 'pending',
+			'created_at'  => gmdate( 'Y-m-d H:i:s', time() - 7200 ),
+			'created_by'  => 7,
+			'run_id'      => '',
+		);
+
+		set_transient( 'agentic_proposal_' . $live_id, $live_proposal, HOUR_IN_SECONDS );
+		set_transient( 'agentic_proposal_' . $expired_id, $expired_proposal, -100 );
+
+		self::invoke_private( 'migrate_legacy_proposal_transients' );
+
+		global $wpdb;
+		$live_row = $wpdb->get_row(
+			$wpdb->prepare( "SELECT * FROM {$wpdb->prefix}agent_builder_proposals WHERE id = %s", $live_id ),
+			ARRAY_A
+		);
+		$this->assertIsArray( $live_row, 'A still-live legacy transient must be swept into the proposals table.' );
+		$this->assertSame( 'list_posts', $live_row['tool'] );
+		$this->assertSame( 'Live legacy proposal', $live_row['description'] );
+		$this->assertSame( 'pending', $live_row['status'] );
+		// params migrated as JSON.
+		$this->assertSame( array( 'post_type' => 'post' ), json_decode( (string) $live_row['params'], true ) );
+
+		$expired_row = $wpdb->get_row(
+			$wpdb->prepare( "SELECT * FROM {$wpdb->prefix}agent_builder_proposals WHERE id = %s", $expired_id ),
+			ARRAY_A
+		);
+		$this->assertNull( $expired_row, 'An already-expired legacy transient must not be swept into the table.' );
+
+		// The live transient pair is removed after a successful sweep.
+		$this->assertFalse( get_transient( 'agentic_proposal_' . $live_id ) );
+	}
+
+	/**
 	 * Invoke a private static Activator method (the existing suite already uses
 	 * ReflectionMethod for create_tables(); the lock helpers stay private for
 	 * the same reason and are exercised through the same seam).
