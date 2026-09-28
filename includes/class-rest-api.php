@@ -1263,30 +1263,15 @@ class REST_API {
 			return $this->execute_code_change( $approval, is_array( $params ) ? $params : array() );
 		}
 
-		// Generic tool execution — run the tool directly with stored params.
-		$tool_loader = Tool_Loader::get_instance();
-		$tool        = $tool_loader->get( $tool_name );
-		$safe_params = is_array( $params ) ? $params : array();
+		// Generic tool execution — run the already-approved tool through
+		// Tool_Executor::execute_approved(), the same fallback chain execute()'s
+		// allow-path uses (tool_loader → agent-inline → abilities-bridge). The
+		// risk gate is skipped: the action was already approved.
+		$executor = new Tool_Executor( Tool_Loader::get_instance(), new Audit_Log() );
+		$agent    = \Agentic_Agent_Registry::get_instance()->get_agent_instance( (string) ( $approval['agent_id'] ?? '' ) );
 
 		try {
-			if ( $tool ) {
-				$result = $tool->execute( $safe_params );
-			} else {
-				// Try agent-inline tools (defined in the agent's execute_tool() method).
-				$agent_id = $approval['agent_id'] ?? '';
-				$registry = \Agentic_Agent_Registry::get_instance();
-				$agent    = $registry->get_agent_instance( $agent_id );
-				$result   = $agent ? $agent->execute_tool( $tool_name, $safe_params ) : null;
-
-				if ( null === $result ) {
-					return array(
-						'ran'     => false,
-						'success' => false,
-						/* translators: %s: tool name */
-						'message' => sprintf( __( 'Tool “%s” is not available to run.', 'agent-builder' ), $label ),
-					);
-				}
-			}
+			$result = $executor->execute_approved( $approval, $agent );
 		} catch ( \Throwable $e ) {
 			\Agentic\Security_Log::log_system(
 				'approval_execution_exception',

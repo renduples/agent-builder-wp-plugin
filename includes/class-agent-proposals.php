@@ -235,32 +235,24 @@ class Agent_Proposals {
 		}
 		$proposal['status'] = 'approved';
 
-		// Execute the change via Tool_Loader. This path bypasses Tool_Executor
-		// entirely, so the calling-agent context (needed by tools like
-		// delegate_to_agent to detect delegation cycles) must be set explicitly.
-		Tool_Base::set_calling_agent( (string) ( $proposal['agent_id'] ?? '' ) );
-
-		$result = Tool_Loader::get_instance()->execute(
-			$proposal['tool'],
-			$proposal['params']
+		// Execute the already-approved change through Tool_Executor's approved
+		// path, which runs the same tool_loader → agent-inline → abilities-bridge
+		// fallback chain as execute()'s allow-path (and sets the calling-agent
+		// context, needed by delegate_to_agent to detect delegation cycles) and
+		// writes the operations ledger for non-readonly tools.
+		$agent  = \Agentic_Agent_Registry::get_instance()->get_agent_instance( (string) ( $proposal['agent_id'] ?? '' ) );
+		$result = ( new Tool_Executor( Tool_Loader::get_instance(), new Audit_Log() ) )->execute_approved(
+			array(
+				'tool'       => (string) $proposal['tool'],
+				'params'     => $proposal['params'],
+				'agent_id'   => (string) ( $proposal['agent_id'] ?? '' ),
+				'run_id'     => (string) ( $proposal['run_id'] ?? '' ),
+				'created_by' => (int) ( $proposal['created_by'] ?? 0 ),
+				'mode'       => Audit_Log::get_mode_context(),
+				'invocation' => 'chat',
+			),
+			$agent
 		);
-
-		if ( null === $result ) {
-			$result = array( 'error' => "Unknown tool: {$proposal['tool']}" );
-		}
-
-		// Log to operations ledger (confirm-path tools bypass Agent_Controller).
-		if ( ! isset( $result['error'] ) ) {
-			$queue = new Approval_Queue();
-			$queue->log_executed(
-				$proposal['agent_id'],
-				$proposal['tool'],
-				$proposal['params'],
-				'medium',
-				Audit_Log::get_mode_context(),
-				'chat'
-			);
-		}
 
 		// Log approval.
 		$audit = new Audit_Log();

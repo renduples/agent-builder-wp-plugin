@@ -12,6 +12,8 @@
 namespace Agentic\Tests;
 
 use Agentic\Agent_Proposals;
+use Agentic\Approval_Queue;
+use Agentic\Risk_Level;
 
 /**
  * Test case for Agent_Proposals.
@@ -118,6 +120,46 @@ class Test_Agent_Proposals extends TestCase {
 		$this->assertSame( 'approved', $row['status'] );
 		$this->assertSame( 'approved', $row['decision'] );
 		$this->assertNotNull( $row['decided_at'] );
+	}
+
+	/**
+	 * approve() routes execution through Tool_Executor::execute_approved(): the
+	 * tool actually runs, agent_builder_tool_executed fires exactly once, and a
+	 * non-readonly tool is written to the operations ledger with its computed
+	 * (high) risk — not the hardcoded 'medium' the pre-M12 path used.
+	 */
+	public function test_approve_routes_through_execute_approved_and_logs_actual_risk(): void {
+		$proposal = Agent_Proposals::create(
+			'db_update_option',
+			array( 'name' => 'agent_builder_test_approve_opt', 'value' => 'approved-via-proposal' ),
+			'wordpress-assistant',
+			'Approve the write'
+		);
+
+		$calls    = 0;
+		$listener = static function () use ( &$calls ) {
+			++$calls;
+		};
+		add_action( 'agent_builder_tool_executed', $listener, 10, 4 );
+
+		$result = Agent_Proposals::approve( $proposal['id'] );
+
+		remove_action( 'agent_builder_tool_executed', $listener, 10 );
+
+		$this->assertSame( 'approved-via-proposal', get_option( 'agent_builder_test_approve_opt' ) );
+		$this->assertTrue( $result['updated'] ?? false );
+		$this->assertSame( 1, $calls, 'execute_approved() must raise the executed hook once' );
+
+		$queue  = new Approval_Queue();
+		$recent = $queue->get_recent( array( 'agent_id' => 'wordpress-assistant' ) );
+		$rows   = array_values(
+			array_filter(
+				$recent,
+				static fn( $r ) => 'db_update_option' === $r['action']
+			)
+		);
+		$this->assertCount( 1, $rows, 'exactly one operations-ledger entry, not a double log' );
+		$this->assertSame( Risk_Level::HIGH, $rows[0]['risk_level'] );
 	}
 
 	/**
