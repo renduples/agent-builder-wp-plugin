@@ -1415,11 +1415,11 @@ class Agent_Controller {
 			// creating a second row that would strand the dispatched one at
 			// 'queued'/'running' forever. A 'queued' run is claimed out of
 			// 'queued' atomically (claim_queued()); a run already 'running'
-			// (the dispatch caller used begin()) is adopted directly. Only a run
-			// that still belongs to this agent and is in 'queued'/'running' is
-			// adoptable; anything else falls back to begin()
-			// (mismatched/terminal run_ids are the resume guard's concern,
-			// handled above).
+			// (the dispatch caller used begin()) is adopted directly. A run_id
+			// this worker cannot adopt — a lost claim_queued() race, a missing
+			// row, a mismatched agent, or a run no longer adoptable — is a
+			// guard rejection, not a cue to begin() a duplicate run: begin() is
+			// reached only when no run_id was supplied at all.
 			$run = null;
 			if ( '' !== $resume_run_id ) {
 				$existing = Agent_Run::load( $resume_run_id );
@@ -1432,6 +1432,24 @@ class Agent_Controller {
 						$run = $existing;
 						$run->make_current();
 					}
+				}
+
+				// A duplicate dispatch, or a retry racing the original, loses
+				// claim_queued()'s compare-and-set and must not re-adopt the row
+				// — and must not silently duplicate the work under a fresh
+				// begin() row (same side effects twice). Reject instead: the
+				// worker that won the claim owns the run.
+				if ( null === $run ) {
+					return array(
+						'error'          => true,
+						'guard_rejected' => true,
+						'response'       => __( 'Cannot start: this run was already claimed by another request.', 'agent-builder' ),
+						'agent_id'       => $agent_id,
+						'task_id'        => $task_id,
+						'run_id'         => $resume_run_id,
+						'status'         => 'error',
+						'cards'          => array(),
+					);
 				}
 			}
 

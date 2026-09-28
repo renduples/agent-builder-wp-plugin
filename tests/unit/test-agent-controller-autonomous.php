@@ -616,6 +616,85 @@ class Test_Agent_Controller_Autonomous extends TestCase {
 	}
 
 	/**
+	 * A fresh background dispatch that loses the claim_queued() race must
+	 * reject cleanly (guard_rejected) rather than begin() a duplicate run row
+	 * that would run the same task a second time. The dispatch caller creates
+	 * the 'queued' run up front; two workers race to adopt it — the winner
+	 * flips it out of 'queued', and the loser's run_autonomous_task() finds
+	 * the row already claimed and must not start over under a new run_id.
+	 */
+	public function test_fresh_dispatch_losing_claim_rejects_without_duplicate_run(): void {
+		global $wpdb;
+
+		$agent_id = 'test-autonomous-queued-claim-loss';
+		$agent    = $this->make_agent( $agent_id );
+		$fake     = new Fake_LLM_Client(
+			array(
+				Fake_LLM_Client::text_response( 'Done.', array( 'prompt_tokens' => 5, 'completion_tokens' => 3, 'total_tokens' => 8 ) ),
+			)
+		);
+
+		// The dispatch caller (the Tasks screen's POST /runs path) creates the
+		// queued run up front, before the job is enqueued.
+		$run    = Agent_Run::create_queued(
+			$agent_id,
+			array(
+				'kind'      => 'task',
+				'user_id'   => 7,
+				'task_text' => 'Summarise the newest posts',
+			)
+		);
+		$run_id = $run->get_run_id();
+		$table  = $wpdb->prefix . 'agent_builder_runs';
+
+		// Race the controller's claim_queued() UPDATE: another worker claims the
+		// row out of 'queued' an instant before the controller's own UPDATE, so
+		// the controller loses the claim (0 rows matched) and must reject rather
+		// than fall through to begin().
+		$armed = false;
+		$racer = static function ( $query ) use ( &$armed, $table, $run_id, $wpdb ) {
+			if ( ! $armed && false !== stripos( (string) $query, "SET status = 'running'" ) && false !== stripos( (string) $query, "AND status = 'queued'" ) ) {
+				$armed = true;
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared -- test-only concurrent claimant simulating another process; mirrors claim_queued()'s own prepared UPDATE.
+				$wpdb->query( $wpdb->prepare( "UPDATE {$table} SET status = 'running' WHERE run_id = %s AND status = 'queued'", $run_id ) );
+			}
+			return $query;
+		};
+		add_filter( 'query', $racer );
+
+		$controller = new Agent_Controller( $fake );
+		try {
+			$result = $controller->run_autonomous_task(
+				$agent,
+				'Summarise the newest posts',
+				'task-queued-claim-loss',
+				array(
+					'run_id'  => $run_id,
+					'user_id' => 7,
+				)
+			);
+		} finally {
+			remove_filter( 'query', $racer );
+		}
+
+		$this->assertTrue( $armed, 'the race must actually intercept claim_queued()\'s UPDATE for this test to prove anything' );
+		$this->assertIsArray( $result );
+		$this->assertTrue( $result['error'] ?? false );
+		$this->assertSame( 'error', $result['status'] );
+		$this->assertTrue( $result['guard_rejected'] ?? false, 'a lost claim must be a guard rejection, not a fresh run' );
+
+		// The loser did not begin() a second run: exactly one row for this agent.
+		$count = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->prefix}agent_builder_runs WHERE root_agent = %s",
+				$agent_id
+			)
+		);
+		$this->assertSame( 1, $count, 'a lost claim must not create a second run row' );
+		$this->assertSame( 0, $fake->chat_calls, 'the loser of the claim race must not execute the task' );
+	}
+
+	/**
 	 * The ~70% elapsed-time guard hands the run off via mark_continuing(),
 	 * not finish() — so it lands in a non-terminal 'continuing' status that
 	 * survives the shutdown safety net at request end (simulated here by
