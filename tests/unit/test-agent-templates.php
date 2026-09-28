@@ -515,10 +515,11 @@ class Test_Agent_Templates extends TestCase {
 
 	/**
 	 * A crafted archive with two entries sharing one name — the first small,
-	 * the second expanding past the cap — is rejected. check_archive_bounds()
-	 * must measure each entry by *index* (getStreamIndex()), not by name
-	 * (getStream() returns only the first matching entry), or the large
-	 * duplicate is silently skipped and the archive slips past the size bound.
+	 * the second expanding past the cap — is rejected outright. name-based
+	 * resolution (getStream()) can only ever open the first matching entry, and
+	 * the declared sizes are attacker-forgeable, so a duplicate name can never be
+	 * safely disambiguated; the whole archive is rejected as soon as any two
+	 * entries collide, before any size accounting runs.
 	 */
 	public function test_import_rejects_duplicate_name_zip_bomb(): void {
 		$zip = $this->build_zip_with_duplicate_names(
@@ -532,7 +533,7 @@ class Test_Agent_Templates extends TestCase {
 		$result = Agent_Templates::import( $this->upload_entry( $zip, 'duplicate.zip' ) );
 
 		$this->assertWPError( $result );
-		$this->assertSame( 'zip_too_large', $result->get_error_code() );
+		$this->assertSame( 'zip_duplicate_entry', $result->get_error_code() );
 		$this->assertSame( $before, $this->import_temp_dirs(), 'Expected no leftover import temp directory' );
 	}
 

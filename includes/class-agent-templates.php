@@ -648,15 +648,17 @@ class Agent_Templates {
 	}
 
 	/**
-	 * Reject an oversized or entry-flooded archive before any bytes are written
-	 * to disk. The entry count is checked up front, but the size bound is
-	 * enforced against the *actual decompressed byte count* — each non-directory
-	 * entry is read through ZipArchive's inflating stream in bounded chunks and
-	 * the running total is checked against the cap as it goes. This never
-	 * trusts the per-entry uncompressed-size fields in the central directory
-	 * (attacker-controlled metadata): a crafted archive that declares small
-	 * sizes while its DEFLATE streams expand to hundreds of MB is aborted here,
-	 * before unzip_file() extracts a single byte to disk.
+	 * Reject an oversized, entry-flooded, or duplicate-name archive before any
+	 * bytes are written to disk. The entry count is checked up front, but the
+	 * size bound is enforced against the *actual decompressed byte count* — each
+	 * non-directory entry is read through ZipArchive's inflating stream in
+	 * bounded chunks and the running total is checked against the cap as it goes.
+	 * This never trusts the per-entry uncompressed-size fields in the central
+	 * directory (attacker-controlled metadata): a crafted archive that declares
+	 * small sizes while its DEFLATE streams expand to hundreds of MB is aborted
+	 * here, before unzip_file() extracts a single byte to disk. Any two entries
+	 * sharing one name are rejected outright, since name-based resolution cannot
+	 * safely tell them apart.
 	 *
 	 * @param string $zip_path Absolute path to the zip.
 	 * @return true|\WP_Error
@@ -674,19 +676,35 @@ class Agent_Templates {
 		}
 
 		$total = 0;
+		$seen  = array();
 		for ( $i = 0; $i < $count; $i++ ) {
 			$name = $zip->getNameIndex( $i );
-			if ( false === $name || str_ends_with( $name, '/' ) ) {
-				continue; // Unnamed or directory entry — no decompressed payload.
+			if ( false === $name ) {
+				continue; // Unnamed entry — no payload, nothing to check.
+			}
+
+			// Reject duplicate entry names outright. getStream() below resolves
+			// by name and only ever opens the *first* entry with that name, so
+			// a second entry sharing the name — its declared sizes forged low
+			// while its payload inflates to gigabytes — would otherwise slip
+			// past both the declared-size precheck and the streamed byte count.
+			// A legitimate archive never needs two entries with the same name;
+			// it is already a marker of a crafted one, so reject it rather than
+			// try to disambiguate.
+			if ( isset( $seen[ $name ] ) ) {
+				$zip->close();
+				return new \WP_Error( 'zip_duplicate_entry', __( 'The archive contains duplicate entry names.', 'agent-builder' ) );
+			}
+			$seen[ $name ] = true;
+
+			if ( str_ends_with( $name, '/' ) ) {
+				continue; // Directory entry — no decompressed payload.
 			}
 
 			// Quick reject on the central-directory size fields where they are
-			// already over the cap. A single entry whose declared size exceeds
+			// already over the cap: a single entry whose declared size exceeds
 			// the whole-archive cap is over the limit no matter what the other
-			// entries hold, and — crucially — this catches a duplicate-name
-			// entry: getStream() below resolves by name and only ever sees the
-			// first matching entry, so a second, larger entry sharing the name
-			// would otherwise slip past the streamed count.
+			// entries hold.
 			$stat = $zip->statIndex( $i );
 			if ( is_array( $stat ) ) {
 				$declared   = (int) ( $stat['size'] ?? 0 );

@@ -132,6 +132,10 @@ class Test_Legacy_Export_Cleanup extends TestCase {
 	public function test_removes_legacy_zip_and_sets_flag_without_auth(): void {
 		$zip_path = $this->legacy_dir . '/content-writer.zip';
 		file_put_contents( $zip_path, 'zip-bytes' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_file_put_contents -- Test fixture.
+		// Backdate to before the streaming-exports release so it is recognised as
+		// legacy — the sweep identifies its own output by mtime alone now.
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_touch -- Test fixture.
+		touch( $zip_path, 1790467200 - 3600 );
 		wp_set_current_user( 0 );
 
 		Activator::maybe_cleanup_legacy_agent_exports();
@@ -181,6 +185,10 @@ class Test_Legacy_Export_Cleanup extends TestCase {
 
 		$zip_path = $this->legacy_dir . '/content-writer.zip';
 		file_put_contents( $zip_path, 'zip-bytes' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_file_put_contents -- Test fixture.
+		// Backdate to before the streaming-exports release so it is recognised as
+		// legacy — the sweep identifies its own output by mtime alone now.
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_touch -- Test fixture.
+		touch( $zip_path, 1790467200 - 3600 );
 		wp_set_current_user( 0 );
 		// Read-only directory makes unlink() fail (this process is unprivileged),
 		// simulating a real delete failure rather than a mocked one.
@@ -294,6 +302,24 @@ class Test_Legacy_Export_Cleanup extends TestCase {
 	}
 
 	/**
+	 * A fresh, slug-shaped .zip named after an agent that is still installed
+	 * (a manual backup of content-writer) must survive: install state is not a
+	 * reliable "ours" signal, since a manual backup is very likely to be named
+	 * after its own agent's slug. The mtime cutoff is applied unconditionally, so
+	 * a file newer than the streaming-exports release is never swept.
+	 */
+	public function test_does_not_touch_fresh_backup_named_after_installed_agent(): void {
+		$backup_path = $this->legacy_dir . '/content-writer.zip';
+		file_put_contents( $backup_path, 'zip-bytes' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_file_put_contents -- Test fixture.
+		wp_set_current_user( 0 );
+
+		Activator::maybe_cleanup_legacy_agent_exports();
+
+		$this->assertFileExists( $backup_path, 'A fresh backup named after its own agent must survive the legacy sweep' );
+		$this->assertTrue( (bool) get_option( 'agent_builder_legacy_exports_cleaned' ), 'A non-legacy zip must not block completion' );
+	}
+
+	/**
 	 * A slug-shaped .zip whose mtime predates the streaming-exports release is
 	 * still removed even when its slug no longer matches an installed agent —
 	 * the pre-fix exporter named output after agents that have since been
@@ -320,14 +346,17 @@ class Test_Legacy_Export_Cleanup extends TestCase {
 	 * failure counter crosses LEGACY_EXPORT_CLEANUP_MAX_FAILURES, the give-up
 	 * flag is set, and further requests short-circuit instead of re-running the
 	 * sweep forever. The stuck entry is simulated with a non-empty directory
-	 * named <slug>.zip — for an installed agent slug (content-writer), so the
-	 * sweep still recognises it as legacy — which wp_delete_file() cannot remove
-	 * even as root.
+	 * named <slug>.zip with a backdated mtime — so the sweep recognises it as
+	 * legacy — which wp_delete_file() cannot remove even as root.
 	 */
 	public function test_gives_up_after_repeated_failures(): void {
 		$stuck = $this->legacy_dir . '/content-writer.zip';
 		wp_mkdir_p( $stuck . '/inner' );
 		file_put_contents( $stuck . '/inner/keep.txt', 'x' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_file_put_contents -- Test fixture making the directory non-empty.
+		// Backdate the directory to before the streaming-exports release so it is
+		// recognised as legacy — the sweep identifies its own output by mtime now.
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_touch -- Test fixture.
+		touch( $stuck, 1790467200 - 3600 );
 		wp_set_current_user( 0 );
 
 		$max = 10; // Mirrors Activator::LEGACY_EXPORT_CLEANUP_MAX_FAILURES.

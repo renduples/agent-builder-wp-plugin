@@ -105,10 +105,10 @@ final class Activator {
 	/**
 	 * Unix timestamp of the release that moved agent-export output out of the
 	 * uploads tree (streaming exports, commit 651be6d, 2026-09-27 UTC). A
-	 * <slug>.zip in uploads/agentic-exports/ whose slug no longer matches an
-	 * installed agent is only treated as legacy when its mtime predates this —
-	 * anything written since belongs to another tool (or a manual backup) and
-	 * must survive the sweep.
+	 * <slug>.zip in uploads/agentic-exports/ is treated as legacy only when its
+	 * mtime predates this — the pre-fix exporter could only have written a file
+	 * before then, so anything written since belongs to another tool (or a manual
+	 * backup) and must survive the sweep, whatever its slug.
 	 */
 	private const LEGACY_EXPORT_STREAMING_CUTOFF = 1790467200;
 
@@ -659,14 +659,16 @@ final class Activator {
 	}
 
 	/**
-	 * Whether a file is a legacy agent-export output: <slug>.zip, where the slug
-	 * matches an agent that still exists (bundled or installed) — the pre-fix
-	 * exporter named its output after the agent slug — or, for a slug that no
-	 * longer resolves to an installed agent, the file predates the release that
-	 * moved exports out of the uploads tree. This narrows the sweep away from
-	 * every .zip in the shared uploads/agentic-exports/ directory — which
-	 * unrelated document tools and manual backups also use — to only files the
-	 * exporter itself named.
+	 * Whether a file is a legacy agent-export output: a <slug>.zip that predates
+	 * the release that moved exports out of the uploads tree. The mtime cutoff is
+	 * applied unconditionally — the pre-fix exporter could only have written a
+	 * file before that release, so recency alone identifies "ours" — rather than
+	 * trusting the slug to match an installed agent (a manual backup named after
+	 * its own agent's slug would then be indistinguishable from a legacy export).
+	 * This narrows the sweep away from every .zip in the shared
+	 * uploads/agentic-exports/ directory — which unrelated document tools and
+	 * manual backups also use — to only files old enough to be the exporter's own
+	 * output.
 	 *
 	 * @param string $zip_path Absolute path to a candidate .zip file.
 	 * @return bool
@@ -677,16 +679,13 @@ final class Activator {
 			return false; // Not slug-shaped — another tool or a manual backup.
 		}
 
-		$slug = $matches[1];
-
-		// A <slug>.zip for an agent that still exists (bundled or installed) is
-		// unambiguously ours, whatever its age.
-		if ( class_exists( 'Agentic_Agent_Registry' ) && \Agentic_Agent_Registry::get_instance()->is_agent_installed( $slug ) ) {
-			return true;
-		}
-
-		// Otherwise only when the file predates the streaming-exports release.
-		// Anything written since by an unrelated tool must survive.
+		// The pre-fix exporter could only have written a file before streaming
+		// exports shipped, so recency alone rules out "ours" — the cutoff is
+		// applied whether or not the slug still matches an installed agent. A
+		// manual backup is very likely to be named after its own agent's slug
+		// (content-writer.zip), so install state is not a safe signal: a fresh
+		// backup dropped into this shared directory must survive regardless of
+		// its slug still being installed.
 		$mtime = @filemtime( $zip_path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- A missing/raced file reads as "not legacy", never a fatal.
 		return false !== $mtime && $mtime < self::LEGACY_EXPORT_STREAMING_CUTOFF;
 	}
