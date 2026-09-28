@@ -2,14 +2,15 @@
 /**
  * Approval Rules
  *
- * CRUD store for the M12 declarative risk-policy rules layer. This task is
- * deliberately scoped to storage only: rows in
- * `{prefix}agent_builder_approval_rules` can be listed, created, updated and
- * deleted so a later task can manage them through a UI. The `compiled` column
- * is left NULL, there is no `evaluate()` method, and nothing here hooks
- * `agent_builder_tool_enforcement` — the rules engine that would actually
- * consume these rows (and fill `compiled` via a reviewer LLM) is a dedicated
- * follow-up (see wp#265).
+ * Storage and Phase A evaluation engine for the M12 declarative risk-policy
+ * rules layer. Rows in `{prefix}agent_builder_approval_rules` can be listed,
+ * created, updated and deleted (wp#265), and `evaluate()` hooks
+ * `agent_builder_tool_enforcement` to turn matching `ask`/`deny` rules into a
+ * stricter enforcement decision. The engine is deliberately fail-closed and
+ * tightening-only in this phase: `classify()` is a stub that always returns
+ * `'unsure'`, so an `allow`-effect rule never fires and the `compiled` column
+ * stays NULL. The reviewer LLM that would replace `classify()` and fill
+ * `compiled` is a dedicated follow-up (see wp#268, designs/M12-rules-engine.md).
  *
  * @package    Agent_Builder
  * @subpackage Includes
@@ -53,6 +54,22 @@ class Approval_Rules {
 	 * @var string[]
 	 */
 	const EFFECTS = array( 'ask', 'allow', 'deny' );
+
+	/**
+	 * Restrictiveness rank of each enforcement decision, least restrictive first.
+	 *
+	 * Mirrors the private ordering Risk_Level::clamp_enforcement() uses. evaluate()
+	 * relies on it to guarantee a matching rule can only ever tighten — never
+	 * loosen — the decision already in flight.
+	 *
+	 * @var array<string, int>
+	 */
+	private const ENFORCEMENT_RANK = array(
+		'allow'   => 0,
+		'confirm' => 1,
+		'queue'   => 2,
+		'block'   => 3,
+	);
 
 	/**
 	 * List approval rules, optionally filtered.
@@ -265,5 +282,147 @@ class Approval_Rules {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table delete.
 		return false !== $wpdb->delete( $table, array( 'id' => $id ), array( '%d' ) );
+	}
+
+	/**
+	 * Register the evaluation engine on the tool-enforcement filter.
+	 *
+	 * Wired from agent-builder.php's bootstrap alongside the other M12 init
+	 * calls. `evaluate()` runs at the filter's default priority 10 — the same
+	 * seam the `agent_builder_tool_enforcement` docblock reserves for the rules
+	 * layer. It only ever tightens; Risk_Level::clamp_enforcement() remains the
+	 * final ceiling downstream, unchanged.
+	 *
+	 * @return void
+	 */
+	public static function init(): void {
+		add_filter( 'agent_builder_tool_enforcement', array( __CLASS__, 'evaluate' ), 10, 2 );
+	}
+
+	/**
+	 * Classify whether a rule's text matches a tool call.
+	 *
+	 * Phase A stub: always returns 'unsure'. This is the seam Phase B replaces
+	 * with a real reviewer-LLM call returning 'match', 'no_match', or 'unsure'.
+	 * The stub never returns 'match', so in this phase an 'allow'-effect rule
+	 * can never loosen anything (see evaluate()).
+	 *
+	 * @param string $rule_text Natural-language rule text.
+	 * @param array  $ctx       Gate context — see Tool_Executor::execute().
+	 * @return string One of 'match', 'no_match', 'unsure' (always 'unsure' here).
+	 */
+	public static function classify( string $rule_text, array $ctx ): string {
+		// Phase A: no real classification yet — the parameters are intentionally
+		// unused until Phase B replaces this stub with a reviewer-LLM call that
+		// reads both. Always 'unsure' keeps the engine fail-closed and
+		// tightening-only until that lands.
+		unset( $rule_text, $ctx );
+
+		return 'unsure';
+	}
+
+	/**
+	 * Evaluate enabled approval rules against a tool call and tighten enforcement.
+	 *
+	 * Filter callback on `agent_builder_tool_enforcement` (priority 10, 2 args).
+	 * Loads every enabled rule whose `agent_slug` is empty (all agents) or equal
+	 * to `$ctx['agent_id']`, in `priority ASC, id ASC` order, classifies each,
+	 * and folds the strongest matching effect into the decision:
+	 *
+	 *   - `deny` beats `ask`; `ask` beats nothing; `allow` never fires here.
+	 *   - `ask` maps to 'confirm'; `deny` maps to 'queue'.
+	 *
+	 * Fail-closed: an 'unsure' classification counts as a match for `ask`/`deny`
+	 * rules (it can only tighten) and is ignored for `allow` rules (an uncertain
+	 * allow must never loosen anything). In Phase A `classify()` always returns
+	 * 'unsure', so ask/deny rules always tighten and allow rules never fire.
+	 *
+	 * The return is always at least as restrictive as `$enforcement`; a rule
+	 * whose mapped decision would be looser is dropped rather than applied, so
+	 * the engine can never weaken a decision an earlier callback or the baseline
+	 * already made. Risk_Level::clamp_enforcement() remains the final ceiling.
+	 *
+	 * @param string $enforcement Current enforcement ('allow'|'confirm'|'queue'|'block').
+	 * @param array  $ctx         Gate context — see Tool_Executor::execute().
+	 * @return string The (possibly tightened) enforcement decision.
+	 */
+	public static function evaluate( string $enforcement, array $ctx ): string {
+		$agent_id = (string) ( $ctx['agent_id'] ?? '' );
+		$tool     = (string) ( $ctx['tool'] ?? '' );
+
+		$winner      = '';
+		$winner_rule = null;
+
+		foreach ( self::list( array( 'enabled' => true ) ) as $rule ) {
+			$rule_agent = (string) ( $rule['agent_slug'] ?? '' );
+			if ( '' !== $rule_agent && $rule_agent !== $agent_id ) {
+				continue;
+			}
+
+			$effect  = (string) ( $rule['effect'] ?? '' );
+			$verdict = self::classify( (string) ( $rule['rule_text'] ?? '' ), $ctx );
+
+			// Fail-closed: a non-matching rule is skipped, and an 'unsure'
+			// verdict counts as a match only when it tightens (ask/deny). An
+			// 'unsure' allow rule is ignored so it can never loosen anything.
+			if ( 'no_match' === $verdict ) {
+				continue;
+			}
+			if ( 'unsure' === $verdict && 'allow' === $effect ) {
+				continue;
+			}
+
+			if ( 'deny' === $effect ) {
+				$winner      = 'deny';
+				$winner_rule = $rule;
+				break; // deny beats every other effect — stop scanning.
+			}
+
+			if ( 'ask' === $effect && '' === $winner ) {
+				$winner      = 'ask';
+				$winner_rule = $rule;
+			}
+
+			// 'allow' is only reachable on an explicit 'match' (Phase B); in
+			// Phase A allow rules are always suppressed above, so nothing here
+			// ever loosens a decision.
+		}
+
+		if ( '' === $winner ) {
+			return $enforcement;
+		}
+
+		$target = 'deny' === $winner ? 'queue' : 'confirm';
+
+		// Audit on a match, same shape as Tool_Grants::log_grant().
+		$audit = new Audit_Log();
+		$audit->log(
+			$agent_id,
+			'rule_matched',
+			$tool,
+			array(
+				'risk_level' => (string) ( $ctx['risk'] ?? '' ),
+				'rule_id'    => (int) ( $winner_rule['id'] ?? 0 ),
+				'effect'     => $winner,
+			)
+		);
+
+		// Tightening-only: never return something less restrictive than the
+		// decision already in flight.
+		return self::tighter( $enforcement, $target );
+	}
+
+	/**
+	 * Return the more restrictive of two enforcement decisions.
+	 *
+	 * @param string $a Enforcement decision.
+	 * @param string $b Enforcement decision.
+	 * @return string The more restrictive (higher-ranked) of the two.
+	 */
+	private static function tighter( string $a, string $b ): string {
+		$rank_a = self::ENFORCEMENT_RANK[ $a ] ?? 0;
+		$rank_b = self::ENFORCEMENT_RANK[ $b ] ?? 0;
+
+		return $rank_a >= $rank_b ? $a : $b;
 	}
 }
