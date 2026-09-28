@@ -70,6 +70,22 @@ class TestCase extends WP_UnitTestCase {
 			$wpdb->query( "DELETE FROM {$security_table}" );
 		}
 
+		$settings_table = $wpdb->prefix . 'agent_builder_agent_settings';
+		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$settings_table}'" ) === $settings_table ) {
+			$wpdb->query( "DELETE FROM {$settings_table}" );
+		}
+
+		$skills_table = $wpdb->prefix . 'agent_builder_skills';
+		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$skills_table}'" ) === $skills_table ) {
+			$wpdb->query( "DELETE FROM {$skills_table}" );
+		}
+
+		$agent_library_table = $wpdb->prefix . 'agent_builder_agent_library';
+		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$agent_library_table}'" ) === $agent_library_table ) {
+			$wpdb->query( "DELETE FROM {$agent_library_table}" );
+			\Agentic\Agent_Library::bust_cache();
+		}
+
 		$runs_table = $wpdb->prefix . 'agent_builder_runs';
 		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$runs_table}'" ) === $runs_table ) {
 			$wpdb->query( "DELETE FROM {$runs_table}" );
@@ -193,5 +209,20 @@ class TestCase extends WP_UnitTestCase {
 			is_dir( $path ) ? $this->delete_directory( $path ) : unlink( $path );
 		}
 		rmdir( $dir );
+	}
+
+	/**
+	 * Skip the current test when running as root, where chmod-based permission
+	 * denial is a no-op: chmod(0000/0500) cannot make a directory unreadable or
+	 * undeletable to root, so a test that relies on it would silently pass
+	 * without exercising the failure path it exists to cover (common under CI
+	 * Docker containers). Guarded by function_exists() for non-POSIX hosts.
+	 *
+	 * @return void
+	 */
+	protected function skip_when_root(): void {
+		if ( function_exists( 'posix_getuid' ) && 0 === posix_getuid() ) {
+			$this->markTestSkipped( 'Running as root; chmod-based permission failure is a no-op.' );
+		}
 	}
 }

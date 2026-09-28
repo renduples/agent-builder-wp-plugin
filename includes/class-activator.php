@@ -95,6 +95,24 @@ final class Activator {
 	);
 
 	/**
+	 * Number of consecutive failed legacy-export cleanup attempts before the
+	 * one-time sweep gives up and asks for manual intervention instead of
+	 * re-running (and re-failing) on every request forever — the stuck file is
+	 * a permissions/ownership problem a human must fix.
+	 */
+	private const LEGACY_EXPORT_CLEANUP_MAX_FAILURES = 10;
+
+	/**
+	 * Unix timestamp of the release that moved agent-export output out of the
+	 * uploads tree (streaming exports, commit 651be6d, 2026-09-27 UTC). A
+	 * <slug>.zip in uploads/agentic-exports/ is treated as legacy only when its
+	 * mtime predates this — the pre-fix exporter could only have written a file
+	 * before then, so anything written since belongs to another tool (or a manual
+	 * backup) and must survive the sweep, whatever its slug.
+	 */
+	private const LEGACY_EXPORT_STREAMING_CUTOFF = 1790467200;
+
+	/**
 	 * Option name and TTL (seconds) for the atomic schema-upgrade lock. See
 	 * acquire_upgrade_lock()/release_upgrade_lock().
 	 *
@@ -540,6 +558,185 @@ final class Activator {
 		if ( wp_next_scheduled( 'agent_builder_notification_digest' ) ) {
 			wp_clear_scheduled_hook( 'agent_builder_notification_digest' );
 		}
+	}
+
+	/**
+	 * One-time cleanup of legacy agent-export zips left behind by earlier
+	 * revisions of the exporter, before it was moved to build archives in a
+	 * temp file outside the web root and stream them through an authenticated
+	 * admin-post handler (nothing new writes either of these locations now).
+	 *
+	 * Two legacy locations are cleared:
+	 *   - wp-content/agentic-exports/ — the intermediate revision's export
+	 *     working directory (the now-removed AGENT_BUILDER_EXPORTS_DIR). No
+	 *     other code ever wrote here, so the whole directory tree is removed.
+	 *   - wp_upload_dir()['basedir'] . '/agentic-exports/<slug>.zip' — the
+	 *     original pre-fix exporter's predictable-filename output, inside the
+	 *     public uploads tree. This directory is shared with unrelated document
+	 *     tools (create_docx, create_pdf, create_spreadsheet, merge_pdfs,
+	 *     html_to_docx), none of which write a .zip there, so only its *.zip
+	 *     files are touched.
+	 *
+	 * This is a security cleanup, not a schema migration, so it runs from an
+	 * early, always-fires hook (init — see agent-builder.php) rather than
+	 * waiting for an admin to visit wp-admin: an unremediated legacy zip is
+	 * exploitable every second it sits there, including on cron/REST/frontend
+	 * requests where admin_init never fires. It is a filesystem delete, not a
+	 * privileged UI action, so it is deliberately NOT gated on
+	 * current_user_can() — it must also run for anonymous visitors. A short
+	 * transient lock prevents concurrent/overlapping sweeps.
+	 *
+	 * Only marks itself done when every legacy file/directory is actually gone:
+	 * if any delete fails (permissions, in-use), the flag is left unset so the
+	 * next request retries instead of silently leaving a still-downloadable
+	 * file exposed forever.
+	 *
+	 * @return void
+	 */
+	public static function maybe_cleanup_legacy_agent_exports(): void {
+		if ( get_option( 'agent_builder_legacy_exports_cleaned' ) || get_option( 'agent_builder_legacy_exports_gave_up' ) ) {
+			return;
+		}
+
+		$lock_key = 'agent_builder_legacy_exports_lock';
+		if ( get_transient( $lock_key ) ) {
+			return; // Another request is already running this one-time sweep.
+		}
+		set_transient( $lock_key, 1, 30 );
+
+		try {
+			$all_removed = true;
+
+			// wp-content/agentic-exports/ — the intermediate revision's export
+			// directory, now fully legacy. Remove the entire tree, not just the
+			// zips inside it (nothing else ever wrote here).
+			$exports_dir = untrailingslashit( WP_CONTENT_DIR ) . '/agentic-exports';
+			if ( is_dir( $exports_dir ) && ! File_Manager::rmdir( $exports_dir, true ) ) {
+				$all_removed = false;
+			}
+
+			// uploads/agentic-exports/<slug>.zip — the original pre-fix output.
+			// Only the <slug>.zip files the pre-fix exporter actually named are
+			// ours here; the directory is shared with unrelated document tools
+			// (and manual backups/future tools may drop a .zip of their own), so
+			// it is never removed wholesale and only slug-shaped zips are touched.
+			$legacy_dir = untrailingslashit( wp_upload_dir()['basedir'] ) . '/agentic-exports';
+			if ( is_dir( $legacy_dir ) ) {
+				$zips = glob( $legacy_dir . '/*.zip' );
+				if ( false === $zips ) {
+					// The directory exists but could not be scanned (unreadable).
+					// Treat that as "not done" rather than "no zips": if the
+					// process can't see into it, it cannot have deleted its
+					// contents, and the flag must stay unset so a later request
+					// retries.
+					$all_removed = false;
+				} else {
+					foreach ( $zips as $zip ) {
+						if ( ! self::is_legacy_export_name( $zip ) ) {
+							continue; // Not ours — belongs to another tool/backup.
+						}
+						if ( ! wp_delete_file( $zip ) ) {
+							$all_removed = false;
+						}
+					}
+				}
+			}
+
+			// Only mark the migration done once every legacy file/directory is
+			// actually gone — a single failed delete leaves the flag unset so the
+			// next request retries rather than abandoning a still-exposed file.
+			// But retrying forever is itself harmful: a permanently-stuck file
+			// (bad permissions/owner) would otherwise make every request re-run
+			// this sweep indefinitely. Count consecutive failures and give up
+			// after a short run, surfacing the problem to an admin instead.
+			if ( $all_removed ) {
+				update_option( 'agent_builder_legacy_exports_cleaned', true );
+				delete_option( 'agent_builder_legacy_exports_fail_count' );
+				delete_option( 'agent_builder_legacy_exports_gave_up' );
+			} else {
+				self::record_legacy_export_cleanup_failure();
+			}
+		} finally {
+			delete_transient( $lock_key );
+		}
+	}
+
+	/**
+	 * Whether a file is a legacy agent-export output: a <slug>.zip that predates
+	 * the release that moved exports out of the uploads tree. The mtime cutoff is
+	 * applied unconditionally — the pre-fix exporter could only have written a
+	 * file before that release, so recency alone identifies "ours" — rather than
+	 * trusting the slug to match an installed agent (a manual backup named after
+	 * its own agent's slug would then be indistinguishable from a legacy export).
+	 * This narrows the sweep away from every .zip in the shared
+	 * uploads/agentic-exports/ directory — which unrelated document tools and
+	 * manual backups also use — to only files old enough to be the exporter's own
+	 * output.
+	 *
+	 * @param string $zip_path Absolute path to a candidate .zip file.
+	 * @return bool
+	 */
+	private static function is_legacy_export_name( string $zip_path ): bool {
+		$basename = basename( $zip_path );
+		if ( 1 !== preg_match( '/^([a-z0-9_-]+)\.zip$/', $basename, $matches ) ) {
+			return false; // Not slug-shaped — another tool or a manual backup.
+		}
+
+		// The pre-fix exporter could only have written a file before streaming
+		// exports shipped, so recency alone rules out "ours" — the cutoff is
+		// applied whether or not the slug still matches an installed agent. A
+		// manual backup is very likely to be named after its own agent's slug
+		// (content-writer.zip), so install state is not a safe signal: a fresh
+		// backup dropped into this shared directory must survive regardless of
+		// its slug still being installed.
+		$mtime = @filemtime( $zip_path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- A missing/raced file reads as "not legacy", never a fatal.
+		return false !== $mtime && $mtime < self::LEGACY_EXPORT_STREAMING_CUTOFF;
+	}
+
+	/**
+	 * Count one failed legacy-export cleanup attempt and, once the failure
+	 * count crosses LEGACY_EXPORT_CLEANUP_MAX_FAILURES, give up: set the
+	 * give-up flag (which stops the sweep re-running on every request) and log
+	 * an error so a human intervenes. The admin notice surfaced by
+	 * Admin_Notice_Manager::show_legacy_exports_stuck_notice() reads the same
+	 * flag.
+	 *
+	 * @return void
+	 */
+	private static function record_legacy_export_cleanup_failure(): void {
+		$failures = (int) get_option( 'agent_builder_legacy_exports_fail_count', 0 ) + 1;
+		update_option( 'agent_builder_legacy_exports_fail_count', $failures );
+
+		if ( $failures >= self::LEGACY_EXPORT_CLEANUP_MAX_FAILURES ) {
+			update_option( 'agent_builder_legacy_exports_gave_up', true );
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Operator-facing signal for a stuck, manual-intervention cleanup; the admin notice surfaces the same state in wp-admin.
+			error_log( '[Agent Builder] Legacy agent-export cleanup gave up after ' . $failures . ' failed attempts — remove the remaining files under wp-content/uploads/agentic-exports/ and wp-content/agentic-exports/ manually.' );
+		}
+	}
+
+	/**
+	 * Handle the "Retry now" link on the stuck-legacy-exports admin notice.
+	 * Hooked on admin_init (before headers are sent) so it can clear the
+	 * give-up state, re-run the sweep, and redirect back to a clean URL.
+	 *
+	 * @return void
+	 */
+	public static function maybe_handle_legacy_exports_retry_request(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		if ( ! isset( $_GET['agentic_retry_legacy_exports_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['agentic_retry_legacy_exports_nonce'] ) ), 'agentic_retry_legacy_exports' ) ) {
+			return;
+		}
+
+		delete_option( 'agent_builder_legacy_exports_gave_up' );
+		delete_option( 'agent_builder_legacy_exports_fail_count' );
+
+		self::maybe_cleanup_legacy_agent_exports();
+
+		wp_safe_redirect( remove_query_arg( array( 'agentic_retry_legacy_exports', 'agentic_retry_legacy_exports_nonce' ) ) );
+		exit;
 	}
 
 	/**
