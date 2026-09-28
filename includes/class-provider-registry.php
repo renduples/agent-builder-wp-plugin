@@ -438,18 +438,57 @@ class Provider_Registry {
 	}
 
 	/**
+	 * Whether the emergency stop ("Disable All Agents") is currently active.
+	 *
+	 * Centralizes the class-existence guard so callers don't repeat it. The stop
+	 * is a runtime halt, not an unconfiguration: enable() disconnects providers
+	 * into a restorable snapshot, so while it is active a site has no *usable*
+	 * provider even though it is still *configured*.
+	 *
+	 * @return bool
+	 */
+	public static function is_emergency_stop_active(): bool {
+		return class_exists( __NAMESPACE__ . '\\Emergency_Stop' ) && Emergency_Stop::is_active();
+	}
+
+	/**
 	 * Whether at least one provider is fully usable for chat right now.
 	 *
 	 * Stricter than get_active(): the hosted "agentic" provider also needs a
 	 * billing identity (see get_license_key()) so the proxy can meter usage.
 	 * Without one the proxy rejects the request, so it is not counted here and
-	 * the admin funnels the user back to setup.
+	 * the admin funnels the user back to setup. A provider disconnected by the
+	 * emergency stop is not usable (see has_configured_provider()).
 	 *
 	 * @return bool
 	 */
 	public static function has_usable_provider(): bool {
-		if ( class_exists( __NAMESPACE__ . '\\Emergency_Stop' ) && Emergency_Stop::is_active() ) {
+		if ( self::is_emergency_stop_active() ) {
 			return false;
+		}
+		return self::has_configured_provider();
+	}
+
+	/**
+	 * Whether the site has a provider set up — usable right now, or held behind
+	 * the emergency stop.
+	 *
+	 * The emergency stop disconnects providers into a restorable snapshot rather
+	 * than removing them, so has_usable_provider() correctly reports false while
+	 * it is active. Callers that gate the admin *menu* or "connect a provider"
+	 * prompts must use this instead, so a stopped site still shows its full menu
+	 * and the administrator can reach Interface Settings to disable the stop.
+	 *
+	 * While the stop is active the answer is derived from the stop's own
+	 * snapshot, not assumed: a site that never configured a provider before the
+	 * stop (empty snapshot) is still unconfigured and must be routed to Quick
+	 * Start, whereas a site that had a real provider keeps its full menu.
+	 *
+	 * @return bool
+	 */
+	public static function has_configured_provider(): bool {
+		if ( self::is_emergency_stop_active() ) {
+			return self::was_configured_before_stop();
 		}
 		$ollama_url = get_option( 'agent_builder_ollama_url', '' );
 		foreach ( self::get_all() as $p ) {
@@ -470,6 +509,40 @@ class Provider_Registry {
 				return true;
 			}
 		}
+		return false;
+	}
+
+	/**
+	 * Whether a provider was configured at the moment the emergency stop was
+	 * enabled, read back from the stop's own restore snapshot.
+	 *
+	 * Emergency_Stop::enable() snapshots each provider's key state (`had_key` /
+	 * `encrypted_key`) and the Ollama URL before disconnecting them, so this is
+	 * the only reliable signal that a provider existed before the stop. A site
+	 * that was never configured still has an empty snapshot and must be routed
+	 * to Quick Start rather than treated as a configured-but-stopped site.
+	 *
+	 * @return bool
+	 */
+	private static function was_configured_before_stop(): bool {
+		$snapshot = get_option( Emergency_Stop::OPTION_SNAPSHOT, array() );
+		if ( ! is_array( $snapshot ) ) {
+			return false;
+		}
+
+		if ( ! empty( $snapshot['ollama_url'] ) ) {
+			return true;
+		}
+
+		foreach ( (array) ( $snapshot['providers'] ?? array() ) as $info ) {
+			if ( ! is_array( $info ) ) {
+				continue;
+			}
+			if ( ! empty( $info['had_key'] ) || ! empty( $info['encrypted_key'] ) ) {
+				return true;
+			}
+		}
+
 		return false;
 	}
 

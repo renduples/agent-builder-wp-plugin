@@ -65,7 +65,18 @@ class Abilities_Manifest {
 	public static function resolve_path( string $agent_slug ): ?string {
 		$library_dirs = apply_filters( 'agentic_library_dirs', array( AGENT_BUILDER_DIR . 'library/agents' ) );
 
-		$paths = array( AGENT_BUILDER_AGENTS_DIR . '/' . $agent_slug . '/abilities.json' );
+		$paths    = array();
+		$user_dir = AGENT_BUILDER_AGENTS_DIR . '/' . $agent_slug;
+		// Only let an installed agents-dir manifest win when that directory is a
+		// real agent (has agent.json or a main agent.php), as the registry
+		// defines one. A partial/leftover dir (e.g. only abilities.json + a
+		// stale signature) must NOT shadow the bundled manifest: its stale
+		// signature would make verify_integrity() fail and block the bundled
+		// agent's tools, while the registry (which needs a main file) never sees
+		// it as installed, so no shadow notice is shown. Fall through instead.
+		if ( self::is_real_agent_dir( $user_dir ) ) {
+			$paths[] = $user_dir . '/abilities.json';
+		}
 		foreach ( $library_dirs as $dir ) {
 			$paths[] = trailingslashit( $dir ) . $agent_slug . '/abilities.json';
 		}
@@ -77,6 +88,19 @@ class Abilities_Manifest {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Whether an agents-dir directory is a real agent, as the registry defines
+	 * one: it has an agent.json (declarative) or a main agent.php (code) file.
+	 * Used so a partial/leftover directory (only abilities.json) can't shadow a
+	 * bundled agent's manifest.
+	 *
+	 * @param string $dir Absolute agent directory (no trailing slash).
+	 * @return bool
+	 */
+	private static function is_real_agent_dir( string $dir ): bool {
+		return file_exists( $dir . '/agent.json' ) || file_exists( $dir . '/agent.php' );
 	}
 
 	/**
@@ -675,5 +699,39 @@ class Abilities_Manifest {
 		} else {
 			self::$cache = array();
 		}
+	}
+
+	/**
+	 * Content signature over all bundled ability manifests.
+	 *
+	 * Lets a deploy that changes an abilities.json *without* bumping the plugin
+	 * version still be detected, so signatures are re-generated instead of going
+	 * stale (a stale signature blocks that agent's tools). Order-independent,
+	 * keyed by slug.
+	 *
+	 * @return string 64-char sha256 hex, or '' when there are no bundled manifests.
+	 */
+	public static function bundled_manifest_signature(): string {
+		$dirs  = apply_filters( 'agentic_library_dirs', array( AGENT_BUILDER_DIR . 'library/agents' ) );
+		$parts = array();
+		foreach ( (array) $dirs as $dir ) {
+			$manifests = glob( trailingslashit( $dir ) . '*/abilities.json' );
+			foreach ( ( false !== $manifests ? $manifests : array() ) as $path ) {
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_get_contents
+				$contents = file_get_contents( $path );
+				if ( false !== $contents ) {
+					$parts[ basename( dirname( $path ) ) ] = md5( $contents );
+				}
+			}
+		}
+		if ( empty( $parts ) ) {
+			return '';
+		}
+		ksort( $parts );
+		$flat = '';
+		foreach ( $parts as $slug => $sum ) {
+			$flat .= $slug . ':' . $sum . '|';
+		}
+		return hash( 'sha256', $flat );
 	}
 }
