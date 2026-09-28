@@ -169,6 +169,20 @@ class Test_Event_Listener_Guards extends TestCase {
 	}
 
 	/**
+	 * The version counter advances by exactly one per call — a single atomic
+	 * increment, not a read-then-write that could lose or double an increment.
+	 */
+	public function test_bust_query_cache_increments_atomically(): void {
+		delete_option( 'agentic_audit_cache_ver' );
+
+		Audit_Log::bust_query_cache();
+		$this->assertSame( 1, (int) get_option( 'agentic_audit_cache_ver' ), 'first bump seeds the counter at 1' );
+
+		Audit_Log::bust_query_cache();
+		$this->assertSame( 2, (int) get_option( 'agentic_audit_cache_ver' ), 'second bump increments the counter to 2' );
+	}
+
+	/**
 	 * A manifest-level `arg_filter` drops hook arguments that do not match the
 	 * declared pattern before they ever reach the approval gate, so a
 	 * high-frequency hook does not mint proposals for irrelevant events.
@@ -194,5 +208,31 @@ class Test_Event_Listener_Guards extends TestCase {
 		// Matching option name — reaches the gate and proposes.
 		Agent_Lifecycle::execute_event_listener( $agent, $listener, array( 'woocommerce_orders', 'old', 'new' ) );
 		$this->assertSame( 1, $this->count_proposal_transients(), 'a matching argument proposes once' );
+	}
+
+	/**
+	 * Remove every option/transient this file's tests write, so a re-run of the
+	 * suite within the 60-second rate-limit window is not blocked by a stale claim
+	 * from a prior run (and proposal / pending-marker / audit-cache state never
+	 * leaks between runs).
+	 */
+	public function tearDown(): void {
+		global $wpdb;
+
+		$wpdb->query(
+			"DELETE FROM {$wpdb->options}
+			WHERE option_name LIKE 'agentic_listener_rate_%'
+			   OR option_name LIKE 'agentic_listener_skips_%'
+			   OR option_name = 'agentic_audit_cache_ver'
+			   OR option_name = 'agent_builder_test'
+			   OR option_name LIKE '_transient_agentic_proposal_%'
+			   OR option_name LIKE '_transient_timeout_agentic_proposal_%'
+			   OR option_name LIKE '_transient_agentic_listener_pending_%'
+			   OR option_name LIKE '_transient_timeout_agentic_listener_pending_%'
+			   OR option_name = '_transient_agentic_foo'
+			   OR option_name = '_transient_timeout_agentic_foo'"
+		);
+
+		parent::tearDown();
 	}
 }

@@ -211,13 +211,39 @@ class Audit_Log {
 	 * recomputed lazily. Old transients expire on their own TTL.
 	 */
 	public static function bust_query_cache(): void {
-		$version = self::get_cache_version() + 1;
+		global $wpdb;
 
-		// In-request copy first (fast path for all subsequent reads this request),
-		// then persist so other requests see the same version. The option write is
-		// a single-row upsert, not a table scan.
+		// Advance the version counter with one atomic statement. `INSERT … ON
+		// DUPLICATE KEY UPDATE option_value = option_value + 1` seeds the first
+		// value and increments every later one in a single step, so two concurrent
+		// log() calls can never read the same version and both write version + 1 —
+		// a read-then-write here would reintroduce exactly the race this method
+		// exists to close and leave a just-cached query stale for its full TTL.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Single-row atomic counter increment on the options table; table name is internal.
+		$wpdb->query(
+			$wpdb->prepare(
+				"INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, '1', 'no') ON DUPLICATE KEY UPDATE option_value = option_value + 1",
+				self::CACHE_VERSION_KEY
+			)
+		);
+
+		// Invalidate get_option()'s cached copy (update_option() would have done
+		// this) so other requests — including ones sharing a persistent object
+		// cache — resolve the freshly-incremented row on their next read.
+		wp_cache_delete( self::CACHE_VERSION_KEY, 'options' );
+
+		// Read the incremented value straight from the DB and mirror it into the
+		// in-request group for the fast path within this request. get_option() is
+		// deliberately avoided here: on the first-ever bump it can have cached this
+		// key in its "notoptions" set and return the stale default.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Single-row read of the counter just incremented above; table name is internal.
+		$version = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT option_value FROM {$wpdb->options} WHERE option_name = %s",
+				self::CACHE_VERSION_KEY
+			)
+		);
 		wp_cache_set( self::CACHE_VERSION_KEY, $version, self::CACHE_GROUP );
-		update_option( self::CACHE_VERSION_KEY, $version, false );
 	}
 
 	/**
