@@ -20,6 +20,9 @@
     "analyze_post": {
       "risk": "none"
     },
+    "find_posts_without_featured_image": {
+      "risk": "none"
+    },
     "search_media_library": {
       "risk": "none"
     },
