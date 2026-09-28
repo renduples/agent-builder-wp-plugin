@@ -326,15 +326,38 @@ class Test_Notifications extends TestCase {
 	}
 
 	/**
-	 * Non-run types never trigger an instant email.
+	 * An `approval_pending` notification under instant mode emails immediately.
+	 *
+	 * Regression for the M11 gate follow-up: approval pauses were excluded from
+	 * the instant-email type set, so under instant mode an approval-needed
+	 * notification was created but never emailed — no instant email (wrong type),
+	 * and no digest (digest is a no-op in instant mode).
 	 */
-	public function test_instant_mode_ignores_non_run_types(): void {
+	public function test_instant_mode_emails_approval_pending(): void {
 		update_option( 'agent_builder_notify_email', 'instant' );
 		reset_phpmailer_instance();
 
-		$user_id = $this->make_admin( 'approval-admin@example.com' );
+		$user_id = $this->make_admin( 'approval-instant@example.com' );
 
 		Notifications::notify( $user_id, 'approval_pending', 'Approval needed', 'Something needs you.' );
+
+		$mailer = tests_retrieve_phpmailer_instance();
+		$this->assertCount( 1, $mailer->mock_sent );
+		$this->assertContains( 'approval-instant@example.com', $this->sent_recipients() );
+	}
+
+	/**
+	 * Types outside the instant-email set never trigger an immediate email.
+	 * `routine_failed` is the one type that is digest-eligible but not
+	 * instant-eligible, so it is the right probe for the instant-type gate.
+	 */
+	public function test_instant_mode_ignores_routine_failed(): void {
+		update_option( 'agent_builder_notify_email', 'instant' );
+		reset_phpmailer_instance();
+
+		$user_id = $this->make_admin( 'routine-admin@example.com' );
+
+		Notifications::notify( $user_id, 'routine_failed', 'Routine failed', 'Something broke.' );
 
 		$mailer = tests_retrieve_phpmailer_instance();
 		$this->assertCount( 0, $mailer->mock_sent );
@@ -342,8 +365,8 @@ class Test_Notifications extends TestCase {
 
 	/**
 	 * The daily digest is a no-op when the mode is "instant": instant mode emails
-	 * (and marks emailed) run notifications as they happen, so the digest must not
-	 * batch anything — running it would re-email rows instant mode already sent.
+	 * (and marks emailed) run/approval notifications as they happen, so the digest
+	 * must not batch anything — running it would re-email rows instant mode sent.
 	 */
 	public function test_digest_does_not_run_in_instant_mode(): void {
 		update_option( 'agent_builder_notify_email', 'instant' );
@@ -351,9 +374,9 @@ class Test_Notifications extends TestCase {
 
 		$admin = $this->make_admin( 'instant-digest@example.com' );
 
-		// approval_pending never triggers an instant email, so the only thing that
-		// could email this row is the (disabled) daily digest.
-		Notifications::notify( $admin, 'approval_pending', 'Approval needed', 'Something needs you.' );
+		// routine_failed is digest-eligible but never instant-eligible, so the only
+		// thing that could email this row is the (disabled) daily digest.
+		Notifications::notify( $admin, 'routine_failed', 'Routine failed', 'Something broke.' );
 
 		Notifications::send_daily_digest();
 

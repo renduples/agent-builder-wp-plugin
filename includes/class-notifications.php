@@ -4,7 +4,7 @@
  *
  * Inbox-backed notifications for run results, routine failures and approvals,
  * with an optional daily email digest for administrators and instant email for
- * run results.
+ * run results and approvals.
  *
  * @package    Agent_Builder
  * @subpackage Includes
@@ -26,8 +26,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * Rows live in wp_agent_builder_notifications; the admin-bar inbox and (later)
  * the Tasks screen read them via unread_count()/list()/mark_read(). Email
- * delivery has two paths: an immediate email for run results (instant mode) and
- * a batched daily digest sent to every non-opted-out administrator.
+ * delivery has two paths: an immediate email for run results and approvals
+ * (instant mode) and a batched daily digest sent to every non-opted-out
+ * administrator.
  */
 class Notifications {
 
@@ -44,8 +45,12 @@ class Notifications {
 
 	/**
 	 * Types eligible for an immediate email when instant mode is on.
+	 *
+	 * `approval_pending` is included deliberately: an approval pause is exactly
+	 * the moment the recipient must act, and in instant mode there is no daily
+	 * digest to batch it into, so it has to email here or be silently dropped.
 	 */
-	private const RUN_TYPES = array( 'run_finished', 'run_waiting', 'run_error' );
+	private const INSTANT_TYPES = array( 'run_finished', 'run_waiting', 'run_error', 'approval_pending' );
 
 	/**
 	 * Notification email mode option key (off|instant|daily).
@@ -425,7 +430,7 @@ class Notifications {
 	 * @return void
 	 */
 	private static function maybe_send_instant_email( int $id, int $user_id, string $type, string $title, string $body, array $extra ): void {
-		if ( ! in_array( $type, self::RUN_TYPES, true ) ) {
+		if ( ! in_array( $type, self::INSTANT_TYPES, true ) ) {
 			return;
 		}
 
