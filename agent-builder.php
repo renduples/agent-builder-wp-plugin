@@ -724,6 +724,8 @@ require_once AGENT_BUILDER_DIR . 'includes/class-knowledge-wizard-rest.php';
 require_once AGENT_BUILDER_DIR . 'includes/class-deploy-wizard-rest.php';
 require_once AGENT_BUILDER_DIR . 'includes/class-runs-rest.php';
 require_once AGENT_BUILDER_DIR . 'includes/class-notifications-rest.php';
+require_once AGENT_BUILDER_DIR . 'includes/class-approval-rules.php';
+require_once AGENT_BUILDER_DIR . 'includes/class-approval-rules-rest.php';
 require_once AGENT_BUILDER_DIR . 'includes/class-security-log.php';
 
 // WP 7.0+ AI Client adapter layer (the bridge).
@@ -785,6 +787,7 @@ Score_REST::init();
 Webmcp_Bridge::init();
 Inventory_REST::init();
 Notifications_REST::init();
+Approval_Rules_REST::init();
 Notifications::init();
 Admin_Bar_Inbox::init();
 Site_Health::init();
