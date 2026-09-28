@@ -775,6 +775,7 @@ Webmcp_Bridge::init();
 Inventory_REST::init();
 Notifications::init();
 Admin_Bar_Inbox::init();
+Site_Health::init();
 
 // Activation/Deactivation hooks — must be registered at global scope in the main
 // plugin file so WordPress can locate them reliably, regardless of how/when the

@@ -625,6 +625,11 @@ class Job_Manager {
 	public static function run_health_check(): array {
 		global $wpdb;
 
+		// Record this tick so the Site Health test (agent_builder_background_runs)
+		// can tell whether WP-Cron is firing on schedule. Not autoloaded — it is
+		// only read from the Site Health screen / endpoints, not on every page.
+		update_option( 'agent_builder_cron_last_tick', time(), false );
+
 		$table   = self::get_table_name();
 		$now     = gmdate( 'Y-m-d H:i:s' );
 		$results = array(
