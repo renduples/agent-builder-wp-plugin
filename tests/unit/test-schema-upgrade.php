@@ -621,40 +621,51 @@ class Test_Schema_Upgrade extends TestCase {
 		$wpdb->query( "ALTER TABLE {$table} DROP COLUMN awaiting_tool_call_id" );
 		delete_option( 'agent_builder_awaiting_tool_call_id_migrated' );
 
-		// Force the specific ADD COLUMN statement to fail with a real MySQL
-		// error, without touching any other query the request makes.
-		$mangle = static function ( $query ) use ( $table ) {
-			if ( false !== stripos( (string) $query, "ALTER TABLE {$table} ADD COLUMN awaiting_tool_call_id" ) ) {
-				return $query . ' GARBAGE SQL CAUSES A SYNTAX ERROR';
-			}
-			return $query;
-		};
-		add_filter( 'query', $mangle );
-
-		$suppress = $wpdb->suppress_errors( true );
 		try {
-			update_option( 'agent_builder_db_schema_version', AGENT_BUILDER_DB_VERSION );
-			$this->enter_admin_as_logged_in_user();
+			// Force the specific ADD COLUMN statement to fail with a real MySQL
+			// error, without touching any other query the request makes.
+			$mangle = static function ( $query ) use ( $table ) {
+				if ( false !== stripos( (string) $query, "ALTER TABLE {$table} ADD COLUMN awaiting_tool_call_id" ) ) {
+					return $query . ' GARBAGE SQL CAUSES A SYNTAX ERROR';
+				}
+				return $query;
+			};
+			add_filter( 'query', $mangle );
 
+			$suppress = $wpdb->suppress_errors( true );
+			try {
+				update_option( 'agent_builder_db_schema_version', AGENT_BUILDER_DB_VERSION );
+				$this->enter_admin_as_logged_in_user();
+
+				Activator::maybe_upgrade();
+			} finally {
+				$wpdb->suppress_errors( $suppress );
+				remove_filter( 'query', $mangle );
+			}
+
+			$this->assertFalse(
+				(bool) get_option( 'agent_builder_awaiting_tool_call_id_migrated' ),
+				'a failed ALTER must leave the migration unmarked so it retries later'
+			);
+
+			$runs_columns_after_failure = $wpdb->get_col( "SHOW COLUMNS FROM {$table}", 0 );
+			$this->assertNotContains( 'awaiting_tool_call_id', $runs_columns_after_failure );
+
+			// Retrying without the mangled SQL must succeed and mark it done.
 			Activator::maybe_upgrade();
+
+			$runs_columns_after_retry = $wpdb->get_col( "SHOW COLUMNS FROM {$table}", 0 );
+			$this->assertContains( 'awaiting_tool_call_id', $runs_columns_after_retry );
+			$this->assertTrue( (bool) get_option( 'agent_builder_awaiting_tool_call_id_migrated' ) );
 		} finally {
-			$wpdb->suppress_errors( $suppress );
-			remove_filter( 'query', $mangle );
+			// Restore — DDL isn't rolled back by the per-test transaction, and a
+			// failed assertion above must not leak the dropped column (or the
+			// unset option) into later tests sharing this test DB.
+			$columns = $wpdb->get_col( "SHOW COLUMNS FROM {$table}", 0 );
+			if ( ! in_array( 'awaiting_tool_call_id', $columns, true ) ) {
+				$wpdb->query( "ALTER TABLE {$table} ADD COLUMN awaiting_tool_call_id varchar(64) DEFAULT NULL AFTER awaiting_id" );
+			}
+			delete_option( 'agent_builder_awaiting_tool_call_id_migrated' );
 		}
-
-		$this->assertFalse(
-			(bool) get_option( 'agent_builder_awaiting_tool_call_id_migrated' ),
-			'a failed ALTER must leave the migration unmarked so it retries later'
-		);
-
-		$runs_columns_after_failure = $wpdb->get_col( "SHOW COLUMNS FROM {$table}", 0 );
-		$this->assertNotContains( 'awaiting_tool_call_id', $runs_columns_after_failure );
-
-		// Retrying without the mangled SQL must succeed and mark it done.
-		Activator::maybe_upgrade();
-
-		$runs_columns_after_retry = $wpdb->get_col( "SHOW COLUMNS FROM {$table}", 0 );
-		$this->assertContains( 'awaiting_tool_call_id', $runs_columns_after_retry );
-		$this->assertTrue( (bool) get_option( 'agent_builder_awaiting_tool_call_id_migrated' ) );
 	}
 }

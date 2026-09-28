@@ -1337,6 +1337,13 @@ class Admin_Menu_Handler {
 		$doc_url     = $this->get_page_doc_url( $page, $tab );
 		$support_url = 'https://agentic-plugin.com/support/';
 
+		// The "Upgrade to Pro" footer link was stripped for the WP.org build,
+		// but the shared footer payload still reads these keys — keep them empty
+		// so get_admin_footer_data() never references undefined variables.
+		$promo_url      = '';
+		$promo_label    = '';
+		$promo_external = false;
+
 		// Short policy blurb — contextual by page/tab.
 		$policy = __( 'Settings control how agents behave on this site. Changes are stored locally and take effect for new conversations.', 'agent-builder' );
 		if ( 'agent-builder' === $page ) {
@@ -1616,7 +1623,7 @@ class Admin_Menu_Handler {
 		}
 
 		echo '<div class="wrap">';
-		echo '<h1>' . esc_html__( 'Agent Chat', 'agent-builder' ) . ' <span class="agentic-status" style="font-size: 14px; font-weight: normal; vertical-align: middle;"><span class="agentic-status-dot"></span>' . esc_html__( 'Online', 'agent-builder' ) . '</span></h1>';
+		echo '<h1>' . esc_html__( 'Agent Chat', 'agent-builder' ) . ' <span class="agentic-status"><span class="agentic-status-dot" aria-hidden="true"></span>' . esc_html__( 'Online', 'agent-builder' ) . '</span></h1>';
 		if ( $agentic_playground ) {
 			echo '<div class="agentic-playground">';
 			echo '<div class="agentic-playground__thread">';

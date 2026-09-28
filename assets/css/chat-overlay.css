@@ -299,7 +299,7 @@
 }
 
 .agentic-overlay-proposal-summary {
-    padding: 0 12px 8px;
+    padding: 8px 12px;
     font-size: 12px;
     color: var(--aco-text);
     line-height: 1.6;
