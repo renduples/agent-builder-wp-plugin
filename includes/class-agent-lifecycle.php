@@ -903,10 +903,11 @@ class Agent_Lifecycle {
 	/**
 	 * Apply the manifest-level argument filter, if the listener declares one.
 	 *
-	 * A listener may declare `arg_filter` (an object with `arg` and `pattern`)
-	 * so that only hook arguments matching a PCRE pattern ever reach the gate —
-	 * high-frequency hooks (updated_option, init, save_post…) otherwise hit the
-	 * approval gate for every irrelevant event.
+	 * A listener may declare `arg_filter` in one of two forms — an exact-match
+	 * allowlist (`arg` + `in`) or a PCRE pattern (`arg` + `pattern`) — so that
+	 * only hook arguments matching it ever reach the gate. High-frequency hooks
+	 * (updated_option, init, save_post…) otherwise hit the approval gate for
+	 * every irrelevant event.
 	 *
 	 * @param array $listener Listener definition.
 	 * @param array $args     WordPress hook arguments.
@@ -914,7 +915,7 @@ class Agent_Lifecycle {
 	 */
 	private static function listener_arg_matches( array $listener, array $args ): bool {
 		$filter = $listener['arg_filter'] ?? null;
-		if ( ! is_array( $filter ) || empty( $filter['pattern'] ) ) {
+		if ( ! is_array( $filter ) ) {
 			return true;
 		}
 
@@ -923,10 +924,24 @@ class Agent_Lifecycle {
 		if ( is_object( $value ) || is_array( $value ) ) {
 			$value = '';
 		}
+		$value = (string) $value;
 
-		// The pattern is validated at manifest-sanitization time; @ guards against
-		// a stray invalid pattern reaching here, which we treat as no-match.
-		$result = @preg_match( '/' . (string) $filter['pattern'] . '/', (string) $value ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- An invalid pattern is "no match", never a fatal.
+		// Exact-match allowlist form: strict string comparison against the listed
+		// values. An empty `in` list matches nothing, so the listener never runs.
+		if ( array_key_exists( 'in', $filter ) ) {
+			$allowlist = is_array( $filter['in'] ) ? $filter['in'] : array();
+			return in_array( $value, $allowlist, true );
+		}
+
+		// PCRE pattern form. The pattern is validated at manifest-sanitization
+		// time; a missing/empty pattern means "no filter" (run on every event),
+		// and @ guards against a stray invalid pattern, which we treat as no-match.
+		$pattern = (string) ( $filter['pattern'] ?? '' );
+		if ( '' === $pattern ) {
+			return true;
+		}
+
+		$result = @preg_match( '/' . $pattern . '/', $value ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- An invalid pattern is "no match", never a fatal.
 
 		return 1 === $result;
 	}
