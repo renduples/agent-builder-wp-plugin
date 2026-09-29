@@ -227,6 +227,12 @@ class Test_Tool_Grants extends TestCase {
 	 * key: the route regex must match the `@`, and the handler must not strip it
 	 * out via sanitize_key(), so the key round-trips through revoke and is
 	 * removed from list_for_user().
+	 *
+	 * NOTE: the request path keeps the `@` literal. The GrantsTab client must do
+	 * the same — it must NOT encodeURIComponent() the key, because WP REST route
+	 * matching does not URL-decode the path, so an `%40`-encoded `@` would fail
+	 * to match this route and return rest_no_route. Dispatching with a literal
+	 * `@` here mirrors exactly what the fixed frontend sends over the wire.
 	 */
 	public function test_revoke_agent_scoped_grant_via_rest(): void {
 		wp_set_current_user( $this->admin_id );

@@ -35,8 +35,10 @@ function GrantsTab() {
 	};
 
 	// A grant entry is either a bare tool slug (grants every agent) or a
-	// `tool@agent` key (grants only that agent). encodeURIComponent carries the
-	// `@` through to the DELETE route so the backend can match and revoke it.
+	// `tool@agent` key (grants only that agent). The `@` is left literal in the
+	// request path: WP REST does not URL-decode route segments, so encoding it
+	// to %40 would fail to match the route and 404. The literal `@` is what the
+	// backend route regex matches.
 	const revoke = ( tool ) => {
 		if (
 			! window.confirm(
@@ -52,7 +54,7 @@ function GrantsTab() {
 		setErr( '' );
 		setOk( '' );
 		apiFetch( {
-			path: `${ GRANTS_PATH }/${ encodeURIComponent( tool ) }`,
+			path: `${ GRANTS_PATH }/${ tool }`,
 			method: 'DELETE',
 		} )
 			.then( () => {
