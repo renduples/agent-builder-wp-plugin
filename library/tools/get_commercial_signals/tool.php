@@ -92,8 +92,11 @@ class Get_Commercial_Signals extends \Agentic\Tool_Base {
 		}
 
 		// Contact page.
-		$contact_page     = get_page_by_path( 'contact' ) ?: get_page_by_path( 'contact-us' );
-		$has_contact_page = $contact_page && $contact_page->post_status === 'publish';
+		$contact_page = get_page_by_path( 'contact' );
+		if ( ! $contact_page ) {
+			$contact_page = get_page_by_path( 'contact-us' );
+		}
+		$has_contact_page = $contact_page && 'publish' === $contact_page->post_status;
 
 		// Scan homepage for contact info and trust signals.
 		$home_response = @wp_safe_remote_get(
@@ -124,7 +127,7 @@ class Get_Commercial_Signals extends \Agentic\Tool_Base {
 				)
 			);
 			$code = is_wp_error( $resp ) ? 0 : wp_remote_retrieve_response_code( $resp );
-			if ( $code === 200 ) {
+			if ( 200 === $code ) {
 				++$key_page_count;
 				$body    = strtolower( wp_remote_retrieve_body( $resp ) );
 				$has_cta = false;

@@ -128,8 +128,8 @@ class Analyze_Requirements extends Tool_Base {
 		$analysis = $this->build_analysis( $description, $category, $keywords, $suggested_tools );
 
 		return array(
-			'analysis'    => $analysis,
-			'suggestions' => array(
+			'analysis'      => $analysis,
+			'suggestions'   => array(
 				'name'            => $name,
 				'slug'            => $slug,
 				'icon'            => $icon,
@@ -410,7 +410,8 @@ class Analyze_Requirements extends Tool_Base {
 			$base  = implode( '-', array_filter( array_slice( $words, 0, 4 ) ) );
 		}
 
-		return sanitize_key( $base ) ?: 'custom-agent';
+		$slug = sanitize_key( $base );
+		return $slug ? $slug : 'custom-agent';
 	}
 
 	/**
@@ -426,7 +427,7 @@ class Analyze_Requirements extends Tool_Base {
 	 * Generates actionable quality notes for the trainer's self-critique.
 	 */
 	private function generate_quality_notes( string $description, array $tools, array $capabilities ): array {
-		$notes = [];
+		$notes = array();
 
 		if ( count( $tools ) < 2 ) {
 			$notes[] = 'Very few tools suggested. The resulting agent may feel underpowered.';
@@ -466,7 +467,7 @@ class Analyze_Requirements extends Tool_Base {
 		$tool_loader->load();
 		$all_tools = $tool_loader->get_all();
 
-		$catalog = [];
+		$catalog    = array();
 		$desc_lower = strtolower( $description );
 
 		foreach ( $all_tools as $name => $tool_instance ) {
@@ -474,17 +475,17 @@ class Analyze_Requirements extends Tool_Base {
 				continue;
 			}
 
-			$catalog[ $name ] = [
+			$catalog[ $name ] = array(
 				'name'        => $name,
 				'description' => $tool_instance->get_description(),
 				'category'    => $tool_instance->get_category(),
 				'risk'        => method_exists( $tool_instance, 'get_risk_level' ) ? $tool_instance->get_risk_level() : 'low',
-			];
+			);
 		}
 
-		$scored = [];
+		$scored = array();
 		foreach ( $catalog as $name => $tool ) {
-			$score = 0;
+			$score     = 0;
 			$tool_text = strtolower( $name . ' ' . $tool['description'] . ' ' . $tool['category'] );
 
 			// Keyword matches (stronger weight)
@@ -508,7 +509,7 @@ class Analyze_Requirements extends Tool_Base {
 			}
 
 			// Boost known high-value utility tools
-			$boosts = [ 'get_site_context', 'get_site_overview', 'list_posts', 'analyze_post' ];
+			$boosts = array( 'get_site_context', 'get_site_overview', 'list_posts', 'analyze_post' );
 			if ( in_array( $name, $boosts, true ) ) {
 				$score += 3;
 			}
@@ -520,29 +521,29 @@ class Analyze_Requirements extends Tool_Base {
 
 		arsort( $scored );
 
-		$suggested = [];
+		$suggested = array();
 		foreach ( array_slice( array_keys( $scored ), 0, 10 ) as $name ) {
-			$suggested[] = [
-				'name'        => $name,
-				'description' => $catalog[ $name ]['description'],
-				'category'    => $catalog[ $name ]['category'],
-				'risk'        => $catalog[ $name ]['risk'],
+			$suggested[] = array(
+				'name'         => $name,
+				'description'  => $catalog[ $name ]['description'],
+				'category'     => $catalog[ $name ]['category'],
+				'risk'         => $catalog[ $name ]['risk'],
 				'match_reason' => 'Strong relevance to described purpose and keywords',
-			];
+			);
 		}
 
 		// Smart fallback
 		if ( empty( $suggested ) ) {
-			$fallbacks = [ 'get_site_context', 'get_site_overview', 'list_posts' ];
+			$fallbacks = array( 'get_site_context', 'get_site_overview', 'list_posts' );
 			foreach ( $fallbacks as $fb ) {
 				if ( isset( $catalog[ $fb ] ) ) {
-					$suggested[] = [
-						'name'        => $fb,
-						'description' => $catalog[ $fb ]['description'],
-						'category'    => $catalog[ $fb ]['category'],
-						'risk'        => $catalog[ $fb ]['risk'],
+					$suggested[] = array(
+						'name'         => $fb,
+						'description'  => $catalog[ $fb ]['description'],
+						'category'     => $catalog[ $fb ]['category'],
+						'risk'         => $catalog[ $fb ]['risk'],
 						'match_reason' => 'Safe baseline utility tool',
-					];
+					);
 				}
 			}
 		}
@@ -554,10 +555,10 @@ class Analyze_Requirements extends Tool_Base {
 	 * Improved keyword extraction with better signal.
 	 */
 	private function extract_keywords( string $description ): array {
-		$stop = [ 'the', 'and', 'for', 'with', 'that', 'this', 'from', 'into', 'about', 'agent', 'create', 'build', 'help', 'make', 'need', 'want', 'can', 'should', 'would', 'could' ];
+		$stop = array( 'the', 'and', 'for', 'with', 'that', 'this', 'from', 'into', 'about', 'agent', 'create', 'build', 'help', 'make', 'need', 'want', 'can', 'should', 'would', 'could' );
 
-		$words = preg_split( '/\W+/', strtolower( $description ) );
-		$keywords = [];
+		$words    = preg_split( '/\W+/', strtolower( $description ) );
+		$keywords = array();
 
 		foreach ( $words as $w ) {
 			if ( strlen( $w ) > 3 && ! in_array( $w, $stop, true ) ) {
@@ -566,8 +567,9 @@ class Analyze_Requirements extends Tool_Base {
 		}
 
 		// Add some bigrams for better matching
-		$parts = preg_split( '/\W+/', strtolower( $description ) );
-		for ( $i = 0; $i < count( $parts ) - 1; $i++ ) {
+		$parts       = preg_split( '/\W+/', strtolower( $description ) );
+		$parts_count = count( $parts );
+		for ( $i = 0; $i < $parts_count - 1; $i++ ) {
 			$bigram = $parts[ $i ] . ' ' . $parts[ $i + 1 ];
 			if ( strlen( $bigram ) > 6 ) {
 				$keywords[] = $bigram;

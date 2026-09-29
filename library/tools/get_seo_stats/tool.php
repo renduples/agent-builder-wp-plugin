@@ -131,7 +131,7 @@ class Get_Seo_Stats extends \Agentic\Tool_Base {
 			// Heading H1 count.
 			preg_match_all( '/<h1[^>]*>/i', $post->post_content, $h1_matches );
 			$h1_count = count( $h1_matches[0] );
-			if ( $h1_count === 0 ) {
+			if ( 0 === $h1_count ) {
 				++$pages_no_h1;
 			} elseif ( $h1_count > 1 ) {
 				++$pages_multiple_h1;
@@ -164,10 +164,13 @@ class Get_Seo_Stats extends \Agentic\Tool_Base {
 					break;
 				}
 			}
-			if ( ! $is_linked && $post->ID !== intval( get_option( 'page_on_front' ) ) ) {
+			if ( ! $is_linked && intval( get_option( 'page_on_front' ) ) !== $post->ID ) {
 				++$orphaned_count;
 			}
 		}
+
+		$permalink = get_option( 'permalink_structure' );
+		$permalink = $permalink ? $permalink : 'default';
 
 		return array(
 			'total_pages'               => $total,
@@ -179,7 +182,7 @@ class Get_Seo_Stats extends \Agentic\Tool_Base {
 			'images_missing_alt'        => $images_missing_alt,
 			'noindex_page_count'        => $noindex_count,
 			'search_discouraged'        => ! (bool) get_option( 'blog_public', 1 ),
-			'permalink_structure'       => get_option( 'permalink_structure' ) ?: 'default',
+			'permalink_structure'       => $permalink,
 			'schema_types_detected'     => $schema_types,
 		);
 	}

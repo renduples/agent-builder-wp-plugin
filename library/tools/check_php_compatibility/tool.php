@@ -80,7 +80,7 @@ class Check_Php_Compatibility extends \Agentic\Tool_Base {
 			);
 		}
 
-		if ( $php_major > 8 || ( $php_major === 8 && $php_minor >= 1 ) ) {
+		if ( $php_major > 8 || ( 8 === $php_major && $php_minor >= 1 ) ) {
 			$checks[] = array(
 				'pattern'  => '/FILTER_SANITIZE_STRING\b/',
 				'issue'    => 'FILTER_SANITIZE_STRING removed in PHP 8.1',
@@ -93,7 +93,7 @@ class Check_Php_Compatibility extends \Agentic\Tool_Base {
 			);
 		}
 
-		if ( $php_major > 8 || ( $php_major === 8 && $php_minor >= 2 ) ) {
+		if ( $php_major > 8 || ( 8 === $php_major && $php_minor >= 2 ) ) {
 			$checks[] = array(
 				'pattern'  => '/\$\{[a-zA-Z_]/',
 				'issue'    => 'Dynamic string interpolation ${var} deprecated in PHP 8.2',
@@ -111,7 +111,7 @@ class Check_Php_Compatibility extends \Agentic\Tool_Base {
 			);
 		}
 
-		if ( $php_major > 8 || ( $php_major === 8 && $php_minor >= 4 ) ) {
+		if ( $php_major > 8 || ( 8 === $php_major && $php_minor >= 4 ) ) {
 			// Detect implicitly nullable parameter type declarations: function foo(Foo $bar = null)
 			$checks[] = array(
 				'pattern'  => '/function\s+\w+\s*\([^)]*\b\w+\s+\$\w+\s*=\s*null/',
