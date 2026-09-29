@@ -349,7 +349,7 @@ class Approval_Rules {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table read.
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM %i WHERE enabled = %d AND ( agent_slug = %s OR agent_slug = %s ) ORDER BY priority ASC, id ASC",
+				'SELECT * FROM %i WHERE enabled = %d AND ( agent_slug = %s OR agent_slug = %s ) ORDER BY priority ASC, id ASC',
 				$table,
 				1,
 				'',

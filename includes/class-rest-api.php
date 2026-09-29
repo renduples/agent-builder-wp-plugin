@@ -1187,7 +1187,10 @@ class REST_API {
 				$proposal_id,
 				'session',
 				(string) $proposal['tool'] . '@' . (string) $proposal['agent_id'],
-				array( 'session_id' => $session_id, 'user_id' => get_current_user_id() )
+				array(
+					'session_id' => $session_id,
+					'user_id'    => get_current_user_id(),
+				)
 			);
 		} else {
 			// 'once' falls through straight to approve; session/always handled above.
