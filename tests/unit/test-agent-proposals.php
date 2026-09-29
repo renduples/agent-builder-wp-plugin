@@ -281,6 +281,32 @@ class Test_Agent_Proposals extends TestCase {
 	}
 
 	/**
+	 * cleanup_expired() compares expires_at against UTC regardless of the MySQL
+	 * session timezone. A chat proposal expires in one hour, so with the session
+	 * timezone set ahead of UTC a fresh proposal would satisfy
+	 * `expires_at < NOW()` and be expired early; against UTC_TIMESTAMP() it must
+	 * survive the cleanup pass untouched.
+	 */
+	public function test_cleanup_expired_uses_utc_when_session_timezone_is_ahead(): void {
+		global $wpdb;
+
+		$original_tz = $wpdb->get_var( 'SELECT @@session.time_zone' );
+		$wpdb->query( "SET time_zone = '+08:00'" );
+
+		try {
+			$proposal = Agent_Proposals::create( 'list_posts', array(), 'wordpress-assistant', 'Fresh across timezones' );
+
+			$flipped = Agent_Proposals::cleanup_expired();
+
+			$this->assertSame( 0, $flipped );
+			$row = $this->get_proposal_row( $proposal['id'] );
+			$this->assertSame( 'pending', $row['status'] );
+		} finally {
+			$wpdb->query( $wpdb->prepare( 'SET time_zone = %s', $original_tz ) );
+		}
+	}
+
+	/**
 	 * mark_decided() claims the pending row atomically: the first claim wins
 	 * (1 affected row), a second claim for an already-decided row loses (0 rows).
 	 */
