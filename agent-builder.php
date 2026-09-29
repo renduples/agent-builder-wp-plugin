@@ -783,6 +783,7 @@ Score_REST::init();
 Webmcp_Bridge::init();
 Inventory_REST::init();
 Notifications_REST::init();
+Routines_REST::init();
 Notifications::init();
 Admin_Bar_Inbox::init();
 Site_Health::init();

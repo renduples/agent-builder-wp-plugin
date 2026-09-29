@@ -422,17 +422,29 @@ class Agent_Lifecycle {
 	 * Every execution is wrapped with start/complete/error audit logging including
 	 * duration timing, so admins can see exactly what happened and how long it took.
 	 *
-	 * @param Agent_Base $agent Agent instance.
-	 * @param array      $task  Task definition from get_scheduled_tasks().
+	 * @param Agent_Base      $agent      Agent instance.
+	 * @param array           $task       Task definition from get_scheduled_tasks().
+	 * @param Agent_Controller|null $controller Optional controller (tests inject a fake-LLM one).
 	 * @return void
 	 */
-	public static function execute_scheduled_task( Agent_Base $agent, array $task ): void {
+	public static function execute_scheduled_task( Agent_Base $agent, array $task, ?Agent_Controller $controller = null ): void {
 		\Agentic\Plugin::get_instance()->load_chat_components();
 
 		$audit    = new Audit_Log();
 		$start    = microtime( true );
 		$agent_id = $agent->get_id();
 		$mode     = ! empty( $task['prompt'] ) ? 'autonomous' : ( ! empty( $task['tool'] ) ? 'tool' : 'direct' );
+
+		// Resolve the Deployments mirror row for this task, if one exists, so the
+		// run's source_ref carries that row's integer id (what Routines::history()
+		// queries) instead of the option-backed string task id. Built-in /
+		// code-sourced tasks have no mirror row and keep the string-id behaviour.
+		$deployment_id = class_exists( Routines::class )
+			? Routines::deployment_id_for_task( (string) ( $task['id'] ?? '' ) )
+			: null;
+		$source_ref    = null !== $deployment_id
+			? 'routine:' . $deployment_id
+			: 'routine:' . (string) ( $task['id'] ?? '' );
 
 		// Log task start.
 		$audit->log(
@@ -451,7 +463,7 @@ class Agent_Lifecycle {
 
 			// If task has a prompt, route through LLM for autonomous execution.
 			if ( ! empty( $task['prompt'] ) ) {
-				$controller = new Agent_Controller();
+				$controller = $controller ?? new Agent_Controller();
 				$controller->set_invocation_context( 'cron' );
 				$result = $controller->run_autonomous_task(
 					$agent,
@@ -459,7 +471,7 @@ class Agent_Lifecycle {
 					$task['id'],
 					array(
 						'kind'       => 'routine',
-						'source_ref' => 'routine:' . $task['id'],
+						'source_ref' => $source_ref,
 					)
 				);
 			}
@@ -495,6 +507,10 @@ class Agent_Lifecycle {
 					'result'     => is_array( $result ) ? substr( wp_json_encode( $result ), 0, 1000 ) : null,
 				)
 			);
+
+			// Reflect the outcome back into the routine's Deployments mirror row so
+			// Routines::list() shows a fresh last_run / last_status.
+			self::record_routine_completion( $deployment_id, $result );
 		} catch ( \Throwable $e ) {
 			$duration = round( microtime( true ) - $start, 3 );
 
@@ -511,6 +527,8 @@ class Agent_Lifecycle {
 				)
 			);
 
+			self::record_routine_completion( $deployment_id, null, 'error' );
+
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Debug logging only when WP_DEBUG is enabled.
 				error_log(
@@ -523,6 +541,29 @@ class Agent_Lifecycle {
 				);
 			}
 		}
+	}
+
+	/**
+	 * Write a routine's completion outcome back into its Deployments mirror row.
+	 *
+	 * @param int|null   $deployment_id Deployments row id, or null when the task has no mirror.
+	 * @param array|null $result        run_autonomous_task() result (null when no run was begun).
+	 * @param string     $status        'completed' or 'error'.
+	 * @return void
+	 */
+	private static function record_routine_completion( ?int $deployment_id, ?array $result, string $status = 'completed' ): void {
+		if ( null === $deployment_id ) {
+			return;
+		}
+
+		Deployments::update_config(
+			$deployment_id,
+			array(
+				'last_run'    => current_time( 'mysql' ),
+				'last_status' => $status,
+				'last_run_id' => $result['run_id'] ?? null,
+			)
+		);
 	}
 
 	/**
@@ -570,6 +611,7 @@ class Agent_Lifecycle {
 				'hook'     => $trigger['hook'],
 				'prompt'   => $trigger['prompt'],
 				'priority' => $trigger['priority'] ?? 10,
+				'source'   => 'user',
 			);
 
 			add_action(
@@ -756,6 +798,16 @@ class Agent_Lifecycle {
 		// Never re-enter: a listener (or a tool it runs) that writes an option and
 		// re-fires this same hook must not recurse.
 		if ( self::$listener_in_flight ) {
+			return;
+		}
+
+		// A paused user-defined trigger (Routines::pause()) must not fire. Built-in
+		// manifest listeners carry no 'source' => 'user' and pass through untouched.
+		// This gate is the real enforcement point for the event-listener flavour of
+		// a routine — not a display-only flag.
+		if ( 'user' === ( $listener['source'] ?? '' )
+			&& class_exists( Routines::class )
+			&& Routines::is_event_listener_paused( (string) ( $listener['id'] ?? '' ) ) ) {
 			return;
 		}
 
@@ -1035,9 +1087,10 @@ class Agent_Lifecycle {
 	 * @param string $listener_id Listener ID.
 	 * @param string $prompt      Base prompt.
 	 * @param array  $hook_args   Sanitized hook arguments.
+	 * @param Agent_Controller|null $controller Optional controller (tests inject a fake-LLM one).
 	 * @return void
 	 */
-	public static function handle_async_event( string $agent_id, string $listener_id, string $prompt, array $hook_args ): void {
+	public static function handle_async_event( string $agent_id, string $listener_id, string $prompt, array $hook_args, ?Agent_Controller $controller = null ): void {
 		\Agentic\Plugin::get_instance()->load_chat_components();
 
 		$registry = \Agentic_Agent_Registry::get_instance();
@@ -1049,6 +1102,18 @@ class Agent_Lifecycle {
 			return;
 		}
 
+		// Resolve the Deployments mirror row for this trigger, if one exists, so
+		// the run's source_ref carries that row's integer id (what
+		// Routines::history() queries) instead of the option-backed trigger id.
+		// Built-in manifest listeners have no mirror row and keep the listener:
+		// prefix.
+		$deployment_id = class_exists( Routines::class )
+			? Routines::deployment_id_for_trigger( $listener_id )
+			: null;
+		$source_ref    = null !== $deployment_id
+			? 'routine:' . $deployment_id
+			: 'listener:' . $listener_id;
+
 		// Build context-enriched prompt.
 		$context_json = wp_json_encode( $hook_args, JSON_PRETTY_PRINT );
 		$full_prompt  = $prompt . "\n\n[EVENT CONTEXT]\n" . $context_json;
@@ -1056,7 +1121,7 @@ class Agent_Lifecycle {
 		$start = microtime( true );
 
 		try {
-			$controller = new Agent_Controller();
+			$controller = $controller ?? new Agent_Controller();
 			$controller->set_invocation_context( 'hook' );
 			$result = $controller->run_autonomous_task(
 				$agent,
@@ -1064,7 +1129,7 @@ class Agent_Lifecycle {
 				'event_' . $listener_id,
 				array(
 					'kind'       => 'event',
-					'source_ref' => 'listener:' . $listener_id,
+					'source_ref' => $source_ref,
 				)
 			);
 
@@ -1095,6 +1160,8 @@ class Agent_Lifecycle {
 					'result'     => is_array( $result ) ? substr( wp_json_encode( $result ), 0, 1000 ) : null,
 				)
 			);
+
+			self::record_routine_completion( $deployment_id, $result );
 		} catch ( \Throwable $e ) {
 			$duration = round( microtime( true ) - $start, 3 );
 
@@ -1108,6 +1175,8 @@ class Agent_Lifecycle {
 					'file'       => $e->getFile() . ':' . $e->getLine(),
 				)
 			);
+
+			self::record_routine_completion( $deployment_id, null, 'error' );
 		}
 	}
 
