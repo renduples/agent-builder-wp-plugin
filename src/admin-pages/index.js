@@ -108,7 +108,7 @@ function AdminPagesApp() {
 			body = <AgentsView data={ data } reload={ reload } />;
 			break;
 		case 'routines':
-			body = <RoutinesView />;
+			body = <RoutinesView data={ data } />;
 			break;
 		default:
 			body = (
