@@ -696,6 +696,9 @@ function RoutineHistoryDrawer( { routine, onClose } ) {
 
 function RoutinesView( { data } ) {
 	const agents = ( data && data.agents ) || [];
+	// Single site-wide signal from the page payload — WP-Cron hasn't ticked
+	// recently, so scheduled routines won't fire until it does.
+	const cronStale = !!( data && data.cron_stale );
 	const [ routines, setRoutines ] = useState( [] );
 	const [ loading, setLoading ] = useState( true );
 	const [ error, setError ] = useState( '' );
@@ -1037,6 +1040,18 @@ function RoutinesView( { data } ) {
 
 	return (
 		<>
+			{ cronStale && (
+				<Notice status="warning" isDismissible={ false }>
+					{ __(
+						'Scheduled background tasks are overdue (no recent cron tick). Routines on a schedule will not run until WP-Cron ticks again.',
+						'agent-builder'
+					) }{ ' ' }
+					<a href="tools.php?page=health-check">
+						{ __( 'Check Site Health', 'agent-builder' ) }
+					</a>
+				</Notice>
+			) }
+
 			{ notice.message && (
 				<Notice
 					status={ notice.status }

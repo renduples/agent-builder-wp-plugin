@@ -633,21 +633,28 @@ class Job_Manager {
 	 *
 	 * Shared by GET /runs (Runs_REST) and the hourly health check.
 	 *
+	 * Jobs already old enough to be marked abandoned (created_at at or before the
+	 * ABANDONED_PENDING_MAX_HOURS threshold) are excluded: the health check's
+	 * abandoned-marking pass runs in the same tick, so re-arming such a job would
+	 * just schedule + spawn a cron event that is immediately thrown away.
+	 *
 	 * @param int $older_than_seconds Only consider jobs at least this old.
 	 * @return int Number of jobs re-scheduled.
 	 */
 	public static function reschedule_stale_pending_jobs( int $older_than_seconds = self::PENDING_RESCHEDULE_GRACE_SECONDS ): int {
 		global $wpdb;
-		$table  = self::get_table_name();
-		$cutoff = gmdate( 'Y-m-d H:i:s', time() - max( 0, $older_than_seconds ) );
+		$table             = self::get_table_name();
+		$cutoff            = gmdate( 'Y-m-d H:i:s', time() - max( 0, $older_than_seconds ) );
+		$abandon_threshold = gmdate( 'Y-m-d H:i:s', time() - ( self::ABANDONED_PENDING_MAX_HOURS * 3600 ) );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table read; %i quotes the table name.
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				'SELECT id FROM %i WHERE status = %s AND created_at < %s LIMIT 200',
+				'SELECT id FROM %i WHERE status = %s AND created_at < %s AND created_at >= %s LIMIT 200',
 				$table,
 				self::STATUS_PENDING,
-				$cutoff
+				$cutoff,
+				$abandon_threshold
 			)
 		);
 

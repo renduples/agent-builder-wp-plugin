@@ -42,6 +42,7 @@ class Routines_Payload {
 			'description' => __( 'Scheduled tasks and event listeners that run your agents automatically. Pause, resume, test, or delete them here.', 'agent-builder' ),
 			'docs_url'    => 'https://agentic-plugin.com/documentation/routines/',
 			'agents'      => $agents,
+			'cron_stale'  => \Agentic\Site_Health::cron_is_stale(),
 		);
 	}
 }
