@@ -125,7 +125,7 @@ class Site_Health {
 	 *
 	 * @return bool True when cron is stale (missing tick, or older than the threshold).
 	 */
-	private static function cron_is_stale(): bool {
+	public static function cron_is_stale(): bool {
 		$last_tick = (int) get_option( self::OPTION_LAST_TICK, 0 );
 
 		if ( 0 === $last_tick ) {
