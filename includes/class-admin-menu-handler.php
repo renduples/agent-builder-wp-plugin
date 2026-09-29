@@ -116,6 +116,18 @@ class Admin_Menu_Handler {
 			fn() => $this->render_page( 'tasks' )
 		);
 
+		// Routines — the scheduled tasks and event listeners a user has set up
+		// to run agents automatically. Positioned next to Tasks; WordPress has
+		// no true "submenu of a submenu", so this sits as a sibling entry.
+		add_submenu_page(
+			'agent-builder',
+			__( 'Agent Builder — Routines', 'agent-builder' ),
+			__( 'Routines', 'agent-builder' ),
+			'agent_builder_manage_agents',
+			'agentic-routines',
+			fn() => $this->render_page( 'routines' )
+		);
+
 		$agentic_agents_menu_title = __( 'Agents', 'agent-builder' );
 		if ( class_exists( '\Agentic\Agent_Updates' ) ) {
 			$agentic_agents_update_count = \Agentic\Agent_Updates::count();
@@ -1557,6 +1569,10 @@ class Admin_Menu_Handler {
 			),
 			'agents'        => array(
 				'page' => 'agents',
+				'tab'  => '',
+			),
+			'routines'      => array(
+				'page' => 'routines',
 				'tab'  => '',
 			),
 		);

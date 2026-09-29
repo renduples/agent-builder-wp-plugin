@@ -23,6 +23,7 @@ use Agentic\Admin_Pages\Agents_Payload;
 use Agentic\Admin_Pages\Approvals_Payload;
 use Agentic\Admin_Pages\Deployment_Payload;
 use Agentic\Admin_Pages\Logs_Payload;
+use Agentic\Admin_Pages\Routines_Payload;
 use Agentic\Admin_Pages\Safety_Center_Payload;
 use Agentic\Admin_Pages\Skills_Payload;
 use Agentic\Admin_Pages\Tools_Payload;
@@ -186,7 +187,7 @@ class Admin_Pages_REST {
 			return current_user_can( 'agent_builder_manage_tools' );
 		}
 
-		if ( 'approvals' === $page || 'deployment' === $page || 'agents' === $page ) {
+		if ( 'approvals' === $page || 'deployment' === $page || 'agents' === $page || 'routines' === $page ) {
 			return current_user_can( 'agent_builder_manage_agents' );
 		}
 
@@ -243,6 +244,10 @@ class Admin_Pages_REST {
 			),
 			'agents'        => array(
 				'class' => Agents_Payload::class,
+				'args'  => array(),
+			),
+			'routines'      => array(
+				'class' => Routines_Payload::class,
 				'args'  => array(),
 			),
 		);

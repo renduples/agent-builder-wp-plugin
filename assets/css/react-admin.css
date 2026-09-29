@@ -1534,6 +1534,18 @@
 	margin-left: auto;
 }
 
+/* Routines — core list screen toolbar (mirrors the Agents toolbar above). */
+.agentic-routines-toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 16px;
+}
+.agentic-routines-toolbar .agentic-react-muted {
+	margin-left: auto;
+}
+
 .agentic-agents-grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
