@@ -69,10 +69,10 @@ class Check_Publicly_Accessible_Files extends \Agentic\Tool_Base {
 				if ( $file->isDot() || $file->isDir() ) {
 					continue;
 				}
-				if ( in_array( strtolower( $file->getExtension() ), array( 'sql', 'gz' ), true )
-					&& str_ends_with( strtolower( $file->getFilename() ), '.sql' )
+				if ( ( in_array( strtolower( $file->getExtension() ), array( 'sql', 'gz' ), true )
+					&& str_ends_with( strtolower( $file->getFilename() ), '.sql' ) )
 					|| str_ends_with( strtolower( $file->getFilename() ), '.sql.gz' ) ) {
-					$rel                = ( $scan_dir === WP_CONTENT_DIR )
+					$rel                = ( WP_CONTENT_DIR === $scan_dir )
 						? 'wp-content/' . $file->getFilename()
 						: $file->getFilename();
 					$candidates[ $rel ] = $file->getPathname();

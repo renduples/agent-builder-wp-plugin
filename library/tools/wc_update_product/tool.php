@@ -159,8 +159,10 @@ class Wc_Update_Product extends \Agentic\Tool_Base {
 				if ( is_numeric( $cat ) ) {
 					$cat_ids[] = (int) $cat;
 				} else {
-					$term = get_term_by( 'name', $cat, 'product_cat' )
-						?: get_term_by( 'slug', sanitize_title( $cat ), 'product_cat' );
+					$term = get_term_by( 'name', $cat, 'product_cat' );
+					if ( ! $term ) {
+						$term = get_term_by( 'slug', sanitize_title( $cat ), 'product_cat' );
+					}
 					if ( $term ) {
 						$cat_ids[] = $term->term_id;
 					}

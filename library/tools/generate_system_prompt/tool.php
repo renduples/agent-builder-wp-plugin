@@ -107,10 +107,10 @@ class Generate_System_Prompt extends Tool_Base {
 			"2. Stay strictly inside your defined expertise. If something is outside your scope, say so clearly and suggest the right specialist.\n" .
 			"3. Be clear, structured, and actionable. Use headings, bullets, and examples when they help.\n" .
 			"4. When performing write operations, be conservative and confirm intent.\n" .
-			"5. Explain what you did and why when it adds value." .
+			'5. Explain what you did and why when it adds value.' .
 			$constraints_section .
 			$tools_section . "\n\n" .
-			"Follow WordPress best practices and the Agent Builder philosophy in everything you do.";
+			'Follow WordPress best practices and the Agent Builder philosophy in everything you do.';
 
 		return array(
 			'system_prompt' => $prompt,

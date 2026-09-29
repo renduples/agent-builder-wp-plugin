@@ -66,7 +66,7 @@ class List_Library_Agents extends Tool_Base {
 		$dirs   = @scandir( $library_path );
 
 		foreach ( $dirs as $dir ) {
-			if ( $dir === '.' || $dir === '..' ) {
+			if ( '.' === $dir || '..' === $dir ) {
 				continue;
 			}
 

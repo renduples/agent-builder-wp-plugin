@@ -116,7 +116,8 @@ class Rewrite_For_Readability extends \Agentic\Tool_Base {
 		}
 
 		$hierarchy_issues = array();
-		for ( $i = 1; $i < count( $heading_levels ); $i++ ) {
+		$heading_count    = count( $heading_levels );
+		for ( $i = 1; $i < $heading_count; $i++ ) {
 			$prev = $heading_levels[ $i - 1 ];
 			$curr = $heading_levels[ $i ];
 			if ( $curr > $prev + 1 ) {

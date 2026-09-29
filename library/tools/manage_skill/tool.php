@@ -83,7 +83,7 @@ class Manage_Skill extends \Agentic\Tool_Base {
 				),
 				'description'   => array(
 					'type'        => 'string',
-					'description' => "The trigger description — what request should make an agent use this skill, and what NOT to trigger on. Shown to agents in their prompt index, so it must be specific. Required for create unless a full SKILL.md is passed via content.",
+					'description' => 'The trigger description — what request should make an agent use this skill, and what NOT to trigger on. Shown to agents in their prompt index, so it must be specific. Required for create unless a full SKILL.md is passed via content.',
 				),
 				'allowed_tools' => array(
 					'type'        => 'string',
@@ -370,7 +370,7 @@ class Manage_Skill extends \Agentic\Tool_Base {
 			return array( 'error' => "Only built-in skills can be reset — this one was created locally, so there's no shipped version to restore." );
 		}
 
-		$source_id = (string) ( $skill['source_id'] ?: $skill['slug'] );
+		$source_id = (string) ( $skill['source_id'] ? $skill['source_id'] : $skill['slug'] );
 		$bundled   = Skills_Registry::get_bundled_content( $source_id );
 		if ( null === $bundled ) {
 			return array( 'error' => 'Could not find the shipped version of this skill to restore.' );

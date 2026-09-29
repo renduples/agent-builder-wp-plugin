@@ -71,6 +71,7 @@ class Lock_User_Account extends Tool_Base {
 
 		// Prevent locking administrators unless current user is also admin and not locking themselves.
 		if ( in_array( 'administrator', (array) $user->roles, true ) ) {
+			// phpcs:ignore WordPress.WP.Capabilities.RoleFound -- deliberate role-name check; a capability swap would change lock behavior.
 			if ( ! current_user_can( 'administrator' ) ) {
 				return array( 'error' => 'You must be an administrator to lock another administrator account.' );
 			}
@@ -98,7 +99,7 @@ class Lock_User_Account extends Tool_Base {
 			'user_id'            => $user_id,
 			'user_display_name'  => $user->display_name,
 			'sessions_destroyed' => true,
-			'reason'             => $reason ?: null,
+			'reason'             => $reason ? $reason : null,
 			'note'               => 'To unlock: restore the user\'s role via wp-admin Users screen or wp_update_user(). Delete the agentic_account_locked usermeta to clear the lock flag.',
 		);
 	}

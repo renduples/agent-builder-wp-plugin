@@ -116,7 +116,7 @@ class List_Comments extends \Agentic\Tool_Base {
 			$results[]  = array(
 				'id'           => (int) $comment->comment_ID,
 				'post_id'      => (int) $comment->comment_post_ID,
-				'post_title'   => $post_title ?: '(no title)',
+				'post_title'   => $post_title ? $post_title : '(no title)',
 				'author'       => $comment->comment_author,
 				'author_email' => $comment->comment_author_email,
 				'author_url'   => $comment->comment_author_url,
