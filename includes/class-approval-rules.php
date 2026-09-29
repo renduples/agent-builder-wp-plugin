@@ -137,14 +137,23 @@ class Approval_Rules {
 	/**
 	 * Validate the fields a caller wants to write.
 	 *
-	 * Checks only the fields present in `$data`: `effect` must be `ask`, `allow`,
-	 * or `deny`, and `agent_slug` must be `''` (all agents) or a slug registered
-	 * in the agent registry. Returns null when everything present is valid.
+	 * Checks only the fields present in `$data`: `rule_text` must not be empty,
+	 * `effect` must be `ask`, `allow`, or `deny`, and `agent_slug` must be `''`
+	 * (all agents) or a slug registered in the agent registry. Returns null when
+	 * everything present is valid.
 	 *
 	 * @param array $data Fields to validate (any subset).
 	 * @return \WP_Error|null Error to return, or null when valid.
 	 */
 	public static function validate( array $data ): ?\WP_Error {
+		if ( array_key_exists( 'rule_text', $data ) && '' === trim( (string) $data['rule_text'] ) ) {
+			return new \WP_Error(
+				'missing_rule_text',
+				__( 'A rule description is required.', 'agent-builder' ),
+				array( 'status' => 400 )
+			);
+		}
+
 		if ( array_key_exists( 'effect', $data ) ) {
 			$effect = (string) $data['effect'];
 			if ( ! in_array( $effect, self::EFFECTS, true ) ) {

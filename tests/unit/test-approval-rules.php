@@ -23,9 +23,11 @@ use Agentic\User_Roles;
 class Test_Approval_Rules extends TestCase {
 
 	/**
-	 * Agent slug registered into the shared registry for agent_slug validation.
+	 * Test-only agent slug registered into the shared registry for agent_slug
+	 * validation. Distinct from every bundled agent slug so that registering and
+	 * unregistering it here can never clobber a real instance other tests share.
 	 */
-	const AGENT = 'wordpress-assistant';
+	const AGENT = 'approval-rules-test-agent';
 
 	/**
 	 * Register a test agent and reset role settings before each test.
@@ -302,6 +304,39 @@ class Test_Approval_Rules extends TestCase {
 		$resp = $this->request( 'POST', '/approval-rules', array( 'effect' => 'deny' ) );
 		$this->assertSame( 400, $resp->get_status() );
 		$this->assertSame( 'missing_rule_text', $resp->as_error()->get_error_code() );
+	}
+
+	/**
+	 * PUT /approval-rules/{id} rejects an empty rule_text with 400, matching
+	 * create, and leaves the stored rule_text unchanged.
+	 */
+	public function test_update_rejects_missing_rule_text(): void {
+		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $admin );
+
+		$id = Approval_Rules::create( array( 'rule_text' => 'Original.', 'effect' => 'ask' ) );
+
+		$resp = $this->request( 'PUT', '/approval-rules/' . $id, array( 'rule_text' => '' ) );
+		$this->assertSame( 400, $resp->get_status() );
+		$this->assertSame( 'missing_rule_text', $resp->as_error()->get_error_code() );
+		$this->assertSame( 'Original.', Approval_Rules::get( $id )['rule_text'] );
+	}
+
+	/**
+	 * PUT and DELETE to a non-existent rule id return 404, driven by the model's
+	 * own "no row affected" return rather than a separate pre-check.
+	 */
+	public function test_update_and_delete_missing_return_404(): void {
+		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $admin );
+
+		$update = $this->request( 'PUT', '/approval-rules/999999', array( 'effect' => 'deny' ) );
+		$this->assertSame( 404, $update->get_status() );
+		$this->assertSame( 'not_found', $update->as_error()->get_error_code() );
+
+		$delete = $this->request( 'DELETE', '/approval-rules/999999' );
+		$this->assertSame( 404, $delete->get_status() );
+		$this->assertSame( 'not_found', $delete->as_error()->get_error_code() );
 	}
 
 	// -------------------------------------------------------------------------
