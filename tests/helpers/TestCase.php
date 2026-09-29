@@ -95,6 +95,11 @@ class TestCase extends WP_UnitTestCase {
 		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$notifications_table}'" ) === $notifications_table ) {
 			$wpdb->query( "DELETE FROM {$notifications_table}" );
 		}
+
+		$proposals_table = $wpdb->prefix . 'agent_builder_proposals';
+		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$proposals_table}'" ) === $proposals_table ) {
+			$wpdb->query( "DELETE FROM {$proposals_table}" );
+		}
 	}
 
 	/**
