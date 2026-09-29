@@ -128,7 +128,7 @@ class Check_Brand_Signals extends \Agentic\Tool_Base {
 					foreach ( $pm[0] as $phone ) {
 						$cleaned = preg_replace( '/\s+/', '', $phone );
 						if ( strlen( $cleaned ) >= 7 ) {
-							$phones_found[ $slug ?: 'home' ][] = $cleaned;
+							$phones_found[ $slug ? $slug : 'home' ][] = $cleaned;
 						}
 					}
 				}
@@ -225,7 +225,7 @@ class Check_Brand_Signals extends \Agentic\Tool_Base {
 
 		// 6. Tagline (15 pts).
 		$tagline = get_bloginfo( 'description' );
-		if ( ! empty( $tagline ) && $tagline !== 'Just another WordPress site' ) {
+		if ( ! empty( $tagline ) && 'Just another WordPress site' !== $tagline ) {
 			$score   += 15;
 			$checks[] = array(
 				'check'  => 'Tagline',

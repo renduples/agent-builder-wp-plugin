@@ -121,7 +121,7 @@ class Save_Video_To_Media extends \Agentic\Tool_Base {
 			'tmp_name' => $tmp,
 		);
 
-		$attach_id = media_handle_sideload( $file_array, $post_id, $title ?: $filename );
+		$attach_id = media_handle_sideload( $file_array, $post_id, $title ? $title : $filename );
 
 		wp_delete_file( $tmp );
 

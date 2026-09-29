@@ -109,7 +109,7 @@ class Preview_Robots_Txt_Update extends \Agentic\Tool_Base {
 
 		return array(
 			'success'    => true,
-			'current'    => $current ?: '(no robots.txt — will be created)',
+			'current'    => $current ? $current : '(no robots.txt — will be created)',
 			'proposed'   => $new_content,
 			'added_bots' => array_values( array_filter( $additions, fn( $l ) => str_starts_with( $l, 'User-agent' ) ) ),
 			'source'     => $robots['source'],

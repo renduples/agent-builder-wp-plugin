@@ -89,12 +89,12 @@ class Read_Docx extends \Agentic\Tool_Base {
 		$include_tables = $arguments['include_tables'] ?? true;
 
 		try {
-			$phpWord = \PhpOffice\PhpWord\IOFactory::load( $path );
+			$php_word = \PhpOffice\PhpWord\IOFactory::load( $path );
 		} catch ( \Exception $e ) {
 			return array( 'error' => 'Could not load document: ' . $e->getMessage() );
 		}
 
-		$sections   = $phpWord->getSections();
+		$sections   = $php_word->getSections();
 		$full_text  = '';
 		$headings   = array();
 		$tables     = array();

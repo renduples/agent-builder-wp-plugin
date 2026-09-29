@@ -65,7 +65,7 @@ class Get_Theme_Details extends \Agentic\Tool_Base {
 			'parent_theme'   => $parent ? $parent->get( 'Name' ) : null,
 			'is_block_theme' => $is_block_theme,
 			'text_domain'    => $theme->get( 'TextDomain' ),
-			'tags'           => $theme->get( 'Tags' ) ?: array(),
+			'tags'           => $theme->get( 'Tags' ) ? $theme->get( 'Tags' ) : array(),
 			'status'         => $theme->get( 'Status' ),
 		);
 

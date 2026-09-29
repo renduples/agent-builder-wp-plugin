@@ -180,8 +180,11 @@ class Fix_Orphan_Pages extends \Agentic\Tool_Base {
 		$tool_loader = \Agentic\Tool_Loader::get_instance();
 
 		foreach ( $orphans as $orphan ) {
-			$orphan_url   = get_permalink( $orphan->ID );
-			$orphan_path  = wp_parse_url( $orphan_url, PHP_URL_PATH ) ?: $orphan_url;
+			$orphan_url  = get_permalink( $orphan->ID );
+			$orphan_path = wp_parse_url( $orphan_url, PHP_URL_PATH );
+			if ( ! $orphan_path ) {
+				$orphan_path = $orphan_url;
+			}
 			$orphan_title = $orphan->post_title;
 
 			// Score each hub for relevance.
@@ -218,7 +221,7 @@ class Fix_Orphan_Pages extends \Agentic\Tool_Base {
 				$score  += count( array_intersect( $o_words, $h_words ) ) * 2;
 
 				if ( ( $outbound_count[ $hub->ID ] ?? 0 ) >= 5 ) {
-					$score += 1;
+					++$score;
 				}
 
 				if ( $score > 0 ) {
