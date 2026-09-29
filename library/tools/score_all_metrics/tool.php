@@ -96,8 +96,8 @@ class Score_All_Metrics extends \Agentic\Tool_Base {
 		// M4: Topical Authority & Content Depth.
 		$topics    = $loader->execute( 'analyze_topic_coverage', array() );
 		$gap_count = count( $topics['weak_categories'] ?? array() );
-		$m4_score  = $gap_count === 0 ? 5 : ( $gap_count <= 3 ? 3 : 1 );
-		$metrics[] = $this->metric_result( 4, 'Topical Authority & Depth', $m4_score, $m4_score >= 4 ? 'pass' : ( $m4_score >= 3 ? 'warn' : 'fail' ), $gap_count === 0 ? 'All topic clusters have adequate coverage.' : "{$gap_count} topic areas need more content." );
+		$m4_score  = 0 === $gap_count ? 5 : ( $gap_count <= 3 ? 3 : 1 );
+		$metrics[] = $this->metric_result( 4, 'Topical Authority & Depth', $m4_score, $m4_score >= 4 ? 'pass' : ( $m4_score >= 3 ? 'warn' : 'fail' ), 0 === $gap_count ? 'All topic clusters have adequate coverage.' : "{$gap_count} topic areas need more content." );
 
 		// M5: User Engagement Signals.
 		$text_only_pct = $content['text_only_post_pct'] ?? 0;
@@ -107,8 +107,8 @@ class Score_All_Metrics extends \Agentic\Tool_Base {
 
 		// M6: Internal Link Quality.
 		$orphaned  = $seo['orphaned_pages'] ?? 0;
-		$m6_score  = $orphaned === 0 ? 5 : ( $orphaned <= 5 ? 3 : 1 );
-		$metrics[] = $this->metric_result( 6, 'Internal Link Quality', $m6_score, $m6_score >= 4 ? 'pass' : ( $m6_score >= 3 ? 'warn' : 'fail' ), $orphaned === 0 ? 'No orphan pages.' : "{$orphaned} orphan pages with no inbound links." );
+		$m6_score  = 0 === $orphaned ? 5 : ( $orphaned <= 5 ? 3 : 1 );
+		$metrics[] = $this->metric_result( 6, 'Internal Link Quality', $m6_score, $m6_score >= 4 ? 'pass' : ( $m6_score >= 3 ? 'warn' : 'fail' ), 0 === $orphaned ? 'No orphan pages.' : "{$orphaned} orphan pages with no inbound links." );
 
 		// M7: Content Freshness.
 		$stale_pct = $content['pct_older_than_12_months'] ?? 0;
@@ -122,7 +122,7 @@ class Score_All_Metrics extends \Agentic\Tool_Base {
 
 		// M9: Content Structure & Readability.
 		$heading_issues = ( $seo['pages_no_h1'] ?? 0 ) + ( $seo['pages_multiple_h1'] ?? 0 );
-		$m9_score       = $heading_issues === 0 && $avg_words >= 400 ? 5 : ( $heading_issues <= 5 ? 3 : 1 );
+		$m9_score       = 0 === $heading_issues && $avg_words >= 400 ? 5 : ( $heading_issues <= 5 ? 3 : 1 );
 		$metrics[]      = $this->metric_result( 9, 'Content Structure & Readability', $m9_score, $m9_score >= 4 ? 'pass' : ( $m9_score >= 3 ? 'warn' : 'fail' ), "{$heading_issues} heading issues, avg {$avg_words} words." );
 
 		// M10: Core Web Vitals — proxy from caching & asset signals.
@@ -150,8 +150,8 @@ class Score_All_Metrics extends \Agentic\Tool_Base {
 		// M13: Authorship & Credentials.
 		$auth_result = $loader->execute( 'check_authorship', array() );
 		$auth_issues = count( $auth_result['authors_missing_bio'] ?? array() );
-		$m13_score   = $auth_issues === 0 ? 5 : ( $auth_issues <= 2 ? 3 : 1 );
-		$metrics[]   = $this->metric_result( 13, 'Authorship & Credentials', $m13_score, $m13_score >= 4 ? 'pass' : ( $m13_score >= 3 ? 'warn' : 'fail' ), $auth_issues === 0 ? 'All authors have bios.' : "{$auth_issues} authors missing bios." );
+		$m13_score   = 0 === $auth_issues ? 5 : ( $auth_issues <= 2 ? 3 : 1 );
+		$metrics[]   = $this->metric_result( 13, 'Authorship & Credentials', $m13_score, $m13_score >= 4 ? 'pass' : ( $m13_score >= 3 ? 'warn' : 'fail' ), 0 === $auth_issues ? 'All authors have bios.' : "{$auth_issues} authors missing bios." );
 
 		// M14: Brand Signals.
 		$brand       = $loader->execute( 'check_brand_signals', array() );
@@ -193,8 +193,8 @@ class Score_All_Metrics extends \Agentic\Tool_Base {
 		// M19: Content Consistency.
 		$consistency = $loader->execute( 'check_content_consistency', array() );
 		$issue_count = count( $consistency['issues'] ?? array() );
-		$m19_score   = $issue_count === 0 ? 5 : ( $issue_count <= 3 ? 3 : 1 );
-		$metrics[]   = $this->metric_result( 19, 'Content Consistency', $m19_score, $m19_score >= 4 ? 'pass' : ( $m19_score >= 3 ? 'warn' : 'fail' ), $issue_count === 0 ? 'No consistency issues detected.' : "{$issue_count} consistency issues found." );
+		$m19_score   = 0 === $issue_count ? 5 : ( $issue_count <= 3 ? 3 : 1 );
+		$metrics[]   = $this->metric_result( 19, 'Content Consistency', $m19_score, $m19_score >= 4 ? 'pass' : ( $m19_score >= 3 ? 'warn' : 'fail' ), 0 === $issue_count ? 'No consistency issues detected.' : "{$issue_count} consistency issues found." );
 
 		// M20: AI Crawler Accessibility.
 		$blanket   = $ai['blanket_block'] ?? false;
@@ -208,9 +208,9 @@ class Score_All_Metrics extends \Agentic\Tool_Base {
 		$max_score   = count( $metrics ) * 5;
 		$overall     = $max_score > 0 ? round( ( $total_score / $max_score ) * 100 ) : 0;
 
-		$pass_count = count( array_filter( $metrics, fn( $m ) => $m['status'] === 'pass' ) );
-		$warn_count = count( array_filter( $metrics, fn( $m ) => $m['status'] === 'warn' ) );
-		$fail_count = count( array_filter( $metrics, fn( $m ) => $m['status'] === 'fail' ) );
+		$pass_count = count( array_filter( $metrics, fn( $m ) => 'pass' === $m['status'] ) );
+		$warn_count = count( array_filter( $metrics, fn( $m ) => 'warn' === $m['status'] ) );
+		$fail_count = count( array_filter( $metrics, fn( $m ) => 'fail' === $m['status'] ) );
 
 		// Priority fixes: lowest-scoring metrics.
 		$sorted = $metrics;

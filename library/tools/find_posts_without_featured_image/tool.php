@@ -71,7 +71,7 @@ class Find_Posts_Without_Featured_Image extends Tool_Base {
 				'posts_per_page' => $limit,
 				'fields'         => 'ids',
 				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-			'meta_query'     => array(
+				'meta_query'     => array(
 					array(
 						'key'     => '_thumbnail_id',
 						'compare' => 'NOT EXISTS',

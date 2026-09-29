@@ -322,6 +322,63 @@ class Test_Routines_REST extends TestCase {
 		$this->assertSame( 'rest_routine_not_found', $resp->get_data()['code'] );
 	}
 
+	/**
+	 * POST /routines/{id}/test-run returns a 400 when the run produced no run id
+	 * (e.g. no LLM is configured), rather than a 200 with a hollow body.
+	 */
+	public function test_run_without_llm_returns_400(): void {
+		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $admin );
+
+		update_option( 'agent_builder_llm_provider', 'nonexistent' );
+		update_option( 'agent_builder_model', 'gpt-4.1-mini' );
+
+		$create = $this->request(
+			'POST',
+			'/routines',
+			array(
+				'kind'       => 'scheduled_task',
+				'agent_slug' => self::AGENT,
+				'prompt'     => 'Do the thing',
+				'schedule'   => 'daily',
+			)
+		);
+		$this->assertSame( 201, $create->get_status() );
+		$id = $create->get_data()['routine']['id'];
+
+		$run = $this->request( 'POST', "/routines/{$id}/test-run" );
+		$this->assertSame( 400, $run->get_status(), 'test-run without a run id is a 400, not a 200' );
+		$this->assertSame( 'rest_routine_action_failed', $run->get_data()['code'] );
+	}
+
+	/**
+	 * POST /routines/{id}/resume returns a 400 when the routine's schedule is
+	 * unknown and it cannot be re-scheduled.
+	 */
+	public function test_resume_unknown_schedule_returns_400(): void {
+		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $admin );
+
+		$id = Deployments::save(
+			array(
+				'type'       => Deployments::TYPE_SCHEDULED_TASK,
+				'agent_slug' => self::AGENT,
+				'label'      => 'Bad schedule',
+				'enabled'    => 1,
+				'source'     => Deployments::SOURCE_ADMIN,
+				'config'     => array(
+					'task_id' => 'ut_bad_schedule',
+					'schedule' => 'not_a_real_schedule',
+					'source'  => 'user',
+				),
+			)
+		);
+
+		$resp = $this->request( 'POST', "/routines/{$id}/resume" );
+		$this->assertSame( 400, $resp->get_status(), 'resume with an unknown schedule is a 400, not a 200' );
+		$this->assertSame( 'rest_routine_action_failed', $resp->get_data()['code'] );
+	}
+
 	// -------------------------------------------------------------------------
 	// Helpers
 	// -------------------------------------------------------------------------

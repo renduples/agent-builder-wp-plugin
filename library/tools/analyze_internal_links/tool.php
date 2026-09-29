@@ -152,10 +152,10 @@ class Analyze_Internal_Links extends \Agentic\Tool_Base {
 				'outbound_links' => $out_count,
 			);
 
-			if ( $in_count === 0 && $p->ID !== $home_id ) {
+			if ( 0 === $in_count && $p->ID !== $home_id ) {
 				$orphans[] = $entry;
 			}
-			if ( $out_count === 0 ) {
+			if ( 0 === $out_count ) {
 				$dead_ends[] = $entry;
 			}
 			if ( $out_count >= 5 ) {
