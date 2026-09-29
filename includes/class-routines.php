@@ -142,9 +142,10 @@ class Routines {
 	/**
 	 * Run history for a routine.
 	 *
-	 * NOTE: no M14 task creates runs with the `routine:<id>` source_ref yet —
-	 * that wiring lands in the next M14 task (execution wiring). Until then
-	 * this returns an empty array; it is correct now, just empty.
+	 * Runs are written with a `routine:<id>` source_ref (id = the Deployments
+	 * row's own integer id, see Agent_Lifecycle::execute_scheduled_task() /
+	 * handle_async_event()), so this query matches the runs those execution
+	 * paths actually create.
 	 *
 	 * @param int $id    Routine (Deployments row) ID.
 	 * @param int $limit Maximum number of runs to return.
@@ -215,5 +216,48 @@ class Routines {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Find the Deployments row id that mirrors a user-defined scheduled task,
+	 * matched on its option-backed task id (config.task_id).
+	 *
+	 * Mirrors the scan Agent_Lifecycle::save_user_scheduled_task() /
+	 * delete_user_scheduled_task() use to locate the mirror row, so the id
+	 * linkage stays identical to how those rows are written.
+	 *
+	 * @param string $task_id Option-backed task id (e.g. us_…).
+	 * @return int|null The Deployments row id, or null when no mirror row exists
+	 *                  (a built-in/code-sourced task with no Deployments row).
+	 */
+	public static function deployment_id_for_task( string $task_id ): ?int {
+		foreach ( Deployments::all( Deployments::TYPE_SCHEDULED_TASK ) as $row ) {
+			if ( (string) ( $row['config']['task_id'] ?? '' ) === $task_id ) {
+				return (int) $row['id'];
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Find the Deployments row id that mirrors a user-defined event listener,
+	 * matched on its option-backed trigger id (config.trigger_id).
+	 *
+	 * Mirrors the scan Agent_Lifecycle::save_user_trigger() /
+	 * delete_user_trigger() use to locate the mirror row.
+	 *
+	 * @param string $trigger_id Option-backed trigger id (e.g. ut_…).
+	 * @return int|null The Deployments row id, or null when no mirror row exists
+	 *                  (a built-in manifest listener with no Deployments row).
+	 */
+	public static function deployment_id_for_trigger( string $trigger_id ): ?int {
+		foreach ( Deployments::all( Deployments::TYPE_EVENT_LISTENER ) as $row ) {
+			if ( (string) ( $row['config']['trigger_id'] ?? '' ) === $trigger_id ) {
+				return (int) $row['id'];
+			}
+		}
+
+		return null;
 	}
 }
