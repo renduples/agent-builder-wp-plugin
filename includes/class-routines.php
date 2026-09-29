@@ -32,7 +32,7 @@ class Routines {
 	 * @param array $row Decoded Deployments row.
 	 * @return bool
 	 */
-	private static function is_routine( array $row ): bool {
+	public static function is_routine( array $row ): bool {
 		$type = (string) ( $row['type'] ?? '' );
 		if ( Deployments::TYPE_SCHEDULED_TASK !== $type && Deployments::TYPE_EVENT_LISTENER !== $type ) {
 			return false;
@@ -55,12 +55,23 @@ class Routines {
 				if ( ! self::is_routine( $row ) ) {
 					continue;
 				}
-				$row['next_run'] = self::next_run( (int) $row['id'] );
-				$routines[]      = $row;
+				$routines[] = self::decorate( $row );
 			}
 		}
 
 		return $routines;
+	}
+
+	/**
+	 * Decorate a single Deployments row with its computed `next_run`, the same
+	 * decoration list() applies to every routine.
+	 *
+	 * @param array $row Decoded Deployments row.
+	 * @return array Row with `next_run` set.
+	 */
+	public static function decorate( array $row ): array {
+		$row['next_run'] = self::next_run( (int) $row['id'] );
+		return $row;
 	}
 
 	/**
