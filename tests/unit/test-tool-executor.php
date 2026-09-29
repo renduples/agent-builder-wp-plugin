@@ -12,6 +12,7 @@
 namespace Agentic\Tests;
 
 use Agentic\Abilities_Manifest;
+use Agentic\Agent_Base;
 use Agentic\Agent_Run;
 use Agentic\Approval_Queue;
 use Agentic\Audit_Log;
@@ -683,6 +684,245 @@ class Test_Tool_Executor extends TestCase {
 		$this->assertArrayHasKey( 'error', $result );
 		$this->assertStringContainsString( 'Unknown tool', $result['error'] );
 		$this->assertSame( 0, $calls );
+	}
+
+	/**
+	 * execute_approved() runs a readonly tool through the tool_loader path and
+	 * — because the tool is readonly — writes nothing to the operations ledger.
+	 */
+	public function test_execute_approved_runs_readonly_tool_without_ledger_write(): void {
+		$result = $this->make_executor()->execute_approved(
+			array(
+				'tool'     => 'list_posts',
+				'params'   => array(),
+				'agent_id' => 'test-agent',
+			)
+		);
+
+		$this->assertIsArray( $result );
+
+		$queue   = new Approval_Queue();
+		$recent  = $queue->get_recent( array( 'agent_id' => 'test-agent' ) );
+		$actions = array_column( $recent, 'action' );
+		$this->assertNotContains( 'list_posts', $actions );
+	}
+
+	/**
+	 * execute_approved() actually runs a non-readonly tool (bypassing the gate,
+	 * as the action is already approved) and logs it to the operations ledger
+	 * with the provided risk level.
+	 */
+	public function test_execute_approved_logs_executed_for_non_readonly_tool(): void {
+		$result = $this->make_executor()->execute_approved(
+			array(
+				'tool'       => 'db_update_option',
+				'params'     => array( 'name' => 'agent_builder_test_approved_opt', 'value' => 'approved-value' ),
+				'agent_id'   => 'test-agent',
+				'risk_level' => Risk_Level::HIGH,
+				'mode'       => 'supervised',
+				'invocation' => 'chat',
+			)
+		);
+
+		$this->assertSame( 'approved-value', get_option( 'agent_builder_test_approved_opt' ) );
+		$this->assertTrue( $result['updated'] ?? false );
+
+		$queue  = new Approval_Queue();
+		$recent = $queue->get_recent( array( 'agent_id' => 'test-agent' ) );
+		$actions = array_column( $recent, 'action' );
+		$this->assertContains( 'db_update_option', $actions );
+
+		$row = $recent[ array_search( 'db_update_option', $actions, true ) ];
+		$this->assertSame( Risk_Level::HIGH, $row['risk_level'] );
+	}
+
+	/**
+	 * execute_approved() fires agent_builder_tool_executed exactly once when a
+	 * tool actually resolves (the same hook execute()'s allow-path raises).
+	 */
+	public function test_execute_approved_fires_tool_executed_hook(): void {
+		$calls    = 0;
+		$listener = static function () use ( &$calls ) {
+			++$calls;
+		};
+		add_action( 'agent_builder_tool_executed', $listener, 10, 4 );
+
+		$this->make_executor()->execute_approved(
+			array(
+				'tool'     => 'list_posts',
+				'params'   => array(),
+				'agent_id' => 'test-agent',
+			)
+		);
+
+		remove_action( 'agent_builder_tool_executed', $listener, 10 );
+
+		$this->assertSame( 1, $calls );
+	}
+
+	/**
+	 * execute_approved() returns the synthesized "Unknown tool" error and does
+	 * not fire agent_builder_tool_executed when no dispatcher resolves the call.
+	 */
+	public function test_execute_approved_unknown_tool_returns_error_without_hook(): void {
+		$calls    = 0;
+		$listener = static function () use ( &$calls ) {
+			++$calls;
+		};
+		add_action( 'agent_builder_tool_executed', $listener, 10, 4 );
+
+		$result = $this->make_executor()->execute_approved(
+			array(
+				'tool'     => 'no_such_tool_does_not_exist',
+				'params'   => array(),
+				'agent_id' => 'test-agent',
+			)
+		);
+
+		remove_action( 'agent_builder_tool_executed', $listener, 10 );
+
+		$this->assertArrayHasKey( 'error', $result );
+		$this->assertStringContainsString( 'Unknown tool', $result['error'] );
+		$this->assertSame( 0, $calls );
+	}
+
+	/**
+	 * execute_approved() tolerates the classic approval-queue record shape:
+	 * `action` for the tool name and a JSON-encoded `params` string.
+	 */
+	public function test_execute_approved_accepts_action_and_json_string_params(): void {
+		$result = $this->make_executor()->execute_approved(
+			array(
+				'action'     => 'db_update_option',
+				'params'     => wp_json_encode( array( 'name' => 'agent_builder_test_json_opt', 'value' => 'json-value' ) ),
+				'agent_id'   => 'test-agent',
+				'risk_level' => Risk_Level::HIGH,
+			)
+		);
+
+		$this->assertSame( 'json-value', get_option( 'agent_builder_test_json_opt' ) );
+		$this->assertTrue( $result['updated'] ?? false );
+	}
+
+	/**
+	 * execute_approved() falls back to the agent-inline execute_tool() when
+	 * Tool_Loader has no such tool — the same fallback chain as execute().
+	 */
+	public function test_execute_approved_uses_agent_inline_fallback(): void {
+		$agent = new class() extends Agent_Base {
+			public function get_id(): string {
+				return 'inline-test-agent';
+			}
+
+			public function execute_tool( string $_tool_name, array $_arguments ): ?array {
+				return array( 'from' => 'inline-fallback' );
+			}
+		};
+
+		$result = $this->make_executor()->execute_approved(
+			array(
+				'tool'     => 'inline_only_tool',
+				'params'   => array(),
+				'agent_id' => 'inline-test-agent',
+			),
+			$agent
+		);
+
+		$this->assertSame( array( 'from' => 'inline-fallback' ), $result );
+	}
+
+	/**
+	 * execute_approved() refuses an EXTREME-risk tool outright — an approval is
+	 * not a way to authorise something outside every risk tier's ceiling.
+	 */
+	public function test_execute_approved_refuses_extreme_risk(): void {
+		$result = $this->make_executor()->execute_approved(
+			array(
+				'tool'       => 'db_update_option',
+				'params'     => array( 'name' => 'agent_builder_test_extreme_opt', 'value' => 'x' ),
+				'agent_id'   => 'test-agent',
+				'risk_level' => Risk_Level::EXTREME,
+			)
+		);
+
+		$this->assertArrayHasKey( 'error', $result );
+		$this->assertStringContainsString( 'extreme risk', $result['error'] );
+		$this->assertFalse( get_option( 'agent_builder_test_extreme_opt' ), 'an extreme-risk tool must never run' );
+	}
+
+	/**
+	 * execute_approved() re-runs validate_args against the tool schema, so an
+	 * approval cannot smuggle invalid arguments past the gate.
+	 */
+	public function test_execute_approved_reruns_validate_args_against_schema(): void {
+		$result = $this->make_executor()->execute_approved(
+			array(
+				'tool'       => 'db_update_option',
+				'params'     => array(),
+				'agent_id'   => 'test-agent',
+				'risk_level' => Risk_Level::HIGH,
+			)
+		);
+
+		$this->assertSame( false, $result['success'] ?? null );
+		$this->assertSame( 'invalid_args', $result['error_code'] ?? null );
+	}
+
+	/**
+	 * execute_approved() takes the same pre-write table backup as the allow-path
+	 * before a non-readonly tool runs.
+	 */
+	public function test_execute_approved_backs_up_table_before_non_readonly_execution(): void {
+		$before = glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*_options.json' ) ?: array();
+		$this->assertCount( 0, $before, 'precondition: no stale options backup from a prior test' );
+
+		$result = $this->make_executor()->execute_approved(
+			array(
+				'tool'       => 'db_update_option',
+				'params'     => array( 'name' => 'agent_builder_test_approved_backup_opt', 'value' => 'backed-up' ),
+				'agent_id'   => 'test-agent',
+				'risk_level' => Risk_Level::HIGH,
+			)
+		);
+
+		$this->assertSame( 'backed-up', get_option( 'agent_builder_test_approved_backup_opt' ) );
+
+		$after = glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*_options.json' ) ?: array();
+		$this->assertCount( 1, $after, 'execute_approved() must take a pre-write backup' );
+	}
+
+	/**
+	 * A Throwable thrown during execute_approved() is caught and returned as an
+	 * error (and audited) rather than bubbling up past the caller.
+	 */
+	public function test_execute_approved_catches_thrown_error(): void {
+		$agent = new class() extends Agent_Base {
+			public function get_id(): string {
+				return 'throwing-agent';
+			}
+
+			public function execute_tool( string $_tool_name, array $_arguments ): ?array {
+				throw new \RuntimeException( 'boom' );
+			}
+		};
+
+		$result = $this->make_executor()->execute_approved(
+			array(
+				'tool'     => 'inline_only_tool',
+				'params'   => array(),
+				'agent_id' => 'throwing-agent',
+			),
+			$agent
+		);
+
+		$this->assertArrayHasKey( 'error', $result );
+		$this->assertStringContainsString( 'boom', $result['error'] );
+
+		global $wpdb;
+		$failures = (int) $wpdb->get_var(
+			$wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}agent_builder_audit_log WHERE action = %s", 'tool_execution_failed' )
+		);
+		$this->assertSame( 1, $failures, 'a thrown execution must be audited as tool_execution_failed' );
 	}
 
 	/**

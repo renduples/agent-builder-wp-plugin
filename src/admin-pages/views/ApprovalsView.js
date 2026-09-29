@@ -1,4 +1,4 @@
-import { useState } from '@wordpress/element';
+import { useMemo, useState } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import { __, sprintf } from '@wordpress/i18n';
 import {
@@ -11,6 +11,8 @@ import {
 import { InfoTip } from '../../shared/components';
 import { RISK_EXPLANATIONS } from '../constants';
 import TabBar from './TabBar';
+import RulesTab from './RulesTab';
+import GrantsTab from './GrantsTab';
 
 const APPROVAL_ACTION_HINT = __(
 	'An agent tried to run this specific action and paused here first. Nothing happens until you decide — approve to let it run once, or reject to cancel it.',
@@ -388,8 +390,51 @@ function ApprovalsView( { data, reload } ) {
 			.finally( () => setBusy( '' ) );
 	};
 
+	// Tab list for this screen: the existing "Approvals" and "Backups" entries
+	// from the payload, with the "Rules" and "Grants" tabs inserted between
+	// them. The payload is tab-agnostic (class-approvals-payload.php), so these
+	// tabs are registered client-side rather than touching a PHP file.
+	const tabs = useMemo( () => {
+		const base = data.tabs || [];
+		const tabUrl = ( id ) => {
+			try {
+				const u = new URL( window.location.href );
+				u.searchParams.set( 'tab', id );
+				return u.toString();
+			} catch {
+				// Tab still renders; only its link is empty.
+				return '';
+			}
+		};
+		return [
+			...base.filter( ( t ) => t.id !== 'backups' ),
+			{ id: 'rules', label: __( 'Rules', 'agent-builder' ), url: tabUrl( 'rules' ) },
+			{ id: 'grants', label: __( 'Grants', 'agent-builder' ), url: tabUrl( 'grants' ) },
+			...base.filter( ( t ) => t.id === 'backups' ),
+		];
+	}, [ data.tabs ] );
+
+	if ( data.tab === 'rules' ) {
+		return (
+			<>
+				<TabBar tabs={ tabs } active={ data.tab } />
+				<RulesTab />
+			</>
+		);
+	}
+
+	if ( data.tab === 'grants' ) {
+		return (
+			<>
+				<TabBar tabs={ tabs } active={ data.tab } />
+				<GrantsTab />
+			</>
+		);
+	}
+
 	return (
 		<>
+			<TabBar tabs={ tabs } active={ data.tab } />
 			{ /* data.description already renders once under the page <h1>
 			 * (see AdminPage in shared/components.js) — repeating it here
 			 * as a lead paragraph duplicated the same sentence twice in a
