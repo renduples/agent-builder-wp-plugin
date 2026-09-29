@@ -1148,12 +1148,15 @@ class REST_API {
 		if ( 'reject' === $action ) {
 			$result = Agent_Proposals::reject( $proposal_id );
 			if ( ! empty( $result['error'] ) ) {
-				return new \WP_REST_Response( $result, 400 );
+				return new \WP_REST_Response( $result, 409 );
 			}
 			return new \WP_REST_Response( $result, 200 );
 		}
 
-		// For session / always grants, record the grant before executing.
+		// For session / always grants, the proposal must still be pending before a
+		// grant is minted: a decided proposal must never grant a tool. The grant
+		// is written only after approve_with_grant()'s atomic pending→deciding
+		// claim, and rolled back if execution fails.
 		if ( 'always' === $action ) {
 			// Server-side cap: only admins may persist always-allow grants.
 			if ( ! current_user_can( 'manage_options' ) ) {
@@ -1161,22 +1164,40 @@ class REST_API {
 			}
 			$proposal = Agent_Proposals::get( $proposal_id );
 			if ( ! $proposal ) {
-				return new \WP_REST_Response( array( 'error' => 'Proposal not found or expired.' ), 400 );
+				return new \WP_REST_Response( array( 'error' => 'Proposal not found or expired.' ), 404 );
 			}
-			Tool_Grants::grant( 'always', $proposal['tool'], array( 'user_id' => get_current_user_id() ) );
+			if ( 'pending' !== $proposal['status'] ) {
+				return new \WP_REST_Response( array( 'error' => 'Proposal already processed.' ), 409 );
+			}
+			$result = Agent_Proposals::approve_with_grant(
+				$proposal_id,
+				'always',
+				(string) $proposal['tool'],
+				array( 'user_id' => get_current_user_id() )
+			);
 		} elseif ( 'session' === $action && '' !== $session_id ) {
 			$proposal = Agent_Proposals::get( $proposal_id );
 			if ( ! $proposal ) {
-				return new \WP_REST_Response( array( 'error' => 'Proposal not found or expired.' ), 400 );
+				return new \WP_REST_Response( array( 'error' => 'Proposal not found or expired.' ), 404 );
 			}
-			Tool_Grants::grant( 'session', $proposal['tool'], array( 'session_id' => $session_id ) );
+			if ( 'pending' !== $proposal['status'] ) {
+				return new \WP_REST_Response( array( 'error' => 'Proposal already processed.' ), 409 );
+			}
+			$result = Agent_Proposals::approve_with_grant(
+				$proposal_id,
+				'session',
+				(string) $proposal['tool'] . '@' . (string) $proposal['agent_id'],
+				array( 'session_id' => $session_id, 'user_id' => get_current_user_id() )
+			);
+		} else {
+			// 'once' falls through straight to approve; session/always handled above.
+			$result = Agent_Proposals::approve( $proposal_id );
 		}
 
-		// 'once' falls through straight to approve; session/always also approve after storing grant.
-		$result = Agent_Proposals::approve( $proposal_id );
-
 		if ( ! empty( $result['error'] ) ) {
-			return new \WP_REST_Response( $result, 400 );
+			// A lost claim (or an already-decided row) reports as a conflict; the
+			// grant, if one was being written, has already been rolled back.
+			return new \WP_REST_Response( $result, 409 );
 		}
 
 		return new \WP_REST_Response( $result, 200 );
@@ -1226,6 +1247,13 @@ class REST_API {
 			return new \WP_REST_Response( array( 'error' => 'A tool name is required.' ), 400 );
 		}
 
+		// Run grants are keyed on the raw run id (never sanitize_key(), which could
+		// collide two distinct ids), so reject anything that is not a generated run
+		// id before it can reach a transient key.
+		if ( ! Tool_Grants::is_valid_run_id( $run_id ) ) {
+			return new \WP_REST_Response( array( 'error' => 'Invalid run id.' ), 400 );
+		}
+
 		$run = Agent_Run::load( $run_id );
 		if ( null === $run ) {
 			return new \WP_REST_Response( array( 'error' => 'Run not found.' ), 404 );
@@ -1239,7 +1267,9 @@ class REST_API {
 			return new \WP_REST_Response( array( 'error' => 'Insufficient permissions.' ), 403 );
 		}
 
-		Tool_Grants::grant( 'run', $tool, array( 'run_id' => $run_id ) );
+		// Store the run grant as `tool@agent` so it authorises only the agent that
+		// owns the run, never a different agent resolving the same tool.
+		Tool_Grants::grant( 'run', $tool . '@' . $run->get_root_agent(), array( 'run_id' => $run_id ) );
 
 		return new \WP_REST_Response(
 			array(

@@ -31,8 +31,12 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Three scopes:
  *   always  — user meta `agentic_tool_grants_always`; a bare tool name grants
  *             every agent, a `tool@agent` key grants only that agent.
- *   session — transient `agentic_session_grants_{session_id}`, browser-tab scoped.
- *   run     — transient `agentic_run_grants_{run_id}`, scoped to a single run.
+ *   session — transient `agentic_session_grants_{session_id}`, browser-tab
+ *             scoped, storing `{ user, grants: [ tool@agent, … ] }` so a grant
+ *             is bound to the user who granted it and the agent it names.
+ *   run     — transient `agentic_run_grants_{run_id}`, keyed on the exact run
+ *             id (never sanitize_key()) and storing `[ tool@agent, … ]`, scoped
+ *             to a single run and the agent it was granted to.
  *
  * The `once` scope is deliberately not here: it remains
  * Approval_Queue::find_approved()'s concern, which Tool_Executor keeps calling
@@ -82,27 +86,36 @@ class Tool_Grants {
 		// name and a `tool@agent` key so a grant can be agent-scoped.
 		if ( ( 'queue' === $enforcement || 'confirm' === $enforcement ) && $user_id && user_can( $user_id, 'manage_options' ) ) {
 			$always = get_user_meta( $user_id, self::ALWAYS_META_KEY, true );
-			if ( is_array( $always ) && self::grant_matches( $always, $tool, $agent_id ) ) {
+			if ( is_array( $always ) && self::grant_matches( $always, $tool, $agent_id, true ) ) {
 				self::log_grant( 'tool_grant_always', $ctx, 'queue' === $enforcement ? array( 'bypassed' => 'approval_queue' ) : array() );
 				return 'allow';
 			}
 		}
 
-		// session — transient, browser-tab scoped. Historically only ever
-		// loosened a `confirm` decision, never the approval queue.
+		// session — transient, browser-tab scoped, bound to the user who granted
+		// it and the agent it was granted to. Historically only ever loosened a
+		// `confirm` decision, never the approval queue. The transient now stores
+		// `array( 'user' => int, 'grants' => string[] )` so one user's session
+		// grant can never authorise a different user, and a `tool@agent` grant
+		// never authorises a different agent.
 		if ( 'confirm' === $enforcement && '' !== $session_id ) {
 			$session = get_transient( 'agentic_session_grants_' . sanitize_key( $session_id ) );
-			if ( is_array( $session ) && in_array( $tool, $session, true ) ) {
-				self::log_grant( 'tool_grant_session', $ctx );
-				return 'allow';
+			if ( is_array( $session ) && is_array( $session['grants'] ?? null ) ) {
+				$session_user = (int) ( $session['user'] ?? 0 );
+				if ( $session_user > 0 && $session_user === $user_id && self::grant_matches( $session['grants'], $tool, $agent_id ) ) {
+					self::log_grant( 'tool_grant_session', $ctx );
+					return 'allow';
+				}
 			}
 		}
 
-		// run — transient, scoped to a single run. Applies to both `queue` and
-		// `confirm`: a run-scoped grant is "allow this tool for the whole run".
+		// run — transient, scoped to a single run and keyed on the exact,
+		// validated run id (never sanitize_key(), which could collide two
+		// distinct ids). Applies to both `queue` and `confirm`: a run-scoped
+		// grant is "allow this tool for the whole run", for the granted agent.
 		if ( '' !== $run_id ) {
-			$run = get_transient( 'agentic_run_grants_' . sanitize_key( $run_id ) );
-			if ( is_array( $run ) && in_array( $tool, $run, true ) ) {
+			$run = get_transient( 'agentic_run_grants_' . $run_id );
+			if ( is_array( $run ) && self::grant_matches( $run, $tool, $agent_id ) ) {
 				self::log_grant( 'tool_grant_run', $ctx );
 				return 'allow';
 			}
@@ -115,9 +128,12 @@ class Tool_Grants {
 	 * Record a grant for a scope.
 	 *
 	 * @param string $scope 'always', 'session', or 'run'.
-	 * @param string $tool  Tool slug (may be a `tool@agent` key for the always scope).
-	 * @param array  $ctx   Context carrying where to write: 'user_id' (always),
-	 *                      'session_id' (session), or 'run_id' (run).
+	 * @param string $tool  Tool slug. For the `always` scope a bare name grants every
+	 *                      agent and a `tool@agent` key grants only that agent; the
+	 *                      `session` and `run` scopes are agent-scoped and must be
+	 *                      passed as a `tool@agent` key.
+	 * @param array  $ctx   Context carrying where to write: 'user_id' (always and
+	 *                      session), 'session_id' (session), or 'run_id' (run).
 	 * @return void
 	 */
 	public static function grant( string $scope, string $tool, array $ctx ): void {
@@ -142,15 +158,18 @@ class Tool_Grants {
 				if ( '' === $session_id ) {
 					return;
 				}
-				$key    = 'agentic_session_grants_' . sanitize_key( $session_id );
-				$grants = get_transient( $key );
-				if ( ! is_array( $grants ) ) {
-					$grants = array();
+				$key     = 'agentic_session_grants_' . sanitize_key( $session_id );
+				$session = get_transient( $key );
+				if ( ! is_array( $session ) || ! is_array( $session['grants'] ?? null ) ) {
+					$session = array(
+						'user'   => (int) ( $ctx['user_id'] ?? 0 ),
+						'grants' => array(),
+					);
 				}
-				if ( ! in_array( $tool, $grants, true ) ) {
-					$grants[] = $tool;
+				if ( ! in_array( $tool, $session['grants'], true ) ) {
+					$session['grants'][] = $tool;
 				}
-				set_transient( $key, $grants, DAY_IN_SECONDS );
+				set_transient( $key, $session, DAY_IN_SECONDS );
 				return;
 
 			case 'run':
@@ -158,7 +177,9 @@ class Tool_Grants {
 				if ( '' === $run_id ) {
 					return;
 				}
-				$key    = 'agentic_run_grants_' . sanitize_key( $run_id );
+				// Key on the exact run id, never sanitize_key(): two distinct ids
+				// (e.g. `run_abc.DEF` vs `run_abcdef`) must not share a grant.
+				$key    = 'agentic_run_grants_' . $run_id;
 				$grants = get_transient( $key );
 				if ( ! is_array( $grants ) ) {
 					$grants = array();
@@ -202,10 +223,11 @@ class Tool_Grants {
 			if ( '' === $session_id ) {
 				return;
 			}
-			$key    = 'agentic_session_grants_' . sanitize_key( $session_id );
-			$grants = get_transient( $key );
-			if ( is_array( $grants ) ) {
-				set_transient( $key, array_values( array_diff( $grants, array( $tool ) ) ), DAY_IN_SECONDS );
+			$key     = 'agentic_session_grants_' . sanitize_key( $session_id );
+			$session = get_transient( $key );
+			if ( is_array( $session ) && is_array( $session['grants'] ?? null ) ) {
+				$session['grants'] = array_values( array_diff( $session['grants'], array( $tool ) ) );
+				set_transient( $key, $session, DAY_IN_SECONDS );
 			}
 			return;
 		}
@@ -226,16 +248,42 @@ class Tool_Grants {
 	}
 
 	/**
-	 * Whether an always-grant list covers the tool: a bare tool name grants every
-	 * agent; a `tool@agent` key grants only that agent.
+	 * Whether a run id is well-formed enough to key a run grant on verbatim.
 	 *
-	 * @param string[] $grants   Stored grant entries.
-	 * @param string   $tool     Tool slug being checked.
-	 * @param string   $agent_id Calling agent identifier.
+	 * Real run ids are either a lowercase v4 UUID (`wp_generate_uuid4()`) or the
+	 * `uniqid('run_', true)` fallback used before that function existed. The
+	 * run-grant transient is keyed on this id without sanitize_key() (to avoid
+	 * colliding two distinct ids), so the REST grant route must reject anything
+	 * that does not match one of those two shapes before it can reach a
+	 * transient key.
+	 *
+	 * @param string $run_id Candidate run id.
+	 * @return bool True when the id conforms to a generated run id.
+	 */
+	public static function is_valid_run_id( string $run_id ): bool {
+		if ( 1 === preg_match( '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $run_id ) ) {
+			return true;
+		}
+
+		return 1 === preg_match( '/^run_[0-9a-f]+\.[0-9a-f]+$/i', $run_id );
+	}
+
+	/**
+	 * Whether a stored grant list covers the tool.
+	 *
+	 * A `tool@agent` key grants only the named agent. For the `always` scope a
+	 * bare tool name grants every agent (set `$bare_matches_any` true); the
+	 * `session` and `run` scopes are agent-scoped and only ever match a
+	 * `tool@agent` key, so a bare tool there never authorises an agent.
+	 *
+	 * @param string[] $grants           Stored grant entries.
+	 * @param string   $tool             Tool slug being checked.
+	 * @param string   $agent_id         Calling agent identifier.
+	 * @param bool     $bare_matches_any Whether a bare tool name grants every agent.
 	 * @return bool
 	 */
-	private static function grant_matches( array $grants, string $tool, string $agent_id ): bool {
-		if ( in_array( $tool, $grants, true ) ) {
+	private static function grant_matches( array $grants, string $tool, string $agent_id, bool $bare_matches_any = false ): bool {
+		if ( $bare_matches_any && in_array( $tool, $grants, true ) ) {
 			return true;
 		}
 

@@ -491,6 +491,31 @@ class Test_Approval_Rules extends TestCase {
 	}
 
 	/**
+	 * A rule-read query failure fails closed: evaluate() tightens 'allow' to
+	 * 'confirm' rather than reading the failed read as "no rules".
+	 */
+	public function test_evaluate_fails_closed_on_db_error(): void {
+		global $wpdb;
+
+		$mangle = static function ( string $query ): string {
+			if ( false !== stripos( $query, 'agent_builder_approval_rules' ) ) {
+				return $query . ' GARBAGE SQL CAUSES A SYNTAX ERROR';
+			}
+			return $query;
+		};
+
+		add_filter( 'query', $mangle );
+
+		$suppress = $wpdb->suppress_errors( true );
+		try {
+			$this->assertSame( 'confirm', Approval_Rules::evaluate( 'allow', $this->evaluation_ctx() ) );
+		} finally {
+			$wpdb->suppress_errors( $suppress );
+			remove_filter( 'query', $mangle );
+		}
+	}
+
+	/**
 	 * A HIGH-risk call still honours Risk_Level::clamp_enforcement()'s ceiling
 	 * after evaluate() runs: a deny rule keeps 'queue', and clamping the result
 	 * back through the same ctx neither crashes nor changes direction.

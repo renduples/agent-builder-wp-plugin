@@ -441,6 +441,14 @@ class Tool_Executor {
 
 			$proposal = Agent_Proposals::create( $tool_name, $arguments, $agent_id, $description, '', $ctx['run_id'], $ctx['user_id'], $listener_id );
 
+			// A failed insert (no proposal row) must not surface a phantom
+			// proposal id — report the failure instead of pretending a proposal
+			// exists for the user to approve.
+			if ( isset( $proposal['error'] ) ) {
+				$this->audit->log( $agent_id, 'proposal_create_failed', $tool_name, array( 'error' => (string) $proposal['error'] ) );
+				return array( 'error' => (string) $proposal['error'] );
+			}
+
 			$this->audit->log(
 				$agent_id,
 				'tool_confirm',
@@ -588,6 +596,22 @@ class Tool_Executor {
 			$risk = Abilities_Manifest::get_effective_risk( $agent_id, $tool_name, $tool_instance, $call_action );
 		}
 
+		// Approved or not, an extreme-risk tool must never run — it sits outside
+		// what any approval flow is allowed to authorise. Refuse it outright,
+		// before any backup or execution branch.
+		if ( Risk_Level::EXTREME === $risk ) {
+			$this->audit->log(
+				$agent_id,
+				'tool_blocked',
+				$tool_name,
+				array(
+					'reason'     => 'Extreme risk — execution not permitted',
+					'risk_level' => $risk,
+				)
+			);
+			return array( 'error' => 'This action is classified as extreme risk and cannot be performed.' );
+		}
+
 		$ctx = array(
 			'tool'       => $tool_name,
 			'action'     => $call_action,
@@ -606,36 +630,69 @@ class Tool_Executor {
 
 		Tool_Base::set_calling_agent( $agent_id );
 
+		// Re-run the same safety checks execute()'s allow-path performs: take the
+		// pre-write backup and validate arguments against the tool schema. An
+		// approval must not be a way to skip either.
+		if ( ! $is_readonly ) {
+			Tool_Helpers::backup_tables_for_tool( $tool_name, $arguments );
+		}
+
+		if ( $tool_instance ) {
+			$arg_error = $tool_instance->validate_args( $arguments );
+			if ( null !== $arg_error ) {
+				$this->audit->log( $agent_id, 'tool_blocked', $tool_name, array( 'reason' => $arg_error ) );
+				return array(
+					'success'    => false,
+					'error_code' => 'invalid_args',
+					'message'    => $arg_error,
+				);
+			}
+		}
+
 		// Execute via Tool_Loader, falling back to agent-inline tools, then
 		// third-party abilities (WP 6.9+) — the same fallback chain execute()'s
-		// allow-path uses. $resolved tracks whether any dispatcher produced a
-		// result, so the synthesized "Unknown tool" case is never reported as a
-		// real execution.
-		$result = $this->tool_loader->execute( $tool_name, $arguments );
+		// allow-path uses. A Throwable is caught and recorded so a failed run is
+		// audited and returned rather than left to bubble up past the caller.
+		try {
+			$result = $this->tool_loader->execute( $tool_name, $arguments );
 
-		if ( null !== $result ) {
-			if ( ! $is_readonly ) {
+			if ( null === $result ) {
+				$result = $agent ? $agent->execute_tool( $tool_name, $arguments ) : null;
+
+				if ( null === $result && $this->abilities_bridge ) {
+					$result = $this->abilities_bridge->execute_ability( $tool_name, $arguments );
+				}
+			}
+
+			$resolved = null !== $result;
+
+			if ( ! $resolved ) {
+				$result = array( 'error' => sprintf( 'Unknown tool: %s', $tool_name ) );
+			} elseif ( ! $is_readonly ) {
+				// Route every resolved execution branch — tool_loader, agent-inline,
+				// or abilities-bridge — through the operations ledger, not just the
+				// loader branch.
 				$queue = new Approval_Queue();
 				$queue->log_executed( $agent_id, $tool_name, $arguments, $risk, $mode, $invocation );
 			}
-		} else {
-			$result = $agent ? $agent->execute_tool( $tool_name, $arguments ) : null;
 
-			if ( null === $result && $this->abilities_bridge ) {
-				$result = $this->abilities_bridge->execute_ability( $tool_name, $arguments );
+			if ( $resolved ) {
+				do_action( 'agent_builder_tool_executed', $tool_name, $arguments, $result, $ctx );
 			}
+
+			return $result;
+		} catch ( \Throwable $e ) {
+			$this->audit->log(
+				$agent_id,
+				'tool_execution_failed',
+				$tool_name,
+				array(
+					'risk_level' => $risk,
+					'error'      => $e->getMessage(),
+					'file'       => $e->getFile() . ':' . $e->getLine(),
+				)
+			);
+			return array( 'error' => sprintf( 'Execution failed: %s', $e->getMessage() ) );
 		}
-
-		$resolved = null !== $result;
-
-		if ( ! $resolved ) {
-			$result = array( 'error' => sprintf( 'Unknown tool: %s', $tool_name ) );
-		}
-
-		if ( $resolved ) {
-			do_action( 'agent_builder_tool_executed', $tool_name, $arguments, $result, $ctx );
-		}
-
-		return $result;
 	}
 }

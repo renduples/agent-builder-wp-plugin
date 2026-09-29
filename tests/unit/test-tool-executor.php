@@ -832,6 +832,100 @@ class Test_Tool_Executor extends TestCase {
 	}
 
 	/**
+	 * execute_approved() refuses an EXTREME-risk tool outright — an approval is
+	 * not a way to authorise something outside every risk tier's ceiling.
+	 */
+	public function test_execute_approved_refuses_extreme_risk(): void {
+		$result = $this->make_executor()->execute_approved(
+			array(
+				'tool'       => 'db_update_option',
+				'params'     => array( 'name' => 'agent_builder_test_extreme_opt', 'value' => 'x' ),
+				'agent_id'   => 'test-agent',
+				'risk_level' => Risk_Level::EXTREME,
+			)
+		);
+
+		$this->assertArrayHasKey( 'error', $result );
+		$this->assertStringContainsString( 'extreme risk', $result['error'] );
+		$this->assertFalse( get_option( 'agent_builder_test_extreme_opt' ), 'an extreme-risk tool must never run' );
+	}
+
+	/**
+	 * execute_approved() re-runs validate_args against the tool schema, so an
+	 * approval cannot smuggle invalid arguments past the gate.
+	 */
+	public function test_execute_approved_reruns_validate_args_against_schema(): void {
+		$result = $this->make_executor()->execute_approved(
+			array(
+				'tool'       => 'db_update_option',
+				'params'     => array(),
+				'agent_id'   => 'test-agent',
+				'risk_level' => Risk_Level::HIGH,
+			)
+		);
+
+		$this->assertSame( false, $result['success'] ?? null );
+		$this->assertSame( 'invalid_args', $result['error_code'] ?? null );
+	}
+
+	/**
+	 * execute_approved() takes the same pre-write table backup as the allow-path
+	 * before a non-readonly tool runs.
+	 */
+	public function test_execute_approved_backs_up_table_before_non_readonly_execution(): void {
+		$before = glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*_options.json' ) ?: array();
+		$this->assertCount( 0, $before, 'precondition: no stale options backup from a prior test' );
+
+		$result = $this->make_executor()->execute_approved(
+			array(
+				'tool'       => 'db_update_option',
+				'params'     => array( 'name' => 'agent_builder_test_approved_backup_opt', 'value' => 'backed-up' ),
+				'agent_id'   => 'test-agent',
+				'risk_level' => Risk_Level::HIGH,
+			)
+		);
+
+		$this->assertSame( 'backed-up', get_option( 'agent_builder_test_approved_backup_opt' ) );
+
+		$after = glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*_options.json' ) ?: array();
+		$this->assertCount( 1, $after, 'execute_approved() must take a pre-write backup' );
+	}
+
+	/**
+	 * A Throwable thrown during execute_approved() is caught and returned as an
+	 * error (and audited) rather than bubbling up past the caller.
+	 */
+	public function test_execute_approved_catches_thrown_error(): void {
+		$agent = new class() extends Agent_Base {
+			public function get_id(): string {
+				return 'throwing-agent';
+			}
+
+			public function execute_tool( string $_tool_name, array $_arguments ): ?array {
+				throw new \RuntimeException( 'boom' );
+			}
+		};
+
+		$result = $this->make_executor()->execute_approved(
+			array(
+				'tool'     => 'inline_only_tool',
+				'params'   => array(),
+				'agent_id' => 'throwing-agent',
+			),
+			$agent
+		);
+
+		$this->assertArrayHasKey( 'error', $result );
+		$this->assertStringContainsString( 'boom', $result['error'] );
+
+		global $wpdb;
+		$failures = (int) $wpdb->get_var(
+			$wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}agent_builder_audit_log WHERE action = %s", 'tool_execution_failed' )
+		);
+		$this->assertSame( 1, $failures, 'a thrown execution must be audited as tool_execution_failed' );
+	}
+
+	/**
 	 * Fetch a raw approval_queue row by id.
 	 *
 	 * @param int $id Queue row id.

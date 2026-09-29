@@ -14,6 +14,7 @@ namespace Agentic\Tests;
 use Agentic\Agent_Proposals;
 use Agentic\Approval_Queue;
 use Agentic\Risk_Level;
+use Agentic\Tool_Grants;
 
 /**
  * Test case for Agent_Proposals.
@@ -111,7 +112,12 @@ class Test_Agent_Proposals extends TestCase {
 	 * returns the tool execution result.
 	 */
 	public function test_approve_transitions_pending_to_approved(): void {
-		$proposal = Agent_Proposals::create( 'list_posts', array(), 'wordpress-assistant', 'Approve me' );
+		$proposal = Agent_Proposals::create(
+			'db_update_option',
+			array( 'name' => 'agent_builder_test_approve_transition_opt', 'value' => 'approved' ),
+			'wordpress-assistant',
+			'Approve me'
+		);
 
 		$result = Agent_Proposals::approve( $proposal['id'] );
 		$this->assertIsArray( $result );
@@ -325,9 +331,9 @@ class Test_Agent_Proposals extends TestCase {
 
 	/**
 	 * A losing concurrent approve() — whose get() read 'pending' but whose
-	 * mark_decided() UPDATE lands after a competing request already claimed the
+	 * mark_deciding() UPDATE lands after a competing request already claimed the
 	 * row — must be refused and must NOT execute the tool. Simulated with the
-	 * 'query' filter: when approve()'s conditional UPDATE is about to run, a
+	 * 'query' filter: when approve()'s conditional claim UPDATE is about to run, a
 	 * competing request claims the row first, so the UPDATE affects 0 rows.
 	 */
 	public function test_approve_refuses_and_skips_execution_when_claim_lost(): void {
@@ -335,7 +341,7 @@ class Test_Agent_Proposals extends TestCase {
 
 		$claimed = false;
 		$race    = static function ( string $query ) use ( &$claimed, $proposal ): string {
-			if ( ! $claimed && false !== stripos( $query, 'agent_builder_proposals' ) && false !== stripos( $query, "SET status = 'approved'" ) ) {
+			if ( ! $claimed && false !== stripos( $query, 'agent_builder_proposals' ) && false !== stripos( $query, "SET status = 'deciding'" ) ) {
 				$claimed = true;
 				global $wpdb;
 				// The competing request claims the pending row first.
@@ -455,6 +461,121 @@ class Test_Agent_Proposals extends TestCase {
 
 		$this->assertNull( Agent_Proposals::has_pending( $agent_id, $listener_id, $tool ) );
 		$this->assertFalse( get_transient( Agent_Proposals::pending_key( $agent_id, $listener_id, $tool ) ) );
+	}
+
+	/**
+	 * create() surfaces a failed insert instead of returning a phantom proposal
+	 * id, and does not mint the listener dedupe marker for a proposal that was
+	 * never actually stored.
+	 */
+	public function test_create_returns_error_and_no_marker_when_insert_fails(): void {
+		$agent_id    = 'insert-fail-agent';
+		$listener_id = 'l-insert-fail';
+		$tool        = 'list_posts';
+
+		$block = static function ( string $query ): string {
+			if ( false !== stripos( $query, 'INSERT INTO' ) && false !== stripos( $query, 'agent_builder_proposals' ) ) {
+				return '';
+			}
+			return $query;
+		};
+
+		add_filter( 'query', $block );
+
+		try {
+			$proposal = Agent_Proposals::create( $tool, array(), $agent_id, 'Insert fails', '', '', 0, $listener_id );
+		} finally {
+			remove_filter( 'query', $block );
+		}
+
+		$this->assertArrayHasKey( 'error', $proposal );
+		$this->assertSame( 'Failed to store the proposal.', $proposal['error'] );
+		$this->assertFalse(
+			get_transient( Agent_Proposals::pending_key( $agent_id, $listener_id, $tool ) ),
+			'no dedupe marker may be set when the insert failed'
+		);
+	}
+
+	/**
+	 * approve_with_grant() persists the grant and executes the tool, recording
+	 * the row as approved.
+	 */
+	public function test_approve_with_grant_writes_grant_and_executes(): void {
+		$proposal = Agent_Proposals::create(
+			'db_update_option',
+			array( 'name' => 'agent_builder_test_grant_opt', 'value' => 'granted' ),
+			'wordpress-assistant',
+			'Approve with always grant'
+		);
+
+		$result = Agent_Proposals::approve_with_grant( $proposal['id'], 'always', 'db_update_option', array( 'user_id' => 42 ) );
+
+		$this->assertArrayNotHasKey( 'error', $result );
+		$this->assertContains( 'db_update_option', Tool_Grants::list_for_user( 42 ) );
+
+		$row = $this->get_proposal_row( $proposal['id'] );
+		$this->assertSame( 'approved', $row['status'] );
+	}
+
+	/**
+	 * approve_with_grant() rolls the grant back when execution fails (a missing
+	 * required parameter), so a failed approval leaves no lasting grant behind.
+	 */
+	public function test_approve_with_grant_rolls_back_grant_on_failure(): void {
+		$proposal = Agent_Proposals::create( 'db_update_option', array(), 'wordpress-assistant', 'Fails on missing args' );
+
+		$result = Agent_Proposals::approve_with_grant(
+			$proposal['id'],
+			'session',
+			'db_update_option@wordpress-assistant',
+			array( 'session_id' => 'sess-grant', 'user_id' => 7 )
+		);
+
+		$this->assertSame( false, $result['success'] ?? null );
+
+		$stored = get_transient( 'agentic_session_grants_sess-grant' );
+		$this->assertIsArray( $stored );
+		$this->assertNotContains( 'db_update_option@wordpress-assistant', $stored['grants'] );
+
+		$row = $this->get_proposal_row( $proposal['id'] );
+		$this->assertSame( 'failed', $row['status'] );
+	}
+
+	/**
+	 * A replay of approve_with_grant() for an already-decided proposal is refused
+	 * (with no fresh grant) — the atomic claim precedes the grant write.
+	 */
+	public function test_approve_with_grant_replay_is_refused_without_grant(): void {
+		$proposal = Agent_Proposals::create(
+			'db_update_option',
+			array( 'name' => 'agent_builder_test_replay_opt', 'value' => 'replay' ),
+			'wordpress-assistant',
+			'Replay grant'
+		);
+
+		$first = Agent_Proposals::approve_with_grant( $proposal['id'], 'always', 'db_update_option', array( 'user_id' => 42 ) );
+		$this->assertArrayNotHasKey( 'error', $first );
+
+		$again = Agent_Proposals::approve_with_grant( $proposal['id'], 'always', 'db_update_option', array( 'user_id' => 42 ) );
+		$this->assertArrayHasKey( 'error', $again );
+		$this->assertSame( 'Proposal already processed.', $again['error'] );
+	}
+
+	/**
+	 * approve() re-runs validate_args through execute_approved(), so an approved
+	 * proposal with invalid arguments fails the row rather than executing.
+	 */
+	public function test_approve_fails_when_args_missing(): void {
+		$proposal = Agent_Proposals::create( 'db_update_option', array(), 'wordpress-assistant', 'Fails validation on approve' );
+
+		$result = Agent_Proposals::approve( $proposal['id'] );
+
+		$this->assertSame( false, $result['success'] ?? null );
+		$this->assertSame( 'invalid_args', $result['error_code'] ?? null );
+
+		$row = $this->get_proposal_row( $proposal['id'] );
+		$this->assertSame( 'failed', $row['status'] );
+		$this->assertSame( 'failed', $row['decision'] );
 	}
 
 	/**

@@ -115,7 +115,7 @@ class Test_Tool_Grants extends TestCase {
 	 * A session grant downgrades a confirm decision.
 	 */
 	public function test_session_grant_downgrades_confirm(): void {
-		set_transient( 'agentic_session_grants_sess1', array( 'edit_post' ), DAY_IN_SECONDS );
+		set_transient( 'agentic_session_grants_sess1', array( 'user' => $this->admin_id, 'grants' => array( 'edit_post@content_writer' ) ), DAY_IN_SECONDS );
 
 		$this->assertSame( 'allow', Tool_Grants::resolve( 'confirm', $this->ctx( array( 'session_id' => 'sess1' ) ) ) );
 	}
@@ -124,7 +124,7 @@ class Test_Tool_Grants extends TestCase {
 	 * A session grant never bypasses the approval queue (session is confirm-only).
 	 */
 	public function test_session_grant_does_not_downgrade_queue(): void {
-		set_transient( 'agentic_session_grants_sess1', array( 'edit_post' ), DAY_IN_SECONDS );
+		set_transient( 'agentic_session_grants_sess1', array( 'user' => $this->admin_id, 'grants' => array( 'edit_post@content_writer' ) ), DAY_IN_SECONDS );
 
 		$this->assertSame( 'queue', Tool_Grants::resolve( 'queue', $this->ctx( array( 'session_id' => 'sess1' ) ) ) );
 	}
@@ -133,7 +133,7 @@ class Test_Tool_Grants extends TestCase {
 	 * A run grant downgrades both confirm and queue when a run_id is present.
 	 */
 	public function test_run_grant_downgrades_confirm_and_queue(): void {
-		set_transient( 'agentic_run_grants_run1', array( 'edit_post' ), DAY_IN_SECONDS );
+		set_transient( 'agentic_run_grants_run1', array( 'edit_post@content_writer' ), DAY_IN_SECONDS );
 
 		$this->assertSame( 'allow', Tool_Grants::resolve( 'confirm', $this->ctx( array( 'run_id' => 'run1' ) ) ) );
 		$this->assertSame( 'allow', Tool_Grants::resolve( 'queue', $this->ctx( array( 'run_id' => 'run1' ) ) ) );
@@ -143,7 +143,7 @@ class Test_Tool_Grants extends TestCase {
 	 * A run grant is ignored when the context carries no run_id.
 	 */
 	public function test_run_grant_ignored_without_run_id(): void {
-		set_transient( 'agentic_run_grants_run1', array( 'edit_post' ), DAY_IN_SECONDS );
+		set_transient( 'agentic_run_grants_run1', array( 'edit_post@content_writer' ), DAY_IN_SECONDS );
 
 		$this->assertSame( 'confirm', Tool_Grants::resolve( 'confirm', $this->ctx() ) );
 	}
@@ -198,18 +198,20 @@ class Test_Tool_Grants extends TestCase {
 	 * grant() writes a session grant to its transient.
 	 */
 	public function test_grant_session_writes_transient(): void {
-		Tool_Grants::grant( 'session', 'edit_post', array( 'session_id' => 'sess1' ) );
+		Tool_Grants::grant( 'session', 'edit_post@content_writer', array( 'session_id' => 'sess1', 'user_id' => $this->admin_id ) );
 
-		$this->assertContains( 'edit_post', get_transient( 'agentic_session_grants_sess1' ) );
+		$stored = get_transient( 'agentic_session_grants_sess1' );
+		$this->assertSame( $this->admin_id, $stored['user'] );
+		$this->assertContains( 'edit_post@content_writer', $stored['grants'] );
 	}
 
 	/**
 	 * grant() writes a run grant to its transient.
 	 */
 	public function test_grant_run_writes_transient(): void {
-		Tool_Grants::grant( 'run', 'edit_post', array( 'run_id' => 'run1' ) );
+		Tool_Grants::grant( 'run', 'edit_post@content_writer', array( 'run_id' => 'run1' ) );
 
-		$this->assertContains( 'edit_post', get_transient( 'agentic_run_grants_run1' ) );
+		$this->assertSame( array( 'edit_post@content_writer' ), get_transient( 'agentic_run_grants_run1' ) );
 	}
 
 	/**
@@ -250,10 +252,11 @@ class Test_Tool_Grants extends TestCase {
 	 * revoke() removes a session grant.
 	 */
 	public function test_revoke_session_removes_grant(): void {
-		Tool_Grants::grant( 'session', 'edit_post', array( 'session_id' => 'sess1' ) );
-		Tool_Grants::revoke( 'session', 'edit_post', array( 'session_id' => 'sess1' ) );
+		Tool_Grants::grant( 'session', 'edit_post@content_writer', array( 'session_id' => 'sess1', 'user_id' => $this->admin_id ) );
+		Tool_Grants::revoke( 'session', 'edit_post@content_writer', array( 'session_id' => 'sess1' ) );
 
-		$this->assertNotContains( 'edit_post', get_transient( 'agentic_session_grants_sess1' ) );
+		$stored = get_transient( 'agentic_session_grants_sess1' );
+		$this->assertNotContains( 'edit_post@content_writer', $stored['grants'] );
 	}
 
 	/**
@@ -261,5 +264,56 @@ class Test_Tool_Grants extends TestCase {
 	 */
 	public function test_list_for_user_returns_empty_when_none(): void {
 		$this->assertSame( array(), Tool_Grants::list_for_user( $this->admin_id ) );
+	}
+
+	/**
+	 * A run grant is agent-scoped: agent A's grant never authorises agent B, even
+	 * though both would resolve the same tool.
+	 */
+	public function test_run_grant_does_not_authorise_different_agent(): void {
+		set_transient( 'agentic_run_grants_run1', array( 'edit_post@content_writer' ), DAY_IN_SECONDS );
+
+		$this->assertSame( 'confirm', Tool_Grants::resolve( 'confirm', $this->ctx( array( 'run_id' => 'run1', 'agent_id' => 'other_agent' ) ) ) );
+	}
+
+	/**
+	 * A session grant is bound to the granting user: another user's session can
+	 * never use it.
+	 */
+	public function test_session_grant_bound_to_granting_user(): void {
+		$other_user = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		set_transient( 'agentic_session_grants_sess1', array( 'user' => $this->admin_id, 'grants' => array( 'edit_post@content_writer' ) ), DAY_IN_SECONDS );
+
+		$this->assertSame( 'confirm', Tool_Grants::resolve( 'confirm', $this->ctx( array( 'session_id' => 'sess1', 'user_id' => $other_user ) ) ) );
+	}
+
+	/**
+	 * A session grant is agent-scoped: the granting user's grant for one agent
+	 * never authorises a different agent in the same session.
+	 */
+	public function test_session_grant_does_not_authorise_different_agent(): void {
+		set_transient( 'agentic_session_grants_sess1', array( 'user' => $this->admin_id, 'grants' => array( 'edit_post@content_writer' ) ), DAY_IN_SECONDS );
+
+		$this->assertSame( 'confirm', Tool_Grants::resolve( 'confirm', $this->ctx( array( 'session_id' => 'sess1', 'agent_id' => 'other_agent' ) ) ) );
+	}
+
+	/**
+	 * Run grants are keyed on the exact run id, so two ids that sanitize_key()
+	 * would collapse to the same key do not share a grant.
+	 */
+	public function test_run_grant_ids_that_sanitize_collide_do_not_share(): void {
+		set_transient( 'agentic_run_grants_run_abc.DEF', array( 'edit_post@content_writer' ), DAY_IN_SECONDS );
+
+		$this->assertSame( 'confirm', Tool_Grants::resolve( 'confirm', $this->ctx( array( 'run_id' => 'run_abcdef' ) ) ) );
+	}
+
+	/**
+	 * is_valid_run_id() accepts only the two generated run-id shapes.
+	 */
+	public function test_is_valid_run_id(): void {
+		$this->assertTrue( Tool_Grants::is_valid_run_id( '01234567-89ab-cdef-0123-456789abcdef' ) );
+		$this->assertTrue( Tool_Grants::is_valid_run_id( 'run_abc123.def456' ) );
+		$this->assertFalse( Tool_Grants::is_valid_run_id( 'not-a-run-id' ) );
+		$this->assertFalse( Tool_Grants::is_valid_run_id( '' ) );
 	}
 }
