@@ -334,6 +334,8 @@ class Test_Schema_Upgrade extends TestCase {
 
 		$this->assertSame( 'autonomous', get_option( 'agent_builder_agent_mode' ) );
 		$this->assertFalse( get_option( 'agent_builder_default_agent_mode' ) );
+
+		delete_option( 'agent_builder_agent_mode' );
 	}
 
 	/**
@@ -347,6 +349,25 @@ class Test_Schema_Upgrade extends TestCase {
 
 		$this->assertSame( 'supervised', get_option( 'agent_builder_agent_mode' ) );
 		$this->assertFalse( get_option( 'agent_builder_default_agent_mode' ) );
+
+		delete_option( 'agent_builder_agent_mode' );
+	}
+
+	/**
+	 * The migration must not clobber a live agent_builder_agent_mode that has
+	 * already diverged from the 'supervised' default: it discards the legacy
+	 * option and leaves the explicit live value untouched.
+	 */
+	public function test_migrate_default_agent_mode_option_does_not_clobber_diverged_mode(): void {
+		update_option( 'agent_builder_agent_mode', 'autonomous' );
+		update_option( 'agent_builder_default_agent_mode', 'supervised' );
+
+		self::invoke_private( 'migrate_default_agent_mode_option' );
+
+		$this->assertSame( 'autonomous', get_option( 'agent_builder_agent_mode' ) );
+		$this->assertFalse( get_option( 'agent_builder_default_agent_mode' ) );
+
+		delete_option( 'agent_builder_agent_mode' );
 	}
 
 	/**

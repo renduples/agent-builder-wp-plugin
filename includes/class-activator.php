@@ -524,6 +524,12 @@ final class Activator {
 	 * valid values; the long-unreachable 'readonly' (and any unknown value)
 	 * collapse to the 'supervised' default.
 	 *
+	 * Never clobbers a live agent_builder_agent_mode that has already diverged
+	 * from the 'supervised' default: the classic settings page (and other
+	 * consumers) may have set it explicitly while the broken React screen wrote a
+	 * stale value to the legacy option. In that case the legacy option is simply
+	 * discarded and the live value is left untouched.
+	 *
 	 * @return void
 	 */
 	private static function migrate_default_agent_mode_option(): void {
@@ -532,11 +538,18 @@ final class Activator {
 			return;
 		}
 
-		$mapped = in_array( (string) $legacy, array( 'autonomous', 'supervised' ), true )
-			? (string) $legacy
-			: 'supervised';
+		// Only adopt the legacy value while the live option is still at its
+		// untouched 'supervised' default. A value that already diverged was set
+		// through a working control (classic settings page, AJAX, etc.) and must win
+		// over the stale broken-screen attempt, which could otherwise silently
+		// escalate a site from 'supervised' to 'autonomous'.
+		if ( 'supervised' === (string) get_option( 'agent_builder_agent_mode', 'supervised' ) ) {
+			$mapped = in_array( (string) $legacy, array( 'autonomous', 'supervised' ), true )
+				? (string) $legacy
+				: 'supervised';
+			update_option( 'agent_builder_agent_mode', $mapped );
+		}
 
-		update_option( 'agent_builder_agent_mode', $mapped );
 		delete_option( 'agent_builder_default_agent_mode' );
 	}
 
