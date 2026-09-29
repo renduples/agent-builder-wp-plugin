@@ -97,7 +97,7 @@ Prompt Tests never run by themselves. They call your AI provider only when you s
 
 = Supported LLM Providers =
 
-* **Cloud Providers:** OpenAI (GPT-4o, o3-mini), Anthropic (Claude 3.5 Sonnet), Google Gemini, xAI (Grok), DeepSeek, Kimi (Moonshot), Mistral, Cohere, and OpenRouter.
+* **Cloud Providers:** OpenAI (GPT-4o, o3-mini), Anthropic (Claude Sonnet 5.5, Opus 5.5, Haiku 4.5), Google Gemini, xAI (Grok), DeepSeek, Kimi (Moonshot), Mistral, Cohere, and OpenRouter.
 * **Local & Private:** Ollama (default: `http://localhost:11434`) or any custom OpenAI-compatible endpoint.
 * **Managed Credits:** Optional Agentic AI service with daily free credits.
 
@@ -341,6 +341,7 @@ This plugin connects to external AI APIs to process prompts and tool executions 
 * Autonomous tasks: agents now run approved low-risk tools on their own, pausing only when a step needs your OK.
 * New notifications: an inbox and admin-bar badge keep you informed when a task finishes, is waiting, or fails.
 * Optional daily activity digest email for administrators summarizing what your agents did — on by default, configurable from Settings → Security.
+* Anthropic: added the Claude 5.x family (Sonnet 5.5 as the fresh-install default, Opus 5.5, Fable 5.1, plus Sonnet 5 and Opus 5) and made forced tool choice resilient to the newer models rejecting it.
 
 = 4.0.2 - 2026-09-27 =
 * Maintenance: version alignment across the WordPress.org, self-hosted, and Pro editions. Ensures clean compatibility with Agent Builder Pro 4.0.2. No functional changes to this edition.
