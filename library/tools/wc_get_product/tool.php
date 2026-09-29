@@ -155,10 +155,14 @@ class Wc_Get_Product extends \Agentic\Tool_Base {
 
 		// SEO metadata (Yoast / RankMath / AIOSEO).
 		$seo        = array();
-		$meta_title = get_post_meta( $product->get_id(), '_yoast_wpseo_title', true )
-			?: get_post_meta( $product->get_id(), 'rank_math_title', true );
-		$meta_desc  = get_post_meta( $product->get_id(), '_yoast_wpseo_metadesc', true )
-			?: get_post_meta( $product->get_id(), 'rank_math_description', true );
+		$meta_title = get_post_meta( $product->get_id(), '_yoast_wpseo_title', true );
+		if ( ! $meta_title ) {
+			$meta_title = get_post_meta( $product->get_id(), 'rank_math_title', true );
+		}
+		$meta_desc = get_post_meta( $product->get_id(), '_yoast_wpseo_metadesc', true );
+		if ( ! $meta_desc ) {
+			$meta_desc = get_post_meta( $product->get_id(), 'rank_math_description', true );
+		}
 		if ( $meta_title ) {
 			$seo['title'] = $meta_title;
 		}

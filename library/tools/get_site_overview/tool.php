@@ -94,7 +94,7 @@ class Get_Site_Overview extends \Agentic\Tool_Base {
 		$permalink_struct = get_option( 'permalink_structure' );
 		$permalink_name   = match ( true ) {
 			empty( $permalink_struct )               => 'default',
-			$permalink_struct === '/%postname%/'     => 'plain',
+			'/%postname%/' === $permalink_struct     => 'plain',
 			str_contains( $permalink_struct, 'date' ) => 'date-based',
 			default                                  => $permalink_struct,
 		};

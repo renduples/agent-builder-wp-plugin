@@ -579,6 +579,111 @@ class Test_Agent_Proposals extends TestCase {
 	}
 
 	/**
+	 * create() persists the session_id it was given, so a later session-scoped
+	 * grant binds to the proposal's own session (see handle_proposal()).
+	 */
+	public function test_create_persists_session_id(): void {
+		$proposal = Agent_Proposals::create(
+			'list_posts',
+			array( 'post_type' => 'post' ),
+			'wordpress-assistant',
+			'Session-bound proposal',
+			'',
+			'',
+			0,
+			'',
+			'chat-session-abc'
+		);
+
+		$read = Agent_Proposals::get( $proposal['id'] );
+		$this->assertSame( 'chat-session-abc', $read['session_id'] );
+	}
+
+	/**
+	 * approve_with_grant() leaves a pre-existing grant untouched when execution
+	 * fails: only a grant this call created is rolled back.
+	 */
+	public function test_approve_with_grant_keeps_pre_existing_grant_on_failure(): void {
+		Tool_Grants::grant( 'always', 'db_update_option', array( 'user_id' => 42 ) );
+
+		$proposal = Agent_Proposals::create( 'db_update_option', array(), 'wordpress-assistant', 'Fails but grant pre-existed' );
+
+		$result = Agent_Proposals::approve_with_grant(
+			$proposal['id'],
+			'always',
+			'db_update_option',
+			array( 'user_id' => 42 )
+		);
+
+		$this->assertSame( false, $result['success'] ?? null );
+		$this->assertContains( 'db_update_option', Tool_Grants::list_for_user( 42 ) );
+
+		$row = $this->get_proposal_row( $proposal['id'] );
+		$this->assertSame( 'failed', $row['status'] );
+	}
+
+	/**
+	 * cleanup_expired() reaps a proposal stuck in 'deciding' (a process died after
+	 * the atomic claim but before finalise()) once it is older than the 15-minute
+	 * window: the row is marked 'failed' and its listener dedupe marker cleared so
+	 * a gated listener is not permanently blocked from proposing again.
+	 */
+	public function test_cleanup_expired_fails_stuck_deciding_rows_and_clears_marker(): void {
+		$agent_id    = 'stuck-deciding-agent';
+		$listener_id = 'l-stuck';
+		$tool        = 'list_posts';
+
+		$proposal = Agent_Proposals::create( $tool, array(), $agent_id, 'Stuck deciding', '', '', 0, $listener_id );
+
+		$this->assertSame( $proposal['id'], Agent_Proposals::has_pending( $agent_id, $listener_id, $tool ) );
+
+		global $wpdb;
+		$wpdb->update(
+			$wpdb->prefix . 'agent_builder_proposals',
+			array(
+				'status'     => 'deciding',
+				'created_at' => gmdate( 'Y-m-d H:i:s', time() - 20 * MINUTE_IN_SECONDS ),
+			),
+			array( 'id' => $proposal['id'] )
+		);
+
+		$flipped = Agent_Proposals::cleanup_expired();
+
+		$this->assertSame( 1, $flipped );
+		$row = $this->get_proposal_row( $proposal['id'] );
+		$this->assertSame( 'failed', $row['status'] );
+		$this->assertNull( Agent_Proposals::has_pending( $agent_id, $listener_id, $tool ) );
+		$this->assertFalse( get_transient( Agent_Proposals::pending_key( $agent_id, $listener_id, $tool ) ) );
+	}
+
+	/**
+	 * handle_proposal() returns 409 for a validate_args rejection (`success =>
+	 * false` with no `error` key), not a 200: a failed approval is a conflict, and
+	 * the caller must not treat it as a successful decision.
+	 */
+	public function test_handle_proposal_returns_409_when_execution_fails_validation(): void {
+		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $admin );
+
+		$proposal = Agent_Proposals::create(
+			'db_update_option',
+			array(), // missing 'name' and 'value' → validate_args fails
+			'wordpress-assistant',
+			'Fails validation via REST',
+			'',
+			'',
+			$admin
+		);
+
+		$request = new \WP_REST_Request( 'POST', '/agentic/v1/proposals/' . $proposal['id'] );
+		$request->set_param( 'action', 'once' );
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertSame( 409, $response->get_status() );
+		$this->assertSame( false, $response->get_data()['success'] ?? null );
+	}
+
+	/**
 	 * Fetch a raw proposals table row by id.
 	 *
 	 * @param string $proposal_id Proposal UUID.

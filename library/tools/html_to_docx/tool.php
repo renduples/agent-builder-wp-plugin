@@ -106,20 +106,20 @@ class Html_To_Docx extends \Agentic\Tool_Base {
 		}
 
 		try {
-			$phpWord = new \PhpOffice\PhpWord\PhpWord();
-			$phpWord->setDefaultFontName( 'Calibri' );
-			$phpWord->setDefaultFontSize( 11 );
+			$php_word = new \PhpOffice\PhpWord\PhpWord();
+			$php_word->setDefaultFontName( 'Calibri' );
+			$php_word->setDefaultFontSize( 11 );
 
 			if ( '' !== $title ) {
-				$phpWord->getDocInfo()->setTitle( sanitize_text_field( $title ) );
+				$php_word->getDocInfo()->setTitle( sanitize_text_field( $title ) );
 			}
 
-			$section = $phpWord->addSection();
+			$section = $php_word->addSection();
 
 			\PhpOffice\PhpWord\Shared\Html::addHtml( $section, $html, false, false );
 
 			$file_path = $dir . $filename;
-			$writer    = \PhpOffice\PhpWord\IOFactory::createWriter( $phpWord, 'Word2007' );
+			$writer    = \PhpOffice\PhpWord\IOFactory::createWriter( $php_word, 'Word2007' );
 			$writer->save( $file_path );
 
 		} catch ( \Exception $e ) {

@@ -202,7 +202,7 @@ class Optimize_Post_Title extends \Agentic\Tool_Base {
 	 * @return string  Improved title.
 	 */
 	private function generate_title( string $old_title, string $target_intent, string $focus_keyword, \WP_Post $post ): string {
-		$keyword = $focus_keyword ?: $this->clean_title_for_reuse( $old_title );
+		$keyword = $focus_keyword ? $focus_keyword : $this->clean_title_for_reuse( $old_title );
 
 		// Intent-specific title patterns.
 		$patterns = array(
@@ -369,7 +369,7 @@ class Optimize_Post_Title extends \Agentic\Tool_Base {
 		}
 
 		// No intent signal penalty.
-		if ( ! $intent_match && $focus_keyword === '' ) {
+		if ( ! $intent_match && '' === $focus_keyword ) {
 			$score = max( 0, $score - 10 );
 		}
 
@@ -407,7 +407,8 @@ class Optimize_Post_Title extends \Agentic\Tool_Base {
 		// Remove common stop patterns.
 		$cleaned = preg_replace( '/\s*[—|:]\s*.*$/', '', $title );
 		$cleaned = preg_replace( '/^(how to|what is|guide to|the)\s+/i', '', $cleaned );
-		return trim( $cleaned ) ?: $title;
+		$cleaned = trim( $cleaned );
+		return $cleaned ? $cleaned : $title;
 	}
 
 	/**
@@ -423,7 +424,7 @@ class Optimize_Post_Title extends \Agentic\Tool_Base {
 		}
 		$trimmed    = substr( $text, 0, $max_chars );
 		$last_space = strrpos( $trimmed, ' ' );
-		if ( $last_space !== false ) {
+		if ( false !== $last_space ) {
 			$trimmed = substr( $trimmed, 0, $last_space );
 		}
 		return $trimmed;

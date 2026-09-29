@@ -64,26 +64,26 @@ class Manage_Frontend_Modal_Agent extends \Agentic\Tool_Base {
 		return array(
 			'type'       => 'object',
 			'properties' => array(
-				'action'         => array(
+				'action'        => array(
 					'type'        => 'string',
 					'enum'        => array( 'list', 'enable', 'disable' ),
 					'description' => 'list: show which agents are currently deployed as a frontend widget. enable: turn one on (or update its settings). disable: turn one off.',
 				),
-				'agent_slug'     => array(
+				'agent_slug'    => array(
 					'type'        => 'string',
 					'description' => 'Which agent. Required for enable and disable.',
 				),
-				'position'       => array(
+				'position'      => array(
 					'type'        => 'string',
 					'enum'        => array( 'bottom-right', 'bottom-left' ),
 					'description' => 'Corner of the screen the widget opens from. Defaults to bottom-right.',
 				),
-				'pages'          => array(
+				'pages'         => array(
 					'type'        => 'string',
 					'enum'        => array( 'all', 'front', 'singular', 'homepage' ),
 					'description' => 'Which frontend pages show this widget. Defaults to all.',
 				),
-				'require_login'  => array(
+				'require_login' => array(
 					'type'        => 'boolean',
 					'description' => 'Only show the widget to logged-in visitors. Defaults to false.',
 				),
@@ -144,7 +144,11 @@ class Manage_Frontend_Modal_Agent extends \Agentic\Tool_Base {
 			if ( $existing_id ) {
 				Deployments::disable( $existing_id );
 			}
-			return array( 'ok' => true, 'agent_slug' => $slug, 'enabled' => false );
+			return array(
+				'ok'         => true,
+				'agent_slug' => $slug,
+				'enabled'    => false,
+			);
 		}
 
 		// Merge onto existing config so omitted fields are not reset to defaults.

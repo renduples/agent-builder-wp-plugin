@@ -67,7 +67,7 @@ class Run_Full_Audit extends \Agentic\Tool_Base {
 		}
 
 		// Top 3 roadblocks: failed/warning checks ranked by impact desc.
-		$roadblocks = array_filter( $all_checks, fn( $c ) => $c['status'] === 'fail' || $c['status'] === 'warn' );
+		$roadblocks = array_filter( $all_checks, fn( $c ) => 'fail' === $c['status'] || 'warn' === $c['status'] );
 		usort( $roadblocks, fn( $a, $b ) => ( $b['impact'] ?? 0 ) <=> ( $a['impact'] ?? 0 ) );
 		$top3 = array_slice( array_values( $roadblocks ), 0, 3 );
 

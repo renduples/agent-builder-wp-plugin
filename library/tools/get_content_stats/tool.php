@@ -56,7 +56,7 @@ class Get_Content_Stats extends \Agentic\Tool_Base {
 		);
 		$total = count( $posts );
 
-		if ( $total === 0 ) {
+		if ( 0 === $total ) {
 			return array(
 				'total_posts' => 0,
 				'message'     => 'No published posts or pages found.',
@@ -114,8 +114,9 @@ class Get_Content_Stats extends \Agentic\Tool_Base {
 		sort( $recent_posts );
 		$avg_gap = null;
 		if ( count( $recent_posts ) >= 2 ) {
-			$gaps = array();
-			for ( $i = 1; $i < count( $recent_posts ); $i++ ) {
+			$gaps         = array();
+			$recent_count = count( $recent_posts );
+			for ( $i = 1; $i < $recent_count; $i++ ) {
 				$gaps[] = ( $recent_posts[ $i ] - $recent_posts[ $i - 1 ] ) / DAY_IN_SECONDS;
 			}
 			$avg_gap = round( array_sum( $gaps ) / count( $gaps ) );
@@ -125,7 +126,7 @@ class Get_Content_Stats extends \Agentic\Tool_Base {
 		$empty_cats = 0;
 		$cats       = get_categories( array( 'hide_empty' => false ) );
 		foreach ( $cats as $cat ) {
-			if ( $cat->count === 0 ) {
+			if ( 0 === $cat->count ) {
 				++$empty_cats;
 			}
 		}

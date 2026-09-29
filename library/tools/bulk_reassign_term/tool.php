@@ -93,7 +93,7 @@ class Bulk_Reassign_Term extends Tool_Base {
 				'posts_per_page' => -1,
 				'fields'         => 'ids',
 				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
-			'tax_query'      => array(
+				'tax_query'      => array(
 					array(
 						'taxonomy' => $taxonomy,
 						'field'    => 'term_id',

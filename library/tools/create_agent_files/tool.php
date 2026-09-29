@@ -112,12 +112,12 @@ class Create_Agent_Files extends Tool_Base {
 				'description' => 'Overwrite if exists.',
 				'required'    => false,
 			),
-			'system_prompt'   => array(
+			'system_prompt'     => array(
 				'type'        => 'string',
 				'description' => 'System prompt text to write to templates/system-prompt.txt.',
 				'required'    => false,
 			),
-			'tools'           => array(
+			'tools'             => array(
 				'type'        => 'array',
 				'description' => 'Tool definitions used to generate abilities.json. Each item: {name, risk?, reason?}.',
 				'required'    => false,
@@ -130,7 +130,7 @@ class Create_Agent_Files extends Tool_Base {
 					),
 				),
 			),
-			'knowledge_files' => array(
+			'knowledge_files'   => array(
 				'type'        => 'array',
 				'description' => 'Knowledge files to inject into the system prompt. Filenames from wp-content/agentic-knowledge/ (e.g. "platform-knowledge.txt").',
 				'required'    => false,
@@ -142,7 +142,7 @@ class Create_Agent_Files extends Tool_Base {
 				'required'    => false,
 				'items'       => array( 'type' => 'string' ),
 			),
-			'welcome_message' => array(
+			'welcome_message'   => array(
 				'type'        => 'string',
 				'description' => 'ALWAYS provide a short, friendly first message shown when the chat opens: a greeting, one line on what this agent does, and an invitation to start.',
 				'required'    => false,
@@ -183,11 +183,11 @@ class Create_Agent_Files extends Tool_Base {
 		// admin created it instead of leaving the Agents list with no author at
 		// all, linked to their profile edit screen the same way bundled agents'
 		// author_uri links out to the publisher.
-		$author     = '';
-		$author_uri = '';
+		$author       = '';
+		$author_uri   = '';
 		$current_user = wp_get_current_user();
 		if ( $current_user && $current_user->exists() ) {
-			$author     = $current_user->display_name ?: $current_user->user_login;
+			$author     = $current_user->display_name ? $current_user->display_name : $current_user->user_login;
 			$author_uri = get_edit_user_link( $current_user->ID );
 		}
 
@@ -252,7 +252,7 @@ class Create_Agent_Files extends Tool_Base {
 		$manifest_json = wp_json_encode( $manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 		$result        = file_put_contents( $agent_dir . '/agent.json', $manifest_json );
 
-		if ( $result === false ) {
+		if ( false === $result ) {
 			return array( 'error' => 'Failed to write agent.json — check directory permissions for ' . $agent_dir );
 		}
 

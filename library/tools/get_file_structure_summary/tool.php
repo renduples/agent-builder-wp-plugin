@@ -158,38 +158,37 @@ class Get_File_Structure_Summary extends \Agentic\Tool_Base {
 		);
 	}
 
-/**
- * Calculate the total size of a directory in kilobytes using native PHP.
- *
- * Replaces a shell `du` call so the tool works on hosts where exec() is
- * disabled and complies with the WordPress.org guidelines (no shell access).
- *
- * @param string $dir Absolute directory path.
- * @return int Size in KB (0 on failure).
- */
-private static function directory_size_kb( string $dir ): int {
-if ( ! is_dir( $dir ) ) {
-return 0;
-}
+	/**
+	 * Calculate the total size of a directory in kilobytes using native PHP.
+	 *
+	 * Replaces a shell `du` call so the tool works on hosts where exec() is
+	 * disabled and complies with the WordPress.org guidelines (no shell access).
+	 *
+	 * @param string $dir Absolute directory path.
+	 * @return int Size in KB (0 on failure).
+	 */
+	private static function directory_size_kb( string $dir ): int {
+		if ( ! is_dir( $dir ) ) {
+			return 0;
+		}
 
-$bytes = 0;
-try {
-$iterator = new \RecursiveIteratorIterator(
-new \RecursiveDirectoryIterator( $dir, \FilesystemIterator::SKIP_DOTS ),
-\RecursiveIteratorIterator::LEAVES_ONLY
-);
-foreach ( $iterator as $file ) {
-if ( $file->isFile() ) {
-$bytes += $file->getSize();
-}
-}
-} catch ( \Throwable $e ) {
-return 0;
-}
+		$bytes = 0;
+		try {
+			$iterator = new \RecursiveIteratorIterator(
+				new \RecursiveDirectoryIterator( $dir, \FilesystemIterator::SKIP_DOTS ),
+				\RecursiveIteratorIterator::LEAVES_ONLY
+			);
+			foreach ( $iterator as $file ) {
+				if ( $file->isFile() ) {
+					$bytes += $file->getSize();
+				}
+			}
+		} catch ( \Throwable $e ) {
+			return 0;
+		}
 
-return (int) round( $bytes / 1024 );
-}
-
+		return (int) round( $bytes / 1024 );
+	}
 }
 
 return new Get_File_Structure_Summary();

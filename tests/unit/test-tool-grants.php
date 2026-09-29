@@ -316,4 +316,43 @@ class Test_Tool_Grants extends TestCase {
 		$this->assertFalse( Tool_Grants::is_valid_run_id( 'not-a-run-id' ) );
 		$this->assertFalse( Tool_Grants::is_valid_run_id( '' ) );
 	}
+
+	/**
+	 * grant('session') refuses to append into an existing blob owned by another
+	 * user: a session is bound to the user who granted it, so a different user's
+	 * grant write must not piggyback on (or overwrite) the original owner's blob.
+	 */
+	public function test_grant_session_refuses_to_append_into_other_users_blob(): void {
+		$owner = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		set_transient( 'agentic_session_grants_sess1', array( 'user' => $owner, 'grants' => array( 'edit_post@content_writer' ) ), DAY_IN_SECONDS );
+
+		$intruder = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		Tool_Grants::grant( 'session', 'db_update_option@content_writer', array( 'session_id' => 'sess1', 'user_id' => $intruder ) );
+
+		$stored = get_transient( 'agentic_session_grants_sess1' );
+		$this->assertSame( $owner, $stored['user'], 'the blob must keep its original owner' );
+		$this->assertSame( array( 'edit_post@content_writer' ), $stored['grants'], 'the intruder grant must not be appended' );
+	}
+
+	/**
+	 * has() reports whether a grant already exists in each scope, so a caller can
+	 * distinguish a grant it is about to create from one that already existed.
+	 */
+	public function test_has_reports_existing_grant(): void {
+		Tool_Grants::grant( 'always', 'edit_post', array( 'user_id' => $this->admin_id ) );
+		Tool_Grants::grant( 'session', 'edit_post@content_writer', array( 'session_id' => 'sess1', 'user_id' => $this->admin_id ) );
+		set_transient( 'agentic_run_grants_run1', array( 'edit_post@content_writer' ), DAY_IN_SECONDS );
+
+		$this->assertTrue( Tool_Grants::has( 'always', 'edit_post', array( 'user_id' => $this->admin_id ) ) );
+		$this->assertTrue( Tool_Grants::has( 'session', 'edit_post@content_writer', array( 'session_id' => 'sess1', 'user_id' => $this->admin_id ) ) );
+		$this->assertTrue( Tool_Grants::has( 'run', 'edit_post@content_writer', array( 'run_id' => 'run1' ) ) );
+
+		// has() keys session on the session id alone (user binding is resolve()'s
+		// concern), so a differing user_id still reports an existing grant.
+		$this->assertTrue( Tool_Grants::has( 'session', 'edit_post@content_writer', array( 'session_id' => 'sess1', 'user_id' => 999999 ) ) );
+
+		$this->assertFalse( Tool_Grants::has( 'always', 'other_tool', array( 'user_id' => $this->admin_id ) ) );
+		$this->assertFalse( Tool_Grants::has( 'session', 'other_tool@content_writer', array( 'session_id' => 'sess1', 'user_id' => $this->admin_id ) ) );
+		$this->assertFalse( Tool_Grants::has( 'run', 'edit_post@content_writer', array( 'run_id' => 'run2' ) ) );
+	}
 }

@@ -150,7 +150,7 @@ class Simulate_AI_Crawler extends \Agentic\Tool_Base {
 				$notes[]    = "Status {$status} (browser got {$baseline_status})";
 			}
 
-			if ( $status === 403 || ( $body_len < $baseline_length * 0.3 && $body_len < 5000 ) ) {
+			if ( 403 === $status || ( $body_len < $baseline_length * 0.3 && $body_len < 5000 ) ) {
 				if ( preg_match( '/cloudflare|challenge-platform|cf-chl-bypass|captcha|blocked|access denied/i', $body ) ) {
 					$is_blocked = true;
 					$notes[]    = 'WAF challenge or block page detected';

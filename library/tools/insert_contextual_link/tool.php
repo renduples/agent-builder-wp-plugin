@@ -114,7 +114,7 @@ class Insert_Contextual_Link extends \Agentic\Tool_Base {
 		$pattern     = '/(?<![<\/a-zA-Z])(' . $escaped_anchor . ')(?![^<]*<\/a>)(?![^<]*>)/i';
 		$new_content = preg_replace( $pattern, '<a href="' . $safe_url . '">$1</a>', $content, 1, $count );
 
-		if ( $count === 0 ) {
+		if ( 0 === $count ) {
 			$linkable  = \Agentic\Tool_Helpers::extract_linkable_phrases( $content );
 			$available = array_merge(
 				$linkable['headings'] ?? array(),
