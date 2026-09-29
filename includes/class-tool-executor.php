@@ -539,4 +539,103 @@ class Tool_Executor {
 
 		return $result;
 	}
+
+	/**
+	 * Run an already-approved action.
+	 *
+	 * This is the execution half of the two approval flows (the classic
+	 * Approval_Queue approve action, and the chat-confirmation proposal). The
+	 * risk gate has already run and a human has decided, so no gating,
+	 * enforcement, backup, or confirmation routing happens here — only the same
+	 * tool_loader → agent-inline → abilities-bridge fallback chain that
+	 * `execute()`'s allow-path uses, plus the non-readonly operations-ledger
+	 * write and the resolved-execution hook.
+	 *
+	 * @param array           $approval Approval record. Recognized keys:
+	 *                                  `tool`/`action` (tool name),
+	 *                                  `params`/`arguments` (decoded args; a JSON
+	 *                                  string is decoded), `agent_id`,
+	 *                                  `risk_level`, `mode`, `invocation` /
+	 *                                  `invocation_context`, `session_id`,
+	 *                                  `run_id`, `run_kind`, `user_id` /
+	 *                                  `created_by`.
+	 * @param Agent_Base|null $agent    Optional agent instance for the
+	 *                                  agent-inline fallback.
+	 * @return array Tool result.
+	 */
+	public function execute_approved( array $approval, ?Agent_Base $agent = null ): array {
+		$tool_name = (string) ( $approval['tool'] ?? $approval['action'] ?? '' );
+		$arguments = $approval['params'] ?? $approval['arguments'] ?? array();
+
+		// The classic approval queue stores params as a JSON string; the proposal
+		// table stores them already decoded. Tolerate both.
+		if ( is_string( $arguments ) ) {
+			$decoded   = json_decode( $arguments, true );
+			$arguments = is_array( $decoded ) ? $decoded : array();
+		}
+		if ( ! is_array( $arguments ) ) {
+			$arguments = array();
+		}
+
+		$agent_id    = (string) ( $approval['agent_id'] ?? '' );
+		$call_action = is_string( $arguments['action'] ?? null ) ? $arguments['action'] : '';
+		$mode        = (string) ( $approval['mode'] ?? '' );
+		$invocation  = (string) ( $approval['invocation'] ?? $approval['invocation_context'] ?? '' );
+
+		$tool_instance = $this->tool_loader->get( $tool_name );
+		$risk          = (string) ( $approval['risk_level'] ?? '' );
+		if ( '' === $risk || ! Risk_Level::is_valid( $risk ) ) {
+			$risk = Abilities_Manifest::get_effective_risk( $agent_id, $tool_name, $tool_instance, $call_action );
+		}
+
+		$ctx = array(
+			'tool'       => $tool_name,
+			'action'     => $call_action,
+			'arguments'  => $arguments,
+			'agent_id'   => $agent_id,
+			'mode'       => $mode,
+			'invocation' => $invocation,
+			'session_id' => (string) ( $approval['session_id'] ?? '' ),
+			'run_id'     => (string) ( $approval['run_id'] ?? '' ),
+			'run_kind'   => (string) ( $approval['run_kind'] ?? '' ),
+			'user_id'    => (int) ( $approval['user_id'] ?? $approval['created_by'] ?? get_current_user_id() ),
+			'risk'       => $risk,
+		);
+
+		$is_readonly = $tool_instance ? ( $tool_instance->get_annotations()['readonly'] ?? false ) : true;
+
+		Tool_Base::set_calling_agent( $agent_id );
+
+		// Execute via Tool_Loader, falling back to agent-inline tools, then
+		// third-party abilities (WP 6.9+) — the same fallback chain execute()'s
+		// allow-path uses. $resolved tracks whether any dispatcher produced a
+		// result, so the synthesized "Unknown tool" case is never reported as a
+		// real execution.
+		$result = $this->tool_loader->execute( $tool_name, $arguments );
+
+		if ( null !== $result ) {
+			if ( ! $is_readonly ) {
+				$queue = new Approval_Queue();
+				$queue->log_executed( $agent_id, $tool_name, $arguments, $risk, $mode, $invocation );
+			}
+		} else {
+			$result = $agent ? $agent->execute_tool( $tool_name, $arguments ) : null;
+
+			if ( null === $result && $this->abilities_bridge ) {
+				$result = $this->abilities_bridge->execute_ability( $tool_name, $arguments );
+			}
+		}
+
+		$resolved = null !== $result;
+
+		if ( ! $resolved ) {
+			$result = array( 'error' => sprintf( 'Unknown tool: %s', $tool_name ) );
+		}
+
+		if ( $resolved ) {
+			do_action( 'agent_builder_tool_executed', $tool_name, $arguments, $result, $ctx );
+		}
+
+		return $result;
+	}
 }

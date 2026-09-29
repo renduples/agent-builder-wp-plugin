@@ -39,14 +39,6 @@ class Agent_Proposals {
 	private const TABLE = 'agent_builder_proposals';
 
 	/**
-	 * Transient prefix for the per-(agent, listener, tool) pending-proposal
-	 * dedupe marker. The marker holds the proposal id and expires with
-	 * EXPIRY_CHAT, so a gated event listener that keeps firing the same tool
-	 * never stacks up duplicate proposals.
-	 */
-	private const LISTENER_PENDING_PREFIX = 'agentic_listener_pending_';
-
-	/**
 	 * Expiry for a chat-originated proposal (no run_id): 1 hour.
 	 */
 	private const EXPIRY_CHAT = 3600;
@@ -55,6 +47,14 @@ class Agent_Proposals {
 	 * Expiry for a run-backed proposal (run_id set): 7 days.
 	 */
 	private const EXPIRY_RUN = 7 * 24 * 3600;
+
+	/**
+	 * Transient prefix for the per-(agent, listener, tool) pending-proposal
+	 * dedupe marker. The marker holds the proposal id and expires with the
+	 * proposal it points at, so a gated event listener that keeps firing the
+	 * same tool never stacks up duplicate proposals.
+	 */
+	private const LISTENER_PENDING_PREFIX = 'agentic_listener_pending_';
 
 	/**
 	 * Create a new proposal.
@@ -71,13 +71,7 @@ class Agent_Proposals {
 	 *                            owner's id explicitly instead).
 	 * @param string $listener_id Event-listener id when this proposal came from a
 	 *                            gated listener (used to dedupe repeat fires); '' for
-	 *                            chat/other origins. Not persisted to the row (the
-	 *                            table has no listener_id column yet — see
-	 *                            wp#277) so the dedupe marker created below relies on
-	 *                            its own EXPIRY_CHAT TTL rather than an early clear on
-	 *                            approve()/reject(); the create-time dedupe check
-	 *                            itself (has_pending(), the safety property that
-	 *                            actually stops proposal pile-up) is unaffected.
+	 *                            chat/other origins.
 	 * @return array Proposal data with ID.
 	 */
 	public static function create( string $tool_name, array $params, string $agent_id, string $description, string $diff = '', string $run_id = '', int $created_by = 0, string $listener_id = '' ): array {
@@ -101,7 +95,6 @@ class Agent_Proposals {
 			'run_id'      => $run_id,
 			'session_id'  => null,
 			'expires_at'  => $expires_at,
-			'listener_id' => $listener_id,
 		);
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table insert.
@@ -126,7 +119,7 @@ class Agent_Proposals {
 		// Record the pending marker so a repeat fire of the same listener + tool
 		// is deduped instead of stacking a second proposal.
 		if ( '' !== $listener_id ) {
-			set_transient( self::pending_key( $agent_id, $listener_id, $tool_name ), $proposal_id, self::EXPIRY_CHAT );
+			set_transient( self::pending_key( $agent_id, $listener_id, $tool_name ), $proposal_id, $expiry );
 		}
 
 		// Log the proposal creation.
@@ -140,6 +133,39 @@ class Agent_Proposals {
 				'description' => $description,
 			)
 		);
+
+		return $proposal;
+	}
+
+	/**
+	 * Get a proposal by ID.
+	 *
+	 * A still-pending proposal whose expires_at has lapsed is treated as
+	 * not found (its stored status is flipped to 'expired' by the daily
+	 * cleanup cron, not here).
+	 *
+	 * @param string $proposal_id Proposal UUID.
+	 * @return array|null Proposal data or null if not found/expired.
+	 */
+	public static function get( string $proposal_id ): ?array {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Single-row custom table lookup.
+		$row = $wpdb->get_row(
+			$wpdb->prepare( "SELECT * FROM {$wpdb->prefix}agent_builder_proposals WHERE id = %s", $proposal_id ),
+			ARRAY_A
+		);
+
+		if ( ! $row ) {
+			return null;
+		}
+
+		$proposal = self::normalize_row( $row );
+
+		// Expiry-on-read: a pending proposal whose window has lapsed is gone.
+		if ( 'pending' === $proposal['status'] && ! empty( $proposal['expires_at'] ) && strtotime( (string) $proposal['expires_at'] ) < time() ) {
+			return null;
+		}
 
 		return $proposal;
 	}
@@ -185,39 +211,6 @@ class Agent_Proposals {
 	}
 
 	/**
-	 * Get a proposal by ID.
-	 *
-	 * A still-pending proposal whose expires_at has lapsed is treated as
-	 * not found (its stored status is flipped to 'expired' by the daily
-	 * cleanup cron, not here).
-	 *
-	 * @param string $proposal_id Proposal UUID.
-	 * @return array|null Proposal data or null if not found/expired.
-	 */
-	public static function get( string $proposal_id ): ?array {
-		global $wpdb;
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Single-row custom table lookup.
-		$row = $wpdb->get_row(
-			$wpdb->prepare( "SELECT * FROM {$wpdb->prefix}agent_builder_proposals WHERE id = %s", $proposal_id ),
-			ARRAY_A
-		);
-
-		if ( ! $row ) {
-			return null;
-		}
-
-		$proposal = self::normalize_row( $row );
-
-		// Expiry-on-read: a pending proposal whose window has lapsed is gone.
-		if ( 'pending' === $proposal['status'] && ! empty( $proposal['expires_at'] ) && strtotime( (string) $proposal['expires_at'] ) < time() ) {
-			return null;
-		}
-
-		return $proposal;
-	}
-
-	/**
 	 * Approve and execute a proposal.
 	 *
 	 * @param string $proposal_id Proposal UUID.
@@ -242,32 +235,24 @@ class Agent_Proposals {
 		}
 		$proposal['status'] = 'approved';
 
-		// Execute the change via Tool_Loader. This path bypasses Tool_Executor
-		// entirely, so the calling-agent context (needed by tools like
-		// delegate_to_agent to detect delegation cycles) must be set explicitly.
-		Tool_Base::set_calling_agent( (string) ( $proposal['agent_id'] ?? '' ) );
-
-		$result = Tool_Loader::get_instance()->execute(
-			$proposal['tool'],
-			$proposal['params']
+		// Execute the already-approved change through Tool_Executor's approved
+		// path, which runs the same tool_loader → agent-inline → abilities-bridge
+		// fallback chain as execute()'s allow-path (and sets the calling-agent
+		// context, needed by delegate_to_agent to detect delegation cycles) and
+		// writes the operations ledger for non-readonly tools.
+		$agent  = \Agentic_Agent_Registry::get_instance()->get_agent_instance( (string) ( $proposal['agent_id'] ?? '' ) );
+		$result = ( new Tool_Executor( Tool_Loader::get_instance(), new Audit_Log() ) )->execute_approved(
+			array(
+				'tool'       => (string) $proposal['tool'],
+				'params'     => $proposal['params'],
+				'agent_id'   => (string) ( $proposal['agent_id'] ?? '' ),
+				'run_id'     => (string) ( $proposal['run_id'] ?? '' ),
+				'created_by' => (int) ( $proposal['created_by'] ?? 0 ),
+				'mode'       => Audit_Log::get_mode_context(),
+				'invocation' => 'chat',
+			),
+			$agent
 		);
-
-		if ( null === $result ) {
-			$result = array( 'error' => "Unknown tool: {$proposal['tool']}" );
-		}
-
-		// Log to operations ledger (confirm-path tools bypass Agent_Controller).
-		if ( ! isset( $result['error'] ) ) {
-			$queue = new Approval_Queue();
-			$queue->log_executed(
-				$proposal['agent_id'],
-				$proposal['tool'],
-				$proposal['params'],
-				'medium',
-				Audit_Log::get_mode_context(),
-				'chat'
-			);
-		}
 
 		// Log approval.
 		$audit = new Audit_Log();
