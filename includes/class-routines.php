@@ -260,4 +260,168 @@ class Routines {
 
 		return null;
 	}
+
+	/**
+	 * Create or update a routine (a user-created scheduled task or event listener).
+	 *
+	 * A thin wrapper over Agent_Lifecycle::save_user_scheduled_task() /
+	 * save_user_trigger() — the args those methods already accept are passed
+	 * through unchanged, and only the Deployments-row linkage they already
+	 * dual-write is resolved back, so the caller gets the Deployments row id
+	 * every other Routines method keys on.
+	 *
+	 * `skill_slug` and `timezone` are routine-level config layered onto the
+	 * mirror row after the underlying save (which rewrites the whole config
+	 * blob, wiping anything not part of its own schema, so this must run after
+	 * it). They are stored only — see designs/M14-routines.md "Deferred":
+	 * `skill_slug` is not wired into execution because there is no existing
+	 * reusable injection path to point at (run_autonomous_task() has no
+	 * skill_slug option, and handle_chat() has no /<slug> skill-invocation), so
+	 * adding one here would invent a second mechanism; `timezone` is
+	 * informational, and next_run() keeps using the site timezone.
+	 *
+	 * @param array $args {
+	 *     @type string $kind        'scheduled_task' or 'event_listener'. Required.
+	 *     @type string $id          Existing task/trigger id to update, or '' for a new routine.
+	 *     @type string $agent_slug  Required. Agent to run the routine (passed through).
+	 *     @type string $name        Optional display name (passed through).
+	 *     @type string $prompt      Prompt/instructions (passed through).
+	 *     @type string $description Optional description (scheduled_task only, passed through).
+	 *     @type string $schedule    Recurrence key (scheduled_task only, passed through).
+	 *     @type string $hook        WP action hook (event_listener only, passed through).
+	 *     @type int    $priority    add_action() priority (event_listener only, passed through).
+	 *     @type string $skill_slug  Optional skill slug to store in the row's config.
+	 *     @type string $timezone    Optional timezone to store in the row's config (informational).
+	 * }
+	 * @return array{ok:bool,id?:int,error?:string}
+	 */
+	public static function save( array $args ): array {
+		$kind       = (string) ( $args['kind'] ?? '' );
+		$skill_slug = sanitize_key( (string) ( $args['skill_slug'] ?? '' ) );
+		$timezone   = sanitize_text_field( (string) ( $args['timezone'] ?? '' ) );
+
+		unset( $args['kind'], $args['skill_slug'], $args['timezone'] );
+
+		if ( 'scheduled_task' === $kind ) {
+			$result = Agent_Lifecycle::save_user_scheduled_task( $args );
+		} elseif ( 'event_listener' === $kind ) {
+			$result = Agent_Lifecycle::save_user_trigger( $args );
+		} else {
+			return array(
+				'ok'    => false,
+				'error' => __( 'Invalid routine kind.', 'agent-builder' ),
+			);
+		}
+
+		if ( empty( $result['ok'] ) ) {
+			return array(
+				'ok'    => false,
+				'error' => (string) ( $result['error'] ?? '' ),
+			);
+		}
+
+		$deployment_id = 'scheduled_task' === $kind
+			? self::deployment_id_for_task( (string) $result['id'] )
+			: self::deployment_id_for_trigger( (string) $result['id'] );
+
+		if ( null === $deployment_id ) {
+			return array(
+				'ok'    => false,
+				'error' => __( 'Routine was saved but its deployment row could not be resolved.', 'agent-builder' ),
+			);
+		}
+
+		$patch = array();
+		if ( '' !== $skill_slug ) {
+			$patch['skill_slug'] = $skill_slug;
+		}
+		if ( '' !== $timezone ) {
+			$patch['timezone'] = $timezone;
+		}
+		if ( ! empty( $patch ) ) {
+			Deployments::update_config( $deployment_id, $patch );
+		}
+
+		return array(
+			'ok' => true,
+			'id' => $deployment_id,
+		);
+	}
+
+	/**
+	 * Manually run one execution of a routine right now, outside its schedule or
+	 * trigger, for the "Test run" action.
+	 *
+	 * Look up the routine, confirm it is one, resolve its agent, then run it
+	 * synchronously through the same Agent_Lifecycle execution path its schedule
+	 * or trigger would use. Execution is currently inline (async dispatch is a
+	 * documented deferred item), so once this returns the run has finished; the
+	 * resulting run id is read back from the mirror row's last_run_id, written by
+	 * Agent_Lifecycle::record_routine_completion().
+	 *
+	 * @param int                 $id         Routine (Deployments row) ID.
+	 * @param int                 $user_id    Accepted for future audit/ownership use; not consumed yet.
+	 * @param Agent_Controller|null $controller Optional controller (tests inject a fake-LLM one).
+	 * @return array{ok:bool,run_id?:string,error?:string}
+	 */
+	public static function test_run( int $id, int $user_id, ?Agent_Controller $controller = null ): array {
+		unset( $user_id ); // Reserved for future audit/ownership use.
+
+		$row = Deployments::get( $id );
+		if ( null === $row ) {
+			return array(
+				'ok'    => false,
+				'error' => __( 'Routine not found.', 'agent-builder' ),
+			);
+		}
+
+		if ( ! self::is_routine( $row ) ) {
+			return array(
+				'ok'    => false,
+				'error' => __( 'Not a routine.', 'agent-builder' ),
+			);
+		}
+
+		$agent_slug = (string) ( $row['agent_slug'] ?? '' );
+		$type       = (string) ( $row['type'] ?? '' );
+		$config     = $row['config'] ?? array();
+
+		$agent = \Agentic_Agent_Registry::get_instance()->get_agent_instance( $agent_slug );
+		if ( ! $agent ) {
+			return array(
+				'ok'    => false,
+				'error' => __( 'Agent not found or not active.', 'agent-builder' ),
+			);
+		}
+
+		if ( Deployments::TYPE_SCHEDULED_TASK === $type ) {
+			$task_id   = (string) ( $config['task_id'] ?? '' );
+			$user_task = Agent_Lifecycle::find_user_scheduled_task( $task_id );
+			if ( null === $user_task ) {
+				return array(
+					'ok'    => false,
+					'error' => __( 'Routine task not found.', 'agent-builder' ),
+				);
+			}
+
+			Agent_Lifecycle::execute_scheduled_task( $agent, Agent_Lifecycle::user_task_to_definition( $user_task ), $controller );
+		} else {
+			// Event listener: no direct "run this trigger's prompt now" entry point
+			// exists, so drive handle_async_event() with empty synthetic hook args.
+			Agent_Lifecycle::handle_async_event(
+				$agent_slug,
+				(string) ( $config['trigger_id'] ?? '' ),
+				(string) ( $config['prompt'] ?? '' ),
+				array(),
+				$controller
+			);
+		}
+
+		$row = Deployments::get( $id );
+
+		return array(
+			'ok'     => true,
+			'run_id' => (string) ( $row['config']['last_run_id'] ?? '' ),
+		);
+	}
 }
