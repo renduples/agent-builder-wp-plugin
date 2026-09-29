@@ -158,11 +158,19 @@ class Tool_Grants {
 				if ( '' === $session_id ) {
 					return;
 				}
+				$user_id = (int) ( $ctx['user_id'] ?? 0 );
 				$key     = 'agentic_session_grants_' . sanitize_key( $session_id );
 				$session = get_transient( $key );
-				if ( ! is_array( $session ) || ! is_array( $session['grants'] ?? null ) ) {
+				if ( is_array( $session ) && is_array( $session['grants'] ?? null ) ) {
+					// A session-grant blob is bound to the user who granted it. Never
+					// append into a blob owned by another user: a different user's
+					// grant write must not piggyback on (or overwrite) it.
+					if ( (int) ( $session['user'] ?? 0 ) !== $user_id ) {
+						return;
+					}
+				} else {
 					$session = array(
-						'user'   => (int) ( $ctx['user_id'] ?? 0 ),
+						'user'   => $user_id,
 						'grants' => array(),
 					);
 				}
@@ -245,6 +253,52 @@ class Tool_Grants {
 		$grants = get_user_meta( $user_id, self::ALWAYS_META_KEY, true );
 
 		return is_array( $grants ) ? array_values( $grants ) : array();
+	}
+
+	/**
+	 * Whether a grant already exists for the given scope + key + context.
+	 *
+	 * Mirrors grant()'s storage reads so a caller (e.g. approve_with_grant()) can
+	 * tell a grant it is about to create from one that already existed, and so
+	 * roll back only the former.
+	 *
+	 * @param string $scope 'always', 'session', or 'run'.
+	 * @param string $tool  Tool slug (or `tool@agent` key) to check.
+	 * @param array  $ctx   Context carrying 'user_id' (always), 'session_id' (session),
+	 *                      or 'run_id' (run).
+	 * @return bool True when the grant is already persisted.
+	 */
+	public static function has( string $scope, string $tool, array $ctx ): bool {
+		switch ( $scope ) {
+			case 'always':
+				$user_id = (int) ( $ctx['user_id'] ?? 0 );
+				if ( 0 === $user_id ) {
+					return false;
+				}
+				$grants = get_user_meta( $user_id, self::ALWAYS_META_KEY, true );
+
+				return is_array( $grants ) && in_array( $tool, $grants, true );
+
+			case 'session':
+				$session_id = (string) ( $ctx['session_id'] ?? '' );
+				if ( '' === $session_id ) {
+					return false;
+				}
+				$session = get_transient( 'agentic_session_grants_' . sanitize_key( $session_id ) );
+
+				return is_array( $session ) && is_array( $session['grants'] ?? null ) && in_array( $tool, $session['grants'], true );
+
+			case 'run':
+				$run_id = (string) ( $ctx['run_id'] ?? '' );
+				if ( '' === $run_id ) {
+					return false;
+				}
+				$grants = get_transient( 'agentic_run_grants_' . $run_id );
+
+				return is_array( $grants ) && in_array( $tool, $grants, true );
+		}
+
+		return false;
 	}
 
 	/**

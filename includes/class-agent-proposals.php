@@ -72,10 +72,14 @@ class Agent_Proposals {
 	 * @param string $listener_id Event-listener id when this proposal came from a
 	 *                            gated listener (used to dedupe repeat fires); '' for
 	 *                            chat/other origins.
+	 * @param string $session_id  Chat session id the proposal was raised in, so a
+	 *                            later session-scoped grant binds to the proposal's
+	 *                            own session rather than whatever the approving
+	 *                            request carries.
 	 * @return array Proposal data with ID, or an `array( 'error' => … )` when the
 	 *               insert failed (in which case no dedupe marker is set).
 	 */
-	public static function create( string $tool_name, array $params, string $agent_id, string $description, string $diff = '', string $run_id = '', int $created_by = 0, string $listener_id = '' ): array {
+	public static function create( string $tool_name, array $params, string $agent_id, string $description, string $diff = '', string $run_id = '', int $created_by = 0, string $listener_id = '', string $session_id = '' ): array {
 		global $wpdb;
 
 		$proposal_id = wp_generate_uuid4();
@@ -94,7 +98,7 @@ class Agent_Proposals {
 			'created_at'  => gmdate( 'Y-m-d H:i:s' ),
 			'created_by'  => $user_id,
 			'run_id'      => $run_id,
-			'session_id'  => null,
+			'session_id'  => $session_id,
 			'listener_id' => $listener_id,
 			'expires_at'  => $expires_at,
 		);
@@ -112,7 +116,7 @@ class Agent_Proposals {
 				'status'      => 'pending',
 				'created_by'  => $user_id > 0 ? $user_id : null,
 				'run_id'      => '' !== $run_id ? $run_id : null,
-				'session_id'  => null,
+				'session_id'  => '' !== $session_id ? $session_id : null,
 				'listener_id' => '' !== $listener_id ? $listener_id : null,
 				'created_at'  => gmdate( 'Y-m-d H:i:s' ),
 				'expires_at'  => $expires_at,
@@ -301,13 +305,26 @@ class Agent_Proposals {
 		}
 		$proposal['status'] = 'deciding';
 
-		// Only now — after the claim — persist the grant, then execute.
-		Tool_Grants::grant( $scope, $grant_key, $grant_ctx );
-		$result = self::execute_proposal( $proposal );
+		// Record whether the grant already existed so rollback only ever removes a
+		// grant this call created — a pre-existing grant (or one written by a
+		// concurrent approve) must survive a failed execution here.
+		$grant_existed = Tool_Grants::has( $scope, $grant_key, $grant_ctx );
 
-		// Roll back the grant when execution failed, so a decided proposal never
-		// leaves a lasting grant behind.
-		if ( self::proposal_failed( $result ) ) {
+		// Only now — after the claim — persist the grant, then execute. The grant
+		// write and the execution share one try so a throw from either is treated
+		// as a failure: the grant (if this call created it) is rolled back below
+		// and finish_approval() still runs to move the proposal out of 'deciding'.
+		try {
+			Tool_Grants::grant( $scope, $grant_key, $grant_ctx );
+			$result = self::execute_proposal( $proposal );
+		} catch ( \Throwable $e ) {
+			$result = array( 'error' => sprintf( 'Execution failed: %s', $e->getMessage() ) );
+		}
+
+		// Roll back a grant this call created when execution failed, so a failed
+		// approval never leaves a lasting grant behind. A pre-existing grant is
+		// left untouched.
+		if ( ! $grant_existed && self::proposal_failed( $result ) ) {
 			Tool_Grants::revoke( $scope, $grant_key, $grant_ctx );
 		}
 
@@ -514,9 +531,47 @@ class Agent_Proposals {
 		$table = $wpdb->prefix . self::TABLE;
 
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- Custom table update.
-		return (int) $wpdb->query(
+		$expired = (int) $wpdb->query(
 			"UPDATE {$table} SET status = 'expired' WHERE status = 'pending' AND expires_at IS NOT NULL AND expires_at < UTC_TIMESTAMP()" // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
 		);
+
+		// Reap proposals stuck in 'deciding' — a process died between the atomic
+		// pending→deciding claim and finalise(), so no one will ever resolve the
+		// row. Mark them 'failed' and clear any listener dedupe marker so a gated
+		// listener is not permanently blocked from proposing again. The age check
+		// uses created_at (the only timestamp set before finalise()); a row that
+		// sat pending long before it was claimed is briefly at risk, but the
+		// deciding window is seconds and this cleanup runs on a cron, so the
+		// practical exposure is a mis-labelled status, never a double execution.
+		$deciding_cutoff = gmdate( 'Y-m-d H:i:s', time() - 15 * MINUTE_IN_SECONDS );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Custom table read.
+		$stuck = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT id, agent_id, listener_id, tool FROM {$table} WHERE status = 'deciding' AND created_at < %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$deciding_cutoff
+			),
+			ARRAY_A
+		);
+
+		$failed = 0;
+		foreach ( ( is_array( $stuck ) ? $stuck : array() ) as $row ) {
+			// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Custom table update.
+			$updated = $wpdb->query(
+				$wpdb->prepare(
+					"UPDATE {$table} SET status = 'failed' WHERE id = %s AND status = 'deciding'", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$row['id']
+				)
+			);
+			if ( 1 === (int) $updated ) {
+				++$failed;
+				$listener_id = (string) ( $row['listener_id'] ?? '' );
+				if ( '' !== $listener_id ) {
+					delete_transient( self::pending_key( (string) $row['agent_id'], $listener_id, (string) $row['tool'] ) );
+				}
+			}
+		}
+
+		return $expired + $failed;
 	}
 
 	/**

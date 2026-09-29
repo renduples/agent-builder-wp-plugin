@@ -294,6 +294,22 @@ class Tool_Executor {
 			return array( 'error' => 'This action is classified as extreme risk and cannot be performed.' );
 		}
 
+		// --- Grant fast-paths (always / session / run) ---
+		// Tool_Grants::resolve() is the single decision point for persisted
+		// grants: it downgrades a queued/confirm-pending call to 'allow' when any
+		// grant scope covers the tool, and leaves the decision untouched otherwise.
+		// It runs first, on the baseline, so a grant loosens the decision *before*
+		// the rules filter below can tighten it. That ordering is what makes an
+		// admin "Ask me first" / "Never" rule win over a persisted grant: the
+		// grant's 'allow' is re-tightened to 'confirm' / 'queue' by the rules
+		// layer, instead of the grant being applied afterwards and undoing the
+		// rule. $ctx['granted'] records whether a grant loosened the baseline, so
+		// Risk_Level::clamp_enforcement() can tell a grant-loosening (permitted —
+		// the pre-M12 "grant is authoritative" semantics) from a filter-loosening
+		// (reclamped back to the baseline for HIGH-risk calls).
+		$enforcement    = Tool_Grants::resolve( $baseline, $ctx );
+		$ctx['granted'] = $enforcement !== $baseline;
+
 		/**
 		 * Filter the tool enforcement decision before it is acted on.
 		 *
@@ -305,7 +321,7 @@ class Tool_Executor {
 		 * @param string $enforcement Enforcement decision ('allow'|'confirm'|'queue'|'block').
 		 * @param array  $ctx         Gate context — see Tool_Executor::execute().
 		 */
-		$enforcement = apply_filters( 'agent_builder_tool_enforcement', $baseline, $ctx );
+		$enforcement = apply_filters( 'agent_builder_tool_enforcement', $enforcement, $ctx );
 
 		// A filter (or a bug in one) can return anything — a typo, a stray
 		// value, null, an int, an array. Validate the type and value here,
@@ -339,14 +355,6 @@ class Tool_Executor {
 			);
 			return array( 'error' => 'This action was blocked by policy and cannot be performed.' );
 		}
-
-		// --- Grant fast-paths (always / session / run) ---
-		// Tool_Grants::resolve() is the single decision point for persisted
-		// grants: it downgrades a queued/confirm-pending call to 'allow' when any
-		// grant scope covers the tool, and leaves the decision untouched otherwise.
-		// The 'once' scope (Approval_Queue::find_approved()) stays a separate
-		// concern, handled below.
-		$enforcement = Tool_Grants::resolve( $enforcement, $ctx );
 
 		if ( 'queue' === $enforcement ) {
 			$queue    = new Approval_Queue();
@@ -439,7 +447,7 @@ class Tool_Executor {
 				}
 			}
 
-			$proposal = Agent_Proposals::create( $tool_name, $arguments, $agent_id, $description, '', $ctx['run_id'], $ctx['user_id'], $listener_id );
+			$proposal = Agent_Proposals::create( $tool_name, $arguments, $agent_id, $description, '', $ctx['run_id'], $ctx['user_id'], $listener_id, $ctx['session_id'] );
 
 			// A failed insert (no proposal row) must not surface a phantom
 			// proposal id — report the failure instead of pretending a proposal
@@ -591,10 +599,17 @@ class Tool_Executor {
 		$invocation  = (string) ( $approval['invocation'] ?? $approval['invocation_context'] ?? '' );
 
 		$tool_instance = $this->tool_loader->get( $tool_name );
-		$risk          = (string) ( $approval['risk_level'] ?? '' );
-		if ( '' === $risk || ! Risk_Level::is_valid( $risk ) ) {
-			$risk = Abilities_Manifest::get_effective_risk( $agent_id, $tool_name, $tool_instance, $call_action );
-		}
+
+		// Never trust the stored risk alone: a tool's effective risk can change
+		// between the approval and the execution (an admin override, a manifest
+		// edit, a risk-registry update). Recompute the live risk and keep the
+		// stricter of the two, so an approval recorded under a lower risk can
+		// never authorise a call that has since escalated.
+		$stored_risk = (string) ( $approval['risk_level'] ?? '' );
+		$live_risk   = Abilities_Manifest::get_effective_risk( $agent_id, $tool_name, $tool_instance, $call_action );
+		$risk        = ( '' === $stored_risk || ! Risk_Level::is_valid( $stored_risk ) )
+			? $live_risk
+			: Risk_Level::max( $stored_risk, $live_risk );
 
 		// Approved or not, an extreme-risk tool must never run — it sits outside
 		// what any approval flow is allowed to authorise. Refuse it outright,
@@ -626,34 +641,40 @@ class Tool_Executor {
 			'risk'       => $risk,
 		);
 
-		$is_readonly = $tool_instance ? ( $tool_instance->get_annotations()['readonly'] ?? false ) : true;
+		// A tool with no loader instance is an agent-inline or third-party
+		// ability, not a readonly pass-through: it still writes (and must be
+		// ledged and audited) like any other non-readonly call. Only a real
+		// Tool_Base that declares itself readonly skips the backup and ledger.
+		$is_readonly = $tool_instance ? ( $tool_instance->get_annotations()['readonly'] ?? false ) : false;
 
 		Tool_Base::set_calling_agent( $agent_id );
 
 		// Re-run the same safety checks execute()'s allow-path performs: take the
 		// pre-write backup and validate arguments against the tool schema. An
-		// approval must not be a way to skip either.
-		if ( ! $is_readonly ) {
-			Tool_Helpers::backup_tables_for_tool( $tool_name, $arguments );
-		}
-
-		if ( $tool_instance ) {
-			$arg_error = $tool_instance->validate_args( $arguments );
-			if ( null !== $arg_error ) {
-				$this->audit->log( $agent_id, 'tool_blocked', $tool_name, array( 'reason' => $arg_error ) );
-				return array(
-					'success'    => false,
-					'error_code' => 'invalid_args',
-					'message'    => $arg_error,
-				);
-			}
-		}
-
-		// Execute via Tool_Loader, falling back to agent-inline tools, then
-		// third-party abilities (WP 6.9+) — the same fallback chain execute()'s
-		// allow-path uses. A Throwable is caught and recorded so a failed run is
-		// audited and returned rather than left to bubble up past the caller.
+		// approval must not be a way to skip either. Both run inside the try so a
+		// throw here is caught and returned, rather than bubbling up past the
+		// caller and leaving the proposal stuck in 'deciding'.
 		try {
+			if ( ! $is_readonly ) {
+				Tool_Helpers::backup_tables_for_tool( $tool_name, $arguments );
+			}
+
+			if ( $tool_instance ) {
+				$arg_error = $tool_instance->validate_args( $arguments );
+				if ( null !== $arg_error ) {
+					$this->audit->log( $agent_id, 'tool_blocked', $tool_name, array( 'reason' => $arg_error ) );
+					return array(
+						'success'    => false,
+						'error_code' => 'invalid_args',
+						'message'    => $arg_error,
+					);
+				}
+			}
+
+			// Execute via Tool_Loader, falling back to agent-inline tools, then
+			// third-party abilities (WP 6.9+) — the same fallback chain execute()'s
+			// allow-path uses. A Throwable is caught and recorded so a failed run
+			// is audited and returned rather than left to bubble up past the caller.
 			$result = $this->tool_loader->execute( $tool_name, $arguments );
 
 			if ( null === $result ) {

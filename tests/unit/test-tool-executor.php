@@ -15,9 +15,11 @@ use Agentic\Abilities_Manifest;
 use Agentic\Agent_Base;
 use Agentic\Agent_Run;
 use Agentic\Approval_Queue;
+use Agentic\Approval_Rules;
 use Agentic\Audit_Log;
 use Agentic\Risk_Level;
 use Agentic\Tool_Executor;
+use Agentic\Tool_Grants;
 use Agentic\Tool_Loader;
 use Agentic\Tools_Registry;
 
@@ -540,6 +542,86 @@ class Test_Tool_Executor extends TestCase {
 	}
 
 	/**
+	 * Grant a tool to a fresh admin via both the always scope (bare tool) and a
+	 * run scope (tool@agent), returning the Agent_Run whose owner is that admin so
+	 * both grants resolve for the same user in execute().
+	 *
+	 * @param string $tool Tool slug.
+	 * @return \Agentic\Agent_Run
+	 */
+	private function grant_admin_always_and_run( string $tool ): Agent_Run {
+		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		Tool_Grants::grant( 'always', $tool, array( 'user_id' => $admin ) );
+
+		$run = Agent_Run::begin( 'test-agent', array( 'kind' => 'routine', 'user_id' => $admin ) );
+		Tool_Grants::grant( 'run', $tool . '@test-agent', array( 'run_id' => $run->get_run_id() ) );
+
+		return $run;
+	}
+
+	/**
+	 * A decision tightened by a rule must not be loosened by any grant. A MEDIUM
+	 * tool (baseline 'confirm') carrying both an always grant and a run grant —
+	 * which together would downgrade it to 'allow' — plus an 'ask' rule matching
+	 * it must still route to the confirm (proposal) path, not execute.
+	 */
+	public function test_always_and_run_grants_cannot_loosen_an_ask_rule(): void {
+		$run     = $this->grant_admin_always_and_run( 'add_custom_css' );
+		$rule_id = Approval_Rules::create(
+			array(
+				'agent_slug' => 'test-agent',
+				'rule_text'  => 'Ask before editing site CSS.',
+				'effect'     => 'ask',
+			)
+		);
+
+		$result = $this->make_executor()->execute(
+			'add_custom_css',
+			array( 'css' => 'body{color:red}' ),
+			'test-agent',
+			'supervised',
+			'chat',
+			null,
+			'',
+			$run
+		);
+
+		Approval_Rules::delete( $rule_id );
+
+		$this->assertSame( 'confirmation_required', $result['status'] ?? null, 'an ask rule must beat the always + run grants' );
+	}
+
+	/**
+	 * The same invariant with a 'deny' rule: it must tighten the grant-loosened
+	 * decision to 'queue' (admin approval queue), not let the grants win.
+	 */
+	public function test_always_and_run_grants_cannot_loosen_a_deny_rule(): void {
+		$run     = $this->grant_admin_always_and_run( 'add_custom_css' );
+		$rule_id = Approval_Rules::create(
+			array(
+				'agent_slug' => 'test-agent',
+				'rule_text'  => 'Never edit site CSS without admin approval.',
+				'effect'     => 'deny',
+			)
+		);
+
+		$result = $this->make_executor()->execute(
+			'add_custom_css',
+			array( 'css' => 'body{color:red}' ),
+			'test-agent',
+			'supervised',
+			'chat',
+			null,
+			'',
+			$run
+		);
+
+		Approval_Rules::delete( $rule_id );
+
+		$this->assertSame( 'queued_for_approval', $result['status'] ?? null, 'a deny rule must beat the always + run grants' );
+	}
+
+	/**
 	 * $ctx['run_id'] and $ctx['run_kind'] are populated from the passed
 	 * Agent_Run, and $ctx['user_id'] resolves to the run's owner.
 	 */
@@ -848,6 +930,32 @@ class Test_Tool_Executor extends TestCase {
 		$this->assertArrayHasKey( 'error', $result );
 		$this->assertStringContainsString( 'extreme risk', $result['error'] );
 		$this->assertFalse( get_option( 'agent_builder_test_extreme_opt' ), 'an extreme-risk tool must never run' );
+	}
+
+	/**
+	 * execute_approved() must not trust a stored risk level below the live risk:
+	 * an approval recorded under 'low' still refuses when the tool's live
+	 * effective risk has since escalated to EXTREME (e.g. an admin override).
+	 */
+	public function test_execute_approved_uses_live_risk_over_stored(): void {
+		update_option(
+			'agent_builder_risk_overrides',
+			array( 'test-agent:add_custom_css' => Risk_Level::EXTREME )
+		);
+
+		$result = $this->make_executor()->execute_approved(
+			array(
+				'tool'       => 'add_custom_css',
+				'params'     => array( 'css' => 'body{color:red}' ),
+				'agent_id'   => 'test-agent',
+				'risk_level' => Risk_Level::LOW,
+			)
+		);
+
+		delete_option( 'agent_builder_risk_overrides' );
+
+		$this->assertArrayHasKey( 'error', $result );
+		$this->assertStringContainsString( 'extreme risk', $result['error'] );
 	}
 
 	/**

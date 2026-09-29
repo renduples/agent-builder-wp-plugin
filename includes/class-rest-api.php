@@ -1131,7 +1131,6 @@ class REST_API {
 	public function handle_proposal( \WP_REST_Request $request ): \WP_REST_Response {
 		$proposal_id = sanitize_text_field( $request->get_param( 'id' ) );
 		$action      = $request->get_param( 'action' );
-		$session_id  = sanitize_text_field( (string) $request->get_param( 'session_id' ) );
 
 		// A proposal is a personal in-chat confirmation, not an admin queue item —
 		// only the user it was created for (or an administrator) may act on it.
@@ -1175,7 +1174,7 @@ class REST_API {
 				(string) $proposal['tool'],
 				array( 'user_id' => get_current_user_id() )
 			);
-		} elseif ( 'session' === $action && '' !== $session_id ) {
+		} elseif ( 'session' === $action ) {
 			$proposal = Agent_Proposals::get( $proposal_id );
 			if ( ! $proposal ) {
 				return new \WP_REST_Response( array( 'error' => 'Proposal not found or expired.' ), 404 );
@@ -1183,12 +1182,22 @@ class REST_API {
 			if ( 'pending' !== $proposal['status'] ) {
 				return new \WP_REST_Response( array( 'error' => 'Proposal already processed.' ), 409 );
 			}
+
+			// The grant binds to the proposal's stored session, not whatever the
+			// request carries — a client must not be able to redirect a session
+			// grant into a different (possibly another user's) session. A proposal
+			// raised without a session has nothing to bind the grant to.
+			$grant_session_id = (string) ( $proposal['session_id'] ?? '' );
+			if ( '' === $grant_session_id ) {
+				return new \WP_REST_Response( array( 'error' => 'Proposal has no session to grant.' ), 409 );
+			}
+
 			$result = Agent_Proposals::approve_with_grant(
 				$proposal_id,
 				'session',
 				(string) $proposal['tool'] . '@' . (string) $proposal['agent_id'],
 				array(
-					'session_id' => $session_id,
+					'session_id' => $grant_session_id,
 					'user_id'    => get_current_user_id(),
 				)
 			);
@@ -1197,9 +1206,11 @@ class REST_API {
 			$result = Agent_Proposals::approve( $proposal_id );
 		}
 
-		if ( ! empty( $result['error'] ) ) {
+		if ( ! empty( $result['error'] ) || ( array_key_exists( 'success', $result ) && false === $result['success'] ) ) {
 			// A lost claim (or an already-decided row) reports as a conflict; the
-			// grant, if one was being written, has already been rolled back.
+			// grant, if one was being written, has already been rolled back. A
+			// validate_args rejection (`success => false` with no `error` key) is
+			// likewise a conflict rather than a 200.
 			return new \WP_REST_Response( $result, 409 );
 		}
 
