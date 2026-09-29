@@ -277,6 +277,7 @@ final class Activator {
 		// maybe_add_awaiting_tool_call_id_column() for why this can't ride
 		// along with the version-gated path below.
 		self::maybe_add_awaiting_tool_call_id_column();
+		self::maybe_add_proposals_listener_id_column();
 		self::migrate_default_agent_mode_option();
 
 		$stored = (string) get_option( 'agent_builder_db_schema_version', '' );
@@ -504,6 +505,71 @@ final class Activator {
 		} catch ( \Throwable $e ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Intentional migration debug output.
 			error_log( '[Agent Builder] maybe_add_awaiting_tool_call_id_column failed: ' . $e->getMessage() );
+			// Leave unmigrated — retried on the next admin_init.
+		}
+	}
+
+	/**
+	 * One-time, version-independent migration for the listener_id column added
+	 * to the proposals table (M12 / wp#277).
+	 *
+	 * Decoupled from AGENT_BUILDER_DB_VERSION for the same reason as
+	 * maybe_add_awaiting_tool_call_id_column(): 2.15.2 is already the current
+	 * version for anyone who has upgraded, so the version-gated create_tables()
+	 * re-run in maybe_upgrade() would no-op and never add the column to an
+	 * already-current site. The column lets approve()/reject() read the
+	 * originating listener back out of the row so they can clear its dedupe
+	 * marker immediately instead of waiting out the marker's TTL.
+	 *
+	 * Tracked by its own option so it runs at most once per site, checks the
+	 * column directly (never assumes anything about the stored schema version),
+	 * and is a safe no-op if the table doesn't exist yet (a fresh activation's
+	 * create_tables() already includes this column).
+	 *
+	 * @return void
+	 */
+	private static function maybe_add_proposals_listener_id_column(): void {
+		if ( get_option( 'agent_builder_proposals_listener_id_migrated' ) ) {
+			return;
+		}
+
+		try {
+			global $wpdb;
+			$table = $wpdb->prefix . 'agent_builder_proposals';
+
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $table is an internal prefix + literal name, not user input.
+			if ( ! $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) ) {
+				return; // Table not created yet — nothing to migrate; leave unmigrated so this retries later.
+			}
+
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is an internal prefix + literal name, not user input.
+			$column_exists = (bool) $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM {$table} LIKE %s", 'listener_id' ) );
+
+			if ( ! $column_exists ) {
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- schema migration; $table is trusted, no user input.
+				$altered = $wpdb->query( "ALTER TABLE {$table} ADD COLUMN listener_id varchar(64) DEFAULT NULL AFTER session_id" );
+
+				if ( false === $altered ) {
+					// ALTER reports failure via a false return + $wpdb->last_error,
+					// never a thrown exception — leave unmigrated so this retries
+					// on the next admin_init instead of permanently suppressing it.
+					return;
+				}
+
+				// Re-verify rather than trust a truthy query result: confirm the
+				// column is actually there before marking this migration done.
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is an internal prefix + literal name, not user input.
+				$column_exists = (bool) $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM {$table} LIKE %s", 'listener_id' ) );
+
+				if ( ! $column_exists ) {
+					return; // Still missing — retry on the next admin_init.
+				}
+			}
+
+			update_option( 'agent_builder_proposals_listener_id_migrated', true );
+		} catch ( \Throwable $e ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Intentional migration debug output.
+			error_log( '[Agent Builder] maybe_add_proposals_listener_id_column failed: ' . $e->getMessage() );
 			// Leave unmigrated — retried on the next admin_init.
 		}
 	}
@@ -2133,6 +2199,7 @@ final class Activator {
             created_by bigint(20) unsigned,
             run_id varchar(36) DEFAULT NULL,
             session_id varchar(191) DEFAULT NULL,
+            listener_id varchar(64) DEFAULT NULL,
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             expires_at datetime,
             decided_by bigint(20) unsigned DEFAULT NULL,
