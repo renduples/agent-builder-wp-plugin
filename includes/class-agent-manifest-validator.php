@@ -81,6 +81,7 @@ final class Agent_Manifest_Validator {
 	private const MAX_LISTENERS         = 20;
 	private const MAX_AUTOMATION_PROMPT = 2000;
 	private const MAX_ARG_MAP           = 10;
+	private const MAX_ARG_FILTER_LEN    = 500;
 
 	/**
 	 * WP-Cron recurrences a task may declare.
@@ -311,9 +312,10 @@ final class Agent_Manifest_Validator {
 	 * a PCRE `pattern` or an exact-match `in` allowlist.
 	 *
 	 * Exactly one of `pattern` / `in` must be present: a filter with neither, or
-	 * with both, is dropped. A `pattern` that fails to compile is dropped; an `in`
-	 * list that is not an array of strings is dropped. Dropping the filter makes
-	 * the listener run on every event, never silently on none.
+	 * with both, is dropped. A `pattern` that fails to compile or exceeds the
+	 * length cap is dropped; an `in` list that is not an array of strings is
+	 * dropped. Dropping the filter makes the listener run on every event, never
+	 * silently on none.
 	 *
 	 * @param mixed $filter Raw arg_filter input.
 	 * @return array{arg:int, pattern:string}|array{arg:int, in:string[]}|null Sanitized filter, or null when absent/invalid.
@@ -356,6 +358,16 @@ final class Agent_Manifest_Validator {
 			return null;
 		}
 
+		// Enforce the length cap before compiling. An over-length pattern is
+		// rejected (dropping the filter, so the listener falls back to running on
+		// every event) rather than silently truncated: a pattern that already
+		// compiled could be truncated into a different, invalid one whose runtime
+		// @preg_match failure would be misread as "no match", silently disabling
+		// the listener instead of running it.
+		if ( strlen( $pattern ) > self::MAX_ARG_FILTER_LEN ) {
+			return null;
+		}
+
 		// Drop patterns that don't compile — the listener then runs on every
 		// event rather than being silently broken by an invalid regex.
 		if ( false === @preg_match( '/' . $pattern . '/', '' ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- A pattern that fails to compile is "drop it", never a fatal.
@@ -364,7 +376,7 @@ final class Agent_Manifest_Validator {
 
 		return array(
 			'arg'     => $arg,
-			'pattern' => substr( $pattern, 0, 500 ),
+			'pattern' => $pattern,
 		);
 	}
 
