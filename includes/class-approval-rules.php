@@ -331,6 +331,45 @@ class Approval_Rules {
 	}
 
 	/**
+	 * Load every enabled rule for the given agent plus the global scope.
+	 *
+	 * Unlike list(), this does not paginate (so an agent with more than 200
+	 * rules is never silently truncated) and returns null on a query failure so
+	 * the caller can distinguish "no rules" from "could not read rules" and fail
+	 * closed. A DB error must never read as "no rules".
+	 *
+	 * @param string $agent_id Agent slug (already sanitized), or '' for global-only.
+	 * @return array<int, array<string, mixed>>|null Rows, or null on query failure.
+	 */
+	private static function load_enabled_rules( string $agent_id ): ?array {
+		global $wpdb;
+
+		$table = $wpdb->prefix . self::TABLE;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table read.
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE enabled = %d AND ( agent_slug = %s OR agent_slug = %s ) ORDER BY priority ASC, id ASC',
+				$table,
+				1,
+				'',
+				$agent_id
+			),
+			ARRAY_A
+		);
+
+		// get_results() collapses a failed query and an empty result set to the
+		// same empty array, so a query failure is only distinguishable by a
+		// non-empty last_error. Treat a failure as "could not read rules" (null)
+		// so the caller fails closed rather than reading the failure as "no rules".
+		if ( '' !== $wpdb->last_error ) {
+			return null;
+		}
+
+		return is_array( $rows ) ? $rows : array();
+	}
+
+	/**
 	 * Evaluate enabled approval rules against a tool call and tighten enforcement.
 	 *
 	 * Filter callback on `agent_builder_tool_enforcement` (priority 10, 2 args).
@@ -344,7 +383,9 @@ class Approval_Rules {
 	 * Fail-closed: an 'unsure' classification counts as a match for `ask`/`deny`
 	 * rules (it can only tighten) and is ignored for `allow` rules (an uncertain
 	 * allow must never loosen anything). In Phase A `classify()` always returns
-	 * 'unsure', so ask/deny rules always tighten and allow rules never fire.
+	 * 'unsure', so ask/deny rules always tighten and allow rules never fire. A
+	 * rule-read query failure also fails closed (tightening to 'confirm') rather
+	 * than reading as "no rules".
 	 *
 	 * The return is always at least as restrictive as `$enforcement`; a rule
 	 * whose mapped decision would be looser is dropped rather than applied, so
@@ -356,18 +397,23 @@ class Approval_Rules {
 	 * @return string The (possibly tightened) enforcement decision.
 	 */
 	public static function evaluate( string $enforcement, array $ctx ): string {
-		$agent_id = (string) ( $ctx['agent_id'] ?? '' );
+		$agent_id = sanitize_key( (string) ( $ctx['agent_id'] ?? '' ) );
 		$tool     = (string) ( $ctx['tool'] ?? '' );
 
 		$winner      = '';
 		$winner_rule = null;
 
-		foreach ( self::list( array( 'enabled' => true ) ) as $rule ) {
-			$rule_agent = (string) ( $rule['agent_slug'] ?? '' );
-			if ( '' !== $rule_agent && $rule_agent !== $agent_id ) {
-				continue;
-			}
+		$rules = self::load_enabled_rules( $agent_id );
+		if ( null === $rules ) {
+			// Fail closed: a DB error must never read as "no rules". Tighten to
+			// 'confirm' rather than letting an otherwise-un-gated call through.
+			$audit = new Audit_Log();
+			$audit->log( $agent_id, 'rule_eval_db_error', $tool, array( 'risk_level' => (string) ( $ctx['risk'] ?? '' ) ) );
 
+			return self::tighter( $enforcement, 'confirm' );
+		}
+
+		foreach ( $rules as $rule ) {
 			$effect  = (string) ( $rule['effect'] ?? '' );
 			$verdict = self::classify( (string) ( $rule['rule_text'] ?? '' ), $ctx );
 
