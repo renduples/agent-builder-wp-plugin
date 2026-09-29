@@ -201,4 +201,167 @@ class Test_Routine_Execution extends TestCase {
 		$this->assertNull( Routines::deployment_id_for_task( 'us_missing' ) );
 		$this->assertNull( Routines::deployment_id_for_trigger( 'ut_missing' ) );
 	}
+
+	/**
+	 * save() delegates to save_user_scheduled_task() and returns the Deployments
+	 * row id (not the option-backed task id) the rest of Routines keys on.
+	 */
+	public function test_save_creates_scheduled_task_routine(): void {
+		$result = Routines::save(
+			array(
+				'kind'       => 'scheduled_task',
+				'agent_slug' => self::AGENT,
+				'prompt'     => 'Do the thing',
+				'schedule'   => 'daily',
+			)
+		);
+
+		$this->assertTrue( $result['ok'], 'save succeeded' );
+		$this->assertIsInt( $result['id'], 'returns the Deployments row id' );
+
+		$row = Deployments::get( $result['id'] );
+		$this->assertSame( Deployments::TYPE_SCHEDULED_TASK, $row['type'] );
+		$this->assertSame( 'user', $row['config']['source'] );
+		$this->assertSame( $result['id'], Routines::deployment_id_for_task( $row['config']['task_id'] ) );
+	}
+
+	/**
+	 * save() delegates to save_user_trigger() for an event-listener routine.
+	 */
+	public function test_save_creates_event_listener_routine(): void {
+		$result = Routines::save(
+			array(
+				'kind'       => 'event_listener',
+				'agent_slug' => self::TRIGGER_AGENT,
+				'hook'       => 'updated_option',
+				'prompt'     => 'React to the change',
+			)
+		);
+
+		$this->assertTrue( $result['ok'], 'save succeeded' );
+		$this->assertIsInt( $result['id'], 'returns the Deployments row id' );
+
+		$row = Deployments::get( $result['id'] );
+		$this->assertSame( Deployments::TYPE_EVENT_LISTENER, $row['type'] );
+		$this->assertSame( $result['id'], Routines::deployment_id_for_trigger( $row['config']['trigger_id'] ) );
+	}
+
+	/**
+	 * save() with an id passed edits the existing routine and resolves the same
+	 * Deployments row id.
+	 */
+	public function test_save_edits_existing_routine_returns_same_row_id(): void {
+		$created = Routines::save(
+			array(
+				'kind'       => 'scheduled_task',
+				'agent_slug' => self::AGENT,
+				'prompt'     => 'Original prompt',
+				'schedule'   => 'daily',
+			)
+		);
+		$this->assertTrue( $created['ok'] );
+
+		$task_id = Deployments::get( $created['id'] )['config']['task_id'];
+
+		$edited = Routines::save(
+			array(
+				'kind'       => 'scheduled_task',
+				'id'         => $task_id,
+				'agent_slug' => self::AGENT,
+				'prompt'     => 'Updated prompt',
+				'schedule'   => 'daily',
+			)
+		);
+
+		$this->assertTrue( $edited['ok'] );
+		$this->assertSame( $created['id'], $edited['id'], 'edit resolves the same Deployments row id' );
+		$this->assertSame( 'Updated prompt', Deployments::get( $edited['id'] )['config']['prompt'] );
+	}
+
+	/**
+	 * skill_slug and timezone in the args are layered onto the mirror row's config.
+	 */
+	public function test_save_stores_skill_slug_and_timezone_in_config(): void {
+		$result = Routines::save(
+			array(
+				'kind'       => 'scheduled_task',
+				'agent_slug' => self::AGENT,
+				'prompt'     => 'Do the thing',
+				'skill_slug' => 'my-skill',
+				'timezone'   => 'America/New_York',
+			)
+		);
+
+		$this->assertTrue( $result['ok'] );
+
+		$config = Deployments::get( $result['id'] )['config'];
+		$this->assertSame( 'my-skill', $config['skill_slug'] );
+		$this->assertSame( 'America/New_York', $config['timezone'] );
+	}
+
+	/**
+	 * save() bubbles up an error for an unknown kind.
+	 */
+	public function test_save_rejects_invalid_kind(): void {
+		$result = Routines::save( array( 'kind' => 'nonsense' ) );
+
+		$this->assertFalse( $result['ok'] );
+	}
+
+	/**
+	 * test_run() actually executes a scheduled-task routine once and returns the
+	 * run id now recorded on the mirror row.
+	 */
+	public function test_run_scheduled_task_executes_and_returns_run_id(): void {
+		$created = Routines::save(
+			array(
+				'kind'       => 'scheduled_task',
+				'agent_slug' => self::AGENT,
+				'prompt'     => 'Do the thing',
+				'schedule'   => 'daily',
+			)
+		);
+		$this->assertTrue( $created['ok'] );
+
+		$result = Routines::test_run( $created['id'], 0, new Agent_Controller( $this->fake_llm() ) );
+
+		$this->assertTrue( $result['ok'], 'test_run succeeded' );
+		$this->assertNotEmpty( $result['run_id'], 'run_id returned' );
+		$this->assertSame( $result['run_id'], Deployments::get( $created['id'] )['config']['last_run_id'] );
+
+		$history = Routines::history( $created['id'] );
+		$this->assertCount( 1, $history, 'the run is discoverable via history()' );
+		$this->assertSame( $result['run_id'], $history[0]['run_id'] );
+	}
+
+	/**
+	 * test_run() on an event-listener routine drives handle_async_event() with
+	 * synthetic empty hook args and returns the resulting run id.
+	 */
+	public function test_run_event_listener_executes_and_returns_run_id(): void {
+		$created = Routines::save(
+			array(
+				'kind'       => 'event_listener',
+				'agent_slug' => self::TRIGGER_AGENT,
+				'hook'       => 'updated_option',
+				'prompt'     => 'React to the change',
+			)
+		);
+		$this->assertTrue( $created['ok'] );
+
+		$result = Routines::test_run( $created['id'], 0, new Agent_Controller( $this->fake_llm( 'Reacted.' ) ) );
+
+		$this->assertTrue( $result['ok'], 'test_run succeeded' );
+		$this->assertNotEmpty( $result['run_id'], 'run_id returned' );
+		$this->assertSame( $result['run_id'], Deployments::get( $created['id'] )['config']['last_run_id'] );
+	}
+
+	/**
+	 * test_run() on a missing row fails cleanly.
+	 */
+	public function test_run_missing_routine_errors(): void {
+		$result = Routines::test_run( 999999, 0 );
+
+		$this->assertFalse( $result['ok'] );
+	}
 }
