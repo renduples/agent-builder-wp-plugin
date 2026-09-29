@@ -142,7 +142,11 @@ PDF and Word document generation are not bundled in this WordPress.org package (
 **Basic Mode:** Simplified interface with guided workflows, fewer options, and one-click safety controls. Best for site owners who want to use agents without configuration. **Advanced Mode:** Full developer console showing tool manifests, REST API docs, risk audits, MCP credentials, and technical audit logs. Switch anytime from Settings → Interface.
 
 = Can I run agents on a schedule? =
-Yes. The Agent Orchestrator agent can deploy other agents as background cron jobs or triggered by site events. You can also use the REST API to orchestrate agents programmatically.
+Yes. Use the Routines screen (Agent Builder → Routines, next to Tasks) to run any agent automatically. A routine can run on a repeating schedule — hourly, twice daily, daily, or weekly — or trigger from a WordPress event such as a post being published, a comment submitted, a new user registered, a file uploaded, a new WooCommerce order, or a plugin or theme change. Each routine can be paused and resumed, test-run before it goes live, and keeps a history of its last 20 runs, each linked back to the Tasks screen.
+
+Routines run on WordPress's WP-Cron, which only fires when your site receives a visit. On a low-traffic site, set `DISABLE_WP_CRON` and add a real system cron entry that hits `wp-cron.php` so scheduled routines run reliably.
+
+If you prefer to script things, you can still orchestrate agents programmatically through the Agent Orchestrator agent or the REST API.
 
 = What is a task? =
 A task is a job you hand to an agent to run in the background. From the Tasks screen you pick an agent, describe what you want, and start it. The agent works on its own — low-risk steps run automatically, while anything that needs your judgement waits for you in Tasks under "Waiting on you". You get a notification when a task is waiting on your OK or has finished, so you only check back when there is something to act on.
