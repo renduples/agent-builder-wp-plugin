@@ -216,9 +216,11 @@ final class Agent_Manifest_Validator {
 				$schedule = 'daily';
 			}
 
+			$clean_name = self::clean_text( (string) ( $task['name'] ?? $id ), self::MAX_NAME );
+
 			$entry = array(
 				'id'          => $id,
-				'name'        => self::clean_text( (string) ( $task['name'] ?? $id ), self::MAX_NAME ) ?: $id,
+				'name'        => '' !== $clean_name ? $clean_name : $id,
 				'schedule'    => $schedule,
 				'description' => self::clean_text( (string) ( $task['description'] ?? '' ), self::MAX_DESCRIPTION ),
 			);
@@ -267,9 +269,11 @@ final class Agent_Manifest_Validator {
 			$priority      = (int) ( $listener['priority'] ?? 10 );
 			$accepted_args = (int) ( $listener['accepted_args'] ?? 1 );
 
+			$clean_name = self::clean_text( (string) ( $listener['name'] ?? $id ), self::MAX_NAME );
+
 			$entry = array(
 				'id'            => $id,
-				'name'          => self::clean_text( (string) ( $listener['name'] ?? $id ), self::MAX_NAME ) ?: $id,
+				'name'          => '' !== $clean_name ? $clean_name : $id,
 				'hook'          => $hook,
 				'priority'      => max( 1, min( 9999, $priority ) ),
 				'accepted_args' => max( 0, min( 10, $accepted_args ) ),

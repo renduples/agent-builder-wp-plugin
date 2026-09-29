@@ -216,4 +216,58 @@ class Test_Agent_Manifest_Validator extends TestCase {
 		$ids = array_column( $manifest['event_listeners'], 'id' );
 		$this->assertSame( array( 'runnable' ), $ids );
 	}
+
+	/**
+	 * A scheduled task whose `name` is empty or whitespace-only falls back to its
+	 * `id`, preserving the pre-phpcs short-ternary (`?: $id`) behaviour.
+	 */
+	public function test_scheduled_task_name_falls_back_to_id(): void {
+		$manifest = Agent_Manifest_Validator::validate(
+			array(
+				'slug'            => 'task-name-fallback',
+				'name'            => 'Task Name Fallback',
+				'description'     => 'Test agent.',
+				'category'        => 'developer',
+				'scheduled_tasks' => array(
+					array( 'id' => 'empty', 'schedule' => 'daily', 'tool' => 'add_custom_css', 'name' => '' ),
+					array( 'id' => 'blank', 'schedule' => 'daily', 'tool' => 'add_custom_css', 'name' => '   ' ),
+					array( 'id' => 'named', 'schedule' => 'daily', 'tool' => 'add_custom_css', 'name' => 'Real Name' ),
+				),
+			)
+		);
+
+		$this->assertIsArray( $manifest );
+		$tasks = array_column( $manifest['scheduled_tasks'], 'name', 'id' );
+
+		$this->assertSame( 'empty', $tasks['empty'] );
+		$this->assertSame( 'blank', $tasks['blank'] );
+		$this->assertSame( 'Real Name', $tasks['named'] );
+	}
+
+	/**
+	 * An event listener whose `name` is empty or whitespace-only falls back to
+	 * its `id`, preserving the pre-phpcs short-ternary (`?: $id`) behaviour.
+	 */
+	public function test_event_listener_name_falls_back_to_id(): void {
+		$manifest = Agent_Manifest_Validator::validate(
+			array(
+				'slug'            => 'listener-name-fallback',
+				'name'            => 'Listener Name Fallback',
+				'description'     => 'Test agent.',
+				'category'        => 'developer',
+				'event_listeners' => array(
+					array( 'id' => 'empty', 'hook' => 'updated_option', 'tool' => 'add_custom_css', 'name' => '' ),
+					array( 'id' => 'blank', 'hook' => 'updated_option', 'tool' => 'add_custom_css', 'name' => '   ' ),
+					array( 'id' => 'named', 'hook' => 'updated_option', 'tool' => 'add_custom_css', 'name' => 'Real Name' ),
+				),
+			)
+		);
+
+		$this->assertIsArray( $manifest );
+		$listeners = array_column( $manifest['event_listeners'], 'name', 'id' );
+
+		$this->assertSame( 'empty', $listeners['empty'] );
+		$this->assertSame( 'blank', $listeners['blank'] );
+		$this->assertSame( 'Real Name', $listeners['named'] );
+	}
 }

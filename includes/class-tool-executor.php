@@ -340,27 +340,13 @@ class Tool_Executor {
 			return array( 'error' => 'This action was blocked by policy and cannot be performed.' );
 		}
 
-		if ( 'queue' === $enforcement ) {
-			// --- Always-grant fast-path for admin users ---
-			// If the admin has declared "Always Allow" for this tool in the chat,
-			// they are authoritative: skip the approval queue entirely.
-			$grant_user_id = $ctx['user_id'];
-			if ( $grant_user_id && user_can( $grant_user_id, 'manage_options' ) ) {
-				$always_grants = get_user_meta( $grant_user_id, 'agentic_tool_grants_always', true );
-				if ( is_array( $always_grants ) && in_array( $tool_name, $always_grants, true ) ) {
-					$this->audit->log(
-						$agent_id,
-						'tool_grant_always',
-						$tool_name,
-						array(
-							'risk_level' => $risk,
-							'bypassed'   => 'approval_queue',
-						)
-					);
-					$enforcement = 'allow';
-				}
-			}
-		}
+		// --- Grant fast-paths (always / session / run) ---
+		// Tool_Grants::resolve() is the single decision point for persisted
+		// grants: it downgrades a queued/confirm-pending call to 'allow' when any
+		// grant scope covers the tool, and leaves the decision untouched otherwise.
+		// The 'once' scope (Approval_Queue::find_approved()) stays a separate
+		// concern, handled below.
+		$enforcement = Tool_Grants::resolve( $enforcement, $ctx );
 
 		if ( 'queue' === $enforcement ) {
 			$queue    = new Approval_Queue();
@@ -412,37 +398,6 @@ class Tool_Executor {
 		}
 
 		if ( 'confirm' === $enforcement ) {
-			// --- Grant fast-path: "Always Allow" (persisted in admin user_meta) ---
-			$grant_user_id = $ctx['user_id'];
-			if ( $grant_user_id && user_can( $grant_user_id, 'manage_options' ) ) {
-				$always_grants = get_user_meta( $grant_user_id, 'agentic_tool_grants_always', true );
-				if ( is_array( $always_grants ) && in_array( $tool_name, $always_grants, true ) ) {
-					$this->audit->log(
-						$agent_id,
-						'tool_grant_always',
-						$tool_name,
-						array( 'risk_level' => $risk )
-					);
-					$enforcement = 'allow';
-				}
-			}
-		}
-
-		if ( 'confirm' === $enforcement && '' !== $session_id ) {
-			// --- Grant fast-path: "Session Allow" (transient, browser-tab scoped) ---
-			$session_grants = get_transient( 'agentic_session_grants_' . sanitize_key( $session_id ) );
-			if ( is_array( $session_grants ) && in_array( $tool_name, $session_grants, true ) ) {
-				$this->audit->log(
-					$agent_id,
-					'tool_grant_session',
-					$tool_name,
-					array( 'risk_level' => $risk )
-				);
-				$enforcement = 'allow';
-			}
-		}
-
-		if ( 'confirm' === $enforcement ) {
 			$manifest = Abilities_Manifest::load( $agent_id );
 			$label    = self::friendly_tool_name( $tool_name );
 
@@ -485,6 +440,14 @@ class Tool_Executor {
 			}
 
 			$proposal = Agent_Proposals::create( $tool_name, $arguments, $agent_id, $description, '', $ctx['run_id'], $ctx['user_id'], $listener_id );
+
+			// A failed insert (no proposal row) must not surface a phantom
+			// proposal id — report the failure instead of pretending a proposal
+			// exists for the user to approve.
+			if ( isset( $proposal['error'] ) ) {
+				$this->audit->log( $agent_id, 'proposal_create_failed', $tool_name, array( 'error' => (string) $proposal['error'] ) );
+				return array( 'error' => (string) $proposal['error'] );
+			}
 
 			$this->audit->log(
 				$agent_id,
@@ -583,5 +546,153 @@ class Tool_Executor {
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Run an already-approved action.
+	 *
+	 * This is the execution half of the two approval flows (the classic
+	 * Approval_Queue approve action, and the chat-confirmation proposal). The
+	 * risk gate has already run and a human has decided, so no gating,
+	 * enforcement, backup, or confirmation routing happens here — only the same
+	 * tool_loader → agent-inline → abilities-bridge fallback chain that
+	 * `execute()`'s allow-path uses, plus the non-readonly operations-ledger
+	 * write and the resolved-execution hook.
+	 *
+	 * @param array           $approval Approval record. Recognized keys:
+	 *                                  `tool`/`action` (tool name),
+	 *                                  `params`/`arguments` (decoded args; a JSON
+	 *                                  string is decoded), `agent_id`,
+	 *                                  `risk_level`, `mode`, `invocation` /
+	 *                                  `invocation_context`, `session_id`,
+	 *                                  `run_id`, `run_kind`, `user_id` /
+	 *                                  `created_by`.
+	 * @param Agent_Base|null $agent    Optional agent instance for the
+	 *                                  agent-inline fallback.
+	 * @return array Tool result.
+	 */
+	public function execute_approved( array $approval, ?Agent_Base $agent = null ): array {
+		$tool_name = (string) ( $approval['tool'] ?? $approval['action'] ?? '' );
+		$arguments = $approval['params'] ?? $approval['arguments'] ?? array();
+
+		// The classic approval queue stores params as a JSON string; the proposal
+		// table stores them already decoded. Tolerate both.
+		if ( is_string( $arguments ) ) {
+			$decoded   = json_decode( $arguments, true );
+			$arguments = is_array( $decoded ) ? $decoded : array();
+		}
+		if ( ! is_array( $arguments ) ) {
+			$arguments = array();
+		}
+
+		$agent_id    = (string) ( $approval['agent_id'] ?? '' );
+		$call_action = is_string( $arguments['action'] ?? null ) ? $arguments['action'] : '';
+		$mode        = (string) ( $approval['mode'] ?? '' );
+		$invocation  = (string) ( $approval['invocation'] ?? $approval['invocation_context'] ?? '' );
+
+		$tool_instance = $this->tool_loader->get( $tool_name );
+		$risk          = (string) ( $approval['risk_level'] ?? '' );
+		if ( '' === $risk || ! Risk_Level::is_valid( $risk ) ) {
+			$risk = Abilities_Manifest::get_effective_risk( $agent_id, $tool_name, $tool_instance, $call_action );
+		}
+
+		// Approved or not, an extreme-risk tool must never run — it sits outside
+		// what any approval flow is allowed to authorise. Refuse it outright,
+		// before any backup or execution branch.
+		if ( Risk_Level::EXTREME === $risk ) {
+			$this->audit->log(
+				$agent_id,
+				'tool_blocked',
+				$tool_name,
+				array(
+					'reason'     => 'Extreme risk — execution not permitted',
+					'risk_level' => $risk,
+				)
+			);
+			return array( 'error' => 'This action is classified as extreme risk and cannot be performed.' );
+		}
+
+		$ctx = array(
+			'tool'       => $tool_name,
+			'action'     => $call_action,
+			'arguments'  => $arguments,
+			'agent_id'   => $agent_id,
+			'mode'       => $mode,
+			'invocation' => $invocation,
+			'session_id' => (string) ( $approval['session_id'] ?? '' ),
+			'run_id'     => (string) ( $approval['run_id'] ?? '' ),
+			'run_kind'   => (string) ( $approval['run_kind'] ?? '' ),
+			'user_id'    => (int) ( $approval['user_id'] ?? $approval['created_by'] ?? get_current_user_id() ),
+			'risk'       => $risk,
+		);
+
+		$is_readonly = $tool_instance ? ( $tool_instance->get_annotations()['readonly'] ?? false ) : true;
+
+		Tool_Base::set_calling_agent( $agent_id );
+
+		// Re-run the same safety checks execute()'s allow-path performs: take the
+		// pre-write backup and validate arguments against the tool schema. An
+		// approval must not be a way to skip either.
+		if ( ! $is_readonly ) {
+			Tool_Helpers::backup_tables_for_tool( $tool_name, $arguments );
+		}
+
+		if ( $tool_instance ) {
+			$arg_error = $tool_instance->validate_args( $arguments );
+			if ( null !== $arg_error ) {
+				$this->audit->log( $agent_id, 'tool_blocked', $tool_name, array( 'reason' => $arg_error ) );
+				return array(
+					'success'    => false,
+					'error_code' => 'invalid_args',
+					'message'    => $arg_error,
+				);
+			}
+		}
+
+		// Execute via Tool_Loader, falling back to agent-inline tools, then
+		// third-party abilities (WP 6.9+) — the same fallback chain execute()'s
+		// allow-path uses. A Throwable is caught and recorded so a failed run is
+		// audited and returned rather than left to bubble up past the caller.
+		try {
+			$result = $this->tool_loader->execute( $tool_name, $arguments );
+
+			if ( null === $result ) {
+				$result = $agent ? $agent->execute_tool( $tool_name, $arguments ) : null;
+
+				if ( null === $result && $this->abilities_bridge ) {
+					$result = $this->abilities_bridge->execute_ability( $tool_name, $arguments );
+				}
+			}
+
+			$resolved = null !== $result;
+
+			if ( ! $resolved ) {
+				$result = array( 'error' => sprintf( 'Unknown tool: %s', $tool_name ) );
+			} elseif ( ! $is_readonly ) {
+				// Route every resolved execution branch — tool_loader, agent-inline,
+				// or abilities-bridge — through the operations ledger, not just the
+				// loader branch.
+				$queue = new Approval_Queue();
+				$queue->log_executed( $agent_id, $tool_name, $arguments, $risk, $mode, $invocation );
+			}
+
+			if ( $resolved ) {
+				do_action( 'agent_builder_tool_executed', $tool_name, $arguments, $result, $ctx );
+			}
+
+			return $result;
+		} catch ( \Throwable $e ) {
+			$this->audit->log(
+				$agent_id,
+				'tool_execution_failed',
+				$tool_name,
+				array(
+					'risk_level' => $risk,
+					'error'      => $e->getMessage(),
+					'file'       => $e->getFile() . ':' . $e->getLine(),
+				)
+			);
+			return array( 'error' => sprintf( 'Execution failed: %s', $e->getMessage() ) );
+		}
 	}
 }

@@ -259,6 +259,118 @@ class Test_Schema_Upgrade extends TestCase {
 	}
 
 	/**
+	 * The 2.15.2 migration sweeps still-live legacy transient-backed proposals
+	 * into the new agent_builder_proposals table before they are lost — and
+	 * leaves an already-expired transient alone (get_transient() would already
+	 * return false for it).
+	 */
+	public function test_migration_sweeps_live_legacy_proposal_transients_into_table(): void {
+		$live_id    = wp_generate_uuid4();
+		$expired_id = wp_generate_uuid4();
+
+		// The pre-2.15.2 transient shape (agentic_proposal_{id}): a PHP array,
+		// one hour TTL, no run_id for a chat-originated proposal.
+		$live_proposal = array(
+			'id'          => $live_id,
+			'tool'        => 'list_posts',
+			'params'      => array( 'post_type' => 'post' ),
+			'agent_id'    => 'wordpress-assistant',
+			'description' => 'Live legacy proposal',
+			'diff'        => "--- a\n+++ b\n",
+			'status'      => 'pending',
+			'created_at'  => gmdate( 'Y-m-d H:i:s' ),
+			'created_by'  => 7,
+			'run_id'      => '',
+		);
+		$expired_proposal = array(
+			'id'          => $expired_id,
+			'tool'        => 'list_posts',
+			'params'      => array( 'post_type' => 'page' ),
+			'agent_id'    => 'wordpress-assistant',
+			'description' => 'Expired legacy proposal',
+			'diff'        => '',
+			'status'      => 'pending',
+			'created_at'  => gmdate( 'Y-m-d H:i:s', time() - 7200 ),
+			'created_by'  => 7,
+			'run_id'      => '',
+		);
+
+		set_transient( 'agentic_proposal_' . $live_id, $live_proposal, HOUR_IN_SECONDS );
+		set_transient( 'agentic_proposal_' . $expired_id, $expired_proposal, -100 );
+
+		self::invoke_private( 'migrate_legacy_proposal_transients' );
+
+		global $wpdb;
+		$live_row = $wpdb->get_row(
+			$wpdb->prepare( "SELECT * FROM {$wpdb->prefix}agent_builder_proposals WHERE id = %s", $live_id ),
+			ARRAY_A
+		);
+		$this->assertIsArray( $live_row, 'A still-live legacy transient must be swept into the proposals table.' );
+		$this->assertSame( 'list_posts', $live_row['tool'] );
+		$this->assertSame( 'Live legacy proposal', $live_row['description'] );
+		$this->assertSame( 'pending', $live_row['status'] );
+		// params migrated as JSON.
+		$this->assertSame( array( 'post_type' => 'post' ), json_decode( (string) $live_row['params'], true ) );
+
+		$expired_row = $wpdb->get_row(
+			$wpdb->prepare( "SELECT * FROM {$wpdb->prefix}agent_builder_proposals WHERE id = %s", $expired_id ),
+			ARRAY_A
+		);
+		$this->assertNull( $expired_row, 'An already-expired legacy transient must not be swept into the table.' );
+
+		// The live transient pair is removed after a successful sweep.
+		$this->assertFalse( get_transient( 'agentic_proposal_' . $live_id ) );
+	}
+
+	/**
+	 * The one-time mode-option migration folds a pre-existing non-default
+	 * agent_builder_default_agent_mode into agent_builder_agent_mode and deletes
+	 * the legacy option, so the migration is idempotent by construction.
+	 */
+	public function test_migrate_default_agent_mode_option_copies_and_deletes(): void {
+		update_option( 'agent_builder_default_agent_mode', 'autonomous' );
+
+		self::invoke_private( 'migrate_default_agent_mode_option' );
+
+		$this->assertSame( 'autonomous', get_option( 'agent_builder_agent_mode' ) );
+		$this->assertFalse( get_option( 'agent_builder_default_agent_mode' ) );
+
+		delete_option( 'agent_builder_agent_mode' );
+	}
+
+	/**
+	 * The legacy 'readonly' value (and any unknown value) collapses to the
+	 * 'supervised' default rather than being copied through verbatim.
+	 */
+	public function test_migrate_default_agent_mode_option_maps_readonly_to_supervised(): void {
+		update_option( 'agent_builder_default_agent_mode', 'readonly' );
+
+		self::invoke_private( 'migrate_default_agent_mode_option' );
+
+		$this->assertSame( 'supervised', get_option( 'agent_builder_agent_mode' ) );
+		$this->assertFalse( get_option( 'agent_builder_default_agent_mode' ) );
+
+		delete_option( 'agent_builder_agent_mode' );
+	}
+
+	/**
+	 * The migration must not clobber a live agent_builder_agent_mode that has
+	 * already diverged from the 'supervised' default: it discards the legacy
+	 * option and leaves the explicit live value untouched.
+	 */
+	public function test_migrate_default_agent_mode_option_does_not_clobber_diverged_mode(): void {
+		update_option( 'agent_builder_agent_mode', 'autonomous' );
+		update_option( 'agent_builder_default_agent_mode', 'supervised' );
+
+		self::invoke_private( 'migrate_default_agent_mode_option' );
+
+		$this->assertSame( 'autonomous', get_option( 'agent_builder_agent_mode' ) );
+		$this->assertFalse( get_option( 'agent_builder_default_agent_mode' ) );
+
+		delete_option( 'agent_builder_agent_mode' );
+	}
+
+	/**
 	 * Invoke a private static Activator method (the existing suite already uses
 	 * ReflectionMethod for create_tables(); the lock helpers stay private for
 	 * the same reason and are exercised through the same seam).
@@ -568,6 +680,66 @@ class Test_Schema_Upgrade extends TestCase {
 		$this->assertContains( 'awaiting_tool_call_id', $runs_columns_after );
 		$this->assertFalse( $option_written, 'This migration must never write the schema-version option.' );
 		$this->assertTrue( (bool) get_option( 'agent_builder_awaiting_tool_call_id_migrated' ) );
+	}
+
+	/**
+	 * The proposals listener_id column is added by its own version-independent
+	 * migration even when the stored schema version already equals
+	 * AGENT_BUILDER_DB_VERSION — 2.15.2 is the current version, so the
+	 * version-gated create_tables() re-run alone would no-op for anyone already
+	 * upgraded. The migration must add the column and must never write the
+	 * schema-version option itself.
+	 */
+	public function test_maybe_upgrade_adds_proposals_listener_id_independent_of_schema_version(): void {
+		global $wpdb;
+
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		$ref = new \ReflectionMethod( Activator::class, 'create_tables' );
+		$ref->invoke( null );
+
+		$table = $wpdb->prefix . 'agent_builder_proposals';
+		$wpdb->query( "ALTER TABLE {$table} DROP COLUMN listener_id" );
+		delete_option( 'agent_builder_proposals_listener_id_migrated' );
+
+		try {
+			$columns_before = $wpdb->get_col( "SHOW COLUMNS FROM {$table}", 0 );
+			$this->assertNotContains( 'listener_id', $columns_before );
+
+			// Stored version already equals the constant — the version-gated
+			// path alone would no-op and never re-run create_tables().
+			update_option( 'agent_builder_db_schema_version', AGENT_BUILDER_DB_VERSION );
+			$this->enter_admin_as_logged_in_user();
+
+			$option_written = false;
+			$tracker        = static function ( $value ) use ( &$option_written ) {
+				$option_written = true;
+				return $value;
+			};
+			add_filter( 'pre_update_option_agent_builder_db_schema_version', $tracker );
+
+			Activator::maybe_upgrade();
+
+			remove_filter( 'pre_update_option_agent_builder_db_schema_version', $tracker );
+
+			$columns_after = $wpdb->get_col( "SHOW COLUMNS FROM {$table}", 0 );
+			$this->assertContains( 'listener_id', $columns_after );
+			$this->assertFalse( $option_written, 'This migration must never write the schema-version option.' );
+			$this->assertTrue( (bool) get_option( 'agent_builder_proposals_listener_id_migrated' ) );
+
+			// Idempotent: a second run with the flag already set is a no-op.
+			Activator::maybe_upgrade();
+			$columns_after_retry = $wpdb->get_col( "SHOW COLUMNS FROM {$table}", 0 );
+			$this->assertContains( 'listener_id', $columns_after_retry );
+		} finally {
+			// Restore — DDL isn't rolled back by the per-test transaction, and a
+			// failed assertion above must not leak a dropped column (or a set
+			// migration flag) into later tests sharing this test DB.
+			$columns = $wpdb->get_col( "SHOW COLUMNS FROM {$table}", 0 );
+			if ( ! in_array( 'listener_id', $columns, true ) ) {
+				$wpdb->query( "ALTER TABLE {$table} ADD COLUMN listener_id varchar(64) DEFAULT NULL AFTER session_id" );
+			}
+			delete_option( 'agent_builder_proposals_listener_id_migrated' );
+		}
 	}
 
 	/**

@@ -229,8 +229,7 @@ class Agent_Controller {
 	 * Apply per-agent LLM and mode overrides.
 	 *
 	 * Reads per-agent overrides from Agent_Settings and, if an override exists for
-	 * the current agent, reconfigures the LLM client's provider/model and sets
-	 * the Agent_Permissions confirmation-mode override for this request lifecycle.
+	 * the current agent, reconfigures the LLM client's provider/model.
 	 *
 	 * @return string Effective agent mode ('disabled'|'supervised'|'autonomous').
 	 */
@@ -268,14 +267,6 @@ class Agent_Controller {
 			$mode          = ! empty( $agent_default ) ? $agent_default : $global_mode;
 		}
 		$mode = in_array( $mode, array( 'disabled', 'supervised', 'autonomous' ), true ) ? $mode : $global_mode;
-
-		// Push into Agent_Permissions so requires_confirmation() respects it.
-		if ( 'autonomous' === $mode ) {
-			Agent_Permissions::set_mode_override( Agent_Permissions::MODE_AUTO );
-		} else {
-			// supervised or disabled both use confirm mode (disabled is handled before any LLM call).
-			Agent_Permissions::set_mode_override( Agent_Permissions::MODE_CONFIRM );
-		}
 
 		return $mode;
 	}
@@ -1211,9 +1202,6 @@ class Agent_Controller {
 			}
 		}
 
-		// Clear per-agent overrides so they don't bleed into subsequent calls in the same process.
-		Agent_Permissions::set_mode_override( null );
-
 		// Record usage against per-role daily limits (only for real user requests).
 		if ( $user_id >= 0 ) {
 			Usage_Limits::record_query( $user_id );
@@ -1272,9 +1260,8 @@ class Agent_Controller {
 
 		// Fail fast — before any LLM call — when this agent has been explicitly
 		// disabled via its per-agent override. Autonomous tasks otherwise ignore
-		// the global/agent-default confirmation mode entirely (MODE_AUTO below
-		// forces no-confirmation execution), so this is the only mode check that
-		// can stop a scheduled run from starting.
+		// the global/agent-default confirmation mode entirely, so this is the only
+		// mode check that can stop a scheduled run from starting.
 		if ( 'disabled' === Agent_Settings::get( $agent_id, 'override_mode' ) ) {
 			return array(
 				'error'    => true,
@@ -1295,7 +1282,6 @@ class Agent_Controller {
 		// bypassed for scheduled tasks, regardless of the resolved mode).
 		$this->apply_agent_overrides();
 		$this->current_agent_mode = 'autonomous';
-		Agent_Permissions::set_mode_override( Agent_Permissions::MODE_AUTO );
 		Audit_Log::set_mode_context( 'autonomous' );
 
 		// A run is already active when this call is a nested delegation —
