@@ -310,6 +310,43 @@ class Test_Job_Manager extends TestCase {
 	}
 
 	/**
+	 * A pending job already past the abandoned-pending threshold is NOT re-armed:
+	 * the health check's abandoned-marking pass is about to fail it, so a
+	 * reschedule + spawn_cron() here would be wasted.
+	 */
+	public function test_reschedule_stale_pending_jobs_skips_job_past_abandon_threshold(): void {
+		$job_id = Job_Manager::create_job(
+			array(
+				'user_id'      => 1,
+				'agent_id'     => 'test-agent',
+				'request_data' => array( 'run_id' => 'r-1' ),
+				'processor'    => Runnable_Test_Processor::class,
+			)
+		);
+
+		// Simulate the event disappearing out from under the pending job.
+		wp_clear_scheduled_hook( 'agent_builder_process_job', array( $job_id ) );
+		$this->assertFalse( wp_next_scheduled( 'agent_builder_process_job', array( $job_id ) ) );
+
+		// Age the job past the abandon threshold so the health check would mark it
+		// abandoned instead of re-arming it.
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test back-dates the job so it is "abandoned".
+		$wpdb->update(
+			$wpdb->prefix . 'agent_builder_jobs',
+			array( 'created_at' => gmdate( 'Y-m-d H:i:s', time() - ( Job_Manager::ABANDONED_PENDING_MAX_HOURS * 3600 ) - 120 ) ),
+			array( 'id' => $job_id ),
+			array( '%s' ),
+			array( '%s' )
+		);
+
+		$rescheduled = Job_Manager::reschedule_stale_pending_jobs();
+
+		$this->assertSame( 0, $rescheduled );
+		$this->assertFalse( wp_next_scheduled( 'agent_builder_process_job', array( $job_id ) ) );
+	}
+
+	/**
 	 * Register a processor class as allowlisted for the current test.
 	 *
 	 * @param string $class Processor class FQN.
