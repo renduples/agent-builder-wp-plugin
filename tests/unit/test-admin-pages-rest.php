@@ -39,6 +39,18 @@ class Test_Admin_Pages_REST extends TestCase {
 	}
 
 	/**
+	 * Set the current user to a subscriber granted only agent_builder_manage_settings.
+	 *
+	 * @return int User id.
+	 */
+	private function set_settings_only_user(): int {
+		$user = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		get_user_by( 'id', $user )->add_cap( 'agent_builder_manage_settings' );
+		wp_set_current_user( $user );
+		return $user;
+	}
+
+	/**
 	 * Build a request carrying the given page + action params.
 	 *
 	 * @param string $page   page param.
@@ -103,6 +115,44 @@ class Test_Admin_Pages_REST extends TestCase {
 		$this->assertFalse(
 			Admin_Pages_REST::can_manage( $this->request( 'agents', 'agent_delete' ) ),
 			'Expected agent_delete to be refused for a manage_agents-only user'
+		);
+	}
+
+	/**
+	 * The Routines page payload is gated on agent_builder_manage_agents, matching
+	 * Routines_REST's own capability — a manage_agents-only user passes.
+	 */
+	public function test_manage_agents_user_passes_routines_page(): void {
+		$this->set_agents_only_user();
+
+		$this->assertTrue(
+			Admin_Pages_REST::can_manage( $this->request( 'routines', '' ) ),
+			'Expected a manage_agents-only user to pass page=routines'
+		);
+	}
+
+	/**
+	 * The Routines page must not fall through to the agent_builder_manage_settings
+	 * safe default — a manage_settings-only user (no manage_agents) is refused.
+	 */
+	public function test_manage_settings_user_cannot_view_routines_page(): void {
+		$this->set_settings_only_user();
+
+		$this->assertFalse(
+			Admin_Pages_REST::can_manage( $this->request( 'routines', '' ) ),
+			'Expected a manage_settings-only user to be refused page=routines'
+		);
+	}
+
+	/**
+	 * A manage_tools-only user is likewise refused the Routines page.
+	 */
+	public function test_manage_tools_user_cannot_view_routines_page(): void {
+		$this->set_tools_only_user();
+
+		$this->assertFalse(
+			Admin_Pages_REST::can_manage( $this->request( 'routines', '' ) ),
+			'Expected a manage_tools-only user to be refused page=routines'
 		);
 	}
 }

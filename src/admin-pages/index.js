@@ -19,6 +19,7 @@ import TrainView from './views/TrainView';
 import AgentReadyView from './views/AgentReadyView';
 import SafetyCenterView from './views/SafetyCenterView';
 import AgentsView from './views/AgentsView';
+import RoutinesView from './views/RoutinesView';
 
 function AdminPagesApp() {
 	const cfg = bootConfig();
@@ -105,6 +106,9 @@ function AdminPagesApp() {
 			break;
 		case 'agents':
 			body = <AgentsView data={ data } reload={ reload } />;
+			break;
+		case 'routines':
+			body = <RoutinesView />;
 			break;
 		default:
 			body = (
