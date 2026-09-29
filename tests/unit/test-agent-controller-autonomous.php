@@ -15,7 +15,6 @@
 namespace Agentic\Tests;
 
 use Agentic\Agent_Controller;
-use Agentic\Agent_Permissions;
 use Agentic\Agent_Proposals;
 use Agentic\Agent_Run;
 use Agentic\Manifest_Agent;
@@ -47,14 +46,12 @@ class Test_Agent_Controller_Autonomous extends TestCase {
 	 */
 	public function setUp(): void {
 		parent::setUp();
-		Agent_Permissions::set_mode_override( null );
 	}
 
 	/**
 	 * Clear options the autonomous path may have left behind.
 	 */
 	public function tearDown(): void {
-		Agent_Permissions::set_mode_override( null );
 		delete_option( 'agent_builder_disable_all_agents' );
 		delete_option( 'agent_builder_allow_anonymous_chat' );
 		parent::tearDown();

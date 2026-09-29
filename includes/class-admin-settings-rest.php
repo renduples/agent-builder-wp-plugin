@@ -843,7 +843,7 @@ class Admin_Settings_REST {
 			: ( 'advanced' === get_option( 'agent_builder_ui_mode', 'basic' ) );
 
 		return array(
-			'default_agent_mode'       => (string) get_option( 'agent_builder_default_agent_mode', 'supervised' ),
+			'default_agent_mode'       => (string) get_option( 'agent_builder_agent_mode', 'supervised' ),
 			'message_scanning'         => (bool) get_option( 'agent_builder_message_scanning', true ),
 			'chat_consent_enabled'     => (bool) get_option( 'agent_builder_chat_consent_enabled', false ),
 			'chat_consent_text'        => (string) get_option( 'agent_builder_chat_consent_text', '' ),
@@ -1229,9 +1229,9 @@ class Admin_Settings_REST {
 	private static function save_security( array $data ): void {
 		if ( isset( $data['default_agent_mode'] ) ) {
 			$mode = sanitize_key( (string) $data['default_agent_mode'] );
-			if ( in_array( $mode, array( 'autonomous', 'supervised', 'readonly' ), true ) ) {
-				$prev = (string) get_option( 'agent_builder_default_agent_mode', 'supervised' );
-				update_option( 'agent_builder_default_agent_mode', $mode );
+			if ( in_array( $mode, array( 'autonomous', 'supervised' ), true ) ) {
+				$prev = (string) get_option( 'agent_builder_agent_mode', 'supervised' );
+				update_option( 'agent_builder_agent_mode', $mode );
 				if ( $prev !== $mode && class_exists( Audit_Log::class ) ) {
 					Audit_Log::log_admin(
 						'default_agent_mode_changed',

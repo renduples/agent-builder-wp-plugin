@@ -323,6 +323,54 @@ class Test_Schema_Upgrade extends TestCase {
 	}
 
 	/**
+	 * The one-time mode-option migration folds a pre-existing non-default
+	 * agent_builder_default_agent_mode into agent_builder_agent_mode and deletes
+	 * the legacy option, so the migration is idempotent by construction.
+	 */
+	public function test_migrate_default_agent_mode_option_copies_and_deletes(): void {
+		update_option( 'agent_builder_default_agent_mode', 'autonomous' );
+
+		self::invoke_private( 'migrate_default_agent_mode_option' );
+
+		$this->assertSame( 'autonomous', get_option( 'agent_builder_agent_mode' ) );
+		$this->assertFalse( get_option( 'agent_builder_default_agent_mode' ) );
+
+		delete_option( 'agent_builder_agent_mode' );
+	}
+
+	/**
+	 * The legacy 'readonly' value (and any unknown value) collapses to the
+	 * 'supervised' default rather than being copied through verbatim.
+	 */
+	public function test_migrate_default_agent_mode_option_maps_readonly_to_supervised(): void {
+		update_option( 'agent_builder_default_agent_mode', 'readonly' );
+
+		self::invoke_private( 'migrate_default_agent_mode_option' );
+
+		$this->assertSame( 'supervised', get_option( 'agent_builder_agent_mode' ) );
+		$this->assertFalse( get_option( 'agent_builder_default_agent_mode' ) );
+
+		delete_option( 'agent_builder_agent_mode' );
+	}
+
+	/**
+	 * The migration must not clobber a live agent_builder_agent_mode that has
+	 * already diverged from the 'supervised' default: it discards the legacy
+	 * option and leaves the explicit live value untouched.
+	 */
+	public function test_migrate_default_agent_mode_option_does_not_clobber_diverged_mode(): void {
+		update_option( 'agent_builder_agent_mode', 'autonomous' );
+		update_option( 'agent_builder_default_agent_mode', 'supervised' );
+
+		self::invoke_private( 'migrate_default_agent_mode_option' );
+
+		$this->assertSame( 'autonomous', get_option( 'agent_builder_agent_mode' ) );
+		$this->assertFalse( get_option( 'agent_builder_default_agent_mode' ) );
+
+		delete_option( 'agent_builder_agent_mode' );
+	}
+
+	/**
 	 * Invoke a private static Activator method (the existing suite already uses
 	 * ReflectionMethod for create_tables(); the lock helpers stay private for
 	 * the same reason and are exercised through the same seam).

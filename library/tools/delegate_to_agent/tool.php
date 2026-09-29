@@ -23,7 +23,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 use Agentic\Tool_Base;
 use Agentic\Agent_Run;
 use Agentic\Agent_Controller;
-use Agentic\Agent_Permissions;
 use Agentic\Audit_Log;
 
 class Delegate_To_Agent extends Tool_Base {
@@ -136,8 +135,7 @@ class Delegate_To_Agent extends Tool_Base {
 		}
 
 		// Snapshot static execution context so the nested autonomous run cannot
-		// leak its mode/audit/caller state back into the calling agent's loop.
-		$prev_mode  = Agent_Permissions::get_mode_override();
+		// leak its audit/caller state back into the calling agent's loop.
 		$prev_audit = Audit_Log::get_mode_context();
 
 		$run->enter( $target );
@@ -147,7 +145,6 @@ class Delegate_To_Agent extends Tool_Base {
 			$response   = $controller->run_autonomous_task( $target_instance, $task, 'delegation_' . $run->get_run_id() );
 		} finally {
 			$run->leave();
-			Agent_Permissions::set_mode_override( $prev_mode );
 			Audit_Log::set_mode_context( $prev_audit );
 			Tool_Base::set_calling_agent( $caller );
 		}
