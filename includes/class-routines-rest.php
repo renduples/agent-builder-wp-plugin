@@ -240,7 +240,7 @@ class Routines_REST {
 			return self::not_found();
 		}
 
-		return new \WP_REST_Response( Routines::pause( $id ), 200 );
+		return self::action_response( Routines::pause( $id ) );
 	}
 
 	/**
@@ -255,7 +255,7 @@ class Routines_REST {
 			return self::not_found();
 		}
 
-		return new \WP_REST_Response( Routines::resume( $id ), 200 );
+		return self::action_response( Routines::resume( $id ) );
 	}
 
 	/**
@@ -270,7 +270,7 @@ class Routines_REST {
 			return self::not_found();
 		}
 
-		return new \WP_REST_Response( Routines::test_run( $id, get_current_user_id() ), 200 );
+		return self::action_response( Routines::test_run( $id, get_current_user_id() ) );
 	}
 
 	/**
@@ -286,9 +286,7 @@ class Routines_REST {
 		}
 
 		$limit = (int) $request->get_param( 'limit' );
-		if ( $limit < 1 ) {
-			$limit = 20;
-		}
+		$limit = max( 1, min( 20, $limit ) );
 
 		return new \WP_REST_Response( array( 'history' => Routines::history( $id, $limit ) ), 200 );
 	}
@@ -296,6 +294,25 @@ class Routines_REST {
 	// -------------------------------------------------------------------------
 	// Helpers
 	// -------------------------------------------------------------------------
+
+	/**
+	 * Translate a Routines action result into a response: the result body on
+	 * success, or a 400 rest_routine_action_failed error when ok is false.
+	 *
+	 * @param array{ok:bool,error?:string} $result Routines::pause/resume/test_run result.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	private static function action_response( array $result ) {
+		if ( empty( $result['ok'] ) ) {
+			return new \WP_Error(
+				'rest_routine_action_failed',
+				(string) ( $result['error'] ?? __( 'Routine action failed.', 'agent-builder' ) ),
+				array( 'status' => 400 )
+			);
+		}
+
+		return new \WP_REST_Response( $result, 200 );
+	}
 
 	/**
 	 * Resolve a Deployments row id to its routine row, or null when the row

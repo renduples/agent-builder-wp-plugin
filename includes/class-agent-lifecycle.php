@@ -427,7 +427,7 @@ class Agent_Lifecycle {
 	 * @param Agent_Controller|null $controller Optional controller (tests inject a fake-LLM one).
 	 * @return void
 	 */
-	public static function execute_scheduled_task( Agent_Base $agent, array $task, ?Agent_Controller $controller = null ): void {
+	public static function execute_scheduled_task( Agent_Base $agent, array $task, ?Agent_Controller $controller = null, string $invocation = 'cron' ): void {
 		\Agentic\Plugin::get_instance()->load_chat_components();
 
 		$audit    = new Audit_Log();
@@ -445,6 +445,34 @@ class Agent_Lifecycle {
 		$source_ref    = null !== $deployment_id
 			? 'routine:' . $deployment_id
 			: 'routine:' . (string) ( $task['id'] ?? '' );
+
+		$deployment_row = null !== $deployment_id ? Deployments::get( $deployment_id ) : null;
+
+		// Defence in depth: a paused routine must not fire even if a stale cron
+		// event reaches here (pause() clears the event, but an event already
+		// queued before the pause could still dispatch).
+		if ( null !== $deployment_row
+			&& ( empty( $deployment_row['enabled'] ) || ! empty( $deployment_row['config']['paused_at'] ) ) ) {
+			return;
+		}
+
+		// Run as the routine's owner on cron (and any non-manual) invocations so
+		// tool grants and user_can() checks act as the user who created it. A
+		// manual test-run acts as the current user instead. Built-in tasks carry
+		// no mirror row, so they have no owner and run as-is.
+		$owner_id        = (int) ( $deployment_row['config']['created_by'] ?? 0 );
+		$restore_user_id = null;
+		$run_user_id     = get_current_user_id();
+
+		if ( 'manual' !== $invocation && $owner_id > 0 ) {
+			if ( ! self::routine_owner_can_run( $owner_id ) ) {
+				self::record_routine_owner_invalid( $deployment_id, $owner_id, $agent_id, (string) ( $task['name'] ?? $task['id'] ?? '' ) );
+				return;
+			}
+			$restore_user_id = get_current_user_id();
+			wp_set_current_user( $owner_id );
+			$run_user_id = $owner_id;
+		}
 
 		// Log task start.
 		$audit->log(
@@ -464,7 +492,7 @@ class Agent_Lifecycle {
 			// If task has a prompt, route through LLM for autonomous execution.
 			if ( ! empty( $task['prompt'] ) ) {
 				$controller = $controller ?? new Agent_Controller();
-				$controller->set_invocation_context( 'cron' );
+				$controller->set_invocation_context( $invocation );
 				$result = $controller->run_autonomous_task(
 					$agent,
 					$task['prompt'],
@@ -472,6 +500,7 @@ class Agent_Lifecycle {
 					array(
 						'kind'       => 'routine',
 						'source_ref' => $source_ref,
+						'user_id'    => $run_user_id,
 					)
 				);
 			}
@@ -479,7 +508,7 @@ class Agent_Lifecycle {
 			// Fallback 1: declarative tool mode — run one reviewed tool directly
 			// (no LLM), through the same risk/permission gate as a chat turn.
 			if ( null === $result && ! empty( $task['tool'] ) ) {
-				$result = self::run_automation_tool( $agent, $task, array(), 'cron' );
+				$result = self::run_automation_tool( $agent, $task, array(), $invocation );
 			}
 
 			// Fallback 2: bundled-PHP-agent callback method. Manifests never carry
@@ -540,6 +569,10 @@ class Agent_Lifecycle {
 					)
 				);
 			}
+		} finally {
+			if ( null !== $restore_user_id ) {
+				wp_set_current_user( $restore_user_id );
+			}
 		}
 	}
 
@@ -556,12 +589,80 @@ class Agent_Lifecycle {
 			return;
 		}
 
+		$run_id      = is_array( $result ) ? (string) ( $result['run_id'] ?? '' ) : '';
+		$skip_reason = null;
+
+		// A "completed" outcome with no run id means no run was actually begun
+		// (the LLM path returned null and no fallback produced a run). Record it
+		// honestly as skipped rather than claiming a run completed.
+		if ( 'completed' === $status && '' === $run_id ) {
+			$status      = 'skipped';
+			$skip_reason = 'no_run_produced';
+		}
+
 		Deployments::update_config(
 			$deployment_id,
 			array(
-				'last_run'    => current_time( 'mysql' ),
-				'last_status' => $status,
-				'last_run_id' => $result['run_id'] ?? null,
+				'last_run'         => current_time( 'mysql' ),
+				'last_status'      => $status,
+				'last_run_id'      => '' === $run_id ? null : $run_id,
+				'last_skip_reason' => $skip_reason,
+			)
+		);
+	}
+
+	/**
+	 * Whether a routine's recorded owner may still run it.
+	 *
+	 * A scheduled/triggered execution impersonates the owner for its duration, so
+	 * an owner who has since been deleted or de-privileged must not be silently
+	 * impersonated — the routine is skipped and an error is recorded instead.
+	 *
+	 * @param int $owner_id Recorded owner user id.
+	 * @return bool True when the user still exists and holds agent_builder_manage_agents.
+	 */
+	private static function routine_owner_can_run( int $owner_id ): bool {
+		$owner = get_userdata( $owner_id );
+		if ( ! $owner ) {
+			return false;
+		}
+
+		return user_can( $owner_id, 'agent_builder_manage_agents' );
+	}
+
+	/**
+	 * Record an owner-invalid routine as errored and notify the (former) owner.
+	 *
+	 * @param int|null $deployment_id Deployments mirror row id, or null.
+	 * @param int      $owner_id      Recorded owner user id.
+	 * @param string   $agent_id      Agent slug.
+	 * @param string   $label         Routine display label/id.
+	 * @return void
+	 */
+	private static function record_routine_owner_invalid( ?int $deployment_id, int $owner_id, string $agent_id, string $label ): void {
+		self::record_routine_completion( $deployment_id, null, 'error' );
+
+		$body = get_userdata( $owner_id )
+			? sprintf(
+				/* translators: %s: routine label */
+				__( 'Routine "%s" was skipped: its owner no longer has the required capability.', 'agent-builder' ),
+				$label
+			)
+			: sprintf(
+				/* translators: 1: routine label, 2: owner user id */
+				__( 'Routine "%1$s" was skipped: its owner (user %2$d) no longer exists.', 'agent-builder' ),
+				$label,
+				$owner_id
+			);
+
+		Notifications::notify(
+			$owner_id,
+			'routine_failed',
+			__( 'Routine skipped', 'agent-builder' ),
+			$body,
+			array(
+				'agent_id' => $agent_id,
+				'severity' => 'error',
 			)
 		);
 	}
@@ -1090,7 +1191,7 @@ class Agent_Lifecycle {
 	 * @param Agent_Controller|null $controller Optional controller (tests inject a fake-LLM one).
 	 * @return void
 	 */
-	public static function handle_async_event( string $agent_id, string $listener_id, string $prompt, array $hook_args, ?Agent_Controller $controller = null ): void {
+	public static function handle_async_event( string $agent_id, string $listener_id, string $prompt, array $hook_args, ?Agent_Controller $controller = null, string $invocation = 'hook' ): void {
 		\Agentic\Plugin::get_instance()->load_chat_components();
 
 		$registry = \Agentic_Agent_Registry::get_instance();
@@ -1114,6 +1215,32 @@ class Agent_Lifecycle {
 			? 'routine:' . $deployment_id
 			: 'listener:' . $listener_id;
 
+		$deployment_row = null !== $deployment_id ? Deployments::get( $deployment_id ) : null;
+
+		// Defence in depth: a paused routine must not fire even if its async event
+		// already slipped into the queue before the pause.
+		if ( null !== $deployment_row
+			&& ( empty( $deployment_row['enabled'] ) || ! empty( $deployment_row['config']['paused_at'] ) ) ) {
+			return;
+		}
+
+		// Run as the routine's owner on hook (and any non-manual) invocations. A
+		// manual test-run acts as the current user instead; built-in listeners
+		// carry no mirror row and so no owner.
+		$owner_id        = (int) ( $deployment_row['config']['created_by'] ?? 0 );
+		$restore_user_id = null;
+		$run_user_id     = get_current_user_id();
+
+		if ( 'manual' !== $invocation && $owner_id > 0 ) {
+			if ( ! self::routine_owner_can_run( $owner_id ) ) {
+				self::record_routine_owner_invalid( $deployment_id, $owner_id, $agent_id, $listener_id );
+				return;
+			}
+			$restore_user_id = get_current_user_id();
+			wp_set_current_user( $owner_id );
+			$run_user_id = $owner_id;
+		}
+
 		// Build context-enriched prompt.
 		$context_json = wp_json_encode( $hook_args, JSON_PRETTY_PRINT );
 		$full_prompt  = $prompt . "\n\n[EVENT CONTEXT]\n" . $context_json;
@@ -1122,7 +1249,7 @@ class Agent_Lifecycle {
 
 		try {
 			$controller = $controller ?? new Agent_Controller();
-			$controller->set_invocation_context( 'hook' );
+			$controller->set_invocation_context( $invocation );
 			$result = $controller->run_autonomous_task(
 				$agent,
 				$full_prompt,
@@ -1130,6 +1257,7 @@ class Agent_Lifecycle {
 				array(
 					'kind'       => 'event',
 					'source_ref' => $source_ref,
+					'user_id'    => $run_user_id,
 				)
 			);
 
@@ -1177,6 +1305,10 @@ class Agent_Lifecycle {
 			);
 
 			self::record_routine_completion( $deployment_id, null, 'error' );
+		} finally {
+			if ( null !== $restore_user_id ) {
+				wp_set_current_user( $restore_user_id );
+			}
 		}
 	}
 

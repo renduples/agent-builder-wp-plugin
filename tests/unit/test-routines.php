@@ -284,6 +284,159 @@ class Test_Routines extends TestCase {
 	}
 
 	/**
+	 * A partial save() that omits `enabled` must preserve a routine's paused state:
+	 * the underlying save rewrites the config blob and re-enables the row, so
+	 * save() has to re-apply the pause it observed before the save.
+	 */
+	public function test_save_omitted_enabled_preserves_pause(): void {
+		$this->register_routine_agent();
+		try {
+			$created = Routines::save(
+				array(
+					'kind'       => 'scheduled_task',
+					'agent_slug' => 'routine-agent',
+					'prompt'     => 'Do the thing',
+					'schedule'   => 'daily',
+				)
+			);
+			$this->assertTrue( $created['ok'] );
+
+			Routines::pause( $created['id'] );
+
+			$task_id = (string) Deployments::get( $created['id'] )['config']['task_id'];
+			$hook    = Agent_Lifecycle::user_task_cron_hook( 'routine-agent', $task_id );
+
+			$updated = Routines::save(
+				array(
+					'kind'       => 'scheduled_task',
+					'id'         => $task_id,
+					'agent_slug' => 'routine-agent',
+					'prompt'     => 'Do the thing, edited',
+					'schedule'   => 'daily',
+				)
+			);
+
+			$this->assertTrue( $updated['ok'] );
+			$row = Deployments::get( $created['id'] );
+			$this->assertNotNull( $row['config']['paused_at'], 'paused_at survives an enabled-less update' );
+			$this->assertFalse( $row['enabled'], 'row stays disabled after an enabled-less update' );
+			$this->assertFalse( wp_next_scheduled( $hook ), 'cron stays cleared after an enabled-less update' );
+		} finally {
+			$this->unregister_routine_agent();
+			delete_option( Agent_Lifecycle::USER_SCHEDULED_TASKS_OPTION );
+		}
+	}
+
+	/**
+	 * An explicit enabled=true save on a paused routine resumes it.
+	 */
+	public function test_save_enabled_true_resumes_paused(): void {
+		$this->register_routine_agent();
+		try {
+			$created = Routines::save(
+				array(
+					'kind'       => 'scheduled_task',
+					'agent_slug' => 'routine-agent',
+					'prompt'     => 'Do the thing',
+					'schedule'   => 'daily',
+				)
+			);
+			$this->assertTrue( $created['ok'] );
+
+			Routines::pause( $created['id'] );
+
+			$task_id = (string) Deployments::get( $created['id'] )['config']['task_id'];
+			$hook    = Agent_Lifecycle::user_task_cron_hook( 'routine-agent', $task_id );
+
+			$updated = Routines::save(
+				array(
+					'kind'       => 'scheduled_task',
+					'id'         => $task_id,
+					'agent_slug' => 'routine-agent',
+					'prompt'     => 'Do the thing',
+					'schedule'   => 'daily',
+					'enabled'    => true,
+				)
+			);
+
+			$this->assertTrue( $updated['ok'] );
+			$row = Deployments::get( $created['id'] );
+			$this->assertNull( $row['config']['paused_at'], 'paused_at cleared on an enabled save' );
+			$this->assertTrue( $row['enabled'], 'row re-enabled on an enabled save' );
+			$this->assertNotFalse( wp_next_scheduled( $hook ), 'cron re-registered on an enabled save' );
+		} finally {
+			$this->unregister_routine_agent();
+			delete_option( Agent_Lifecycle::USER_SCHEDULED_TASKS_OPTION );
+		}
+	}
+
+	/**
+	 * resume() schedules the first occurrence one interval out — resuming a routine
+	 * must not fire it the instant it is re-enabled.
+	 */
+	public function test_resume_schedules_one_interval_out(): void {
+		$id   = $this->seed_scheduled_task( 'us_resume_interval', 'daily' );
+		$hook = Agent_Lifecycle::user_task_cron_hook( 'routine-agent', 'us_resume_interval' );
+
+		Routines::pause( $id );
+		$this->assertFalse( wp_next_scheduled( $hook ), 'paused first' );
+
+		$result = Routines::resume( $id );
+		$this->assertTrue( $result['ok'] );
+
+		$next     = wp_next_scheduled( $hook );
+		$interval = (int) wp_get_schedules()['daily']['interval'];
+		$this->assertNotFalse( $next, 'resume re-registers the cron event' );
+		$this->assertGreaterThanOrEqual( time() + $interval - 10, $next, 'first occurrence is one interval out, not immediate' );
+		$this->assertLessThanOrEqual( time() + $interval + 10, $next, 'first occurrence is not pushed past one interval' );
+	}
+
+	/**
+	 * history() clamps its limit into 1..20.
+	 */
+	public function test_history_clamps_limit(): void {
+		global $wpdb;
+
+		$id = $this->seed_scheduled_task( 'us_history_clamp' );
+
+		$wpdb->query( "DELETE FROM {$wpdb->prefix}agent_builder_runs WHERE run_id LIKE 'us_clamp_%'" );
+
+		for ( $i = 1; $i <= 25; $i++ ) {
+			$wpdb->insert(
+				$wpdb->prefix . 'agent_builder_runs',
+				array(
+					'run_id'     => sprintf( 'us_clamp_%02d', $i ),
+					'source_ref' => 'routine:' . $id,
+				)
+			);
+		}
+
+		try {
+			$this->assertCount( 20, Routines::history( $id, 100 ), 'limit above 20 is clamped to 20' );
+			$this->assertCount( 5, Routines::history( $id, 5 ), 'limit in range is honoured' );
+			$this->assertCount( 1, Routines::history( $id, 0 ), 'limit below 1 is clamped to 1' );
+		} finally {
+			$wpdb->query( "DELETE FROM {$wpdb->prefix}agent_builder_runs WHERE run_id LIKE 'us_clamp_%'" );
+		}
+	}
+
+	/**
+	 * Register the shared routine-agent the save() tests resolve by slug.
+	 */
+	private function register_routine_agent(): void {
+		\Agentic_Agent_Registry::get_instance()->register(
+			new Manifest_Agent( array( 'slug' => 'routine-agent', 'name' => 'Routine Agent' ), '' )
+		);
+	}
+
+	/**
+	 * Unregister the shared routine-agent.
+	 */
+	private function unregister_routine_agent(): void {
+		\Agentic_Agent_Registry::get_instance()->unregister( 'routine-agent' );
+	}
+
+	/**
 	 * Clean up proposal/pending/rate-limit state and any scheduled-task cron this
 	 * file creates, so a re-run of the suite is not blocked by a prior run.
 	 */

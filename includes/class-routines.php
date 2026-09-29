@@ -134,8 +134,25 @@ class Routines {
 			wp_clear_scheduled_hook( $hook );
 
 			if ( ! $paused ) {
-				$schedule = (string) ( $config['schedule'] ?? 'daily' );
-				wp_schedule_event( time(), $schedule, $hook );
+				$schedule  = (string) ( $config['schedule'] ?? 'daily' );
+				$schedules = wp_get_schedules();
+				if ( ! isset( $schedules[ $schedule ] ) ) {
+					return array(
+						'ok'    => false,
+						'error' => __( 'Unknown schedule.', 'agent-builder' ),
+					);
+				}
+
+				// First occurrence one interval out, not immediately — resuming a
+				// routine must not fire it the instant it is re-enabled.
+				$next_ts   = time() + (int) $schedules[ $schedule ]['interval'];
+				$scheduled = wp_schedule_event( $next_ts, $schedule, $hook );
+				if ( false === $scheduled ) {
+					return array(
+						'ok'    => false,
+						'error' => __( 'Failed to reschedule routine.', 'agent-builder' ),
+					);
+				}
 			}
 		}
 
@@ -163,6 +180,8 @@ class Routines {
 	 * @return array<int, array<string, mixed>>
 	 */
 	public static function history( int $id, int $limit = 20 ): array {
+		$limit = max( 1, min( 20, $limit ) );
+
 		return Agent_Run::query(
 			array(
 				'source_ref' => 'routine:' . $id,
@@ -311,12 +330,32 @@ class Routines {
 		$kind       = (string) ( $args['kind'] ?? '' );
 		$skill_slug = sanitize_key( (string) ( $args['skill_slug'] ?? '' ) );
 		$timezone   = sanitize_text_field( (string) ( $args['timezone'] ?? '' ) );
-		// The editor's enabled toggle. Only a falsy value needs post-save work
-		// (see below) — the underlying saves always write enabled=1, so an omitted
-		// or truthy value needs nothing beyond the normal save.
+		// The editor's enabled toggle: null when omitted (a partial update must not
+		// change pause state), true/false when the caller states a desired state.
 		$enabled = array_key_exists( 'enabled', $args ) ? (bool) $args['enabled'] : null;
 
 		unset( $args['kind'], $args['skill_slug'], $args['timezone'], $args['enabled'] );
+
+		// Capture the pre-save mirror row so a paused state and its owner survive
+		// the underlying save, which rewrites the config blob (dropping paused_at /
+		// created_by) and always writes enabled=1.
+		$existing_id = (string) ( $args['id'] ?? '' );
+		$was_paused  = false;
+		$created_by  = get_current_user_id();
+		if ( '' !== $existing_id ) {
+			$existing_deployment_id = 'scheduled_task' === $kind
+				? self::deployment_id_for_task( $existing_id )
+				: self::deployment_id_for_trigger( $existing_id );
+			if ( null !== $existing_deployment_id ) {
+				$existing_row = Deployments::get( $existing_deployment_id );
+				if ( null !== $existing_row ) {
+					$was_paused = ! empty( $existing_row['config']['paused_at'] );
+					if ( ! empty( $existing_row['config']['created_by'] ) ) {
+						$created_by = (int) $existing_row['config']['created_by'];
+					}
+				}
+			}
+		}
 
 		if ( 'scheduled_task' === $kind ) {
 			$result = Agent_Lifecycle::save_user_scheduled_task( $args );
@@ -347,22 +386,24 @@ class Routines {
 			);
 		}
 
-		$patch = array();
+		$patch = array( 'created_by' => $created_by );
 		if ( '' !== $skill_slug ) {
 			$patch['skill_slug'] = $skill_slug;
 		}
 		if ( '' !== $timezone ) {
 			$patch['timezone'] = $timezone;
 		}
-		if ( ! empty( $patch ) ) {
-			Deployments::update_config( $deployment_id, $patch );
-		}
+		Deployments::update_config( $deployment_id, $patch );
 
-		// A routine explicitly saved as disabled must stop running, not merely
-		// carry a cosmetic flag. pause() already does the real thing for both
-		// kinds: it clears the freshly-registered WP-Cron event for a scheduled
-		// task and disables the Deployments row for an event listener.
+		// Reconcile pause state after the save: an explicit disabled save pauses,
+		// an explicit enabled save on a paused routine resumes, and an omitted
+		// enabled (partial update) preserves the paused state the routine already
+		// had. pause()/resume() do the real work for both kinds.
 		if ( false === $enabled ) {
+			self::pause( $deployment_id );
+		} elseif ( true === $enabled && $was_paused ) {
+			self::resume( $deployment_id );
+		} elseif ( null === $enabled && $was_paused ) {
 			self::pause( $deployment_id );
 		}
 
@@ -378,18 +419,19 @@ class Routines {
 	 *
 	 * Look up the routine, confirm it is one, resolve its agent, then run it
 	 * synchronously through the same Agent_Lifecycle execution path its schedule
-	 * or trigger would use. Execution is currently inline (async dispatch is a
-	 * documented deferred item), so once this returns the run has finished; the
-	 * resulting run id is read back from the mirror row's last_run_id, written by
-	 * Agent_Lifecycle::record_routine_completion().
+	 * or trigger would use, but with invocation 'manual' (not 'cron'/'hook') and
+	 * as the current user rather than the stored owner. Execution is currently
+	 * inline (async dispatch is a documented deferred item), so once this returns
+	 * the run has finished; the resulting run id is read back from the mirror
+	 * row's last_run_id, written by Agent_Lifecycle::record_routine_completion().
 	 *
-	 * @param int                 $id         Routine (Deployments row) ID.
-	 * @param int                 $user_id    Accepted for future audit/ownership use; not consumed yet.
+	 * @param int                   $id         Routine (Deployments row) ID.
+	 * @param int                   $user_id    The current user; not consumed (a test run acts as the request user).
 	 * @param Agent_Controller|null $controller Optional controller (tests inject a fake-LLM one).
 	 * @return array{ok:bool,run_id?:string,error?:string}
 	 */
 	public static function test_run( int $id, int $user_id, ?Agent_Controller $controller = null ): array {
-		unset( $user_id ); // Reserved for future audit/ownership use.
+		unset( $user_id ); // Test runs act as the current (already-authenticated) user.
 
 		$row = Deployments::get( $id );
 		if ( null === $row ) {
@@ -428,7 +470,7 @@ class Routines {
 				);
 			}
 
-			Agent_Lifecycle::execute_scheduled_task( $agent, Agent_Lifecycle::user_task_to_definition( $user_task ), $controller );
+			Agent_Lifecycle::execute_scheduled_task( $agent, Agent_Lifecycle::user_task_to_definition( $user_task ), $controller, 'manual' );
 		} else {
 			// Event listener: no direct "run this trigger's prompt now" entry point
 			// exists, so drive handle_async_event() with empty synthetic hook args.
@@ -437,15 +479,24 @@ class Routines {
 				(string) ( $config['trigger_id'] ?? '' ),
 				(string) ( $config['prompt'] ?? '' ),
 				array(),
-				$controller
+				$controller,
+				'manual'
 			);
 		}
 
-		$row = Deployments::get( $id );
+		$row    = Deployments::get( $id );
+		$run_id = (string) ( $row['config']['last_run_id'] ?? '' );
+
+		if ( '' === $run_id ) {
+			return array(
+				'ok'    => false,
+				'error' => __( 'The test run did not produce a run.', 'agent-builder' ),
+			);
+		}
 
 		return array(
 			'ok'     => true,
-			'run_id' => (string) ( $row['config']['last_run_id'] ?? '' ),
+			'run_id' => $run_id,
 		);
 	}
 }

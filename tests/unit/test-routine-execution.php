@@ -24,6 +24,7 @@ use Agentic\Agent_Permissions;
 use Agentic\Agent_Run;
 use Agentic\Deployments;
 use Agentic\Manifest_Agent;
+use Agentic\Notifications;
 use Agentic\Routines;
 
 /**
@@ -363,5 +364,159 @@ class Test_Routine_Execution extends TestCase {
 		$result = Routines::test_run( 999999, 0 );
 
 		$this->assertFalse( $result['ok'] );
+	}
+
+	/**
+	 * A routine whose recorded owner no longer exists is skipped: no run is begun,
+	 * the mirror row records an error, and a failure notification is raised.
+	 */
+	public function test_execute_skipped_when_owner_missing(): void {
+		$save = Agent_Lifecycle::save_user_scheduled_task(
+			array(
+				'agent_slug' => self::AGENT,
+				'prompt'     => 'Do the thing',
+				'schedule'   => 'daily',
+			)
+		);
+		$this->assertTrue( $save['ok'] );
+
+		$task_id        = $save['id'];
+		$deployments_id = Routines::deployment_id_for_task( $task_id );
+		Deployments::update_config( $deployments_id, array( 'created_by' => 999999 ) );
+
+		$user_task = Agent_Lifecycle::find_user_scheduled_task( $task_id );
+		$agent     = \Agentic_Agent_Registry::get_instance()->get_agent_instance( self::AGENT );
+
+		Agent_Lifecycle::execute_scheduled_task( $agent, Agent_Lifecycle::user_task_to_definition( $user_task ), new Agent_Controller( $this->fake_llm() ) );
+
+		$row = Deployments::get( $deployments_id );
+		$this->assertSame( 'error', $row['config']['last_status'], 'missing-owner routine records an error' );
+		$this->assertNull( $row['config']['last_run_id'], 'no run id recorded' );
+		$this->assertSame( array(), Routines::history( $deployments_id ), 'no run was created' );
+		$this->assertNotEmpty( Notifications::list( 999999 ), 'a failure notification is recorded for the former owner' );
+	}
+
+	/**
+	 * A routine whose recorded owner still exists but lost the
+	 * agent_builder_manage_agents capability is skipped the same way.
+	 */
+	public function test_execute_skipped_when_owner_lacks_capability(): void {
+		$subscriber = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+
+		$save = Agent_Lifecycle::save_user_scheduled_task(
+			array(
+				'agent_slug' => self::AGENT,
+				'prompt'     => 'Do the thing',
+				'schedule'   => 'daily',
+			)
+		);
+		$this->assertTrue( $save['ok'] );
+
+		$task_id        = $save['id'];
+		$deployments_id = Routines::deployment_id_for_task( $task_id );
+		Deployments::update_config( $deployments_id, array( 'created_by' => $subscriber ) );
+
+		$user_task = Agent_Lifecycle::find_user_scheduled_task( $task_id );
+		$agent     = \Agentic_Agent_Registry::get_instance()->get_agent_instance( self::AGENT );
+
+		Agent_Lifecycle::execute_scheduled_task( $agent, Agent_Lifecycle::user_task_to_definition( $user_task ), new Agent_Controller( $this->fake_llm() ) );
+
+		$row = Deployments::get( $deployments_id );
+		$this->assertSame( 'error', $row['config']['last_status'], 'de-privileged owner routine records an error' );
+		$this->assertSame( array(), Routines::history( $deployments_id ), 'no run was created' );
+		$this->assertNotEmpty( Notifications::list( $subscriber ), 'a failure notification is recorded for the de-privileged owner' );
+	}
+
+	/**
+	 * A routine with a valid owner runs as that owner on cron: the run is
+	 * attributed to the owner (not the cron context user) and tagged cron.
+	 */
+	public function test_execute_runs_as_owner(): void {
+		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
+
+		$save = Agent_Lifecycle::save_user_scheduled_task(
+			array(
+				'agent_slug' => self::AGENT,
+				'prompt'     => 'Do the thing',
+				'schedule'   => 'daily',
+			)
+		);
+		$this->assertTrue( $save['ok'] );
+
+		$task_id        = $save['id'];
+		$deployments_id = Routines::deployment_id_for_task( $task_id );
+		Deployments::update_config( $deployments_id, array( 'created_by' => $admin ) );
+
+		$user_task = Agent_Lifecycle::find_user_scheduled_task( $task_id );
+		$agent     = \Agentic_Agent_Registry::get_instance()->get_agent_instance( self::AGENT );
+
+		Agent_Lifecycle::execute_scheduled_task( $agent, Agent_Lifecycle::user_task_to_definition( $user_task ), new Agent_Controller( $this->fake_llm() ) );
+
+		$history = Routines::history( $deployments_id );
+		$this->assertCount( 1, $history, 'a run was created for the owner' );
+		$this->assertSame( $admin, $history[0]['user_id'], 'run is attributed to the routine owner' );
+		$this->assertSame( 'cron', $history[0]['invocation'], 'cron invocation is recorded' );
+	}
+
+	/**
+	 * When no run is actually produced, the completion write records 'skipped'
+	 * (with a reason) rather than claiming a run completed.
+	 */
+	public function test_completion_skipped_when_no_run_produced(): void {
+		$save = Agent_Lifecycle::save_user_scheduled_task(
+			array(
+				'agent_slug' => self::AGENT,
+				'prompt'     => 'Do the thing',
+				'schedule'   => 'daily',
+			)
+		);
+		$this->assertTrue( $save['ok'] );
+
+		$task_id        = $save['id'];
+		$deployments_id = Routines::deployment_id_for_task( $task_id );
+
+		// A task definition with no prompt / tool / callback produces no run at all.
+		$task  = array(
+			'id'       => $task_id,
+			'name'     => 'No-run task',
+			'schedule' => 'daily',
+		);
+		$agent = \Agentic_Agent_Registry::get_instance()->get_agent_instance( self::AGENT );
+
+		Agent_Lifecycle::execute_scheduled_task( $agent, $task, new Agent_Controller( $this->fake_llm() ) );
+
+		$row = Deployments::get( $deployments_id );
+		$this->assertSame( 'skipped', $row['config']['last_status'], 'no-run outcome is skipped, not completed' );
+		$this->assertSame( 'no_run_produced', $row['config']['last_skip_reason'] );
+		$this->assertNull( $row['config']['last_run_id'] );
+	}
+
+	/**
+	 * test_run() reports ok:false when the execution produced no run id.
+	 */
+	public function test_run_returns_not_ok_when_no_run_id(): void {
+		$created = Routines::save(
+			array(
+				'kind'       => 'scheduled_task',
+				'agent_slug' => self::AGENT,
+				'prompt'     => 'Do the thing',
+				'schedule'   => 'daily',
+			)
+		);
+		$this->assertTrue( $created['ok'] );
+
+		// An unconfigured LLM client forces run_autonomous_task() to return null
+		// before a run is begun, so test_run() has no run id to report.
+		$unconfigured = new class extends \Agentic\LLM_Client {
+			public function is_configured(): bool {
+				return false;
+			}
+		};
+
+		$result = Routines::test_run( $created['id'], 0, new Agent_Controller( $unconfigured ) );
+
+		$this->assertFalse( $result['ok'], 'test_run reports failure when no run was produced' );
+		$this->assertArrayHasKey( 'error', $result );
+		$this->assertSame( 'skipped', Deployments::get( $created['id'] )['config']['last_status'] );
 	}
 }
