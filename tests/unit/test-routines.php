@@ -204,6 +204,50 @@ class Test_Routines extends TestCase {
 	}
 
 	/**
+	 * save() with enabled=false is a real stop, not a cosmetic flag: the cron
+	 * event the underlying save just registered is cleared and the Deployments
+	 * mirror row is disabled, so a routine created from the editor with the
+	 * "enabled" toggle off won't fire.
+	 */
+	public function test_save_disabled_scheduled_task_clears_cron(): void {
+		$agent = new Manifest_Agent(
+			array(
+				'slug' => 'routine-agent',
+				'name' => 'Routine Agent',
+			),
+			''
+		);
+		\Agentic_Agent_Registry::get_instance()->register( $agent );
+
+		try {
+			$result = Routines::save(
+				array(
+					'kind'       => 'scheduled_task',
+					'agent_slug' => 'routine-agent',
+					'prompt'     => 'Do the thing',
+					'schedule'   => 'daily',
+					'enabled'    => false,
+				)
+			);
+
+			$this->assertArrayHasKey( 'ok', $result );
+			$this->assertTrue( $result['ok'], 'save succeeds' );
+			$this->assertArrayHasKey( 'id', $result, 'save returns the Deployments row id' );
+
+			$row     = Deployments::get( (int) $result['id'] );
+			$task_id = (string) ( $row['config']['task_id'] ?? '' );
+			$this->assertNotSame( '', $task_id, 'saved task carries a task id' );
+
+			$hook = Agent_Lifecycle::user_task_cron_hook( 'routine-agent', $task_id );
+			$this->assertFalse( wp_next_scheduled( $hook ), 'disabled save clears the cron event' );
+			$this->assertFalse( $row['enabled'], 'disabled save disables the mirror row' );
+		} finally {
+			\Agentic_Agent_Registry::get_instance()->unregister( 'routine-agent' );
+			delete_option( Agent_Lifecycle::USER_SCHEDULED_TASKS_OPTION );
+		}
+	}
+
+	/**
 	 * list() returns only user-sourced scheduled tasks and event listeners,
 	 * decorated with next_run, and excludes code-sourced deployments.
 	 */

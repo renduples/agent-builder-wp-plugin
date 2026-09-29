@@ -303,6 +303,7 @@ class Routines {
 	 *     @type int    $priority    add_action() priority (event_listener only, passed through).
 	 *     @type string $skill_slug  Optional skill slug to store in the row's config.
 	 *     @type string $timezone    Optional timezone to store in the row's config (informational).
+	 *     @type bool   $enabled     Optional. When false, the saved routine is paused (cron cleared / listener disabled). Defaults to enabled.
 	 * }
 	 * @return array{ok:bool,id?:int,error?:string}
 	 */
@@ -310,8 +311,12 @@ class Routines {
 		$kind       = (string) ( $args['kind'] ?? '' );
 		$skill_slug = sanitize_key( (string) ( $args['skill_slug'] ?? '' ) );
 		$timezone   = sanitize_text_field( (string) ( $args['timezone'] ?? '' ) );
+		// The editor's enabled toggle. Only a falsy value needs post-save work
+		// (see below) — the underlying saves always write enabled=1, so an omitted
+		// or truthy value needs nothing beyond the normal save.
+		$enabled = array_key_exists( 'enabled', $args ) ? (bool) $args['enabled'] : null;
 
-		unset( $args['kind'], $args['skill_slug'], $args['timezone'] );
+		unset( $args['kind'], $args['skill_slug'], $args['timezone'], $args['enabled'] );
 
 		if ( 'scheduled_task' === $kind ) {
 			$result = Agent_Lifecycle::save_user_scheduled_task( $args );
@@ -351,6 +356,14 @@ class Routines {
 		}
 		if ( ! empty( $patch ) ) {
 			Deployments::update_config( $deployment_id, $patch );
+		}
+
+		// A routine explicitly saved as disabled must stop running, not merely
+		// carry a cosmetic flag. pause() already does the real thing for both
+		// kinds: it clears the freshly-registered WP-Cron event for a scheduled
+		// task and disables the Deployments row for an event listener.
+		if ( false === $enabled ) {
+			self::pause( $deployment_id );
 		}
 
 		return array(
