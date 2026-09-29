@@ -94,6 +94,7 @@ class Agent_Proposals {
 			'created_by'  => $user_id,
 			'run_id'      => $run_id,
 			'session_id'  => null,
+			'listener_id' => $listener_id,
 			'expires_at'  => $expires_at,
 		);
 
@@ -111,6 +112,7 @@ class Agent_Proposals {
 				'created_by'  => $user_id > 0 ? $user_id : null,
 				'run_id'      => '' !== $run_id ? $run_id : null,
 				'session_id'  => null,
+				'listener_id' => '' !== $listener_id ? $listener_id : null,
 				'created_at'  => gmdate( 'Y-m-d H:i:s' ),
 				'expires_at'  => $expires_at,
 			)
@@ -211,6 +213,23 @@ class Agent_Proposals {
 	}
 
 	/**
+	 * Clear the listener dedupe marker for a proposal that came from a gated
+	 * listener, so once the proposal is resolved the listener can propose again
+	 * instead of waiting out the marker's TTL.
+	 *
+	 * @param array $proposal Proposal data (as read back via get()).
+	 * @return void
+	 */
+	private static function clear_pending_marker( array $proposal ): void {
+		$listener_id = $proposal['listener_id'] ?? '';
+		if ( '' === $listener_id ) {
+			return;
+		}
+
+		delete_transient( self::pending_key( (string) ( $proposal['agent_id'] ?? '' ), (string) $listener_id, (string) ( $proposal['tool'] ?? '' ) ) );
+	}
+
+	/**
 	 * Approve and execute a proposal.
 	 *
 	 * @param string $proposal_id Proposal UUID.
@@ -234,6 +253,11 @@ class Agent_Proposals {
 			return array( 'error' => 'Proposal already processed.' );
 		}
 		$proposal['status'] = 'approved';
+
+		// Clear the listener dedupe marker now the proposal is decided, so a
+		// gated listener can mint a fresh proposal instead of waiting out the
+		// marker's TTL.
+		self::clear_pending_marker( $proposal );
 
 		// Execute the already-approved change through Tool_Executor's approved
 		// path, which runs the same tool_loader → agent-inline → abilities-bridge
@@ -299,6 +323,11 @@ class Agent_Proposals {
 			return array( 'error' => 'Proposal already processed.' );
 		}
 		$proposal['status'] = 'rejected';
+
+		// Clear the listener dedupe marker now the proposal is decided, so a
+		// gated listener can mint a fresh proposal instead of waiting out the
+		// marker's TTL.
+		self::clear_pending_marker( $proposal );
 
 		// Log rejection.
 		$audit = new Audit_Log();

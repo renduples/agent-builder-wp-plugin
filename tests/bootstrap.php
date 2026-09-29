@@ -266,6 +266,7 @@ function _agentic_create_test_tables() {
 		created_by bigint(20) unsigned,
 		run_id varchar(36) DEFAULT NULL,
 		session_id varchar(191) DEFAULT NULL,
+		listener_id varchar(64) DEFAULT NULL,
 		created_at datetime DEFAULT CURRENT_TIMESTAMP,
 		expires_at datetime,
 		decided_by bigint(20) unsigned DEFAULT NULL,

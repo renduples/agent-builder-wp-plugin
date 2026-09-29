@@ -413,6 +413,51 @@ class Test_Agent_Proposals extends TestCase {
 	}
 
 	/**
+	 * A listener-gated proposal persists its listener_id, and approve() clears the
+	 * dedupe marker immediately (rather than waiting out the marker's one-hour
+	 * TTL), so the same event can mint a fresh proposal again.
+	 */
+	public function test_approve_clears_listener_dedupe_marker_immediately(): void {
+		$agent_id    = 'approve-clears-marker-agent';
+		$listener_id = 'l-approve';
+		$tool        = 'list_posts';
+
+		$proposal = Agent_Proposals::create( $tool, array(), $agent_id, 'Approve marker', '', '', 0, $listener_id );
+
+		// listener_id round-trips through the row: persisted by create()'s insert,
+		// read back by get()/normalize_row().
+		$this->assertSame( $listener_id, Agent_Proposals::get( $proposal['id'] )['listener_id'] );
+
+		// A live marker exists while the proposal is still pending.
+		$this->assertSame( $proposal['id'], Agent_Proposals::has_pending( $agent_id, $listener_id, $tool ) );
+
+		Agent_Proposals::approve( $proposal['id'] );
+
+		// The marker is gone the moment the proposal is decided — no TTL wait.
+		$this->assertNull( Agent_Proposals::has_pending( $agent_id, $listener_id, $tool ) );
+		$this->assertFalse( get_transient( Agent_Proposals::pending_key( $agent_id, $listener_id, $tool ) ) );
+	}
+
+	/**
+	 * reject() likewise clears the listener dedupe marker immediately.
+	 */
+	public function test_reject_clears_listener_dedupe_marker_immediately(): void {
+		$agent_id    = 'reject-clears-marker-agent';
+		$listener_id = 'l-reject';
+		$tool        = 'list_posts';
+
+		$proposal = Agent_Proposals::create( $tool, array(), $agent_id, 'Reject marker', '', '', 0, $listener_id );
+
+		$this->assertSame( $listener_id, Agent_Proposals::get( $proposal['id'] )['listener_id'] );
+		$this->assertSame( $proposal['id'], Agent_Proposals::has_pending( $agent_id, $listener_id, $tool ) );
+
+		Agent_Proposals::reject( $proposal['id'] );
+
+		$this->assertNull( Agent_Proposals::has_pending( $agent_id, $listener_id, $tool ) );
+		$this->assertFalse( get_transient( Agent_Proposals::pending_key( $agent_id, $listener_id, $tool ) ) );
+	}
+
+	/**
 	 * Fetch a raw proposals table row by id.
 	 *
 	 * @param string $proposal_id Proposal UUID.

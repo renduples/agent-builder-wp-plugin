@@ -683,6 +683,66 @@ class Test_Schema_Upgrade extends TestCase {
 	}
 
 	/**
+	 * The proposals listener_id column is added by its own version-independent
+	 * migration even when the stored schema version already equals
+	 * AGENT_BUILDER_DB_VERSION — 2.15.2 is the current version, so the
+	 * version-gated create_tables() re-run alone would no-op for anyone already
+	 * upgraded. The migration must add the column and must never write the
+	 * schema-version option itself.
+	 */
+	public function test_maybe_upgrade_adds_proposals_listener_id_independent_of_schema_version(): void {
+		global $wpdb;
+
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		$ref = new \ReflectionMethod( Activator::class, 'create_tables' );
+		$ref->invoke( null );
+
+		$table = $wpdb->prefix . 'agent_builder_proposals';
+		$wpdb->query( "ALTER TABLE {$table} DROP COLUMN listener_id" );
+		delete_option( 'agent_builder_proposals_listener_id_migrated' );
+
+		try {
+			$columns_before = $wpdb->get_col( "SHOW COLUMNS FROM {$table}", 0 );
+			$this->assertNotContains( 'listener_id', $columns_before );
+
+			// Stored version already equals the constant — the version-gated
+			// path alone would no-op and never re-run create_tables().
+			update_option( 'agent_builder_db_schema_version', AGENT_BUILDER_DB_VERSION );
+			$this->enter_admin_as_logged_in_user();
+
+			$option_written = false;
+			$tracker        = static function ( $value ) use ( &$option_written ) {
+				$option_written = true;
+				return $value;
+			};
+			add_filter( 'pre_update_option_agent_builder_db_schema_version', $tracker );
+
+			Activator::maybe_upgrade();
+
+			remove_filter( 'pre_update_option_agent_builder_db_schema_version', $tracker );
+
+			$columns_after = $wpdb->get_col( "SHOW COLUMNS FROM {$table}", 0 );
+			$this->assertContains( 'listener_id', $columns_after );
+			$this->assertFalse( $option_written, 'This migration must never write the schema-version option.' );
+			$this->assertTrue( (bool) get_option( 'agent_builder_proposals_listener_id_migrated' ) );
+
+			// Idempotent: a second run with the flag already set is a no-op.
+			Activator::maybe_upgrade();
+			$columns_after_retry = $wpdb->get_col( "SHOW COLUMNS FROM {$table}", 0 );
+			$this->assertContains( 'listener_id', $columns_after_retry );
+		} finally {
+			// Restore — DDL isn't rolled back by the per-test transaction, and a
+			// failed assertion above must not leak a dropped column (or a set
+			// migration flag) into later tests sharing this test DB.
+			$columns = $wpdb->get_col( "SHOW COLUMNS FROM {$table}", 0 );
+			if ( ! in_array( 'listener_id', $columns, true ) ) {
+				$wpdb->query( "ALTER TABLE {$table} ADD COLUMN listener_id varchar(64) DEFAULT NULL AFTER session_id" );
+			}
+			delete_option( 'agent_builder_proposals_listener_id_migrated' );
+		}
+	}
+
+	/**
 	 * The column migration runs at most once per site: once its own
 	 * "migrated" flag is set, a later maybe_upgrade() call must skip the
 	 * SHOW COLUMNS/ALTER TABLE path entirely, even if (hypothetically) the
