@@ -252,11 +252,11 @@ class Test_Event_Listener_Guards extends TestCase {
 
 		// Non-listed option name — filtered out before the gate.
 		Agent_Lifecycle::execute_event_listener( $agent, $listener, array( 'posts_table_option', 'old', 'new' ) );
-		$this->assertSame( 0, $this->count_proposal_transients(), 'a value outside the allowlist never reaches the gate' );
+		$this->assertSame( 0, $this->count_proposals(), 'a value outside the allowlist never reaches the gate' );
 
 		// Allowlisted option name — reaches the gate and proposes.
 		Agent_Lifecycle::execute_event_listener( $agent, $listener, array( 'woocommerce_orders', 'old', 'new' ) );
-		$this->assertSame( 1, $this->count_proposal_transients(), 'an allowlisted value proposes once' );
+		$this->assertSame( 1, $this->count_proposals(), 'an allowlisted value proposes once' );
 	}
 
 	/**
@@ -277,7 +277,7 @@ class Test_Event_Listener_Guards extends TestCase {
 		);
 
 		Agent_Lifecycle::execute_event_listener( $agent, $listener, array( 'woocommerce_orders', 'old', 'new' ) );
-		$this->assertSame( 0, $this->count_proposal_transients(), 'an empty allowlist never reaches the gate' );
+		$this->assertSame( 0, $this->count_proposals(), 'an empty allowlist never reaches the gate' );
 	}
 
 	/**
