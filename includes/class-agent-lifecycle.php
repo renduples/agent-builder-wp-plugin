@@ -570,6 +570,7 @@ class Agent_Lifecycle {
 				'hook'     => $trigger['hook'],
 				'prompt'   => $trigger['prompt'],
 				'priority' => $trigger['priority'] ?? 10,
+				'source'   => 'user',
 			);
 
 			add_action(
@@ -756,6 +757,16 @@ class Agent_Lifecycle {
 		// Never re-enter: a listener (or a tool it runs) that writes an option and
 		// re-fires this same hook must not recurse.
 		if ( self::$listener_in_flight ) {
+			return;
+		}
+
+		// A paused user-defined trigger (Routines::pause()) must not fire. Built-in
+		// manifest listeners carry no 'source' => 'user' and pass through untouched.
+		// This gate is the real enforcement point for the event-listener flavour of
+		// a routine — not a display-only flag.
+		if ( 'user' === ( $listener['source'] ?? '' )
+			&& class_exists( Routines::class )
+			&& Routines::is_event_listener_paused( (string) ( $listener['id'] ?? '' ) ) ) {
 			return;
 		}
 
