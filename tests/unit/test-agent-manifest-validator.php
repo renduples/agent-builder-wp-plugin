@@ -93,6 +93,85 @@ class Test_Agent_Manifest_Validator extends TestCase {
 	}
 
 	/**
+	 * The `in` allowlist form survives sanitisation as an exact-match list, and an
+	 * empty `in` is preserved (it matches nothing at runtime).
+	 */
+	public function test_arg_filter_in_allowlist_validation(): void {
+		$manifest = $this->validate(
+			array(
+				array(
+					'id'         => 'allowlisted',
+					'hook'       => 'updated_option',
+					'tool'       => 'add_custom_css',
+					'arg_filter' => array( 'arg' => 0, 'in' => array( 'publish', 'pending' ) ),
+				),
+				array(
+					'id'         => 'empty',
+					'hook'       => 'updated_option',
+					'tool'       => 'add_custom_css',
+					'arg_filter' => array( 'arg' => 0, 'in' => array() ),
+				),
+			)
+		);
+
+		$this->assertIsArray( $manifest );
+		$listeners = $manifest['event_listeners'];
+
+		$this->assertSame(
+			array( 'arg' => 0, 'in' => array( 'publish', 'pending' ) ),
+			$listeners[0]['arg_filter']
+		);
+		$this->assertSame(
+			array( 'arg' => 0, 'in' => array() ),
+			$listeners[1]['arg_filter']
+		);
+	}
+
+	/**
+	 * A malformed `arg_filter` — neither form, both forms, a non-string allowlist
+	 * item, or a non-list `in` — is rejected (dropped, not kept).
+	 */
+	public function test_arg_filter_rejects_malformed_filters(): void {
+		$manifest = $this->validate(
+			array(
+				array(
+					'id'         => 'neither',
+					'hook'       => 'updated_option',
+					'tool'       => 'add_custom_css',
+					'arg_filter' => array( 'arg' => 0 ),
+				),
+				array(
+					'id'         => 'both',
+					'hook'       => 'updated_option',
+					'tool'       => 'add_custom_css',
+					'arg_filter' => array( 'arg' => 0, 'pattern' => '^x', 'in' => array( 'x' ) ),
+				),
+				array(
+					'id'         => 'non-string-item',
+					'hook'       => 'updated_option',
+					'tool'       => 'add_custom_css',
+					'arg_filter' => array( 'arg' => 0, 'in' => array( 'ok', 42 ) ),
+				),
+				array(
+					'id'         => 'non-list-in',
+					'hook'       => 'updated_option',
+					'tool'       => 'add_custom_css',
+					'arg_filter' => array( 'arg' => 0, 'in' => 'publish' ),
+				),
+			)
+		);
+
+		$this->assertIsArray( $manifest );
+		foreach ( $manifest['event_listeners'] as $listener ) {
+			$this->assertArrayNotHasKey(
+				'arg_filter',
+				$listener,
+				sprintf( 'listener %s keeps no malformed arg_filter', $listener['id'] )
+			);
+		}
+	}
+
+	/**
 	 * A listener naming neither `prompt` nor `tool` has nothing to run and is
 	 * discarded from the manifest entirely.
 	 */
