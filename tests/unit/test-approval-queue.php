@@ -122,6 +122,41 @@ class Test_Approval_Queue extends TestCase {
 	}
 
 	/**
+	 * cleanup_expired() compares expires_at against UTC regardless of the MySQL
+	 * session timezone. With the session timezone set ahead of UTC, a near-term
+	 * (but still future) UTC expiry would satisfy `expires_at < NOW()` and be
+	 * expired early; against UTC_TIMESTAMP() it must survive the cleanup pass.
+	 */
+	public function test_cleanup_expired_uses_utc_when_session_timezone_is_ahead(): void {
+		global $wpdb;
+
+		$original_tz = $wpdb->get_var( 'SELECT @@session.time_zone' );
+		$wpdb->query( "SET time_zone = '+08:00'" );
+
+		try {
+			$queue = new Approval_Queue();
+			$id    = $queue->add( 'test-agent', 'delete_form', array( 'form_id' => 9 ), 'Cleanup', 7, 'high' );
+
+			// A 7-day queue item outlasts any real-world timezone offset, so
+			// nudge expires_at to a near-future UTC moment to exercise the
+			// timezone comparison deterministically.
+			$wpdb->update(
+				$wpdb->prefix . 'agent_builder_approval_queue',
+				array( 'expires_at' => gmdate( 'Y-m-d H:i:s', time() + HOUR_IN_SECONDS ) ),
+				array( 'id' => $id )
+			);
+
+			$queue->cleanup_expired();
+
+			$row = $this->get_queue_row( $id );
+			$this->assertSame( 'pending', $row['status'] );
+			$this->assertSame( 1, $queue->get_pending_count() );
+		} finally {
+			$wpdb->query( $wpdb->prepare( 'SET time_zone = %s', $original_tz ) );
+		}
+	}
+
+	/**
 	 * log_executed() records an immediately-executed write with no approval
 	 * gate — it must not appear in get_pending_count() or get_completed_count(),
 	 * since nobody approved it (approved_by stays NULL).
