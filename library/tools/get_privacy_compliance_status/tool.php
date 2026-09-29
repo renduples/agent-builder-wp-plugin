@@ -78,8 +78,14 @@ class Get_Privacy_Compliance_Status extends \Agentic\Tool_Base {
 		$privacy_url     = $has_privacy ? get_permalink( $privacy_page_id ) : null;
 
 		// Terms page (look by common slugs/titles).
-		$terms_page = get_page_by_path( 'terms' ) ?: get_page_by_path( 'terms-of-service' ) ?: get_page_by_path( 'terms-and-conditions' );
-		$has_terms  = $terms_page && $terms_page->post_status === 'publish';
+		$terms_page = get_page_by_path( 'terms' );
+		if ( ! $terms_page ) {
+			$terms_page = get_page_by_path( 'terms-of-service' );
+		}
+		if ( ! $terms_page ) {
+			$terms_page = get_page_by_path( 'terms-and-conditions' );
+		}
+		$has_terms = $terms_page && 'publish' === $terms_page->post_status;
 
 		// Known tracker script domains.
 		$known_trackers    = array(

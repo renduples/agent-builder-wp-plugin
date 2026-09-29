@@ -51,8 +51,11 @@ class Check_Eeat_Signals extends \Agentic\Tool_Base {
 		$checks = array();
 
 		// 1. About page exists (15 pts).
-		$about     = get_page_by_path( 'about' ) ?: get_page_by_path( 'about-us' );
-		$has_about = $about && $about->post_status === 'publish';
+		$about = get_page_by_path( 'about' );
+		if ( ! $about ) {
+			$about = get_page_by_path( 'about-us' );
+		}
+		$has_about = $about && 'publish' === $about->post_status;
 		if ( $has_about ) {
 			$about_words = str_word_count( wp_strip_all_tags( $about->post_content ) );
 			if ( $about_words >= 200 ) {
@@ -116,8 +119,11 @@ class Check_Eeat_Signals extends \Agentic\Tool_Base {
 		}
 
 		// 3. Contact page / transparency (15 pts).
-		$contact     = get_page_by_path( 'contact' ) ?: get_page_by_path( 'contact-us' );
-		$has_contact = $contact && $contact->post_status === 'publish';
+		$contact = get_page_by_path( 'contact' );
+		if ( ! $contact ) {
+			$contact = get_page_by_path( 'contact-us' );
+		}
+		$has_contact = $contact && 'publish' === $contact->post_status;
 		if ( $has_contact ) {
 			$score   += 15;
 			$checks[] = array(

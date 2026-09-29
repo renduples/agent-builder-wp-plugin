@@ -119,7 +119,10 @@ class Search_Capabilities extends \Agentic\Tool_Base {
 		if ( is_wp_error( $response ) ) {
 			if ( ! empty( $local_matches ) ) {
 				return $this->merge_local_matches(
-					array( 'results' => array(), 'total' => 0 ),
+					array(
+						'results' => array(),
+						'total'   => 0,
+					),
 					$local_matches
 				);
 			}
@@ -164,7 +167,8 @@ class Search_Capabilities extends \Agentic\Tool_Base {
 
 		// Match on individual words too, so "Support Triage agent" still finds
 		// the "Support Triage" agent despite the trailing, non-matching word.
-		$words   = preg_split( '/\s+/', strtolower( $query ) ) ?: array();
+		$words   = preg_split( '/\s+/', strtolower( $query ) );
+		$words   = is_array( $words ) ? $words : array();
 		$words   = array_diff( array_unique( array_filter( $words, static fn( $w ) => strlen( $w ) >= 4 ) ), $stopwords );
 		$needles = array_filter( array_merge( array( $query ), $words ) );
 
@@ -204,9 +208,9 @@ class Search_Capabilities extends \Agentic\Tool_Base {
 			return $body;
 		}
 
-		$results       = is_array( $body['results'] ?? null ) ? $body['results'] : array();
-		$local_slugs   = array_column( $local_matches, 'slug' );
-		$results       = array_values(
+		$results         = is_array( $body['results'] ?? null ) ? $body['results'] : array();
+		$local_slugs     = array_column( $local_matches, 'slug' );
+		$results         = array_values(
 			array_filter(
 				$results,
 				static fn( $r ) => ! in_array( $r['slug'] ?? null, $local_slugs, true )

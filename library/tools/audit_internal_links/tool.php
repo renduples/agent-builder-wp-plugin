@@ -86,7 +86,8 @@ class Audit_Internal_Links extends \Agentic\Tool_Base {
 					$outbound[] = $full_url;
 					// Credit inbound links.
 					foreach ( $all_urls as $target_url => $target_id ) {
-						if ( $target_id !== $post->ID && str_contains( $full_url, wp_parse_url( $target_url, PHP_URL_PATH ) ?: '' ) ) {
+						$target_path = wp_parse_url( $target_url, PHP_URL_PATH );
+						if ( $target_id !== $post->ID && str_contains( $full_url, $target_path ? $target_path : '' ) ) {
 							$inbound_map[ $target_id ] = ( $inbound_map[ $target_id ] ?? 0 ) + 1;
 						}
 					}
@@ -105,14 +106,14 @@ class Audit_Internal_Links extends \Agentic\Tool_Base {
 			$inbound_count  = $inbound_map[ $post->ID ] ?? 0;
 			$outbound_count = count( $outbound_map[ $post->ID ] ?? array() );
 
-			if ( $inbound_count === 0 && $post->ID !== $home_id ) {
+			if ( 0 === $inbound_count && $post->ID !== $home_id ) {
 				$orphans[] = array(
 					'post_id' => $post->ID,
 					'title'   => $post->post_title,
 					'url'     => get_permalink( $post->ID ),
 				);
 			}
-			if ( $outbound_count === 0 ) {
+			if ( 0 === $outbound_count ) {
 				$dead_ends[] = array(
 					'post_id'        => $post->ID,
 					'title'          => $post->post_title,
