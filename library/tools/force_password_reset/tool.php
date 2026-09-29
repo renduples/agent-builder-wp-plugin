@@ -89,7 +89,7 @@ class Force_Password_Reset extends \Agentic\Tool_Base {
 		}
 
 		// Prevent resetting the current user's own password via the agent.
-		if ( $user_id === get_current_user_id() ) {
+		if ( get_current_user_id() === $user_id ) {
 			return array(
 				'success' => false,
 				'error'   => 'Cannot force a password reset on your own account via an agent.',

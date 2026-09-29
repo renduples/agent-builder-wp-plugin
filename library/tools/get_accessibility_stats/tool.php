@@ -76,7 +76,7 @@ class Get_Accessibility_Stats extends \Agentic\Tool_Base {
 
 			preg_match_all( '/<h1[^>]*>/i', $post->post_content, $h1m );
 			$h1c = count( $h1m[0] );
-			if ( $h1c === 0 ) {
+			if ( 0 === $h1c ) {
 				++$pages_no_h1; }
 			if ( $h1c > 1 ) {
 				++$pages_multiple_h1; }

@@ -124,7 +124,7 @@ class Fetch_Url extends \Agentic\Tool_Base {
 			$decoded = json_decode( $body, true );
 			if ( null !== $decoded ) {
 				$encoded          = wp_json_encode( $decoded, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE );
-				$result['data']   = substr( $encoded ?: '', 0, $max_chars );
+				$result['data']   = substr( $encoded ? $encoded : '', 0, $max_chars );
 				$result['format'] = 'json';
 				return $result;
 			}

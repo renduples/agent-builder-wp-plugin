@@ -739,7 +739,7 @@ class Create_Form extends \Agentic\Tool_Base {
 			'title'                => $title,
 			'submit_label'         => 'Submit',
 			'fields'               => $fields,
-			'confirmation_message' => $confirmation_message ?: 'Thank you — your submission has been received!',
+			'confirmation_message' => $confirmation_message ? $confirmation_message : 'Thank you — your submission has been received!',
 		);
 
 		$engine = \Agentic_Native_Forms::get_instance();
