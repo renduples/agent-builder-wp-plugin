@@ -12,6 +12,7 @@ import { InfoTip } from '../../shared/components';
 import { RISK_EXPLANATIONS } from '../constants';
 import TabBar from './TabBar';
 import RulesTab from './RulesTab';
+import GrantsTab from './GrantsTab';
 
 const APPROVAL_ACTION_HINT = __(
 	'An agent tried to run this specific action and paused here first. Nothing happens until you decide — approve to let it run once, or reject to cancel it.',
@@ -390,22 +391,25 @@ function ApprovalsView( { data, reload } ) {
 	};
 
 	// Tab list for this screen: the existing "Approvals" and "Backups" entries
-	// from the payload, with the new "Rules" tab inserted between them. The
-	// payload is tab-agnostic (class-approvals-payload.php), so the Rules tab
-	// is registered client-side rather than touching a PHP file.
+	// from the payload, with the "Rules" and "Grants" tabs inserted between
+	// them. The payload is tab-agnostic (class-approvals-payload.php), so these
+	// tabs are registered client-side rather than touching a PHP file.
 	const tabs = useMemo( () => {
 		const base = data.tabs || [];
-		let rulesUrl = '';
-		try {
-			const u = new URL( window.location.href );
-			u.searchParams.set( 'tab', 'rules' );
-			rulesUrl = u.toString();
-		} catch {
-			// Rules tab still renders; only its link is empty.
-		}
+		const tabUrl = ( id ) => {
+			try {
+				const u = new URL( window.location.href );
+				u.searchParams.set( 'tab', id );
+				return u.toString();
+			} catch {
+				// Tab still renders; only its link is empty.
+				return '';
+			}
+		};
 		return [
 			...base.filter( ( t ) => t.id !== 'backups' ),
-			{ id: 'rules', label: __( 'Rules', 'agent-builder' ), url: rulesUrl },
+			{ id: 'rules', label: __( 'Rules', 'agent-builder' ), url: tabUrl( 'rules' ) },
+			{ id: 'grants', label: __( 'Grants', 'agent-builder' ), url: tabUrl( 'grants' ) },
 			...base.filter( ( t ) => t.id === 'backups' ),
 		];
 	}, [ data.tabs ] );
@@ -415,6 +419,15 @@ function ApprovalsView( { data, reload } ) {
 			<>
 				<TabBar tabs={ tabs } active={ data.tab } />
 				<RulesTab />
+			</>
+		);
+	}
+
+	if ( data.tab === 'grants' ) {
+		return (
+			<>
+				<TabBar tabs={ tabs } active={ data.tab } />
+				<GrantsTab />
 			</>
 		);
 	}

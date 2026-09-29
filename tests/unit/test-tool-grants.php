@@ -223,6 +223,30 @@ class Test_Tool_Grants extends TestCase {
 	}
 
 	/**
+	 * The DELETE /tool-grants/{tool} route revokes an agent-scoped `tool@agent`
+	 * key: the route regex must match the `@`, and the handler must not strip it
+	 * out via sanitize_key(), so the key round-trips through revoke and is
+	 * removed from list_for_user().
+	 *
+	 * NOTE: the request path keeps the `@` literal. The GrantsTab client must do
+	 * the same — it must NOT encodeURIComponent() the key, because WP REST route
+	 * matching does not URL-decode the path, so an `%40`-encoded `@` would fail
+	 * to match this route and return rest_no_route. Dispatching with a literal
+	 * `@` here mirrors exactly what the fixed frontend sends over the wire.
+	 */
+	public function test_revoke_agent_scoped_grant_via_rest(): void {
+		wp_set_current_user( $this->admin_id );
+		Tool_Grants::grant( 'always', 'edit_post@content_writer', array( 'user_id' => $this->admin_id ) );
+		$this->assertContains( 'edit_post@content_writer', Tool_Grants::list_for_user( $this->admin_id ) );
+
+		$request  = new \WP_REST_Request( 'DELETE', '/agentic/v1/tool-grants/edit_post@content_writer' );
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertNotContains( 'edit_post@content_writer', Tool_Grants::list_for_user( $this->admin_id ) );
+	}
+
+	/**
 	 * revoke() removes a session grant.
 	 */
 	public function test_revoke_session_removes_grant(): void {
