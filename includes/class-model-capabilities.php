@@ -46,6 +46,24 @@ final class Model_Capabilities {
 	private const LEARNED_UNSUPPORTED_OPTION = 'agent_builder_learned_tools_unsupported';
 
 	/**
+	 * WordPress option storing runtime-learned "this model rejected a forced
+	 * tool_choice" facts, keyed by "{provider}:{model}".
+	 */
+	private const LEARNED_TOOL_CHOICE_UNSUPPORTED_OPTION = 'agent_builder_learned_tool_choice_unsupported';
+
+	/**
+	 * Claude 5.5+ (Sonnet 5.5, Opus 5.5) and Fable 5.1 reject a forced
+	 * `tool_choice` of `{"type":"any"}` (and `{"type":"tool","name":…}`) with
+	 * a 400. Handled up front by sending `tool_choice: auto`; any other model
+	 * that rejects forcing is learned at runtime into the option above.
+	 */
+	public const MODELS_REJECTING_FORCED_TOOL_CHOICE = array(
+		'claude-sonnet-5-5',
+		'claude-opus-5-5',
+		'claude-fable-5-1',
+	);
+
+	/**
 	 * Capability defaults (safe baseline for classic GPT-4o / Claude / Gemini chat).
 	 *
 	 * @return array<string, mixed>
@@ -389,6 +407,44 @@ final class Model_Capabilities {
 	 */
 	private static function learned_key( string $model, string $provider ): string {
 		return $provider . ':' . $model;
+	}
+
+	/**
+	 * Whether this model/provider will accept a forced tool choice
+	 * (`tool_choice: {"type":"any"}`). Claude 5.5+ (Sonnet 5.5, Opus 5.5)
+	 * and Fable 5.1 reject it with a 400; anything learned to reject it at
+	 * runtime also returns false. Callers fall back to `auto` and steer via
+	 * the system prompt.
+	 *
+	 * @param string $model    Model id.
+	 * @param string $provider Provider slug.
+	 */
+	public static function supports_forced_tool_choice( string $model, string $provider = '' ): bool {
+		if ( in_array( strtolower( trim( $model ) ), self::MODELS_REJECTING_FORCED_TOOL_CHOICE, true ) ) {
+			return false;
+		}
+		return ! isset( self::learned_tool_choice_unsupported()[ self::learned_key( $model, $provider ) ] );
+	}
+
+	/**
+	 * Persist that a model/provider rejected a forced tool_choice, so later
+	 * calls send `auto` up front instead of round-tripping a 400 every time.
+	 *
+	 * @param string $model    Model id.
+	 * @param string $provider Provider slug.
+	 */
+	public static function mark_forced_tool_choice_unsupported( string $model, string $provider = '' ): void {
+		$learned                                    = self::learned_tool_choice_unsupported();
+		$learned[ self::learned_key( $model, $provider ) ] = true;
+		update_option( self::LEARNED_TOOL_CHOICE_UNSUPPORTED_OPTION, $learned, false );
+	}
+
+	/**
+	 * @return array<string, bool>
+	 */
+	private static function learned_tool_choice_unsupported(): array {
+		$learned = get_option( self::LEARNED_TOOL_CHOICE_UNSUPPORTED_OPTION, array() );
+		return is_array( $learned ) ? $learned : array();
 	}
 
 	/**
