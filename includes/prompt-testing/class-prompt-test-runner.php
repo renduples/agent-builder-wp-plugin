@@ -348,11 +348,10 @@ final class Prompt_Test_Runner {
 		} catch ( \Throwable $e ) {
 			return $this->build_error_record( $row, $e, $started );
 		} finally {
-			// Agent_Controller::chat() clears its own permission override, but
-			// run_autonomous_task() does not, and neither clears the audit mode
-			// context. In a web request that is invisible; across fifty prompts in
-			// one process it would silently relax the risk gate for every prompt
-			// after the first autonomous one.
+			// run_autonomous_task() does not clear the audit mode context. In a web
+			// request that is invisible; across fifty prompts in one process it would
+			// silently relax the risk gate for every prompt after the first
+			// autonomous one.
 			$this->reset_global_state();
 		}
 	}
@@ -361,10 +360,6 @@ final class Prompt_Test_Runner {
 	 * Reset process-global agent state left behind by a run.
 	 */
 	private function reset_global_state(): void {
-		if ( class_exists( '\\Agentic\\Agent_Permissions' ) ) {
-			\Agentic\Agent_Permissions::set_mode_override( null );
-		}
-
 		if ( class_exists( '\\Agentic\\Audit_Log' ) && method_exists( '\\Agentic\\Audit_Log', 'set_mode_context' ) ) {
 			\Agentic\Audit_Log::set_mode_context( '' );
 		}

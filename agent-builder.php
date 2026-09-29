@@ -66,7 +66,7 @@ spl_autoload_register(
 // wp-content/agentic-agents/ (or -knowledge/, -backups/) needs to move.
 define( 'AGENT_BUILDER_FILE', __FILE__ );
 define( 'AGENT_BUILDER_VERSION', '4.0.2' );
-define( 'AGENT_BUILDER_DB_VERSION', '2.15.1' );
+define( 'AGENT_BUILDER_DB_VERSION', '2.15.2' );
 define( 'AGENT_BUILDER_DIR', plugin_dir_path( __FILE__ ) );
 define( 'AGENT_BUILDER_URL', plugin_dir_url( __FILE__ ) );
 define( 'AGENT_BUILDER_BASENAME', plugin_basename( __FILE__ ) );
@@ -677,6 +677,8 @@ final class Plugin {
 
 			$queue = new Approval_Queue();
 			$queue->cleanup_expired();
+
+			Agent_Proposals::cleanup_expired();
 		} finally {
 			delete_transient( $lock_key );
 		}
@@ -722,6 +724,8 @@ require_once AGENT_BUILDER_DIR . 'includes/class-knowledge-wizard-rest.php';
 require_once AGENT_BUILDER_DIR . 'includes/class-deploy-wizard-rest.php';
 require_once AGENT_BUILDER_DIR . 'includes/class-runs-rest.php';
 require_once AGENT_BUILDER_DIR . 'includes/class-notifications-rest.php';
+require_once AGENT_BUILDER_DIR . 'includes/class-approval-rules.php';
+require_once AGENT_BUILDER_DIR . 'includes/class-approval-rules-rest.php';
 require_once AGENT_BUILDER_DIR . 'includes/class-security-log.php';
 
 // WP 7.0+ AI Client adapter layer (the bridge).
@@ -783,6 +787,8 @@ Score_REST::init();
 Webmcp_Bridge::init();
 Inventory_REST::init();
 Notifications_REST::init();
+Approval_Rules_REST::init();
+Approval_Rules::init();
 Notifications::init();
 Admin_Bar_Inbox::init();
 Site_Health::init();
