@@ -183,6 +183,28 @@ class Test_Event_Listener_Guards extends TestCase {
 	}
 
 	/**
+	 * bust_query_cache() clears get_option()'s `notoptions` negative cache as well
+	 * as the option's own value. A request that read the counter before the first
+	 * bump would have cached "this option does not exist" under `notoptions`; on a
+	 * persistent object cache that entry is keyed separately from the value, so
+	 * leaving it would let a later read fall back to the stale default instead of
+	 * the freshly-incremented counter.
+	 */
+	public function test_bust_query_cache_clears_notoptions(): void {
+		delete_option( 'agentic_audit_cache_ver' );
+
+		// Simulate get_option()'s negative cache from a pre-bump read.
+		wp_cache_set( 'notoptions', array( 'agentic_audit_cache_ver' => true ), 'options' );
+
+		Audit_Log::bust_query_cache();
+
+		$this->assertFalse(
+			wp_cache_get( 'notoptions', 'options' ),
+			'bust_query_cache() clears the notoptions negative-cache entry'
+		);
+	}
+
+	/**
 	 * A manifest-level `arg_filter` drops hook arguments that do not match the
 	 * declared pattern before they ever reach the approval gate, so a
 	 * high-frequency hook does not mint proposals for irrelevant events.

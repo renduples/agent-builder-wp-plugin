@@ -232,6 +232,14 @@ class Audit_Log {
 		// cache — resolve the freshly-incremented row on their next read.
 		wp_cache_delete( self::CACHE_VERSION_KEY, 'options' );
 
+		// The 'notoptions' negative cache must go too. get_option() records "this
+		// option does not exist" under the 'notoptions' key on a first-miss, and
+		// on a persistent object cache that entry is keyed separately from the
+		// value above — so a read that fell back to get_option() before the
+		// first-ever bump could otherwise keep returning the stale default 0
+		// instead of the freshly-incremented counter.
+		wp_cache_delete( 'notoptions', 'options' );
+
 		// Read the incremented value straight from the DB and mirror it into the
 		// in-request group for the fast path within this request. get_option() is
 		// deliberately avoided here: on the first-ever bump it can have cached this

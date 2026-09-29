@@ -93,6 +93,35 @@ class Test_Agent_Manifest_Validator extends TestCase {
 	}
 
 	/**
+	 * An over-length `pattern` is rejected at sanitisation time (dropping the
+	 * filter, so the listener runs on every event) rather than silently truncated
+	 * into a different pattern that may no longer compile at runtime.
+	 */
+	public function test_arg_filter_rejects_overlength_pattern(): void {
+		$overlong = '^' . str_repeat( 'a', 501 ) . '$';
+
+		$manifest = $this->validate(
+			array(
+				array(
+					'id'         => 'overlong',
+					'hook'       => 'updated_option',
+					'tool'       => 'add_custom_css',
+					'arg_filter' => array( 'arg' => 0, 'pattern' => $overlong ),
+				),
+			)
+		);
+
+		$this->assertIsArray( $manifest );
+		$listeners = $manifest['event_listeners'];
+
+		$this->assertArrayNotHasKey(
+			'arg_filter',
+			$listeners[0],
+			'an over-length pattern is rejected, not silently truncated'
+		);
+	}
+
+	/**
 	 * The `in` allowlist form survives sanitisation as an exact-match list, and an
 	 * empty `in` is preserved (it matches nothing at runtime).
 	 */
