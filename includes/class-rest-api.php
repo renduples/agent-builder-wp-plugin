@@ -314,10 +314,14 @@ class REST_API {
 			)
 		);
 
-		// Revoke an always-allow tool grant for the current admin user.
+		// Revoke an always-allow tool grant for the current admin user. The
+		// regex must also match a `tool@agent` key (the `@` is part of the key
+		// set Tool_Grants produces), otherwise an agent-scoped grant 404s. The
+		// `@` is escaped because WP compiles route keys with `@` as its regex
+		// delimiter (see WP_REST_Server::get_routes()).
 		register_rest_route(
 			'agentic/v1',
-			'/tool-grants/(?P<tool>[a-zA-Z0-9_]+)',
+			'/tool-grants/(?P<tool>[a-zA-Z0-9_\@-]+)',
 			array(
 				'methods'             => 'DELETE',
 				'callback'            => array( $this, 'handle_tool_grant_revoke' ),
@@ -1185,7 +1189,10 @@ class REST_API {
 	 * @return \WP_REST_Response
 	 */
 	public function handle_tool_grant_revoke( \WP_REST_Request $request ): \WP_REST_Response {
-		$tool_name = sanitize_key( $request->get_param( 'tool' ) );
+		// sanitize_key() strips the `@` out of a `tool@agent` key, so an agent-
+		// scoped grant could never be revoked. Preserve `@` (and `-`) while still
+		// dropping anything outside the character set grant_matches() produces.
+		$tool_name = preg_replace( '/[^a-zA-Z0-9_@-]/', '', (string) $request->get_param( 'tool' ) );
 
 		Tool_Grants::revoke( 'always', $tool_name, array( 'user_id' => get_current_user_id() ) );
 

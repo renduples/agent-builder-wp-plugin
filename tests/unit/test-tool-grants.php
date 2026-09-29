@@ -223,6 +223,24 @@ class Test_Tool_Grants extends TestCase {
 	}
 
 	/**
+	 * The DELETE /tool-grants/{tool} route revokes an agent-scoped `tool@agent`
+	 * key: the route regex must match the `@`, and the handler must not strip it
+	 * out via sanitize_key(), so the key round-trips through revoke and is
+	 * removed from list_for_user().
+	 */
+	public function test_revoke_agent_scoped_grant_via_rest(): void {
+		wp_set_current_user( $this->admin_id );
+		Tool_Grants::grant( 'always', 'edit_post@content_writer', array( 'user_id' => $this->admin_id ) );
+		$this->assertContains( 'edit_post@content_writer', Tool_Grants::list_for_user( $this->admin_id ) );
+
+		$request  = new \WP_REST_Request( 'DELETE', '/agentic/v1/tool-grants/edit_post@content_writer' );
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertNotContains( 'edit_post@content_writer', Tool_Grants::list_for_user( $this->admin_id ) );
+	}
+
+	/**
 	 * revoke() removes a session grant.
 	 */
 	public function test_revoke_session_removes_grant(): void {
