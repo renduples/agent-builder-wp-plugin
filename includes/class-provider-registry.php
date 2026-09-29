@@ -1323,15 +1323,49 @@ class Provider_Registry {
 					'name'          => 'Anthropic (Claude)',
 					// phpcs:ignore PluginCheck.CodeAnalysis.AIProvider.DirectIntegration -- Multi-provider agent tool-calling is this plugin's core feature; the WP AI Client SDK explicitly excludes agent/tool orchestration from its scope (php-ai-client REQUIREMENTS.md: "no agents"), and no official connector exists for this provider yet.
 					'endpoint'      => 'https://api.anthropic.com/v1/messages',
-					'default_model' => 'claude-sonnet-4-6',
+					// Claude 5.x is the current family; Sonnet 5.5 is the default. The 4.x models stay
+					// selectable but are ordered after the 5.x ones. default_model only seeds fresh
+					// installs — a site's already-saved model is never overwritten.
+					'default_model' => 'claude-sonnet-5-5',
 					'auth_type'     => 'anthropic',
 					'req_format'    => 'anthropic',
 					'resp_format'   => 'anthropic',
 					'requires_key'  => true,
 					'key_url'       => 'https://platform.claude.com/settings/keys',
 					'icon'          => 'anthropic',
-					'models'        => array( 'claude-sonnet-4-6', 'claude-opus-4-6', 'claude-haiku-4-5-20251001', 'claude-sonnet-4-5-20250929', 'claude-opus-4-20250514' ),
+					'models'        => array(
+						'claude-sonnet-5-5',
+						'claude-opus-5-5',
+						'claude-fable-5-1',
+						'claude-sonnet-5',
+						'claude-opus-5',
+						'claude-sonnet-4-6',
+						'claude-opus-4-6',
+						'claude-haiku-4-5-20251001',
+						'claude-sonnet-4-5-20250929',
+						'claude-opus-4-20250514',
+					),
 					'model_pricing' => array(
+						'claude-sonnet-5-5'          => array(
+							'in'  => 2.00,
+							'out' => 10.00,
+						),
+						'claude-opus-5-5'            => array(
+							'in'  => 4.00,
+							'out' => 20.00,
+						),
+						'claude-fable-5-1'           => array(
+							'in'  => 10.00,
+							'out' => 50.00,
+						),
+						'claude-sonnet-5'            => array(
+							'in'  => 2.00,
+							'out' => 10.00,
+						),
+						'claude-opus-5'              => array(
+							'in'  => 5.00,
+							'out' => 25.00,
+						),
 						'claude-sonnet-4-6'          => array(
 							'in'  => 3.00,
 							'out' => 15.00,

@@ -368,6 +368,22 @@ class LLM_Client {
 				);
 			}
 
+			// Claude 5.5+ (and Fable 5.1) reject a forced tool_choice with a 400. Retry once
+			// with `auto`, remember the model, and steer via the system prompt instead.
+			if ( 400 === $status && 'anthropic' === $this->provider && $force_tool_use
+				&& false !== stripos( (string) $error_message, 'tool_choice' ) ) {
+				Model_Capabilities::mark_forced_tool_choice_unsupported( (string) $this->model, (string) $this->provider );
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log(
+					sprintf(
+						'Agentic LLM [%s/%s] rejects forced tool_choice — retrying with tool_choice=auto.',
+						$this->provider,
+						$this->model
+					)
+				);
+				return $this->chat( $messages, $tools, false );
+			}
+
 			// Provider rejected tool schemas (common for small Ollama models): retry once without tools.
 			if ( $sent_tools && Model_Capabilities::is_tools_unsupported_error( (string) $error_message ) ) {
 				Model_Capabilities::mark_tools_unsupported( (string) $this->model, (string) $this->provider );
@@ -1275,8 +1291,9 @@ class LLM_Client {
 						$anthropic_tools[] = $tool_def;
 					}
 					if ( ! empty( $anthropic_tools ) ) {
+						// Claude 5.5+ rejects a forced tool_choice; send auto and steer via the system prompt.
 						$body['tools']       = $anthropic_tools;
-						$body['tool_choice'] = array( 'type' => $force_tool_use ? 'any' : 'auto' );
+						$body['tool_choice'] = array( 'type' => $force_tool_use && Model_Capabilities::supports_forced_tool_choice( (string) $this->model, (string) $this->provider ) ? 'any' : 'auto' );
 					}
 				}
 				break;
