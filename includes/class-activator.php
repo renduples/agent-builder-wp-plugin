@@ -277,6 +277,7 @@ final class Activator {
 		// maybe_add_awaiting_tool_call_id_column() for why this can't ride
 		// along with the version-gated path below.
 		self::maybe_add_awaiting_tool_call_id_column();
+		self::migrate_default_agent_mode_option();
 
 		$stored = (string) get_option( 'agent_builder_db_schema_version', '' );
 		if ( AGENT_BUILDER_DB_VERSION === $stored ) {
@@ -505,6 +506,38 @@ final class Activator {
 			error_log( '[Agent Builder] maybe_add_awaiting_tool_call_id_column failed: ' . $e->getMessage() );
 			// Leave unmigrated — retried on the next admin_init.
 		}
+	}
+
+	/**
+	 * One-time, version-independent migration folding the dead
+	 * agent_builder_default_agent_mode option into agent_builder_agent_mode.
+	 *
+	 * The React Settings screen's Security tab historically wrote "default agent
+	 * mode" to agent_builder_default_agent_mode — an option nothing else in the
+	 * plugin ever read, so a change saved there had no effect on agent behaviour.
+	 * That screen now reads/writes agent_builder_agent_mode (the option every
+	 * other consumer uses); this migrates any value a site already saved under
+	 * the broken option before it is lost.
+	 *
+	 * Idempotent by construction: the legacy option is deleted on success, so a
+	 * second run finds nothing to migrate. Only 'autonomous'/'supervised' are
+	 * valid values; the long-unreachable 'readonly' (and any unknown value)
+	 * collapse to the 'supervised' default.
+	 *
+	 * @return void
+	 */
+	private static function migrate_default_agent_mode_option(): void {
+		$legacy = get_option( 'agent_builder_default_agent_mode' );
+		if ( false === $legacy ) {
+			return;
+		}
+
+		$mapped = in_array( (string) $legacy, array( 'autonomous', 'supervised' ), true )
+			? (string) $legacy
+			: 'supervised';
+
+		update_option( 'agent_builder_agent_mode', $mapped );
+		delete_option( 'agent_builder_default_agent_mode' );
 	}
 
 	/**
