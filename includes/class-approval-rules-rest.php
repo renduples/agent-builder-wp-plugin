@@ -195,10 +195,6 @@ class Approval_Rules_REST {
 	public static function update_rule( \WP_REST_Request $request ) {
 		$id = (int) $request->get_param( 'id' );
 
-		if ( null === Approval_Rules::get( $id ) ) {
-			return new \WP_Error( 'not_found', __( 'Rule not found.', 'agent-builder' ), array( 'status' => 404 ) );
-		}
-
 		$data = self::payload( $request );
 
 		$error = Approval_Rules::validate( $data );
@@ -206,7 +202,9 @@ class Approval_Rules_REST {
 			return $error;
 		}
 
-		Approval_Rules::update( $id, $data );
+		if ( ! Approval_Rules::update( $id, $data ) ) {
+			return new \WP_Error( 'not_found', __( 'Rule not found.', 'agent-builder' ), array( 'status' => 404 ) );
+		}
 
 		return new \WP_REST_Response( array( 'rule' => Approval_Rules::get( $id ) ), 200 );
 	}
@@ -220,11 +218,9 @@ class Approval_Rules_REST {
 	public static function delete_rule( \WP_REST_Request $request ) {
 		$id = (int) $request->get_param( 'id' );
 
-		if ( null === Approval_Rules::get( $id ) ) {
+		if ( ! Approval_Rules::delete( $id ) ) {
 			return new \WP_Error( 'not_found', __( 'Rule not found.', 'agent-builder' ), array( 'status' => 404 ) );
 		}
-
-		Approval_Rules::delete( $id );
 
 		return new \WP_REST_Response(
 			array(
