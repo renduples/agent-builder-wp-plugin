@@ -207,6 +207,36 @@ class Deployments {
 	}
 
 	/**
+	 * Shallow-merge a patch into a deployment's `config` JSON blob.
+	 *
+	 * Patch keys win over existing keys, but any config key not named in $patch
+	 * is preserved untouched. This is the safe primitive for callers that want
+	 * to write a single config field (e.g. `last_run`) without rebuilding — and
+	 * risking the silent wipe of — the rest of the stored config.
+	 *
+	 * @param int   $id    Deployment ID.
+	 * @param array $patch Config keys to merge in.
+	 * @return bool True on success, false if the row does not exist.
+	 */
+	public static function update_config( int $id, array $patch ): bool {
+		$existing = self::get( $id );
+		if ( null === $existing ) {
+			return false;
+		}
+
+		$merged = array_merge( (array) ( $existing['config'] ?? array() ), $patch );
+
+		self::save(
+			array(
+				'id'     => $id,
+				'config' => $merged,
+			)
+		);
+
+		return true;
+	}
+
+	/**
 	 * Enable a deployment by ID.
 	 *
 	 * @param int $id Deployment ID.
