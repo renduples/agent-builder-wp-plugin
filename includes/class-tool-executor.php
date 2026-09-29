@@ -236,6 +236,8 @@ class Tool_Executor {
 	 * @param Agent_Run|null  $run                Owning run, when this call happened inside one (background
 	 *                                            task, routine, delegation, …). Null for interactive chat
 	 *                                            calls with no run.
+	 * @param string          $listener_id        Event-listener id when this call came from a gated listener;
+	 *                                            used to dedupe repeat confirmation proposals. '' otherwise.
 	 * @return array Tool result.
 	 */
 	public function execute(
@@ -246,7 +248,8 @@ class Tool_Executor {
 		string $invocation_context,
 		?Agent_Base $agent = null,
 		string $session_id = '',
-		?Agent_Run $run = null
+		?Agent_Run $run = null,
+		string $listener_id = ''
 	): array {
 		// Block disabled tools (defense-in-depth: LLM may hallucinate calls to tools
 		// that were already filtered from definitions sent to the LLM).
@@ -407,7 +410,36 @@ class Tool_Executor {
 			$description = '' === $reason
 				? sprintf( '%s — can change your site, so it needs your approval.', $label )
 				: sprintf( '%s — %s', $label, $reason );
-			$proposal    = Agent_Proposals::create( $tool_name, $arguments, $agent_id, $description, '', $ctx['run_id'], $ctx['user_id'] );
+
+			// Dedupe gated listener calls: if this exact agent + listener + tool
+			// already has an unexpired pending proposal, don't stack a second one —
+			// log once and return. This is what stops a high-frequency hook (e.g.
+			// updated_option) from minting a proposal per fire.
+			if ( '' !== $listener_id ) {
+				$existing = Agent_Proposals::has_pending( $agent_id, $listener_id, $tool_name );
+				if ( null !== $existing ) {
+					$this->audit->log(
+						$agent_id,
+						'event_listener_deduped',
+						$listener_id,
+						array(
+							'tool'        => $tool_name,
+							'proposal_id' => $existing,
+						)
+					);
+
+					return array(
+						'status'      => 'deduplicated',
+						'proposal_id' => $existing,
+						'message'     => sprintf(
+							'“%s” already has a pending proposal for this event; no new proposal was created.',
+							$label
+						),
+					);
+				}
+			}
+
+			$proposal = Agent_Proposals::create( $tool_name, $arguments, $agent_id, $description, '', $ctx['run_id'], $ctx['user_id'], $listener_id );
 
 			$this->audit->log(
 				$agent_id,

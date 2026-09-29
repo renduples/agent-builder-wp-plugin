@@ -43,6 +43,37 @@ class Agent_Lifecycle {
 	const ALLOWED_USER_SCHEDULES = array( 'hourly', 'twicedaily', 'daily', 'weekly' );
 
 	/**
+	 * Option-name prefixes owned by Agent Builder. A write to any option or
+	 * transient whose name starts with one of these must never fire an event
+	 * listener — this is what breaks the updated_option → approval proposal →
+	 * updated_option feedback loop.
+	 *
+	 * @var array<int, string>
+	 */
+	const INTERNAL_OPTION_PREFIXES = array(
+		'_transient_agentic_',
+		'_transient_timeout_agentic_',
+		'_site_transient_agentic_',
+		'_site_transient_timeout_agentic_',
+		'agentic_',
+		'agent_builder_',
+	);
+
+	/**
+	 * Default minimum interval (seconds) between two executions of the same
+	 * event listener. Overridable per listener via the manifest `min_interval`.
+	 */
+	const DEFAULT_LISTENER_MIN_INTERVAL = 60;
+
+	/**
+	 * Re-entrancy guard: true while a listener is executing (including any tool
+	 * it runs synchronously), so an option write by that work never re-dispatches.
+	 *
+	 * @var bool
+	 */
+	private static bool $listener_in_flight = false;
+
+	/**
 	 * Bind cron hooks for all active agents' scheduled tasks.
 	 *
 	 * Called on 'agentic_agents_loaded' action.
@@ -720,9 +751,35 @@ class Agent_Lifecycle {
 	 * @return void
 	 */
 	public static function execute_event_listener( Agent_Base $agent, array $listener, array $args ): void {
-		$audit    = new Audit_Log();
-		$start    = microtime( true );
 		$agent_id = $agent->get_id();
+
+		// Never re-enter: a listener (or a tool it runs) that writes an option and
+		// re-fires this same hook must not recurse.
+		if ( self::$listener_in_flight ) {
+			return;
+		}
+
+		// Writes made by Agent Builder itself (its own options and transients)
+		// never reach a listener.
+		if ( self::is_internal_option_event( (string) ( $listener['hook'] ?? '' ), $args[0] ?? null ) ) {
+			return;
+		}
+
+		// Manifest argument filter — irrelevant events never reach the gate.
+		if ( ! self::listener_arg_matches( $listener, $args ) ) {
+			return;
+		}
+
+		// Per-listener rate limit (skipped fires are counted, not audit-logged).
+		if ( ! self::claim_listener_execution( $agent_id, (string) ( $listener['id'] ?? '' ), self::listener_min_interval( $listener ) ) ) {
+			self::increment_listener_skip_count( $agent_id, (string) ( $listener['id'] ?? '' ) );
+			return;
+		}
+
+		self::$listener_in_flight = true;
+
+		$audit = new Audit_Log();
+		$start = microtime( true );
 
 		try {
 			if ( ! empty( $listener['prompt'] ) ) {
@@ -814,7 +871,159 @@ class Agent_Lifecycle {
 					'file'          => $e->getFile() . ':' . $e->getLine(),
 				)
 			);
+		} finally {
+			self::$listener_in_flight = false;
 		}
+	}
+
+	/**
+	 * Whether a hook firing with this first argument is a write to an option or
+	 * transient owned by Agent Builder itself, and must therefore be ignored by
+	 * every listener.
+	 *
+	 * @param string $hook Listener hook name.
+	 * @param mixed  $arg  First hook argument (the option name for option hooks).
+	 * @return bool
+	 */
+	private static function is_internal_option_event( string $hook, $arg ): bool {
+		if ( ! in_array( $hook, array( 'updated_option', 'added_option', 'deleted_option' ), true ) ) {
+			return false;
+		}
+		if ( ! is_string( $arg ) || '' === $arg ) {
+			return false;
+		}
+		foreach ( self::INTERNAL_OPTION_PREFIXES as $prefix ) {
+			if ( 0 === strpos( $arg, $prefix ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Apply the manifest-level argument filter, if the listener declares one.
+	 *
+	 * A listener may declare `arg_filter` in one of two forms — an exact-match
+	 * allowlist (`arg` + `in`) or a PCRE pattern (`arg` + `pattern`) — so that
+	 * only hook arguments matching it ever reach the gate. High-frequency hooks
+	 * (updated_option, init, save_post…) otherwise hit the approval gate for
+	 * every irrelevant event.
+	 *
+	 * @param array $listener Listener definition.
+	 * @param array $args     WordPress hook arguments.
+	 * @return bool True when the listener should run (no filter, or filter matches).
+	 */
+	private static function listener_arg_matches( array $listener, array $args ): bool {
+		$filter = $listener['arg_filter'] ?? null;
+		if ( ! is_array( $filter ) ) {
+			return true;
+		}
+
+		$index = (int) ( $filter['arg'] ?? 0 );
+		$value = $args[ $index ] ?? '';
+		if ( is_object( $value ) || is_array( $value ) ) {
+			$value = '';
+		}
+		$value = (string) $value;
+
+		// Exact-match allowlist form: strict string comparison against the listed
+		// values. An empty `in` list matches nothing, so the listener never runs.
+		if ( array_key_exists( 'in', $filter ) ) {
+			$allowlist = is_array( $filter['in'] ) ? $filter['in'] : array();
+			return in_array( $value, $allowlist, true );
+		}
+
+		// PCRE pattern form. The pattern is validated at manifest-sanitization
+		// time; a missing/empty pattern means "no filter" (run on every event),
+		// and @ guards against a stray invalid pattern, which we treat as no-match.
+		$pattern = (string) ( $filter['pattern'] ?? '' );
+		if ( '' === $pattern ) {
+			return true;
+		}
+
+		$result = @preg_match( '/' . $pattern . '/', $value ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- An invalid pattern is "no match", never a fatal.
+
+		return 1 === $result;
+	}
+
+	/**
+	 * Resolve a listener's rate-limit interval in seconds.
+	 *
+	 * @param array $listener Listener definition.
+	 * @return int Seconds; 0 disables rate limiting.
+	 */
+	private static function listener_min_interval( array $listener ): int {
+		$interval = (int) ( $listener['min_interval'] ?? self::DEFAULT_LISTENER_MIN_INTERVAL );
+		if ( $interval <= 0 ) {
+			return 0;
+		}
+		return min( $interval, 86400 );
+	}
+
+	/**
+	 * Atomically claim this listener's execution window.
+	 *
+	 * The claim is a single wp_options row written via add_option(), whose
+	 * duplicate-key failure is the atomic "someone already claimed this window"
+	 * signal — unlike a transient's get-then-set there is no read-modify-write
+	 * race. Once the stored timestamp is older than `$min_interval` the claim is
+	 * taken over with an update.
+	 *
+	 * @param string $agent_id    Agent slug.
+	 * @param string $listener_id Listener id.
+	 * @param int    $min_interval Seconds between executions (0 = no limit).
+	 * @return bool True when this fire may proceed.
+	 */
+	private static function claim_listener_execution( string $agent_id, string $listener_id, int $min_interval ): bool {
+		if ( $min_interval <= 0 || '' === $listener_id ) {
+			return true;
+		}
+
+		$key = 'agentic_listener_rate_' . md5( $agent_id . '|' . $listener_id );
+		$now = time();
+
+		// Atomic acquire: add_option() inserts only when the option is absent.
+		$added = add_option( $key, $now, '', 'no' );
+		if ( $added ) {
+			return true;
+		}
+
+		$last = (int) get_option( $key, 0 );
+		if ( $now - $last >= $min_interval ) {
+			// Window elapsed — refresh the claim. Two requests racing to refresh
+			// an expired claim may both pass, which is acceptable for a rate limiter.
+			update_option( $key, $now, 'no' );
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Count a rate-limited (skipped) listener fire.
+	 *
+	 * Skipped fires are aggregated into a single counter option, never written as
+	 * individual audit-log rows.
+	 *
+	 * @param string $agent_id    Agent slug.
+	 * @param string $listener_id Listener id.
+	 * @return void
+	 */
+	private static function increment_listener_skip_count( string $agent_id, string $listener_id ): void {
+		$key   = 'agentic_listener_skips_' . md5( $agent_id . '|' . $listener_id );
+		$count = (int) get_option( $key, 0 );
+		update_option( $key, $count + 1, 'no' );
+	}
+
+	/**
+	 * Read how many times a listener's fire has been skipped by the rate limit.
+	 *
+	 * @param string $agent_id    Agent slug.
+	 * @param string $listener_id Listener id.
+	 * @return int Skip count.
+	 */
+	public static function get_listener_skip_count( string $agent_id, string $listener_id ): int {
+		return (int) get_option( 'agentic_listener_skips_' . md5( $agent_id . '|' . $listener_id ), 0 );
 	}
 
 	/**
@@ -1018,8 +1227,12 @@ class Agent_Lifecycle {
 			return array( 'error' => 'Agent is disabled; automation tool not run.' );
 		}
 
+		// Pass the listener id through so the gate can dedupe repeat confirmation
+		// proposals from the same listener + tool (hook context only).
+		$listener_id = 'hook' === $context ? (string) ( $spec['id'] ?? '' ) : '';
+
 		$executor = new Tool_Executor( Tool_Loader::get_instance(), new Audit_Log() );
-		return $executor->execute( $tool, $arguments, $agent->get_id(), $mode, $context, $agent );
+		return $executor->execute( $tool, $arguments, $agent->get_id(), $mode, $context, $agent, '', null, $listener_id );
 	}
 
 	/**

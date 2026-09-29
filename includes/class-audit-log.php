@@ -187,22 +187,82 @@ class Audit_Log {
 	}
 
 	/**
+	 * Cache version option key.
+	 *
+	 * A single monotonically-increasing counter. Every audit insert bumps it, and
+	 * the query caches below key off it, so a new row invalidates every cached
+	 * audit query without a `DELETE … LIKE` scan over wp_options.
+	 */
+	private const CACHE_VERSION_KEY = 'agentic_audit_cache_ver';
+
+	/**
+	 * Object-cache group used for the in-request copy of the cache version.
+	 */
+	private const CACHE_GROUP = 'agentic';
+
+	/**
 	 * Bust all short-lived audit-log query transients.
 	 * Called automatically after each log() insert.
+	 *
+	 * Instead of deleting every matching transient (a broad `DELETE … LIKE` on
+	 * wp_options that piled up row locks under rapid inserts and hung requests),
+	 * we advance a single version counter. Every query cache key embeds that
+	 * counter, so the moment it changes all cached results are stale and get
+	 * recomputed lazily. Old transients expire on their own TTL.
 	 */
 	public static function bust_query_cache(): void {
-		delete_transient( 'agentic_audit_agent_ids' );
-		delete_transient( 'agentic_audit_action_types' );
-		// Pattern-delete the per-filter result transients via option scan (cheap on small sites).
 		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Targeted transient cleanup.
+
+		// Advance the version counter with one atomic statement. `INSERT … ON
+		// DUPLICATE KEY UPDATE option_value = option_value + 1` seeds the first
+		// value and increments every later one in a single step, so two concurrent
+		// log() calls can never read the same version and both write version + 1 —
+		// a read-then-write here would reintroduce exactly the race this method
+		// exists to close and leave a just-cached query stale for its full TTL.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Single-row atomic counter increment on the options table; table name is internal.
 		$wpdb->query(
 			$wpdb->prepare(
-				"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
-				'_transient_agentic_audit_%',
-				'_transient_timeout_agentic_audit_%'
+				"INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, '1', 'no') ON DUPLICATE KEY UPDATE option_value = option_value + 1",
+				self::CACHE_VERSION_KEY
 			)
 		);
+
+		// Invalidate get_option()'s cached copy (update_option() would have done
+		// this) so other requests — including ones sharing a persistent object
+		// cache — resolve the freshly-incremented row on their next read.
+		wp_cache_delete( self::CACHE_VERSION_KEY, 'options' );
+
+		// Read the incremented value straight from the DB and mirror it into the
+		// in-request group for the fast path within this request. get_option() is
+		// deliberately avoided here: on the first-ever bump it can have cached this
+		// key in its "notoptions" set and return the stale default.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Single-row read of the counter just incremented above; table name is internal.
+		$version = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT option_value FROM {$wpdb->options} WHERE option_name = %s",
+				self::CACHE_VERSION_KEY
+			)
+		);
+		wp_cache_set( self::CACHE_VERSION_KEY, $version, self::CACHE_GROUP );
+	}
+
+	/**
+	 * Read the current audit query cache version.
+	 *
+	 * Memoised in the object cache for the lifetime of the request; falls back to
+	 * the persistent option on the first read of a request (or when no persistent
+	 * object cache is configured).
+	 *
+	 * @return int Non-negative version number.
+	 */
+	private static function get_cache_version(): int {
+		$version = wp_cache_get( self::CACHE_VERSION_KEY, self::CACHE_GROUP );
+		if ( false === $version ) {
+			$version = (int) get_option( self::CACHE_VERSION_KEY, 0 );
+			wp_cache_set( self::CACHE_VERSION_KEY, $version, self::CACHE_GROUP );
+		}
+
+		return (int) $version;
 	}
 
 	/**
@@ -224,8 +284,9 @@ class Audit_Log {
 			default => 1,
 		};
 
-		// Build a stable cache key from all filter parameters.
-		$cache_key = 'agentic_audit_' . md5( $period . '|' . (string) $limit . '|' . (string) $agent_id . '|' . (string) $action . '|' . implode( ',', $exclude_actions ) );
+		// Build a stable cache key from all filter parameters, versioned by the
+		// audit cache version so any new insert invalidates it.
+		$cache_key = 'agentic_audit_v' . self::get_cache_version() . '_' . md5( $period . '|' . (string) $limit . '|' . (string) $agent_id . '|' . (string) $action . '|' . implode( ',', $exclude_actions ) );
 		$cached    = get_transient( $cache_key );
 		if ( false !== $cached ) {
 			return $cached;
@@ -270,14 +331,15 @@ class Audit_Log {
 	 * @return string[]
 	 */
 	public function get_agent_ids(): array {
-		$cached = get_transient( 'agentic_audit_agent_ids' );
+		$cache_key = 'agentic_audit_agent_ids_v' . self::get_cache_version();
+		$cached    = get_transient( $cache_key );
 		if ( false !== $cached ) {
 			return $cached;
 		}
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Cached immediately below. %i placeholder safely quotes the table name.
 		$rows = $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT agent_id FROM %i ORDER BY agent_id ASC', $wpdb->prefix . 'agent_builder_audit_log' ) );
-		set_transient( 'agentic_audit_agent_ids', $rows, 300 );
+		set_transient( $cache_key, $rows, 300 );
 		return $rows;
 	}
 
@@ -287,14 +349,15 @@ class Audit_Log {
 	 * @return string[]
 	 */
 	public function get_action_types(): array {
-		$cached = get_transient( 'agentic_audit_action_types' );
+		$cache_key = 'agentic_audit_action_types_v' . self::get_cache_version();
+		$cached    = get_transient( $cache_key );
 		if ( false !== $cached ) {
 			return $cached;
 		}
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Cached immediately below.
 		$rows = $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT action FROM %i ORDER BY action ASC', $wpdb->prefix . 'agent_builder_audit_log' ) );
-		set_transient( 'agentic_audit_action_types', $rows, 300 );
+		set_transient( $cache_key, $rows, 300 );
 		return $rows;
 	}
 
@@ -412,6 +475,7 @@ class Audit_Log {
 			'event_listener_triggered' => 'Noticed a site change',
 			'event_listener_complete'  => 'Finished responding to change',
 			'event_listener_error'     => 'Error responding to change',
+			'event_listener_deduped'   => 'Skipped a duplicate event',
 			'proposal_created'         => 'Proposed a change',
 			'proposal_approved'        => 'Change approved',
 			'proposal_rejected'        => 'Change rejected',

@@ -280,6 +280,23 @@ final class Agent_Manifest_Validator {
 				continue;
 			}
 
+			// Rate limit: at most one execution per listener per `min_interval`
+			// seconds (0 disables; negative coerced to the default of 60).
+			$min_interval = (int) ( $listener['min_interval'] ?? 60 );
+			if ( $min_interval < 0 ) {
+				$min_interval = 60;
+			}
+			$entry['min_interval'] = min( $min_interval, 86400 );
+
+			// Argument filter: run the listener only when hook argument `arg`
+			// matches `pattern` (PCRE) or is listed in `in` (exact allowlist).
+			// Malformed filters are dropped, so a typo can't silently disable the
+			// listener — it falls back to every event.
+			$arg_filter = self::clean_arg_filter( $listener['arg_filter'] ?? null );
+			if ( null !== $arg_filter ) {
+				$entry['arg_filter'] = $arg_filter;
+			}
+
 			$clean[ $id ] = $entry;
 			if ( count( $clean ) >= self::MAX_LISTENERS ) {
 				break;
@@ -287,6 +304,68 @@ final class Agent_Manifest_Validator {
 		}
 
 		return array_values( $clean );
+	}
+
+	/**
+	 * Sanitize a listener's `arg_filter` — a positional hook argument plus either
+	 * a PCRE `pattern` or an exact-match `in` allowlist.
+	 *
+	 * Exactly one of `pattern` / `in` must be present: a filter with neither, or
+	 * with both, is dropped. A `pattern` that fails to compile is dropped; an `in`
+	 * list that is not an array of strings is dropped. Dropping the filter makes
+	 * the listener run on every event, never silently on none.
+	 *
+	 * @param mixed $filter Raw arg_filter input.
+	 * @return array{arg:int, pattern:string}|array{arg:int, in:string[]}|null Sanitized filter, or null when absent/invalid.
+	 */
+	private static function clean_arg_filter( $filter ): ?array {
+		if ( ! is_array( $filter ) ) {
+			return null;
+		}
+
+		$arg = max( 0, min( 10, (int) ( $filter['arg'] ?? 0 ) ) );
+
+		$has_pattern = array_key_exists( 'pattern', $filter );
+		$has_in      = array_key_exists( 'in', $filter );
+
+		// Exactly one of the two forms may be present.
+		if ( $has_pattern === $has_in ) {
+			return null;
+		}
+
+		if ( $has_in ) {
+			$in = $filter['in'];
+			if ( ! is_array( $in ) ) {
+				return null;
+			}
+			$allowlist = array();
+			foreach ( $in as $item ) {
+				if ( ! is_string( $item ) ) {
+					return null;
+				}
+				$allowlist[] = substr( $item, 0, 500 );
+			}
+			return array(
+				'arg' => $arg,
+				'in'  => $allowlist,
+			);
+		}
+
+		$pattern = trim( (string) ( $filter['pattern'] ?? '' ) );
+		if ( '' === $pattern ) {
+			return null;
+		}
+
+		// Drop patterns that don't compile — the listener then runs on every
+		// event rather than being silently broken by an invalid regex.
+		if ( false === @preg_match( '/' . $pattern . '/', '' ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- A pattern that fails to compile is "drop it", never a fatal.
+			return null;
+		}
+
+		return array(
+			'arg'     => $arg,
+			'pattern' => substr( $pattern, 0, 500 ),
+		);
 	}
 
 	/**

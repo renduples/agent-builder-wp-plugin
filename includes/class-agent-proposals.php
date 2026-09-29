@@ -39,6 +39,14 @@ class Agent_Proposals {
 	private const TABLE = 'agent_builder_proposals';
 
 	/**
+	 * Transient prefix for the per-(agent, listener, tool) pending-proposal
+	 * dedupe marker. The marker holds the proposal id and expires with
+	 * EXPIRY_CHAT, so a gated event listener that keeps firing the same tool
+	 * never stacks up duplicate proposals.
+	 */
+	private const LISTENER_PENDING_PREFIX = 'agentic_listener_pending_';
+
+	/**
 	 * Expiry for a chat-originated proposal (no run_id): 1 hour.
 	 */
 	private const EXPIRY_CHAT = 3600;
@@ -61,9 +69,18 @@ class Agent_Proposals {
 	 *                            the current user when 0 (e.g. a background run
 	 *                            acting on behalf of its owner should pass that
 	 *                            owner's id explicitly instead).
+	 * @param string $listener_id Event-listener id when this proposal came from a
+	 *                            gated listener (used to dedupe repeat fires); '' for
+	 *                            chat/other origins. Not persisted to the row (the
+	 *                            table has no listener_id column yet — see
+	 *                            wp#277) so the dedupe marker created below relies on
+	 *                            its own EXPIRY_CHAT TTL rather than an early clear on
+	 *                            approve()/reject(); the create-time dedupe check
+	 *                            itself (has_pending(), the safety property that
+	 *                            actually stops proposal pile-up) is unaffected.
 	 * @return array Proposal data with ID.
 	 */
-	public static function create( string $tool_name, array $params, string $agent_id, string $description, string $diff = '', string $run_id = '', int $created_by = 0 ): array {
+	public static function create( string $tool_name, array $params, string $agent_id, string $description, string $diff = '', string $run_id = '', int $created_by = 0, string $listener_id = '' ): array {
 		global $wpdb;
 
 		$proposal_id = wp_generate_uuid4();
@@ -84,6 +101,7 @@ class Agent_Proposals {
 			'run_id'      => $run_id,
 			'session_id'  => null,
 			'expires_at'  => $expires_at,
+			'listener_id' => $listener_id,
 		);
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table insert.
@@ -105,6 +123,12 @@ class Agent_Proposals {
 			)
 		);
 
+		// Record the pending marker so a repeat fire of the same listener + tool
+		// is deduped instead of stacking a second proposal.
+		if ( '' !== $listener_id ) {
+			set_transient( self::pending_key( $agent_id, $listener_id, $tool_name ), $proposal_id, self::EXPIRY_CHAT );
+		}
+
 		// Log the proposal creation.
 		$audit = new Audit_Log();
 		$audit->log(
@@ -118,6 +142,46 @@ class Agent_Proposals {
 		);
 
 		return $proposal;
+	}
+
+	/**
+	 * Dedupe key for a pending proposal raised by a specific listener + tool.
+	 *
+	 * @param string $agent_id    Agent slug.
+	 * @param string $listener_id Listener id.
+	 * @param string $tool_name   Tool slug.
+	 * @return string Transient name (bounded length, safe for wp_options).
+	 */
+	public static function pending_key( string $agent_id, string $listener_id, string $tool_name ): string {
+		return self::LISTENER_PENDING_PREFIX . md5( $agent_id . '|' . $listener_id . '|' . $tool_name );
+	}
+
+	/**
+	 * Return the id of an unexpired, still-pending proposal for the given
+	 * agent + listener + tool, or null when none exists.
+	 *
+	 * Clears a stale marker (one whose proposal has expired or been resolved) so
+	 * a future fire is not deduped against a proposal that no longer exists.
+	 *
+	 * @param string $agent_id    Agent slug.
+	 * @param string $listener_id Listener id.
+	 * @param string $tool_name   Tool slug.
+	 * @return string|null Proposal id, or null.
+	 */
+	public static function has_pending( string $agent_id, string $listener_id, string $tool_name ): ?string {
+		$key         = self::pending_key( $agent_id, $listener_id, $tool_name );
+		$proposal_id = get_transient( $key );
+		if ( ! is_string( $proposal_id ) || '' === $proposal_id ) {
+			return null;
+		}
+
+		$proposal = self::get( $proposal_id );
+		if ( null === $proposal || 'pending' !== ( $proposal['status'] ?? '' ) ) {
+			delete_transient( $key );
+			return null;
+		}
+
+		return $proposal_id;
 	}
 
 	/**
