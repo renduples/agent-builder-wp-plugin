@@ -265,10 +265,62 @@ class Agent_Controller {
 
 		$parts = array();
 		foreach ( $fields as $key => $value ) {
-			$parts[] = $key . ': ' . $value;
+			// Never leak secret-shaped arguments into the live-pane summary.
+			if ( self::is_secret_summary_key( (string) $key ) ) {
+				continue;
+			}
+
+			$scalar = self::summary_scalar( $value );
+			if ( '' === $scalar ) {
+				continue;
+			}
+
+			$parts[] = $key . ': ' . $scalar;
 		}
 
 		return implode( ', ', $parts );
+	}
+
+	/**
+	 * Whether a summary field key looks secret-shaped and must be redacted.
+	 *
+	 * Matches the issue's allowlist of sensitive substrings (key, token,
+	 * password, secret, auth) case-insensitively, so a future tool that surfaces
+	 * e.g. an `api_key` or `auth_token` argument cannot leak it to the pane.
+	 *
+	 * @param string $key Field key.
+	 * @return bool
+	 */
+	private static function is_secret_summary_key( string $key ): bool {
+		$key = strtolower( $key );
+		foreach ( array( 'key', 'token', 'password', 'secret', 'auth' ) as $needle ) {
+			if ( false !== strpos( $key, $needle ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Cast a summary value to a safe string without a string-conversion TypeError.
+	 *
+	 * Scalars stringify as expected; non-scalars (arrays/objects) map to '' so
+	 * the caller can skip the field rather than emit "Array" or throw.
+	 *
+	 * @param mixed $value Field value.
+	 * @return string
+	 */
+	private static function summary_scalar( $value ): string {
+		if ( is_string( $value ) || is_int( $value ) || is_float( $value ) ) {
+			return (string) $value;
+		}
+
+		if ( is_bool( $value ) ) {
+			return $value ? 'true' : 'false';
+		}
+
+		return '';
 	}
 
 	/**
@@ -689,9 +741,10 @@ class Agent_Controller {
 	 * @param string     $deployment_context  Where the agent is running: admin_chat, gutenberg_sidebar, shortcode, modal, etc.
 	 * @param string     $handoff_from        Optional: agent slug this conversation was delegated from (P0 multi-agent).
 	 * @param string     $handoff_context     Optional: rich context from the previous agent (P0 multi-agent).
+	 * @param string     $skill_slug          Optional: skill slug invoked via a `/<slug>` command, whose SKILL.md body is injected.
 	 * @return array Response data.
 	 */
-	public function chat( string $message, array $history = array(), int $user_id = 0, string $session_id = '', string $agent_id = '', ?array $image_data = null, string $page_context = '', string $deployment_context = '', string $handoff_from = '', string $handoff_context = '' ): array {
+	public function chat( string $message, array $history = array(), int $user_id = 0, string $session_id = '', string $agent_id = '', ?array $image_data = null, string $page_context = '', string $deployment_context = '', string $handoff_from = '', string $handoff_context = '', string $skill_slug = '' ): array {
 		if ( class_exists( __NAMESPACE__ . '\\Emergency_Stop' ) && Emergency_Stop::is_active() ) {
 			return array(
 				'response' => Emergency_Stop::blocked_message(),
@@ -843,12 +896,13 @@ class Agent_Controller {
 
 		// Build messages array with agent's system prompt + site context + persona notes + page context + handoff (if any).
 		$use_weak_guidance = $this->should_use_weak_model_tool_guidance();
+		$skill_block       = '' !== $skill_slug ? Skill_Commands::injection_block( $current_agent_id, $skill_slug ) : '';
 		$messages          = array(
 			array(
 				'role'    => 'system',
 				'content' => Agent_Prompt_Builder::build(
 					$this->current_agent,
-					$page_context_block . $deployment_context_block . $memory_block . $retrieval_block,
+					$page_context_block . $deployment_context_block . $memory_block . $retrieval_block . $skill_block,
 					$handoff_from,
 					$handoff_context,
 					$use_weak_guidance

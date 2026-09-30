@@ -27,7 +27,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * Every card carries `{type, tool, title}` plus type-specific fields:
  *   - post: post_id, action, status, edit_url, view_url
- *   - file: path, url
+ *   - file: url
  *   - list: count, items (a few sample rows)
  *
  * Unrecognized tools, and tools whose result carries an error or no usable
@@ -178,9 +178,12 @@ class Result_Card {
 			return null;
 		}
 
-		$edit_url = isset( $result['edit_url'] ) ? (string) $result['edit_url'] : ( isset( $result['edit_link'] ) ? (string) $result['edit_link'] : '' );
-		$view_url = isset( $result['url'] ) ? (string) $result['url'] : '';
+		$raw_edit = isset( $result['edit_url'] ) ? (string) $result['edit_url'] : ( isset( $result['edit_link'] ) ? (string) $result['edit_link'] : '' );
+		$edit_url = self::safe_card_url( $raw_edit );
+		$view_url = self::safe_card_url( isset( $result['url'] ) ? (string) $result['url'] : '' );
 
+		// Fall back to the canonical WordPress URLs when the tool's own URL was
+		// absent or failed the allowlist (javascript:, data:, off-site, …).
 		if ( '' === $edit_url ) {
 			$link     = get_edit_post_link( $post_id, 'raw' );
 			$edit_url = is_string( $link ) ? $link : '';
@@ -188,6 +191,12 @@ class Result_Card {
 		if ( '' === $view_url ) {
 			$link     = get_permalink( $post_id );
 			$view_url = is_string( $link ) ? $link : '';
+		}
+
+		// The edit link is only meaningful — and only surfaced — for someone who
+		// can actually edit the post.
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			$edit_url = '';
 		}
 
 		return array(
@@ -215,13 +224,87 @@ class Result_Card {
 			return null;
 		}
 
+		// The exporter always writes `<name>` directly under uploads/agentic-exports/,
+		// so a valid relative path is exactly `agentic-exports/<basename>`. Anything
+		// else — a subdirectory, an absolute path, or a `..` escape — is rejected.
+		$name = basename( $path );
+		if ( 'agentic-exports/' . $name !== $path ) {
+			return null;
+		}
+
+		$uploads  = wp_upload_dir();
+		$exports  = wp_normalize_path( trailingslashit( $uploads['basedir'] ) . 'agentic-exports' );
+		$absolute = wp_normalize_path( $exports . '/' . $name );
+
+		// Resolve symlinks and any residual `..` segments, then insist the real
+		// file still lives inside the exports directory.
+		$real = realpath( $absolute );
+		if ( false === $real ) {
+			return null;
+		}
+
+		$real_exports = realpath( $exports );
+		if ( false === $real_exports || 0 !== strpos( wp_normalize_path( $real ), trailingslashit( wp_normalize_path( $real_exports ) ) ) ) {
+			return null;
+		}
+
 		return array(
 			'type'  => 'file',
 			'tool'  => $tool,
-			'title' => basename( $path ),
-			'path'  => $path,
-			'url'   => (string) ( $result['url'] ?? '' ),
+			'title' => $name,
+			'url'   => trailingslashit( $uploads['baseurl'] ) . 'agentic-exports/' . $name,
 		);
+	}
+
+	/**
+	 * Validate a tool-supplied card URL, so a stored result can never smuggle a
+	 * javascript:/data:/off-site link into a card.
+	 *
+	 * Accepts root-relative paths and http(s) URLs whose host matches home_url();
+	 * everything else maps to '' so the caller can fall back to a canonical
+	 * WordPress URL.
+	 *
+	 * @param string $url Raw URL from a tool result.
+	 * @return string The URL when safe, '' otherwise.
+	 */
+	private static function safe_card_url( string $url ): string {
+		$url = trim( $url );
+		if ( '' === $url ) {
+			return '';
+		}
+
+		// A root-relative path ("/wp-admin/…") is fine; a protocol-relative URL
+		// ("//evil.com") is not — it falls through and the missing scheme rejects it.
+		// Browsers turn "\" into "/" and strip tab/CR/LF, so "/\evil.com" or
+		// "/\t/evil.com" would become the off-site "//evil.com". Reject any
+		// backslash, control character or whitespace outright.
+		if ( preg_match( '/[\\\\\x00-\x20\x7f]/', $url ) ) {
+			return '';
+		}
+		if ( str_starts_with( $url, '/' ) && ! str_starts_with( $url, '//' ) ) {
+			return $url;
+		}
+
+		$parts = wp_parse_url( $url );
+		if ( ! is_array( $parts ) || empty( $parts['scheme'] ) || empty( $parts['host'] ) ) {
+			return '';
+		}
+
+		$scheme = strtolower( (string) $parts['scheme'] );
+		if ( ! in_array( $scheme, array( 'http', 'https' ), true ) ) {
+			return '';
+		}
+
+		$home = wp_parse_url( home_url() );
+		if ( ! is_array( $home ) || empty( $home['host'] ) ) {
+			return '';
+		}
+
+		if ( strtolower( (string) $parts['host'] ) !== strtolower( (string) $home['host'] ) ) {
+			return '';
+		}
+
+		return $url;
 	}
 
 	/**

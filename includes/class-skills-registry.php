@@ -247,6 +247,14 @@ final class Skills_Registry {
 
 		$slug = sanitize_title( $data['name'] ?? 'skill' );
 
+		// Default scope when none is supplied: shared (available to every agent)
+		// unless the site opts out of shared-by-default, in which case scope to
+		// the creating agent when one is known. An explicit agent_slug (including
+		// an empty string, meaning "shared") is always honoured as-is.
+		$agent_slug = array_key_exists( 'agent_slug', $data )
+			? $data['agent_slug']
+			: ( '1' !== get_option( 'agent_builder_skills_default_shared', '1' ) ? \Agentic\Tool_Base::get_calling_agent() : '' );
+
 		// Ensure unique slug.
 		$existing = self::get_by_slug( $slug );
 		if ( $existing ) {
@@ -261,7 +269,7 @@ final class Skills_Registry {
 				'slug'        => $slug,
 				'description' => sanitize_text_field( $data['description'] ?? '' ),
 				'content'     => $data['content'] ?? '',
-				'agent_slug'  => self::normalize_agent_slugs( $data['agent_slug'] ?? '' ),
+				'agent_slug'  => self::normalize_agent_slugs( $agent_slug ),
 				'source'      => sanitize_key( $data['source'] ?? 'local' ),
 				'source_id'   => sanitize_text_field( $data['source_id'] ?? '' ),
 				'version'     => sanitize_text_field( $data['version'] ?? '1.0.0' ),

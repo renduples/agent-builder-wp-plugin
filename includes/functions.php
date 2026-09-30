@@ -68,6 +68,18 @@ function agent_builder_chat_i18n(): array {
 		'gateConfirm'         => __( 'Waiting for approval', 'agent-builder' ),
 		'gateQueue'           => __( 'Queued for approval', 'agent-builder' ),
 		'gateBlock'           => __( 'Blocked by policy', 'agent-builder' ),
+		// Skills UX (M15-d): Save as skill + Teach a task recording.
+		'saveAsSkill'         => __( 'Save as skill', 'agent-builder' ),
+		'teachTask'           => __( 'Teach a task', 'agent-builder' ),
+		'teachTaskTitle'      => __( 'Record a task demonstration', 'agent-builder' ),
+		'recordingActive'     => __( 'Recording — demonstrate the task in the chat, then stop to create a draft.', 'agent-builder' ),
+		'recordingStop'       => __( 'Stop & create draft', 'agent-builder' ),
+		'recordingDrafting'   => __( 'Drafting skill…', 'agent-builder' ),
+		'draftCreated'        => __( 'Draft skill created.', 'agent-builder' ),
+		'reviewDraft'         => __( 'Review draft', 'agent-builder' ),
+		'saveSkillFailed'     => __( 'Could not save the skill.', 'agent-builder' ),
+		'recordStartFailed'   => __( 'Could not start recording.', 'agent-builder' ),
+		'recordStopFailed'    => __( 'Could not create the draft from the recording.', 'agent-builder' ),
 	);
 }
 

@@ -717,30 +717,38 @@ class Chat_Assets {
 	/**
 	 * Build the slashCommands array for JS localisation.
 	 *
-	 * Returns all globally-enabled commands with their metadata.
-	 * JS filters by context using agenticChat.isAdmin.
+	 * Returns all globally-enabled Pro commands with their metadata, followed by
+	 * the enabled skills for the given agent. Skill commands are appended
+	 * unconditionally so a free install without the Pro `Slash_Commands` class
+	 * still gets its skills in the `/` palette. JS filters by context using
+	 * agenticChat.isAdmin.
 	 *
+	 * @param string $agent_slug Agent slug whose skills to list (shared + specific).
 	 * @return array<int, array<string, mixed>>
 	 */
-	public static function get_slash_commands_for_js(): array {
-		if ( ! class_exists( '\\Agentic\\Slash_Commands' ) ) {
-			return array();
+	public static function get_slash_commands_for_js( string $agent_slug = '' ): array {
+		$result = array();
+
+		if ( class_exists( '\\Agentic\\Slash_Commands' ) ) {
+			foreach ( Slash_Commands::get_all() as $cmd ) {
+				if ( ! $cmd['enabled'] ) {
+					continue;
+				}
+				$result[] = array(
+					'name'        => $cmd['name'],
+					'description' => $cmd['description'],
+					'client_side' => $cmd['client_side'],
+					'has_args'    => $cmd['has_args'],
+					'arg_hint'    => $cmd['arg_hint'],
+					'contexts'    => $cmd['contexts'],
+				);
+			}
 		}
 
-		$result = array();
-		foreach ( Slash_Commands::get_all() as $cmd ) {
-			if ( ! $cmd['enabled'] ) {
-				continue;
-			}
-			$result[] = array(
-				'name'        => $cmd['name'],
-				'description' => $cmd['description'],
-				'client_side' => $cmd['client_side'],
-				'has_args'    => $cmd['has_args'],
-				'arg_hint'    => $cmd['arg_hint'],
-				'contexts'    => $cmd['contexts'],
-			);
+		foreach ( Skill_Commands::for_js( $agent_slug ) as $skill_cmd ) {
+			$result[] = $skill_cmd;
 		}
+
 		return $result;
 	}
 
