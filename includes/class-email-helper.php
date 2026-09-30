@@ -50,7 +50,9 @@ class Email_Helper {
 			'Content-Type: text/html; charset=UTF-8',
 		);
 
-		return wp_mail( $to, $subject, $html, $headers );
+		// A replacement wp_mail() (SMTP plugins) may return null; never let that
+		// become a TypeError that kills the notification cron.
+		return (bool) wp_mail( $to, $subject, $html, $headers );
 	}
 
 	/**
