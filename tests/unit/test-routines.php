@@ -371,6 +371,135 @@ class Test_Routines extends TestCase {
 	}
 
 	/**
+	 * resume() on a routine whose schedule is unknown restores the paused state
+	 * rather than leaving the row enabled with no scheduled event.
+	 */
+	public function test_resume_unknown_schedule_restores_paused_state(): void {
+		$id = Deployments::save(
+			array(
+				'type'       => Deployments::TYPE_SCHEDULED_TASK,
+				'agent_slug' => 'routine-agent',
+				'label'      => 'Bad schedule',
+				'enabled'    => 1,
+				'source'     => Deployments::SOURCE_ADMIN,
+				'config'     => array(
+					'task_id'  => 'us_bad_resume',
+					'schedule' => 'not_a_real_schedule',
+					'source'   => 'user',
+				),
+			)
+		);
+
+		$result = Routines::resume( $id );
+
+		$this->assertFalse( $result['ok'], 'unknown schedule makes resume fail' );
+
+		$row = Deployments::get( $id );
+		$this->assertFalse( $row['enabled'], 'a failed resume restores the paused state instead of leaving enabled=1' );
+		$this->assertNotNull( $row['config']['paused_at'], 'a failed resume stamps paused_at' );
+	}
+
+	/**
+	 * A schedule registered with a zero interval is treated as unknown, so resume()
+	 * cannot schedule the first occurrence "immediately" and instead fails cleanly.
+	 */
+	public function test_resume_zero_interval_schedule_is_unknown(): void {
+		$filter = static function ( $schedules ) {
+			$schedules['zero_interval'] = array(
+				'interval' => 0,
+				'display'  => 'Zero',
+			);
+			return $schedules;
+		};
+		add_filter( 'cron_schedules', $filter );
+
+		try {
+			$id = Deployments::save(
+				array(
+					'type'       => Deployments::TYPE_SCHEDULED_TASK,
+					'agent_slug' => 'routine-agent',
+					'label'      => 'Zero schedule',
+					'enabled'    => 0,
+					'source'     => Deployments::SOURCE_ADMIN,
+					'config'     => array(
+						'task_id'   => 'us_zero_interval',
+						'schedule'  => 'zero_interval',
+						'source'    => 'user',
+						'paused_at' => current_time( 'mysql' ),
+					),
+				)
+			);
+
+			$result = Routines::resume( $id );
+
+			$this->assertFalse( $result['ok'], 'a zero-interval schedule is treated as unknown' );
+
+			$row = Deployments::get( $id );
+			$this->assertFalse( $row['enabled'], 'failed resume leaves the routine disabled' );
+			$this->assertNotNull( $row['config']['paused_at'], 'failed resume keeps the paused stamp' );
+		} finally {
+			remove_filter( 'cron_schedules', $filter );
+		}
+	}
+
+	/**
+	 * save() with enabled=true on a paused routine surfaces a failed resume and
+	 * re-applies the pause, instead of ignoring the failure and leaving the routine
+	 * enabled with no scheduled event.
+	 */
+	public function test_save_enabled_true_resume_failure_restores_pause(): void {
+		$this->register_routine_agent();
+		try {
+			$created = Routines::save(
+				array(
+					'kind'       => 'scheduled_task',
+					'agent_slug' => 'routine-agent',
+					'prompt'     => 'Do the thing',
+					'schedule'   => 'daily',
+				)
+			);
+			$this->assertTrue( $created['ok'] );
+
+			Routines::pause( $created['id'] );
+
+			$task_id = (string) Deployments::get( $created['id'] )['config']['task_id'];
+			$hook    = Agent_Lifecycle::user_task_cron_hook( 'routine-agent', $task_id );
+
+			// Force wp_schedule_event() to fail so resume() cannot re-register cron.
+			$block = static function () {
+				return false;
+			};
+			add_filter( 'pre_schedule_event', $block );
+
+			try {
+				$updated = Routines::save(
+					array(
+						'kind'       => 'scheduled_task',
+						'id'         => $task_id,
+						'agent_slug' => 'routine-agent',
+						'prompt'     => 'Do the thing',
+						'schedule'   => 'daily',
+						'enabled'    => true,
+					)
+				);
+			} finally {
+				remove_filter( 'pre_schedule_event', $block );
+			}
+
+			$this->assertFalse( $updated['ok'], 'save reports failure when re-enable cannot reschedule' );
+			$this->assertArrayHasKey( 'error', $updated );
+
+			$row = Deployments::get( $created['id'] );
+			$this->assertFalse( $row['enabled'], 'failed re-enable leaves the routine paused, not enabled' );
+			$this->assertNotNull( $row['config']['paused_at'], 'failed re-enable keeps the paused stamp' );
+			$this->assertFalse( wp_next_scheduled( $hook ), 'failed re-enable leaves no cron event' );
+		} finally {
+			$this->unregister_routine_agent();
+			delete_option( Agent_Lifecycle::USER_SCHEDULED_TASKS_OPTION );
+		}
+	}
+
+	/**
 	 * resume() schedules the first occurrence one interval out — resuming a routine
 	 * must not fire it the instant it is re-enabled.
 	 */

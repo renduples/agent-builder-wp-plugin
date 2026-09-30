@@ -379,6 +379,38 @@ class Test_Routines_REST extends TestCase {
 		$this->assertSame( 'rest_routine_action_failed', $resp->get_data()['code'] );
 	}
 
+	/**
+	 * A failed resume restores the paused state on the underlying row: the row is
+	 * left disabled with a paused_at stamp, not enabled with no scheduled event.
+	 */
+	public function test_resume_unknown_schedule_restores_paused_state(): void {
+		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $admin );
+
+		$id = Deployments::save(
+			array(
+				'type'       => Deployments::TYPE_SCHEDULED_TASK,
+				'agent_slug' => self::AGENT,
+				'label'      => 'Bad schedule',
+				'enabled'    => 1,
+				'source'     => Deployments::SOURCE_ADMIN,
+				'config'     => array(
+					'task_id'  => 'ut_bad_resume',
+					'schedule' => 'not_a_real_schedule',
+					'source'   => 'user',
+				),
+			)
+		);
+
+		$resp = $this->request( 'POST', "/routines/{$id}/resume" );
+		$this->assertSame( 400, $resp->get_status(), 'resume with an unknown schedule is a 400, not a 200' );
+		$this->assertSame( 'rest_routine_action_failed', $resp->get_data()['code'] );
+
+		$row = Deployments::get( $id );
+		$this->assertFalse( $row['enabled'], 'a failed resume leaves the row disabled, not enabled=1' );
+		$this->assertNotNull( $row['config']['paused_at'], 'a failed resume stamps paused_at' );
+	}
+
 	// -------------------------------------------------------------------------
 	// Helpers
 	// -------------------------------------------------------------------------
