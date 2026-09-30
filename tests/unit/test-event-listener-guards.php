@@ -35,18 +35,17 @@ class Test_Event_Listener_Guards extends TestCase {
 	}
 
 	/**
-	 * Count pending proposal transients currently stored in wp_options.
+	 * Count proposals currently stored in the proposals table.
+	 *
+	 * Proposals moved from transients to the agent_builder_proposals table in
+	 * schema 2.15.2 (M12); the dedupe marker remains a transient but the proposal
+	 * itself now lives in the table.
 	 *
 	 * @return int
 	 */
-	private function count_proposal_transients(): int {
+	private function count_proposals(): int {
 		global $wpdb;
-		return (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$wpdb->options} WHERE option_name LIKE %s",
-				'_transient_agentic_proposal_%'
-			)
-		);
+		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}agent_builder_proposals" );
 	}
 
 	/**
@@ -71,7 +70,7 @@ class Test_Event_Listener_Guards extends TestCase {
 			Agent_Lifecycle::execute_event_listener( $agent, $listener, array( 'some_site_option', 'old', 'new' ) );
 		}
 
-		$this->assertSame( 1, $this->count_proposal_transients(), 'exactly one proposal after 50 fires' );
+		$this->assertSame( 1, $this->count_proposals(), 'exactly one proposal after 50 fires' );
 
 		// The listener still holds a single unexpired pending marker.
 		$this->assertNotNull(
@@ -119,7 +118,7 @@ class Test_Event_Listener_Guards extends TestCase {
 		update_option( 'agent_builder_test', 'x' );
 		update_option( '_transient_timeout_agentic_foo', time() + 60 );
 
-		$this->assertSame( 0, $this->count_proposal_transients(), 'internal writes must never mint a proposal' );
+		$this->assertSame( 0, $this->count_proposals(), 'internal writes must never mint a proposal' );
 	}
 
 	/**
@@ -140,7 +139,7 @@ class Test_Event_Listener_Guards extends TestCase {
 			Agent_Lifecycle::execute_event_listener( $agent, $listener, array( 'some_option', 'old', 'new' ) );
 		}
 
-		$this->assertSame( 1, $this->count_proposal_transients(), 'only the first fire passes the rate limit' );
+		$this->assertSame( 1, $this->count_proposals(), 'only the first fire passes the rate limit' );
 		$this->assertSame( 9, Agent_Lifecycle::get_listener_skip_count( 'listener-rate-agent', 'l-rate' ), 'nine fires are skipped and counted' );
 	}
 
@@ -225,11 +224,11 @@ class Test_Event_Listener_Guards extends TestCase {
 
 		// Non-matching option name — filtered out before the gate.
 		Agent_Lifecycle::execute_event_listener( $agent, $listener, array( 'posts_table_option', 'old', 'new' ) );
-		$this->assertSame( 0, $this->count_proposal_transients(), 'a non-matching argument never reaches the gate' );
+		$this->assertSame( 0, $this->count_proposals(), 'a non-matching argument never reaches the gate' );
 
 		// Matching option name — reaches the gate and proposes.
 		Agent_Lifecycle::execute_event_listener( $agent, $listener, array( 'woocommerce_orders', 'old', 'new' ) );
-		$this->assertSame( 1, $this->count_proposal_transients(), 'a matching argument proposes once' );
+		$this->assertSame( 1, $this->count_proposals(), 'a matching argument proposes once' );
 	}
 
 	/**
@@ -253,11 +252,11 @@ class Test_Event_Listener_Guards extends TestCase {
 
 		// Non-listed option name — filtered out before the gate.
 		Agent_Lifecycle::execute_event_listener( $agent, $listener, array( 'posts_table_option', 'old', 'new' ) );
-		$this->assertSame( 0, $this->count_proposal_transients(), 'a value outside the allowlist never reaches the gate' );
+		$this->assertSame( 0, $this->count_proposals(), 'a value outside the allowlist never reaches the gate' );
 
 		// Allowlisted option name — reaches the gate and proposes.
 		Agent_Lifecycle::execute_event_listener( $agent, $listener, array( 'woocommerce_orders', 'old', 'new' ) );
-		$this->assertSame( 1, $this->count_proposal_transients(), 'an allowlisted value proposes once' );
+		$this->assertSame( 1, $this->count_proposals(), 'an allowlisted value proposes once' );
 	}
 
 	/**
@@ -278,7 +277,7 @@ class Test_Event_Listener_Guards extends TestCase {
 		);
 
 		Agent_Lifecycle::execute_event_listener( $agent, $listener, array( 'woocommerce_orders', 'old', 'new' ) );
-		$this->assertSame( 0, $this->count_proposal_transients(), 'an empty allowlist never reaches the gate' );
+		$this->assertSame( 0, $this->count_proposals(), 'an empty allowlist never reaches the gate' );
 	}
 
 	/**

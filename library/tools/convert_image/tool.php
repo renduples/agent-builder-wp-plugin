@@ -78,7 +78,7 @@ class Convert_Image extends \Agentic\Tool_Base {
 			return array( 'error' => 'Unsupported format. Use: jpeg, png, webp, or gif.' );
 		}
 
-		$target_ext  = $format === 'jpeg' ? 'jpg' : $format;
+		$target_ext  = 'jpeg' === $format ? 'jpg' : $format;
 		$target_mime = self::SUPPORTED[ $format ];
 
 		$file = get_attached_file( $att_id );

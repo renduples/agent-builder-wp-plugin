@@ -75,17 +75,15 @@ class Create_Short_Link extends Tool_Base {
 				}
 				++$attempts;
 			} while ( isset( $links[ $slug ] ) && $attempts < 20 );
-		} else {
+		} elseif ( isset( $links[ $slug ] ) ) {
 			// Check uniqueness.
-			if ( isset( $links[ $slug ] ) ) {
-				return array(
-					'error'    => "Slug '{$slug}' is already in use.",
-					'existing' => array(
-						'target_url' => $links[ $slug ]['target_url'],
-						'short_url'  => site_url( '/go/' . $slug ),
-					),
-				);
-			}
+			return array(
+				'error'    => "Slug '{$slug}' is already in use.",
+				'existing' => array(
+					'target_url' => $links[ $slug ]['target_url'],
+					'short_url'  => site_url( '/go/' . $slug ),
+				),
+			);
 		}
 
 		$links[ $slug ] = array(

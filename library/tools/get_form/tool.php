@@ -238,6 +238,7 @@ class Get_Form extends \Agentic\Tool_Base {
 					'id'          => $field->id,
 					'type'        => $field->type,
 					'label'       => $field->label,
+					// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Gravity Forms field property name.
 					'required'    => (bool) $field->isRequired,
 					'placeholder' => $field->placeholder ?? '',
 					'choices'     => $choices,

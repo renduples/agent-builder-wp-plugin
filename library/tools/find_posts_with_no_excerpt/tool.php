@@ -74,7 +74,7 @@ class Find_Posts_With_No_Excerpt extends Tool_Base {
 				)
 			);
 
-			if ( $paged === 1 ) {
+			if ( 1 === $paged ) {
 				$total = $query->found_posts;
 			}
 

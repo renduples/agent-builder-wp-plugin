@@ -13,7 +13,6 @@
 namespace Agentic\Tests;
 
 use Agentic\Agent_Lifecycle;
-use Agentic\Agent_Permissions;
 use Agentic\Deployments;
 use Agentic\Manifest_Agent;
 use Agentic\Provider_Registry;
@@ -36,7 +35,6 @@ class Test_Routines_REST extends TestCase {
 	public function setUp(): void {
 		parent::setUp();
 		\Agentic_Agent_Registry::get_instance()->register( $this->make_agent( self::AGENT ) );
-		Agent_Permissions::set_mode_override( null );
 	}
 
 	/**
@@ -47,7 +45,6 @@ class Test_Routines_REST extends TestCase {
 		global $wpdb;
 
 		\Agentic_Agent_Registry::get_instance()->unregister( self::AGENT );
-		Agent_Permissions::set_mode_override( null );
 
 		MockWPFunctions::reset();
 		delete_option( 'agent_builder_llm_provider' );

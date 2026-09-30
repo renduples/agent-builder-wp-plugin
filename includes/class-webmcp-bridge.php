@@ -254,6 +254,9 @@ class Webmcp_Bridge {
 				$tool_name
 			);
 			$proposal = Agent_Proposals::create( $tool_name, $arguments, $agent_slug, $description );
+			if ( isset( $proposal['error'] ) ) {
+				return new \WP_REST_Response( array( 'error' => (string) $proposal['error'] ), 500 );
+			}
 			return new \WP_REST_Response(
 				array(
 					'status'      => 'confirmation_required',

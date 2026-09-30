@@ -137,6 +137,7 @@ class Create_Pdf extends \Agentic\Tool_Base {
 			);
 
 			// Suppress mPDF notices about unsupported CSS.
+			// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- mPDF third-party property name.
 			$mpdf->showImageErrors     = false;
 			$mpdf->ignore_invalid_utf8 = true;
 

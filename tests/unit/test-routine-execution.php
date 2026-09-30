@@ -20,7 +20,6 @@ namespace Agentic\Tests;
 
 use Agentic\Agent_Controller;
 use Agentic\Agent_Lifecycle;
-use Agentic\Agent_Permissions;
 use Agentic\Agent_Run;
 use Agentic\Deployments;
 use Agentic\Manifest_Agent;
@@ -45,7 +44,6 @@ class Test_Routine_Execution extends TestCase {
 		parent::setUp();
 		\Agentic_Agent_Registry::get_instance()->register( $this->make_agent( self::AGENT ) );
 		\Agentic_Agent_Registry::get_instance()->register( $this->make_agent( self::TRIGGER_AGENT ) );
-		Agent_Permissions::set_mode_override( null );
 	}
 
 	/**
@@ -56,7 +54,6 @@ class Test_Routine_Execution extends TestCase {
 
 		\Agentic_Agent_Registry::get_instance()->unregister( self::AGENT );
 		\Agentic_Agent_Registry::get_instance()->unregister( self::TRIGGER_AGENT );
-		Agent_Permissions::set_mode_override( null );
 
 		$wpdb->query( "DELETE FROM {$wpdb->prefix}agent_builder_deployments" );
 

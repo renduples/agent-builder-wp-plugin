@@ -85,7 +85,7 @@ class Get_Orphaned_Content extends Tool_Base {
 				$samples['auto_drafts'] = array_map(
 					fn( $p ) => array(
 						'ID'    => $p->ID,
-						'title' => $p->post_title ?: '(no title)',
+						'title' => $p->post_title ? $p->post_title : '(no title)',
 						'date'  => $p->post_date,
 					),
 					$posts

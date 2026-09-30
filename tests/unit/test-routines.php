@@ -59,13 +59,9 @@ class Test_Routines extends TestCase {
 	 * @return int
 	 */
 	private function count_proposal_transients(): int {
+		// Proposals live in the agent_builder_proposals table since M12 (DB 2.15.2).
 		global $wpdb;
-		return (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$wpdb->options} WHERE option_name LIKE %s",
-				'_transient_agentic_proposal_%'
-			)
-		);
+		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}agent_builder_proposals" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 	}
 
 	/**

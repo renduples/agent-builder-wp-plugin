@@ -162,7 +162,7 @@ class Fix_All_Internal_Links extends \Agentic\Tool_Base {
 			$links = array_map(
 				fn( $s ) => array(
 					'title' => $s['title'],
-					'url'   => wp_parse_url( $s['url'], PHP_URL_PATH ) ?: $s['url'],
+					'url'   => wp_parse_url( $s['url'], PHP_URL_PATH ) ? wp_parse_url( $s['url'], PHP_URL_PATH ) : $s['url'],
 				),
 				$top
 			);

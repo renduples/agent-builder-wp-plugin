@@ -257,6 +257,48 @@ function _agentic_create_test_tables() {
 		KEY created_at (created_at)
 	) {$charset_collate};";
 	dbDelta( $sql );
+
+	$sql = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agent_builder_proposals (
+		id varchar(36) NOT NULL,
+		tool varchar(191),
+		params longtext,
+		agent_id varchar(64),
+		description text,
+		diff longtext,
+		status varchar(16) DEFAULT 'pending',
+		created_by bigint(20) unsigned,
+		run_id varchar(36) DEFAULT NULL,
+		session_id varchar(191) DEFAULT NULL,
+		listener_id varchar(64) DEFAULT NULL,
+		created_at datetime DEFAULT CURRENT_TIMESTAMP,
+		expires_at datetime,
+		decided_by bigint(20) unsigned DEFAULT NULL,
+		decided_at datetime DEFAULT NULL,
+		decision varchar(16) DEFAULT NULL,
+		PRIMARY KEY (id),
+		KEY status (status),
+		KEY run_id (run_id),
+		KEY created_by (created_by)
+	) {$charset_collate};";
+	dbDelta( $sql );
+
+	$sql = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agent_builder_approval_rules (
+		id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+		agent_slug varchar(64) NOT NULL DEFAULT '',
+		rule_text text NOT NULL,
+		effect varchar(8) NOT NULL,
+		priority smallint NOT NULL DEFAULT 10,
+		enabled tinyint(1) NOT NULL DEFAULT 1,
+		compiled longtext,
+		created_by bigint(20) unsigned,
+		created_at datetime DEFAULT CURRENT_TIMESTAMP,
+		updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+		last_matched_at datetime DEFAULT NULL,
+		match_count bigint(20) unsigned NOT NULL DEFAULT 0,
+		PRIMARY KEY (id),
+		KEY agent_enabled (agent_slug, enabled)
+	) {$charset_collate};";
+	dbDelta( $sql );
 }
 
 /**

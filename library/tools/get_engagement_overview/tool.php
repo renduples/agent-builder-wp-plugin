@@ -178,7 +178,7 @@ class Get_Engagement_Overview extends \Agentic\Tool_Base {
 		$engagement_score  = 100;
 		$engagement_issues = array();
 
-		if ( $total_comments === 0 ) {
+		if ( 0 === $total_comments ) {
 			$engagement_score   -= 20;
 			$engagement_issues[] = 'No comments on any content — consider enabling comments or adding CTAs.';
 		}
