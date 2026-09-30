@@ -100,7 +100,7 @@ class Detect_Original_Content extends \Agentic\Tool_Base {
 				'signals'      => $signals,
 				'signal_count' => $signal_count,
 				'is_original'  => $is_original,
-				'assessment'   => $signal_count >= 3 ? 'Strong original content' : ( $signal_count >= 2 ? 'Some original elements' : ( $signal_count === 1 ? 'Minimal originality signals' : 'Likely commodity content' ) ),
+				'assessment'   => $signal_count >= 3 ? 'Strong original content' : ( $signal_count >= 2 ? 'Some original elements' : ( 1 === $signal_count ? 'Minimal originality signals' : 'Likely commodity content' ) ),
 			);
 		}
 

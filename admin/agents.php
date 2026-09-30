@@ -197,7 +197,7 @@ $agentic_available_updates = class_exists( '\Agentic\Agent_Updates' ) ? \Agentic
 // per row — WebMCP exposure in particular scans every active agent's own
 // manifest internally, so calling it once and indexing by slug avoids
 // redoing that scan for every row.
-$agent_builder_webmcp_enabled       = class_exists( '\Agentic\Webmcp_Bridge' ) && \Agentic\Webmcp_Bridge::is_enabled();
+$agent_builder_webmcp_enabled = class_exists( '\Agentic\Webmcp_Bridge' ) && \Agentic\Webmcp_Bridge::is_enabled();
 $agentic_webmcp_exposed_slugs = $agent_builder_webmcp_enabled && class_exists( '\Agentic\Abilities_Manifest' )
 	? array_unique( array_column( \Agentic\Abilities_Manifest::get_webmcp_exposed(), 'agent_slug' ) )
 	: array();
@@ -393,9 +393,12 @@ wp_enqueue_style( 'agentic-react-admin', AGENT_BUILDER_URL . 'assets/css/react-a
 					$agentic_row_class = $agentic_agent['active'] ? 'active' : 'inactive';
 					$agentic_nonce     = wp_create_nonce( 'agentic_agent_action' );
 
-					$agentic_mcp        = class_exists( '\Agentic_Relay_Connect' ) ? \Agentic_Relay_Connect::mcp_readiness( $agentic_slug ) : array( 'ready' => false, 'reason' => null );
-					$agentic_mcp_ok     = ! empty( $agentic_mcp['ready'] );
-					$agentic_webmcp_ok  = in_array( $agentic_slug, $agentic_webmcp_exposed_slugs, true );
+					$agentic_mcp         = class_exists( '\Agentic_Relay_Connect' ) ? \Agentic_Relay_Connect::mcp_readiness( $agentic_slug ) : array(
+						'ready'  => false,
+						'reason' => null,
+					);
+					$agentic_mcp_ok      = ! empty( $agentic_mcp['ready'] );
+					$agentic_webmcp_ok   = in_array( $agentic_slug, $agentic_webmcp_exposed_slugs, true );
 					$agentic_whatsapp_ok = '1' === \Agentic\Agent_Settings::get( $agentic_slug, 'whatsapp_enabled' );
 					?>
 					<tr class="<?php echo esc_attr( $agentic_row_class ); ?>" data-slug="<?php echo esc_attr( $agentic_slug ); ?>">
@@ -718,7 +721,7 @@ function agentic_confirm_bulk( btn ) {
 	return true;
 }
 
-<?php if ( class_exists( '\Agentic\Agent_Updates' ) ) : ?>
+	<?php if ( class_exists( '\Agentic\Agent_Updates' ) ) : ?>
 (function () {
 	// One-click agent update handler.
 	document.querySelectorAll( '.agentic-update-now' ).forEach( function ( link ) {
@@ -770,6 +773,6 @@ function agentic_confirm_bulk( btn ) {
 		} );
 	} );
 }());
-<?php endif; ?>
+	<?php endif; ?>
 </script>
 <?php endif; ?>

@@ -82,7 +82,7 @@ class Get_Revision_Diff extends Tool_Base {
 		$lines_removed = substr_count( $diff_html, '<del>' );
 
 		return array(
-			'diff_html'       => $diff_html ?: '<p>No content differences found.</p>',
+			'diff_html'       => $diff_html ? $diff_html : '<p>No content differences found.</p>',
 			'lines_added'     => $lines_added,
 			'lines_removed'   => $lines_removed,
 			'revision_a_date' => $rev_a->post_modified,

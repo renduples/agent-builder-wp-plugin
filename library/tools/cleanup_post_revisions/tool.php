@@ -77,7 +77,7 @@ class Cleanup_Post_Revisions extends Tool_Base {
 					'posts_per_page' => -1,
 					'fields'         => 'ids',
 					// phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.PostNotIn_exclude
-				'exclude'        => array(),
+					'exclude'        => array(),
 				)
 			);
 		}

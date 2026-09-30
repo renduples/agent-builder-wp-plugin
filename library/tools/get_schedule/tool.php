@@ -133,7 +133,7 @@ class Get_Schedule extends \Agentic\Tool_Base {
 		$format_post = static function ( \WP_Post $p ) use ( $post_type ): array {
 			return array(
 				'id'       => $p->ID,
-				'title'    => $p->post_title ?: '(no title)',
+				'title'    => $p->post_title ? $p->post_title : '(no title)',
 				'status'   => $p->post_status,
 				'date'     => $p->post_date,
 				'modified' => $p->post_modified,

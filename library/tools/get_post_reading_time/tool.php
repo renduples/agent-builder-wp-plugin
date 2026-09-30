@@ -70,7 +70,7 @@ class Get_Post_Reading_Time extends Tool_Base {
 		$word_count   = str_word_count( $plain_text );
 		$minutes      = (int) ceil( $word_count / 200 );
 		$minutes      = max( 1, $minutes );
-		$reading_time = $minutes === 1 ? '1 min read' : "{$minutes} min read";
+		$reading_time = 1 === $minutes ? '1 min read' : "{$minutes} min read";
 
 		return array(
 			'post_id'              => $post_id,

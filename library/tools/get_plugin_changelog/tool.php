@@ -86,7 +86,7 @@ class Get_Plugin_Changelog extends Tool_Base {
 			'name'      => $data['name'] ?? $slug,
 			'version'   => $data['version'] ?? 'unknown',
 			'slug'      => $slug,
-			'changelog' => $changelog ?: 'No changelog available for this plugin.',
+			'changelog' => $changelog ? $changelog : 'No changelog available for this plugin.',
 		);
 	}
 }

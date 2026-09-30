@@ -172,7 +172,8 @@ class Create_Spreadsheet extends \Agentic\Tool_Base {
 					$sheet->getColumnDimension( strtoupper( (string) $letter ) )->setWidth( (float) $width );
 				}
 			} elseif ( ! empty( $headers ) ) {
-				for ( $c = 1; $c <= count( $headers ); $c++ ) {
+				$header_count = count( $headers );
+				for ( $c = 1; $c <= $header_count; $c++ ) {
 					$sheet->getColumnDimensionByColumn( $c )->setAutoSize( true );
 				}
 			}
