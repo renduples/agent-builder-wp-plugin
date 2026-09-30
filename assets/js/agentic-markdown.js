@@ -69,6 +69,8 @@
 			return null;
 		}
 		if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
+		// A relative input must stay on this host: "/\\evil.com" resolves off-site.
+		if (!/^[a-z][a-z0-9+.-]*:/i.test(String(href).trim()) && url.host !== location.host) return null;
 		return url.href;
 	}
 

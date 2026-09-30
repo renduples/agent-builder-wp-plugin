@@ -1882,7 +1882,7 @@
             el.appendChild(h);
         }
         function link(href, label, margin, parent) {
-            href = window.AgenticMarkdown.safeCardHref(href);
+            href = (window.AgenticMarkdown && window.AgenticMarkdown.safeCardHref) ? window.AgenticMarkdown.safeCardHref(href) : null;
             if (!href) return; // unsafe scheme — drop the link entirely
             const a = document.createElement('a');
             a.href = href;
@@ -1914,7 +1914,7 @@
             head('📄 Generated file');
             const body = document.createElement('div');
             body.textContent = card.title || '';
-            if (card.url) {
+            if (card.url && window.AgenticMarkdown && window.AgenticMarkdown.safeCardHref(card.url)) {
                 body.appendChild(document.createTextNode(' · '));
                 link(card.url, 'Open', '', body);
             }

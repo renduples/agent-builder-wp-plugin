@@ -156,6 +156,10 @@ class Test_Result_Card extends TestCase {
 			'data:text/html,<script>alert(1)</script>',
 			'//evil.com/steal',
 			'https://evil.com/steal',
+			"/\\evil.com",
+			"/\t/evil.com",
+			"/\n/evil.com",
+			"/\r/evil.com",
 		);
 
 		foreach ( $bad as $url ) {

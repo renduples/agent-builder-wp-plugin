@@ -275,6 +275,12 @@ class Result_Card {
 
 		// A root-relative path ("/wp-admin/…") is fine; a protocol-relative URL
 		// ("//evil.com") is not — it falls through and the missing scheme rejects it.
+		// Browsers turn "\" into "/" and strip tab/CR/LF, so "/\evil.com" or
+		// "/\t/evil.com" would become the off-site "//evil.com". Reject any
+		// backslash, control character or whitespace outright.
+		if ( preg_match( '/[\\\\\x00-\x20\x7f]/', $url ) ) {
+			return '';
+		}
 		if ( str_starts_with( $url, '/' ) && ! str_starts_with( $url, '//' ) ) {
 			return $url;
 		}
