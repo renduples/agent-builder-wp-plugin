@@ -1153,17 +1153,22 @@ class Agent_Controller {
 			$current_provider
 		);
 
+		$cards          = Result_Card::collect( $tool_results );
+		$result_summary = Result_Card::summarize( $cards );
+
 		$result = array(
-			'response'    => $response,
-			'agent_id'    => $current_agent_id,
-			'agent_name'  => $this->current_agent->get_name(),
-			'agent_icon'  => $this->current_agent->get_icon(),
-			'session_id'  => $session_id,
-			'tokens_used' => $total_tokens,
-			'cost'        => round( $estimated_cost, 6 ),
-			'tools_used'  => array_column( $tool_results, 'tool' ),
-			'iterations'  => $iterations,
-			'reasoning'   => $final_reasoning,  // P0 observability. — surfaced for chat UI cards.
+			'response'       => $response,
+			'agent_id'       => $current_agent_id,
+			'agent_name'     => $this->current_agent->get_name(),
+			'agent_icon'     => $this->current_agent->get_icon(),
+			'session_id'     => $session_id,
+			'tokens_used'    => $total_tokens,
+			'cost'           => round( $estimated_cost, 6 ),
+			'tools_used'     => array_column( $tool_results, 'tool' ),
+			'iterations'     => $iterations,
+			'reasoning'      => $final_reasoning,  // P0 observability. — surfaced for chat UI cards.
+			'cards'          => $cards,
+			'result_summary' => $result_summary,
 		);
 
 		// Surface any pending proposal or high-risk queued approval from tool
@@ -1739,20 +1744,24 @@ class Agent_Controller {
 			$run->finish( $final_status, array( 'text' => (string) $response ) );
 		}
 
+		$cards          = Result_Card::collect( $tool_results );
+		$result_summary = Result_Card::summarize( $cards );
+
 		return array(
-			'response'    => $response,
-			'agent_id'    => $agent_id,
-			'task_id'     => $task_id,
-			'mode'        => 'autonomous',
-			'run_id'      => $run->get_run_id(),
-			'status'      => $final_status,
-			'session_id'  => $session_id,
-			'tokens_used' => $total_tokens,
-			'cost'        => round( $estimated_cost, 6 ),
-			'tools_used'  => array_column( $tool_results, 'tool' ),
-			'iterations'  => $iterations,
-			'reasoning'   => $final_reasoning,  // P0 observability.
-			'cards'       => array(),
+			'response'       => $response,
+			'agent_id'       => $agent_id,
+			'task_id'        => $task_id,
+			'mode'           => 'autonomous',
+			'run_id'         => $run->get_run_id(),
+			'status'         => $final_status,
+			'session_id'     => $session_id,
+			'tokens_used'    => $total_tokens,
+			'cost'           => round( $estimated_cost, 6 ),
+			'tools_used'     => array_column( $tool_results, 'tool' ),
+			'iterations'     => $iterations,
+			'reasoning'      => $final_reasoning,  // P0 observability.
+			'cards'          => $cards,
+			'result_summary' => $result_summary,
 		);
 	}
 

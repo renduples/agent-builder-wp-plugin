@@ -688,6 +688,8 @@ class REST_API {
 				'tools_used'       => $response['tools_used'] ?? array(),
 				'iterations'       => $response['iterations'] ?? 0,
 				'reasoning'        => $response['reasoning'] ?? '',
+				'cards'            => $response['cards'] ?? array(),
+				'result_summary'   => $response['result_summary'] ?? '',
 				'error'            => ! empty( $response['error'] ),
 				// Surface a pending confirmation so the chat renders approve/reject
 				// buttons in streaming mode (parity with the non-streaming path).
