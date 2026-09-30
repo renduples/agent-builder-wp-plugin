@@ -607,9 +607,10 @@ class Agent_Controller {
 	 * @param string     $deployment_context  Where the agent is running: admin_chat, gutenberg_sidebar, shortcode, modal, etc.
 	 * @param string     $handoff_from        Optional: agent slug this conversation was delegated from (P0 multi-agent).
 	 * @param string     $handoff_context     Optional: rich context from the previous agent (P0 multi-agent).
+	 * @param string     $skill_slug          Optional: skill slug invoked via a `/<slug>` command, whose SKILL.md body is injected.
 	 * @return array Response data.
 	 */
-	public function chat( string $message, array $history = array(), int $user_id = 0, string $session_id = '', string $agent_id = '', ?array $image_data = null, string $page_context = '', string $deployment_context = '', string $handoff_from = '', string $handoff_context = '' ): array {
+	public function chat( string $message, array $history = array(), int $user_id = 0, string $session_id = '', string $agent_id = '', ?array $image_data = null, string $page_context = '', string $deployment_context = '', string $handoff_from = '', string $handoff_context = '', string $skill_slug = '' ): array {
 		if ( class_exists( __NAMESPACE__ . '\\Emergency_Stop' ) && Emergency_Stop::is_active() ) {
 			return array(
 				'response' => Emergency_Stop::blocked_message(),
@@ -761,12 +762,13 @@ class Agent_Controller {
 
 		// Build messages array with agent's system prompt + site context + persona notes + page context + handoff (if any).
 		$use_weak_guidance = $this->should_use_weak_model_tool_guidance();
+		$skill_block       = '' !== $skill_slug ? Skill_Commands::injection_block( $current_agent_id, $skill_slug ) : '';
 		$messages          = array(
 			array(
 				'role'    => 'system',
 				'content' => Agent_Prompt_Builder::build(
 					$this->current_agent,
-					$page_context_block . $deployment_context_block . $memory_block . $retrieval_block,
+					$page_context_block . $deployment_context_block . $memory_block . $retrieval_block . $skill_block,
 					$handoff_from,
 					$handoff_context,
 					$use_weak_guidance
