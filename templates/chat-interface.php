@@ -214,13 +214,13 @@ if ( $agentic_default_agent_id && isset( $agentic_agents[ $agentic_default_agent
 		<p id="agentic-consent-text"></p>
 		<button type="button" id="agentic-consent-accept" class="agentic-consent-accept"><?php esc_html_e( 'I Understand', 'agent-builder' ); ?></button>
 	</div>
+	<div class="agentic-typing-indicator" id="agentic-typing" style="display: none;">
+		<span></span>
+		<span></span>
+		<span></span>
+		<span id="agentic-typing-text">Agent is thinking...</span>
+	</div>
 	<div class="agentic-chat-input-container">
-		<div class="agentic-typing-indicator" id="agentic-typing" style="display: none;">
-			<span></span>
-			<span></span>
-			<span></span>
-			<span id="agentic-typing-text">Agent is thinking...</span>
-		</div>
 		<div id="agentic-image-preview" class="agentic-image-preview" style="display:none;">
 			<img id="agentic-preview-img" src="" alt="Preview" />
 			<button type="button" id="agentic-remove-image" class="agentic-remove-image" title="<?php esc_attr_e( 'Remove image', 'agent-builder' ); ?>">&times;</button>
