@@ -2,10 +2,10 @@
     "$schema": "https://agentic-plugin.com/schemas/agent/v1.json",
     "slug": "content-writer",
     "name": "Content Writer",
-    "description": "Creates, edits, and publishes posts and pages. Drafts from a description, rewrites for clarity, and optimises titles, excerpts, and structure.",
+    "description": "Creates, edits, and publishes posts and pages. Drafts from a description, rewrites for clarity, optimises titles, excerpts and structure, and manages categories, tags and featured images. Publishing and edits ask for your approval.",
     "category": "content",
     "icon": "✍️",
-    "version": "2.0.0",
+    "version": "2.1.0",
     "author": "Agentic Community",
     "author_uri": "https://agentic-plugin.com/developer/agentic-community/",
     "capabilities": [

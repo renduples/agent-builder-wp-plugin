@@ -5,7 +5,7 @@
   "description": "Helps you manage your site's people: reviews registrations and inactive accounts, flags risky privileged users, drafts emails to members, manages who can access the plugin and its agents, and assists with account security actions — always with your approval.",
   "category": "admin",
   "icon": "👥",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "Agent Builder",
   "author_uri": "https://agentic-plugin.com",
   "capabilities": [ "list_users", "edit_users", "manage_options" ],

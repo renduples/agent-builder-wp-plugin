@@ -5,7 +5,7 @@
   "description": "Teaches your agents new workflows — without needing to touch a technical skill editor. Describe what you want an agent to know how to do, and it handles the rest.",
   "category": "developer",
   "icon": "🧩",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "Agent Builder",
   "author_uri": "https://agentic-plugin.com",
   "capabilities": [ "manage_options" ],

@@ -5,7 +5,7 @@
 | Field | Value |
 |-------|-------|
 | Slug | `wordpress-assistant` |
-| Version | 1.2.1 |
+| Version | 1.3.0 |
 | Category | Starter |
 | Author | Agentic Community |
 | Required Capabilities | `read` |
@@ -14,7 +14,7 @@
 
 WordPress Assistant is the starting point for new users. It explains what Agent Builder can do, which specialist agent to use for a given task, and how to set up scheduled tasks or event listeners. It has read-only access to site metadata so it can give contextualised answers about your specific WordPress installation.
 
-The agent can inspect your site's structure, list registered post types, summarise your content library, and analyse whether your pages align with the search intent they target. It never modifies your site — all tools are read-only.
+The agent can inspect your site's structure, list registered post types, summarise your content library, and analyse whether your pages align with the search intent they target. It is read-mostly: everything that changes your site — the three narrow write tools it holds (`update_attachment_alt_text`, `moderate_comment`, and `reply_to_comment`) — is gated and asks for your approval before it applies.
 
 WordPress Assistant also acts as a router: it knows about every other bundled agent and can recommend the right specialist for any task, from SEO fixes to security scans to AI visibility checks.
 

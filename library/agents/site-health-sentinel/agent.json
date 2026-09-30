@@ -5,7 +5,7 @@
   "description": "A read-only watchdog for your site's health: checks performance, database, PHP errors, plugin updates, cron, and security signals, then explains what to fix and why.",
   "category": "admin",
   "icon": "🛡️",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "Agent Builder",
   "author_uri": "https://agentic-plugin.com",
   "capabilities": [

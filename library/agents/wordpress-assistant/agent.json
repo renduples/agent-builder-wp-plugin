@@ -2,10 +2,10 @@
     "$schema": "https://agentic-plugin.com/schemas/agent/v1.json",
     "slug": "wordpress-assistant",
     "name": "WordPress Assistant",
-    "description": "Your guide to WordPress and the AI ecosystem. Answers questions about the plugin and helps new users get started.",
+    "description": "Your guide to WordPress and the AI ecosystem. Answers questions about the plugin and helps new users get started, with read-mostly access to your site; the few fixes it applies (image alt text, comment moderation and replies) always ask first.",
     "category": "starter",
     "icon": "🧭",
-    "version": "1.2.1",
+    "version": "1.3.0",
     "author": "Agentic Community",
     "author_uri": "https://agentic-plugin.com/developer/agentic-community/",
     "capabilities": [
