@@ -1381,7 +1381,15 @@ class LLM_Client {
 						);
 						if ( ! empty( $fn['parameters'] ) && is_array( $fn['parameters'] ) ) {
 							// Gemini rejects additionalProperties / PHP junk (sanitize_callback, etc.).
-							$decl['parameters'] = $this->normalize_tool_schema_for_google( $fn['parameters'] );
+							$params = $this->normalize_tool_schema_for_google( $fn['parameters'] );
+							// Gemini also rejects an OBJECT schema with empty `properties`
+							// (HTTP 400). Parameter-less tools — e.g. abilities bridged from
+							// other plugins such as get_post_types() — must omit `parameters`.
+							$props = $params['properties'] ?? null;
+							$empty = null === $props || array() === $props || ( $props instanceof \stdClass && array() === get_object_vars( $props ) );
+							if ( ! ( 'object' === ( $params['type'] ?? 'object' ) && $empty ) ) {
+								$decl['parameters'] = $params;
+							}
 						}
 						$fn_declarations[] = $decl;
 					}
