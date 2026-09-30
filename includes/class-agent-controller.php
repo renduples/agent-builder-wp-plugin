@@ -265,10 +265,62 @@ class Agent_Controller {
 
 		$parts = array();
 		foreach ( $fields as $key => $value ) {
-			$parts[] = $key . ': ' . $value;
+			// Never leak secret-shaped arguments into the live-pane summary.
+			if ( self::is_secret_summary_key( (string) $key ) ) {
+				continue;
+			}
+
+			$scalar = self::summary_scalar( $value );
+			if ( '' === $scalar ) {
+				continue;
+			}
+
+			$parts[] = $key . ': ' . $scalar;
 		}
 
 		return implode( ', ', $parts );
+	}
+
+	/**
+	 * Whether a summary field key looks secret-shaped and must be redacted.
+	 *
+	 * Matches the issue's allowlist of sensitive substrings (key, token,
+	 * password, secret, auth) case-insensitively, so a future tool that surfaces
+	 * e.g. an `api_key` or `auth_token` argument cannot leak it to the pane.
+	 *
+	 * @param string $key Field key.
+	 * @return bool
+	 */
+	private static function is_secret_summary_key( string $key ): bool {
+		$key = strtolower( $key );
+		foreach ( array( 'key', 'token', 'password', 'secret', 'auth' ) as $needle ) {
+			if ( false !== strpos( $key, $needle ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Cast a summary value to a safe string without a string-conversion TypeError.
+	 *
+	 * Scalars stringify as expected; non-scalars (arrays/objects) map to '' so
+	 * the caller can skip the field rather than emit "Array" or throw.
+	 *
+	 * @param mixed $value Field value.
+	 * @return string
+	 */
+	private static function summary_scalar( $value ): string {
+		if ( is_string( $value ) || is_int( $value ) || is_float( $value ) ) {
+			return (string) $value;
+		}
+
+		if ( is_bool( $value ) ) {
+			return $value ? 'true' : 'false';
+		}
+
+		return '';
 	}
 
 	/**

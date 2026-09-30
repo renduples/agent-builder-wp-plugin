@@ -38,18 +38,37 @@ class Test_Result_Card extends TestCase {
 	}
 
 	/**
+	 * Log in as an administrator and create a draft post, returning its id.
+	 *
+	 * @param string $title Post title.
+	 * @return int
+	 */
+	private function make_editor_post( string $title = 'Test Post' ): int {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+
+		return self::factory()->post->create(
+			array(
+				'post_title'  => $title,
+				'post_status' => 'draft',
+			)
+		);
+	}
+
+	/**
 	 * create_post_content returns a full post card (created action), reusing the
-	 * tool's own url/edit_url rather than inventing fields.
+	 * tool's own on-site url/edit_url rather than inventing fields.
 	 */
 	public function test_normalize_create_post_content(): void {
+		$post_id = $this->make_editor_post( 'Hello World' );
+
 		$result = array(
 			'success'  => true,
-			'post_id'  => 123,
+			'post_id'  => $post_id,
 			'status'   => 'draft',
 			'title'    => 'Hello World',
-			'url'      => 'https://example.test/?p=123',
-			'edit_url' => 'https://example.test/wp-admin/post.php?post=123&action=edit',
-			'message'  => 'Draft saved (ID: 123).',
+			'url'      => get_permalink( $post_id ),
+			'edit_url' => get_edit_post_link( $post_id, 'raw' ),
+			'message'  => 'Draft saved (ID: ' . $post_id . ').',
 		);
 
 		$card = Result_Card::normalize( 'create_post_content', $result );
@@ -59,22 +78,24 @@ class Test_Result_Card extends TestCase {
 		$this->assertSame( 'create_post_content', $card['tool'] );
 		$this->assertSame( 'Hello World', $card['title'] );
 		$this->assertSame( 'created', $card['action'] );
-		$this->assertSame( 123, $card['post_id'] );
-		$this->assertSame( 'https://example.test/wp-admin/post.php?post=123&action=edit', $card['edit_url'] );
-		$this->assertSame( 'https://example.test/?p=123', $card['view_url'] );
+		$this->assertSame( $post_id, $card['post_id'] );
+		$this->assertSame( get_edit_post_link( $post_id, 'raw' ), $card['edit_url'] );
+		$this->assertSame( get_permalink( $post_id ), $card['view_url'] );
 	}
 
 	/**
 	 * db_create_post has edit_link (not edit_url) and no url — normalize must
-	 * map edit_link to edit_url and leave view_url a string.
+	 * map edit_link to edit_url and fall view_url back to the permalink.
 	 */
 	public function test_normalize_db_create_post_maps_edit_link(): void {
+		$post_id = $this->make_editor_post( 'Draft Post' );
+
 		$result = array(
-			'post_id'   => 456,
+			'post_id'   => $post_id,
 			'title'     => 'Draft Post',
 			'status'    => 'draft',
 			'type'      => 'post',
-			'edit_link' => 'https://example.test/wp-admin/post.php?post=456&action=edit',
+			'edit_link' => get_edit_post_link( $post_id, 'raw' ),
 		);
 
 		$card = Result_Card::normalize( 'db_create_post', $result );
@@ -82,52 +103,119 @@ class Test_Result_Card extends TestCase {
 		$this->assertIsArray( $card );
 		$this->assertSame( 'post', $card['type'] );
 		$this->assertSame( 'created', $card['action'] );
-		$this->assertSame( 456, $card['post_id'] );
-		$this->assertSame( 'https://example.test/wp-admin/post.php?post=456&action=edit', $card['edit_url'] );
-		$this->assertIsString( $card['view_url'] );
+		$this->assertSame( $post_id, $card['post_id'] );
+		$this->assertSame( get_edit_post_link( $post_id, 'raw' ), $card['edit_url'] );
+		$this->assertSame( get_permalink( $post_id ), $card['view_url'] );
 	}
 
 	/**
 	 * db_update_post and update_post_content normalize to an "updated" action.
 	 */
 	public function test_normalize_update_tools_report_updated_action(): void {
+		$post_id = $this->make_editor_post( 'Updated Title' );
+
 		$db_update = Result_Card::normalize(
 			'db_update_post',
 			array(
-				'post_id'   => 789,
+				'post_id'   => $post_id,
 				'title'     => 'Updated Title',
 				'status'    => 'draft',
 				'modified'  => '2026-01-01 00:00:00',
-				'edit_link' => 'https://example.test/wp-admin/post.php?post=789&action=edit',
+				'edit_link' => get_edit_post_link( $post_id, 'raw' ),
 			)
 		);
 		$this->assertIsArray( $db_update );
 		$this->assertSame( 'updated', $db_update['action'] );
-		$this->assertSame( 789, $db_update['post_id'] );
+		$this->assertSame( $post_id, $db_update['post_id'] );
 
 		$update_content = Result_Card::normalize(
 			'update_post_content',
 			array(
 				'success' => true,
-				'post_id' => 789,
+				'post_id' => $post_id,
 				'status'  => 'draft',
-				'url'     => 'https://example.test/?p=789',
-				'message' => 'Post ID 789 updated successfully.',
+				'url'     => get_permalink( $post_id ),
+				'message' => 'Post ID ' . $post_id . ' updated successfully.',
 			)
 		);
 		$this->assertIsArray( $update_content );
 		$this->assertSame( 'updated', $update_content['action'] );
-		$this->assertSame( 'https://example.test/?p=789', $update_content['view_url'] );
-		$this->assertIsString( $update_content['edit_url'] );
+		$this->assertSame( get_permalink( $post_id ), $update_content['view_url'] );
+		$this->assertSame( get_edit_post_link( $post_id, 'raw' ), $update_content['edit_url'] );
 	}
 
 	/**
-	 * File tools normalize to a file card carrying the path + public url.
+	 * An unsafe tool-supplied URL (javascript:, data:, protocol-relative, or an
+	 * off-site host) is dropped and the card falls back to the canonical WP URLs.
+	 */
+	public function test_normalize_post_rejects_unsafe_urls_and_falls_back(): void {
+		$post_id = $this->make_editor_post( 'Safe Fallback' );
+
+		$bad = array(
+			'javascript:alert(1)',
+			'data:text/html,<script>alert(1)</script>',
+			'//evil.com/steal',
+			'https://evil.com/steal',
+		);
+
+		foreach ( $bad as $url ) {
+			$card = Result_Card::normalize(
+				'create_post_content',
+				array(
+					'post_id'  => $post_id,
+					'title'    => 'Safe Fallback',
+					'url'      => $url,
+					'edit_url' => $url,
+				)
+			);
+
+			$this->assertIsArray( $card, 'an unsafe URL must still produce a card via fallback' );
+			$this->assertSame( get_permalink( $post_id ), $card['view_url'] );
+			$this->assertSame( get_edit_post_link( $post_id, 'raw' ), $card['edit_url'] );
+		}
+	}
+
+	/**
+	 * The edit link is only surfaced to a user who can edit the post.
+	 */
+	public function test_normalize_post_hides_edit_url_for_unprivileged_user(): void {
+		wp_set_current_user( 0 );
+
+		$post_id = self::factory()->post->create(
+			array(
+				'post_title'  => 'Hidden Edit',
+				'post_status' => 'draft',
+			)
+		);
+
+		$card = Result_Card::normalize(
+			'create_post_content',
+			array(
+				'post_id'  => $post_id,
+				'title'    => 'Hidden Edit',
+				'url'      => get_permalink( $post_id ),
+				'edit_url' => get_edit_post_link( $post_id, 'raw' ),
+			)
+		);
+
+		$this->assertIsArray( $card );
+		$this->assertSame( '', $card['edit_url'] );
+		$this->assertSame( get_permalink( $post_id ), $card['view_url'] );
+	}
+
+	/**
+	 * File tools normalize to a file card carrying the on-site download url only —
+	 * the raw `path` is no longer part of the contract.
 	 */
 	public function test_normalize_file_tool(): void {
+		$uploads = wp_upload_dir();
+		$dir     = trailingslashit( $uploads['basedir'] ) . 'agentic-exports/';
+		wp_mkdir_p( $dir );
+		file_put_contents( $dir . 'report.docx', 'PK' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+
 		$result = array(
 			'file_path'    => 'agentic-exports/report.docx',
-			'url'          => 'https://example.test/wp-content/uploads/agentic-exports/report.docx',
+			'url'          => 'https://evil.test/wp-content/uploads/agentic-exports/report.docx',
 			'file_size_kb' => 12.4,
 		);
 
@@ -137,8 +225,19 @@ class Test_Result_Card extends TestCase {
 		$this->assertSame( 'file', $card['type'] );
 		$this->assertSame( 'create_docx', $card['tool'] );
 		$this->assertSame( 'report.docx', $card['title'] );
-		$this->assertSame( 'agentic-exports/report.docx', $card['path'] );
-		$this->assertSame( 'https://example.test/wp-content/uploads/agentic-exports/report.docx', $card['url'] );
+		$this->assertArrayNotHasKey( 'path', $card );
+		$this->assertSame( trailingslashit( $uploads['baseurl'] ) . 'agentic-exports/report.docx', $card['url'] );
+	}
+
+	/**
+	 * A file_path that escapes the exports directory (traversal, subdirectory, or
+	 * absolute) is rejected outright.
+	 */
+	public function test_normalize_file_rejects_path_escape(): void {
+		$this->assertNull( Result_Card::normalize( 'create_docx', array( 'file_path' => 'agentic-exports/../../wp-config.php' ) ) );
+		$this->assertNull( Result_Card::normalize( 'create_docx', array( 'file_path' => 'agentic-exports/sub/report.docx' ) ) );
+		$this->assertNull( Result_Card::normalize( 'create_docx', array( 'file_path' => '/etc/passwd' ) ) );
+		$this->assertNull( Result_Card::normalize( 'create_docx', array( 'file_path' => '../report.docx' ) ) );
 	}
 
 	/**

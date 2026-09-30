@@ -7,6 +7,7 @@
  * card here. Unknown card types render nothing.
  */
 import { __ } from '@wordpress/i18n';
+import AgenticMarkdown from '../../assets/js/agentic-markdown';
 
 const CARD_STYLE = {
 	display: 'flex',
@@ -47,16 +48,18 @@ function ResultCard( { card } ) {
 
 	if ( 'post' === card.type ) {
 		heading = postHeading( card );
-		if ( card.view_url || card.edit_url ) {
+		const viewUrl = card.view_url ? AgenticMarkdown.safeCardHref( card.view_url ) : null;
+		const editUrl = card.edit_url ? AgenticMarkdown.safeCardHref( card.edit_url ) : null;
+		if ( viewUrl || editUrl ) {
 			detail = (
 				<div style={ LINK_STYLE }>
-					{ card.view_url && (
-						<a href={ card.view_url } target="_blank" rel="noopener">
+					{ viewUrl && (
+						<a href={ viewUrl } target="_blank" rel="noopener">
 							{ __( 'View', 'agent-builder' ) }
 						</a>
 					) }
-					{ card.edit_url && (
-						<a href={ card.edit_url } target="_blank" rel="noopener">
+					{ editUrl && (
+						<a href={ editUrl } target="_blank" rel="noopener">
 							{ __( 'Edit', 'agent-builder' ) }
 						</a>
 					) }
@@ -67,10 +70,11 @@ function ResultCard( { card } ) {
 		heading =
 			__( 'Generated a file', 'agent-builder' ) +
 			( card.title ? ' “' + card.title + '”' : '' );
-		if ( card.url ) {
+		const url = card.url ? AgenticMarkdown.safeCardHref( card.url ) : null;
+		if ( url ) {
 			detail = (
 				<div style={ LINK_STYLE }>
-					<a href={ card.url } target="_blank" rel="noopener">
+					<a href={ url } target="_blank" rel="noopener">
 						{ __( 'Download', 'agent-builder' ) }
 					</a>
 				</div>
@@ -120,7 +124,7 @@ export function ResultCards( { cards } ) {
 	return (
 		<div className="agentic-result-cards">
 			{ cards.map( ( card, i ) => (
-				<ResultCard key={ card.post_id || card.path || card.title || i } card={ card } />
+				<ResultCard key={ card.post_id || card.title || i } card={ card } />
 			) ) }
 		</div>
 	);

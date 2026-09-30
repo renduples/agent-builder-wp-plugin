@@ -54,6 +54,24 @@
 		return url.replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 	}
 
+	// Validate a card link (result cards' "Open"/"Edit"/"View" buttons) against an
+	// http/https-only allowlist using the WHATWG URL parser, which also rejects
+	// control-character obfuscation (e.g. "java\tscript:"). Unlike safeLinkHref()
+	// this does NOT HTML-escape — the result is assigned to a DOM property
+	// (a.href), not interpolated into markup. Returns the normalized absolute URL,
+	// or null when the input is unparseable or its scheme is not http:/https:.
+	function safeCardHref(href) {
+		if (!href) return null;
+		var url;
+		try {
+			url = new URL(href, location.href);
+		} catch (e) {
+			return null;
+		}
+		if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
+		return url.href;
+	}
+
 	/**
 	 * Render markdown to safe HTML.
 	 *
@@ -206,5 +224,5 @@
 		return html;
 	}
 
-	return { render: render };
+	return { render: render, safeCardHref: safeCardHref };
 }));

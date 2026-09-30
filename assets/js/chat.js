@@ -317,8 +317,10 @@
             document.body.removeChild(ta);
         }
 
-        // Voice input (Web Speech API — requires HTTPS; decoupled from TTS audio)
-        if (typeof agenticChat === 'undefined' || agenticChat.isSsl === '1') {
+        // Voice input (Web Speech API — requires HTTPS; decoupled from TTS audio).
+        // Fail closed: only initialize when the server positively reports SSL,
+        // never when agenticChat is absent.
+        if (typeof agenticChat !== 'undefined' && agenticChat.isSsl === '1') {
             initVoiceInput();
         }
 
@@ -1879,14 +1881,16 @@
             h.textContent = text;
             el.appendChild(h);
         }
-        function link(href, label, margin) {
+        function link(href, label, margin, parent) {
+            href = window.AgenticMarkdown.safeCardHref(href);
+            if (!href) return; // unsafe scheme — drop the link entirely
             const a = document.createElement('a');
             a.href = href;
             a.target = '_blank';
             a.rel = 'noopener';
             a.textContent = label;
             if (margin) a.style.marginRight = margin;
-            el.appendChild(a);
+            (parent || el).appendChild(a);
         }
 
         if (card.type === 'post') {
@@ -1909,10 +1913,10 @@
         } else if (card.type === 'file') {
             head('📄 Generated file');
             const body = document.createElement('div');
-            body.textContent = card.title || card.path || '';
+            body.textContent = card.title || '';
             if (card.url) {
                 body.appendChild(document.createTextNode(' · '));
-                link(card.url, 'Open', '');
+                link(card.url, 'Open', '', body);
             }
             el.appendChild(body);
         } else if (card.type === 'list') {
@@ -1987,7 +1991,7 @@
         list.style.cssText = 'margin:6px 0 0;padding:0;list-style:none;';
         details.appendChild(list);
 
-        const rows = new Map(); // tool name -> { li, status, startedAt }
+        const rows = new Map(); // tool name -> FIFO queue of { li, status, startedAt }
         let activeCount = 0;
         let attached = false;
 
@@ -2021,18 +2025,24 @@
             el: details,
             begin(name) {
                 activeCount++;
-                const { li, status } = makeRow(name);
-                status.textContent = '…';
-                rows.set(name, { li, status, startedAt: Date.now() });
+                const row = makeRow(name);
+                row.status.textContent = '…';
+                row.startedAt = Date.now();
+                // Per-name FIFO: a tool called twice in one run keeps two rows
+                // instead of the second call overwriting the first.
+                const queue = rows.get(name) || [];
+                queue.push(row);
+                rows.set(name, queue);
                 setSummary();
                 attach();
             },
             end(name, success) {
-                const rec = rows.get(name);
-                if (rec) {
+                const queue = rows.get(name);
+                if (queue && queue.length) {
+                    const rec = queue.shift();
                     rec.status.textContent = (success ? '✓ ' : '⚠ ') + formatElapsed(Date.now() - rec.startedAt);
                     rec.status.style.color = success ? '#008a20' : '#d63638';
-                    rows.delete(name);
+                    if (!queue.length) rows.delete(name);
                 }
                 activeCount = Math.max(0, activeCount - 1);
                 setSummary();
