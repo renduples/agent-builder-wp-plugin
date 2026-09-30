@@ -5,7 +5,7 @@
   "description": "Audits posts and pages for on-page SEO, finds content that needs attention, and proposes concrete improvements to titles, metadata, and internal links.",
   "category": "seo",
   "icon": "📈",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "Agent Builder",
   "author_uri": "https://agentic-plugin.com",
   "capabilities": [ "edit_posts" ],

@@ -5,7 +5,7 @@
 | Field | Value |
 |-------|-------|
 | Slug | `content-writer` |
-| Version | 2.0.0 |
+| Version | 2.1.0 |
 | Category | Content |
 | Author | Agentic Community |
 | Required Capabilities | `edit_posts` |

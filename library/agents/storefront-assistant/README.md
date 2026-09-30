@@ -3,8 +3,8 @@
 | Field | Value |
 |-------|-------|
 | Slug | `storefront-assistant` |
-| Version | 1.0.0 |
-| Category | Bundled |
+| Version | 1.0.1 |
+| Category | Ecommerce |
 
 Bundled Agent Builder agent. Helps a visitor browse a WooCommerce catalog and build a cart, both in wp-admin chat and — its main purpose — directly in the browser via the WebMCP Bridge, so an AI browser agent visiting the storefront can shop on a visitor's behalf. Every tool it holds is scoped to the calling visitor's own session; none of them can see or change another visitor's data.
 

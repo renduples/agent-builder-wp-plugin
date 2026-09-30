@@ -1,4 +1,4 @@
-# Agentic Library – 11 Pre-Built Agents
+# Agentic Library – 12 Pre-Built Agents
 
 > Ready-to-use AI agents that ship with the free Agent Builder plugin, and a guide for building your own.
 
@@ -6,10 +6,11 @@
 
 ## What's Inside
 
-**11 production-ready agents** ship with Agent Builder (WordPress.org free edition). Each is fully functional out of the box and can be customised.
+**12 production-ready agents** ship with Agent Builder (WordPress.org free edition). Each is fully functional out of the box and can be customised.
 
 | Slug | Name |
 |------|------|
+| `ai-radar` | AI Radar |
 | `agent-orchestrator` | Agent Orchestrator |
 | `assistant-trainer` | Assistant Trainer |
 | `content-writer` | Content Writer |
@@ -27,6 +28,16 @@ More agents: [Community Agents](https://agentic-plugin.com/community-agents/).
 ---
 
 ## Agents
+
+### AI Radar (`ai-radar/`)
+Scans how visible your site is to AI crawlers and assistants, then fixes what it finds with your approval.
+- robots.txt access and llms.txt discoverability
+- schema.org markup and FAQ coverage
+- Applies fixes only after you approve them
+
+**Category:** SEO
+
+---
 
 ### Agent Orchestrator (`agent-orchestrator/`)
 Deploys other agents to chat widgets, scheduled tasks, and triggers via natural language instead of the technical Publish screens.
@@ -142,7 +153,7 @@ Your guide to WordPress and Agent Builder for new users.
 
 1. **Activate in WordPress:**
    - Go to **Agent Builder → Agents**
-   - All 11 bundled agents appear automatically
+   - All 12 bundled agents appear automatically
    - Click **Activate** on any agent
 
 2. **Start using:**
@@ -283,7 +294,7 @@ Rather than hand-writing these files, you can describe the agent you want in cha
 
 ## Listing on the Marketplace
 
-The [Community Agents marketplace](https://agentic-plugin.com/community-agents/) is where developers publish agents beyond the 11 bundled here. In the free/WordPress.org plugin, Community Agents is **browse-only** — visitors can preview and download an agent's files, but not one-click remote-install (that requires Agent Builder Pro or a connector).
+The [Community Agents marketplace](https://agentic-plugin.com/community-agents/) is where developers publish agents beyond the 12 bundled here. In the free/WordPress.org plugin, Community Agents is **browse-only** — visitors can preview and download an agent's files, but not one-click remote-install (that requires Agent Builder Pro or a connector).
 
 To list an agent:
 1. Package the four files above exactly as they appear in this directory (a real `agent.json` + `abilities.json` + `templates/system-prompt.txt` + `README.md`, no PHP).

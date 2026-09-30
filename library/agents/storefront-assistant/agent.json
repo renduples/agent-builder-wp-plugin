@@ -5,7 +5,7 @@
   "description": "Helps visitors browse your WooCommerce catalog and build a cart — in wp-admin chat, or directly in the browser via WebMCP for AI agents visiting your store. Never places an order or takes payment; the shopper always completes checkout themselves.",
   "category": "ecommerce",
   "icon": "🛍️",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "Agent Builder",
   "author_uri": "https://agentic-plugin.com",
   "capabilities": [ "read" ],

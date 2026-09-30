@@ -5,7 +5,7 @@
   "description": "Triages incoming comments and form submissions: summarises the request, suggests a priority and category, and drafts a helpful reply for your review.",
   "category": "support",
   "icon": "🎧",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "Agent Builder",
   "author_uri": "https://agentic-plugin.com",
   "capabilities": [

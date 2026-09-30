@@ -5,7 +5,7 @@
     "description": "Meta-agent that trains new AI agents from natural language descriptions, and keeps the existing ones honest by running the prompt-test suite against them and proposing the tools or skills they turn out to be missing.",
     "category": "developer",
     "icon": "🏗️",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "author": "Agentic Community",
     "author_uri": "https://agentic-plugin.com/developer/agentic-community/",
     "capabilities": [

@@ -1,11 +1,11 @@
 # 🏗️ Assistant Trainer
 
-> Meta-agent that trains new AI assistants from natural language descriptions.
+> Meta-agent that trains new AI agents from natural language descriptions, and keeps the existing ones honest by running the prompt-test suite against them and proposing the tools or skills they turn out to be missing.
 
 | Field | Value |
 |-------|-------|
 | Slug | `assistant-trainer` |
-| Version | 1.1.0 |
+| Version | 1.2.1 |
 | Category | Developer |
 | Author | Agentic Community |
 | Required Capabilities | `manage_options` |

@@ -5,7 +5,7 @@
   "description": "A team lead for content operations. Plans the work, then delegates writing and SEO subtasks to your specialist agents and pulls their results into one coherent plan.",
   "category": "content",
   "icon": "🎬",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "Agent Builder",
   "author_uri": "https://agentic-plugin.com",
   "team": true,

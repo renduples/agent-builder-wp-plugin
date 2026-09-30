@@ -3,7 +3,7 @@
 | Field | Value |
 |-------|-------|
 | Slug | `support-triage` |
-| Version | 1.0.0 |
-| Category | Bundled |
+| Version | 1.1.0 |
+| Category | Support |
 
-Bundled Agent Builder agent. See `agent.json` and `abilities.json` for tools and capabilities.
+Triages incoming comments and form submissions: summarises each request, suggests a priority and category, and drafts a helpful reply for your review. Summaries and drafts run on their own; posting a reply or changing a comment's status asks for your approval.
