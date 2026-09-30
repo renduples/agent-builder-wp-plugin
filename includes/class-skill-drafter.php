@@ -1,0 +1,386 @@
+<?php
+/**
+ * Skill Drafter — turn a live conversation or a recorded tool sequence into a
+ * draft skill via a single reviewer-LLM call.
+ *
+ * A draft is an ordinary `agent_builder_skills` row with `enabled=0` and
+ * `source='draft'`, ready for the M15-d editing UI to review, polish and
+ * publish. This class is the backend draft-creation path only: it never
+ * enables a skill, and it never writes a row whose spec fails validation.
+ *
+ * The generation call follows Prompt_Test_Runner::judge()'s reviewer-LLM
+ * pattern — a standalone `LLM_Client` built outside the agent's configured
+ * model flow, so a per-agent model override does not end up choosing the
+ * drafter.
+ *
+ * @package    Agent_Builder
+ * @subpackage Includes
+ * @since      4.4.0
+ *
+ * php version 8.1
+ */
+
+declare(strict_types=1);
+
+namespace Agentic;
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * Skill_Drafter
+ *
+ * @since 4.4.0
+ */
+class Skill_Drafter {
+
+	/**
+	 * Draft a skill from the conversation history of a session.
+	 *
+	 * Reads the session's messages (and any tools the agent used in each turn)
+	 * up to the given message id, asks the reviewer LLM for a SKILL.md-shaped
+	 * spec, validates it, and stores a disabled draft on success.
+	 *
+	 * @param string   $session_id Browser-tab session id whose transcript to draft from.
+	 * @param int|null $up_to_id   Optional conversation row id to stop at (inclusive).
+	 * @return array{ok:bool,id?:int,edit_url?:string,error?:string,validation?:string[]}
+	 */
+	public static function from_conversation( string $session_id, ?int $up_to_id = null ): array {
+		$messages = self::read_conversation( $session_id, $up_to_id );
+
+		if ( empty( $messages ) ) {
+			return array(
+				'ok'    => false,
+				'error' => __( 'No conversation messages found for that session.', 'agent-builder' ),
+			);
+		}
+
+		$prompt = __( 'A user and a WordPress AI agent just completed the task below. Turn it into a reusable skill.', 'agent-builder' )
+			. "\n\n" . self::format_conversation( $messages );
+
+		return self::draft( $prompt, (string) $session_id );
+	}
+
+	/**
+	 * Draft a skill from a recorded tool-call sequence (Skill_Recorder::stop()'s
+	 * `steps` array).
+	 *
+	 * @param array<int, array<string, mixed>> $steps Recorded steps: each has
+	 *                                                `tool`, `action`, `args_summary` and `success`.
+	 * @return array{ok:bool,id?:int,edit_url?:string,error?:string,validation?:string[]}
+	 */
+	public static function from_recording( array $steps ): array {
+		$steps = array_values( array_filter( $steps, 'is_array' ) );
+
+		if ( empty( $steps ) ) {
+			return array(
+				'ok'    => false,
+				'error' => __( 'No recorded steps to draft from.', 'agent-builder' ),
+			);
+		}
+
+		$prompt = __( 'A human demonstrated the task below as a sequence of tool calls. Turn it into a reusable skill.', 'agent-builder' )
+			. "\n\n" . self::format_recording( $steps );
+
+		return self::draft( $prompt, '' );
+	}
+
+	/**
+	 * Shared draft pipeline: ask the reviewer LLM for a spec, validate it, and
+	 * persist a disabled draft row.
+	 *
+	 * @param string $prompt    User message describing the task to encode.
+	 * @param string $source_id Provenance id (the source session id, or '').
+	 * @return array{ok:bool,id?:int,edit_url?:string,error?:string,validation?:string[]}
+	 */
+	private static function draft( string $prompt, string $source_id ): array {
+		$spec = self::generate_spec( $prompt );
+
+		if ( is_wp_error( $spec ) ) {
+			return array(
+				'ok'    => false,
+				'error' => $spec->get_error_message(),
+			);
+		}
+
+		$name        = (string) ( $spec['name'] ?? '' );
+		$description = (string) ( $spec['description'] ?? '' );
+		$body        = (string) ( $spec['content'] ?? '' );
+
+		$errors = Skills_Registry::validate_spec_fields( $name, $description );
+		if ( '' === $body ) {
+			$errors[] = __( 'The skill body is required.', 'agent-builder' );
+		}
+
+		if ( ! empty( $errors ) ) {
+			return array(
+				'ok'         => false,
+				'error'      => __( 'The generated skill failed validation.', 'agent-builder' ),
+				'validation' => $errors,
+			);
+		}
+
+		$author = '';
+		$user   = wp_get_current_user();
+		if ( $user instanceof \WP_User && '' !== (string) $user->display_name ) {
+			$author = (string) $user->display_name;
+		}
+
+		$id = Skills_Registry::create(
+			array(
+				'name'        => $name,
+				'description' => $description,
+				'content'     => self::build_content( $name, $description, $body ),
+				'source'      => 'draft',
+				'source_id'   => $source_id,
+				'author'      => $author,
+				'enabled'     => false,
+			)
+		);
+
+		if ( false === $id ) {
+			return array(
+				'ok'    => false,
+				'error' => __( 'Could not save the draft skill.', 'agent-builder' ),
+			);
+		}
+
+		return array(
+			'ok'       => true,
+			'id'       => (int) $id,
+			'edit_url' => admin_url( 'admin.php?page=agentic-skills&skill_view=edit&skill_id=' . (int) $id ),
+		);
+	}
+
+	/**
+	 * Ask the reviewer LLM for a SKILL.md-shaped spec and parse the JSON reply.
+	 *
+	 * @param string $prompt User message describing the task.
+	 * @return array<string, mixed>|\WP_Error Spec array, or error.
+	 */
+	private static function generate_spec( string $prompt ): array|\WP_Error {
+		$system = 'You turn a demonstrated task into a reusable skill for a WordPress AI agent. '
+			. 'Reply with a single JSON object and nothing else, with exactly three string fields: '
+			. '"name" — a lowercase kebab-case slug using only letters, digits and single hyphens, 64 characters or fewer; '
+			. '"description" — one or two sentences the agent uses to decide when to apply this skill, naming the trigger and the task, 1024 characters or fewer; '
+			. '"content" — the SKILL.md body in markdown: a numbered "Workflow" list of concrete steps and a "Quality Rules" bullet list.';
+
+		try {
+			// Built outside the agent flow on purpose, so a per-agent model
+			// override does not end up choosing the drafter.
+			$llm      = static::make_llm();
+			$response = $llm->chat(
+				array(
+					array(
+						'role'    => 'system',
+						'content' => $system,
+					),
+					array(
+						'role'    => 'user',
+						'content' => $prompt,
+					),
+				)
+			);
+		} catch ( \Throwable $e ) {
+			return new \WP_Error( 'skill_draft_llm_error', $e->getMessage() );
+		}
+
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
+
+		$text = '';
+		if ( isset( $response['choices'][0]['message']['content'] ) ) {
+			$text = (string) $response['choices'][0]['message']['content'];
+		} elseif ( isset( $response['content'] ) ) {
+			$text = (string) $response['content'];
+		}
+
+		return self::parse_spec( $text );
+	}
+
+	/**
+	 * Parse the JSON spec out of the model's reply, tolerating a markdown
+	 * code fence or surrounding prose.
+	 *
+	 * @param string $text Model reply.
+	 * @return array<string, mixed>|\WP_Error
+	 */
+	private static function parse_spec( string $text ): array|\WP_Error {
+		$text = trim( $text );
+
+		if ( preg_match( '/```(?:json)?\s*([\s\S]*?)```/', $text, $fence ) ) {
+			$text = trim( $fence[1] );
+		}
+
+		$decoded = json_decode( $text, true );
+		if ( is_array( $decoded ) ) {
+			return $decoded;
+		}
+
+		// Fall back to the first JSON object span in a prose-heavy reply.
+		if ( preg_match( '/\{[\s\S]*\}/', $text, $span ) ) {
+			$decoded = json_decode( $span[0], true );
+			if ( is_array( $decoded ) ) {
+				return $decoded;
+			}
+		}
+
+		return new \WP_Error( 'skill_draft_invalid_json', __( 'The model did not return a valid skill spec.', 'agent-builder' ) );
+	}
+
+	/**
+	 * Read a session's conversation rows (role, content, tools_used) up to the
+	 * given row id, ordered oldest-first.
+	 *
+	 * @param string   $session_id Session id.
+	 * @param int|null $up_to_id   Optional inclusive row id cap.
+	 * @return array<int, array<string, mixed>>
+	 */
+	private static function read_conversation( string $session_id, ?int $up_to_id ): array {
+		global $wpdb;
+		$table = $wpdb->prefix . 'agent_builder_conversations';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table, presence checked per-request.
+		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) !== $table ) {
+			return array();
+		}
+
+		if ( null !== $up_to_id ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table query.
+			$rows = $wpdb->get_results(
+				$wpdb->prepare(
+					'SELECT id, role, content, tools_used FROM %i WHERE session_id = %s AND id <= %d ORDER BY id ASC',
+					$table,
+					$session_id,
+					$up_to_id
+				),
+				ARRAY_A
+			);
+		} else {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table query.
+			$rows = $wpdb->get_results(
+				$wpdb->prepare(
+					'SELECT id, role, content, tools_used FROM %i WHERE session_id = %s ORDER BY id ASC',
+					$table,
+					$session_id
+				),
+				ARRAY_A
+			);
+		}
+
+		if ( ! is_array( $rows ) ) {
+			return array();
+		}
+
+		$messages = array();
+		foreach ( $rows as $row ) {
+			$entry = array(
+				'role'    => (string) ( $row['role'] ?? '' ),
+				'content' => (string) ( $row['content'] ?? '' ),
+			);
+			if ( ! empty( $row['tools_used'] ) ) {
+				$decoded        = json_decode( (string) $row['tools_used'], true );
+				$entry['tools'] = is_array( $decoded ) ? array_values( array_map( 'strval', $decoded ) ) : array();
+			}
+			$messages[] = $entry;
+		}
+
+		return $messages;
+	}
+
+	/**
+	 * Render conversation messages as a readable transcript for the prompt.
+	 *
+	 * @param array<int, array<string, mixed>> $messages Normalized messages.
+	 * @return string
+	 */
+	private static function format_conversation( array $messages ): string {
+		$lines = array();
+
+		foreach ( $messages as $message ) {
+			$who     = 'user' === (string) ( $message['role'] ?? '' ) ? __( 'User', 'agent-builder' ) : __( 'Agent', 'agent-builder' );
+			$content = trim( (string) ( $message['content'] ?? '' ) );
+			if ( '' === $content ) {
+				continue;
+			}
+
+			$line = $who . ': ' . $content;
+
+			$tools = $message['tools'] ?? array();
+			if ( ! empty( $tools ) ) {
+				/* translators: %s: comma-separated tool names the agent used. */
+				$line .= ' ' . sprintf( __( '[tools used: %s]', 'agent-builder' ), implode( ', ', $tools ) );
+			}
+
+			$lines[] = $line;
+		}
+
+		return implode( "\n\n", $lines );
+	}
+
+	/**
+	 * Render a recorded step sequence as a readable list for the prompt.
+	 *
+	 * @param array<int, array<string, mixed>> $steps Recorded steps.
+	 * @return string
+	 */
+	private static function format_recording( array $steps ): string {
+		$lines = array();
+
+		foreach ( $steps as $index => $step ) {
+			$tool    = (string) ( $step['tool'] ?? '' );
+			$action  = (string) ( $step['action'] ?? '' );
+			$success = ! empty( $step['success'] );
+
+			$line    = sprintf(
+				'%d. %s%s%s',
+				$index + 1,
+				'' !== $tool ? $tool : __( '(unknown tool)', 'agent-builder' ),
+				'' !== $action ? ' (' . $action . ')' : '',
+				$success ? '' : ' [failed]'
+			);
+			$lines[] = $line;
+
+			if ( isset( $step['args_summary'] ) && is_array( $step['args_summary'] ) && ! empty( $step['args_summary'] ) ) {
+				$lines[] = '   ' . __( 'args:', 'agent-builder' ) . ' ' . wp_json_encode( $step['args_summary'] );
+			}
+		}
+
+		return implode( "\n", $lines );
+	}
+
+	/**
+	 * Build the full SKILL.md content (front matter + body) stored on the row.
+	 *
+	 * @param string $name        Spec name (slug).
+	 * @param string $description Spec description (trigger).
+	 * @param string $body        Model-produced markdown body.
+	 * @return string
+	 */
+	private static function build_content( string $name, string $description, string $body ): string {
+		$desc = str_replace( array( '\\', '"' ), array( '\\\\', '\\"' ), $description );
+		$body = trim( $body );
+
+		return "---\n"
+			. 'name: ' . $name . "\n"
+			. 'description: "' . $desc . "\"\n"
+			. "---\n\n"
+			. $body;
+	}
+
+	/**
+	 * Build the LLM client used for drafting.
+	 *
+	 * A caller may substitute a scripted client (e.g. a test double) via the
+	 * `agentic_skill_drafter_llm` filter; otherwise the standalone default is
+	 * built, outside the agent's configured-model flow.
+	 *
+	 * @return \Agentic\LLM_Client
+	 */
+	protected static function make_llm(): \Agentic\LLM_Client {
+		$llm = apply_filters( 'agentic_skill_drafter_llm', null );
+		return $llm instanceof \Agentic\LLM_Client ? $llm : new \Agentic\LLM_Client();
+	}
+}
