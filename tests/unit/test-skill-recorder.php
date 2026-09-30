@@ -76,6 +76,36 @@ class Test_Skill_Recorder extends TestCase {
 	}
 
 	/**
+	 * peek() returns the captured steps without consuming the recording.
+	 */
+	public function test_peek_returns_steps_without_consuming(): void {
+		Skill_Recorder::start( self::USER, self::SESSION );
+
+		do_action(
+			'agent_builder_tool_executed',
+			'db_create_post',
+			array( 'action' => 'create' ),
+			array( 'success' => true ),
+			array( 'user_id' => self::USER, 'session_id' => self::SESSION, 'action' => 'create' )
+		);
+
+		$peeked = Skill_Recorder::peek( self::USER );
+		$this->assertTrue( $peeked['ok'] );
+		$this->assertCount( 1, $peeked['steps'] );
+
+		// Not consumed: the recording is still active.
+		$this->assertTrue( Skill_Recorder::status( self::USER )['recording'] );
+	}
+
+	/**
+	 * peek() with nothing recording errors.
+	 */
+	public function test_peek_with_nothing_recording_errors(): void {
+		$result = Skill_Recorder::peek( self::USER );
+		$this->assertFalse( $result['ok'] );
+	}
+
+	/**
 	 * A tool call from the recording user+session is appended via the real
 	 * agent_builder_tool_executed hook, with success derived from the result.
 	 */
