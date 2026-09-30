@@ -126,7 +126,7 @@ class Skill_Drafter_REST {
 			return new \WP_Error(
 				'rest_skill_draft_failed',
 				(string) ( $result['error'] ?? __( 'Could not draft the skill.', 'agent-builder' ) ),
-				array( 'status' => 400 )
+				array( 'status' => (int) ( $result['status'] ?? 400 ) )
 			);
 		}
 
@@ -134,30 +134,29 @@ class Skill_Drafter_REST {
 	}
 
 	/**
-	 * POST /skills/draft-from-recording — stop the active recording and draft a
-	 * skill from its captured steps.
+	 * POST /skills/draft-from-recording — draft a skill from the active
+	 * recording's captured steps.
 	 *
-	 * The recorder's stop() is the only place that returns the raw `steps`, so
-	 * this route consumes the recording itself rather than asking the client to
-	 * round-trip the steps back through a second request. Keeping it here (and
-	 * not inside Skill_Recorder_REST) lets the drafter own the drafting, while
-	 * the recorder's own stop() route stays a pure inspect/stop concern.
+	 * The steps are read via the recorder's peek() (without deleting the
+	 * transient), so a failed draft leaves the recording intact for a retry. The
+	 * recording is consumed only after a draft row has been created.
 	 *
 	 * @param \WP_REST_Request $_request Request.
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public static function draft_from_recording( \WP_REST_Request $_request ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- REST callback signature.
-		$stopped = \Agentic\Skill_Recorder::stop( get_current_user_id() );
+		$user_id = get_current_user_id();
+		$peeked  = \Agentic\Skill_Recorder::peek( $user_id );
 
-		if ( empty( $stopped['ok'] ) ) {
+		if ( empty( $peeked['ok'] ) ) {
 			return new \WP_Error(
 				'rest_skill_draft_recording_failed',
-				(string) ( $stopped['error'] ?? __( 'No recording to draft from.', 'agent-builder' ) ),
+				(string) ( $peeked['error'] ?? __( 'No recording to draft from.', 'agent-builder' ) ),
 				array( 'status' => 400 )
 			);
 		}
 
-		$steps  = isset( $stopped['steps'] ) && is_array( $stopped['steps'] ) ? $stopped['steps'] : array();
+		$steps  = isset( $peeked['steps'] ) && is_array( $peeked['steps'] ) ? $peeked['steps'] : array();
 		$result = Skill_Drafter::from_recording( $steps );
 
 		if ( empty( $result['ok'] ) ) {
@@ -167,6 +166,9 @@ class Skill_Drafter_REST {
 				array( 'status' => 400 )
 			);
 		}
+
+		// The draft row exists — now it is safe to consume the recording.
+		\Agentic\Skill_Recorder::stop( $user_id );
 
 		return new \WP_REST_Response( $result, 201 );
 	}

@@ -570,7 +570,7 @@ class REST_API {
 		// message untouched so it reaches the model verbatim.
 		$skill_slug = '';
 		$parsed     = \Agentic\Skill_Commands::parse( (string) $message );
-		if ( null !== $parsed ) {
+		if ( null !== $parsed && ! \Agentic\Skill_Commands::is_pro_command( $parsed['slug'] ) ) {
 			foreach ( \Agentic\Skills_Registry::get_for_agent( $agent_id ) as $skill ) {
 				if ( (string) ( $skill['slug'] ?? '' ) === $parsed['slug'] ) {
 					$skill_slug = $parsed['slug'];

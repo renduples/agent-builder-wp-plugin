@@ -121,6 +121,32 @@ class Skill_Recorder {
 	}
 
 	/**
+	 * Return the captured steps without consuming the recording.
+	 *
+	 * The recording stays active, so the caller can inspect the steps and only
+	 * call stop() to delete them once they are safely handed off — e.g. after a
+	 * draft row has been created.
+	 *
+	 * @param int $user_id User whose recording to peek at.
+	 * @return array{ok:bool,steps?:array<int,array<string,mixed>>,error?:string}
+	 */
+	public static function peek( int $user_id ): array {
+		$recording = get_transient( self::transient_key( $user_id ) );
+
+		if ( false === $recording || ! is_array( $recording ) ) {
+			return array(
+				'ok'    => false,
+				'error' => __( 'No skill recording is active.', 'agent-builder' ),
+			);
+		}
+
+		return array(
+			'ok'    => true,
+			'steps' => isset( $recording['steps'] ) && is_array( $recording['steps'] ) ? $recording['steps'] : array(),
+		);
+	}
+
+	/**
 	 * Report the current recording state without consuming it.
 	 *
 	 * @param int $user_id User to query.
