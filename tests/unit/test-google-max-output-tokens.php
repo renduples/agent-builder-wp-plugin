@@ -186,4 +186,41 @@ class Test_Google_Max_Output_Tokens extends TestCase {
 		$this->assertNotNull( $fc_part );
 		$this->assertSame( 'opaque-signature-abc', $fc_part['thoughtSignature'] ?? null );
 	}
+
+	/**
+	 * Gemini returns HTTP 400 for an OBJECT schema with empty properties, so a
+	 * parameter-less tool must be declared without `parameters`.
+	 */
+	public function test_parameterless_tool_omits_parameters_for_google(): void {
+		$tools = array(
+			array(
+				'type'     => 'function',
+				'function' => array(
+					'name'        => 'get_post_types',
+					'description' => 'List post types.',
+					'parameters'  => array(
+						'type'       => 'object',
+						'properties' => new \stdClass(),
+					),
+				),
+			),
+			array(
+				'type'     => 'function',
+				'function' => array(
+					'name'        => 'get_weather',
+					'description' => 'Weather.',
+					'parameters'  => array(
+						'type'       => 'object',
+						'properties' => array( 'city' => array( 'type' => 'string' ) ),
+					),
+				),
+			),
+		);
+		$body  = $this->build_request( array( array( 'role' => 'user', 'content' => 'hi' ) ), $tools );
+		$decls = $body['tools'][0]['functionDeclarations'] ?? array();
+		$this->assertSame( 'get_post_types', $decls[0]['name'] ?? null );
+		$this->assertArrayNotHasKey( 'parameters', $decls[0] );
+		$this->assertArrayHasKey( 'parameters', $decls[1] );
+		$this->assertArrayHasKey( 'city', (array) $decls[1]['parameters']['properties'] );
+	}
 }
