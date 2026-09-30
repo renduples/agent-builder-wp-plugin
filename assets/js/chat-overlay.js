@@ -746,118 +746,10 @@
     /*  Markdown (lightweight)                                             */
     /* ------------------------------------------------------------------ */
     function renderMarkdown(text) {
-        if (!text) return '';
-        var h = esc(text);
-
-        // Extract fenced code blocks into placeholders FIRST — before any other
-        // substitution (headers, lists, bold, links, tables) — so the raw code is
-        // never rewritten into markdown markup, and the single-newline pass below
-        // can't turn the code's own line breaks into <br>. Restored at the very end.
-        var codeNonce = 'agentic_code_' + Math.random().toString(36).slice(2) + Date.now().toString(36) + '_';
-        var codeBlocks = [];
-        h = h.replace(/```(\w*)\n([\s\S]*?)```/g, function (block, lang, code) {
-            codeBlocks.push({ lang: lang, code: code });
-            return codeNonce + (codeBlocks.length - 1);
-        });
-
-        h = h.replace(/`([^`]+)`/g, '<code>$1</code>');
-
-        // Tables — process before headers/lists to avoid conflicts.
-        h = h.replace(/(^\|.+\|$\n?)+/gm, function (tableBlock) {
-            var rows = tableBlock.trim().split('\n');
-            if (rows.length < 2) return tableBlock;
-            var sepIndex = -1;
-            for (var i = 0; i < rows.length; i++) {
-                if (/^\|[\s:]*-{2,}[\s:]*\|/.test(rows[i])) { sepIndex = i; break; }
-            }
-            if (sepIndex === -1) return tableBlock;
-            var tableHtml = '<table>';
-            tableHtml += '<thead>';
-            for (var hdr = 0; hdr < sepIndex; hdr++) {
-                var hcells = rows[hdr].split('|').slice(1, -1);
-                tableHtml += '<tr>' + hcells.map(function (c) { return '<th>' + c.trim() + '</th>'; }).join('') + '</tr>';
-            }
-            tableHtml += '</thead>';
-            if (sepIndex + 1 < rows.length) {
-                tableHtml += '<tbody>';
-                for (var bdy = sepIndex + 1; bdy < rows.length; bdy++) {
-                    if (!rows[bdy].trim()) continue;
-                    var bcells = rows[bdy].split('|').slice(1, -1);
-                    tableHtml += '<tr>' + bcells.map(function (c) { return '<td>' + c.trim() + '</td>'; }).join('') + '</tr>';
-                }
-                tableHtml += '</tbody>';
-            }
-            tableHtml += '</table>';
-            return tableHtml;
-        });
-
-        h = h.replace(/^-{3,}$/gm, '<hr>');
-
-        h = h.replace(/^#### (.*$)/gm, '<h4>$1</h4>');
-        h = h.replace(/^### (.*$)/gm, '<h3>$1</h3>');
-        h = h.replace(/^## (.*$)/gm, '<h2>$1</h2>');
-        h = h.replace(/^# (.*$)/gm, '<h1>$1</h1>');
-
-        h = h.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-        h = h.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-
-        h = h.replace(/\[([^\]]+)\]\(([^)]+)\)/g, function (match, label, url) {
-            var href = safeLinkHref(url);
-            if (href === null) return label; // unsafe scheme — plain text
-            return '<a href="' + href + '" target="_blank" rel="noopener">' + label + '</a>';
-        });
-
-        h = h.replace(/^\s*[-*]\s+(.*)$/gm, '<li>$1</li>');
-        h = h.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
-        h = h.replace(/<\/li>\n<li>/g, '</li><li>');
-        h = h.replace(/(<\/li>)\n(<\/ul>)/g, '$1$2');
-
-        h = h.replace(/(?:^[ \t]*\d+\.\s+.*(?:\n|$))+/gm, function (block) {
-            var items = block.split('\n').filter(function (line) {
-                return /^[ \t]*\d+\.\s+/.test(line);
-            });
-            return '<ol>' + items.map(function (line) {
-                return '<li>' + line.replace(/^[ \t]*\d+\.\s+/, '') + '</li>';
-            }).join('') + '</ol>';
-        });
-
-        h = h.replace(/^>\s+(.*)$/gm, '<blockquote>$1</blockquote>');
-
-        h = h.replace(/\n\n/g, '</p><p>');
-        h = '<p>' + h + '</p>';
-        h = h.replace(/<p><\/p>/g, '');
-        h = h.replace(/<p>(<h[1-6]>)/g, '$1');
-        h = h.replace(/(<\/h[1-6]>)<\/p>/g, '$1');
-        h = h.replace(/<p>(<ul>)/g, '$1');
-        h = h.replace(/(<\/ul>)<\/p>/g, '$1');
-        h = h.replace(/<p>(<ol>)/g, '$1');
-        h = h.replace(/(<\/ol>)<\/p>/g, '$1');
-        h = h.replace(/<p>(<blockquote>)/g, '$1');
-        h = h.replace(/(<\/blockquote>)<\/p>/g, '$1');
-        h = h.replace(/<p>(<table>)/g, '$1');
-        h = h.replace(/(<\/table>)<\/p>/g, '$1');
-        h = h.replace(/<p>(<hr>)/g, '$1');
-        h = h.replace(/(<hr>)<\/p>/g, '$1');
-        // Unwrap the code placeholder from its paragraph — the real
-        // <div class="agentic-code-wrap"> block is restored after the newline
-        // pass below, so it is the token, not the block, that must escape <p>.
-        h = h.replace(new RegExp('<p>(' + codeNonce + '\\d+)</p>', 'g'), '$1');
-
-        // Preserve single line breaks inside a paragraph (the model's "line1\n
-        // line2" and "- item" lists after a colon). Code blocks are held aside as
-        // placeholders, so their inner newlines survive — the copy button reads
-        // textContent, which drops <br>.
-        h = h.replace(/\n/g, '<br>');
-
-        // Restore the code blocks now that every substitution and the newline
-        // pass have run, so none of them ever saw the raw code content.
-        h = h.replace(new RegExp(codeNonce + '(\\d+)', 'g'), function (m, i) {
-            var b = codeBlocks[parseInt(i, 10)];
-            return b === undefined ? m :
-                '<div class="agentic-code-wrap"><button class="agentic-copy-btn" title="Copy">Copy</button><pre><code class="language-' + b.lang + '">' + b.code + '</code></pre></div>';
-        });
-
-        return h;
+        // Delegates to the shared AgenticMarkdown utility (assets/js/agentic-markdown.js),
+        // loaded as a script dependency. The overlay has no agent handoff, so
+        // delegate links stay off.
+        return window.AgenticMarkdown.render(text);
     }
 
     /* ------------------------------------------------------------------ */
@@ -879,24 +771,6 @@
         var d = document.createElement('div');
         d.textContent = text;
         return d.innerHTML;
-    }
-
-    // Validate a link URL against a safe-scheme allowlist and make it safe to
-    // interpolate into href="…". Returns the attribute-safe URL, or null when
-    // the scheme is disallowed (javascript:, data:, vbscript:, etc.).
-    // The URL argument is already HTML-escaped by esc() — which escapes &, <, >
-    // but NOT the quote characters — so this only needs to escape " and ' on top
-    // of that. Scheme detection mirrors the URL Standard: strip ASCII
-    // tab/newline/CR and surrounding C0 control + space first, so a
-    // "java\tscript:"-style obfuscation can't masquerade as a relative URL.
-    function safeLinkHref(url) {
-        var stripped = url.replace(/[\t\n\r]/g, '').replace(/^[\x00-\x20]+|[\x00-\x20]+$/g, '');
-        var scheme = stripped.match(/^([a-z][a-z0-9+.\-]*):/i);
-        if (scheme) {
-            var name = scheme[1].toLowerCase();
-            if (name !== 'http' && name !== 'https' && name !== 'mailto') return null;
-        }
-        return url.replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
 
     function uuid() {

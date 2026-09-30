@@ -419,6 +419,19 @@ class Agent_Proposals {
 			do_action( 'agent_builder_approval_resolved', 'proposal', $proposal_id, $final, $result, $proposal );
 		}
 
+		// Thread a result card when the executed tool produced one, so the chat
+		// can surface what the approval actually did (post/file/list).
+		if ( is_array( $result ) && ! isset( $result['error'] ) ) {
+			$result['cards'] = Result_Card::collect(
+				array(
+					array(
+						'tool'   => (string) ( $proposal['tool'] ?? '' ),
+						'result' => $result,
+					),
+				)
+			);
+		}
+
 		return $result;
 	}
 

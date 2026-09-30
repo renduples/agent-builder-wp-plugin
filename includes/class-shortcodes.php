@@ -59,7 +59,7 @@ class Shortcodes {
 		wp_register_script(
 			'agentic-chat-frontend',
 			AGENT_BUILDER_URL . 'assets/js/chat.js',
-			array( 'agentic-ui' ),
+			array( 'agentic-ui', 'agentic-markdown' ),
 			(string) filemtime( AGENT_BUILDER_DIR . 'assets/js/chat.js' ),
 			true
 		);
@@ -98,6 +98,7 @@ class Shortcodes {
 			'consentEnabled' => get_option( 'agent_builder_chat_consent_enabled', false ) ? '1' : '0',
 			'consentText'    => \Agentic\GDPR::get_consent_text(),
 			'isAdmin'        => current_user_can( 'manage_options' ) ? '1' : '0',
+			'isSsl'          => is_ssl() ? '1' : '0',
 			'adminAgentsUrl' => admin_url( 'admin.php?page=agentic-agents' ),
 			'slashCommands'  => \Agentic\Chat_Assets::get_slash_commands_for_js(),
 			'i18n'           => agent_builder_chat_i18n(),

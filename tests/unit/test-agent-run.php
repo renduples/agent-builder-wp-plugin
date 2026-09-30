@@ -238,6 +238,24 @@ class Test_Agent_Run extends TestCase {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared -- Test-only schema change on a trusted internal table name.
 		$wpdb->query( "ALTER TABLE {$table} DROP COLUMN awaiting_tool_call_id" );
 
+		// The DROP above can be refused on a long-lived test DB, silently leaving
+		// the column in place (issue #344). MariaDB applies ADD/DROP COLUMN with
+		// ALGORITHM=INSTANT — a metadata-only change that never rebuilds the
+		// table — and after this test's own DROP → restore-ADD cycle has run
+		// hundreds of times against the persistent wptests_ table, MariaDB starts
+		// rejecting any further structural change with a spurious "Row size too
+		// large" error. When that happens the column stays present, so this test's
+		// premise — a genuinely absent column — is unachievable. Guard against it
+		// and skip rather than assert on a schema we failed to mutate. (OPTIMIZE
+		// TABLE or a fresh/CI test DB clears the stale state and the DROP lands;
+		// the production code under test is correct — a real site never drops the
+		// column, and a genuinely pre-migration table accepts the ADD COLUMN.)
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test-only schema check on a trusted internal table name.
+		$column_still_present = $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM {$table} LIKE %s", 'awaiting_tool_call_id' ) );
+		if ( $column_still_present ) {
+			$this->markTestSkipped( 'DROP COLUMN was refused (MariaDB instant-DDL "Row size too large", see #344); cannot simulate a missing column.' );
+		}
+
 		try {
 			$transcript = array(
 				array( 'role' => 'user', 'content' => 'Publish the draft.' ),
