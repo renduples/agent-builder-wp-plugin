@@ -450,8 +450,10 @@ class Agent_Lifecycle {
 
 		// Defence in depth: a paused routine must not fire even if a stale cron
 		// event reaches here (pause() clears the event, but an event already
-		// queued before the pause could still dispatch).
-		if ( null !== $deployment_row
+		// queued before the pause could still dispatch). A manual test-run is the
+		// deliberate exception — testing a paused routine is a normal use.
+		if ( 'manual' !== $invocation
+			&& null !== $deployment_row
 			&& ( empty( $deployment_row['enabled'] ) || ! empty( $deployment_row['config']['paused_at'] ) ) ) {
 			return;
 		}
@@ -470,23 +472,28 @@ class Agent_Lifecycle {
 				return;
 			}
 			$restore_user_id = get_current_user_id();
-			wp_set_current_user( $owner_id );
-			$run_user_id = $owner_id;
+			$run_user_id     = $owner_id;
 		}
 
-		// Log task start.
-		$audit->log(
-			$agent_id,
-			'scheduled_task_start',
-			$task['id'],
-			array(
-				'task_name' => $task['name'],
-				'schedule'  => $task['schedule'],
-				'mode'      => $mode,
-			)
-		);
-
 		try {
+			// Switch to the routine's owner inside the try so the finally below
+			// always restores the previous user, even if anything here throws.
+			if ( null !== $restore_user_id ) {
+				wp_set_current_user( $owner_id );
+			}
+
+			// Log task start.
+			$audit->log(
+				$agent_id,
+				'scheduled_task_start',
+				$task['id'],
+				array(
+					'task_name' => $task['name'],
+					'schedule'  => $task['schedule'],
+					'mode'      => $mode,
+				)
+			);
+
 			$result = null;
 
 			// If task has a prompt, route through LLM for autonomous execution.
@@ -1218,8 +1225,10 @@ class Agent_Lifecycle {
 		$deployment_row = null !== $deployment_id ? Deployments::get( $deployment_id ) : null;
 
 		// Defence in depth: a paused routine must not fire even if its async event
-		// already slipped into the queue before the pause.
-		if ( null !== $deployment_row
+		// already slipped into the queue before the pause. A manual test-run is the
+		// deliberate exception — testing a paused routine is a normal use.
+		if ( 'manual' !== $invocation
+			&& null !== $deployment_row
 			&& ( empty( $deployment_row['enabled'] ) || ! empty( $deployment_row['config']['paused_at'] ) ) ) {
 			return;
 		}
@@ -1237,8 +1246,7 @@ class Agent_Lifecycle {
 				return;
 			}
 			$restore_user_id = get_current_user_id();
-			wp_set_current_user( $owner_id );
-			$run_user_id = $owner_id;
+			$run_user_id     = $owner_id;
 		}
 
 		// Build context-enriched prompt.
@@ -1248,6 +1256,12 @@ class Agent_Lifecycle {
 		$start = microtime( true );
 
 		try {
+			// Switch to the routine's owner inside the try so the finally below
+			// always restores the previous user, even if anything here throws.
+			if ( null !== $restore_user_id ) {
+				wp_set_current_user( $owner_id );
+			}
+
 			$controller = $controller ?? new Agent_Controller();
 			$controller->set_invocation_context( $invocation );
 			$result = $controller->run_autonomous_task(

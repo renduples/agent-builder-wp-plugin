@@ -104,6 +104,20 @@ class Test_Routine_Execution extends TestCase {
 	}
 
 	/**
+	 * A controller whose run_autonomous_task() throws, to exercise the try/finally
+	 * user-restore path when a scheduled/async run blows up mid-flight.
+	 *
+	 * @return Agent_Controller
+	 */
+	private function throwing_controller(): Agent_Controller {
+		return new class extends Agent_Controller {
+			public function run_autonomous_task( \Agentic\Agent_Base $agent, string $prompt, string $task_id = '', array $options = array() ): ?array {
+				throw new \RuntimeException( 'boom' );
+			}
+		};
+	}
+
+	/**
 	 * execute_scheduled_task() writes the run with a `routine:<deployments-id>`
 	 * source_ref so history() finds it, and stamps the mirror row's last_run.
 	 */
@@ -518,5 +532,140 @@ class Test_Routine_Execution extends TestCase {
 		$this->assertFalse( $result['ok'], 'test_run reports failure when no run was produced' );
 		$this->assertArrayHasKey( 'error', $result );
 		$this->assertSame( 'skipped', Deployments::get( $created['id'] )['config']['last_status'] );
+	}
+
+	/**
+	 * A manual test-run of a paused routine is allowed (paused only blocks
+	 * scheduled/hook dispatches) and produces a fresh run.
+	 */
+	public function test_run_paused_routine_is_allowed_and_produces_run(): void {
+		$created = Routines::save(
+			array(
+				'kind'       => 'scheduled_task',
+				'agent_slug' => self::AGENT,
+				'prompt'     => 'Do the thing',
+				'schedule'   => 'daily',
+			)
+		);
+		$this->assertTrue( $created['ok'] );
+
+		Routines::pause( $created['id'] );
+
+		$result = Routines::test_run( $created['id'], 0, new Agent_Controller( $this->fake_llm() ) );
+
+		$this->assertTrue( $result['ok'], 'a manual test-run of a paused routine is allowed' );
+		$this->assertNotEmpty( $result['run_id'], 'the test-run produces a fresh run id' );
+		$this->assertSame( $result['run_id'], Deployments::get( $created['id'] )['config']['last_run_id'] );
+	}
+
+	/**
+	 * A paused routine that produced a run earlier must not have that prior run id
+	 * reported as a fresh success when a later manual test-run produces no run.
+	 */
+	public function test_run_paused_routine_does_not_report_stale_success(): void {
+		$created = Routines::save(
+			array(
+				'kind'       => 'scheduled_task',
+				'agent_slug' => self::AGENT,
+				'prompt'     => 'Do the thing',
+				'schedule'   => 'daily',
+			)
+		);
+		$this->assertTrue( $created['ok'] );
+
+		// Produce one real run so the mirror row carries a prior run id.
+		$first = Routines::test_run( $created['id'], 0, new Agent_Controller( $this->fake_llm() ) );
+		$this->assertTrue( $first['ok'] );
+		$this->assertNotEmpty( Deployments::get( $created['id'] )['config']['last_run_id'], 'first run sets last_run_id' );
+
+		Routines::pause( $created['id'] );
+
+		// An unconfigured LLM produces no run, so test_run() must not report the
+		// prior run id as a fresh success.
+		$unconfigured = new class extends \Agentic\LLM_Client {
+			public function is_configured(): bool {
+				return false;
+			}
+		};
+
+		$result = Routines::test_run( $created['id'], 0, new Agent_Controller( $unconfigured ) );
+
+		$this->assertFalse( $result['ok'], 'a paused test-run that produced no run must not report stale success' );
+		$this->assertArrayHasKey( 'error', $result );
+		$this->assertSame( 'skipped', Deployments::get( $created['id'] )['config']['last_status'] );
+		$this->assertNull( Deployments::get( $created['id'] )['config']['last_run_id'] );
+	}
+
+	/**
+	 * When a scheduled run throws, execute_scheduled_task() still restores the
+	 * cron-context user in its finally, instead of leaving the owner impersonated.
+	 */
+	public function test_execute_restores_current_user_when_run_throws(): void {
+		$owner     = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$cron_user = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+
+		$save = Agent_Lifecycle::save_user_scheduled_task(
+			array(
+				'agent_slug' => self::AGENT,
+				'prompt'     => 'Do the thing',
+				'schedule'   => 'daily',
+			)
+		);
+		$this->assertTrue( $save['ok'] );
+
+		$task_id        = $save['id'];
+		$deployments_id = Routines::deployment_id_for_task( $task_id );
+		Deployments::update_config( $deployments_id, array( 'created_by' => $owner ) );
+
+		$user_task = Agent_Lifecycle::find_user_scheduled_task( $task_id );
+		$agent     = \Agentic_Agent_Registry::get_instance()->get_agent_instance( self::AGENT );
+
+		wp_set_current_user( $cron_user );
+
+		try {
+			Agent_Lifecycle::execute_scheduled_task( $agent, Agent_Lifecycle::user_task_to_definition( $user_task ), $this->throwing_controller() );
+
+			$this->assertSame( $cron_user, get_current_user_id(), 'the cron-context user is restored after the run throws' );
+		} finally {
+			wp_set_current_user( 0 );
+		}
+	}
+
+	/**
+	 * When an async-event run throws, handle_async_event() still restores the
+	 * hook-context user in its finally, instead of leaving the owner impersonated.
+	 */
+	public function test_handle_async_event_restores_current_user(): void {
+		$owner     = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$cron_user = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+
+		$save = Agent_Lifecycle::save_user_trigger(
+			array(
+				'agent_slug' => self::TRIGGER_AGENT,
+				'hook'       => 'updated_option',
+				'prompt'     => 'React to the change',
+			)
+		);
+		$this->assertTrue( $save['ok'] );
+
+		$trigger_id     = $save['id'];
+		$deployments_id = Routines::deployment_id_for_trigger( $trigger_id );
+		Deployments::update_config( $deployments_id, array( 'created_by' => $owner ) );
+
+		wp_set_current_user( $cron_user );
+
+		try {
+			Agent_Lifecycle::handle_async_event(
+				self::TRIGGER_AGENT,
+				$trigger_id,
+				'React to the change',
+				array( 'some_option', 'old', 'new' ),
+				$this->throwing_controller()
+			);
+
+			$this->assertSame( $cron_user, get_current_user_id(), 'the hook-context user is restored after the run throws' );
+		} finally {
+			wp_set_current_user( 0 );
+		}
 	}
 }

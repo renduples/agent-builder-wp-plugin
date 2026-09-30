@@ -136,7 +136,8 @@ class Routines {
 			if ( ! $paused ) {
 				$schedule  = (string) ( $config['schedule'] ?? 'daily' );
 				$schedules = wp_get_schedules();
-				if ( ! isset( $schedules[ $schedule ] ) ) {
+				if ( ! isset( $schedules[ $schedule ] ) || empty( $schedules[ $schedule ]['interval'] ) ) {
+					self::restore_paused( $id );
 					return array(
 						'ok'    => false,
 						'error' => __( 'Unknown schedule.', 'agent-builder' ),
@@ -148,6 +149,7 @@ class Routines {
 				$next_ts   = time() + (int) $schedules[ $schedule ]['interval'];
 				$scheduled = wp_schedule_event( $next_ts, $schedule, $hook );
 				if ( false === $scheduled ) {
+					self::restore_paused( $id );
 					return array(
 						'ok'    => false,
 						'error' => __( 'Failed to reschedule routine.', 'agent-builder' ),
@@ -165,6 +167,18 @@ class Routines {
 		}
 
 		return array( 'ok' => true );
+	}
+
+	/**
+	 * Re-apply the paused state after a failed resume, so a failed re-enable never
+	 * leaves the routine enabled with no scheduled event.
+	 *
+	 * @param int $id Routine (Deployments row) ID.
+	 * @return void
+	 */
+	private static function restore_paused( int $id ): void {
+		Deployments::update_config( $id, array( 'paused_at' => current_time( 'mysql' ) ) );
+		Deployments::disable( $id );
 	}
 
 	/**
@@ -402,7 +416,16 @@ class Routines {
 		if ( false === $enabled ) {
 			self::pause( $deployment_id );
 		} elseif ( true === $enabled && $was_paused ) {
-			self::resume( $deployment_id );
+			$resume_result = self::resume( $deployment_id );
+			if ( empty( $resume_result['ok'] ) ) {
+				// A failed re-enable must not leave the routine enabled with no
+				// scheduled event: re-apply the paused state and surface the error.
+				self::pause( $deployment_id );
+				return array(
+					'ok'    => false,
+					'error' => (string) ( $resume_result['error'] ?? '' ),
+				);
+			}
 		} elseif ( null === $enabled && $was_paused ) {
 			self::pause( $deployment_id );
 		}
@@ -460,6 +483,8 @@ class Routines {
 			);
 		}
 
+		$before_run_id = (string) ( $config['last_run_id'] ?? '' );
+
 		if ( Deployments::TYPE_SCHEDULED_TASK === $type ) {
 			$task_id   = (string) ( $config['task_id'] ?? '' );
 			$user_task = Agent_Lifecycle::find_user_scheduled_task( $task_id );
@@ -487,7 +512,10 @@ class Routines {
 		$row    = Deployments::get( $id );
 		$run_id = (string) ( $row['config']['last_run_id'] ?? '' );
 
-		if ( '' === $run_id ) {
+		// Only report a run id produced by this call: a run that returned without
+		// producing a new run leaves last_run_id unchanged, which must not be
+		// reported as a fresh success.
+		if ( '' === $run_id || $run_id === $before_run_id ) {
 			return array(
 				'ok'    => false,
 				'error' => __( 'The test run did not produce a run.', 'agent-builder' ),
