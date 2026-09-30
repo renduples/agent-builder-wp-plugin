@@ -11,6 +11,7 @@
 namespace Agentic\Tests;
 
 use Agentic\Skill_Drafter;
+use Agentic\Skill_Recorder;
 use Agentic\Skills_Registry;
 
 /**
@@ -24,11 +25,20 @@ class Test_Skill_Drafter extends TestCase {
 	private const SESSION = 'draft-session-1';
 
 	/**
+	 * User ids whose recordings this file may have created, cleaned up in tearDown.
+	 *
+	 * @var int[]
+	 */
+	private $recording_users = array();
+
+	/**
 	 * Reset the LLM stub filter, current user and conversation rows.
 	 */
 	public function setUp(): void {
 		parent::setUp();
 		remove_all_filters( 'agentic_skill_drafter_llm' );
+		\Agentic\Skill_Recorder::init();
+		$this->recording_users = array();
 		$this->clear_conversations();
 		wp_set_current_user( 0 );
 	}
@@ -37,6 +47,9 @@ class Test_Skill_Drafter extends TestCase {
 	 * Remove the LLM stub filter and any conversation rows this file wrote.
 	 */
 	public function tearDown(): void {
+		foreach ( $this->recording_users as $user_id ) {
+			delete_transient( 'agentic_skill_recording_' . $user_id );
+		}
 		remove_all_filters( 'agentic_skill_drafter_llm' );
 		$this->clear_conversations();
 		wp_set_current_user( 0 );
@@ -210,6 +223,120 @@ class Test_Skill_Drafter extends TestCase {
 		wp_set_current_user( $user );
 
 		$resp = $this->request( 'POST', '/skills/draft-from-conversation', array( 'session_id' => self::SESSION ) );
+
+		$this->assertSame( 201, $resp->get_status() );
+		$this->assertTrue( $resp->get_data()['ok'] );
+	}
+
+	/**
+	 * from_description() drafts a skill from free-form text.
+	 */
+	public function test_from_description_creates_draft(): void {
+		$this->stub_llm( $this->spec_json() );
+
+		$result = Skill_Drafter::from_description( 'Send a weekly summary to subscribers.' );
+
+		$this->assertTrue( $result['ok'] );
+		$this->assertArrayHasKey( 'edit_url', $result );
+		$row = Skills_Registry::get( (int) $result['id'] );
+		$this->assertNotNull( $row );
+		$this->assertSame( 'draft', $row['source'] );
+		$this->assertSame( 0, (int) $row['enabled'] );
+	}
+
+	/**
+	 * from_description() with empty text errors without touching the LLM.
+	 */
+	public function test_from_description_empty_errors(): void {
+		$this->stub_llm( $this->spec_json() );
+
+		$result = Skill_Drafter::from_description( '   ' );
+
+		$this->assertFalse( $result['ok'] );
+		$this->assertArrayHasKey( 'error', $result );
+		$this->assertSame( 0, $this->count_skills() );
+	}
+
+	/**
+	 * /skills/draft-from-recording is refused (403) without the capability.
+	 */
+	public function test_draft_from_recording_route_gated_on_manage_tools(): void {
+		$subscriber = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		wp_set_current_user( $subscriber );
+
+		$resp = $this->request( 'POST', '/skills/draft-from-recording' );
+
+		$this->assertSame( 403, $resp->get_status() );
+	}
+
+	/**
+	 * /skills/draft-from-recording stops the active recording and drafts a skill
+	 * from its steps.
+	 */
+	public function test_draft_from_recording_route_drafts_steps(): void {
+		$this->stub_llm( $this->spec_json() );
+
+		$user = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		get_user_by( 'id', $user )->add_cap( 'agent_builder_manage_tools' );
+		wp_set_current_user( $user );
+		$this->recording_users[] = $user;
+
+		Skill_Recorder::start( $user, 'rec-route' );
+		do_action(
+			'agent_builder_tool_executed',
+			'db_create_post',
+			array( 'action' => 'create' ),
+			array( 'success' => true ),
+			array( 'user_id' => $user, 'session_id' => 'rec-route', 'action' => 'create' )
+		);
+
+		$resp = $this->request( 'POST', '/skills/draft-from-recording' );
+
+		$this->assertSame( 201, $resp->get_status() );
+		$data = $resp->get_data();
+		$this->assertTrue( $data['ok'] );
+		$this->assertArrayHasKey( 'edit_url', $data );
+		$this->assertNotNull( Skills_Registry::get( (int) $data['id'] ) );
+	}
+
+	/**
+	 * /skills/draft-from-recording with no active recording returns a 400.
+	 */
+	public function test_draft_from_recording_route_without_recording_errors(): void {
+		$this->stub_llm( $this->spec_json() );
+
+		$user = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		get_user_by( 'id', $user )->add_cap( 'agent_builder_manage_tools' );
+		wp_set_current_user( $user );
+
+		$resp = $this->request( 'POST', '/skills/draft-from-recording' );
+
+		$this->assertSame( 400, $resp->get_status() );
+	}
+
+	/**
+	 * /skills/draft-from-description is refused (403) without the capability.
+	 */
+	public function test_draft_from_description_route_gated_on_manage_tools(): void {
+		$subscriber = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		wp_set_current_user( $subscriber );
+
+		$resp = $this->request( 'POST', '/skills/draft-from-description', array( 'description' => 'Do a thing.' ) );
+
+		$this->assertSame( 403, $resp->get_status() );
+	}
+
+	/**
+	 * A user holding agent_builder_manage_tools drafts from text via the route.
+	 */
+	public function test_manage_tools_user_drafts_from_description_via_rest(): void {
+		$this->stub_llm( $this->spec_json() );
+
+		$user = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		get_user_by( 'id', $user )->add_cap( 'agent_builder_manage_tools' );
+		wp_set_current_user( $user );
+
+		$resp = $this->request( 'POST', '/skills/draft-from-description', array( 'description' => 'Back up posts nightly.' ) );
 
 		$this->assertSame( 201, $resp->get_status() );
 		$this->assertTrue( $resp->get_data()['ok'] );

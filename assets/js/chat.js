@@ -125,6 +125,12 @@
             agentSelect.addEventListener('change', handleAgentSwitch);
         }
 
+        // Skills UX (M15-d): Teach a task recording toggle + banner, gated on
+        // the same capability as the skill REST routes.
+        if (typeof agenticChat !== 'undefined' && agenticChat.canManageTools === '1') {
+            initSkillRecorder();
+        }
+
         // Handle suggested prompt clicks
         document.addEventListener('click', function(e) {
             if (e.target.classList.contains('agentic-prompt-btn') && root.contains(e.target)) {
@@ -293,6 +299,11 @@
 
                 sendMessage(lastUserMsg);
             }
+
+            // ── Save as skill ──────────────────────────────────────────
+            if (btn.classList.contains('agentic-action-save-skill')) {
+                saveMessageAsSkill(msgDiv);
+            }
         });
 
         function fallbackCopy(text, callback) {
@@ -404,6 +415,192 @@
             banner.innerHTML = '<span class="dashicons dashicons-migrate"></span> ' +
                 escapeHtml(handoffText).replace('%s', '<strong>' + escapeHtml(agenticChat.handoffFrom) + '</strong>');
             chatContainer.insertBefore(banner, chatContainer.firstChild);
+        }
+    }
+
+    // ── Skills UX (M15-d) ─────────────────────────────────────────────
+
+    // Resolve an i18n string from the localized agenticChat, with a fallback.
+    function skillLabel(key, fallback) {
+        return (typeof agenticChat !== 'undefined' && agenticChat.i18n && agenticChat.i18n[key]) || fallback;
+    }
+
+    // Show a transient inline notice (with an optional "Review draft" link).
+    // agenticUI.toast() is text-only, so this carries its own anchor.
+    function showSkillNotice(message, editUrl, kind) {
+        if (!chatContainer) return;
+        const notice = document.createElement('div');
+        notice.className = 'agentic-skill-notice agentic-skill-notice--' + (kind || 'success');
+        const text = document.createElement('span');
+        text.className = 'agentic-skill-notice__msg';
+        text.textContent = message;
+        notice.appendChild(text);
+        if (editUrl) {
+            const link = document.createElement('a');
+            link.className = 'agentic-skill-notice__link';
+            link.href = editUrl;
+            link.textContent = skillLabel('reviewDraft', 'Review draft');
+            notice.appendChild(link);
+        }
+        const close = document.createElement('button');
+        close.type = 'button';
+        close.className = 'agentic-skill-notice__close';
+        close.setAttribute('aria-label', 'Dismiss');
+        close.innerHTML = '&times;';
+        notice.appendChild(close);
+        const remove = function() {
+            if (notice.parentNode) notice.parentNode.removeChild(notice);
+        };
+        close.addEventListener('click', remove);
+        chatContainer.insertBefore(notice, chatContainer.firstChild);
+        setTimeout(remove, 8000);
+    }
+
+    // POST /skills/draft-from-conversation for the clicked message, falling back
+    // to the whole conversation when the message has no stored row id yet.
+    function saveMessageAsSkill(msgDiv) {
+        const body = { session_id: sessionId };
+        if (msgDiv && msgDiv.dataset && msgDiv.dataset.messageId) {
+            body.message_id = parseInt(msgDiv.dataset.messageId, 10);
+        }
+        fetch(agenticChat.restUrl + 'skills/draft-from-conversation', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-WP-Nonce': agenticChat.nonce
+            },
+            body: JSON.stringify(body)
+        })
+            .then(function(res) {
+                if (!res.ok) {
+                    return res.json()
+                        .then(function(err) { throw new Error(err.message || skillLabel('saveSkillFailed', 'Could not save the skill.')); })
+                        .catch(function() { throw new Error(skillLabel('saveSkillFailed', 'Could not save the skill.')); });
+                }
+                return res.json();
+            })
+            .then(function(data) {
+                if (data && data.edit_url) {
+                    showSkillNotice(skillLabel('draftCreated', 'Draft skill created.'), data.edit_url, 'success');
+                } else {
+                    showSkillNotice(skillLabel('saveSkillFailed', 'Could not save the skill.'), null, 'error');
+                }
+            })
+            .catch(function(err) {
+                showSkillNotice(err.message || skillLabel('saveSkillFailed', 'Could not save the skill.'), null, 'error');
+            });
+    }
+
+    // "Teach a task" — inject a header toggle and a recording banner, start/stop
+    // the recorder, and on stop draft a skill from the recorded steps.
+    function initSkillRecorder() {
+        const actionsEl = chatContainer.querySelector('.agentic-chat-actions');
+        if (!actionsEl) return;
+
+        let banner = null;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.id = 'agentic-teach-task-btn';
+        btn.className = 'agentic-btn-secondary';
+        btn.title = skillLabel('teachTaskTitle', 'Record a task demonstration');
+        btn.setAttribute('aria-pressed', 'false');
+        btn.innerHTML =
+            '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>';
+        actionsEl.insertBefore(btn, actionsEl.firstChild);
+
+        function showRecordingBanner() {
+            if (banner) {
+                banner.style.display = 'flex';
+                return;
+            }
+            banner = document.createElement('div');
+            banner.className = 'agentic-recording-banner';
+            banner.innerHTML =
+                '<span class="dashicons dashicons-video-alt3"></span>' +
+                '<span class="agentic-recording-banner__text">' + escapeHtml(skillLabel('recordingActive', 'Recording — demonstrate the task in the chat, then stop to create a draft.')) + '</span>' +
+                '<button type="button" class="agentic-recording-banner__stop">' + escapeHtml(skillLabel('recordingStop', 'Stop & create draft')) + '</button>';
+            chatContainer.insertBefore(banner, chatContainer.firstChild);
+            banner.querySelector('.agentic-recording-banner__stop').addEventListener('click', stopRecording);
+        }
+
+        function hideRecordingBanner() {
+            if (banner) banner.style.display = 'none';
+        }
+
+        function setRecording(active) {
+            if (active) {
+                btn.classList.add('agentic-recording-on');
+                btn.setAttribute('aria-pressed', 'true');
+                showRecordingBanner();
+            } else {
+                btn.classList.remove('agentic-recording-on');
+                btn.setAttribute('aria-pressed', 'false');
+                hideRecordingBanner();
+            }
+        }
+
+        function startRecording() {
+            fetch(agenticChat.restUrl + 'skills/recording/start', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-WP-Nonce': agenticChat.nonce
+                },
+                body: JSON.stringify({ session_id: sessionId })
+            })
+                .then(function(res) { return res.json().catch(function() { return {}; }); })
+                .then(function(data) {
+                    if (data && data.ok) {
+                        setRecording(true);
+                    } else {
+                        showSkillNotice(data && data.message ? data.message : skillLabel('recordStartFailed', 'Could not start recording.'), null, 'error');
+                    }
+                })
+                .catch(function() {
+                    showSkillNotice(skillLabel('recordStartFailed', 'Could not start recording.'), null, 'error');
+                });
+        }
+
+        function stopRecording() {
+            btn.disabled = true;
+            fetch(agenticChat.restUrl + 'skills/draft-from-recording', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-WP-Nonce': agenticChat.nonce
+                },
+                body: '{}'
+            })
+                .then(function(res) {
+                    if (!res.ok) {
+                        return res.json()
+                            .then(function(err) { throw new Error(err.message || skillLabel('recordStopFailed', 'Could not create the draft from the recording.')); })
+                            .catch(function() { throw new Error(skillLabel('recordStopFailed', 'Could not create the draft from the recording.')); });
+                    }
+                    return res.json();
+                })
+                .then(function(data) {
+                    setRecording(false);
+                    showSkillNotice(skillLabel('draftCreated', 'Draft skill created.'), data && data.edit_url ? data.edit_url : null, 'success');
+                })
+                .catch(function(err) {
+                    setRecording(false);
+                    showSkillNotice(err.message || skillLabel('recordStopFailed', 'Could not create the draft from the recording.'), null, 'error');
+                })
+                .finally(function() { btn.disabled = false; });
+        }
+
+        btn.addEventListener('click', function() {
+            if (btn.classList.contains('agentic-recording-on')) {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        });
+
+        // Arriving via the Skills screen's "Teach a task" link starts recording.
+        if (typeof agenticChat !== 'undefined' && agenticChat.teachTask === '1') {
+            startRecording();
         }
     }
 
@@ -731,6 +928,13 @@
         const div = document.createElement('div');
         div.className = `agentic-message agentic-message-${role}`;
 
+        // Track the conversation row id so "Save as skill" can draft up to this
+        // message. Live messages have no id yet (the row is written server-side
+        // during send), so saving one drafts from the whole conversation.
+        if (meta && meta.id) {
+            div.dataset.messageId = String(meta.id);
+        }
+
         // Show attached image
         if (imageData && imageData.dataUrl) {
             const imgEl = document.createElement('img');
@@ -785,6 +989,14 @@
                 '<button class="agentic-action-btn agentic-action-regenerate" title="Regenerate response" aria-label="Regenerate response">' +
                     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.17"/></svg>' +
                 '</button>';
+            // Save as skill — only for users who can manage tools (the REST
+            // route is gated the same way).
+            if (typeof agenticChat !== 'undefined' && agenticChat.canManageTools === '1') {
+                actionsDiv.innerHTML +=
+                    '<button class="agentic-action-btn agentic-action-save-skill" title="' + skillLabel('saveAsSkill', 'Save as skill') + '" aria-label="' + skillLabel('saveAsSkill', 'Save as skill') + '">' +
+                        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>' +
+                    '</button>';
+            }
             div.appendChild(actionsDiv);
         }
 
@@ -1311,6 +1523,9 @@
             history.forEach(function(msg) {
                 const role = msg.role === 'user' ? 'user' : 'agent';
                 const meta = {};
+                if (msg.id) {
+                    meta.id = msg.id;
+                }
                 if (msg.tools_used && msg.tools_used.length) {
                     meta.tools = msg.tools_used;
                 }

@@ -87,6 +87,32 @@ class Skill_Drafter {
 	}
 
 	/**
+	 * Draft a skill from a free-form text description.
+	 *
+	 * The Skills screen's "Create from text" entry point: the owner types what
+	 * the skill should do, and the same reviewer-LLM pipeline turns it into a
+	 * disabled draft ready to review and publish.
+	 *
+	 * @param string $text Plain-text description of the task to encode.
+	 * @return array{ok:bool,id?:int,edit_url?:string,error?:string,validation?:string[]}
+	 */
+	public static function from_description( string $text ): array {
+		$text = trim( $text );
+
+		if ( '' === $text ) {
+			return array(
+				'ok'    => false,
+				'error' => __( 'A description is required to draft a skill.', 'agent-builder' ),
+			);
+		}
+
+		$prompt = __( 'A WordPress site owner described the task below. Turn it into a reusable skill.', 'agent-builder' )
+			. "\n\n" . $text;
+
+		return self::draft( $prompt, '' );
+	}
+
+	/**
 	 * Shared draft pipeline: ask the reviewer LLM for a spec, validate it, and
 	 * persist a disabled draft row.
 	 *

@@ -534,6 +534,97 @@
     color: var(--ac-accent, #6366f1);
 }
 
+/* Skills UX (M15-d) — Save as skill / Teach a task */
+.agentic-action-save-skill:hover {
+    color: var(--ac-accent, #6366f1);
+}
+
+.agentic-recording-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff4e5;
+    border-left: 3px solid #f59e0b;
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin: 0 0 12px 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #2c3338;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+.agentic-recording-banner .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: #f59e0b;
+    flex-shrink: 0;
+}
+.agentic-recording-banner__text {
+    flex: 1;
+}
+.agentic-recording-banner__stop {
+    flex-shrink: 0;
+    border: 1px solid #f59e0b;
+    background: #f59e0b;
+    color: #fff;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 12px;
+    cursor: pointer;
+}
+.agentic-recording-banner__stop:hover {
+    background: #d97706;
+    border-color: #d97706;
+}
+
+.agentic-btn-secondary.agentic-recording-on {
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.12);
+    border-color: #f59e0b;
+}
+
+.agentic-skill-notice {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #ecfdf5;
+    border-left: 3px solid #22c55e;
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin: 0 0 12px 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #2c3338;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+.agentic-skill-notice--error {
+    background: #fef2f2;
+    border-left-color: #ef4444;
+}
+.agentic-skill-notice__msg {
+    flex: 1;
+}
+.agentic-skill-notice__link {
+    flex-shrink: 0;
+    font-weight: 600;
+    color: #2271b1;
+    text-decoration: none;
+}
+.agentic-skill-notice__link:hover {
+    text-decoration: underline;
+}
+.agentic-skill-notice__close {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    color: #6b7280;
+    padding: 0;
+}
+
 /* Tool usage indicator */
 .agentic-tools-used {
     display: flex;

@@ -71,6 +71,33 @@ class Skill_Drafter_REST {
 				),
 			)
 		);
+
+		register_rest_route(
+			self::NS,
+			'/skills/draft-from-recording',
+			array(
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => array( __CLASS__, 'draft_from_recording' ),
+				'permission_callback' => array( __CLASS__, 'can_manage' ),
+			)
+		);
+
+		register_rest_route(
+			self::NS,
+			'/skills/draft-from-description',
+			array(
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => array( __CLASS__, 'draft_from_description' ),
+				'permission_callback' => array( __CLASS__, 'can_manage' ),
+				'args'                => array(
+					'description' => array(
+						'type'              => 'string',
+						'required'          => true,
+						'sanitize_callback' => 'sanitize_textarea_field',
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -94,6 +121,67 @@ class Skill_Drafter_REST {
 		$up_to_id   = ( null !== $message_id && '' !== $message_id ) ? (int) $message_id : null;
 
 		$result = Skill_Drafter::from_conversation( $session_id, $up_to_id );
+
+		if ( empty( $result['ok'] ) ) {
+			return new \WP_Error(
+				'rest_skill_draft_failed',
+				(string) ( $result['error'] ?? __( 'Could not draft the skill.', 'agent-builder' ) ),
+				array( 'status' => 400 )
+			);
+		}
+
+		return new \WP_REST_Response( $result, 201 );
+	}
+
+	/**
+	 * POST /skills/draft-from-recording — stop the active recording and draft a
+	 * skill from its captured steps.
+	 *
+	 * The recorder's stop() is the only place that returns the raw `steps`, so
+	 * this route consumes the recording itself rather than asking the client to
+	 * round-trip the steps back through a second request. Keeping it here (and
+	 * not inside Skill_Recorder_REST) lets the drafter own the drafting, while
+	 * the recorder's own stop() route stays a pure inspect/stop concern.
+	 *
+	 * @param \WP_REST_Request $_request Request.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public static function draft_from_recording( \WP_REST_Request $_request ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- REST callback signature.
+		$stopped = \Agentic\Skill_Recorder::stop( get_current_user_id() );
+
+		if ( empty( $stopped['ok'] ) ) {
+			return new \WP_Error(
+				'rest_skill_draft_recording_failed',
+				(string) ( $stopped['error'] ?? __( 'No recording to draft from.', 'agent-builder' ) ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$steps  = isset( $stopped['steps'] ) && is_array( $stopped['steps'] ) ? $stopped['steps'] : array();
+		$result = Skill_Drafter::from_recording( $steps );
+
+		if ( empty( $result['ok'] ) ) {
+			return new \WP_Error(
+				'rest_skill_draft_failed',
+				(string) ( $result['error'] ?? __( 'Could not draft the skill.', 'agent-builder' ) ),
+				array( 'status' => 400 )
+			);
+		}
+
+		return new \WP_REST_Response( $result, 201 );
+	}
+
+	/**
+	 * POST /skills/draft-from-description — draft a skill from a plain-text
+	 * description (the Skills screen "Create from text" entry point).
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public static function draft_from_description( \WP_REST_Request $request ) {
+		$text = sanitize_textarea_field( (string) $request->get_param( 'description' ) );
+
+		$result = Skill_Drafter::from_description( $text );
 
 		if ( empty( $result['ok'] ) ) {
 			return new \WP_Error(
