@@ -867,7 +867,7 @@ class REST_API {
 				// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table query.
 				$rows = $wpdb->get_results(
 					$wpdb->prepare(
-						"SELECT role, content, tools_used, feedback, created_at FROM {$conv_table} WHERE session_id = %s ORDER BY created_at ASC, id ASC", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+						"SELECT id, role, content, tools_used, feedback, created_at FROM {$conv_table} WHERE session_id = %s ORDER BY created_at ASC, id ASC", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 						$session_id
 					),
 					ARRAY_A
@@ -876,7 +876,7 @@ class REST_API {
 				// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table query.
 				$rows = $wpdb->get_results(
 					$wpdb->prepare(
-						"SELECT role, content, tools_used, feedback, created_at FROM {$conv_table} WHERE session_id = %s AND user_id = %d ORDER BY created_at ASC, id ASC", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+						"SELECT id, role, content, tools_used, feedback, created_at FROM {$conv_table} WHERE session_id = %s AND user_id = %d ORDER BY created_at ASC, id ASC", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 						$session_id,
 						$user_id
 					),
@@ -885,6 +885,7 @@ class REST_API {
 			}
 			foreach ( $rows as $row ) {
 				$entry = array(
+					'id'      => (int) $row['id'],
 					'role'    => $row['role'],
 					'content' => $row['content'],
 					'time'    => $row['created_at'],
