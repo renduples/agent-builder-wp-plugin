@@ -789,6 +789,7 @@ Inventory_REST::init();
 Notifications_REST::init();
 Approval_Rules_REST::init();
 Approval_Rules::init();
+Routines_REST::init();
 Notifications::init();
 Admin_Bar_Inbox::init();
 Site_Health::init();

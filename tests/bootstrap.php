@@ -56,6 +56,9 @@ function _agentic_create_test_tables() {
 	if ( class_exists( 'Agentic\\Security_Log' ) ) {
 		\Agentic\Security_Log::create_table();
 	}
+	if ( class_exists( 'Agentic\\Deployments' ) ) {
+		\Agentic\Deployments::create_table();
+	}
 
 	global $wpdb;
 	$charset_collate = $wpdb->get_charset_collate();
