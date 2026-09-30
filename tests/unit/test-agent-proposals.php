@@ -14,7 +14,9 @@ namespace Agentic\Tests;
 use Agentic\Agent_Proposals;
 use Agentic\Approval_Queue;
 use Agentic\Risk_Level;
+use Agentic\Tool_Base;
 use Agentic\Tool_Grants;
+use Agentic\Tool_Loader;
 
 /**
  * Test case for Agent_Proposals.
@@ -642,7 +644,7 @@ class Test_Agent_Proposals extends TestCase {
 			$wpdb->prefix . 'agent_builder_proposals',
 			array(
 				'status'     => 'deciding',
-				'created_at' => gmdate( 'Y-m-d H:i:s', time() - 20 * MINUTE_IN_SECONDS ),
+				'decided_at' => gmdate( 'Y-m-d H:i:s', time() - 20 * MINUTE_IN_SECONDS ),
 			),
 			array( 'id' => $proposal['id'] )
 		);
@@ -684,6 +686,167 @@ class Test_Agent_Proposals extends TestCase {
 	}
 
 	/**
+	 * cleanup_expired() reaps a stuck 'deciding' row by its claim timestamp
+	 * (decided_at), never by created_at: a proposal that sat pending for an hour
+	 * and is only claimed now must survive cleanup, or a live approval would be
+	 * reaped the instant it is claimed (double execution).
+	 */
+	public function test_cleanup_expired_does_not_reap_a_just_claimed_row(): void {
+		$agent_id    = 'just-claimed-agent';
+		$listener_id = 'l-just-claimed';
+		$tool        = 'list_posts';
+
+		$proposal = Agent_Proposals::create( $tool, array(), $agent_id, 'Just claimed', '', '', 0, $listener_id );
+
+		// Backdate created_at so the proposal looks like it sat pending for an
+		// hour; its claim (decided_at) must still be "now".
+		global $wpdb;
+		$wpdb->update(
+			$wpdb->prefix . 'agent_builder_proposals',
+			array( 'created_at' => gmdate( 'Y-m-d H:i:s', time() - HOUR_IN_SECONDS ) ),
+			array( 'id' => $proposal['id'] )
+		);
+
+		// Claim it now, exactly as approve()/approve_with_grant() do before
+		// executing — mark_deciding() stamps decided_at = now.
+		$mark_deciding = new \ReflectionMethod( Agent_Proposals::class, 'mark_deciding' );
+		$this->assertTrue( $mark_deciding->invoke( null, $proposal['id'] ) );
+
+		$flipped = Agent_Proposals::cleanup_expired();
+
+		$this->assertSame( 0, $flipped );
+		$row = $this->get_proposal_row( $proposal['id'] );
+		$this->assertSame( 'deciding', $row['status'] );
+	}
+
+	/**
+	 * proposal_failed() treats only an 'error' key or a validate_args rejection
+	 * (`error_code => 'invalid_args'`) as a failure: a tool that ran and returned
+	 * `success => false` for its own reasons is a successful run, not a failure.
+	 */
+	public function test_proposal_failed_predicate(): void {
+		$this->assertTrue( Agent_Proposals::proposal_failed( array( 'error' => 'boom' ) ) );
+		$this->assertTrue( Agent_Proposals::proposal_failed( array( 'success' => false, 'error_code' => 'invalid_args', 'message' => 'Missing required parameter: name' ) ) );
+		$this->assertFalse( Agent_Proposals::proposal_failed( array( 'success' => false ) ) );
+		$this->assertFalse( Agent_Proposals::proposal_failed( array( 'success' => false, 'message' => 'Declined for its own reasons.' ) ) );
+		$this->assertFalse( Agent_Proposals::proposal_failed( array( 'success' => true ) ) );
+		$this->assertFalse( Agent_Proposals::proposal_failed( array() ) );
+	}
+
+	/**
+	 * handle_proposal() returns 200 (not 409) for a tool that ran and returned
+	 * `success => false` for its own reasons — only an 'error' key or a
+	 * validate_args rejection is a failed approval.
+	 */
+	public function test_handle_proposal_returns_200_when_tool_returns_success_false(): void {
+		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $admin );
+
+		$this->register_test_tool( new Stub_Success_False_Tool() );
+
+		$proposal = Agent_Proposals::create(
+			'stub_success_false',
+			array(),
+			'wordpress-assistant',
+			'Runs and declines on its own'
+		);
+
+		$request = new \WP_REST_Request( 'POST', '/agentic/v1/proposals/' . $proposal['id'] );
+		$request->set_param( 'action', 'once' );
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertArrayNotHasKey( 'error', $response->get_data() );
+		$this->assertSame( false, $response->get_data()['success'] ?? null );
+
+		$row = $this->get_proposal_row( $proposal['id'] );
+		$this->assertSame( 'approved', $row['status'] );
+	}
+
+	/**
+	 * approve_with_grant() turns a refused grant write (here: a session blob owned
+	 * by a different user) into an error *before* the tool runs, so a tool is never
+	 * executed with no grant stored, and the row is finalised to 'failed'.
+	 */
+	public function test_approve_with_grant_refuses_execution_when_grant_denied(): void {
+		// A session blob owned by user 1 already exists for this session.
+		Tool_Grants::grant( 'session', 'list_posts@some-agent', array( 'session_id' => 'sess-denied', 'user_id' => 1 ) );
+
+		$proposal = Agent_Proposals::create(
+			'db_update_option',
+			array( 'name' => 'agent_builder_test_denied_opt', 'value' => 'must-not-exist' ),
+			'wordpress-assistant',
+			'Refused grant'
+		);
+
+		// Approving as user 2 against user 1's blob: grant() refuses, so the tool
+		// must not run and the row must fail.
+		$result = Agent_Proposals::approve_with_grant(
+			$proposal['id'],
+			'session',
+			'db_update_option@wordpress-assistant',
+			array( 'session_id' => 'sess-denied', 'user_id' => 2 )
+		);
+
+		$this->assertSame( 'The grant could not be stored.', $result['error'] ?? null );
+		$this->assertFalse( get_option( 'agent_builder_test_denied_opt' ), 'the tool must not run when the grant is refused' );
+
+		$row = $this->get_proposal_row( $proposal['id'] );
+		$this->assertSame( 'failed', $row['status'] );
+	}
+
+	/**
+	 * handle_proposal() binds a session grant to the proposal's creator, not the
+	 * acting user: an admin approving another user's proposal mints a session blob
+	 * owned by the creator, never the admin.
+	 */
+	public function test_session_grant_binds_to_proposal_creator(): void {
+		$owner = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $admin );
+
+		$proposal = Agent_Proposals::create(
+			'list_posts',
+			array(),
+			'wordpress-assistant',
+			'Session grant binds to creator',
+			'',
+			'',
+			$owner,
+			'',
+			'sess-owner'
+		);
+
+		$request = new \WP_REST_Request( 'POST', '/agentic/v1/proposals/' . $proposal['id'] );
+		$request->set_param( 'action', 'session' );
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertSame( 200, $response->get_status() );
+
+		$blob = get_transient( 'agentic_session_grants_sess-owner' );
+		$this->assertIsArray( $blob );
+		$this->assertSame( $owner, (int) $blob['user'], 'the session grant must bind to the proposal creator, not the admin' );
+	}
+
+	/**
+	 * Inject a test tool into the shared Tool_Loader singleton without re-running
+	 * load() (which would re-glob the real tool dirs via include_once and drop the
+	 * already-included instances). Real tools remain untouched.
+	 *
+	 * @param Tool_Base $tool Tool instance to register.
+	 * @return void
+	 */
+	private function register_test_tool( Tool_Base $tool ): void {
+		$loader = Tool_Loader::get_instance();
+		$loader->load(); // Idempotent; ensures real tools are loaded before we add ours.
+
+		$prop  = new \ReflectionProperty( Tool_Loader::class, 'tools' );
+		$tools = $prop->getValue( $loader );
+		$tools[ $tool->get_name() ] = $tool;
+		$prop->setValue( $loader, $tools );
+	}
+
+	/**
 	 * Fetch a raw proposals table row by id.
 	 *
 	 * @param string $proposal_id Proposal UUID.
@@ -696,5 +859,74 @@ class Test_Agent_Proposals extends TestCase {
 			$wpdb->prepare( "SELECT * FROM {$wpdb->prefix}agent_builder_proposals WHERE id = %s", $proposal_id ),
 			ARRAY_A
 		);
+	}
+}
+
+/**
+ * Test double: a tool that runs successfully but returns `success => false` for
+ * its own business reasons (no `error` key, no `invalid_args`). Exercises the
+ * "a tool that ran and declined is a 200, not a 409" path.
+ */
+class Stub_Success_False_Tool extends \Agentic\Tool_Base {
+
+	/**
+	 * Get the tool name.
+	 *
+	 * @return string
+	 */
+	public function get_name(): string {
+		return 'stub_success_false';
+	}
+
+	/**
+	 * Get the tool description.
+	 *
+	 * @return string
+	 */
+	public function get_description(): string {
+		return 'Test tool that declines for its own business reasons.';
+	}
+
+	/**
+	 * Get the tool category.
+	 *
+	 * @return string
+	 */
+	public function get_category(): string {
+		return 'test';
+	}
+
+	/**
+	 * Get the parameter schema.
+	 *
+	 * @return array
+	 */
+	public function get_parameters(): array {
+		return array(
+			'type'       => 'object',
+			'properties' => new \stdClass(),
+		);
+	}
+
+	/**
+	 * Execute the tool.
+	 *
+	 * @param array $arguments Tool arguments.
+	 * @return array
+	 */
+	public function execute( array $arguments ): array {
+		return array(
+			'success' => false,
+			'message' => 'Declined for its own business reasons.',
+		);
+	}
+
+	/**
+	 * Declare a risk level so the risk-floor coverage test skips this test double.
+	 *
+	 * @return string
+	 */
+	public function get_risk_level(): string {
+		return Risk_Level::NONE;
 	}
 }

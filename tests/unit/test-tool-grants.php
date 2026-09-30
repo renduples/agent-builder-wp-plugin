@@ -253,10 +253,38 @@ class Test_Tool_Grants extends TestCase {
 	 */
 	public function test_revoke_session_removes_grant(): void {
 		Tool_Grants::grant( 'session', 'edit_post@content_writer', array( 'session_id' => 'sess1', 'user_id' => $this->admin_id ) );
-		Tool_Grants::revoke( 'session', 'edit_post@content_writer', array( 'session_id' => 'sess1' ) );
+		Tool_Grants::revoke( 'session', 'edit_post@content_writer', array( 'session_id' => 'sess1', 'user_id' => $this->admin_id ) );
 
 		$stored = get_transient( 'agentic_session_grants_sess1' );
 		$this->assertNotContains( 'edit_post@content_writer', $stored['grants'] );
+	}
+
+	/**
+	 * revoke('session') never revokes from a blob owned by another user: one
+	 * user's failed-approval rollback must not strip another user's grant.
+	 */
+	public function test_revoke_session_does_not_touch_other_users_blob(): void {
+		$owner = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		set_transient( 'agentic_session_grants_sess1', array( 'user' => $owner, 'grants' => array( 'edit_post@content_writer' ) ), DAY_IN_SECONDS );
+
+		$intruder = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		Tool_Grants::revoke( 'session', 'edit_post@content_writer', array( 'session_id' => 'sess1', 'user_id' => $intruder ) );
+
+		$stored = get_transient( 'agentic_session_grants_sess1' );
+		$this->assertSame( $owner, $stored['user'] );
+		$this->assertSame( array( 'edit_post@content_writer' ), $stored['grants'] );
+	}
+
+	/**
+	 * grant('session') returns false when it refuses (owner mismatch), so
+	 * approve_with_grant() can fail the approval before executing the tool.
+	 */
+	public function test_grant_session_returns_false_when_refused(): void {
+		$owner = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		set_transient( 'agentic_session_grants_sess1', array( 'user' => $owner, 'grants' => array() ), DAY_IN_SECONDS );
+
+		$intruder = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		$this->assertFalse( Tool_Grants::grant( 'session', 'edit_post@content_writer', array( 'session_id' => 'sess1', 'user_id' => $intruder ) ) );
 	}
 
 	/**
@@ -347,9 +375,9 @@ class Test_Tool_Grants extends TestCase {
 		$this->assertTrue( Tool_Grants::has( 'session', 'edit_post@content_writer', array( 'session_id' => 'sess1', 'user_id' => $this->admin_id ) ) );
 		$this->assertTrue( Tool_Grants::has( 'run', 'edit_post@content_writer', array( 'run_id' => 'run1' ) ) );
 
-		// has() keys session on the session id alone (user binding is resolve()'s
-		// concern), so a differing user_id still reports an existing grant.
-		$this->assertTrue( Tool_Grants::has( 'session', 'edit_post@content_writer', array( 'session_id' => 'sess1', 'user_id' => 999999 ) ) );
+		// has() keys session on the blob's owning user, mirroring grant(): a grant
+		// held by another user's session is not one this caller owns.
+		$this->assertFalse( Tool_Grants::has( 'session', 'edit_post@content_writer', array( 'session_id' => 'sess1', 'user_id' => 999999 ) ) );
 
 		$this->assertFalse( Tool_Grants::has( 'always', 'other_tool', array( 'user_id' => $this->admin_id ) ) );
 		$this->assertFalse( Tool_Grants::has( 'session', 'other_tool@content_writer', array( 'session_id' => 'sess1', 'user_id' => $this->admin_id ) ) );
