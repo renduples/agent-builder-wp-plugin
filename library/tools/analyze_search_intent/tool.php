@@ -169,7 +169,7 @@ class Analyze_Search_Intent extends \Agentic\Tool_Base {
 		arsort( $signals );
 		$primary_intent = array_key_first( $signals );
 		$max_score      = max( $signals );
-		$total          = array_sum( $signals ) ?: 1;
+		$total          = array_sum( $signals ) ? array_sum( $signals ) : 1;
 		$confidence     = round( $max_score / $total * 100 );
 
 		$sorted    = array_values( $signals );

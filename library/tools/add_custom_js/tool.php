@@ -53,7 +53,10 @@ class Add_Custom_Js extends Tool_Base {
 	}
 
 	public function get_annotations(): array {
-		return array( 'read_only' => false, 'destructive' => false );
+		return array(
+			'read_only'   => false,
+			'destructive' => false,
+		);
 	}
 
 	public function execute( array $args ): array {

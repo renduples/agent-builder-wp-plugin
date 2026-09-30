@@ -94,7 +94,8 @@ class Add_Faq_Schema extends \Agentic\Tool_Base {
 		$qa_pairs = array();
 		$parts    = preg_split( '/(<h[23][^>]*>.*?<\/h[23]>)/is', $content, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY );
 
-		for ( $i = 0; $i < count( $parts ); $i++ ) {
+		$parts_count = count( $parts );
+		for ( $i = 0; $i < $parts_count; $i++ ) {
 			if ( preg_match( '/<h[23][^>]*>(.*?)<\/h[23]>/is', $parts[ $i ], $heading_match ) ) {
 				$question = trim( wp_strip_all_tags( $heading_match[1] ) );
 				if ( str_contains( $question, '?' ) || preg_match( '/^(?:what|how|why|when|where|who|which|can|does|is|are|do|should|will|would)\b/i', $question ) ) {

@@ -71,7 +71,7 @@ class Analyze_Semantics extends \Agentic\Tool_Base {
 		$result = array(
 			'post_id'       => $post_id,
 			'title'         => $title,
-			'focus_keyword' => $focus_kw ?: '(none set)',
+			'focus_keyword' => $focus_kw ? $focus_kw : '(none set)',
 			'placement'     => array(),
 			'issues'        => array(),
 		);

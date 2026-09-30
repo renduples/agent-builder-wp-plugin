@@ -112,7 +112,7 @@ class Check_Permalink_Structure extends \Agentic\Tool_Base {
 		}
 
 		return array(
-			'permalink_structure' => $permalink ?: '(default)',
+			'permalink_structure' => $permalink ? $permalink : '(default)',
 			'is_seo_friendly'     => ! empty( $permalink ) && str_contains( $permalink, '%postname%' ),
 			'total_posts_checked' => count( $posts ),
 			'long_slugs'          => array_slice( $long_slugs, 0, 10 ),

@@ -79,7 +79,7 @@ class Analyze_Topic_Coverage extends \Agentic\Tool_Base {
 		}
 
 		// Content gap suggestions.
-		$strong_cats = array_filter( $cat_results, fn( $c ) => $c['status'] === 'strong' );
+		$strong_cats = array_filter( $cat_results, fn( $c ) => 'strong' === $c['status'] );
 		$suggestions = array();
 		foreach ( $weak_cats as $wc ) {
 			$suggestions[] = "Write 3-5 more posts in \"{$wc['name']}\" to build topical authority (currently {$wc['count']} posts).";
