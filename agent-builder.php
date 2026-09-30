@@ -790,6 +790,8 @@ Notifications_REST::init();
 Approval_Rules_REST::init();
 Approval_Rules::init();
 Routines_REST::init();
+Skill_Recorder::init();
+Skill_Recorder_REST::init();
 Notifications::init();
 Admin_Bar_Inbox::init();
 Site_Health::init();
