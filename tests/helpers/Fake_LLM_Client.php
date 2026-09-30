@@ -95,6 +95,32 @@ class Fake_LLM_Client extends LLM_Client {
 	}
 
 	/**
+	 * Stream the next scripted response by delegating to chat(), then replay the
+	 * assistant text through the token callback once for consumer parity.
+	 *
+	 * Lets tests exercise the streaming path (tool_start/tool_end/gate_decision
+	 * events) without the real stream_chat() network call.
+	 *
+	 * @param array    $messages       Conversation messages (recorded for inspection).
+	 * @param callable $on_token       Invoked per text token: fn(string $token): void.
+	 * @param array    $tools          Available tools (unused).
+	 * @param bool     $force_tool_use Force-tool-use flag (unused).
+	 * @return array|\WP_Error The next queued response, or WP_Error when exhausted.
+	 */
+	public function stream_chat( array $messages, callable $on_token, array $tools = array(), bool $force_tool_use = false ): array|\WP_Error {
+		$response = $this->chat( $messages, $tools, $force_tool_use );
+
+		if ( ! is_wp_error( $response ) ) {
+			$content = (string) ( $response['choices'][0]['message']['content'] ?? '' );
+			if ( '' !== $content ) {
+				$on_token( $content );
+			}
+		}
+
+		return $response;
+	}
+
+	/**
 	 * Build a scripted tool-call response.
 	 *
 	 * @param string               $tool_name Tool the model asks to call.

@@ -427,6 +427,50 @@ class Test_Runs_REST extends TestCase {
 		$this->assertNotFalse( wp_next_scheduled( 'agent_builder_process_job', array( $job_id ) ) );
 	}
 
+	/**
+	 * GET /runs/{run_id} exposes the per-run step list the live pane polls,
+	 * backed by real Audit_Log rows correlated to the run via Agent_Run::current()
+	 * — not a fabricated or empty array.
+	 */
+	public function test_run_detail_returns_run_backed_steps(): void {
+		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $admin );
+
+		// begin() makes the run current, so the Audit_Log row below is correlated
+		// to this run_id the same way the controller correlates its tool calls.
+		$run = Agent_Run::begin(
+			self::AGENT,
+			array( 'kind' => 'task', 'user_id' => $admin, 'task_text' => 'Summarise the newest posts' )
+		);
+		$run_id = $run->get_run_id();
+
+		$audit = new \Agentic\Audit_Log();
+		$audit->log( self::AGENT, 'tool_executed', 'list_posts', array( 'id' => 1 ) );
+
+		Agent_Run::reset_current_for_tests();
+
+		$resp = $this->request( 'GET', '/runs/' . $run_id );
+		$this->assertSame( 200, $resp->get_status() );
+
+		$data = $resp->get_data();
+		$this->assertSame( $run_id, $data['run']['run_id'] );
+
+		$steps = $data['steps'];
+		$this->assertNotEmpty( $steps, 'the run detail must expose real per-run steps' );
+
+		$tool_step = null;
+		foreach ( $steps as $step ) {
+			if ( 'tool_executed' === ( $step['action'] ?? '' ) ) {
+				$tool_step = $step;
+				break;
+			}
+		}
+
+		$this->assertNotNull( $tool_step, 'the tool_executed step must be present' );
+		$this->assertSame( $run_id, $tool_step['run_id'] ?? '' );
+		$this->assertSame( 'list_posts', $tool_step['target_type'] ?? '' );
+	}
+
 	// -------------------------------------------------------------------------
 	// Helpers
 	// -------------------------------------------------------------------------
