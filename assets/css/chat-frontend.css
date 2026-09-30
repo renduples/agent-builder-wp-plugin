@@ -315,6 +315,16 @@
     animation-delay: 0.4s;
 }
 
+/* The label span is the last child; don't style it as one of the dots. */
+.agentic-chat-frontend .agentic-typing-indicator span:last-child {
+    width: auto;
+    height: auto;
+    background: none;
+    border-radius: 0;
+    animation: none;
+    white-space: nowrap;
+}
+
 @keyframes agenticTyping {
     0%, 80%, 100% {
         transform: scale(0.8);
