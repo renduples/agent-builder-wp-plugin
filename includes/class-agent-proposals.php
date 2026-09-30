@@ -312,23 +312,31 @@ class Agent_Proposals {
 
 		// Only now — after the claim — persist the grant, then execute. The grant
 		// write and the execution share one try so a throw from either is treated
-		// as a failure: the grant (if this call created it) is rolled back below
-		// and finish_approval() still runs to move the proposal out of 'deciding'.
+		// as a failure, and the revoke + finalise live in the finally so the
+		// claimed row always leaves 'deciding' — even when grant() throws. A
+		// grant() that refuses (e.g. a session blob owned by another user) is
+		// turned into an error *before* the tool runs, so a refused grant never
+		// executes with no grant stored.
+		$result = array();
 		try {
-			Tool_Grants::grant( $scope, $grant_key, $grant_ctx );
-			$result = self::execute_proposal( $proposal );
+			if ( ! Tool_Grants::grant( $scope, $grant_key, $grant_ctx ) ) {
+				$result = array( 'error' => 'The grant could not be stored.' );
+			} else {
+				$result = self::execute_proposal( $proposal );
+			}
 		} catch ( \Throwable $e ) {
 			$result = array( 'error' => sprintf( 'Execution failed: %s', $e->getMessage() ) );
-		}
+		} finally {
+			// Roll back a grant this call created when execution failed, so a failed
+			// approval never leaves a lasting grant behind. A pre-existing grant is
+			// left untouched, and revoke() refuses to touch a blob owned by another
+			// user.
+			if ( ! $grant_existed && self::proposal_failed( $result ) ) {
+				Tool_Grants::revoke( $scope, $grant_key, $grant_ctx );
+			}
 
-		// Roll back a grant this call created when execution failed, so a failed
-		// approval never leaves a lasting grant behind. A pre-existing grant is
-		// left untouched.
-		if ( ! $grant_existed && self::proposal_failed( $result ) ) {
-			Tool_Grants::revoke( $scope, $grant_key, $grant_ctx );
+			return self::finish_approval( $proposal_id, $proposal, $result );
 		}
-
-		return self::finish_approval( $proposal_id, $proposal, $result );
 	}
 
 	/**
@@ -355,17 +363,22 @@ class Agent_Proposals {
 
 	/**
 	 * Whether a proposal execution result counts as a failure (rather than a
-	 * successful run): an 'error' key, or an explicit `success => false`.
+	 * successful run): an 'error' key, or a validate_args rejection
+	 * (`error_code => 'invalid_args'`). A tool that ran and returned
+	 * `success => false` for its own reasons is a successful run, not a failure.
+	 *
+	 * Shared by handle_proposal()'s 409 decision and approve_with_grant()'s
+	 * rollback/status decision so the two can never disagree.
 	 *
 	 * @param array $result Tool execution result.
 	 * @return bool
 	 */
-	private static function proposal_failed( array $result ): bool {
+	public static function proposal_failed( array $result ): bool {
 		if ( isset( $result['error'] ) ) {
 			return true;
 		}
 
-		return array_key_exists( 'success', $result ) && false === $result['success'];
+		return 'invalid_args' === ( $result['error_code'] ?? null );
 	}
 
 	/**
@@ -539,15 +552,15 @@ class Agent_Proposals {
 		// pending→deciding claim and finalise(), so no one will ever resolve the
 		// row. Mark them 'failed' and clear any listener dedupe marker so a gated
 		// listener is not permanently blocked from proposing again. The age check
-		// uses created_at (the only timestamp set before finalise()); a row that
-		// sat pending long before it was claimed is briefly at risk, but the
-		// deciding window is seconds and this cleanup runs on a cron, so the
-		// practical exposure is a mis-labelled status, never a double execution.
+		// keys on decided_at (stamped by mark_deciding() at claim time), never
+		// created_at: a proposal that sat pending long before it was claimed must
+		// not be reaped the instant it is claimed, or the still-running execution
+		// would be double-run.
 		$deciding_cutoff = gmdate( 'Y-m-d H:i:s', time() - 15 * MINUTE_IN_SECONDS );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Custom table read.
 		$stuck = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT id, agent_id, listener_id, tool FROM {$table} WHERE status = 'deciding' AND created_at < %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT id, agent_id, listener_id, tool FROM {$table} WHERE status = 'deciding' AND decided_at < %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				$deciding_cutoff
 			),
 			ARRAY_A
@@ -727,6 +740,10 @@ class Agent_Proposals {
 	 * the listener dedupe marker survives until execution completes and the
 	 * decision is finalised.
 	 *
+	 * The claim also stamps decided_at so cleanup_expired() can age a stuck row
+	 * from the moment it was claimed, not from created_at: a proposal that sat
+	 * pending for a long time must not be reaped the instant it is claimed.
+	 *
 	 * @param string $proposal_id Proposal UUID.
 	 * @return bool True when this call claimed the pending row (1 affected row).
 	 */
@@ -734,12 +751,12 @@ class Agent_Proposals {
 		global $wpdb;
 
 		$table = $wpdb->prefix . self::TABLE;
-		$sql   = "UPDATE {$table} SET status = 'deciding' WHERE id = %s AND status = 'pending'";
+		$sql   = "UPDATE {$table} SET status = 'deciding', decided_at = %s WHERE id = %s AND status = 'pending'";
 
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- Custom table conditional claim.
 		$updated = $wpdb->query(
 			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Custom plugin table.
-			$wpdb->prepare( $sql, $proposal_id )
+			$wpdb->prepare( $sql, gmdate( 'Y-m-d H:i:s' ), $proposal_id )
 		);
 
 		return 1 === (int) $updated;

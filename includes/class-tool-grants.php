@@ -134,14 +134,16 @@ class Tool_Grants {
 	 *                      passed as a `tool@agent` key.
 	 * @param array  $ctx   Context carrying where to write: 'user_id' (always and
 	 *                      session), 'session_id' (session), or 'run_id' (run).
-	 * @return void
+	 * @return bool True when the grant is now persisted; false when the store
+	 *              refused the write (a missing scope key, or a session blob owned
+	 *              by a different user).
 	 */
-	public static function grant( string $scope, string $tool, array $ctx ): void {
+	public static function grant( string $scope, string $tool, array $ctx ): bool {
 		switch ( $scope ) {
 			case 'always':
 				$user_id = (int) ( $ctx['user_id'] ?? 0 );
 				if ( 0 === $user_id ) {
-					return;
+					return false;
 				}
 				$grants = get_user_meta( $user_id, self::ALWAYS_META_KEY, true );
 				if ( ! is_array( $grants ) ) {
@@ -151,14 +153,14 @@ class Tool_Grants {
 					$grants[] = $tool;
 					update_user_meta( $user_id, self::ALWAYS_META_KEY, $grants );
 				}
-				return;
+				return true;
 
 			case 'session':
 				$session_id = (string) ( $ctx['session_id'] ?? '' );
-				if ( '' === $session_id ) {
-					return;
+				$user_id    = (int) ( $ctx['user_id'] ?? 0 );
+				if ( '' === $session_id || 0 === $user_id ) {
+					return false;
 				}
-				$user_id = (int) ( $ctx['user_id'] ?? 0 );
 				$key     = 'agentic_session_grants_' . sanitize_key( $session_id );
 				$session = get_transient( $key );
 				if ( is_array( $session ) && is_array( $session['grants'] ?? null ) ) {
@@ -166,7 +168,7 @@ class Tool_Grants {
 					// append into a blob owned by another user: a different user's
 					// grant write must not piggyback on (or overwrite) it.
 					if ( (int) ( $session['user'] ?? 0 ) !== $user_id ) {
-						return;
+						return false;
 					}
 				} else {
 					$session = array(
@@ -178,12 +180,12 @@ class Tool_Grants {
 					$session['grants'][] = $tool;
 				}
 				set_transient( $key, $session, DAY_IN_SECONDS );
-				return;
+				return true;
 
 			case 'run':
 				$run_id = (string) ( $ctx['run_id'] ?? '' );
 				if ( '' === $run_id ) {
-					return;
+					return false;
 				}
 				// Key on the exact run id, never sanitize_key(): two distinct ids
 				// (e.g. `run_abc.DEF` vs `run_abcdef`) must not share a grant.
@@ -198,8 +200,10 @@ class Tool_Grants {
 				// A run should never legitimately outlive a day; the transient is
 				// the run grant's lifetime, not the run row's `state` column.
 				set_transient( $key, $grants, DAY_IN_SECONDS );
-				return;
+				return true;
 		}
+
+		return false;
 	}
 
 	/**
@@ -228,12 +232,18 @@ class Tool_Grants {
 
 		if ( 'session' === $scope ) {
 			$session_id = (string) ( $ctx['session_id'] ?? '' );
+			$user_id    = (int) ( $ctx['user_id'] ?? 0 );
 			if ( '' === $session_id ) {
 				return;
 			}
 			$key     = 'agentic_session_grants_' . sanitize_key( $session_id );
 			$session = get_transient( $key );
 			if ( is_array( $session ) && is_array( $session['grants'] ?? null ) ) {
+				// Never revoke from a blob owned by another user: the rollback of one
+				// user's failed approval must not strip another user's grant.
+				if ( $user_id > 0 && (int) ( $session['user'] ?? 0 ) !== $user_id ) {
+					return;
+				}
 				$session['grants'] = array_values( array_diff( $session['grants'], array( $tool ) ) );
 				set_transient( $key, $session, DAY_IN_SECONDS );
 			}
@@ -281,12 +291,19 @@ class Tool_Grants {
 
 			case 'session':
 				$session_id = (string) ( $ctx['session_id'] ?? '' );
+				$user_id    = (int) ( $ctx['user_id'] ?? 0 );
 				if ( '' === $session_id ) {
 					return false;
 				}
 				$session = get_transient( 'agentic_session_grants_' . sanitize_key( $session_id ) );
 
-				return is_array( $session ) && is_array( $session['grants'] ?? null ) && in_array( $tool, $session['grants'], true );
+				// Mirror grant()'s ownership check: a blob is only "this user's
+				// grant" when its stored user matches the caller's — a grant held by
+				// another user's session is not one this call owns (or may roll back).
+				return is_array( $session )
+					&& is_array( $session['grants'] ?? null )
+					&& (int) ( $session['user'] ?? 0 ) === $user_id
+					&& in_array( $tool, $session['grants'], true );
 
 			case 'run':
 				$run_id = (string) ( $ctx['run_id'] ?? '' );
