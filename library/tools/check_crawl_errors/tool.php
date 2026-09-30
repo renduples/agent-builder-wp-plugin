@@ -92,7 +92,7 @@ class Check_Crawl_Errors extends \Agentic\Tool_Base {
 			}
 
 			$code = wp_remote_retrieve_response_code( $response );
-			if ( $code === 200 ) {
+			if ( 200 === $code ) {
 				++$ok_count;
 			} elseif ( $code >= 300 && $code < 400 ) {
 				$location    = wp_remote_retrieve_header( $response, 'location' );

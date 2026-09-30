@@ -162,7 +162,7 @@ class Check_AI_Headers extends \Agentic\Tool_Base {
 
 		// Cache-Control header.
 		$cache_control             = $headers['cache-control'] ?? '';
-		$findings['cache_control'] = $cache_control ?: null;
+		$findings['cache_control'] = $cache_control ? $cache_control : null;
 		if ( ! empty( $cache_control ) && stripos( $cache_control, 'no-store' ) !== false ) {
 			$issues[] = array(
 				'message'  => 'Cache-Control: no-store detected.',

@@ -53,7 +53,10 @@ class Add_Custom_Css extends Tool_Base {
 	}
 
 	public function get_annotations(): array {
-		return array( 'read_only' => false, 'destructive' => false );
+		return array(
+			'read_only'   => false,
+			'destructive' => false,
+		);
 	}
 
 	public function execute( array $args ): array {
@@ -67,8 +70,8 @@ class Add_Custom_Css extends Tool_Base {
 			return array( 'error' => 'css is required and cannot be empty.' );
 		}
 
-		$snippets    = (array) get_option( 'agent_builder_custom_css', array() );
-		$snippet_id  = 'css_' . time() . '_' . wp_rand( 1000, 9999 );
+		$snippets   = (array) get_option( 'agent_builder_custom_css', array() );
+		$snippet_id = 'css_' . time() . '_' . wp_rand( 1000, 9999 );
 
 		$snippets[ $snippet_id ] = array(
 			'label'      => $label,

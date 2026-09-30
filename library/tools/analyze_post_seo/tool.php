@@ -194,7 +194,7 @@ class Analyze_Post_Seo extends \Agentic\Tool_Base {
 			$pass[] = 'Heading structure present.';
 		}
 
-		if ( $internal_links === 0 ) {
+		if ( 0 === $internal_links ) {
 			$score   -= 10;
 			$issues[] = 'No internal links. Link to related content to improve crawlability.';
 		} else {

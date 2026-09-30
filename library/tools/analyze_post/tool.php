@@ -197,7 +197,7 @@ class Analyze_Post extends \Agentic\Tool_Base {
 			'internal_links'         => $internal_links,
 			'external_links'         => $external_links,
 			'has_excerpt'            => ! empty( $post->post_excerpt ),
-			'focus_keyword_analysis' => $keyword_data ?: null,
+			'focus_keyword_analysis' => $keyword_data ? $keyword_data : null,
 			'rendered_analysis'      => $rendered_analysis,
 			'recommendations'        => $recs,
 		);
