@@ -1,0 +1,331 @@
+<?php
+/**
+ * Unit tests for Skill_Drafter (M15-b) and its REST surface.
+ *
+ * The reviewer-LLM call is stubbed through the agentic_skill_drafter_llm
+ * filter with a Fake_LLM_Client, so no network or provider state is touched.
+ *
+ * @package Agentic\Tests
+ */
+
+namespace Agentic\Tests;
+
+use Agentic\Skill_Drafter;
+use Agentic\Skills_Registry;
+
+/**
+ * Covers from_conversation(), from_recording() and /skills/draft-from-conversation.
+ */
+class Test_Skill_Drafter extends TestCase {
+
+	/**
+	 * Session id the conversation tests draft from.
+	 */
+	private const SESSION = 'draft-session-1';
+
+	/**
+	 * Reset the LLM stub filter, current user and conversation rows.
+	 */
+	public function setUp(): void {
+		parent::setUp();
+		remove_all_filters( 'agentic_skill_drafter_llm' );
+		$this->clear_conversations();
+		wp_set_current_user( 0 );
+	}
+
+	/**
+	 * Remove the LLM stub filter and any conversation rows this file wrote.
+	 */
+	public function tearDown(): void {
+		remove_all_filters( 'agentic_skill_drafter_llm' );
+		$this->clear_conversations();
+		wp_set_current_user( 0 );
+		parent::tearDown();
+	}
+
+	/**
+	 * from_recording() with a valid spec creates a disabled draft row.
+	 */
+	public function test_from_recording_creates_disabled_draft(): void {
+		$this->stub_llm( $this->spec_json() );
+
+		$result = Skill_Drafter::from_recording(
+			array(
+				array(
+					'tool'         => 'db_create_post',
+					'action'       => 'create',
+					'args_summary' => array( 'title' => 'Draft post' ),
+					'success'      => true,
+				),
+				array(
+					'tool'         => 'db_update_post',
+					'action'       => 'update',
+					'args_summary' => array( 'post_id' => 1 ),
+					'success'      => true,
+				),
+			)
+		);
+
+		$this->assertTrue( $result['ok'], 'from_recording should succeed' );
+		$this->assertArrayHasKey( 'id', $result );
+		$this->assertArrayHasKey( 'edit_url', $result );
+
+		$row = Skills_Registry::get( (int) $result['id'] );
+		$this->assertNotNull( $row, 'a draft row should exist' );
+		$this->assertSame( 'draft', $row['source'] );
+		$this->assertSame( 0, (int) $row['enabled'] );
+		$this->assertSame( 'publish-weekly-newsletter', $row['name'] );
+		$this->assertStringContainsString( 'Workflow', (string) $row['content'] );
+	}
+
+	/**
+	 * from_recording() with no steps errors without touching the LLM.
+	 */
+	public function test_from_recording_with_no_steps_errors(): void {
+		$this->stub_llm( $this->spec_json() );
+
+		$result = Skill_Drafter::from_recording( array() );
+
+		$this->assertFalse( $result['ok'] );
+		$this->assertArrayHasKey( 'error', $result );
+		$this->assertSame( 0, $this->count_skills() );
+	}
+
+	/**
+	 * from_conversation() reads the session transcript and creates a draft.
+	 */
+	public function test_from_conversation_creates_draft(): void {
+		$this->seed_conversation(
+			self::SESSION,
+			array(
+				array( 'role' => 'user', 'content' => 'Please publish the weekly newsletter.', 'tools_used' => '' ),
+				array( 'role' => 'assistant', 'content' => 'Done — the newsletter is live.', 'tools_used' => wp_json_encode( array( 'db_create_post' ) ) ),
+			)
+		);
+		$this->stub_llm( $this->spec_json() );
+
+		$result = Skill_Drafter::from_conversation( self::SESSION );
+
+		$this->assertTrue( $result['ok'] );
+		$this->assertNotNull( Skills_Registry::get( (int) $result['id'] ) );
+	}
+
+	/**
+	 * from_conversation() stops reading at the given message id, so only the
+	 * earlier turns reach the prompt.
+	 */
+	public function test_from_conversation_respects_up_to_id(): void {
+		$ids = $this->seed_conversation(
+			self::SESSION,
+			array(
+				array( 'role' => 'user', 'content' => 'First request.', 'tools_used' => '' ),
+				array( 'role' => 'assistant', 'content' => 'First answer.', 'tools_used' => '' ),
+				array( 'role' => 'user', 'content' => 'Later request.', 'tools_used' => '' ),
+			)
+		);
+		$fake = new Fake_LLM_Client( array( Fake_LLM_Client::text_response( $this->spec_json() ) ) );
+		$this->stub_llm_with( $fake );
+
+		Skill_Drafter::from_conversation( self::SESSION, (int) $ids[1] );
+
+		$prompt = $fake->messages_seen[0][1]['content'] ?? '';
+		$this->assertStringContainsString( 'First request', $prompt );
+		$this->assertStringContainsString( 'First answer', $prompt );
+		$this->assertStringNotContainsString( 'Later request', $prompt, 'messages past up_to_id must be excluded' );
+	}
+
+	/**
+	 * from_conversation() for an unknown session errors without touching the LLM.
+	 */
+	public function test_from_conversation_with_no_messages_errors(): void {
+		$this->stub_llm( $this->spec_json() );
+
+		$result = Skill_Drafter::from_conversation( 'nonexistent-session' );
+
+		$this->assertFalse( $result['ok'] );
+		$this->assertArrayHasKey( 'error', $result );
+		$this->assertSame( 0, $this->count_skills() );
+	}
+
+	/**
+	 * An LLM failure returns an error and creates no draft row.
+	 */
+	public function test_llm_failure_returns_error_and_no_draft(): void {
+		// Empty queue → chat() returns a WP_Error.
+		$this->stub_llm_with( new Fake_LLM_Client( array() ) );
+
+		$result = Skill_Drafter::from_recording(
+			array(
+				array( 'tool' => 'db_create_post', 'action' => 'create', 'success' => true ),
+			)
+		);
+
+		$this->assertFalse( $result['ok'] );
+		$this->assertArrayHasKey( 'error', $result );
+		$this->assertSame( 0, $this->count_skills() );
+	}
+
+	/**
+	 * A spec that fails validate_spec_fields() returns an error and no draft.
+	 */
+	public function test_validation_failure_returns_error_and_no_draft(): void {
+		$this->stub_llm( $this->spec_json( 'Not A Valid Name!', '' ) );
+
+		$result = Skill_Drafter::from_recording(
+			array(
+				array( 'tool' => 'db_create_post', 'action' => 'create', 'success' => true ),
+			)
+		);
+
+		$this->assertFalse( $result['ok'] );
+		$this->assertArrayHasKey( 'validation', $result );
+		$this->assertNotEmpty( $result['validation'] );
+		$this->assertSame( 0, $this->count_skills() );
+	}
+
+	/**
+	 * /skills/draft-from-conversation is refused (403) without the capability.
+	 */
+	public function test_route_gated_on_manage_tools(): void {
+		$subscriber = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		wp_set_current_user( $subscriber );
+
+		$resp = $this->request( 'POST', '/skills/draft-from-conversation', array( 'session_id' => 's' ) );
+
+		$this->assertSame( 403, $resp->get_status() );
+	}
+
+	/**
+	 * A user holding agent_builder_manage_tools drafts through the REST route.
+	 */
+	public function test_manage_tools_user_drafts_via_rest(): void {
+		$this->seed_conversation(
+			self::SESSION,
+			array( array( 'role' => 'user', 'content' => 'Do the thing.', 'tools_used' => '' ) )
+		);
+		$this->stub_llm( $this->spec_json() );
+
+		$user = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		get_user_by( 'id', $user )->add_cap( 'agent_builder_manage_tools' );
+		wp_set_current_user( $user );
+
+		$resp = $this->request( 'POST', '/skills/draft-from-conversation', array( 'session_id' => self::SESSION ) );
+
+		$this->assertSame( 201, $resp->get_status() );
+		$this->assertTrue( $resp->get_data()['ok'] );
+	}
+
+	// -------------------------------------------------------------------------
+	// Helpers
+	// -------------------------------------------------------------------------
+
+	/**
+	 * A JSON spec string the stub LLM returns as its text reply.
+	 *
+	 * @param string $name        Spec name (slug).
+	 * @param string $description Spec description (trigger).
+	 * @return string
+	 */
+	private function spec_json( string $name = 'publish-weekly-newsletter', string $description = 'Use when the user wants to publish a weekly newsletter.' ): string {
+		return wp_json_encode(
+			array(
+				'name'        => $name,
+				'description' => $description,
+				'content'     => "# Workflow\n1. Gather posts.\n2. Publish.\n\n# Quality Rules\n- Verify links.",
+			)
+		);
+	}
+
+	/**
+	 * Stub the drafter LLM with a client returning the given text.
+	 *
+	 * @param string $text Text the LLM returns.
+	 * @return void
+	 */
+	private function stub_llm( string $text ): void {
+		$this->stub_llm_with( new Fake_LLM_Client( array( Fake_LLM_Client::text_response( $text ) ) ) );
+	}
+
+	/**
+	 * Stub the drafter LLM with a specific client.
+	 *
+	 * @param Fake_LLM_Client $client Scripted client.
+	 * @return void
+	 */
+	private function stub_llm_with( Fake_LLM_Client $client ): void {
+		add_filter( 'agentic_skill_drafter_llm', static fn() => $client );
+	}
+
+	/**
+	 * Insert conversation rows and return their auto-increment ids.
+	 *
+	 * @param string                       $session_id Session id.
+	 * @param array<int, array<string, mixed>> $messages  Messages (role, content, tools_used).
+	 * @return int[] Inserted row ids.
+	 */
+	private function seed_conversation( string $session_id, array $messages ): array {
+		global $wpdb;
+		$table = $wpdb->prefix . 'agent_builder_conversations';
+		$ids   = array();
+
+		foreach ( $messages as $message ) {
+			$wpdb->insert(
+				$table,
+				array(
+					'session_id' => $session_id,
+					'user_id'    => 1,
+					'agent_id'   => 'test-agent',
+					'role'       => (string) $message['role'],
+					'content'    => (string) $message['content'],
+					'tools_used' => (string) ( $message['tools_used'] ?? '' ),
+				),
+				array( '%s', '%d', '%s', '%s', '%s', '%s' )
+			);
+			$ids[] = (int) $wpdb->insert_id;
+		}
+
+		return $ids;
+	}
+
+	/**
+	 * Count rows in the skills table.
+	 *
+	 * @return int
+	 */
+	private function count_skills(): int {
+		global $wpdb;
+		$table = $wpdb->prefix . 'agent_builder_skills';
+		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Static custom table name.
+	}
+
+	/**
+	 * Remove every conversation row this file might have written.
+	 *
+	 * @return void
+	 */
+	private function clear_conversations(): void {
+		global $wpdb;
+		$table = $wpdb->prefix . 'agent_builder_conversations';
+		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) === $table ) {
+			$wpdb->query( "DELETE FROM {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Static custom table name.
+		}
+	}
+
+	/**
+	 * Dispatch a REST request against the skill-drafter routes.
+	 *
+	 * @param string               $method HTTP method.
+	 * @param string               $route  Route path (relative to /agentic/v1).
+	 * @param array<string, mixed> $json   JSON body to send (POST).
+	 * @return \WP_REST_Response
+	 */
+	private function request( string $method, string $route, array $json = array() ): \WP_REST_Response {
+		$req = new \WP_REST_Request( $method, '/agentic/v1' . $route );
+		if ( ! empty( $json ) ) {
+			$req->set_header( 'Content-Type', 'application/json' );
+			$req->set_body( wp_json_encode( $json ) );
+		}
+
+		return rest_get_server()->dispatch( $req );
+	}
+}
