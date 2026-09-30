@@ -62,6 +62,12 @@ function agent_builder_chat_i18n(): array {
 		'summaryStatus'       => __( 'Status', 'agent-builder' ),
 		'summaryPostType'     => __( 'Post type', 'agent-builder' ),
 		'summaryPost'         => __( 'Post', 'agent-builder' ),
+		// Live activity pane (collapsible "Working…" step list).
+		'working'             => __( 'Working…', 'agent-builder' ),
+		'workingDone'         => __( 'Working complete', 'agent-builder' ),
+		'gateConfirm'         => __( 'Waiting for approval', 'agent-builder' ),
+		'gateQueue'           => __( 'Queued for approval', 'agent-builder' ),
+		'gateBlock'           => __( 'Blocked by policy', 'agent-builder' ),
 	);
 }
 

@@ -29,6 +29,7 @@ import {
 } from '@wordpress/components';
 import { AdminPage, Panel } from '../shared/components';
 import { ProposalCard } from '../shared/chat-embed';
+import { ResultCards } from '../shared/result-card';
 
 const RUNS_PATH = 'agentic/v1/runs';
 const NOTIFICATIONS_PATH = 'agentic/v1/notifications';
@@ -321,8 +322,8 @@ function TasksApp() {
 		return () => clearInterval( id );
 	}, [ hasActiveInTab, loadRuns ] );
 
-	// Load the drawer the moment a run is opened, and poll it (same 3s cadence)
-	// only while that run is still non-terminal.
+	// Load the drawer the moment a run is opened, and poll GET /runs/{id} every
+	// 2s while that run is still non-terminal, so its live step list keeps up.
 	useEffect( () => {
 		if ( ! drawerRunId ) {
 			return;
@@ -338,7 +339,7 @@ function TasksApp() {
 		if ( ! status || DONE_STATUSES.includes( status ) ) {
 			return;
 		}
-		const id = setInterval( () => loadDrawer( drawerRunId, true ), 3000 );
+		const id = setInterval( () => loadDrawer( drawerRunId, true ), 2000 );
 		return () => clearInterval( id );
 	}, [ drawerRunId, drawer?.run?.status, loadDrawer ] );
 
@@ -692,6 +693,8 @@ function TasksApp() {
 									{ run.error }
 								</Notice>
 							) }
+
+							<ResultCards cards={ run?.result_summary?.cards } />
 
 							{ isApprovalAwaiting ? (
 								<ApprovalCard

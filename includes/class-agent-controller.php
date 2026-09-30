@@ -1829,12 +1829,18 @@ class Agent_Controller {
 			$current_provider
 		);
 
-		if ( $owns_run ) {
-			$run->finish( $final_status, array( 'text' => (string) $response ) );
-		}
-
 		$cards          = Result_Card::collect( $tool_results );
 		$result_summary = Result_Card::summarize( $cards );
+
+		if ( $owns_run ) {
+			$run->finish(
+				$final_status,
+				array(
+					'text'  => (string) $response,
+					'cards' => $cards,
+				)
+			);
+		}
 
 		return array(
 			'response'       => $response,

@@ -1711,6 +1711,7 @@ class Admin_Menu_Handler {
 				'consentEnabled' => get_option( 'agent_builder_chat_consent_enabled', false ) ? '1' : '0',
 				'consentText'    => \Agentic\GDPR::get_consent_text(),
 				'isAdmin'        => current_user_can( 'manage_options' ) ? '1' : '0',
+				'isSsl'          => is_ssl() ? '1' : '0',
 				'adminUrl'       => admin_url(),
 				'adminAgentsUrl' => admin_url( 'admin.php?page=agentic-agents' ),
 				// Agent-to-agent handoff context (set when arriving via a delegate

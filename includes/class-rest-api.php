@@ -1400,6 +1400,14 @@ class REST_API {
 				),
 			'detail'  => $detail,
 			'result'  => is_array( $result ) ? self::summarize_tool_result( $result ) : $result,
+			'cards'   => Result_Card::collect(
+				array(
+					array(
+						'tool'   => $tool_name,
+						'result' => is_array( $result ) ? $result : array(),
+					),
+				)
+			),
 		);
 	}
 

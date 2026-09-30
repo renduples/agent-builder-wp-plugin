@@ -306,8 +306,8 @@
             document.body.removeChild(ta);
         }
 
-        // Voice input (Web Speech API — graceful degradation)
-        if (typeof agenticChat === 'undefined' || agenticChat.audio === '1') {
+        // Voice input (Web Speech API — requires HTTPS; decoupled from TTS audio)
+        if (typeof agenticChat === 'undefined' || agenticChat.isSsl === '1') {
             initVoiceInput();
         }
 
@@ -886,6 +886,7 @@
                 // --- SSE streaming path ---
                 const streamBubble = addMessage('', 'agent');
                 const contentDiv = streamBubble ? streamBubble.querySelector('.agentic-message-content') : null;
+                const livePane = createLivePane(streamBubble);
                 let accText = '';
                 let sseBuf = '';
                 const dec = new TextDecoder();
@@ -916,11 +917,14 @@
                                         }
                                     }
                                 } else if (evt.type === 'tool_start') {
-                                    if (typingText) typingText.textContent = '⚙️ ' + (evt.name || '');
+                                    livePane.begin(evt.name);
                                 } else if (evt.type === 'tool_end') {
-                                    if (typingText) typingText.textContent = agenticChat.i18n.thinking;
+                                    livePane.end(evt.name, evt.success);
+                                } else if (evt.type === 'gate_decision') {
+                                    livePane.gate(evt.tool, evt.decision);
                                 } else if (evt.type === 'end') {
                                     const finalText = evt.response || accText;
+                                    livePane.finish();
                                     if (contentDiv && evt.response) {
                                         contentDiv.innerHTML = renderMarkdown(finalText);
                                     }
@@ -971,6 +975,11 @@
                                         card.appendChild(body);
                                         streamBubble.appendChild(card);
                                     }
+
+                                    // Normalized result cards (post/file/list) this run produced.
+                                    if (streamBubble) {
+                                        renderResultCards(evt.cards, streamBubble);
+                                    }
                                 // Pending confirmation -> render approve/reject buttons (streaming parity).
                                 if (streamBubble && evt.pending_proposal && evt.proposal) {
                                     const proposalCard = renderProposalCard(evt.proposal);
@@ -979,6 +988,7 @@
                                 }
                                 } else if (evt.type === 'error') {
                                     const errText = evt.message || agenticChat.i18n.errorGeneric;
+                                    livePane.finish();
                                     if (contentDiv) contentDiv.innerHTML = renderMarkdown(errText);
                                 }
                             }
@@ -1574,6 +1584,12 @@
                 conversationHistory.push({ role: 'assistant', content: confirmMsg });
                 saveConversation();
             }
+
+            // Normalized result cards (post/file/list) the approved tool returned.
+            if (isApproveVariant && !data.error && Array.isArray(data.cards) && data.cards.length) {
+                const cardsHost = cardElement.parentElement || cardElement;
+                renderResultCards(data.cards, cardsHost);
+            }
         } catch (error) {
             console.error('Proposal action error:', error);
             buttons.forEach(btn => btn.disabled = false);
@@ -1612,6 +1628,12 @@
             cardElement.classList.add('agentic-proposal-' + (action === 'approve' ? 'approved' : 'rejected'));
             const okMsg = (data.data && data.data.message) || (action === 'approve' ? 'Approved.' : 'Rejected.');
             actionsDiv.innerHTML = '<div class="agentic-proposal-status">' + (action === 'approve' ? '✅ ' : '❌ ') + escapeHtml(okMsg) + '</div>';
+
+            // Normalized result cards (post/file/list) the approved tool returned.
+            if (action === 'approve' && data.data && data.data.execution && Array.isArray(data.data.execution.cards) && data.data.execution.cards.length) {
+                const cardsHost = cardElement.parentElement || cardElement;
+                renderResultCards(data.data.execution.cards, cardsHost);
+            }
         } catch (error) {
             console.error('Approval action error:', error);
             buttons.forEach(btn => btn.disabled = false);
@@ -1624,6 +1646,195 @@
     // chat supports agent handoff, so delegate links render as buttons.
     function renderMarkdown(text) {
         return window.AgenticMarkdown.render(text, { delegateLinks: true });
+    }
+
+    // Render a single normalized result card (see Result_Card::normalize()) into a
+    // small DOM element summarising what a tool call did. The card shapes are the
+    // `cards` payload the server returns on a chat `end` event and on an approved
+    // proposal — post / file / list. Text is set via textContent (never innerHTML)
+    // so titles and links from the server can't inject markup.
+    function renderResultCard(card) {
+        const el = document.createElement('div');
+        el.className = 'agentic-result-card';
+        el.style.cssText = 'margin:8px 0;padding:10px 12px;border:1px solid #dcdcde;border-radius:6px;background:#fff;font-size:13px;';
+
+        function head(text) {
+            const h = document.createElement('div');
+            h.style.cssText = 'font-weight:600;margin-bottom:4px;';
+            h.textContent = text;
+            el.appendChild(h);
+        }
+        function link(href, label, margin) {
+            const a = document.createElement('a');
+            a.href = href;
+            a.target = '_blank';
+            a.rel = 'noopener';
+            a.textContent = label;
+            if (margin) a.style.marginRight = margin;
+            el.appendChild(a);
+        }
+
+        if (card.type === 'post') {
+            const verb = card.action === 'updated' ? 'Updated' : 'Created';
+            head('📝 ' + verb + ' post');
+
+            const body = document.createElement('div');
+            body.style.marginBottom = '6px';
+            body.textContent = card.title || ('Post #' + card.post_id);
+            if (card.status) {
+                const s = document.createElement('span');
+                s.style.color = '#757575';
+                s.textContent = ' (' + card.status + ')';
+                body.appendChild(s);
+            }
+            el.appendChild(body);
+
+            if (card.view_url) link(card.view_url, 'View', '10px');
+            if (card.edit_url) link(card.edit_url, 'Edit', '');
+        } else if (card.type === 'file') {
+            head('📄 Generated file');
+            const body = document.createElement('div');
+            body.textContent = card.title || card.path || '';
+            if (card.url) {
+                body.appendChild(document.createTextNode(' · '));
+                link(card.url, 'Open', '');
+            }
+            el.appendChild(body);
+        } else if (card.type === 'list') {
+            head('📋 Listed ' + (card.count != null ? card.count : ''));
+            const titles = (card.items || []).map(function (it) {
+                return it && it.title ? it.title : '';
+            }).filter(Boolean);
+            if (titles.length) {
+                const body = document.createElement('div');
+                body.style.color = '#757575';
+                body.textContent = titles.join(', ');
+                el.appendChild(body);
+            }
+        } else {
+            el.textContent = card.title || card.tool || '';
+        }
+
+        return el;
+    }
+
+    // Append a run's normalized cards to a container, if any.
+    function renderResultCards(cards, container) {
+        if (!container || !Array.isArray(cards) || !cards.length) return;
+        cards.forEach(function (card) {
+            container.appendChild(renderResultCard(card));
+        });
+    }
+
+    // Humanize a raw tool/function name ("create_page" -> "Create Page") for the
+    // live activity pane. Falls back to "Tool" for empty/unknown names.
+    function friendlyToolName(name) {
+        const human = String(name || '')
+            .replace(/[_-]+/g, ' ')
+            .replace(/\b\w/g, (c) => c.toUpperCase())
+            .trim();
+        return human || 'Tool';
+    }
+
+    // Short elapsed-time label ("1s", "45s") for a live-pane step.
+    function formatElapsed(ms) {
+        if (ms < 1000) return '<1s';
+        return Math.round(ms / 1000) + 's';
+    }
+
+    // Human label for an approval-gate decision (confirm/queue/block).
+    function gateLabel(decision) {
+        switch (decision) {
+            case 'confirm': return (agenticChat.i18n && agenticChat.i18n.gateConfirm) || 'Waiting for approval';
+            case 'queue': return (agenticChat.i18n && agenticChat.i18n.gateQueue) || 'Queued for approval';
+            case 'block': return (agenticChat.i18n && agenticChat.i18n.gateBlock) || 'Blocked by policy';
+            default: return String(decision || '');
+        }
+    }
+
+    // Collapsible "Working…" pane: lists each tool step as it happens (friendly
+    // name + elapsed time + ✓/⚠), replacing the old typing-text swap. Driven by
+    // SSE tool_start / tool_end / gate_decision. Attaches to the container only
+    // once the first step arrives, so a run that never calls a tool shows no pane.
+    function createLivePane(container) {
+        const details = document.createElement('details');
+        details.className = 'agentic-live-pane';
+        details.style.cssText = 'margin-top:8px;font-size:13px;border:1px solid #dcdcde;border-radius:6px;padding:6px 10px;background:#f6f7f7;';
+        details.open = false;
+
+        const summary = document.createElement('summary');
+        summary.style.cssText = 'cursor:pointer;color:#2271b1;font-weight:600;';
+        const summaryText = document.createElement('span');
+        summary.appendChild(summaryText);
+        details.appendChild(summary);
+
+        const list = document.createElement('ul');
+        list.style.cssText = 'margin:6px 0 0;padding:0;list-style:none;';
+        details.appendChild(list);
+
+        const rows = new Map(); // tool name -> { li, status, startedAt }
+        let activeCount = 0;
+        let attached = false;
+
+        function setSummary() {
+            summaryText.textContent = activeCount > 0
+                ? ((agenticChat.i18n && agenticChat.i18n.working) || 'Working…') + ' (' + activeCount + ')'
+                : ((agenticChat.i18n && agenticChat.i18n.workingDone) || 'Working complete');
+        }
+        function attach() {
+            if (!attached && container) {
+                container.appendChild(details);
+                attached = true;
+            }
+        }
+        function makeRow(name) {
+            const li = document.createElement('li');
+            li.style.cssText = 'margin:3px 0;display:flex;gap:8px;align-items:baseline;';
+            const label = document.createElement('span');
+            label.textContent = friendlyToolName(name);
+            label.style.cssText = 'flex:0 0 auto;';
+            const status = document.createElement('span');
+            status.style.cssText = 'color:#757575;font-size:12px;';
+            li.appendChild(label);
+            li.appendChild(status);
+            list.appendChild(li);
+            return { li, status };
+        }
+
+        setSummary();
+        return {
+            el: details,
+            begin(name) {
+                activeCount++;
+                const { li, status } = makeRow(name);
+                status.textContent = '…';
+                rows.set(name, { li, status, startedAt: Date.now() });
+                setSummary();
+                attach();
+            },
+            end(name, success) {
+                const rec = rows.get(name);
+                if (rec) {
+                    rec.status.textContent = (success ? '✓ ' : '⚠ ') + formatElapsed(Date.now() - rec.startedAt);
+                    rec.status.style.color = success ? '#008a20' : '#d63638';
+                    rows.delete(name);
+                }
+                activeCount = Math.max(0, activeCount - 1);
+                setSummary();
+            },
+            gate(name, decision) {
+                const { status } = makeRow(name);
+                status.textContent = '⚠ ' + gateLabel(decision);
+                status.style.color = '#d63638';
+                setSummary();
+                attach();
+            },
+            finish() {
+                activeCount = 0;
+                setSummary();
+                details.open = false;
+            }
+        };
     }
 
     // Escape HTML

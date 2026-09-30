@@ -14,6 +14,7 @@ import { Notice } from '@wordpress/components';
 // Shared markdown renderer (assets/js/agentic-markdown.js), also loaded as a
 // <script> dependency by the vanilla chat surfaces so the three stay in sync.
 import AgenticMarkdown from '../../assets/js/agentic-markdown';
+import { ResultCards } from './result-card';
 
 // Human labels for the key-argument summary rows on a Proposed Change card.
 // Mirrors the summary labels in assets/js/chat.js and assets/js/chat-overlay.js.
@@ -303,6 +304,7 @@ export function ChatEmbed( { assistant, deploymentContext, className = '' } ) {
 						proposal: data.pending_proposal
 							? data.proposal
 							: null,
+						cards: data.cards || [],
 					} )
 				);
 			}
@@ -401,6 +403,9 @@ export function ChatEmbed( { assistant, deploymentContext, className = '' } ) {
 								sessionId={ sessionIdRef.current }
 							/>
 						) }
+						{ m.cards && m.cards.length ? (
+							<ResultCards cards={ m.cards } />
+						) : null }
 					</div>
 				) ) }
 				<div ref={ messagesEndRef } />

@@ -59,6 +59,7 @@ Prompt Tests never run by themselves. They call your AI provider only when you s
 
 * **Basic / Advanced Modes:** Guided flows for owners; a full developer console (manifests, risk audits, REST API, MCP) for power users.
 * **Embed Everywhere:** Gutenberg blocks, shortcodes, or wp-admin launchers.
+* **Voice dictation:** chat voice input uses your browser's built-in Web Speech API (HTTPS required).
 * **100% Free Local Knowledge:** Train agents on your own docs via the local Open Knowledge Format (OKF) wiki — no cloud storage needed.
 
 ---
