@@ -483,7 +483,11 @@ class Tool_Executor {
 		}
 
 		// --- Enforcement is 'allow' — proceed with execution ---
-		$is_readonly = $tool_instance ? ( $tool_instance->get_annotations()['readonly'] ?? false ) : true;
+		// A tool with no loader instance is an agent-inline or third-party
+		// ability, not a readonly pass-through: it still writes (and must be
+		// ledged and audited) like any other non-readonly call. Only a real
+		// Tool_Base that declares itself readonly skips the backup and ledger.
+		$is_readonly = $tool_instance ? ( $tool_instance->get_annotations()['readonly'] ?? false ) : false;
 
 		$this->audit->log(
 			$agent_id,
@@ -518,12 +522,7 @@ class Tool_Executor {
 		// never gets reported as a real execution.
 		$result = $this->tool_loader->execute( $tool_name, $arguments );
 
-		if ( null !== $result ) {
-			if ( ! $is_readonly ) {
-				$queue = new Approval_Queue();
-				$queue->log_executed( $agent_id, $tool_name, $arguments, $risk, $mode, $invocation_context );
-			}
-		} else {
+		if ( null === $result ) {
 			$result = $agent ? $agent->execute_tool( $tool_name, $arguments ) : null;
 
 			if ( null === $result && $this->abilities_bridge ) {
@@ -535,6 +534,12 @@ class Tool_Executor {
 
 		if ( ! $resolved ) {
 			$result = array( 'error' => sprintf( 'Unknown tool: %s', $tool_name ) );
+		} elseif ( ! $is_readonly ) {
+			// Route every resolved execution branch — tool_loader, agent-inline,
+			// or abilities-bridge — through the operations ledger, not just the
+			// loader branch.
+			$queue = new Approval_Queue();
+			$queue->log_executed( $agent_id, $tool_name, $arguments, $risk, $mode, $invocation_context );
 		}
 
 		/**
