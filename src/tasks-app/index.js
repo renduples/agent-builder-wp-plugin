@@ -458,6 +458,16 @@ function TasksApp() {
 	const awaiting = drawer?.awaiting || null;
 	const isApprovalAwaiting = awaiting && awaiting.action !== undefined;
 
+	// Announce drawer open/close to any Pro bundle so it can mount a team-run
+	// group thread into the drawer slot (and unmount when the drawer closes).
+	useEffect( () => {
+		document.dispatchEvent(
+			new CustomEvent( 'agentic:tasks-drawer', {
+				detail: { runId: drawerRunId },
+			} )
+		);
+	}, [ drawerRunId ] );
+
 	return (
 		<div className="agentic-admin">
 			<AdminPage
@@ -534,6 +544,7 @@ function TasksApp() {
 							</Flex>
 						</form>
 					) }
+					<div id="agent-builder-tasks-composer-slot" />
 				</Panel>
 
 				<Panel
@@ -660,6 +671,7 @@ function TasksApp() {
 					onRequestClose={ closeDrawer }
 					className="agentic-tasks-drawer"
 				>
+					<div id="agent-builder-tasks-drawer-slot" />
 					{ drawerLoading ? (
 						<p>
 							<Spinner /> { __( 'Loading…', 'agent-builder' ) }

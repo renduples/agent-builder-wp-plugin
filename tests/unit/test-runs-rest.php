@@ -471,6 +471,97 @@ class Test_Runs_REST extends TestCase {
 		$this->assertSame( 'list_posts', $tool_step['target_type'] ?? '' );
 	}
 
+	/**
+	 * agent_builder_before_task_dispatch returning a WP_Error short-circuits the
+	 * request: the error is surfaced and no run row is created.
+	 */
+	public function test_before_task_dispatch_wp_error_short_circuits(): void {
+		$this->grant_plugin_privilege( 'run_tasks_manually', 'editor' );
+
+		$editor = self::factory()->user->create( array( 'role' => 'editor' ) );
+		wp_set_current_user( $editor );
+
+		$error  = new \WP_Error( 'team_budget', 'No budget left for this team run.', array( 'status' => 402 ) );
+		$filter = static function ( $pre, $agent_id, $task, $request ) use ( $error ) {
+			return $error;
+		};
+		add_filter( 'agent_builder_before_task_dispatch', $filter, 10, 4 );
+
+		$create = $this->request( 'POST', '/runs', array( 'agent_id' => self::AGENT, 'task' => 'My task' ) );
+
+		remove_filter( 'agent_builder_before_task_dispatch', $filter );
+
+		$this->assertSame( 402, $create->get_status() );
+		$this->assertSame( 'team_budget', $create->as_error()->get_error_code() );
+		$this->assertSame( 0, $this->count_runs(), 'short-circuited dispatch must not create a run' );
+	}
+
+	/**
+	 * agent_builder_before_task_dispatch returning a WP_REST_Response is returned
+	 * as-is (untouched) and no run row is created.
+	 */
+	public function test_before_task_dispatch_response_short_circuits(): void {
+		$this->grant_plugin_privilege( 'run_tasks_manually', 'editor' );
+
+		$editor = self::factory()->user->create( array( 'role' => 'editor' ) );
+		wp_set_current_user( $editor );
+
+		$response = new \WP_REST_Response( array( 'run' => 'team-run-id', 'queued' => false ), 202 );
+		$filter   = static function ( $pre, $agent_id, $task, $request ) use ( $response ) {
+			return $response;
+		};
+		add_filter( 'agent_builder_before_task_dispatch', $filter, 10, 4 );
+
+		$create = $this->request( 'POST', '/runs', array( 'agent_id' => self::AGENT, 'task' => 'My task' ) );
+
+		remove_filter( 'agent_builder_before_task_dispatch', $filter );
+
+		$this->assertSame( 202, $create->get_status() );
+		$this->assertSame( 'team-run-id', $create->get_data()['run'] );
+		$this->assertSame( 0, $this->count_runs(), 'short-circuited dispatch must not create a run' );
+	}
+
+	/**
+	 * agent_builder_before_task_dispatch returning null (the default) continues
+	 * normally: a queued run is created and the raw request (with `team`/`members`
+	 * params) is passed through to the callback.
+	 */
+	public function test_before_task_dispatch_null_continues_and_creates_run(): void {
+		$this->grant_plugin_privilege( 'run_tasks_manually', 'editor' );
+
+		$editor = self::factory()->user->create( array( 'role' => 'editor' ) );
+		wp_set_current_user( $editor );
+
+		$captured = null;
+		$filter   = static function ( $pre, $agent_id, $task, $request ) use ( &$captured ) {
+			$captured = $request;
+			return null;
+		};
+		add_filter( 'agent_builder_before_task_dispatch', $filter, 10, 4 );
+
+		$create = $this->request(
+			'POST',
+			'/runs',
+			array(
+				'agent_id' => self::AGENT,
+				'task'     => 'My task',
+				'team'     => 'alpha',
+				'members'  => array( 'agent-a', 'agent-b' ),
+			)
+		);
+
+		remove_filter( 'agent_builder_before_task_dispatch', $filter );
+
+		$this->assertSame( 201, $create->get_status() );
+		$this->assertSame( 'queued', $create->get_data()['run']['status'] );
+		$this->assertSame( 1, $this->count_runs(), 'a null filter result must let the run proceed' );
+
+		// The raw request is passed through so Pro can read the team params.
+		$this->assertInstanceOf( \WP_REST_Request::class, $captured );
+		$this->assertSame( 'alpha', $captured->get_param( 'team' ) );
+		$this->assertSame( array( 'agent-a', 'agent-b' ), $captured->get_param( 'members' ) );
+	}
+
 	// -------------------------------------------------------------------------
 	// Helpers
 	// -------------------------------------------------------------------------
@@ -519,6 +610,16 @@ class Test_Runs_REST extends TestCase {
 			array( '%s' ),
 			array( '%s' )
 		);
+	}
+
+	/**
+	 * Count the run rows currently in the runs table.
+	 *
+	 * @return int
+	 */
+	private function count_runs(): int {
+		global $wpdb;
+		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}agent_builder_runs" );
 	}
 
 	/**

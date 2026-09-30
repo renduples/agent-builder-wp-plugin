@@ -285,6 +285,24 @@ class Runs_REST {
 			return $error;
 		}
 
+		/**
+		 * Filters a task dispatch just before the run is queued, after the agent
+		 * has passed access validation and before any run row exists.
+		 *
+		 * A callback returning a \WP_REST_Response or \WP_Error short-circuits
+		 * the request (the value is returned as-is and no run is created); any
+		 * other value (null) lets the run proceed normally.
+		 *
+		 * @param mixed            $pre      Null by default.
+		 * @param string           $agent_id Agent slug.
+		 * @param string           $task     Task description.
+		 * @param \WP_REST_Request $request  Raw request (Pro reads `team`/`members`).
+		 */
+		$dispatch = apply_filters( 'agent_builder_before_task_dispatch', null, $agent_id, $task, $request );
+		if ( $dispatch instanceof \WP_REST_Response || is_wp_error( $dispatch ) ) {
+			return $dispatch;
+		}
+
 		// create_queued() (not begin()): the run must survive the creating
 		// request so the WP-Cron worker can adopt it later (see wp#230).
 		$run = Agent_Run::create_queued(

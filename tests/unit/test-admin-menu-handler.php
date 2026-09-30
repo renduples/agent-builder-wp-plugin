@@ -266,6 +266,46 @@ class Test_Admin_Menu_Handler extends TestCase {
 	}
 
 	/**
+	 * tasks_page_localize() localizes `assignTargets` as an empty array by default
+	 * (no assign_targets filter), so the free Tasks composer renders no member
+	 * picker.
+	 */
+	public function test_tasks_localize_assign_targets_defaults_empty(): void {
+		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $admin );
+
+		$method  = new \ReflectionMethod( Admin_Menu_Handler::class, 'tasks_page_localize' );
+		$payload = $method->invoke( new Admin_Menu_Handler() );
+
+		$this->assertArrayHasKey( 'assignTargets', $payload );
+		$this->assertSame( array(), $payload['assignTargets'] );
+	}
+
+	/**
+	 * agent_builder_tasks_assign_targets feeds the localized `assignTargets` value,
+	 * which is returned verbatim (only its array-ness is enforced).
+	 */
+	public function test_tasks_localize_assign_targets_is_filtered(): void {
+		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $admin );
+
+		$targets = array(
+			array( 'slug' => 'lead', 'name' => 'Lead agent' ),
+		);
+		$filter  = static function ( $extra, $agents ) use ( $targets ) {
+			return $targets;
+		};
+		add_filter( 'agent_builder_tasks_assign_targets', $filter, 10, 2 );
+
+		$method  = new \ReflectionMethod( Admin_Menu_Handler::class, 'tasks_page_localize' );
+		$payload = $method->invoke( new Admin_Menu_Handler() );
+
+		remove_filter( 'agent_builder_tasks_assign_targets', $filter );
+
+		$this->assertSame( $targets, $payload['assignTargets'] );
+	}
+
+	/**
 	 * Reset per-test globals so one denial test can't leak into the next.
 	 */
 	public function tearDown(): void {

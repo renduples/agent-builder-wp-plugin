@@ -1496,13 +1496,29 @@ class Admin_Menu_Handler {
 			}
 		}
 
+		/**
+		 * Filters the assign-targets list localized for the Tasks composer.
+		 *
+		 * Empty by default in the free build — Pro feeds the team-run member
+		 * picker here. The value is localized verbatim (as `assignTargets`), so
+		 * only the array-ness is enforced; no fields are sanitized or escaped.
+		 *
+		 * @param array $extra  Additional assign targets (default empty).
+		 * @param array $agents Accessible agents (id/name/icon rows).
+		 */
+		$assign_targets = apply_filters( 'agent_builder_tasks_assign_targets', array(), $agents );
+		if ( ! is_array( $assign_targets ) ) {
+			$assign_targets = array();
+		}
+
 		return array(
-			'restUrl'    => rest_url( 'agentic/v1/' ),
-			'nonce'      => wp_create_nonce( 'wp_rest' ),
-			'agents'     => $agents,
-			'isAdvanced' => $this->is_advanced_mode( 'tasks' ),
-			'canRun'     => current_user_can( 'agent_builder_run_tasks_manually' ) || current_user_can( 'manage_options' ),
-			'footer'     => $this->get_admin_footer_data( 'agentic-tasks' ),
+			'restUrl'       => rest_url( 'agentic/v1/' ),
+			'nonce'         => wp_create_nonce( 'wp_rest' ),
+			'agents'        => $agents,
+			'assignTargets' => $assign_targets,
+			'isAdvanced'    => $this->is_advanced_mode( 'tasks' ),
+			'canRun'        => current_user_can( 'agent_builder_run_tasks_manually' ) || current_user_can( 'manage_options' ),
+			'footer'        => $this->get_admin_footer_data( 'agentic-tasks' ),
 		);
 	}
 
