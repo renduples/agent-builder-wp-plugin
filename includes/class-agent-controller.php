@@ -129,6 +129,12 @@ class Agent_Controller {
 		}
 
 		$this->executor = new Tool_Executor( $this->tool_loader, $this->audit, $this->abilities_bridge );
+
+		// Surface the approval-gate decision into the SSE stream for the live
+		// activity pane. Registered here so a streaming chat observes its own
+		// tool calls; emit_stream() is a no-op until enable_streaming() sets the
+		// emit callback, so non-streaming callers are unaffected.
+		add_action( 'agent_builder_tool_gate_decision', array( $this, 'on_gate_decision' ), 10, 2 );
 	}
 
 	/**
@@ -167,7 +173,10 @@ class Agent_Controller {
 	 * The callback is invoked for each SSE event emitted during the conversation:
 	 *   - ('live', string $token)        — text token from the LLM
 	 *   - ('tool_start', array $data)    — tool execution started; $data contains 'name'
-	 *   - ('tool_end',   array $data)    — tool execution completed; $data contains 'name'
+	 *   - ('tool_end',   array $data)    — tool execution completed; $data contains
+	 *                                      'name', 'success' and 'summary'
+	 *   - ('gate_decision', array $data) — approval-gate resolution for a gated tool
+	 *                                      call; $data contains 'tool' and 'decision'
 	 *
 	 * @param callable $emit fn(string $type, mixed $data): void.
 	 * @return void
@@ -187,6 +196,79 @@ class Agent_Controller {
 		if ( null !== $this->stream_emit ) {
 			( $this->stream_emit )( $type, $data );
 		}
+	}
+
+	/**
+	 * Emit a gate_decision SSE event when a tool call is gated away from
+	 * immediate execution (confirm/queue/block).
+	 *
+	 * A call allowed through immediately is instead conveyed by its
+	 * tool_start/tool_end events, so no gate_decision is emitted for `allow`.
+	 *
+	 * @param string                    $enforcement Resolved enforcement decision.
+	 * @param array<string, mixed>      $ctx         Tool execution context.
+	 * @return void
+	 */
+	public function on_gate_decision( string $enforcement, array $ctx ): void {
+		if ( 'allow' === $enforcement ) {
+			return;
+		}
+
+		$this->emit_stream(
+			'gate_decision',
+			array(
+				'tool'     => $ctx['tool'] ?? '',
+				'decision' => $enforcement,
+			)
+		);
+	}
+
+	/**
+	 * Infer whether a tool result represents success.
+	 *
+	 * Mirrors Skill_Recorder::result_success(): an explicit `success` key wins,
+	 * else a non-empty `error` key marks failure, else the result is treated as
+	 * successful.
+	 *
+	 * @param mixed $result Tool execution result.
+	 * @return bool
+	 */
+	private static function result_success( mixed $result ): bool {
+		if ( ! is_array( $result ) ) {
+			return true;
+		}
+
+		if ( isset( $result['success'] ) ) {
+			return (bool) $result['success'];
+		}
+
+		if ( isset( $result['error'] ) && $result['error'] ) {
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Build a short human-readable summary of a tool call for the live pane.
+	 *
+	 * @param string               $tool_name Tool name.
+	 * @param array<string, mixed> $arguments Tool arguments.
+	 * @return string
+	 */
+	private static function summarize_tool_call( string $tool_name, array $arguments ): string {
+		$fields = Tool_Executor::summarize_arguments( $arguments );
+
+		if ( empty( $fields ) ) {
+			return $tool_name;
+		}
+
+		$parts = array();
+		foreach ( $fields as $key => $value ) {
+			$parts[] = $key . ': ' . $value;
+		}
+
+		return implode( ', ', $parts );
 	}
 
 	/**
@@ -1028,7 +1110,14 @@ class Agent_Controller {
 					$tool_result = $this->execute_tool( $function_name, $arguments );
 
 					// Notify the frontend that the tool has finished.
-					$this->emit_stream( 'tool_end', array( 'name' => $function_name ) );
+					$this->emit_stream(
+						'tool_end',
+						array(
+							'name'    => $function_name,
+							'success' => self::result_success( $tool_result ),
+							'summary' => self::summarize_tool_call( $function_name, $arguments ),
+						)
+					);
 
 					// Add tool result to messages.
 					$messages[] = array(
