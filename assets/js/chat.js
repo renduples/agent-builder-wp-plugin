@@ -317,8 +317,10 @@
             document.body.removeChild(ta);
         }
 
-        // Voice input (Web Speech API — graceful degradation)
-        if (typeof agenticChat === 'undefined' || agenticChat.audio === '1') {
+        // Voice input (Web Speech API — requires HTTPS; decoupled from TTS audio).
+        // Fail closed: only initialize when the server positively reports SSL,
+        // never when agenticChat is absent.
+        if (typeof agenticChat !== 'undefined' && agenticChat.isSsl === '1') {
             initVoiceInput();
         }
 
@@ -1098,6 +1100,7 @@
                 // --- SSE streaming path ---
                 const streamBubble = addMessage('', 'agent');
                 const contentDiv = streamBubble ? streamBubble.querySelector('.agentic-message-content') : null;
+                const livePane = createLivePane(streamBubble);
                 let accText = '';
                 let sseBuf = '';
                 const dec = new TextDecoder();
@@ -1128,11 +1131,14 @@
                                         }
                                     }
                                 } else if (evt.type === 'tool_start') {
-                                    if (typingText) typingText.textContent = '⚙️ ' + (evt.name || '');
+                                    livePane.begin(evt.name);
                                 } else if (evt.type === 'tool_end') {
-                                    if (typingText) typingText.textContent = agenticChat.i18n.thinking;
+                                    livePane.end(evt.name, evt.success);
+                                } else if (evt.type === 'gate_decision') {
+                                    livePane.gate(evt.tool, evt.decision);
                                 } else if (evt.type === 'end') {
                                     const finalText = evt.response || accText;
+                                    livePane.finish();
                                     if (contentDiv && evt.response) {
                                         contentDiv.innerHTML = renderMarkdown(finalText);
                                     }
@@ -1183,6 +1189,11 @@
                                         card.appendChild(body);
                                         streamBubble.appendChild(card);
                                     }
+
+                                    // Normalized result cards (post/file/list) this run produced.
+                                    if (streamBubble) {
+                                        renderResultCards(evt.cards, streamBubble);
+                                    }
                                 // Pending confirmation -> render approve/reject buttons (streaming parity).
                                 if (streamBubble && evt.pending_proposal && evt.proposal) {
                                     const proposalCard = renderProposalCard(evt.proposal);
@@ -1191,6 +1202,7 @@
                                 }
                                 } else if (evt.type === 'error') {
                                     const errText = evt.message || agenticChat.i18n.errorGeneric;
+                                    livePane.finish();
                                     if (contentDiv) contentDiv.innerHTML = renderMarkdown(errText);
                                 }
                             }
@@ -1789,6 +1801,12 @@
                 conversationHistory.push({ role: 'assistant', content: confirmMsg });
                 saveConversation();
             }
+
+            // Normalized result cards (post/file/list) the approved tool returned.
+            if (isApproveVariant && !data.error && Array.isArray(data.cards) && data.cards.length) {
+                const cardsHost = cardElement.parentElement || cardElement;
+                renderResultCards(data.cards, cardsHost);
+            }
         } catch (error) {
             console.error('Proposal action error:', error);
             buttons.forEach(btn => btn.disabled = false);
@@ -1827,6 +1845,12 @@
             cardElement.classList.add('agentic-proposal-' + (action === 'approve' ? 'approved' : 'rejected'));
             const okMsg = (data.data && data.data.message) || (action === 'approve' ? 'Approved.' : 'Rejected.');
             actionsDiv.innerHTML = '<div class="agentic-proposal-status">' + (action === 'approve' ? '✅ ' : '❌ ') + escapeHtml(okMsg) + '</div>';
+
+            // Normalized result cards (post/file/list) the approved tool returned.
+            if (action === 'approve' && data.data && data.data.execution && Array.isArray(data.data.execution.cards) && data.data.execution.cards.length) {
+                const cardsHost = cardElement.parentElement || cardElement;
+                renderResultCards(data.data.execution.cards, cardsHost);
+            }
         } catch (error) {
             console.error('Approval action error:', error);
             buttons.forEach(btn => btn.disabled = false);
@@ -1834,150 +1858,208 @@
         }
     }
 
-    // Simple markdown renderer
+    // Simple markdown renderer — delegates to the shared AgenticMarkdown utility
+    // (assets/js/agentic-markdown.js), loaded as a script dependency. The admin
+    // chat supports agent handoff, so delegate links render as buttons.
     function renderMarkdown(text) {
-        if (!text) return '';
-        
-        // Escape HTML first
-        let html = escapeHtml(text);
+        return window.AgenticMarkdown.render(text, { delegateLinks: true });
+    }
 
-        // Extract fenced code blocks into placeholders FIRST — before any other
-        // substitution (headers, lists, bold, links, tables) — so the raw code is
-        // never rewritten into markdown markup, and the single-newline pass below
-        // can't turn the code's own line breaks into <br>. Restored at the very end.
-        var codeNonce = 'agentic_code_' + Math.random().toString(36).slice(2) + Date.now().toString(36) + '_';
-        var codeBlocks = [];
-        html = html.replace(/```(\w*)\n([\s\S]*?)```/g, function (block, lang, code) {
-            codeBlocks.push({ lang: lang, code: code });
-            return codeNonce + (codeBlocks.length - 1);
-        });
-        
-        // Inline code
-        html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+    // Render a single normalized result card (see Result_Card::normalize()) into a
+    // small DOM element summarising what a tool call did. The card shapes are the
+    // `cards` payload the server returns on a chat `end` event and on an approved
+    // proposal — post / file / list. Text is set via textContent (never innerHTML)
+    // so titles and links from the server can't inject markup.
+    function renderResultCard(card) {
+        const el = document.createElement('div');
+        el.className = 'agentic-result-card';
+        el.style.cssText = 'margin:8px 0;padding:10px 12px;border:1px solid #dcdcde;border-radius:6px;background:#fff;font-size:13px;';
 
-        // Tables — process before headers/lists to avoid conflicts
-        html = html.replace(/(^\|.+\|$\n?)+/gm, function(tableBlock) {
-            const rows = tableBlock.trim().split('\n');
-            if (rows.length < 2) return tableBlock;
-            
-            // Check for separator row (|---|---|)
-            const sepIndex = rows.findIndex(r => /^\|[\s:]*-{2,}[\s:]*\|/.test(r));
-            if (sepIndex === -1) return tableBlock;
-            
-            let tableHtml = '<table>';
-            
-            // Header rows (everything before separator)
-            tableHtml += '<thead>';
-            for (let i = 0; i < sepIndex; i++) {
-                const cells = rows[i].split('|').slice(1, -1);
-                tableHtml += '<tr>' + cells.map(c => '<th>' + c.trim() + '</th>').join('') + '</tr>';
+        function head(text) {
+            const h = document.createElement('div');
+            h.style.cssText = 'font-weight:600;margin-bottom:4px;';
+            h.textContent = text;
+            el.appendChild(h);
+        }
+        function link(href, label, margin, parent) {
+            href = (window.AgenticMarkdown && window.AgenticMarkdown.safeCardHref) ? window.AgenticMarkdown.safeCardHref(href) : null;
+            if (!href) return; // unsafe scheme — drop the link entirely
+            const a = document.createElement('a');
+            a.href = href;
+            a.target = '_blank';
+            a.rel = 'noopener';
+            a.textContent = label;
+            if (margin) a.style.marginRight = margin;
+            (parent || el).appendChild(a);
+        }
+
+        if (card.type === 'post') {
+            const verb = card.action === 'updated' ? 'Updated' : 'Created';
+            head('📝 ' + verb + ' post');
+
+            const body = document.createElement('div');
+            body.style.marginBottom = '6px';
+            body.textContent = card.title || ('Post #' + card.post_id);
+            if (card.status) {
+                const s = document.createElement('span');
+                s.style.color = '#757575';
+                s.textContent = ' (' + card.status + ')';
+                body.appendChild(s);
             }
-            tableHtml += '</thead>';
-            
-            // Body rows (everything after separator)
-            if (sepIndex + 1 < rows.length) {
-                tableHtml += '<tbody>';
-                for (let i = sepIndex + 1; i < rows.length; i++) {
-                    if (!rows[i].trim()) continue;
-                    const cells = rows[i].split('|').slice(1, -1);
-                    tableHtml += '<tr>' + cells.map(c => '<td>' + c.trim() + '</td>').join('') + '</tr>';
+            el.appendChild(body);
+
+            if (card.view_url) link(card.view_url, 'View', '10px');
+            if (card.edit_url) link(card.edit_url, 'Edit', '');
+        } else if (card.type === 'file') {
+            head('📄 Generated file');
+            const body = document.createElement('div');
+            body.textContent = card.title || '';
+            if (card.url && window.AgenticMarkdown && window.AgenticMarkdown.safeCardHref(card.url)) {
+                body.appendChild(document.createTextNode(' · '));
+                link(card.url, 'Open', '', body);
+            }
+            el.appendChild(body);
+        } else if (card.type === 'list') {
+            head('📋 Listed ' + (card.count != null ? card.count : ''));
+            const titles = (card.items || []).map(function (it) {
+                return it && it.title ? it.title : '';
+            }).filter(Boolean);
+            if (titles.length) {
+                const body = document.createElement('div');
+                body.style.color = '#757575';
+                body.textContent = titles.join(', ');
+                el.appendChild(body);
+            }
+        } else {
+            el.textContent = card.title || card.tool || '';
+        }
+
+        return el;
+    }
+
+    // Append a run's normalized cards to a container, if any.
+    function renderResultCards(cards, container) {
+        if (!container || !Array.isArray(cards) || !cards.length) return;
+        cards.forEach(function (card) {
+            container.appendChild(renderResultCard(card));
+        });
+    }
+
+    // Humanize a raw tool/function name ("create_page" -> "Create Page") for the
+    // live activity pane. Falls back to "Tool" for empty/unknown names.
+    function friendlyToolName(name) {
+        const human = String(name || '')
+            .replace(/[_-]+/g, ' ')
+            .replace(/\b\w/g, (c) => c.toUpperCase())
+            .trim();
+        return human || 'Tool';
+    }
+
+    // Short elapsed-time label ("1s", "45s") for a live-pane step.
+    function formatElapsed(ms) {
+        if (ms < 1000) return '<1s';
+        return Math.round(ms / 1000) + 's';
+    }
+
+    // Human label for an approval-gate decision (confirm/queue/block).
+    function gateLabel(decision) {
+        switch (decision) {
+            case 'confirm': return (agenticChat.i18n && agenticChat.i18n.gateConfirm) || 'Waiting for approval';
+            case 'queue': return (agenticChat.i18n && agenticChat.i18n.gateQueue) || 'Queued for approval';
+            case 'block': return (agenticChat.i18n && agenticChat.i18n.gateBlock) || 'Blocked by policy';
+            default: return String(decision || '');
+        }
+    }
+
+    // Collapsible "Working…" pane: lists each tool step as it happens (friendly
+    // name + elapsed time + ✓/⚠), replacing the old typing-text swap. Driven by
+    // SSE tool_start / tool_end / gate_decision. Attaches to the container only
+    // once the first step arrives, so a run that never calls a tool shows no pane.
+    function createLivePane(container) {
+        const details = document.createElement('details');
+        details.className = 'agentic-live-pane';
+        details.style.cssText = 'margin-top:8px;font-size:13px;border:1px solid #dcdcde;border-radius:6px;padding:6px 10px;background:#f6f7f7;';
+        details.open = false;
+
+        const summary = document.createElement('summary');
+        summary.style.cssText = 'cursor:pointer;color:#2271b1;font-weight:600;';
+        const summaryText = document.createElement('span');
+        summary.appendChild(summaryText);
+        details.appendChild(summary);
+
+        const list = document.createElement('ul');
+        list.style.cssText = 'margin:6px 0 0;padding:0;list-style:none;';
+        details.appendChild(list);
+
+        const rows = new Map(); // tool name -> FIFO queue of { li, status, startedAt }
+        let activeCount = 0;
+        let attached = false;
+
+        function setSummary() {
+            summaryText.textContent = activeCount > 0
+                ? ((agenticChat.i18n && agenticChat.i18n.working) || 'Working…') + ' (' + activeCount + ')'
+                : ((agenticChat.i18n && agenticChat.i18n.workingDone) || 'Working complete');
+        }
+        function attach() {
+            if (!attached && container) {
+                container.appendChild(details);
+                attached = true;
+            }
+        }
+        function makeRow(name) {
+            const li = document.createElement('li');
+            li.style.cssText = 'margin:3px 0;display:flex;gap:8px;align-items:baseline;';
+            const label = document.createElement('span');
+            label.textContent = friendlyToolName(name);
+            label.style.cssText = 'flex:0 0 auto;';
+            const status = document.createElement('span');
+            status.style.cssText = 'color:#757575;font-size:12px;';
+            li.appendChild(label);
+            li.appendChild(status);
+            list.appendChild(li);
+            return { li, status };
+        }
+
+        setSummary();
+        return {
+            el: details,
+            begin(name) {
+                activeCount++;
+                const row = makeRow(name);
+                row.status.textContent = '…';
+                row.startedAt = Date.now();
+                // Per-name FIFO: a tool called twice in one run keeps two rows
+                // instead of the second call overwriting the first.
+                const queue = rows.get(name) || [];
+                queue.push(row);
+                rows.set(name, queue);
+                setSummary();
+                attach();
+            },
+            end(name, success) {
+                const queue = rows.get(name);
+                if (queue && queue.length) {
+                    const rec = queue.shift();
+                    rec.status.textContent = (success ? '✓ ' : '⚠ ') + formatElapsed(Date.now() - rec.startedAt);
+                    rec.status.style.color = success ? '#008a20' : '#d63638';
+                    if (!queue.length) rows.delete(name);
                 }
-                tableHtml += '</tbody>';
+                activeCount = Math.max(0, activeCount - 1);
+                setSummary();
+            },
+            gate(name, decision) {
+                const { status } = makeRow(name);
+                status.textContent = '⚠ ' + gateLabel(decision);
+                status.style.color = '#d63638';
+                setSummary();
+                attach();
+            },
+            finish() {
+                activeCount = 0;
+                setSummary();
+                details.open = false;
             }
-            
-            tableHtml += '</table>';
-            return tableHtml;
-        });
-
-        // Horizontal rules
-        html = html.replace(/^-{3,}$/gm, '<hr>');
-        
-        // Headers (most specific first)
-        html = html.replace(/^#### (.*$)/gm, '<h4>$1</h4>');
-        html = html.replace(/^### (.*$)/gm, '<h3>$1</h3>');
-        html = html.replace(/^## (.*$)/gm, '<h2>$1</h2>');
-        html = html.replace(/^# (.*$)/gm, '<h1>$1</h1>');
-        
-        // Bold and italic
-        html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-        html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-        
-        // Agent delegation links — rendered as buttons, not anchors.
-        // Convention: [→ Agent Name](agentic-delegate:agent-id)
-        html = html.replace(/\[([^\]]+)\]\(agentic-delegate:([a-z0-9-]+)\)/g,
-            '<button class="agentic-delegate-btn" data-agent="$2">$1</button>');
-
-        // Standard links — scheme-validated and attribute-escaped.
-        html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, function (match, label, url) {
-            var href = safeLinkHref(url);
-            if (href === null) return label; // unsafe scheme — plain text
-            return '<a href="' + href + '" target="_blank" rel="noopener">' + label + '</a>';
-        });
-        
-        // Lists
-        html = html.replace(/^\s*[-*]\s+(.*)$/gm, '<li>$1</li>');
-        html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
-        // Drop the newline the <ul> wrapper leaves between items, so a later
-        // single-newline pass doesn't inject a stray <br> between <li>s — both
-        // between items and between the last item and the closing </ul>.
-        html = html.replace(/<\/li>\n<li>/g, '</li><li>');
-        html = html.replace(/(<\/li>)\n(<\/ul>)/g, '$1$2');
-
-        // Numbered lists — wrap each run of "1. item" lines in an <ol> directly,
-        // mirroring the <ul> handling above, so the items are never left as bare
-        // <li> that the later single-newline pass would join with a stray <br>.
-        html = html.replace(/(?:^[ \t]*\d+\.\s+.*(?:\n|$))+/gm, function (block) {
-            const items = block.split('\n').filter(function (line) {
-                return /^[ \t]*\d+\.\s+/.test(line);
-            });
-            return '<ol>' + items.map(function (line) {
-                return '<li>' + line.replace(/^[ \t]*\d+\.\s+/, '') + '</li>';
-            }).join('') + '</ol>';
-        });
-
-        // Blockquotes
-        html = html.replace(/^>\s+(.*)$/gm, '<blockquote>$1</blockquote>');
-        
-        // Paragraphs
-        html = html.replace(/\n\n/g, '</p><p>');
-        html = '<p>' + html + '</p>';
-        html = html.replace(/<p><\/p>/g, '');
-        html = html.replace(/<p>(<h[1-6]>)/g, '$1');
-        html = html.replace(/(<\/h[1-6]>)<\/p>/g, '$1');
-        html = html.replace(/<p>(<ul>)/g, '$1');
-        html = html.replace(/(<\/ul>)<\/p>/g, '$1');
-        html = html.replace(/<p>(<ol>)/g, '$1');
-        html = html.replace(/(<\/ol>)<\/p>/g, '$1');
-        // Unwrap the code placeholder from its paragraph — the real
-        // <div class="agentic-code-wrap"> block is restored after the newline
-        // pass below, so it is the token, not the block, that must escape <p>.
-        html = html.replace(new RegExp('<p>(' + codeNonce + '\\d+)</p>', 'g'), '$1');
-        html = html.replace(/<p>(<blockquote>)/g, '$1');
-        html = html.replace(/(<\/blockquote>)<\/p>/g, '$1');
-        html = html.replace(/<p>(<table>)/g, '$1');
-        html = html.replace(/(<\/table>)<\/p>/g, '$1');
-        html = html.replace(/<p>(<hr>)/g, '$1');
-        html = html.replace(/(<hr>)<\/p>/g, '$1');
-
-        // Preserve single line breaks inside a paragraph (the model's "line1\n
-        // line2" and "- item" lists after a colon). Blank lines were already
-        // turned into paragraph breaks above; only lone newlines remain. Code
-        // blocks are still held aside as placeholders, so their inner newlines
-        // survive as real newlines — the copy button reads textContent, which
-        // drops <br>.
-        html = html.replace(/\n/g, '<br>');
-
-        // Restore the code blocks now that every substitution and the newline
-        // pass have run, so none of them ever saw the raw code content.
-        html = html.replace(new RegExp(codeNonce + '(\\d+)', 'g'), function (m, i) {
-            var b = codeBlocks[parseInt(i, 10)];
-            // A token this render could only have inserted, so a match is always
-            // one of our own; keep the guard anyway against index drift.
-            return b === undefined ? m :
-                '<div class="agentic-code-wrap"><button class="agentic-copy-btn" title="Copy">Copy</button><pre><code class="language-' + b.lang + '">' + b.code + '</code></pre></div>';
-        });
-
-        return html;
+        };
     }
 
     // Escape HTML
@@ -2000,24 +2082,6 @@
         const textarea = document.createElement('textarea');
         textarea.innerHTML = text;
         return textarea.value;
-    }
-
-    // Validate a link URL against a safe-scheme allowlist and make it safe to
-    // interpolate into href="…". Returns the attribute-safe URL, or null when
-    // the scheme is disallowed (javascript:, data:, vbscript:, etc.).
-    // The URL argument is already HTML-escaped by escapeHtml() — which escapes
-    // &, <, > but NOT the quote characters — so this only needs to escape " and
-    // ' on top of that. Scheme detection mirrors the URL Standard: strip ASCII
-    // tab/newline/CR and surrounding C0 control + space first, so a
-    // "java\tscript:"-style obfuscation can't masquerade as a relative URL.
-    function safeLinkHref(url) {
-        var stripped = url.replace(/[\t\n\r]/g, '').replace(/^[\x00-\x20]+|[\x00-\x20]+$/g, '');
-        var scheme = stripped.match(/^([a-z][a-z0-9+.\-]*):/i);
-        if (scheme) {
-            var name = scheme[1].toLowerCase();
-            if (name !== 'http' && name !== 'https' && name !== 'mailto') return null;
-        }
-        return url.replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
 
     // Generate UUID

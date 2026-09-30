@@ -62,6 +62,12 @@ function agent_builder_chat_i18n(): array {
 		'summaryStatus'       => __( 'Status', 'agent-builder' ),
 		'summaryPostType'     => __( 'Post type', 'agent-builder' ),
 		'summaryPost'         => __( 'Post', 'agent-builder' ),
+		// Live activity pane (collapsible "Working…" step list).
+		'working'             => __( 'Working…', 'agent-builder' ),
+		'workingDone'         => __( 'Working complete', 'agent-builder' ),
+		'gateConfirm'         => __( 'Waiting for approval', 'agent-builder' ),
+		'gateQueue'           => __( 'Queued for approval', 'agent-builder' ),
+		'gateBlock'           => __( 'Blocked by policy', 'agent-builder' ),
 		// Skills UX (M15-d): Save as skill + Teach a task recording.
 		'saveAsSkill'         => __( 'Save as skill', 'agent-builder' ),
 		'teachTask'           => __( 'Teach a task', 'agent-builder' ),

@@ -29,6 +29,10 @@ class Chat_Assets {
 	 * @return void
 	 */
 	public static function register_ui_library(): void {
+		// The markdown renderer is a sibling shared primitive — registered here so
+		// any script that already depends on agentic-ui can also depend on it.
+		self::register_markdown();
+
 		if ( wp_script_is( 'agentic-ui', 'registered' ) ) {
 			return;
 		}
@@ -59,6 +63,28 @@ class Chat_Assets {
 				'areYouSure'    => __( 'Are you sure?', 'agent-builder' ),
 				'notifications' => __( 'Notifications', 'agent-builder' ),
 			)
+		);
+	}
+
+	/**
+	 * Register the shared markdown renderer (UMD) used by every chat surface.
+	 *
+	 * Loaded as a plain <script> dependency by the vanilla chat surfaces and
+	 * bundled by webpack for the React embed. Idempotent.
+	 *
+	 * @return void
+	 */
+	public static function register_markdown(): void {
+		if ( wp_script_is( 'agentic-markdown', 'registered' ) ) {
+			return;
+		}
+
+		wp_register_script(
+			'agentic-markdown',
+			AGENT_BUILDER_URL . 'assets/js/agentic-markdown.js',
+			array(),
+			AGENT_BUILDER_VERSION,
+			true
 		);
 	}
 
@@ -123,7 +149,7 @@ class Chat_Assets {
 		wp_enqueue_script(
 			'agentic-chat-overlay',
 			AGENT_BUILDER_URL . 'assets/js/chat-overlay.js',
-			array( 'agentic-ui', 'wp-i18n' ),
+			array( 'agentic-ui', 'agentic-markdown', 'wp-i18n' ),
 			AGENT_BUILDER_VERSION,
 			true
 		);
@@ -371,7 +397,7 @@ class Chat_Assets {
 			wp_register_script(
 				'agentic-chat-frontend',
 				AGENT_BUILDER_URL . 'assets/js/chat.js',
-				array( 'agentic-ui' ),
+				array( 'agentic-ui', 'agentic-markdown' ),
 				(string) filemtime( AGENT_BUILDER_DIR . 'assets/js/chat.js' ),
 				true
 			);
@@ -402,6 +428,7 @@ class Chat_Assets {
 				'consentEnabled' => get_option( 'agent_builder_chat_consent_enabled', false ) ? '1' : '0',
 				'consentText'    => \Agentic\GDPR::get_consent_text(),
 				'isAdmin'        => current_user_can( 'manage_options' ) ? '1' : '0',
+				'isSsl'          => is_ssl() ? '1' : '0',
 				'adminUrl'       => admin_url(),
 				'adminAgentsUrl' => admin_url( 'admin.php?page=agentic-agents' ),
 				// Read-only deep-link query args for chat bootstrap (no state change).
