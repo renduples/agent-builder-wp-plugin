@@ -99,7 +99,7 @@ class Shortcodes {
 			'consentText'    => \Agentic\GDPR::get_consent_text(),
 			'isAdmin'        => current_user_can( 'manage_options' ) ? '1' : '0',
 			'adminAgentsUrl' => admin_url( 'admin.php?page=agentic-agents' ),
-			'slashCommands'  => \Agentic\Chat_Assets::get_slash_commands_for_js(),
+			'slashCommands'  => \Agentic\Chat_Assets::get_slash_commands_for_js( $agent_slug ),
 			'i18n'           => agent_builder_chat_i18n(),
 		);
 

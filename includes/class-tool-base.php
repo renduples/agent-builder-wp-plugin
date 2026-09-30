@@ -52,6 +52,19 @@ abstract class Tool_Base {
 	}
 
 	/**
+	 * Get the slug of the agent currently executing a tool.
+	 *
+	 * Static counterpart to get_calling_agent_slug() for callers outside the
+	 * tool class hierarchy (e.g. Skills_Registry) that need to scope a record
+	 * to the acting agent.
+	 *
+	 * @return string Agent slug, or empty string when outside agent context.
+	 */
+	public static function get_calling_agent(): string {
+		return self::$calling_agent;
+	}
+
+	/**
 	 * Get the slug of the agent that triggered the current tool execution.
 	 *
 	 * @return string Agent slug, or empty string if called outside agent context.

@@ -1725,7 +1725,7 @@ class Admin_Menu_Handler {
 				// text is fetched from REST, never placed on the query string.
 				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				'briefToken'     => isset( $_GET['brief'] ) ? sanitize_key( wp_unslash( $_GET['brief'] ) ) : '',
-				'slashCommands'  => \Agentic\Chat_Assets::get_slash_commands_for_js(),
+				'slashCommands'  => \Agentic\Chat_Assets::get_slash_commands_for_js( $agentic_chat_slug ),
 				'i18n'           => agent_builder_chat_i18n(),
 			)
 		);

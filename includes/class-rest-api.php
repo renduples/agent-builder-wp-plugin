@@ -564,6 +564,27 @@ class REST_API {
 			$instances = \Agentic_Agent_Registry::get_instance()->get_accessible_instances();
 			$agent_id  = $instances ? array_key_first( $instances ) : '';
 		}
+
+		// Resolve a `/<slug>` slash-command into a skill. A known slug strips the
+		// prefix and injects the skill body downstream; an unknown slug leaves the
+		// message untouched so it reaches the model verbatim.
+		$skill_slug = '';
+		$parsed     = \Agentic\Skill_Commands::parse( (string) $message );
+		if ( null !== $parsed ) {
+			foreach ( \Agentic\Skills_Registry::get_for_agent( $agent_id ) as $skill ) {
+				if ( (string) ( $skill['slug'] ?? '' ) === $parsed['slug'] ) {
+					$skill_slug = $parsed['slug'];
+					$message    = $parsed['args'];
+					break;
+				}
+			}
+		}
+
+		if ( '' !== $skill_slug ) {
+			$audit = new Audit_Log();
+			$audit->log( $agent_id, 'skill_invoked', 'skill', array( 'skill_slug' => $skill_slug ) );
+		}
+
 		$is_stream = (bool) $request->get_param( 'stream' );
 
 		// Process with potential tool calls.
@@ -608,7 +629,7 @@ class REST_API {
 		}
 
 		try {
-			$response = $controller->chat( $message, $history, $user_id, $session_id, $agent_id, $image_data, $page_context, $deployment_context, $handoff_from, $handoff_context );
+			$response = $controller->chat( $message, $history, $user_id, $session_id, $agent_id, $image_data, $page_context, $deployment_context, $handoff_from, $handoff_context, $skill_slug );
 		} catch ( \Throwable $e ) {
 			\Agentic\Security_Log::log_system(
 				'chat_exception',
