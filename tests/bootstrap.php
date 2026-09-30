@@ -299,6 +299,23 @@ function _agentic_create_test_tables() {
 		KEY agent_enabled (agent_slug, enabled)
 	) {$charset_collate};";
 	dbDelta( $sql );
+
+	$sql = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}agent_builder_conversations (
+		id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+		session_id varchar(36) NOT NULL,
+		user_id bigint(20) unsigned NOT NULL DEFAULT 0,
+		agent_id varchar(64) NOT NULL DEFAULT '',
+		role varchar(16) NOT NULL DEFAULT 'user',
+		content longtext NOT NULL,
+		tools_used text,
+		feedback tinyint(1) DEFAULT NULL,
+		created_at datetime DEFAULT CURRENT_TIMESTAMP,
+		PRIMARY KEY (id),
+		KEY session_user (session_id, user_id),
+		KEY user_agent (user_id, agent_id),
+		KEY created_at (created_at)
+	) {$charset_collate};";
+	dbDelta( $sql );
 }
 
 /**

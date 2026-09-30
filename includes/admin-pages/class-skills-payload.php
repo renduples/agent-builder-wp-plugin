@@ -26,6 +26,7 @@ class Skills_Payload {
 			'clawhub'   => __( 'ClawHub', 'agent-builder' ),
 			'wordpress' => __( 'WordPress.org', 'agent-builder' ),
 			'anthropic' => __( 'Anthropic', 'agent-builder' ),
+			'draft'     => __( 'Draft', 'agent-builder' ),
 		);
 
 		// Map agent slugs to their display names for the Agent column, same
@@ -55,13 +56,15 @@ class Skills_Payload {
 				'agent'     => implode( ', ', $agent_names ),
 				'enabled'   => ! empty( $skill['enabled'] ),
 				'version'   => (string) ( $skill['version'] ?? '' ),
+				'source'    => $source,
 				'edit_url'  => admin_url( 'admin.php?page=agentic-skills&skill_view=edit&skill_id=' . $id ),
 				'delete_id' => $id,
 			);
-			// Source/version detail and export are Advanced-only, matching the
-			// classic Skills admin page's Basic/Advanced split.
+			// Source label and export are Advanced-only, matching the classic
+			// Skills admin page's Basic/Advanced split. `source` itself is always
+			// present so the React view can split draft rows out into the Drafts
+			// section regardless of mode.
 			if ( $is_advanced ) {
-				$row['source']       = $source;
 				$row['source_label'] = $source_labels[ $source ] ?? __( 'Local', 'agent-builder' );
 				$row['export_url']   = wp_nonce_url( admin_url( 'admin-post.php?action=agentic_export_skill&skill_id=' . $id ), 'agentic_export_skill' );
 			}
@@ -100,6 +103,14 @@ class Skills_Payload {
 					'label'   => __( 'Create Skill', 'agent-builder' ),
 					'url'     => admin_url( 'admin.php?page=agentic-skills&skill_view=new' ),
 					'primary' => true,
+				),
+				array(
+					'label' => __( 'Import SKILL.md', 'agent-builder' ),
+					'url'   => admin_url( 'admin.php?page=agentic-skills&skill_view=new' ),
+				),
+				array(
+					'label' => __( 'Teach a task', 'agent-builder' ),
+					'url'   => admin_url( 'admin.php?page=agentic-chat&teach_task=1' ),
 				),
 				array(
 					'label' => __( 'Browse Community', 'agent-builder' ),

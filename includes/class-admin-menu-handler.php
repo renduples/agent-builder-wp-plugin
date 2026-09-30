@@ -1711,6 +1711,11 @@ class Admin_Menu_Handler {
 				'consentEnabled' => get_option( 'agent_builder_chat_consent_enabled', false ) ? '1' : '0',
 				'consentText'    => \Agentic\GDPR::get_consent_text(),
 				'isAdmin'        => current_user_can( 'manage_options' ) ? '1' : '0',
+				// Skills UX (M15-d): gate Save-as-skill + Teach-a-task on the same
+				// capability the skill REST routes themselves require.
+				'canManageTools' => current_user_can( 'agent_builder_manage_tools' ) ? '1' : '0',
+				// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only flag from the Skills screen's "Teach a task" link.
+				'teachTask'      => isset( $_GET['teach_task'] ) ? '1' : '0',
 				'adminUrl'       => admin_url(),
 				'adminAgentsUrl' => admin_url( 'admin.php?page=agentic-agents' ),
 				// Agent-to-agent handoff context (set when arriving via a delegate
@@ -1725,7 +1730,7 @@ class Admin_Menu_Handler {
 				// text is fetched from REST, never placed on the query string.
 				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				'briefToken'     => isset( $_GET['brief'] ) ? sanitize_key( wp_unslash( $_GET['brief'] ) ) : '',
-				'slashCommands'  => \Agentic\Chat_Assets::get_slash_commands_for_js(),
+				'slashCommands'  => \Agentic\Chat_Assets::get_slash_commands_for_js( $agentic_chat_slug ),
 				'i18n'           => agent_builder_chat_i18n(),
 			)
 		);
