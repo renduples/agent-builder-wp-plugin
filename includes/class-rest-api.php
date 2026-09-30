@@ -572,7 +572,7 @@ class REST_API {
 		$parsed     = \Agentic\Skill_Commands::parse( (string) $message );
 		if ( null !== $parsed ) {
 			foreach ( \Agentic\Skills_Registry::get_for_agent( $agent_id ) as $skill ) {
-				if ( $parsed['slug'] === (string) ( $skill['slug'] ?? '' ) ) {
+				if ( (string) ( $skill['slug'] ?? '' ) === $parsed['slug'] ) {
 					$skill_slug = $parsed['slug'];
 					$message    = $parsed['args'];
 					break;

@@ -106,7 +106,7 @@ class Skill_Commands {
 		}
 
 		foreach ( Skills_Registry::get_for_agent( $agent_slug ) as $skill ) {
-			if ( $skill_slug !== (string) ( $skill['slug'] ?? '' ) ) {
+			if ( (string) ( $skill['slug'] ?? '' ) !== $skill_slug ) {
 				continue;
 			}
 
