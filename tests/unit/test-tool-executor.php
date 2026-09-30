@@ -273,6 +273,39 @@ class Test_Tool_Executor extends TestCase {
 	}
 
 	/**
+	 * execute()'s allow-path must write a non-readonly tool resolved via the
+	 * agent-inline fallback (not Tool_Loader) to the operations ledger too —
+	 * every resolved branch reaches log_executed(), not just the loader branch.
+	 */
+	public function test_execute_logs_executed_for_agent_inline_fallback_tool(): void {
+		$agent = new class() extends Agent_Base {
+			public function get_id(): string {
+				return 'inline-test-agent';
+			}
+
+			public function execute_tool( string $_tool_name, array $_arguments ): ?array {
+				return array( 'from' => 'inline-fallback' );
+			}
+		};
+
+		$result = $this->make_executor()->execute(
+			'inline_only_tool',
+			array(),
+			'inline-test-agent',
+			'autonomous',
+			'chat',
+			$agent
+		);
+
+		$this->assertSame( array( 'from' => 'inline-fallback' ), $result );
+
+		$queue   = new Approval_Queue();
+		$recent  = $queue->get_recent( array( 'agent_id' => 'inline-test-agent' ) );
+		$actions = array_column( $recent, 'action' );
+		$this->assertContains( 'inline_only_tool', $actions );
+	}
+
+	/**
 	 * A read-only tool never triggers a table backup, even under 'allow'.
 	 */
 	public function test_readonly_tool_never_triggers_a_backup(): void {
