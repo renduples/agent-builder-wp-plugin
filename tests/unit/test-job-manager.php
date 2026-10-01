@@ -243,7 +243,16 @@ class Test_Job_Manager extends TestCase {
 
 		// wp_raise_memory_limit() returns early when memory_limit is unlimited
 		// (-1), so set a finite limit first to reach the admin_memory_limit filter.
-		$previous_limit = ini_set( 'memory_limit', '64M' );
+		// The target must stay above this process's CURRENT actual usage: PHP's
+		// memory manager refuses to lower memory_limit below that and raises an
+		// E_WARNING ("Failed to set memory limit..."), which PHPUnit's
+		// convertWarningsToExceptions turns into a test error. A flat '64M' is
+		// comfortably above a fresh process but not above one that has already
+		// run hundreds of other tests in the same run. The exact value doesn't
+		// matter otherwise — wp_raise_memory_limit('admin') applies the
+		// admin_memory_limit filter unconditionally once past the -1 check.
+		$target_limit   = max( 64 * MB_IN_BYTES, (int) memory_get_usage( true ) + ( 16 * MB_IN_BYTES ) );
+		$previous_limit = ini_set( 'memory_limit', (string) $target_limit );
 
 		$fired    = false;
 		$callback = function ( $limit ) use ( &$fired ) {

@@ -161,6 +161,26 @@ class TestCase extends WP_UnitTestCase {
 			mkdir( $agent_dir, 0755, true );
 		}
 
+		// Abilities_Manifest::resolve_path() only honours an agents-dir manifest
+		// when the directory is a "real" agent — has an agent.json or agent.php,
+		// same as Agent_Registry requires (Fix #138, 925fbc7) — so a bare
+		// abilities.json-only directory is invisible to it, just like a stale
+		// leftover dir in production. Ship a minimal agent.json alongside it so
+		// this fixture is resolvable the same way a real installed agent is.
+		$agent_json_file = $agent_dir . '/agent.json';
+		if ( ! file_exists( $agent_json_file ) ) {
+			file_put_contents(
+				$agent_json_file,
+				wp_json_encode(
+					array(
+						'slug' => $agent_id,
+						'name' => 'Test Agent',
+					),
+					JSON_PRETTY_PRINT
+				)
+			);
+		}
+
 		if ( empty( $abilities ) ) {
 			$abilities = array(
 				'_test_placeholder' => array(
