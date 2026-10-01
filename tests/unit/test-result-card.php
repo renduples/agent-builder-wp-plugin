@@ -368,4 +368,292 @@ class Test_Result_Card extends TestCase {
 		$this->assertSame( 'list_comments', $result['cards'][0]['tool'] );
 		$this->assertNotEmpty( $result['result_summary'] );
 	}
+
+	/**
+	 * An unrecognized connector tool with no filter registered still maps to
+	 * null (the seam adds nothing when nothing hooks it).
+	 */
+	public function test_external_card_no_filter_returns_null(): void {
+		$this->assertNull( Result_Card::normalize( 'mcp:github:list_issues', array( 'issues' => array() ) ) );
+	}
+
+	/**
+	 * A filter returning a well-formed card is returned, sanitized to only the
+	 * keys the built-in cards use, with tags stripped and scalars coerced.
+	 */
+	public function test_external_card_filter_returns_sanitised_card(): void {
+		add_filter(
+			'agent_builder_result_card',
+			static function () {
+				return array(
+					'type'     => 'post',
+					'tool'     => 'mcp:github:create_issue',
+					'title'    => 'Hello <b>World</b>',
+					'action'   => 'created',
+					'post_id'  => '42',
+					'status'   => 'open',
+					'edit_url' => '/wp-admin/post.php?post=42&action=edit',
+					'view_url' => '/?p=42',
+					'junk'     => 'drop me',
+				);
+			},
+			10,
+			3
+		);
+
+		$card = Result_Card::normalize( 'mcp:github:create_issue', array( 'ok' => true ) );
+
+		$this->assertIsArray( $card );
+		$this->assertSame( 'post', $card['type'] );
+		$this->assertSame( 'mcp:github:create_issue', $card['tool'] );
+		$this->assertSame( 'Hello World', $card['title'] );
+		$this->assertSame( 'created', $card['action'] );
+		$this->assertSame( 42, $card['post_id'] );
+		$this->assertSame( 'open', $card['status'] );
+		$this->assertSame( '/wp-admin/post.php?post=42&action=edit', $card['edit_url'] );
+		$this->assertSame( '/?p=42', $card['view_url'] );
+		$this->assertArrayNotHasKey( 'junk', $card );
+	}
+
+	/**
+	 * A filter returning an unsupported type (or a non-array) maps to null.
+	 */
+	public function test_external_card_unknown_type_or_non_array_returns_null(): void {
+		add_filter(
+			'agent_builder_result_card',
+			static function () {
+				return array( 'type' => 'text', 'title' => 'Excerpt', 'text' => 'raw' );
+			},
+			10,
+			3
+		);
+
+		$this->assertNull( Result_Card::normalize( 'mcp:github:list_issues', array( 'issues' => array() ) ) );
+
+		remove_all_filters( 'agent_builder_result_card' );
+		add_filter(
+			'agent_builder_result_card',
+			static function () {
+				return 'not-an-array';
+			},
+			10,
+			3
+		);
+
+		$this->assertNull( Result_Card::normalize( 'mcp:github:list_issues', array( 'issues' => array() ) ) );
+	}
+
+	/**
+	 * Unsafe URLs (javascript:, data:, off-site, or a backslash/whitespace
+	 * escape) are dropped from an external card rather than surfaced.
+	 */
+	public function test_external_card_rejects_unsafe_urls(): void {
+		$bad = array(
+			'javascript:alert(1)',
+			'data:text/html,<script>alert(1)</script>',
+			'//evil.com/steal',
+			'https://evil.com/steal',
+			"/\\evil.com",
+			"/\t/evil.com",
+		);
+
+		foreach ( $bad as $url ) {
+			remove_all_filters( 'agent_builder_result_card' );
+			add_filter(
+				'agent_builder_result_card',
+				static function () use ( $url ) {
+					return array(
+						'type'     => 'post',
+						'title'    => 'Unsafe',
+						'edit_url' => $url,
+						'view_url' => $url,
+					);
+				},
+				10,
+				3
+			);
+
+			$card = Result_Card::normalize( 'mcp:github:create_issue', array( 'ok' => true ) );
+			$this->assertIsArray( $card, 'an unsafe URL must still produce a card without the URL' );
+			$this->assertArrayNotHasKey( 'edit_url', $card );
+			$this->assertArrayNotHasKey( 'view_url', $card );
+		}
+
+		remove_all_filters( 'agent_builder_result_card' );
+		add_filter(
+			'agent_builder_result_card',
+			static function () {
+				return array( 'type' => 'file', 'title' => 'report.docx', 'url' => 'javascript:alert(1)' );
+			},
+			10,
+			3
+		);
+
+		$file = Result_Card::normalize( 'mcp:drive:export', array( 'ok' => true ) );
+		$this->assertIsArray( $file );
+		$this->assertArrayNotHasKey( 'url', $file );
+	}
+
+	/**
+	 * HTML in an external card's string fields is stripped.
+	 */
+	public function test_external_card_strips_html(): void {
+		add_filter(
+			'agent_builder_result_card',
+			static function () {
+				return array(
+					'type'   => 'post',
+					'title'  => '<script>alert(1)</script>Safe Title',
+					'status' => '<em>draft</em>',
+				);
+			},
+			10,
+			3
+		);
+
+		$card = Result_Card::normalize( 'mcp:github:create_issue', array( 'ok' => true ) );
+
+		$this->assertIsArray( $card );
+		$this->assertSame( 'Safe Title', $card['title'] );
+		$this->assertSame( 'draft', $card['status'] );
+	}
+
+	/**
+	 * Oversized titles are capped and oversized item lists are trimmed to the
+	 * sample limit.
+	 */
+	public function test_external_card_caps_oversized_strings_and_lists(): void {
+		add_filter(
+			'agent_builder_result_card',
+			static function () {
+				$items = array();
+				for ( $i = 1; $i <= 30; $i++ ) {
+					$items[] = array( 'id' => $i, 'title' => 'Item ' . $i );
+				}
+
+				return array(
+					'type'  => 'list',
+					'title' => str_repeat( 'x', 300 ),
+					'count' => 30,
+					'items' => $items,
+				);
+			},
+			10,
+			3
+		);
+
+		$card = Result_Card::normalize( 'mcp:github:list_issues', array( 'ok' => true ) );
+
+		$this->assertIsArray( $card );
+		$this->assertSame( 200, strlen( $card['title'] ) );
+		$this->assertCount( 20, $card['items'] );
+		$this->assertSame( 1, $card['items'][0]['id'] );
+		$this->assertSame( 'Item 1', $card['items'][0]['title'] );
+	}
+
+	/**
+	 * A file and a list external card are accepted and sanitized through their
+	 * own type-specific fields.
+	 */
+	public function test_external_card_file_and_list_types(): void {
+		add_filter(
+			'agent_builder_result_card',
+			static function () {
+				return array(
+					'type'  => 'file',
+					'title' => 'report.docx',
+					'url'   => '/wp-content/uploads/agentic-exports/report.docx',
+				);
+			},
+			10,
+			3
+		);
+
+		$file = Result_Card::normalize( 'mcp:drive:export', array( 'ok' => true ) );
+		$this->assertIsArray( $file );
+		$this->assertSame( 'file', $file['type'] );
+		$this->assertSame( 'report.docx', $file['title'] );
+		$this->assertSame( '/wp-content/uploads/agentic-exports/report.docx', $file['url'] );
+
+		remove_all_filters( 'agent_builder_result_card' );
+		add_filter(
+			'agent_builder_result_card',
+			static function () {
+				return array(
+					'type'  => 'list',
+					'title' => 'Issues',
+					'count' => 2,
+					'items' => array(
+						array( 'id' => 10, 'title' => 'First' ),
+						array( 'id' => 11, 'title' => 'Second' ),
+					),
+				);
+			},
+			10,
+			3
+		);
+
+		$list = Result_Card::normalize( 'mcp:github:list_issues', array( 'ok' => true ) );
+		$this->assertIsArray( $list );
+		$this->assertSame( 'list', $list['type'] );
+		$this->assertSame( 'Issues', $list['title'] );
+		$this->assertSame( 2, $list['count'] );
+		$this->assertCount( 2, $list['items'] );
+	}
+
+	/**
+	 * An error result short-circuits before the filter runs, so a connector can
+	 * never turn a failed tool call into a card.
+	 */
+	public function test_external_card_error_result_never_reaches_filter(): void {
+		$called = false;
+		add_filter(
+			'agent_builder_result_card',
+			static function () use ( &$called ) {
+				$called = true;
+				return array( 'type' => 'post', 'title' => 'Should not appear' );
+			},
+			10,
+			3
+		);
+
+		$card = Result_Card::normalize( 'mcp:github:create_issue', array( 'error' => 'rate limited' ) );
+
+		$this->assertNull( $card );
+		$this->assertFalse( $called, 'an error result must not reach the filter' );
+	}
+
+	/**
+	 * The filter receives the tool name and the raw, unmodified result.
+	 */
+	public function test_external_card_filter_receives_tool_and_raw_result(): void {
+		$seen_tool   = null;
+		$seen_result = null;
+		add_filter(
+			'agent_builder_result_card',
+			static function ( $card, $tool, $result ) use ( &$seen_tool, &$seen_result ) {
+				$seen_tool   = $tool;
+				$seen_result = $result;
+				return null;
+			},
+			10,
+			3
+		);
+
+		$raw = array( 'content' => 'raw payload', 'nested' => array( 'a' => 1 ) );
+		Result_Card::normalize( 'mcp:github:list_issues', $raw );
+
+		$this->assertSame( 'mcp:github:list_issues', $seen_tool );
+		$this->assertSame( $raw, $seen_result );
+	}
+
+	/**
+	 * summarize() copes with a card type it does not know by falling back to the
+	 * card title, so an unrecognized card still yields a readable clause.
+	 */
+	public function test_summarize_unknown_card_type_falls_back_to_title(): void {
+		$summary = Result_Card::summarize( array( array( 'type' => 'connector', 'title' => 'Synced 3 issues' ) ) );
+
+		$this->assertSame( 'Synced 3 issues.', $summary );
+	}
 }
