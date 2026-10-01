@@ -4,7 +4,7 @@ Tags: ai, ai safety, ai agents, mcp, webmcp
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 4.0.2
+Stable tag: 4.4.0
 Donate link: https://agentic-plugin.com/donate/
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -341,12 +341,18 @@ This plugin connects to external AI APIs to process prompts and tool executions 
 
 == Changelog ==
 
-= 4.1.0 =
+= 4.4.0 - 2026-10-01 =
 * New Tasks screen: hand a job to an agent and it runs in the background — low-risk steps happen automatically, anything that needs your judgement waits under "Waiting on you".
 * Autonomous tasks: agents now run approved low-risk tools on their own, pausing only when a step needs your OK.
 * New notifications: an inbox and admin-bar badge keep you informed when a task finishes, is waiting, or fails.
 * Optional daily activity digest email for administrators summarizing what your agents did — on by default, configurable from Settings → Security.
 * Anthropic: added the Claude 5.x family (Sonnet 5.5 as the fresh-install default, Opus 5.5, Fable 5.1, plus Sonnet 5 and Opus 5) and made forced tool choice resilient to the newer models rejecting it.
+* Approval rules: write plain-English rules such as "Ask me first before publishing anything" or "Allow automatically: adding tags". "Ask first" always beats "Allow automatically", and high-risk tools still need your OK.
+* Allow once, for this task, or always — and see and revoke every standing permission under Approvals → Grants.
+* Agent profiles: give each agent a display name, title, avatar and standing instructions; pin, hide, duplicate, and export or import an agent as a template. Create a new agent from three fields.
+* Routines: run an agent or skill on a schedule or when something happens on your site, with a test run, pause/resume, next run in your timezone and the last 20 runs.
+* Skills: save a conversation as a skill, teach a task by demonstration, create one from a description, and invoke any skill with /skill-name in chat. Skills are shared across agents by default.
+* Results arrive as cards (posts, files, tables, diffs), a live "Working…" pane shows each step as it happens, and voice dictation is available on HTTPS sites.
 
 = 4.0.2 - 2026-09-27 =
 * Maintenance: version alignment across the WordPress.org, self-hosted, and Pro editions. Ensures clean compatibility with Agent Builder Pro 4.0.2. No functional changes to this edition.
@@ -408,8 +414,8 @@ For the full version history, visit [agentic-plugin.com/changelog](https://agent
 
 == Upgrade Notice ==
 
-= 4.1.0 =
-Creates new database tables and adds the Tasks screen. Autonomous tasks now run low-risk tools automatically and surface medium/high-risk ones for your review under Tasks → Waiting on you. Administrators receive a daily activity digest by default (toggle in Settings → Security).
+= 4.4.0 =
+Creates new database tables and adds Tasks, approval rules, agent profiles, Routines and skill drafting. Autonomous tasks now run low-risk tools automatically and surface medium/high-risk ones for your review under Tasks → Waiting on you. Administrators receive a daily activity digest by default (toggle in Settings → Security).
 
 = 3.3.0 =
 React Settings, Tools, Approvals, and Knowledge hubs. No breaking changes for existing agents or API keys.
