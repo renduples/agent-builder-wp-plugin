@@ -415,7 +415,7 @@ For the full version history, visit [agentic-plugin.com/changelog](https://agent
 == Upgrade Notice ==
 
 = 4.4.0 =
-Creates new database tables and adds Tasks, approval rules, agent profiles, Routines and skill drafting. Autonomous tasks now run low-risk tools automatically and surface medium/high-risk ones for your review under Tasks → Waiting on you. Administrators receive a daily activity digest by default (toggle in Settings → Security).
+Adds Tasks, approval rules, agent profiles, Routines and skill drafting, and creates new database tables. Low-risk autonomous steps now run on their own; anything else waits for you under Tasks. Admins get a daily digest (Settings → Security).
 
 = 3.3.0 =
 React Settings, Tools, Approvals, and Knowledge hubs. No breaking changes for existing agents or API keys.

@@ -361,7 +361,7 @@ class Notifications {
 		$now   = gmdate( 'Y-m-d H:i:s' );
 
 		if ( empty( $ids ) ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table update.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table update.
 			$wpdb->query(
 				$wpdb->prepare(
 					'UPDATE %i SET read_at = %s WHERE user_id = %d AND read_at IS NULL',
@@ -381,7 +381,7 @@ class Notifications {
 		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
 		$args         = array_merge( array( $table, $now, $user_id ), $ids );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table update.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table update.
 		$wpdb->query(
 			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Dynamic IN (%d…) count matches $ids; table %i + read_at %s + user_id %d via $args.
 			$wpdb->prepare(
@@ -461,7 +461,7 @@ class Notifications {
 		$claimed_at   = gmdate( 'Y-m-d H:i:s' );
 		$claim_args   = array_merge( array( $table, $claimed_at ), $ids );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table update.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table update.
 		$claimed = (int) $wpdb->query(
 			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Dynamic IN (%d…) count matches $ids; table %i + emailed_at %s via $claim_args.
 			$wpdb->prepare(
@@ -533,7 +533,7 @@ class Notifications {
 		// Release the claim so a transient send failure is retried by the next
 		// digest rather than silently dropping these rows.
 		$release_args = array_merge( array( $table ), $ids, array( $claimed_at ) );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table update.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table update.
 		$wpdb->query(
 			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Dynamic IN (%d…) count matches $ids; table %i + emailed_at %s via $release_args.
 			$wpdb->prepare(
@@ -638,7 +638,7 @@ class Notifications {
 		// else already owns the cooldown" signal. Suppress the expected
 		// duplicate-key error so it never reaches the log.
 		$suppressed = $wpdb->suppress_errors( true );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Raw write: this is a cooldown row, not an option read through the options API.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Raw write: this is a cooldown row, not an option read through the options API.
 		$inserted = $wpdb->query(
 			$wpdb->prepare(
 				"INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')",
@@ -654,7 +654,7 @@ class Notifications {
 
 		// The row already exists. Read it directly, bypassing get_option() so
 		// the alloptions cache can't serve a stale copy of a raw-written row.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Raw read: get_option() may serve a stale cached value for a raw-written row.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Raw read: get_option() may serve a stale cached value for a raw-written row.
 		$existing = $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT option_value FROM {$wpdb->options} WHERE option_name = %s",
@@ -666,7 +666,7 @@ class Notifications {
 			// The row vanished between our failed INSERT and this read. Retry the
 			// INSERT once; if it still fails, someone else won it.
 			$suppressed = $wpdb->suppress_errors( true );
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Raw write.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Raw write.
 			$inserted = $wpdb->query(
 				$wpdb->prepare(
 					"INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')",
@@ -687,7 +687,7 @@ class Notifications {
 		// Stale cooldown: compare-and-swap takeover. The WHERE clause pins the
 		// exact value just read, so the UPDATE only lands if nobody else took the
 		// row over first (0 affected rows = lost the race).
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Raw write.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Raw write.
 		$taken = $wpdb->query(
 			$wpdb->prepare(
 				"UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s AND option_value = %s",
@@ -709,7 +709,7 @@ class Notifications {
 	private static function mark_emailed( int $id ): void {
 		global $wpdb;
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table update.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table update.
 		$wpdb->update(
 			$wpdb->prefix . 'agent_builder_notifications',
 			array( 'emailed_at' => gmdate( 'Y-m-d H:i:s' ) ),
