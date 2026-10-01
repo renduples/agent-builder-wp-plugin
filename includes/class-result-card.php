@@ -82,8 +82,36 @@ class Result_Card {
 	private const LIST_SAMPLE_LIMIT = 5;
 
 	/**
+	 * Card types the client renderer understands. An externally supplied card
+	 * must be one of these or it is dropped.
+	 *
+	 * @var array<int,string>
+	 */
+	private const CARD_TYPES = array( 'post', 'file', 'list' );
+
+	/**
+	 * Hard cap (in characters) for an external card's title and short string
+	 * fields, so a connector can never surface an unbounded string.
+	 *
+	 * @var int
+	 */
+	private const STRING_MAX_LENGTH = 200;
+
+	/**
+	 * Hard cap on the number of sample items an external list card may surface.
+	 *
+	 * @var int
+	 */
+	private const LIST_MAX_ITEMS = 20;
+
+	/**
 	 * Normalize one tool result into a card, or null when the tool has no
 	 * card representation (or its result carries only an error).
+	 *
+	 * Unrecognized tools get one last chance through the
+	 * `agent_builder_result_card` filter, which connectors (Pro MCP tools, for
+	 * example) hook to supply their own card. With nothing hooked, the default
+	 * null passes through unchanged.
 	 *
 	 * @param string $tool   Tool name, as recorded in a tool_results entry.
 	 * @param array  $result The tool's raw return value.
@@ -106,7 +134,142 @@ class Result_Card {
 			return self::normalize_list( $tool, $result, self::LIST_TOOLS[ $tool ] );
 		}
 
-		return null;
+		/**
+		 * Filter the result card for a tool this class does not recognize, so a
+		 * connector can surface its own card. Return null to keep the tool
+		 * card-less (the default).
+		 *
+		 * @param array|null $card   Card to show, or null.
+		 * @param string     $tool   Tool name.
+		 * @param array      $result Raw tool result.
+		 */
+		$card = apply_filters( 'agent_builder_result_card', null, $tool, $result );
+
+		return self::sanitize_external_card( $card );
+	}
+
+	/**
+	 * Sanitize a card supplied through the agent_builder_result_card filter.
+	 *
+	 * Accepts only an array whose `type` is one the renderer knows; keeps only
+	 * the keys the built-in cards use; strips tags from every string and caps
+	 * its length; runs every URL through safe_card_url(); and discards
+	 * everything else. Returns null for anything empty or invalid, so hostile
+	 * or malformed filter output can never surface an unsanitized card.
+	 *
+	 * @param mixed $card Raw filter return value.
+	 * @return array<string,mixed>|null
+	 */
+	private static function sanitize_external_card( $card ): ?array {
+		if ( ! is_array( $card ) ) {
+			return null;
+		}
+
+		$type = isset( $card['type'] ) && is_string( $card['type'] ) ? $card['type'] : '';
+		if ( ! in_array( $type, self::CARD_TYPES, true ) ) {
+			return null;
+		}
+
+		$clean = array( 'type' => $type );
+
+		$tool = self::clean_card_text( $card['tool'] ?? '' );
+		if ( '' !== $tool ) {
+			$clean['tool'] = $tool;
+		}
+
+		// Every card carries a title; without one there is nothing to show.
+		$title = self::clean_card_text( $card['title'] ?? '' );
+		if ( '' === $title ) {
+			return null;
+		}
+		$clean['title'] = $title;
+
+		if ( 'post' === $type ) {
+			$post_id = (int) ( $card['post_id'] ?? 0 );
+			if ( $post_id > 0 ) {
+				$clean['post_id'] = $post_id;
+			}
+
+			$action = self::clean_card_text( $card['action'] ?? '' );
+			if ( '' !== $action ) {
+				$clean['action'] = $action;
+			}
+
+			$status = self::clean_card_text( $card['status'] ?? '' );
+			if ( '' !== $status ) {
+				$clean['status'] = $status;
+			}
+
+			$edit_url = self::clean_card_url( $card['edit_url'] ?? '' );
+			if ( '' !== $edit_url ) {
+				$clean['edit_url'] = $edit_url;
+			}
+
+			$view_url = self::clean_card_url( $card['view_url'] ?? '' );
+			if ( '' !== $view_url ) {
+				$clean['view_url'] = $view_url;
+			}
+		} elseif ( 'file' === $type ) {
+			$url = self::clean_card_url( $card['url'] ?? '' );
+			if ( '' !== $url ) {
+				$clean['url'] = $url;
+			}
+		} elseif ( 'list' === $type ) {
+			$clean['count'] = isset( $card['count'] ) ? max( 0, (int) $card['count'] ) : 0;
+
+			$items   = isset( $card['items'] ) && is_array( $card['items'] ) ? $card['items'] : array();
+			$samples = array();
+			foreach ( array_slice( $items, 0, self::LIST_MAX_ITEMS ) as $item ) {
+				if ( ! is_array( $item ) ) {
+					continue;
+				}
+
+				$item_title = self::clean_card_text( $item['title'] ?? '' );
+				if ( '' === $item_title ) {
+					continue;
+				}
+
+				$samples[] = array(
+					'id'    => (int) ( $item['id'] ?? $item['ID'] ?? $item['post_id'] ?? 0 ),
+					'title' => $item_title,
+				);
+			}
+			if ( ! empty( $samples ) ) {
+				$clean['items'] = $samples;
+			}
+		}
+
+		return $clean;
+	}
+
+	/**
+	 * Strip tags and cap a single card string field.
+	 *
+	 * @param mixed $value Raw value.
+	 * @return string Stripped, trimmed, capped string ('' when absent/empty).
+	 */
+	private static function clean_card_text( $value ): string {
+		$text = is_string( $value ) ? $value : ( is_scalar( $value ) ? (string) $value : '' );
+		$text = trim( wp_strip_all_tags( $text ) );
+		if ( mb_strlen( $text ) > self::STRING_MAX_LENGTH ) {
+			$text = mb_substr( $text, 0, self::STRING_MAX_LENGTH );
+		}
+
+		return $text;
+	}
+
+	/**
+	 * Validate a single card URL against the site allowlist.
+	 *
+	 * @param mixed $value Raw value.
+	 * @return string The URL when safe, '' otherwise.
+	 */
+	private static function clean_card_url( $value ): string {
+		if ( ! is_string( $value ) ) {
+			return '';
+		}
+
+		return self::safe_card_url( $value );
 	}
 
 	/**
@@ -374,7 +537,9 @@ class Result_Card {
 				return 'Listed ' . (int) ( $card['count'] ?? 0 ) . ' ' . strtolower( (string) ( $card['title'] ?? 'items' ) );
 
 			default:
-				return '';
+				// Unknown card types fall back to the title so a future type still
+				// yields a readable summary clause.
+				return (string) ( $card['title'] ?? '' );
 		}
 	}
 
