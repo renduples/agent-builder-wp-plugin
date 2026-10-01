@@ -472,16 +472,16 @@ final class Activator {
 			global $wpdb;
 			$table = $wpdb->prefix . 'agent_builder_runs';
 
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $table is an internal prefix + literal name, not user input.
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $table is an internal prefix + literal name, not user input.
 			if ( ! $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) ) {
 				return; // Table not created yet — nothing to migrate; leave unmigrated so this retries later.
 			}
 
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is an internal prefix + literal name, not user input.
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $table is an internal prefix + literal name, not user input.
 			$column_exists = (bool) $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM {$table} LIKE %s", 'awaiting_tool_call_id' ) );
 
 			if ( ! $column_exists ) {
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- schema migration; $table is trusted, no user input.
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.SchemaChange -- schema migration; $table is trusted, no user input.
 				$altered = $wpdb->query( "ALTER TABLE {$table} ADD COLUMN awaiting_tool_call_id varchar(64) DEFAULT NULL AFTER awaiting_id" );
 
 				if ( false === $altered ) {
@@ -493,7 +493,7 @@ final class Activator {
 
 				// Re-verify rather than trust a truthy query result: confirm the
 				// column is actually there before marking this migration done.
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is an internal prefix + literal name, not user input.
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $table is an internal prefix + literal name, not user input.
 				$column_exists = (bool) $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM {$table} LIKE %s", 'awaiting_tool_call_id' ) );
 
 				if ( ! $column_exists ) {
@@ -537,16 +537,16 @@ final class Activator {
 			global $wpdb;
 			$table = $wpdb->prefix . 'agent_builder_proposals';
 
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $table is an internal prefix + literal name, not user input.
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $table is an internal prefix + literal name, not user input.
 			if ( ! $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) ) {
 				return; // Table not created yet — nothing to migrate; leave unmigrated so this retries later.
 			}
 
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is an internal prefix + literal name, not user input.
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $table is an internal prefix + literal name, not user input.
 			$column_exists = (bool) $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM {$table} LIKE %s", 'listener_id' ) );
 
 			if ( ! $column_exists ) {
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- schema migration; $table is trusted, no user input.
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.SchemaChange -- schema migration; $table is trusted, no user input.
 				$altered = $wpdb->query( "ALTER TABLE {$table} ADD COLUMN listener_id varchar(64) DEFAULT NULL AFTER session_id" );
 
 				if ( false === $altered ) {
@@ -558,7 +558,7 @@ final class Activator {
 
 				// Re-verify rather than trust a truthy query result: confirm the
 				// column is actually there before marking this migration done.
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is an internal prefix + literal name, not user input.
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $table is an internal prefix + literal name, not user input.
 				$column_exists = (bool) $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM {$table} LIKE %s", 'listener_id' ) );
 
 				if ( ! $column_exists ) {
@@ -640,7 +640,7 @@ final class Activator {
 		global $wpdb;
 
 		$table = $wpdb->prefix . 'agent_builder_proposals';
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Migration; custom table existence check.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Migration; custom table existence check.
 		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) !== $table ) {
 			self::record( 'migrate_legacy_proposal_transients', 'warning', 'proposals table missing — skipping transient sweep' );
 			return;

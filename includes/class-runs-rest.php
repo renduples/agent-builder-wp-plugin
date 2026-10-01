@@ -642,6 +642,17 @@ class Runs_REST {
 			return array();
 		}
 
+		// Internal bookkeeping (e.g. which duplicate bridged tools were hidden
+		// from the model) stays in the audit log but is not a step the user
+		// needs to see, so keep it out of the run's step list.
+		$hidden = (array) apply_filters( 'agent_builder_run_steps_hidden_actions', array( 'tool_suppressed' ) );
+		$rows   = array_values(
+			array_filter(
+				$rows,
+				static fn( $row ) => ! in_array( (string) ( $row['action'] ?? '' ), $hidden, true )
+			)
+		);
+
 		foreach ( $rows as &$row ) {
 			$decoded = json_decode( (string) ( $row['details'] ?? '' ), true );
 			if ( is_array( $decoded ) ) {

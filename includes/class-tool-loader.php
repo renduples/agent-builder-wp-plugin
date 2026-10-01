@@ -81,7 +81,9 @@ class Tool_Loader {
 		$tool_dirs = apply_filters( 'agentic_tool_dirs', array( AGENT_BUILDER_DIR . 'library/tools/' ) );
 
 		// Use a transient to cache the list of tool paths across requests.
-		$cache_key  = 'agentic_tool_paths';
+		// Version-keyed so an update that adds, moves or removes a tool never
+		// serves a stale path list for the rest of the cache lifetime.
+		$cache_key  = 'agentic_tool_paths_' . AGENT_BUILDER_VERSION;
 		$tool_files = get_transient( $cache_key );
 
 		if ( false === $tool_files ) {
@@ -122,6 +124,12 @@ class Tool_Loader {
 		$tool_files = $unique_files;
 
 		foreach ( $tool_files as $tool_file ) {
+			// A cached path can outlive its file (tool removed, plugin swapped);
+			// skip it rather than emit an include warning on every request.
+			if ( ! is_readable( $tool_file ) ) {
+				continue;
+			}
+
 			// include_once prevents fatal "Cannot redeclare class" if load() is
 			// called more than once in a request (e.g. after sync_to_registry reset).
 			$tool_instance = include_once $tool_file;
@@ -263,7 +271,7 @@ class Tool_Loader {
 	public function sync_to_registry(): void {
 		// Bust the cached path list and reset the in-process loaded flag so the
 		// glob() re-scan runs immediately in this request (not just the next one).
-		delete_transient( 'agentic_tool_paths' );
+		delete_transient( 'agentic_tool_paths_' . AGENT_BUILDER_VERSION );
 		$this->loaded = false;
 		$this->load();
 

@@ -812,7 +812,7 @@ class Agent_Run {
 		global $wpdb;
 		$table = $wpdb->prefix . 'agent_builder_runs';
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is $wpdb->prefix-derived internal name, not user input.
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $table is $wpdb->prefix-derived internal name, not user input.
 		$column = $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM {$table} LIKE %s", 'awaiting_tool_call_id' ) );
 
 		return is_string( $column ) && '' !== $column;
@@ -1178,7 +1178,7 @@ class Agent_Run {
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $table is $wpdb->prefix-derived; $where_sql built only from the fixed condition strings above; every value is bound via prepare()'s variadic args below.
 		$sql = "SELECT * FROM {$table} WHERE {$where_sql} ORDER BY started_at DESC, id DESC LIMIT %d OFFSET %d";
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Filtered, paginated run listing.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Filtered, paginated run listing.
 		$rows = $wpdb->get_results(
 			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Custom plugin table; $sql is bound via prepare() immediately below.
 			$wpdb->prepare( $sql, ...$values ),
@@ -1203,7 +1203,7 @@ class Agent_Run {
 		global $wpdb;
 		$table = $wpdb->prefix . 'agent_builder_runs';
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Small aggregate, not worth caching.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Small aggregate, not worth caching.
 		$rows = $wpdb->get_results(
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is $wpdb->prefix-derived; only user_id is bound, via prepare().
 			$wpdb->prepare( "SELECT status, COUNT(*) as total FROM {$table} WHERE user_id = %d GROUP BY status", $user_id ),
@@ -1233,13 +1233,13 @@ class Agent_Run {
 		$table = $wpdb->prefix . 'agent_builder_runs';
 
 		if ( $user_id > 0 ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Small aggregate, not worth caching.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Small aggregate, not worth caching.
 			$count = $wpdb->get_var(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is $wpdb->prefix-derived; only user_id is bound via prepare().
 				$wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE status = 'waiting' AND user_id = %d", $user_id )
 			);
 		} else {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is $wpdb->prefix-derived; no user input in the query.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $table is $wpdb->prefix-derived; no user input in the query.
 			$count = $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE status = 'waiting'" );
 		}
 
@@ -1262,13 +1262,13 @@ class Agent_Run {
 		$table = $wpdb->prefix . 'agent_builder_runs';
 
 		if ( $user_id > 0 ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Small aggregate, not worth caching.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Small aggregate, not worth caching.
 			$count = $wpdb->get_var(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is $wpdb->prefix-derived; only user_id is bound via prepare().
 				$wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE status IN ('queued','running','continuing') AND user_id = %d", $user_id )
 			);
 		} else {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is $wpdb->prefix-derived; no user input in the query.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $table is $wpdb->prefix-derived; no user input in the query.
 			$count = $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE status IN ('queued','running','continuing')" );
 		}
 
@@ -1606,7 +1606,7 @@ class Agent_Run {
 	private function persist( array $fields, array $formats ): bool {
 		global $wpdb;
 		$table = $wpdb->prefix . 'agent_builder_runs';
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table update, keyed by run_id.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table update, keyed by run_id.
 		return false !== $wpdb->update( $table, $fields, array( 'run_id' => $this->run_id ), $formats, array( '%s' ) );
 	}
 

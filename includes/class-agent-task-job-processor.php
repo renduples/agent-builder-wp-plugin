@@ -172,7 +172,7 @@ class Agent_Task_Job_Processor implements Job_Processor_Interface {
 				? sprintf( 'Run owner (user %d) no longer exists; the run cannot be executed.', $owner_id )
 				: sprintf( 'Run owner (user %d) lacks the agent_builder_run_tasks_manually capability.', $owner_id );
 			$run->finish( 'failed', array( 'error' => $message ) );
-			throw new \Exception( $message );
+			throw new \Exception( esc_html( $message ) );
 		}
 
 		$agent_id = (string) ( $request_data['agent_id'] ?? '' );

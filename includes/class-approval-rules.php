@@ -104,7 +104,7 @@ class Approval_Rules {
 
 		$query_args = array_merge( array( $table ), $values, array( $per_page, $offset ) );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table read.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Custom table read.
 		$rows = $wpdb->get_results(
 			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- $where_sql holds only fixed fragments; placeholders are filled by $query_args.
 			$wpdb->prepare(
@@ -268,7 +268,7 @@ class Approval_Rules {
 			return true;
 		}
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table update.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table update.
 		$result = $wpdb->update( $table, $row, array( 'id' => $id ), $formats, array( '%d' ) );
 
 		return false !== $result;
@@ -289,7 +289,7 @@ class Approval_Rules {
 			return false;
 		}
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table delete.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table delete.
 		return false !== $wpdb->delete( $table, array( 'id' => $id ), array( '%d' ) );
 	}
 
