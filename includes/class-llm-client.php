@@ -402,8 +402,12 @@ class LLM_Client {
 			// Log the full response and request body for debugging.
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			error_log( sprintf( 'Agentic LLM error [%s/%s] HTTP %d: %s', $this->provider, $this->model, $status, $raw_body ) );
-			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			error_log( sprintf( 'Agentic LLM request body [%s/%s]: %s', $this->provider, $this->model, wp_json_encode( $body ) ) );
+			// The request body carries the whole conversation and site content, so it is
+			// only written when a developer explicitly opts in.
+			if ( defined( 'AGENT_BUILDER_DEBUG_LLM' ) && AGENT_BUILDER_DEBUG_LLM ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( sprintf( 'Agentic LLM request body [%s/%s]: %s', $this->provider, $this->model, wp_json_encode( $body ) ) );
+			}
 
 			return new \WP_Error(
 				'api_error',

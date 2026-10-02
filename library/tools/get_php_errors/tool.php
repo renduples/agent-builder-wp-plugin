@@ -80,6 +80,7 @@ class Get_Php_Errors extends Tool_Base {
 		}
 
 		$lines = array();
+		// phpcs:ignore Generic.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition -- Idiomatic line-by-line read.
 		while ( ( $line = fgets( $handle ) ) !== false ) {
 			$line = trim( $line );
 			if ( empty( $line ) ) {
@@ -88,10 +89,13 @@ class Get_Php_Errors extends Tool_Base {
 
 			if ( 'all' !== $level_filter ) {
 				$match = match ( $level_filter ) {
-					'fatal'      => stripos( $line, 'Fatal error' ) !== false || stripos( $line, 'fatal' ) !== false,
-					'warning'    => stripos( $line, 'Warning' ) !== false,
-					'notice'     => stripos( $line, 'Notice' ) !== false,
-					'deprecated' => stripos( $line, 'Deprecated' ) !== false,
+					// Match PHP's own log prefix ("PHP Fatal error:", "Warning:") rather than
+					// the bare word, so a logged message that merely mentions "fatal" or
+					// "warning" is not miscounted as one.
+					'fatal'      => 1 === preg_match( '/\b(?:PHP )?(?:Fatal|Parse|Recoverable fatal) error:/i', $line ),
+					'warning'    => 1 === preg_match( '/\b(?:PHP )?Warning:/i', $line ),
+					'notice'     => 1 === preg_match( '/\b(?:PHP )?Notice:/i', $line ),
+					'deprecated' => 1 === preg_match( '/\b(?:PHP )?Deprecated:/i', $line ),
 					default      => true,
 				};
 				if ( ! $match ) {
