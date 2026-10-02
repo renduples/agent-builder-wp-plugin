@@ -1,6 +1,6 @@
 === Agent Builder ===
 Contributors: agenticplugin
-Tags: ai, ai safety, ai agents, mcp, webmcp
+Tags: ai, ai agents, automation, ai assistant, mcp
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
@@ -9,68 +9,82 @@ Donate link: https://agentic-plugin.com/donate/
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Create, train, and orchestrate AI agents with built-in safety using simple job descriptions. Approval gates, tamper-proof logs, MCP and WebMCP.
+Give AI agents real WordPress work. They run in the background and only come back when something needs your OK. Safe by design.
 
 == Description ==
 
-**Agent Builder** turns your WordPress site into an AI workspace where agents work under your control. Unlike generic chatbots that only answer questions, agents perform real actions — drafting articles, auditing SEO, triaging comments, monitoring health — all supervised by safety controls you can see and trust.
+**Hand a job to an agent, walk away, and get pinged only when it needs you.**
 
-Every tool is risk-classified. Sensitive actions pause in an approval queue, logged and tamper-evident. Roll back changes or use the kill switch to stop all agents.
+Agent Builder gives your WordPress site a team of AI agents that do real work: drafting posts, fixing SEO, triaging comments, checking site health, and helping run your store. They work in the background under rules you set. Low-risk steps happen on their own. Anything that needs your judgement waits for you with one click to approve.
 
----
-
-## 🛡️ Agent Safety: The Cornerstone
-
-Unlike plugins that add AI without guardrails, **Agent Builder puts safety at the center**:
-
-* **Risk Inventory:** Every tool classified Low/Medium/High/Extreme.
-* **Approval Gate & Queue:** Medium-risk actions confirm; High-risk actions queue for your review first.
-* **Kill Switch:** One click disables all agents and disconnects providers.
-* **Tool Risk Floors:** Sensitive tools like password resets or refunds require confirmation.
-* **Automatic Backups:** A timestamped backup is saved before any file or database change — restore with one click.
-* **Tamper-Proof Activity Log:** Hash-chained audit trail; tampering becomes detectable.
-
-One of the first WordPress plugins actively built for AI-agent safety.
-
-### Site Brief
-
-After you connect a provider, scan this WordPress install. Agent Builder
-lists what it found — updates, Site Health, held comments, oversized
-media, store issues if you run WooCommerce — and queues a fix only when
-you approve. The scan does not change the site.
+Bring your own AI provider (OpenAI, Anthropic, Google Gemini, xAI, DeepSeek, Mistral and more, or a local model through Ollama). The plugin is free, with no account required.
 
 ---
 
-### 🧪 Agents That Test Themselves
+### ✅ Assign a task, get on with your day
 
-Every release is graded against **54 real problems WordPress owners actually ask about** — "my site feels slow on my phone", "I'm drowning in spam comments", "my scheduled posts aren't publishing" — ranked by how often they come up and how stuck people get. Each one is assigned to the bundled agent that should handle it.
+* **Tasks:** Pick an agent, describe the job in plain English, and press Assign. The agent works in the background. You can watch each step live or come back later.
+* **Waiting on you:** When a step needs your approval, the task pauses and tells you. Approve it and the agent picks up where it left off.
+* **Notifications:** You get an inbox, an admin-bar badge and a dashboard card, plus an optional daily email digest. You hear about results and approvals without having to check.
+* **Results you can use:** Finished work arrives as cards, such as the post with an "Open in editor" link, a file, a table or a before/after diff.
 
-* **Prompt Tests:** `wp agent prompt-test` replays the catalog through the same path as a real chat and writes a plain-markdown report: pass or fail, which tools the agent called, whether it stopped for your approval, tokens and cost.
-* **Agents that check their own work:** ask the Assistant Trainer to replay a few prompts, analyse where coverage is thin, and propose specific improvements — a tool an agent should be granted, a request no agent can answer honestly yet. It proposes; you approve. Nothing changes on its own.
-* **Your problems, not ours:** add the request that frustrates you to the catalog. If an agent can't handle it, that is a gap you can see.
+### 🧭 Site Brief: start with what your site needs
+
+Connect a provider and Site Brief scans your install. It checks for pending updates, Site Health warnings, comments held for moderation, oversized media and WooCommerce store issues. The result is a ranked list of jobs, each assigned to the agent best suited to it. The scan is read-only. Nothing changes until you approve a job.
+
+### 🔁 Routines: put the routine work on autopilot
+
+Run any agent on a schedule (hourly, daily, weekly) or when something happens on your site, such as a post being published, a new order, a comment, or a new user. Every routine has a test run, pause and resume, its next run shown in your timezone, and a history of the last 20 runs.
+
+### 🧑‍💼 Agents that feel like teammates
+
+* **Profiles:** Give each agent a name, a job title, an avatar and standing instructions. Pin your favourites and hide the rest.
+* **Create in three fields:** Name, what it should do, and its rules. Or duplicate an existing agent and adjust it.
+* **Share as templates:** Export an agent as a file and import it on another site.
+* **12 agents included:** Content Writer, SEO Optimizer, Site Health Sentinel, Support Triage, WordPress Assistant, Assistant Trainer, Agent Orchestrator, Editorial Director, User Assistant, Skills Assistant, Storefront Assistant and AI Radar.
+
+### 🎓 Skills: teach once, reuse everywhere
+
+* **Save a conversation as a skill** when an agent gets something right.
+* **Teach a task** by showing the agent the steps once while it records.
+* **Create a skill from a description**, or import a SKILL.md file.
+* Type **/skill-name** in chat to use it. Skills are shared across all your agents by default.
+
+### 🛡️ You stay in control
+
+* **Approval rules in plain English:** For example, "Ask me first before publishing anything" or "Allow automatically: adding tags to posts." "Ask first" always wins.
+* **Allow once, for this task, or always:** Every standing permission is listed under Approvals, where you can revoke it.
+* **Risk levels on every tool:** Low, Medium, High and Extreme. High-risk actions always need your OK.
+* **Automatic backups** before any file or database change, with one-click restore.
+* **Tamper-evident activity log:** Every action is recorded in a hash-chained audit trail.
+* **Kill switch:** One click stops every agent.
+
+### 🔌 Works with the AI tools you already use
+
+* **MCP server:** Connect Grok Bot, Claude Desktop, Cursor or VS Code to your site. They can use your agents' tools with the same approval gates.
+* **WebMCP:** Visitors' AI browser agents can use the low-risk tools you choose, such as browsing your store.
+* **WordPress Abilities API (WP 6.9+):** Tools are exposed as native abilities, and the plugin can use abilities from other plugins.
+* **Voice:** Dictate to agents in chat using your browser's speech recognition (HTTPS sites).
+
+---
+
+### 🧪 Agents that are tested on real problems
+
+Every release is graded against **54 real problems WordPress owners ask about**, such as "my site feels slow on my phone", "I'm drowning in spam comments" and "my scheduled posts aren't publishing". Each problem is assigned to the bundled agent that should handle it.
+
+* **Prompt Tests:** `wp agent prompt-test` replays the catalog through the same path as a real chat. It writes a plain report of pass or fail, which tools were called, whether the agent stopped for approval, and the tokens and cost.
+* **Agents that check their own work:** The Assistant Trainer can replay prompts, find gaps and propose improvements. It proposes; you approve.
+* **Your problems, not ours:** Add the request that frustrates you to the catalog.
 
 Prompt Tests never run by themselves. They call your AI provider only when you start them, within a spending cap you set.
 
----
+### ⚡ Built for developers
 
-### 🚀 Zero-Code Simplicity
-
-**12 free built-in agents**: Content Writer, SEO Optimizer, Site Health Sentinel, Support Triage, WordPress Assistant, Assistant Trainer, Agent Orchestrator, Editorial Director, User Assistant, Skills Assistant, Storefront Assistant, AI Radar.
-
-* **Basic / Advanced Modes:** Guided flows for owners; a full developer console (manifests, risk audits, REST API, MCP) for power users.
-* **Embed Everywhere:** Gutenberg blocks, shortcodes, or wp-admin launchers.
-* **Voice dictation:** chat voice input uses your browser's built-in Web Speech API (HTTPS required).
-* **100% Free Local Knowledge:** Train agents on your own docs via the local Open Knowledge Format (OKF) wiki — no cloud storage needed.
-
----
-
-### ⚡ Built for Developers
-
-* **WebMCP Bridge:** Expose low-risk tools to visitors' own AI browser agents, same risk gates as the backend.
-* **MCP Ready:** Connect Grok Bot, Claude Desktop, Cursor, and VS Code via secure credentials.
-* **WordPress Abilities API (WP 6.9+):** Exposes tools as native abilities; imports other plugins' abilities.
-* **Multi-LLM BYOK:** OpenAI, Anthropic, Google Gemini, DeepSeek, xAI, Kimi, Mistral, Cohere, or local Ollama.
-* **Prompt Tests (evals):** `wp agent prompt-test --dry-run` validates the catalog for free; `--agent=`, `--rank=` and `--max-cost=` choose what to spend on. Point it at a staging site from CI.
+* **Basic / Advanced modes:** Guided screens for site owners, plus a full console for developers with manifests, risk audits, REST API docs and MCP credentials.
+* **Embed anywhere:** Gutenberg blocks, shortcodes or wp-admin launchers.
+* **Local knowledge:** Train agents on your own docs through the local Open Knowledge Format (OKF) wiki. No cloud storage is needed.
+* **Hooks everywhere:** Filters on the approval gate, run lifecycle, result cards and more.
+* **Evals in CI:** `wp agent prompt-test --dry-run` validates the catalog for free. Use `--agent=`, `--rank=` and `--max-cost=` to choose what to spend on.
 
 == Installation ==
 

@@ -1,6 +1,6 @@
 # Agent Builder
 
-**Version:** 3.4.1
+**Version:** 4.4.0
 
 Free [Agent Builder](https://agentic-plugin.com/) WordPress plugin.
 
@@ -10,9 +10,21 @@ Free [Agent Builder](https://agentic-plugin.com/) WordPress plugin.
 - **Docs / product site:** https://agentic-plugin.com/documentation/
 - **Community agents:** https://agentic-plugin.com/community-agents/
 
-Create, train, and orchestrate AI agents in WordPress with built-in safety using simple job descriptions — approval gates, risk audits, tamper-proof logs, a Basic/Advanced interface split, MCP and WebMCP.
+Give AI agents real WordPress work. Hand a job to an agent, walk away, and get pinged only when it needs you. Low-risk steps run on their own; anything that needs your judgement waits for one-click approval.
 
-## 11 agents included free
+## What it does
+
+- **Tasks:** assign a job in plain English. It runs in the background, pauses under *Waiting on you* when a step needs approval, then resumes.
+- **Site Brief:** a read-only scan of your site turned into a ranked list of approve-to-act jobs.
+- **Routines:** run an agent on a schedule or when something happens on the site, with test run, pause and a 20-run history.
+- **Agent profiles:** a name, title, avatar and standing instructions for each agent. Pin, hide, duplicate, or export and import as a template.
+- **Skills:** save a conversation as a skill, teach a task by demonstration, or invoke a skill with `/skill-name`.
+- **Approval rules:** plain-English rules ("Ask me first before publishing anything"), plus allow once, for this task or always.
+- **Safety:** risk levels on every tool, automatic backups, a hash-chained audit log and a kill switch.
+- **MCP and WebMCP:** connect Grok Bot, Claude Desktop, Cursor or VS Code. Visitors' AI browser agents can use low-risk tools.
+- **Bring your own model:** OpenAI, Anthropic, Google Gemini, xAI, DeepSeek, Mistral, Kimi, Cohere or local Ollama.
+
+## 12 agents included free
 
 | Agent | Role |
 |-------|------|
@@ -27,6 +39,7 @@ Create, train, and orchestrate AI agents in WordPress with built-in safety using
 | **User Assistant** | Manages member outreach, onboarding, and role-based permissions |
 | **Skills Assistant** | Discovers and imports community skills to teach agents new capabilities |
 | **Storefront Assistant** | Helps visitors browse your WooCommerce catalog and build a cart, including via WebMCP |
+| **AI Radar** | Checks how visible your site is to AI crawlers and assistants (robots.txt, llms.txt, schema.org) and fixes gaps with your approval |
 
 More at [Community Agents](https://agentic-plugin.com/community-agents/).
 
