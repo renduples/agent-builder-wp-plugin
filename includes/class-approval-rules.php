@@ -72,6 +72,14 @@ class Approval_Rules {
 	);
 
 	/**
+	 * Version of the reviewer prompt. Bump whenever REVIEWER_PROMPT or the
+	 * user-message template changes, so cached verdicts are not reused.
+	 *
+	 * @var string
+	 */
+	const PROMPT_VERSION = '2';
+
+	/**
 	 * System prompt for the rule reviewer.
 	 *
 	 * @var string
@@ -88,7 +96,23 @@ class Approval_Rules {
 	 *
 	 * @var string
 	 */
-	private const SECRET_KEY_PATTERN = '/pass|secret|token|api[_-]?key|private|credential|auth|cookie|salt|nonce|^key$|_key$|-key$/i';
+	private const SECRET_KEY_PATTERN = '/passw|passphrase|passwd|pwd|^pass$|[_-]pass$|^pass[_-]|secret|token|api[_-]?key|access[_-]?key|private[_-]?key|credential|^auth$|^auth[_-]|[_-]auth$|authori[sz]ation|cookie|salt|nonce|bearer|jwt|session|signature|dsn|connection[_-]?string|^key$|[_-]key$|[_-]key[_-]id$/i';
+
+	/**
+	 * Well-known secret formats redacted from any string value.
+	 *
+	 * @var string[]
+	 */
+	private const SECRET_VALUE_PATTERNS = array(
+		'/\b(?:sk|pk|rk)_(?:live|test)_[A-Za-z0-9]{8,}/',
+		'/\bsk-[A-Za-z0-9_\-]{16,}/',
+		'/\bgh[pousr]_[A-Za-z0-9]{20,}/',
+		'/\bgithub_pat_[A-Za-z0-9_]{20,}/',
+		'/\bxox[abposr]-[A-Za-z0-9\-]{10,}/',
+		'/\b(?:AKIA|ASIA)[0-9A-Z]{16}\b/',
+		'/\bAIza[0-9A-Za-z_\-]{30,}/',
+		'/\beyJ[A-Za-z0-9_\-]{8,}\.[A-Za-z0-9_\-]{8,}\.[A-Za-z0-9_\-]{8,}/',
+	);
 
 	/**
 	 * LLM client override for the reviewer (tests only).
@@ -389,9 +413,10 @@ class Approval_Rules {
 	 * `unsure`; anything else, an unconfigured provider, an error or an
 	 * exception is 'unsure', which evaluate() treats fail-closed.
 	 *
-	 * Definite verdicts are cached for ten minutes per rule, rule text and
-	 * call, so a run repeating the same call is not billed again. An 'unsure'
-	 * caused by an error is never cached.
+	 * Definite verdicts are cached for ten minutes per rule, prompt version,
+	 * provider, model and exact prompt, so a run repeating the same call is not
+	 * billed again. An 'unsure' caused by an error is never cached, and neither
+	 * is any verdict on a call whose arguments had to be shortened.
 	 *
 	 * @param string $rule_text Natural-language rule text.
 	 * @param array  $ctx       Gate context — see Tool_Executor::execute().
@@ -399,19 +424,21 @@ class Approval_Rules {
 	 * @return string One of 'match', 'no_match', 'unsure'.
 	 */
 	public static function classify( string $rule_text, array $ctx, int $rule_id = 0 ): string {
-		$messages  = self::build_reviewer_messages( $rule_text, $ctx );
-		$model     = (string) get_option( 'agent_builder_reviewer_model', '' );
-		$cache_key = 'agent_builder_rule_verdict_' . md5( $rule_id . '|' . $model . '|' . sha1( (string) $messages[1]['content'] ) );
-
-		$cached = get_transient( $cache_key );
-		if ( is_string( $cached ) && in_array( $cached, array( 'match', 'no_match', 'unsure' ), true ) ) {
-			return $cached;
-		}
+		list( $messages, $truncated ) = self::build_prompt( $rule_text, $ctx );
 
 		try {
-			$llm = self::$reviewer_client ?? new LLM_Client();
+			$llm   = self::$reviewer_client ?? new LLM_Client();
+			$model = (string) get_option( 'agent_builder_reviewer_model', '' );
 			if ( '' !== $model ) {
 				$llm->set_model( $model );
+			}
+
+			$cache_key = $truncated ? '' : self::cache_key( $rule_id, $llm->get_provider(), $llm->get_model(), (string) $messages[1]['content'] );
+			if ( '' !== $cache_key ) {
+				$cached = get_transient( $cache_key );
+				if ( is_string( $cached ) && in_array( $cached, array( 'match', 'no_match', 'unsure' ), true ) ) {
+					return $cached;
+				}
 			}
 
 			if ( ! $llm->is_configured() ) {
@@ -433,9 +460,29 @@ class Approval_Rules {
 		$content = $response['choices'][0]['message']['content'] ?? ( $response['content'] ?? '' );
 		$verdict = self::parse_verdict( is_string( $content ) ? $content : '' );
 
-		set_transient( $cache_key, $verdict, 10 * MINUTE_IN_SECONDS );
+		if ( '' !== $cache_key ) {
+			set_transient( $cache_key, $verdict, 10 * MINUTE_IN_SECONDS );
+		}
 
 		return $verdict;
+	}
+
+	/**
+	 * Transient key for a reviewer verdict.
+	 *
+	 * Covers everything that can change the answer: the rule, the prompt
+	 * version, the provider and model actually used, and the exact user
+	 * message (rule text, tool, agent, risk and arguments).
+	 *
+	 * @param int    $rule_id  Rule id.
+	 * @param string $provider Provider the client will use.
+	 * @param string $model    Model the client will use.
+	 * @param string $user     User message sent to the reviewer.
+	 * @param string $version  Prompt version (defaults to PROMPT_VERSION).
+	 * @return string Transient name.
+	 */
+	public static function cache_key( int $rule_id, string $provider, string $model, string $user, string $version = self::PROMPT_VERSION ): string {
+		return 'agent_builder_rule_verdict_' . md5( implode( '|', array( $version, $rule_id, $provider, $model, sha1( $user ) ) ) );
 	}
 
 	/**
@@ -448,31 +495,55 @@ class Approval_Rules {
 	 * @return array<int, array{role: string, content: string}> Chat messages.
 	 */
 	public static function build_reviewer_messages( string $rule_text, array $ctx ): array {
-		$tool   = (string) ( $ctx['tool'] ?? '' );
-		$action = (string) ( $ctx['action'] ?? '' );
-		$label  = ucfirst( trim( str_replace( '_', ' ', $tool ) ) );
-		$args   = is_array( $ctx['arguments'] ?? null ) ? $ctx['arguments'] : array();
+		return self::build_prompt( $rule_text, $ctx )[0];
+	}
+
+	/**
+	 * Build the reviewer messages and report whether arguments were shortened.
+	 *
+	 * Every field outside the delimited blocks is flattened to one line and
+	 * has its angle brackets neutralised, so no field can inject lines or
+	 * delimiters into the trusted part of the message.
+	 *
+	 * @param string $rule_text Natural-language rule text.
+	 * @param array  $ctx       Gate context — see Tool_Executor::execute().
+	 * @return array{0: array<int, array{role: string, content: string}>, 1: bool} Messages, truncated flag.
+	 */
+	private static function build_prompt( string $rule_text, array $ctx ): array {
+		$tool      = (string) ( $ctx['tool'] ?? '' );
+		$action    = (string) ( $ctx['action'] ?? '' );
+		$label     = ucfirst( trim( str_replace( '_', ' ', $tool ) ) );
+		$args      = is_array( $ctx['arguments'] ?? null ) ? $ctx['arguments'] : array();
+		$risk      = (string) ( $ctx['risk'] ?? '' );
+		$truncated = false;
+		$json      = self::render_arguments( $args, $truncated );
 
 		$user = sprintf(
-			"Tool: %s\nTool label: %s\n%sAgent: %s\nRisk level: %s\n\n<rule_text>\n%s\n</rule_text>\n\n<arguments>\n%s\n</arguments>\n\nDoes the rule apply to this action? Answer match, no_match or unsure.",
-			$tool,
-			$label,
-			'' === $action ? '' : sprintf( "Action: %s\n", $action ),
-			(string) ( $ctx['agent_id'] ?? '' ),
-			'' === (string) ( $ctx['risk'] ?? '' ) ? 'unknown' : (string) $ctx['risk'],
+			"Tool: %s\nTool label: %s\n%sAgent: %s\nRisk level: %s\n\n<rule_text>\n%s\n</rule_text>\n\n<arguments>\n%s\n</arguments>\n\n%sDoes the rule apply to this action? Answer match, no_match or unsure.",
+			self::inline_field( $tool ),
+			self::inline_field( $label ),
+			'' === $action ? '' : sprintf( "Action: %s\n", self::inline_field( $action ) ),
+			self::inline_field( (string) ( $ctx['agent_id'] ?? '' ) ),
+			'' === $risk ? 'unknown' : self::inline_field( $risk ),
 			self::neutralise_delimiters( trim( $rule_text ) ),
-			self::neutralise_delimiters( self::summarise_arguments( $args ) )
+			self::neutralise_delimiters( $json ),
+			$truncated
+				? "Note: some argument values were shortened or cut off. If the omitted part could decide whether the rule applies, answer unsure.\n\n"
+				: ''
 		);
 
 		return array(
 			array(
-				'role'    => 'system',
-				'content' => self::REVIEWER_PROMPT,
+				array(
+					'role'    => 'system',
+					'content' => self::REVIEWER_PROMPT,
+				),
+				array(
+					'role'    => 'user',
+					'content' => $user,
+				),
 			),
-			array(
-				'role'    => 'user',
-				'content' => $user,
-			),
+			$truncated,
 		);
 	}
 
@@ -496,43 +567,58 @@ class Approval_Rules {
 	 * Redact secrets from tool arguments and render them as compact JSON.
 	 *
 	 * Values under keys that look like passwords, tokens, keys or other
-	 * credentials are replaced, long string values are shortened to 120
-	 * characters, keys are sorted so equal calls render equally, and the
-	 * result is cut to 500 characters.
+	 * credentials are replaced; secret-looking substrings (URL credentials,
+	 * bearer tokens, well-known key formats, long random tokens) are replaced
+	 * in every string; JSON held in a string is redacted inside; long string
+	 * values are shortened to 120 characters; keys are sorted so equal calls
+	 * render equally; and the result is cut to 500 characters.
 	 *
 	 * @param array $args Tool arguments.
 	 * @return string JSON (possibly truncated), '{}' when empty.
 	 */
 	public static function summarise_arguments( array $args ): string {
-		$json = wp_json_encode( self::redact( $args ), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+		$truncated = false;
+
+		return self::render_arguments( $args, $truncated );
+	}
+
+	/**
+	 * Render redacted arguments, flagging whether anything was shortened.
+	 *
+	 * @param array $args      Tool arguments.
+	 * @param bool  $truncated Set to true when any value or the whole was cut.
+	 * @return string JSON (possibly truncated), '{}' when empty.
+	 */
+	private static function render_arguments( array $args, bool &$truncated ): string {
+		$json = wp_json_encode( self::redact( $args, $truncated ), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 		$json = is_string( $json ) ? $json : '{}';
 
 		if ( mb_strlen( $json ) > 500 ) {
-			$json = mb_substr( $json, 0, 499 ) . '…';
+			$json      = mb_substr( $json, 0, 499 ) . '…';
+			$truncated = true;
 		}
 
 		return $json;
 	}
 
 	/**
-	 * Recursively redact secret-looking keys, shorten long strings, sort keys.
+	 * Recursively redact secrets, shorten long strings and sort keys.
 	 *
-	 * @param array $data Arguments (or a nested part of them).
+	 * @param array $data      Arguments (or a nested part of them).
+	 * @param bool  $truncated Set to true when a string value was shortened.
 	 * @return array Redacted copy.
 	 */
-	private static function redact( array $data ): array {
+	private static function redact( array $data, bool &$truncated ): array {
 		$out = array();
 		foreach ( $data as $key => $value ) {
 			if ( is_string( $key ) && 1 === preg_match( self::SECRET_KEY_PATTERN, $key ) ) {
 				$out[ $key ] = '[redacted]';
 			} elseif ( is_array( $value ) ) {
-				$out[ $key ] = self::redact( $value );
+				$out[ $key ] = self::redact( $value, $truncated );
 			} elseif ( is_object( $value ) ) {
 				$out[ $key ] = '[object]';
-			} elseif ( is_string( $value ) && mb_strlen( $value ) > 120 ) {
-				// One long field (post content, CSS) must not crowd every
-				// other argument out of the 500-character budget.
-				$out[ $key ] = mb_substr( $value, 0, 119 ) . '…';
+			} elseif ( is_string( $value ) ) {
+				$out[ $key ] = self::redact_string( $value, $truncated );
 			} else {
 				$out[ $key ] = $value;
 			}
@@ -540,6 +626,61 @@ class Approval_Rules {
 		ksort( $out );
 
 		return $out;
+	}
+
+	/**
+	 * Redact one string value regardless of its key.
+	 *
+	 * A string holding a JSON object or array is decoded, redacted like the
+	 * arguments themselves, and re-encoded. Otherwise secret-looking
+	 * substrings are replaced. Either way the result is shortened to 120
+	 * characters so one long field cannot crowd out the rest.
+	 *
+	 * @param string $value     String value.
+	 * @param bool   $truncated Set to true when the value was shortened.
+	 * @return string Redacted (and possibly shortened) value.
+	 */
+	private static function redact_string( string $value, bool &$truncated ): string {
+		$trimmed = ltrim( $value );
+		if ( '' !== $trimmed && ( '{' === $trimmed[0] || '[' === $trimmed[0] ) ) {
+			$decoded = json_decode( $value, true );
+			if ( is_array( $decoded ) ) {
+				$encoded = wp_json_encode( self::redact( $decoded, $truncated ), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+				$value   = is_string( $encoded ) ? $encoded : '[redacted]';
+			}
+		}
+
+		// URL credentials: scheme://user:pass@host → scheme://[redacted]@host.
+		$value = (string) preg_replace( '#([a-z][a-z0-9+.\-]*://)[^/\s@]+@#i', '$1[redacted]@', $value );
+		// HTTP auth schemes: Bearer / Basic / Token <credential>.
+		$value = (string) preg_replace( '#\b(Bearer|Basic|Token)\s+[A-Za-z0-9._~+/=\-]{8,}#i', '$1 [redacted]', $value );
+		// Well-known key formats.
+		$value = (string) preg_replace( self::SECRET_VALUE_PATTERNS, '[redacted]', $value );
+		// Long random-looking tokens: 32+ chars, mixing letters and digits.
+		$value = (string) preg_replace_callback(
+			'#[A-Za-z0-9+/_=]{32,}#',
+			static function ( array $m ): string {
+				return ( 1 === preg_match( '/[0-9]/', $m[0] ) && 1 === preg_match( '/[A-Za-z]/', $m[0] ) ) ? '[redacted]' : $m[0];
+			},
+			$value
+		);
+
+		if ( mb_strlen( $value ) > 120 ) {
+			$value     = mb_substr( $value, 0, 119 ) . '…';
+			$truncated = true;
+		}
+
+		return $value;
+	}
+
+	/**
+	 * Flatten a field to one line and neutralise its delimiters.
+	 *
+	 * @param string $text Field value.
+	 * @return string Single-line, delimiter-safe text.
+	 */
+	private static function inline_field( string $text ): string {
+		return self::neutralise_delimiters( trim( (string) preg_replace( '/[\r\n\x{2028}\x{2029}]+/u', ' ', $text ) ) );
 	}
 
 	/**
@@ -651,7 +792,7 @@ class Approval_Rules {
 		self::$last_match = null;
 
 		if ( 'block' === $enforcement || 'block' === ( $ctx['baseline'] ?? '' ) ) {
-			return $enforcement;
+			return self::tighter( $enforcement, 'block' );
 		}
 
 		$agent_id = sanitize_key( (string) ( $ctx['agent_id'] ?? '' ) );

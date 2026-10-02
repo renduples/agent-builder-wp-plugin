@@ -725,6 +725,42 @@ class Test_Tool_Executor extends TestCase {
 	}
 
 	/**
+	 * An allow rule the reviewer says matches cannot lift a HIGH-risk call
+	 * end to end: Risk_Level::clamp_enforcement() re-tightens it to the queue.
+	 */
+	public function test_allow_rule_match_cannot_lift_high_risk_through_executor(): void {
+		$fake = new Fake_LLM_Client( array( Fake_LLM_Client::text_response( 'match' ) ) );
+		Approval_Rules::set_reviewer_client( $fake );
+		$rule_id = Approval_Rules::create(
+			array(
+				'agent_slug' => 'test-agent',
+				'rule_text'  => 'Allow automatically: changing any site option.',
+				'effect'     => 'allow',
+			)
+		);
+
+		try {
+			$result = $this->make_executor()->execute(
+				'db_update_option',
+				array(
+					'name'  => 'agent_builder_test_allow_rule_opt',
+					'value' => 'should-not-be-set',
+				),
+				'test-agent',
+				'autonomous',
+				'chat'
+			);
+		} finally {
+			Approval_Rules::delete( $rule_id );
+			Approval_Rules::set_reviewer_client( null );
+		}
+
+		$this->assertSame( 1, $fake->chat_calls, 'the allow rule was consulted' );
+		$this->assertSame( 'queued_for_approval', $result['status'] ?? null );
+		$this->assertFalse( get_option( 'agent_builder_test_allow_rule_opt' ) );
+	}
+
+	/**
 	 * A deny rule the reviewer says does not match leaves an allowed call
 	 * alone: it executes rather than being blocked or queued.
 	 */
