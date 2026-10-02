@@ -186,18 +186,18 @@ The interface text is written in English, and the `.pot` translation template is
 
 == Screenshots ==
 
-1. Dashboard — Overview of active agents, connected providers, safety status, and quick actions.
-2. Interactive Chat — Issue instructions to specialized agents; see every tool the agent calls and its result.
-3. Agents Hub — Activate/deactivate bundled agents, see their tools, and assign MCP exposure.
-4. Agent Ready Score — Verify your site is discoverable by AI agents and your agentic commerce stack is ready.
-5. Approvals Queue — Review, approve, or reject sensitive actions before agents execute them.
-6. Tools Hub — See every tool an agent can use, its risk level, and enable/disable by category.
-7. Knowledge — Train agents on your own docs and guidelines with the local Open Knowledge Framework wiki, no cloud storage needed.
-8. Activity Log — Full tamper proof audit trail showing what agents did, when, and whether they succeeded.
-9. Safety Center — Risk inventory, kill switch, per-agent tool scopes, and audit-log integrity check.
-10. Quick Start Wizard — Connect your LLM provider and choose Basic or Advanced mode in under two minutes.
-11. Settings & Providers — Connect and manage LLM providers. Interface (UI modes) and Security are in the same Settings nav.
-12. Site Brief — A read-only scan of your site, turned into a ranked list of approve-to-act jobs, each attributed to the agent that raised it. Nothing changes until you approve.
+1. Tasks — Assign a job in plain English and the agent works in the background. Run details show the result and every step it took.
+2. Waiting on you — When a step needs your OK the task pauses. Allow it once, for the session or always, or deny it.
+3. Site Brief — A read-only scan of your site, turned into a ranked list of jobs, each assigned to the agent best suited to it. Nothing changes until you approve.
+4. Routines — Run agents on a schedule or when something happens on your site, with test runs, pause and resume, and a run history.
+5. Agents — Each agent has a profile with a name, title and avatar. Pin your favourites, assign a task, or duplicate or export an agent as a template.
+6. Approval rules — Plain-English rules for what agents must ask you about, may do automatically, or must never do.
+7. Skills — One shared skill library. Create a skill from a description, import a SKILL.md file, teach a task, or browse the community library.
+8. Chat — Talk to any agent and see exactly what it looked at and which tools it used.
+9. Safety Center — Risk inventory, approval status, audit-log verification and the emergency stop, all on one screen.
+10. Activity — A tamper-evident timeline of everything your agents did, with search and CSV export.
+11. Tools — Every tool an agent can use, with its risk level and an on/off switch.
+12. Providers — Bring your own AI provider, such as OpenAI, Anthropic, Google Gemini, xAI, DeepSeek or Mistral, or run a local model with Ollama.
 
 == External Services ==
 
