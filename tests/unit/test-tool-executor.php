@@ -655,6 +655,112 @@ class Test_Tool_Executor extends TestCase {
 	}
 
 	/**
+	 * A deny rule the reviewer says matches blocks the call outright, and the
+	 * error the model sees quotes the user's rule instead of a generic policy
+	 * or "high-risk" message.
+	 */
+	public function test_deny_rule_match_blocks_and_quotes_rule(): void {
+		$fake = new Fake_LLM_Client( array( Fake_LLM_Client::text_response( 'match' ) ) );
+		Approval_Rules::set_reviewer_client( $fake );
+		$rule_id = Approval_Rules::create(
+			array(
+				'agent_slug' => 'test-agent',
+				'rule_text'  => 'Never edit site CSS.',
+				'effect'     => 'deny',
+			)
+		);
+
+		try {
+			$result = $this->make_executor()->execute(
+				'add_custom_css',
+				array( 'css' => 'body{color:red}' ),
+				'test-agent',
+				'supervised',
+				'chat'
+			);
+		} finally {
+			Approval_Rules::delete( $rule_id );
+			Approval_Rules::set_reviewer_client( null );
+		}
+
+		$this->assertArrayNotHasKey( 'status', $result );
+		$this->assertStringContainsString( 'blocked by the site owner\'s rule: “Never edit site CSS”', $result['error'] ?? '' );
+		$this->assertSame( 'Blocked by your rule: “Never edit site CSS”', $result['reason'] ?? null );
+		$this->assertStringNotContainsString( 'High-risk', $result['error'] ?? '' );
+	}
+
+	/**
+	 * An ask rule the reviewer says matches routes a normally-allowed call to
+	 * confirmation, with the rule quoted as the reason.
+	 */
+	public function test_ask_rule_match_confirms_with_rule_reason(): void {
+		update_option( 'agent_builder_approval_auto_max_risk', 'medium' );
+		Risk_Level::bust_cache();
+		$fake = new Fake_LLM_Client( array( Fake_LLM_Client::text_response( 'match' ) ) );
+		Approval_Rules::set_reviewer_client( $fake );
+		$rule_id = Approval_Rules::create(
+			array(
+				'agent_slug' => 'test-agent',
+				'rule_text'  => 'Ask me first before changing the site design.',
+				'effect'     => 'ask',
+			)
+		);
+
+		try {
+			$result = $this->make_executor()->execute(
+				'add_custom_css',
+				array( 'css' => 'body{color:red}' ),
+				'test-agent',
+				'supervised',
+				'chat'
+			);
+		} finally {
+			Approval_Rules::delete( $rule_id );
+			Approval_Rules::set_reviewer_client( null );
+		}
+
+		$this->assertSame( 'confirmation_required', $result['status'] ?? null );
+		$this->assertSame( 'Matched your rule: “Ask me first before changing the site design”.', $result['reason'] ?? null );
+		$this->assertSame( 1, $fake->chat_calls );
+	}
+
+	/**
+	 * A deny rule the reviewer says does not match leaves an allowed call
+	 * alone: it executes rather than being blocked or queued.
+	 */
+	public function test_deny_rule_no_match_does_not_tighten(): void {
+		update_option( 'agent_builder_approval_auto_max_risk', 'medium' );
+		Risk_Level::bust_cache();
+		$fake = new Fake_LLM_Client( array( Fake_LLM_Client::text_response( 'no_match' ) ) );
+		Approval_Rules::set_reviewer_client( $fake );
+		$rule_id = Approval_Rules::create(
+			array(
+				'agent_slug' => 'test-agent',
+				'rule_text'  => 'Never delete users or change their roles.',
+				'effect'     => 'deny',
+			)
+		);
+
+		try {
+			$result = $this->make_executor()->execute(
+				'add_custom_css',
+				array( 'css' => 'body{color:red}' ),
+				'test-agent',
+				'supervised',
+				'chat'
+			);
+		} finally {
+			Approval_Rules::delete( $rule_id );
+			Approval_Rules::set_reviewer_client( null );
+		}
+
+		$this->assertNotSame( 'queued_for_approval', $result['status'] ?? null );
+		$this->assertNotSame( 'confirmation_required', $result['status'] ?? null );
+		$this->assertStringNotContainsString( 'blocked', (string) ( $result['error'] ?? '' ) );
+		$this->assertSame( 1, $fake->chat_calls );
+	}
+
+	/**
 	 * $ctx['run_id'] and $ctx['run_kind'] are populated from the passed
 	 * Agent_Run, and $ctx['user_id'] resolves to the run's owner.
 	 */

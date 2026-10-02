@@ -203,6 +203,8 @@ The interface text is written in English, and the `.pot` translation template is
 
 This plugin connects to external AI APIs to process prompts and tool executions — no request to any AI provider is made until you configure or explicitly activate it. Optional catalog refresh from Agentic is off by default and only runs after you enable it in Settings → Security. See "Agentic Account & Platform Services" below for every Agentic endpoint, when it is used, and what is sent.
 
+If you create approval rules, each tool call an agent proposes is also checked against them with your configured AI provider: a short description of the proposed action (the tool name, its arguments with passwords, keys and tokens removed, and your rule text) is sent to that provider to decide whether a rule applies. Nothing is sent for this when you have no approval rules.
+
 = OpenAI =
 * **Endpoint:** `https://api.openai.com/v1/chat/completions`
 * **When used:** When OpenAI is selected as your AI provider.
@@ -362,6 +364,7 @@ This plugin connects to external AI APIs to process prompts and tool executions 
 * Optional daily activity digest email for administrators summarizing what your agents did — on by default, configurable from Settings → Security.
 * Anthropic: added the Claude 5.x family (Sonnet 5.5 as the fresh-install default, Opus 5.5, Fable 5.1, plus Sonnet 5 and Opus 5) and made forced tool choice resilient to the newer models rejecting it.
 * Approval rules: write plain-English rules such as "Ask me first before publishing anything" or "Allow automatically: adding tags". "Ask first" always beats "Allow automatically", and high-risk tools still need your OK.
+* Approval rules are now checked by your configured AI provider, so a rule only applies to the actions it describes (a "Never delete users" rule no longer stops an agent from listing them). "Never" rules now block the action outright and tell you which rule stopped it; if the check is unsure, the action waits for your approval instead. An optional reviewer model can be set with the agent_builder_reviewer_model option.
 * Allow once, for this task, or always — and see and revoke every standing permission under Approvals → Grants.
 * Agent profiles: give each agent a display name, title, avatar and standing instructions; pin, hide, duplicate, and export or import an agent as a template. Create a new agent from three fields.
 * Routines: run an agent or skill on a schedule or when something happens on your site, with a test run, pause/resume, next run in your timezone and the last 20 runs.
