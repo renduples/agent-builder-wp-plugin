@@ -149,6 +149,34 @@ class Tool_Executor {
 	}
 
 	/**
+	 * A matched rule's text, trimmed of its closing full stop for quoting.
+	 *
+	 * @param array<string, mixed> $rule_match Match from Approval_Rules::consume_match().
+	 * @return string Rule text ready to sit inside quotation marks.
+	 */
+	private static function rule_quote( array $rule_match ): string {
+		return rtrim( trim( (string) ( $rule_match['rule_text'] ?? '' ) ), ' .' );
+	}
+
+	/**
+	 * The reason shown when an approval rule decided a call.
+	 *
+	 * @param array<string, mixed> $rule_match Match from Approval_Rules::consume_match().
+	 * @return string E.g. 'Matched your rule: “Ask me first before publishing anything”'.
+	 */
+	private static function rule_reason( array $rule_match ): string {
+		$quote = self::rule_quote( $rule_match );
+
+		if ( 'deny' === ( $rule_match['effect'] ?? '' ) && 'block' === ( $rule_match['enforcement'] ?? '' ) ) {
+			return sprintf( 'Blocked by your rule: “%s”', $quote );
+		}
+
+		return 'match' === ( $rule_match['verdict'] ?? '' )
+			? sprintf( 'Matched your rule: “%s”', $quote )
+			: sprintf( 'May fall under your rule: “%s”', $quote );
+	}
+
+	/**
 	 * Normalise a manifest reason to exactly one sentence-ending full stop.
 	 *
 	 * Manifest reasons are hand-written and inconsistent about trailing
@@ -335,6 +363,15 @@ class Tool_Executor {
 
 		$enforcement = Risk_Level::clamp_enforcement( $enforcement, $ctx );
 
+		// The approval rule that produced this decision, if any, so the user
+		// and the model are told which of the user's rules applied. Dropped
+		// when another filter or the clamp changed the decision afterwards.
+		$rule_match = Approval_Rules::consume_match( $tool_name );
+		if ( null !== $rule_match && $rule_match['enforcement'] !== $enforcement ) {
+			$rule_match = null;
+		}
+		$rule_reason = null === $rule_match ? '' : self::rule_reason( $rule_match );
+
 		/**
 		 * Fires once the gate decision for this tool call is final.
 		 *
@@ -344,6 +381,26 @@ class Tool_Executor {
 		do_action( 'agent_builder_tool_gate_decision', $enforcement, $ctx );
 
 		if ( 'block' === $enforcement ) {
+			if ( null !== $rule_match ) {
+				$this->audit->log(
+					$agent_id,
+					'tool_blocked',
+					$tool_name,
+					array(
+						'reason'     => 'Blocked by approval rule',
+						'rule_id'    => $rule_match['rule_id'],
+						'risk_level' => $risk,
+					)
+				);
+				return array(
+					'error'  => sprintf(
+						'This action was blocked by the site owner\'s rule: “%s”. It was not performed; do not retry it or work around it.',
+						self::rule_quote( $rule_match )
+					),
+					'reason' => $rule_reason,
+				);
+			}
+
 			$this->audit->log(
 				$agent_id,
 				'tool_blocked',
@@ -379,7 +436,9 @@ class Tool_Executor {
 				// Fall through to execution.
 			} else {
 				$manifest = Abilities_Manifest::load( $agent_id );
-				$reason   = $manifest['abilities'][ $tool_name ]['reason'] ?? 'High-risk operation requires admin approval.';
+				$reason   = '' !== $rule_reason
+					? $rule_reason
+					: ( $manifest['abilities'][ $tool_name ]['reason'] ?? 'High-risk operation requires admin approval.' );
 				$queue_id = $queue->add( $agent_id, $tool_name, $arguments, $reason, 7, $risk, $mode, $invocation_context, $ctx['run_id'], $ctx['user_id'] );
 
 				$this->audit->log(
@@ -397,7 +456,9 @@ class Tool_Executor {
 					'status'      => 'queued_for_approval',
 					'approval_id' => $queue_id,
 					'message'     => sprintf(
-						'This action (%s) is high-risk and needs admin approval. Review it below, or in the Approval Queue page later.',
+						'' !== $rule_reason
+							? 'This action (%s) falls under one of your approval rules and needs admin approval. Review it below, or in the Approval Queue page later.'
+							: 'This action (%s) is high-risk and needs admin approval. Review it below, or in the Approval Queue page later.',
 						$tool_name
 					),
 					'reason'      => $reason,
@@ -414,7 +475,7 @@ class Tool_Executor {
 			// "This action requires your confirmation before proceeding." — which
 			// the message below then quoted back as its own Reason, producing a
 			// tautology with a doubled full stop. Say what the tool is instead.
-			$reason      = self::as_sentence( (string) ( $manifest['abilities'][ $tool_name ]['reason'] ?? '' ) );
+			$reason      = self::as_sentence( '' !== $rule_reason ? $rule_reason : (string) ( $manifest['abilities'][ $tool_name ]['reason'] ?? '' ) );
 			$description = '' === $reason
 				? sprintf( '%s — can change your site, so it needs your approval.', $label )
 				: sprintf( '%s — %s', $label, $reason );
