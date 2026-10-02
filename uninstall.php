@@ -168,3 +168,22 @@ if ( is_array( $agentic_cron_events ) ) {
 		}
 	}
 }
+
+/*
+ * -------------------------------------------------------------------------
+ * 6. Remove the user-agents directory when it holds only the guard files
+ *    the plugin created itself. Agents a user built or imported are never
+ *    deleted here.
+ * -------------------------------------------------------------------------
+ */
+$agentic_agents_dir = WP_CONTENT_DIR . '/agentic-agents';
+if ( is_dir( $agentic_agents_dir ) ) {
+	$agentic_entries = array_diff( (array) scandir( $agentic_agents_dir ), array( '.', '..', 'index.php', '.htaccess', 'web.config' ) );
+	if ( empty( $agentic_entries ) ) {
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+		if ( WP_Filesystem() ) {
+			global $wp_filesystem;
+			$wp_filesystem->rmdir( $agentic_agents_dir, true );
+		}
+	}
+}
