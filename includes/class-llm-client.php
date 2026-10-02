@@ -368,9 +368,10 @@ class LLM_Client {
 				);
 			}
 
-			// Claude 5.5+ (and Fable 5.1) reject a forced tool_choice with a 400. Retry once
+			// Some models reject a forced tool_choice with a 400 — Claude 5.5+ / Fable 5.1,
+			// DeepSeek's thinking models. Retry once
 			// with `auto`, remember the model, and steer via the system prompt instead.
-			if ( 400 === $status && 'anthropic' === $this->provider && $force_tool_use
+			if ( 400 === $status && $force_tool_use
 				&& false !== stripos( (string) $error_message, 'tool_choice' ) ) {
 				Model_Capabilities::mark_forced_tool_choice_unsupported( (string) $this->model, (string) $this->provider );
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
@@ -581,7 +582,7 @@ class LLM_Client {
 					$stream_buf .= $data;
 
 					// Consume complete SSE frames (separated by double newline).
-					// phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition -- Intentional assignment for stream frame parsing (idiomatic and safe here).
+					// phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition, Generic.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition -- Intentional assignment for stream frame parsing (idiomatic and safe here).
 					while ( ( $pos = strpos( $stream_buf, "\n\n" ) ) !== false ) {
 						$frame      = substr( $stream_buf, 0, $pos );
 						$stream_buf = substr( $stream_buf, $pos + 2 );
@@ -612,7 +613,7 @@ class LLM_Client {
 								}
 								// Capture tool calls if Ollama ever streams them (P0 Item 3 improvement).
 								if ( ! empty( $chunk['message']['tool_calls'] ) ) {
-									$tool_calls_raw = array_merge( $tool_calls_raw ?: array(), $chunk['message']['tool_calls'] );
+									$tool_calls_raw = array_merge( ( $tool_calls_raw ? $tool_calls_raw : array() ), $chunk['message']['tool_calls'] );
 									$finish_reason  = 'tool_calls';
 								}
 								if ( ! empty( $chunk['done'] ) ) {
@@ -683,7 +684,7 @@ class LLM_Client {
 					}
 					// Capture tool calls if Ollama ever streams them (P0 Item 3 improvement).
 					if ( ! empty( $chunk['message']['tool_calls'] ) ) {
-						$tool_calls_raw = array_merge( $tool_calls_raw ?: array(), $chunk['message']['tool_calls'] );
+						$tool_calls_raw = array_merge( ( $tool_calls_raw ? $tool_calls_raw : array() ), $chunk['message']['tool_calls'] );
 						$finish_reason  = 'tool_calls';
 					}
 					if ( ! empty( $chunk['done'] ) && 'tool_calls' !== $finish_reason ) {
@@ -1037,7 +1038,7 @@ class LLM_Client {
 	 * @return array<string, mixed>
 	 */
 	private static function google_function_response( $decoded, string $fallback ): array {
-		if ( is_array( $decoded ) && $decoded !== array_values( $decoded ) ) {
+		if ( is_array( $decoded ) && array_values( $decoded ) !== $decoded ) {
 			return $decoded;
 		}
 		return array( 'result' => is_array( $decoded ) ? $decoded : $fallback );
@@ -1418,7 +1419,7 @@ class LLM_Client {
 						$this->sanitize_tools_for_openai( $tools )
 					);
 					$body['tools']       = $simplified_tools;
-					$body['tool_choice'] = $force_tool_use ? 'required' : 'auto';
+					$body['tool_choice'] = $force_tool_use && Model_Capabilities::supports_forced_tool_choice( (string) $this->model, (string) $this->provider ) ? 'required' : 'auto';
 				}
 				break;
 
@@ -1429,7 +1430,7 @@ class LLM_Client {
 				if ( ! empty( $tools ) ) {
 					// Sanitize schemas — WP abilities / MCP often ship illegal top-level oneOf/enum.
 					$body['tools']       = $this->sanitize_tools_for_openai( $tools );
-					$body['tool_choice'] = $force_tool_use ? 'required' : 'auto';
+					$body['tool_choice'] = $force_tool_use && Model_Capabilities::supports_forced_tool_choice( (string) $this->model, (string) $this->provider ) ? 'required' : 'auto';
 				}
 		}
 
