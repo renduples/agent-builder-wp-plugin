@@ -40,6 +40,8 @@ final class Deactivator {
 		wp_clear_scheduled_hook( 'agent_builder_process_job' );
 		wp_clear_scheduled_hook( 'agent_builder_refresh_provider_models' );
 		wp_clear_scheduled_hook( 'agent_builder_notification_digest' );
+		wp_clear_scheduled_hook( 'agent_builder_job_health_check' );
+		wp_clear_scheduled_hook( 'agent_builder_rescan_score' );
 		flush_rewrite_rules();
 
 		// Reset the agent-updates opt-in so the consent prompt reappears on next activation.
