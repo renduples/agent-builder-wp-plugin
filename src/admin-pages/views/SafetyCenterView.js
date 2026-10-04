@@ -630,7 +630,7 @@ function SafetyCenterView( { data, reload } ) {
 					</p>
 					<p className="agentic-safety-card__hint">
 						{ __(
-							'When an agent wants to make an important change, it stops here first. Nothing runs until you approve it.',
+							'Actions that need your approval wait here. A queued action does not run until you approve it.',
 							'agent-builder'
 						) }
 					</p>

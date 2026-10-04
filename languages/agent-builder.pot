@@ -9135,7 +9135,7 @@ msgstr ""
 
 #: build/admin-pages.js:28
 #: src/admin-pages/index.js:3052
-msgid "When an agent wants to make an important change, it stops here first. Nothing runs until you approve it."
+msgid "Actions that need your approval wait here. A queued action does not run until you approve it."
 msgstr ""
 
 #: build/admin-pages.js:28

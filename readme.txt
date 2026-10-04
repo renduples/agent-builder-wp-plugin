@@ -9,7 +9,7 @@ Donate link: https://agentic-plugin.com/donate/
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Give AI agents real WordPress work. They run in the background and only come back when something needs your OK. Safe by design.
+Give AI agents real WordPress work. They run in the background and only come back when something needs your OK. Built with safety controls.
 
 == Description ==
 
@@ -18,6 +18,8 @@ Give AI agents real WordPress work. They run in the background and only come bac
 Agent Builder gives your WordPress site a team of AI agents that do real work: drafting posts, fixing SEO, triaging comments, checking site health and helping run your store. Low-risk steps happen on their own. Anything that needs your judgement waits for one-click approval.
 
 Bring your own AI provider (OpenAI, Anthropic, Google Gemini, xAI, DeepSeek, Mistral and more, or a local model through Ollama). Free, with no account required.
+
+**Important:** AI models are run by third-party providers you choose (or by your own Ollama server). Agents can make mistakes or be misled by content they read. Approvals, backups and the activity log reduce risk but are not guarantees: review what agents do, keep independent backups and test on a staging site.
 
 ---
 
@@ -101,10 +103,10 @@ Save a conversation as a skill, teach a task by demonstrating it once, or write 
 Agent Builder allows you to create, train, and orchestrate autonomous AI agents inside WordPress using simple job descriptions. Agents use modular, risk-rated tools and skills to perform real administrative and editorial tasks — all under your control, with full visibility into what they do.
 
 = How is this different from generic WordPress chatbot plugins? =
-Standard chatbot plugins stream text from an API. Agent Builder gives agents permission-controlled tools to interact directly with your site—drafting posts, auditing SEO, checking health—backed by risk classification, approval gates, and a tamper-proof audit log. You stay in control.
+Standard chatbot plugins stream text from an API. Agent Builder gives agents permission-controlled tools to interact directly with your site—drafting posts, auditing SEO, checking health—backed by risk classification, approval gates, and a tamper-evident audit log. You stay in control.
 
-= Is Agent Builder safe? =
-Yes. Agent Builder is built around safety controls: (1) every tool is classified by risk level, (2) medium-risk actions need confirmation, high-risk actions queue for your review, (3) you have a one-click Emergency Stop to disable all agents, (4) a tamper-proof audit log records everything, (5) per-agent tool scopes show exactly what each agent can do. Read the “Agent Safety” section above for the full picture.
+= Is Agent Builder safe to use? =
+Agent Builder is built with safety controls: (1) every tool is classified by risk level, (2) medium-risk actions need confirmation and high-risk actions queue for your review, (3) a one-click Emergency Stop disables all agents, (4) a tamper-evident audit log records what agents do, (5) per-agent tool scopes show exactly what each agent can do. See “You stay in control” above. These controls reduce risk, but no software can guarantee safety: AI models can make mistakes or be misled by content they read. You remain responsible for reviewing what agents do and for keeping your own backups of your site.
 
 = Does Site Brief change my site by itself? =
 No. The scan is read-only. Writes use the same approval queue as chat.
@@ -116,7 +118,7 @@ It depends on the risk level. Low-risk actions happen immediately. Medium-risk a
 Because they are tested the way you would use them. Agent Builder ships a ranked catalog of 54 real requests from WordPress owners, each assigned to a bundled agent, and a WP-CLI command (`wp agent prompt-test`) that replays them through the real chat path and writes a report of what every agent did: tools called, approval stops, cost. Run it on your own site, add your own requests, and read the report in plain markdown. From chat, ask the Assistant Trainer "which of my agents are missing tools?" and it will analyse the results and propose what to grant — you approve. It runs only when you start it and costs only what your AI provider charges for those calls.
 
 = Can I undo a change an agent made? =
-Yes. Before an agent modifies a tracked file or database table, Agent Builder automatically creates a timestamped backup — this is on by default and needs no setup. Every backup shows up in the Approvals screen, where you can restore it with one click.
+Often, yes. Before an agent changes a tracked file or database table, Agent Builder automatically takes a timestamped backup (on by default, no setup needed), and you can restore it with one click from the Approvals screen. Database backups keep the last 3 snapshots per table, and for large tables only the affected rows are saved. These backups cover only the files and tables that agent tools track. They do not replace a full site backup or a staging site.
 
 = Do I need coding skills to use Agent Builder? =
 No. The plugin includes a **Basic interface mode** designed for non-technical site owners, with guided workflows, plain-language approvals, and one-click controls. Experienced users can switch to **Advanced mode** for developer tools and raw configuration.
@@ -149,7 +151,7 @@ A task is a job you hand to an agent to run in the background. From the Tasks sc
 Yes — a daily activity digest that summarizes what your agents did. It is sent only to site administrators, uses WordPress's own mail function (`wp_mail`, no external email service), and is on by default. You can switch it to instant run notifications or turn email off entirely from Settings → Security, and each administrator can opt out of the digest individually.
 
 = Where is my data sent? =
-When using cloud LLM providers, conversation context and tool parameters are sent directly to your chosen provider via their official API (see External Services below). If you use Ollama or a local endpoint, 100% of your data stays on your local server.
+When using cloud LLM providers, conversation context and tool parameters are sent directly to your chosen provider via their official API (see External Services below). If you use Ollama or another local endpoint, AI requests go only to that endpoint (by default on your own server), not to a cloud provider. Optional services listed under External Services are used only if you turn them on.
 
 = What is the WordPress Abilities API integration? =
 On WordPress 6.9+, Agent Builder provides bidirectional integration: (1) **Outbound:** Registers agent tools as abilities under `agent-builder/` and `wp-extended/` namespaces for external MCP discovery. (2) **Inbound:** Automatically imports abilities exposed by other WordPress plugins so your agents can use them as tools, all protected by the same risk gate.
@@ -349,6 +351,11 @@ If you create approval rules, each tool call an agent proposes is also checked a
 * Routines: run an agent or skill on a schedule or when something happens on your site, with a test run, pause/resume, next run in your timezone and the last 20 runs.
 * Skills: save a conversation as a skill, teach a task by demonstration, create one from a description, and invoke any skill with /skill-name in chat. Skills are shared across agents by default.
 * Results arrive as cards (posts, files, tables, diffs), a live "Working…" pane shows each step as it happens, and voice dictation is available on HTTPS sites.
+* Accuracy: the plugin no longer calls itself "safe by design". The readme now describes the safety controls, says plainly that no software can guarantee safety, and adds a short note that AI models are run by third-party providers you choose, that agents can make mistakes, and that you should keep your own backups and use a staging site.
+* Accuracy: the Activity log is described as tamper-evident (edits and deletions are detectable), not tamper-proof.
+* Accuracy: the Safety Center approvals hint now says actions that need approval wait there until you approve them, instead of "Nothing runs until you approve it".
+* Accuracy: the default chat consent notice no longer says data is not shared with third parties. It now says messages are sent to the AI provider the site uses. Sites that saved their own consent text keep it.
+* Accuracy: the readme now explains what backups cover (the last 3 snapshots per database table, only the affected rows for large tables) and that they do not replace a full site backup or a staging site. The Ollama answer now says AI requests stay on your endpoint instead of "100% of your data".
 
 = 4.0.2 - 2026-09-27 =
 * Maintenance: version alignment across the WordPress.org, self-hosted, and Pro editions. Ensures clean compatibility with Agent Builder Pro 4.0.2. No functional changes to this edition.
@@ -367,7 +374,7 @@ Major release. The safety-first way to run AI agents on WordPress — agents tha
 * Prompt Tests — replay a catalog of real owner requests against your agents; see what passed, what stopped for approval and what it cost, and get proposed improvements for your approval.
 * Safety Center — one screen for risk inventory, approval gates, per-agent tool scopes, tamper-detection status, and an emergency stop.
 * Agent-Ready Score and the opt-in WebMCP Bridge for AI-agent discoverability.
-* Hardened throughout: hash-chained tamper-proof Activity log, a stronger approval write-path, and a consistent agent_builder_ prefix across constants, options, tables, hooks, and capabilities.
+* Hardened throughout: hash-chained tamper-evident Activity log, a stronger approval write-path, and a consistent agent_builder_ prefix across constants, options, tables, hooks, and capabilities.
 
 = 3.4.2 - 2026-09-20 =
 * Added Site Brief: a read-only dashboard scan that turns this site into a ranked list of approve-to-act jobs. No new external services.
