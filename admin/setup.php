@@ -293,8 +293,8 @@ $agentic_wizard_meta = array(
 // Build $agent_builder_providers by merging registry data (name, icon, key_url) with wizard-only metadata.
 $agent_builder_providers = array();
 foreach ( \Agentic\Provider_Registry::get_all() as $agentic_reg_p ) {
-	$agentic_pslug                       = $agentic_reg_p['slug'];
-	$agentic_wmeta                       = $agentic_wizard_meta[ $agentic_pslug ] ?? array();
+	$agentic_pslug                             = $agentic_reg_p['slug'];
+	$agentic_wmeta                             = $agentic_wizard_meta[ $agentic_pslug ] ?? array();
 	$agent_builder_providers[ $agentic_pslug ] = array_merge(
 		array(
 			'name'    => $agentic_reg_p['name'],
