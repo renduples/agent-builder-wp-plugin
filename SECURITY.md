@@ -6,6 +6,7 @@ Agentic Tech LLC maintains Agent Builder. We take reports about the plugin's sec
 
 Please report privately. Do not open a public GitHub issue, forum post or pull request for a security problem.
 
+- **Patchstack (preferred):** [Agent Builder Vulnerability Disclosure Program](https://patchstack.com/database/vdp/4f108df7-e398-4bbb-bdc8-b4d93aa3cbc3). Patchstack helps with verification and CVE assignment and notifies us.
 - **Email:** security@agentic-plugin.com
 - **GitHub:** use "Report a vulnerability" on this repository's **Security** tab (private advisory).
 

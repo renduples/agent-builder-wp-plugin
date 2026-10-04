@@ -99,6 +99,10 @@ Save a conversation as a skill, teach a task by demonstrating it once, or write 
 
 == Frequently Asked Questions ==
 
+= Where do I report security bugs found in this plugin? =
+
+Please report security bugs found in the source code of the Agent Builder plugin through the [Patchstack Vulnerability Disclosure  Program](https://patchstack.com/database/vdp/4f108df7-e398-4bbb-bdc8-b4d93aa3cbc3). The Patchstack team will assist you with verification, CVE assignment, and notify the developers of this plugin.
+
 = What is Agent Builder? =
 Agent Builder allows you to create, train, and orchestrate autonomous AI agents inside WordPress using simple job descriptions. Agents use modular, risk-rated tools and skills to perform real administrative and editorial tasks — all under your control, with full visibility into what they do.
 
