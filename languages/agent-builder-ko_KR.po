@@ -2827,7 +2827,7 @@ msgid "Recommended"
 msgstr "권장"
 
 #: admin/setup.php:855
-msgid "The AI proposes changes — you review and approve before anything is saved or published. Nothing happens without your sign-off."
+msgid "In Supervised mode, changes the AI proposes wait for your approval before they are saved or published."
 msgstr "AI가 변경 사항을 제안하면 저장하거나 발행하기 전에 사용자가 검토하고 승인합니다. 승인 없이는 아무 일도 일어나지 않습니다."
 
 #: admin/setup.php:861 admin/signup.php:96 admin/signup.php:222 src/settings-app/index.js:702

@@ -2829,7 +2829,7 @@ msgid "Recommended"
 msgstr "Recomendado"
 
 #: admin/setup.php:855
-msgid "The AI proposes changes — you review and approve before anything is saved or published. Nothing happens without your sign-off."
+msgid "In Supervised mode, changes the AI proposes wait for your approval before they are saved or published."
 msgstr "A IA propõe as alterações — você revisa e aprova antes que qualquer coisa seja salva ou publicada. Nada acontece sem o seu aval."
 
 #: admin/setup.php:861 admin/signup.php:96 admin/signup.php:222 src/settings-app/index.js:702

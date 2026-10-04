@@ -853,7 +853,7 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 								<strong><?php esc_html_e( 'Supervised', 'agent-builder' ); ?></strong>
 								<span class="wizard-mode-badge"><?php esc_html_e( 'Recommended', 'agent-builder' ); ?></span>
 							</div>
-							<p><?php esc_html_e( 'The AI proposes changes — you review and approve before anything is saved or published. Nothing happens without your sign-off.', 'agent-builder' ); ?></p>
+							<p><?php esc_html_e( 'In Supervised mode, changes the AI proposes wait for your approval before they are saved or published.', 'agent-builder' ); ?></p>
 						</label>
 						<label class="wizard-mode-card" data-mode="autonomous">
 							<input type="radio" name="wizard_mode" value="autonomous">
