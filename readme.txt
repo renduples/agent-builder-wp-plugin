@@ -259,7 +259,7 @@ If you create approval rules, each tool call an agent proposes is also checked a
 = Ollama (Local) =
 * **Endpoint:** User-configured local URL (default: `http://localhost:11434`)
 * **When used:** When Ollama is selected as your AI provider.
-* **Data sent:** All data remains strictly on your local infrastructure.
+* **Data sent:** Prompts, conversation context and tool data go only to the Ollama URL you configure (by default on the same server), not to a cloud AI provider.
 
 = WordPress.org Plugin & Core Directory (Opt in) =
 * **Endpoint:** `https://api.wordpress.org/`
