@@ -44,3 +44,4 @@ package-lock.json
 languages/*.po
 languages/*.mo
 languages/*.json
+SECURITY.md
