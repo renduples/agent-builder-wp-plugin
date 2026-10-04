@@ -3185,7 +3185,7 @@ msgid "Recommended"
 msgstr ""
 
 #: admin/setup.php:856
-msgid "The AI proposes changes — you review and approve before anything is saved or published. Nothing happens without your sign-off."
+msgid "In Supervised mode, changes the AI proposes wait for your approval before they are saved or published."
 msgstr ""
 
 #: admin/setup.php:862
@@ -9135,7 +9135,7 @@ msgstr ""
 
 #: build/admin-pages.js:28
 #: src/admin-pages/index.js:3052
-msgid "When an agent wants to make an important change, it stops here first. Nothing runs until you approve it."
+msgid "Actions that need your approval wait here. A queued action does not run until you approve it."
 msgstr ""
 
 #: build/admin-pages.js:28

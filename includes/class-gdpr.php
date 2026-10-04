@@ -36,6 +36,12 @@ class GDPR {
 	/** Nonce action for consent dismissal. */
 	const CONSENT_NONCE = 'agentic_consent';
 
+	/**
+	 * Default chat consent notice, used when no custom text is saved.
+	 * Saved custom text on existing sites is left untouched.
+	 */
+	const DEFAULT_CONSENT_TEXT = 'By chatting you agree to your messages being processed by an AI service. Messages are sent to the AI provider this site uses.';
+
 	// -------------------------------------------------------------------------
 	// Initialisation
 	// -------------------------------------------------------------------------
@@ -1136,7 +1142,7 @@ class GDPR {
 	public static function get_consent_text(): string {
 		$text = get_option( 'agent_builder_chat_consent_text', '' );
 		if ( empty( trim( (string) $text ) ) ) {
-			return 'By chatting you agree to your messages being processed by an AI. We do not share your data with third parties.';
+			return self::DEFAULT_CONSENT_TEXT;
 		}
 		return (string) $text;
 	}

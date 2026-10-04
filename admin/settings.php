@@ -137,7 +137,7 @@ if ( isset( $_POST['agentic_save_settings'] ) && check_admin_referer( 'agentic_s
 					update_option( 'agent_builder_retention_conversations', 30 );
 					update_option( 'agent_builder_retention_audit_log', 30 );
 					update_option( 'agent_builder_chat_consent_enabled', false );
-					update_option( 'agent_builder_chat_consent_text', 'By chatting you agree to your messages being processed by an AI. We do not share your data with third parties.' );
+					update_option( 'agent_builder_chat_consent_text', \Agentic\GDPR::DEFAULT_CONSENT_TEXT );
 					update_option( 'agent_builder_allow_platform_sync', '0' );
 				},
 			),
@@ -508,7 +508,7 @@ if ( isset( $_POST['agentic_save_settings'] ) && check_admin_referer( 'agentic_s
 		update_option( 'agent_builder_enable_weak_model_tool_guidance', isset( $_POST['agent_builder_enable_weak_model_tool_guidance'] ) ? '1' : '0' );
 		update_option( 'agent_builder_max_tool_retries', max( 1, absint( $_POST['agent_builder_max_tool_retries'] ?? 3 ) ) );
 
-		$agentic_styles_aft = array(
+		$agentic_styles_aft  = array(
 			'chat_theme'      => (string) get_option( 'agent_builder_chat_theme', 'light' ),
 			'chat_audio'      => (string) get_option( 'agent_builder_chat_audio', '0' ),
 			'chat_tts'        => (string) get_option( 'agent_builder_chat_tts', '1' ),
@@ -568,22 +568,22 @@ $agentic_cache_ttl     = get_option( 'agent_builder_response_cache_ttl', 3600 );
 $agentic_cache_stats   = \Agentic\Response_Cache::get_stats();
 
 // Security settings.
-$agent_builder_security_enabled       = get_option( 'agent_builder_security_enabled', true );
-$agentic_allow_anon_chat        = get_option( 'agent_builder_allow_anonymous_chat', false );
-$agent_builder_turnstile_site_key     = get_option( 'agent_builder_turnstile_site_key', '' );
-$agent_builder_turnstile_secret_key   = get_option( 'agent_builder_turnstile_secret_key', '' );
-$agentic_turnstile_require_anon = get_option( 'agent_builder_turnstile_require_anonymous', true );
-$agent_builder_turnstile_require_all  = get_option( 'agent_builder_turnstile_require_all', false );
+$agent_builder_security_enabled      = get_option( 'agent_builder_security_enabled', true );
+$agentic_allow_anon_chat             = get_option( 'agent_builder_allow_anonymous_chat', false );
+$agent_builder_turnstile_site_key    = get_option( 'agent_builder_turnstile_site_key', '' );
+$agent_builder_turnstile_secret_key  = get_option( 'agent_builder_turnstile_secret_key', '' );
+$agentic_turnstile_require_anon      = get_option( 'agent_builder_turnstile_require_anonymous', true );
+$agent_builder_turnstile_require_all = get_option( 'agent_builder_turnstile_require_all', false );
 // GDPR settings.
 $agent_builder_ip_anonymize = get_option( 'agent_builder_ip_anonymize', true );
 
 // Item 3: Tool reliability for weaker models (global defaults)
-$agentic_weak_guidance_global    = get_option( 'agent_builder_enable_weak_model_tool_guidance', '1' );
-$agentic_max_retries_global      = get_option( 'agent_builder_max_tool_retries', '3' );
+$agentic_weak_guidance_global          = get_option( 'agent_builder_enable_weak_model_tool_guidance', '1' );
+$agentic_max_retries_global            = get_option( 'agent_builder_max_tool_retries', '3' );
 $agent_builder_retention_conversations = get_option( 'agent_builder_retention_conversations', 30 );
 $agent_builder_retention_audit_log     = get_option( 'agent_builder_retention_audit_log', 30 );
 $agent_builder_chat_consent_enabled    = get_option( 'agent_builder_chat_consent_enabled', false );
-$agent_builder_chat_consent_text       = get_option( 'agent_builder_chat_consent_text', 'By chatting you agree to your messages being processed by an AI. We do not share your data with third parties.' );
+$agent_builder_chat_consent_text       = get_option( 'agent_builder_chat_consent_text', \Agentic\GDPR::DEFAULT_CONSENT_TEXT );
 $agent_builder_local_memory_enabled    = '1' === get_option( 'agent_builder_local_memory_enabled', '0' );
 $agent_builder_allow_platform_sync     = '1' === get_option( 'agent_builder_allow_platform_sync', '0' );
 // Rate limit settings (read near Users tab).

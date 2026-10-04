@@ -293,8 +293,8 @@ $agentic_wizard_meta = array(
 // Build $agent_builder_providers by merging registry data (name, icon, key_url) with wizard-only metadata.
 $agent_builder_providers = array();
 foreach ( \Agentic\Provider_Registry::get_all() as $agentic_reg_p ) {
-	$agentic_pslug                       = $agentic_reg_p['slug'];
-	$agentic_wmeta                       = $agentic_wizard_meta[ $agentic_pslug ] ?? array();
+	$agentic_pslug                             = $agentic_reg_p['slug'];
+	$agentic_wmeta                             = $agentic_wizard_meta[ $agentic_pslug ] ?? array();
 	$agent_builder_providers[ $agentic_pslug ] = array_merge(
 		array(
 			'name'    => $agentic_reg_p['name'],
@@ -853,7 +853,7 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 								<strong><?php esc_html_e( 'Supervised', 'agent-builder' ); ?></strong>
 								<span class="wizard-mode-badge"><?php esc_html_e( 'Recommended', 'agent-builder' ); ?></span>
 							</div>
-							<p><?php esc_html_e( 'The AI proposes changes — you review and approve before anything is saved or published. Nothing happens without your sign-off.', 'agent-builder' ); ?></p>
+							<p><?php esc_html_e( 'In Supervised mode, changes the AI proposes wait for your approval before they are saved or published.', 'agent-builder' ); ?></p>
 						</label>
 						<label class="wizard-mode-card" data-mode="autonomous">
 							<input type="radio" name="wizard_mode" value="autonomous">
