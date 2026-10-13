@@ -66,6 +66,10 @@ spl_autoload_register(
 // wp-content/agentic-agents/ (or -knowledge/, -backups/) needs to move.
 define( 'AGENT_BUILDER_FILE', __FILE__ );
 define( 'AGENT_BUILDER_VERSION', '4.4.0' );
+
+// "Last updated" date of the agentic-plugin.com Terms of Service the sign-up
+// forms ask administrators to accept; sent with the hosted sign-up.
+define( 'AGENT_BUILDER_TERMS_VERSION', '2026-10-06' );
 define( 'AGENT_BUILDER_DB_VERSION', '2.15.2' );
 define( 'AGENT_BUILDER_DIR', plugin_dir_path( __FILE__ ) );
 define( 'AGENT_BUILDER_URL', plugin_dir_url( __FILE__ ) );

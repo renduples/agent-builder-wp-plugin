@@ -1266,6 +1266,38 @@ class Admin_Ajax {
 	 *
 	 * @return void
 	 */
+	/**
+	 * Whether the sign-up request carries the administrator's acceptance of
+	 * both the Terms of Service and the Privacy Policy.
+	 *
+	 * @param array $post Request fields ($_POST).
+	 * @return bool
+	 */
+	public static function has_signup_consent( array $post ): bool {
+		return '1' === (string) ( $post['agree_terms'] ?? '' ) && '1' === (string) ( $post['agree_privacy'] ?? '' );
+	}
+
+	/**
+	 * Body of the hosted sign-up request to agentic-plugin.com.
+	 *
+	 * @param string $email          Administrator email.
+	 * @param string $site_url       Site URL.
+	 * @param string $site_name      Site name.
+	 * @param string $plugin_version Plugin version.
+	 * @return array
+	 */
+	public static function hosted_signup_body( string $email, string $site_url, string $site_name, string $plugin_version ): array {
+		return array(
+			'email'          => $email,
+			'site_url'       => $site_url,
+			'site_name'      => $site_name,
+			'plugin_version' => $plugin_version,
+			'plugin_tier'    => 'free',
+			'terms_accepted' => '1',
+			'terms_version'  => AGENT_BUILDER_TERMS_VERSION,
+		);
+	}
+
 	public static function signup_api_key(): void {
 		check_ajax_referer( 'agentic_signup' );
 
@@ -1298,6 +1330,12 @@ class Admin_Ajax {
 			wp_send_json_error( array( 'message' => __( 'Email address is required.', 'agent-builder' ) ) );
 		}
 
+		// The forms check these boxes in the browser too; the request itself
+		// must carry the acceptance before anything is sent to the service.
+		if ( ! self::has_signup_consent( wp_unslash( $_POST ) ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- only compared against '1'.
+			wp_send_json_error( array( 'message' => __( 'Please agree to the Terms of Service and Privacy Policy.', 'agent-builder' ) ) );
+		}
+
 		if ( empty( $site_url ) ) {
 			$site_url = home_url();
 		}
@@ -1306,13 +1344,7 @@ class Admin_Ajax {
 			Service_Registry::url( 'agentic-api', '/wp-json/agentic/v1/register' ),
 			array(
 				'timeout' => 15,
-				'body'    => array(
-					'email'          => $email,
-					'site_url'       => $site_url,
-					'site_name'      => $site_name,
-					'plugin_version' => $plugin_version,
-					'plugin_tier'    => 'free',
-				),
+				'body'    => self::hosted_signup_body( $email, $site_url, $site_name, $plugin_version ),
 			)
 		);
 
@@ -1345,6 +1377,8 @@ class Admin_Ajax {
 		}
 		update_option( 'agent_builder_onboarding_complete', true );
 		update_option( 'agent_builder_service_consent', true );
+		update_option( 'agent_builder_terms_version_accepted', AGENT_BUILDER_TERMS_VERSION, false );
+		update_option( 'agent_builder_terms_accepted_at', gmdate( 'c' ), false );
 
 		wp_send_json_success(
 			array(

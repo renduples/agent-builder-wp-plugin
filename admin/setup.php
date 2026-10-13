@@ -1239,6 +1239,8 @@ function saveKey() {
 		fd.append('site_name', '');
 		fd.append('domain', window.location.hostname);
 		fd.append('plugin_version', '');
+		fd.append('agree_terms', '1');
+		fd.append('agree_privacy', '1');
 		fetch(ajaxUrl, { method: 'POST', body: fd })
 			.then(function(r) { return r.json(); })
 			.then(function(data) {
