@@ -188,4 +188,20 @@ class Test_Hosted_Signup extends TestCase {
 	public function test_license_missing_is_false_without_an_api_key(): void {
 		$this->assertFalse( Provider_Registry::hosted_license_missing() );
 	}
+
+	public function test_signup_consent_requires_both_boxes(): void {
+		$this->assertTrue( Admin_Ajax::has_signup_consent( array( 'agree_terms' => '1', 'agree_privacy' => '1' ) ) );
+		$this->assertFalse( Admin_Ajax::has_signup_consent( array( 'agree_terms' => '1' ) ) );
+		$this->assertFalse( Admin_Ajax::has_signup_consent( array( 'agree_privacy' => '1' ) ) );
+		$this->assertFalse( Admin_Ajax::has_signup_consent( array( 'agree_terms' => 'yes', 'agree_privacy' => '1' ) ) );
+		$this->assertFalse( Admin_Ajax::has_signup_consent( array() ) );
+	}
+
+	public function test_hosted_signup_body_carries_terms_acceptance(): void {
+		$body = Admin_Ajax::hosted_signup_body( 'a@example.com', 'https://example.com', 'Example', '4.4.0' );
+		$this->assertSame( '1', $body['terms_accepted'] );
+		$this->assertSame( AGENT_BUILDER_TERMS_VERSION, $body['terms_version'] );
+		$this->assertSame( 'free', $body['plugin_tier'] );
+		$this->assertSame( 'a@example.com', $body['email'] );
+	}
 }

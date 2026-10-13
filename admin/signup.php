@@ -563,7 +563,9 @@ $agentic_signup_tts_voices     = array(
 				chat_model    : document.getElementById( 'agentic-signup-model' ).value,
 				vision_model  : document.getElementById( 'agentic-signup-vision-model' ).value,
 				tts_voice     : document.getElementById( 'agentic-signup-tts-voice' ).value,
-				video_model   : document.getElementById( 'agentic-signup-video-model' ).value
+				video_model   : document.getElementById( 'agentic-signup-video-model' ).value,
+				agree_terms   : terms.checked ? '1' : '',
+				agree_privacy : privacy.checked ? '1' : ''
 			} )
 		} )
 		.then( function ( r ) { return r.json(); } )
