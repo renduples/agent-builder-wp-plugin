@@ -344,6 +344,7 @@
         // Initialize history panel
         initHistory();
         fetchStatus();
+        fitChatToViewport();
 
         // Initialize consent banner if required
         initConsent();
@@ -2190,6 +2191,42 @@
         const textarea = document.createElement('textarea');
         textarea.innerHTML = text;
         return textarea.value;
+    }
+
+    // Admin Chat page only: size the panel to the space left below its top edge
+    // so the composer is on screen without scrolling, whatever sits above it
+    // (admin notices, the consent banner). The CSS height (100vh minus a fixed
+    // offset) assumed nothing above the panel. Embedded variants (front-end
+    // shortcode, modal widget, Skills/Publish embeds) keep their own sizing.
+    function fitChatToViewport() {
+        if (!chatContainer || chatContainer.id !== 'agentic-chat') return;
+        if (chatContainer.classList.contains('agentic-chat-frontend') || chatContainer.closest('.agentic-modal-widget')) return;
+        let page = '';
+        try { page = new URLSearchParams(window.location.search).get('page') || ''; } catch (err) {}
+        if (page !== 'agentic-chat') return;
+
+        let frame = 0;
+        const fit = function () {
+            frame = 0;
+            const top = chatContainer.getBoundingClientRect().top + window.scrollY;
+            const available = Math.round(window.innerHeight - top - 20);
+            const height = Math.max(380, available) + 'px';
+            if (chatContainer.style.height !== height) {
+                chatContainer.style.height = height;
+                chatContainer.style.minHeight = '0';
+            }
+        };
+        const schedule = function () {
+            if (!frame) frame = window.requestAnimationFrame(fit);
+        };
+        fit();
+        window.addEventListener('resize', schedule);
+        // Re-fit when content above the panel changes height (a dismissed
+        // notice, the consent banner closing).
+        if (typeof ResizeObserver !== 'undefined' && chatContainer.parentElement) {
+            const wpbody = document.getElementById('wpbody-content') || chatContainer.parentElement;
+            new ResizeObserver(schedule).observe(wpbody);
+        }
     }
 
     // Generate UUID
