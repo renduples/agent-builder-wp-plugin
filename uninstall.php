@@ -187,3 +187,12 @@ if ( is_dir( $agentic_agents_dir ) ) {
 		}
 	}
 }
+
+/*
+ * -------------------------------------------------------------------------
+ * 7. Remove the plugin's data folders: automatic pre-change backups
+ *    (copies of site content and database rows) and knowledge files.
+ * -------------------------------------------------------------------------
+ */
+require_once __DIR__ . '/includes/class-uninstall-cleanup.php';
+\Agentic\Uninstall_Cleanup::remove_data_directories();

@@ -179,7 +179,7 @@ class Create_Agent_Files extends Tool_Base {
 		}
 
 		// Custom agents have no shipped publisher the way bundled agents do
-		// ("By Agent Builder", "By Agentic Community") — attribute to whichever
+		// ("By Agent Builder") — attribute to whichever
 		// admin created it instead of leaving the Agents list with no author at
 		// all, linked to their profile edit screen the same way bundled agents'
 		// author_uri links out to the publisher.

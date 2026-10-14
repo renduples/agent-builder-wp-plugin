@@ -69,7 +69,7 @@ class Test_Tool_Executor extends TestCase {
 		if ( ! is_dir( $dir ) ) {
 			return;
 		}
-		foreach ( glob( $dir . '/*_options.json' ) ?: array() as $file ) {
+		foreach ( glob( $dir . '/*_options.php' ) ?: array() as $file ) {
 			unlink( $file );
 		}
 	}
@@ -246,7 +246,7 @@ class Test_Tool_Executor extends TestCase {
 	public function test_allow_path_backs_up_table_before_executing_non_readonly_tool(): void {
 		update_option( 'agent_builder_approval_auto_max_risk', Risk_Level::HIGH );
 
-		$before = glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*_options.json' ) ?: array();
+		$before = glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*_options.php' ) ?: array();
 		$this->assertCount( 0, $before, 'precondition: no stale options backup from a prior test' );
 
 		$result = $this->make_executor()->execute(
@@ -260,7 +260,7 @@ class Test_Tool_Executor extends TestCase {
 		$this->assertSame( 'written-value', get_option( 'agent_builder_test_allow_opt' ) );
 		$this->assertTrue( $result['updated'] ?? false );
 
-		$after = glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*_options.json' ) ?: array();
+		$after = glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*_options.php' ) ?: array();
 		$this->assertCount( 1, $after, 'backup_tables_for_tool() should have written one options backup' );
 
 		// The write must have been logged to the operations ledger too
@@ -309,7 +309,7 @@ class Test_Tool_Executor extends TestCase {
 	 * A read-only tool never triggers a table backup, even under 'allow'.
 	 */
 	public function test_readonly_tool_never_triggers_a_backup(): void {
-		$before = glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*_options.json' ) ?: array();
+		$before = glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*_options.php' ) ?: array();
 
 		$this->make_executor()->execute(
 			'list_posts',
@@ -319,7 +319,7 @@ class Test_Tool_Executor extends TestCase {
 			'chat'
 		);
 
-		$after = glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*_options.json' ) ?: array();
+		$after = glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*_options.php' ) ?: array();
 		$this->assertSame( count( $before ), count( $after ) );
 	}
 
@@ -1156,7 +1156,7 @@ class Test_Tool_Executor extends TestCase {
 	 * before a non-readonly tool runs.
 	 */
 	public function test_execute_approved_backs_up_table_before_non_readonly_execution(): void {
-		$before = glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*_options.json' ) ?: array();
+		$before = glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*_options.php' ) ?: array();
 		$this->assertCount( 0, $before, 'precondition: no stale options backup from a prior test' );
 
 		$result = $this->make_executor()->execute_approved(
@@ -1170,7 +1170,7 @@ class Test_Tool_Executor extends TestCase {
 
 		$this->assertSame( 'backed-up', get_option( 'agent_builder_test_approved_backup_opt' ) );
 
-		$after = glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*_options.json' ) ?: array();
+		$after = glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*_options.php' ) ?: array();
 		$this->assertCount( 1, $after, 'execute_approved() must take a pre-write backup' );
 	}
 
@@ -1221,5 +1221,35 @@ class Test_Tool_Executor extends TestCase {
 			$wpdb->prepare( "SELECT * FROM {$wpdb->prefix}agent_builder_approval_queue WHERE id = %d", $id ),
 			ARRAY_A
 		);
+	}
+	/**
+	 * content_preview() turns create/update content into readable plain text
+	 * for the approval card: block comments and tags stripped, block closers
+	 * become line breaks, entities decoded, scripts never survive as markup.
+	 */
+	public function test_content_preview_is_plain_text(): void {
+		$preview = Tool_Executor::content_preview(
+			array(
+				'title'   => 'Hello',
+				'content' => "<!-- wp:paragraph -->\n<p>Welcome &amp; <strong>hello</strong>.</p>\n<!-- /wp:paragraph --><h2>Next</h2><script>alert(1)</script><ul><li>One</li><li>Two</li></ul>",
+			)
+		);
+
+		$this->assertSame( "Welcome & hello.\nNext\nOne\nTwo", $preview );
+		$this->assertStringNotContainsString( '<', $preview );
+		$this->assertStringNotContainsString( 'alert', $preview );
+	}
+
+	/**
+	 * content_preview() is empty without content and capped for long content.
+	 */
+	public function test_content_preview_empty_and_capped(): void {
+		$this->assertSame( '', Tool_Executor::content_preview( array( 'title' => 'No body' ) ) );
+		$this->assertSame( '', Tool_Executor::content_preview( array( 'content' => array( 'not', 'scalar' ) ) ) );
+
+		$long    = str_repeat( 'a', Tool_Executor::CONTENT_PREVIEW_MAX + 50 );
+		$preview = Tool_Executor::content_preview( array( 'content' => '<p>' . $long . '</p>' ) );
+		$this->assertSame( Tool_Executor::CONTENT_PREVIEW_MAX + 1, mb_strlen( $preview ) );
+		$this->assertStringEndsWith( '…', $preview );
 	}
 }

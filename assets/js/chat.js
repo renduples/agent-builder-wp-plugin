@@ -344,6 +344,7 @@
         // Initialize history panel
         initHistory();
         fetchStatus();
+        fitChatToViewport();
 
         // Initialize consent banner if required
         initConsent();
@@ -405,6 +406,8 @@
             setTimeout(function() {
                 sendMessage(agenticChat.initialMessage);
             }, 600);
+        } else {
+            restoreDraft();
         }
 
         // P0 Basic Multi-Agent Orchestration: show professional handoff banner when applicable.
@@ -829,10 +832,46 @@
         // Save selected agent to cookie (read server-side to avoid redirect flash)
         document.cookie = 'agentic_last_agent=' + encodeURIComponent(newAgentId) + ';path=/;max-age=31536000;SameSite=Lax';
         
+        // Keep what the user was typing: the reload below would otherwise drop
+        // it. restoreDraft() puts it back into the composer after the reload.
+        saveDraft();
+
         // Reload page with new agent (simplest approach for full state reset)
         const url = new URL(window.location.href);
         url.searchParams.set('agent', newAgentId);
         window.location.href = url.toString();
+    }
+
+    // Unsent composer text survives an agent switch (which reloads the page).
+    // Stored in sessionStorage (this tab only), keyed per site so multisite
+    // installs on one domain don't share drafts; cleared once restored or sent.
+    function draftKey() {
+        const site = (typeof agenticChat !== 'undefined' && agenticChat.restUrl) ? agenticChat.restUrl : window.location.host;
+        return 'agentic_chat_draft:' + site;
+    }
+    function saveDraft() {
+        if (!input) return;
+        try {
+            if (input.value.trim()) {
+                sessionStorage.setItem(draftKey(), input.value);
+            } else {
+                sessionStorage.removeItem(draftKey());
+            }
+        } catch (err) {}
+    }
+    function clearDraft() {
+        try { sessionStorage.removeItem(draftKey()); } catch (err) {}
+    }
+    function restoreDraft() {
+        if (!input) return;
+        let draft = null;
+        try { draft = sessionStorage.getItem(draftKey()); } catch (err) {}
+        clearDraft();
+        if (!draft || input.value.trim()) return;
+        input.value = draft;
+        autoResize();
+        input.focus();
+        input.setSelectionRange(draft.length, draft.length);
     }
 
     // Handle form submission
@@ -868,6 +907,7 @@
         // Clear input and image
         input.value = '';
         input.style.height = 'auto';
+        clearDraft();
         clearPendingImage();
 
         // Add to history
@@ -1242,8 +1282,10 @@
                     const isQuota = response.status === 429 || response.status === 402;
                     const msg = addMessage(data.response || agenticChat.i18n.errorGeneric, 'agent');
                     if (isQuota && msg) msg.classList.add('agentic-quota-error');
-                    if (isQuota) setLed('credits', 'error', 'Credits: exhausted \u2014 add credits or use your own API key');
+                    if (isQuota) setLed('credits', 'error', ledText('ledCreditsExhausted', 'Credits: exhausted \u2014 add credits or use your own API key'));
                 } else {
+                    aiConnected = true;
+                    setLed('ai', 'ok', ledText('ledAiConnected', 'AI service: connected'));
                     conversationHistory.push({ role: 'assistant', content: data.response });
                     saveConversation();
                     totalTokens += data.tokens_used || 0;
@@ -1269,7 +1311,8 @@
             }
         } catch (error) {
             console.error('Chat error:', error);
-            setLed('ai', 'error', 'AI service: connection failed');
+            aiConnected = false;
+            setLed('ai', 'error', ledText('ledAiFailed', 'AI service: connection failed'));
             const msg = error.name === 'AbortError'
                 ? agenticChat.i18n.errorTimeout
                 : agenticChat.i18n.errorConnection;
@@ -1400,24 +1443,43 @@
 
     // ── Chat History Panel ──
 
-    // Status LEDs (AI connectivity + credits).
+    // Status LEDs (AI connectivity + credits). Each light carries its state as
+    // a tooltip and as screen-reader text, so the dot colour is never the only
+    // signal: green = OK, amber = needs attention soon, red = blocked, grey =
+    // not known yet.
+    function ledText(key, fallback) {
+        return (agenticChat.i18n && agenticChat.i18n[key]) || fallback;
+    }
+    // Once a reply succeeds the AI light reads "connected"; a later status
+    // poll (which only knows "configured") must not downgrade it to "ready".
+    var aiConnected = false;
     function setLed(which, level, title) {
         var el = document.querySelector('.agentic-led[data-led="' + which + '"]');
         if (!el) return;
         el.classList.remove('agentic-led-ok', 'agentic-led-warn', 'agentic-led-error', 'agentic-led-unknown');
         el.classList.add('agentic-led-' + level);
-        if (title) el.title = title;
+        if (title) {
+            el.title = title;
+            var sr = el.querySelector('.agentic-led-sr');
+            if (sr) sr.textContent = title;
+        }
     }
     function applyStatusLeds(d) {
         if (!d) return;
-        if (d.configured === false) { setLed('ai', 'error', 'No AI provider configured'); }
-        else if (d.ai === 'ok') { setLed('ai', 'ok', 'AI service: connected'); }
-        else if (d.ai === 'unreachable') { setLed('ai', 'error', 'AI service: unreachable'); }
-        else { setLed('ai', 'unknown', 'AI service: unknown'); }
-        if (d.credits === 'ok') { setLed('credits', 'ok', 'Credits: OK'); }
-        else if (d.credits === 'exhausted') { setLed('credits', 'error', 'Credits: exhausted \u2014 add credits or use your own API key'); }
-        else if (d.credits === 'low') { setLed('credits', 'warn', 'Credits: running low'); }
-        else { setLed('credits', 'unknown', 'Credits: unknown'); }
+        if (d.configured === false || d.ai === 'not_configured') { aiConnected = false; setLed('ai', 'error', ledText('ledAiNotConfigured', 'AI service: not configured')); }
+        else if (aiConnected) { setLed('ai', 'ok', ledText('ledAiConnected', 'AI service: connected')); }
+        else if (d.ai === 'ready' || d.ai === 'ok') { setLed('ai', 'ok', ledText('ledAiReady', 'AI service: ready (%s)').replace('%s', d.provider_label || d.provider || '')); }
+        else if (d.ai === 'unreachable') { setLed('ai', 'error', ledText('ledAiFailed', 'AI service: connection failed')); }
+        else { setLed('ai', 'unknown', ledText('ledAiUnknown', 'AI service: status unknown')); }
+
+        // Credits only apply to the hosted service; with your own API key the
+        // light is hidden rather than left grey and meaningless.
+        var creditsEl = document.querySelector('.agentic-led[data-led="credits"]');
+        if (creditsEl) creditsEl.hidden = d.credits === 'not_applicable';
+        if (d.credits === 'ok') { setLed('credits', 'ok', ledText('ledCreditsOk', 'Credits: available')); }
+        else if (d.credits === 'exhausted') { setLed('credits', 'error', ledText('ledCreditsExhausted', 'Credits: exhausted \u2014 add credits or use your own API key')); }
+        else if (d.credits === 'low') { setLed('credits', 'warn', ledText('ledCreditsLow', 'Credits: running low')); }
+        else if (d.credits !== 'not_applicable') { setLed('credits', 'unknown', ledText('ledCreditsUnknown', 'Credits: not checked yet')); }
     }
     function fetchStatus() {
         if (typeof agenticChat === 'undefined' || !agenticChat.restUrl) return;
@@ -1562,6 +1624,49 @@
         return proposal.kind === 'approval' ? renderApprovalCard(proposal) : renderProposal(proposal);
     }
 
+    // Plain-text preview of the content a create/update proposal will write
+    // (server-built content_preview: tags stripped, entities decoded). Always
+    // rendered via textContent, never innerHTML. Long previews are clipped to
+    // ~600 characters with a "Show full content" toggle.
+    function renderContentPreview(text, prefix) {
+        const i18n = (typeof agenticChat !== 'undefined' && agenticChat.i18n) || {};
+        const limit = 600;
+        const full = String(text);
+        const clipped = full.length > limit ? full.slice(0, limit).replace(/\s+\S*$/, '') + '…' : full;
+
+        const wrap = document.createElement('div');
+        wrap.className = prefix + '-content';
+
+        const label = document.createElement('strong');
+        label.className = prefix + '-content-label';
+        label.textContent = i18n.contentPreview || 'Content preview';
+        wrap.appendChild(label);
+
+        const body = document.createElement('div');
+        body.className = prefix + '-content-body';
+        body.textContent = clipped;
+        wrap.appendChild(body);
+
+        if (clipped !== full) {
+            const toggle = document.createElement('button');
+            toggle.type = 'button';
+            toggle.className = prefix + '-content-toggle';
+            toggle.setAttribute('aria-expanded', 'false');
+            toggle.textContent = i18n.showFullContent || 'Show full content';
+            toggle.addEventListener('click', function () {
+                const expanded = toggle.getAttribute('aria-expanded') === 'true';
+                body.textContent = expanded ? clipped : full;
+                toggle.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+                toggle.textContent = expanded
+                    ? (i18n.showFullContent || 'Show full content')
+                    : (i18n.showLessContent || 'Show less');
+            });
+            wrap.appendChild(toggle);
+        }
+
+        return wrap;
+    }
+
     // Render a proposal card with diff and approve/reject buttons
     function renderProposal(proposal) {
         const card = document.createElement('div');
@@ -1608,6 +1713,10 @@
                 });
                 card.appendChild(summaryDiv);
             }
+        }
+
+        if (proposal.content_preview) {
+            card.appendChild(renderContentPreview(proposal.content_preview, 'agentic-proposal'));
         }
 
         // Diff view
@@ -2082,6 +2191,42 @@
         const textarea = document.createElement('textarea');
         textarea.innerHTML = text;
         return textarea.value;
+    }
+
+    // Admin Chat page only: size the panel to the space left below its top edge
+    // so the composer is on screen without scrolling, whatever sits above it
+    // (admin notices, the consent banner). The CSS height (100vh minus a fixed
+    // offset) assumed nothing above the panel. Embedded variants (front-end
+    // shortcode, modal widget, Skills/Publish embeds) keep their own sizing.
+    function fitChatToViewport() {
+        if (!chatContainer || chatContainer.id !== 'agentic-chat') return;
+        if (chatContainer.classList.contains('agentic-chat-frontend') || chatContainer.closest('.agentic-modal-widget')) return;
+        let page = '';
+        try { page = new URLSearchParams(window.location.search).get('page') || ''; } catch (err) {}
+        if (page !== 'agentic-chat') return;
+
+        let frame = 0;
+        const fit = function () {
+            frame = 0;
+            const top = chatContainer.getBoundingClientRect().top + window.scrollY;
+            const available = Math.round(window.innerHeight - top - 20);
+            const height = Math.max(380, available) + 'px';
+            if (chatContainer.style.height !== height) {
+                chatContainer.style.height = height;
+                chatContainer.style.minHeight = '0';
+            }
+        };
+        const schedule = function () {
+            if (!frame) frame = window.requestAnimationFrame(fit);
+        };
+        fit();
+        window.addEventListener('resize', schedule);
+        // Re-fit when content above the panel changes height (a dismissed
+        // notice, the consent banner closing).
+        if (typeof ResizeObserver !== 'undefined' && chatContainer.parentElement) {
+            const wpbody = document.getElementById('wpbody-content') || chatContainer.parentElement;
+            new ResizeObserver(schedule).observe(wpbody);
+        }
     }
 
     // Generate UUID

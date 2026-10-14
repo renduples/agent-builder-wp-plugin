@@ -45,6 +45,51 @@ function renderChatMarkdown( text ) {
 	return AgenticMarkdown.render( text, { codeBlock: 'plain' } );
 }
 
+const CONTENT_PREVIEW_LIMIT = 600;
+
+/**
+ * Plain-text preview of the content a create/update proposal will write. The
+ * server builds `content_preview` with tags stripped and entities decoded; it
+ * is rendered as a React text child (escaped), never as HTML. Mirrors
+ * renderContentPreview() in assets/js/chat.js.
+ */
+export function ContentPreview( { text } ) {
+	const [ expanded, setExpanded ] = useState( false );
+	const full = String( text || '' );
+	if ( ! full ) {
+		return null;
+	}
+	const clipped =
+		full.length > CONTENT_PREVIEW_LIMIT
+			? full.slice( 0, CONTENT_PREVIEW_LIMIT ).replace( /\s+\S*$/, '' ) +
+			  '…'
+			: full;
+	const isClipped = clipped !== full;
+
+	return (
+		<div className="agentic-proposal-content">
+			<strong className="agentic-proposal-content-label">
+				{ __( 'Content preview', 'agent-builder' ) }
+			</strong>
+			<div className="agentic-proposal-content-body">
+				{ expanded ? full : clipped }
+			</div>
+			{ isClipped && (
+				<button
+					type="button"
+					className="agentic-proposal-content-toggle"
+					aria-expanded={ expanded }
+					onClick={ () => setExpanded( ! expanded ) }
+				>
+					{ expanded
+						? __( 'Show less', 'agent-builder' )
+						: __( 'Show full content', 'agent-builder' ) }
+				</button>
+			) }
+		</div>
+	);
+}
+
 /**
  * Renders a pending_proposal/proposal card the same way the vanilla chat
  * surfaces (chat.js, chat-overlay.js) do — once/session/always/deny for a
@@ -130,6 +175,7 @@ export function ProposalCard( { proposal, sessionId } ) {
 							) ) }
 					</div>
 				) }
+			<ContentPreview text={ proposal.content_preview } />
 			{ proposal.diff && (
 				<>
 					<button

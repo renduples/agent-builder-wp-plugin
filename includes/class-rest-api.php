@@ -1018,15 +1018,24 @@ class REST_API {
 			$active_slugs = array();
 		}
 
+		$configured = $llm->is_configured();
+		$provider   = $llm->get_provider();
+
 		return new \WP_REST_Response(
 			array(
-				'version'       => AGENT_BUILDER_VERSION,
-				'configured'    => $llm->is_configured(),
-				'provider'      => $llm->get_provider(),
-				'model'         => $llm->get_model(),
-				'mode'          => get_option( 'agent_builder_agent_mode', 'supervised' ),
-				'active_agents' => array_values( $active_slugs ),
-				'capabilities'  => array(
+				'version'        => AGENT_BUILDER_VERSION,
+				'configured'     => $configured,
+				'provider'       => $provider,
+				'provider_label' => (string) ( Provider_Registry::get( $provider )['name'] ?? $provider ),
+				// Header status lights. Derived from local state only — no
+				// remote call: "ready" means a provider is configured; the chat
+				// UI upgrades it to "connected" after a successful reply.
+				'ai'             => $configured ? 'ready' : 'not_configured',
+				'credits'        => self::credits_status( $provider ),
+				'model'          => $llm->get_model(),
+				'mode'           => get_option( 'agent_builder_agent_mode', 'supervised' ),
+				'active_agents'  => array_values( $active_slugs ),
+				'capabilities'   => array(
 					'chat'         => true,
 					'read_files'   => true,
 					'search_code'  => true,
@@ -1036,6 +1045,39 @@ class REST_API {
 			),
 			200
 		);
+	}
+
+	/**
+	 * Credits state for the chat header's Credits light.
+	 *
+	 * Only the hosted "agentic" provider spends plugin credits; with your own
+	 * API key the light is "not_applicable". Uses the balance last reported by
+	 * the hosted service (LLM_Client::get_last_hosted_credits()) — no remote call.
+	 *
+	 * @param string $provider Active provider slug.
+	 * @return string 'not_applicable'|'unknown'|'ok'|'low'|'exhausted'.
+	 */
+	public static function credits_status( string $provider ): string {
+		if ( 'agentic' !== $provider ) {
+			return 'not_applicable';
+		}
+
+		$credits = LLM_Client::get_last_hosted_credits();
+		if ( ! isset( $credits['remaining'] ) || ! is_numeric( $credits['remaining'] ) ) {
+			return 'unknown';
+		}
+
+		$remaining = (float) $credits['remaining'];
+		if ( $remaining <= 0 ) {
+			return 'exhausted';
+		}
+
+		/**
+		 * Filter the remaining-credits threshold below which the Credits light shows "low".
+		 *
+		 * @param float $threshold Threshold. Default 5.
+		 */
+		return $remaining < (float) apply_filters( 'agent_builder_low_credits_threshold', 5.0 ) ? 'low' : 'ok';
 	}
 
 	/**

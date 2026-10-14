@@ -764,6 +764,60 @@ class Admin_Menu_Handler {
 	}
 
 	/**
+	 * General-purpose agent that Chat and the Tasks composer open on when the
+	 * user has not picked one yet.
+	 */
+	public const DEFAULT_AGENT = 'wordpress-assistant';
+
+	/**
+	 * Pick the default agent from a list of agent slugs the user can access:
+	 * the WordPress Assistant when available, otherwise the first one.
+	 *
+	 * @param string[] $slugs Accessible agent slugs, in display order.
+	 * @return string Agent slug, or '' when the list is empty.
+	 */
+	public static function default_agent_slug( array $slugs ): string {
+		$slugs = array_values( array_map( 'strval', $slugs ) );
+		if ( in_array( self::DEFAULT_AGENT, $slugs, true ) ) {
+			return self::DEFAULT_AGENT;
+		}
+		return $slugs[0] ?? '';
+	}
+
+	/**
+	 * Add "Settings" (and, until setup is done, "Finish setup") to the plugin's
+	 * row on the Plugins screen.
+	 *
+	 * Hooked to 'plugin_action_links_{basename}'.
+	 *
+	 * @param array $links Existing action links.
+	 * @return array
+	 */
+	public function plugin_action_links( array $links ): array {
+		$plugin_links = array();
+
+		// The Settings screen only exists once an AI provider is connected
+		// (register() bails to Quick Start before that), so link it only then.
+		if ( $this->any_llm_configured() && ( current_user_can( 'agent_builder_manage_settings' ) || current_user_can( 'manage_options' ) ) ) {
+			$plugin_links['settings'] = sprintf(
+				'<a href="%s">%s</a>',
+				esc_url( admin_url( 'admin.php?page=agentic-settings' ) ),
+				esc_html__( 'Settings', 'agent-builder' )
+			);
+		}
+
+		if ( current_user_can( 'manage_options' ) && ! get_option( 'agent_builder_onboarding_complete' ) ) {
+			$plugin_links['finish_setup'] = sprintf(
+				'<a href="%s"><strong>%s</strong></a>',
+				esc_url( admin_url( 'admin.php?page=agentic-signup' ) ),
+				esc_html__( 'Finish setup', 'agent-builder' )
+			);
+		}
+
+		return array_merge( $plugin_links, $links );
+	}
+
+	/**
 	 * Redirect any Agentic admin page to the Quick Start (signup) page when
 	 * no LLM provider is configured yet.
 	 *
@@ -1259,6 +1313,41 @@ class Admin_Menu_Handler {
 				window.setTimeout( agenticPlaceGlobalModeSwitch, 400 );
 			}
 
+			// One Basic/Advanced switch per page: screens that render their own
+			// per-screen toggle (Agents, Tools, Approvals, some Settings tabs,
+			// ...) keep that one, and the site-wide switch steps aside there.
+			// It stays on every other screen (e.g. the Dashboard). Those
+			// toggles may be rendered later by React, so watch briefly.
+			function agenticHasScreenToggle() {
+				var el = document.getElementById( 'agentic-global-mode-switch' );
+				var found = document.querySelectorAll( '.agentic-screen-mode-toggle' );
+				for ( var i = 0; i < found.length; i++ ) {
+					if ( ! el || ! el.contains( found[ i ] ) ) {
+						return true;
+					}
+				}
+				return false;
+			}
+			function agenticYieldToScreenToggle() {
+				var el = document.getElementById( 'agentic-global-mode-switch' );
+				if ( el && agenticHasScreenToggle() ) {
+					el.hidden = true;
+					return true;
+				}
+				return false;
+			}
+			if ( ! agenticYieldToScreenToggle() && window.MutationObserver ) {
+				var agenticModeObserver = new MutationObserver( function () {
+					if ( agenticYieldToScreenToggle() ) {
+						agenticModeObserver.disconnect();
+					}
+				} );
+				agenticModeObserver.observe( document.body, { childList: true, subtree: true } );
+				window.setTimeout( function () {
+					agenticModeObserver.disconnect();
+				}, 10000 );
+			}
+
 			var toggle = document.getElementById( 'agentic-global-mode-switch' );
 			if ( ! toggle ) {
 				return;
@@ -1515,6 +1604,7 @@ class Admin_Menu_Handler {
 			'restUrl'       => rest_url( 'agentic/v1/' ),
 			'nonce'         => wp_create_nonce( 'wp_rest' ),
 			'agents'        => $agents,
+			'defaultAgent'  => self::default_agent_slug( array_column( $agents, 'id' ) ),
 			'assignTargets' => $assign_targets,
 			'isAdvanced'    => $this->is_advanced_mode( 'tasks' ),
 			'canRun'        => current_user_can( 'agent_builder_run_tasks_manually' ) || current_user_can( 'manage_options' ),
@@ -1704,10 +1794,7 @@ class Admin_Menu_Handler {
 			$agentic_chat_slug = sanitize_key( $_COOKIE['agentic_last_agent'] );
 		}
 		if ( ! $agentic_chat_slug ) {
-			$agentic_chat_accessible = \Agentic_Agent_Registry::get_instance()->get_accessible_instances();
-			if ( isset( $agentic_chat_accessible['wordpress-assistant'] ) ) {
-				$agentic_chat_slug = 'wordpress-assistant';
-			}
+			$agentic_chat_slug = self::default_agent_slug( array_keys( \Agentic_Agent_Registry::get_instance()->get_accessible_instances() ) );
 		}
 		$agentic_chat_features = agent_builder_get_effective_chat_features( $agentic_chat_slug );
 

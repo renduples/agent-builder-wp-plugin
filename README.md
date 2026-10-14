@@ -2,10 +2,12 @@
 
 > ### ⬇️ Install in WordPress (no coding needed)
 > 1. **[Download agent-builder.zip](https://agentic-plugin.com/downloads/agent-builder.zip)**. It is always the latest version.
-> 2. In your WordPress admin, go to **Plugins → Add New → Upload Plugin**, choose the file, and click **Install Now**.
+> 2. In your WordPress admin, go to **Plugins → Add Plugin → Upload Plugin**, choose the file, and click **Install Now**.
 > 3. Click **Activate**. Agent Builder opens a short setup wizard to connect your AI provider.
 >
 > Updates then arrive in your normal WordPress update screen.
+>
+> This download is the **self-hosted build** of Agent Builder: the same plugin as the code in this repository, packaged with its libraries and an updater that checks agentic-plugin.com. When Agent Builder is listed on WordPress.org you will also be able to install it from **Plugins → Add Plugin** by searching for "Agent Builder".
 >
 > ⚠️ Don't use GitHub's green **Code → Download ZIP** button. That is the source code, not an installable plugin: it is missing required libraries and unzips under the wrong folder name.
 

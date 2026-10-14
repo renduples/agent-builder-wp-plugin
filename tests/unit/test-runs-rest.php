@@ -472,6 +472,110 @@ class Test_Runs_REST extends TestCase {
 	}
 
 	/**
+	 * A run paused on a create-post proposal exposes the proposal's argument
+	 * summary and a plain-text content preview, so the Tasks card shows what
+	 * is being approved — never raw HTML.
+	 */
+	public function test_awaiting_proposal_includes_content_preview(): void {
+		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $admin );
+
+		$run    = Agent_Run::begin(
+			self::AGENT,
+			array( 'kind' => 'task', 'user_id' => $admin, 'task_text' => 'Write a welcome post' )
+		);
+		$run_id = $run->get_run_id();
+
+		$proposal = \Agentic\Agent_Proposals::create(
+			'create_post_content',
+			array(
+				'title'   => 'Hello from Agent Builder',
+				'status'  => 'draft',
+				'content' => '<p>Welcome, <em>visitors</em>!</p><p>Second paragraph.</p>',
+			),
+			self::AGENT,
+			'Creates a new post or page with content.',
+			'',
+			$run_id,
+			$admin
+		);
+		$run->mark_waiting( 'proposal', (string) $proposal['id'], array() );
+		Agent_Run::reset_current_for_tests();
+
+		$resp = $this->request( 'GET', '/runs/' . $run_id );
+		$this->assertSame( 200, $resp->get_status() );
+
+		$awaiting = $resp->get_data()['awaiting'];
+		$this->assertSame( 'Hello from Agent Builder', $awaiting['summary']['title'] );
+		$this->assertSame( "Welcome, visitors!\nSecond paragraph.", $awaiting['content_preview'] );
+	}
+
+	/**
+	 * Run steps carry a readable label, the friendly tool names and a status,
+	 * so the Run details modal never shows bare "tool choice" / "tool call".
+	 */
+	public function test_run_steps_are_described(): void {
+		$choice = \Agentic\Runs_REST::describe_step(
+			array(
+				'action'      => 'tool_choice',
+				'target_type' => 'conversation',
+				'details'     => array( 'tools' => array( 'get_post_content', 'update_post_seo' ) ),
+			)
+		);
+		$this->assertSame( 'Decided to use', $choice['label'] );
+		$this->assertSame( array( 'Get post content', 'Update post seo' ), $choice['tools'] );
+		$this->assertSame( '', $choice['status'] );
+
+		$call = \Agentic\Runs_REST::describe_step(
+			array(
+				'action'      => 'tool_call',
+				'target_type' => 'get_post_content',
+				'details'     => array( 'post_id' => 5 ),
+			)
+		);
+		$this->assertSame( 'Used a tool', $call['label'] );
+		$this->assertSame( array( 'Get post content' ), $call['tools'] );
+		$this->assertSame( 'done', $call['status'] );
+
+		$blocked = \Agentic\Runs_REST::describe_step( array( 'action' => 'tool_blocked', 'target_type' => 'db_delete_post' ) );
+		$this->assertSame( 'blocked', $blocked['status'] );
+
+		$start = \Agentic\Runs_REST::describe_step( array( 'action' => 'autonomous_chat_start', 'target_type' => 'scheduled_task' ) );
+		$this->assertSame( 'Started the task', $start['label'] );
+		$this->assertSame( array(), $start['tools'] );
+	}
+
+	/**
+	 * GET /runs/{id} steps include the description fields.
+	 */
+	public function test_run_detail_steps_include_labels(): void {
+		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $admin );
+
+		$run    = Agent_Run::begin(
+			self::AGENT,
+			array( 'kind' => 'task', 'user_id' => $admin, 'task_text' => 'Check a post' )
+		);
+		$run_id = $run->get_run_id();
+
+		( new \Agentic\Audit_Log() )->log( self::AGENT, 'tool_call', 'get_post_content', array( 'post_id' => 1 ) );
+		Agent_Run::reset_current_for_tests();
+
+		$steps = $this->request( 'GET', '/runs/' . $run_id )->get_data()['steps'];
+		$call  = null;
+		foreach ( $steps as $step ) {
+			if ( 'tool_call' === ( $step['action'] ?? '' ) ) {
+				$call = $step;
+			}
+		}
+
+		$this->assertNotNull( $call );
+		$this->assertSame( 'Used a tool', $call['label'] );
+		$this->assertSame( array( 'Get post content' ), $call['tools'] );
+		$this->assertSame( 'done', $call['status'] );
+	}
+
+	/**
 	 * agent_builder_before_task_dispatch returning a WP_Error short-circuits the
 	 * request: the error is surfaced and no run row is created.
 	 */

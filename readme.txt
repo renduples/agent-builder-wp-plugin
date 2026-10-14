@@ -78,7 +78,7 @@ Save a conversation as a skill, teach a task by demonstrating it once, or write 
 = Automatic Installation =
 
 1. Log in to your WordPress admin dashboard.
-2. Navigate to **Plugins → Add New Plugin**.
+2. Navigate to **Plugins → Add Plugin** (**Add New Plugin** in older WordPress versions).
 3. Search for **Agent Builder**.
 4. Click **Install Now**, then click **Activate**.
 5. The Quick Start wizard will guide you through connecting your preferred AI provider in under two minutes.
@@ -86,7 +86,7 @@ Save a conversation as a skill, teach a task by demonstrating it once, or write 
 = Manual Installation =
 
 1. Download the plugin ZIP file.
-2. Go to **Plugins → Add New Plugin → Upload Plugin**.
+2. Go to **Plugins → Add Plugin → Upload Plugin**.
 3. Select the `.zip` file and click **Install Now**.
 4. Activate the plugin through the WordPress Plugins menu.
 5. Navigate to **Agent Builder → Settings** to connect your LLM provider.
@@ -164,7 +164,7 @@ On WordPress 6.9+, Agent Builder provides bidirectional integration: (1) **Outbo
 **Tools:** Single, permission-controlled actions an agent can execute (e.g., `create_draft_post`, `get_site_health`). **Skills:** Pre-packaged instruction sets and tool workflows following the open `agentskills.io` standard that teach agents multi-step capabilities without writing code.
 
 = What happens to my data if I delete the plugin? =
-Uninstall keeps your data unless you check “Delete all plugin data” on the deactivation dialog. If you do choose to delete, conversation history, options, custom tables, and the agents and skills you created or imported are all removed.
+Uninstall keeps your data unless you check “Delete all plugin data” on the deactivation dialog. If you do choose to delete, conversation history, options, custom tables, the agents and skills you created or imported, automatic backups (wp-content/agentic-backups) and knowledge files (wp-content/agentic-knowledge) are all removed. Agent folders you built yourself in wp-content/agentic-agents are kept.
 
 = Is this plugin translated into other languages? =
 The interface text is written in English, and the `.pot` translation template is included so you (or [translate.wordpress.org](https://translate.wordpress.org/)) can generate your own `.mo`/`.json` translation files for your site's locale. Pre-built translations for 11 languages ship with Agent Builder Pro.
@@ -343,6 +343,14 @@ If you create approval rules, each tool call an agent proposes is also checked a
 == Changelog ==
 
 = 4.4.0 - 2026-10-01 =
+* Safer backups: automatic pre-change backups are now private on every web server (guarded files with random names), existing backups are converted on upgrade, and Site Health warns if backup or knowledge files can be read from the web.
+* Uninstall with "Delete all plugin data" now also removes the backup and knowledge folders.
+* Activation opens Quick Start; the plugins list gains Settings and Finish setup links.
+* Approval cards show a preview of the content you are approving.
+* Tasks: notifications and badges update live; run details show the result first, with readable steps.
+* Posts written by agents are saved as blocks, so they open as normal blocks in the editor.
+* Chat keeps your typed message when you switch agent, the message box stays on screen, and the AI and Credits indicators explain their state.
+* Dashboard shows "Not scanned yet" until the first Agent-Ready scan instead of a misleading score; Site Brief and setup wording is clearer.
 * Hosted Agentic AI sign-up now records which version of the Terms of Service the administrator accepted, and the sign-up request is refused unless both the Terms and Privacy Policy boxes are ticked.
 * New Tasks screen: hand a job to an agent and it runs in the background — low-risk steps happen automatically, anything that needs your judgement waits under "Waiting on you".
 * Autonomous tasks: agents now run approved low-risk tools on their own, pausing only when a step needs your OK.

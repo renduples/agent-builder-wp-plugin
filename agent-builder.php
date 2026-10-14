@@ -4,7 +4,7 @@
  *
  * Plugin Name:       Agent Builder
  * Plugin URI:        https://agentic-plugin.com
- * Description:       Orchestrate role-based AI agents and teams with simple job descriptions.
+ * Description:       Give AI agents real WordPress work. They run in the background and only come back when something needs your OK. Built with safety controls.
  * Version:           4.4.0
  * Requires at least: 6.4
  * Requires PHP:      8.1
@@ -275,6 +275,12 @@ final class Plugin {
 		add_action( 'admin_init', array( $menu, 'maybe_redirect_removed_account_tab' ), 1 );
 		add_action( 'admin_init', array( $menu, 'handle_provider_actions' ), 1 );
 		add_action( 'admin_init', array( $menu, 'maybe_redirect_to_quickstart' ) );
+		add_filter( 'plugin_action_links_' . AGENT_BUILDER_BASENAME, array( $menu, 'plugin_action_links' ) );
+
+		// One-time redirect to Quick Start right after a manual activation.
+		// The "Finish Setup" notice stays as the fallback for every case this
+		// skips (bulk, network-wide or WP-CLI activation).
+		add_action( 'admin_init', array( Activator::class, 'maybe_activation_redirect' ) );
 
 		// Deferred/chunked/lock-guarded heavy data seeding (agents, tools, skills,
 		// demo knowledge) moved out of the activation request — see class-activator.php.
@@ -418,6 +424,11 @@ final class Plugin {
 				'ajaxUrl'         => admin_url( 'admin-ajax.php' ),
 				'nonce'           => wp_create_nonce( 'agentic_plugin_deactivate' ),
 				'canSendFeedback' => (bool) get_option( 'agent_builder_service_consent' ),
+				'i18n'            => array(
+					'deleteDescription'   => __( 'When you delete the plugin, conversations, logs, API keys, settings, every Agent Builder database table (including the agents and skills you created or bought), automatic backups and knowledge files are permanently removed. Agent folders you built in wp-content/agentic-agents are kept.', 'agent-builder' ),
+					'deleteConfirm'       => __( 'When you delete the plugin, all Agent Builder data, including the agents and skills you created or bought and all automatic backups, will be permanently deleted. This cannot be undone. Continue?', 'agent-builder' ),
+					'deleteConfirmButton' => __( 'Delete everything', 'agent-builder' ),
+				),
 			)
 		);
 	}
@@ -806,8 +817,9 @@ Site_Health::init();
 // Plugin class is instantiated. Activator and Deactivator are autoloaded on demand.
 register_activation_hook(
 	__FILE__,
-	static function () {
+	static function ( $network_wide = false ) {
 		Activator::activate( AGENT_BUILDER_DB_VERSION );
+		Activator::flag_activation_redirect( (bool) $network_wide );
 	}
 );
 register_deactivation_hook( __FILE__, array( Deactivator::class, 'deactivate' ) );
