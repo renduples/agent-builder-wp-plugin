@@ -663,11 +663,129 @@ class Tool_Helpers {
 	}
 
 	/**
+	 * File-name pattern of every protected backup (file and table backups):
+	 * {Ymd-His}_{24 hex random}_{slug}.php.
+	 *
+	 * The random component makes names unguessable; the .php extension plus
+	 * File_Manager::GUARD_HEADER makes the payload unreadable over HTTP even
+	 * on servers that ignore .htaccess (nginx). Only characters that
+	 * sanitize_file_name() leaves alone are used, so the REST restore/delete
+	 * handlers receive the name unchanged.
+	 */
+	const BACKUP_NAME_PATTERN = '/^(\d{8}-\d{6})_([a-f0-9]{24})_([A-Za-z0-9_-]+)\.php$/';
+
+	/**
+	 * Option recording that plain-text backups from older versions were converted.
+	 */
+	const BACKUP_FORMAT_OPTION = 'agent_builder_backup_format';
+
+	/**
+	 * Current backup storage format (2 = exit-guarded .php, random names).
+	 */
+	const BACKUP_FORMAT_VERSION = 2;
+
+	/**
+	 * Build a new protected backup file name.
+	 *
+	 * @param string      $slug      Table name or path slug ([A-Za-z0-9_-]).
+	 * @param string|null $timestamp Ymd-His timestamp (default: now, UTC).
+	 * @return string File name (no directory).
+	 */
+	public static function new_backup_name( string $slug, ?string $timestamp = null ): string {
+		$slug = (string) preg_replace( '/[^A-Za-z0-9_-]+/', '-', $slug );
+		$slug = substr( trim( $slug, '-' ), 0, 100 );
+		if ( '' === $slug ) {
+			$slug = 'file';
+		}
+
+		return ( $timestamp ?? gmdate( 'Ymd-His' ) ) . '_' . bin2hex( random_bytes( 12 ) ) . '_' . $slug . '.php';
+	}
+
+	/**
+	 * Map a backup's stored relative path back to an absolute path.
+	 *
+	 * Paths under plugins/, themes/ or agentic-agents/ are relative to
+	 * WP_CONTENT_DIR; everything else (robots.txt, llms.txt, or a path that
+	 * already starts with wp-content/) is relative to ABSPATH. Rejects any
+	 * traversal segment.
+	 *
+	 * @param string $relative Relative path recorded at backup time.
+	 * @return string|null Absolute path, or null if the path is unsafe.
+	 */
+	private static function resolve_backup_original( string $relative ): ?string {
+		$relative = ltrim( str_replace( '\\', '/', $relative ), '/' );
+		if ( '' === $relative || in_array( '..', explode( '/', $relative ), true ) ) {
+			return null;
+		}
+
+		if ( str_starts_with( $relative, 'plugins/' ) || str_starts_with( $relative, 'themes/' ) || str_starts_with( $relative, 'agentic-agents/' ) ) {
+			return WP_CONTENT_DIR . '/' . $relative;
+		}
+
+		return ABSPATH . $relative;
+	}
+
+	/**
+	 * Split a guarded file-backup payload into its metadata line and content.
+	 *
+	 * @param string $payload Payload after the guard line.
+	 * @return array{meta: array<string, mixed>, header_len: int, content: string}|null
+	 */
+	private static function parse_file_backup_payload( string $payload ): ?array {
+		$newline = strpos( $payload, "\n" );
+		if ( false === $newline ) {
+			return null;
+		}
+
+		$meta = json_decode( substr( $payload, 0, $newline ), true );
+		if ( ! is_array( $meta ) || empty( $meta['original_rel'] ) || ! is_string( $meta['original_rel'] ) ) {
+			return null;
+		}
+
+		return array(
+			'meta'       => $meta,
+			'header_len' => $newline + 1,
+			'content'    => (string) substr( $payload, $newline + 1 ),
+		);
+	}
+
+	/**
+	 * Write a file backup in the protected format.
+	 *
+	 * @param string      $relative  Original path relative to the site root.
+	 * @param string      $content   Original file content.
+	 * @param string|null $timestamp Ymd-His timestamp (default: now).
+	 * @return string|null Backup path or null on failure.
+	 */
+	private static function write_file_backup( string $relative, string $content, ?string $timestamp = null ): ?string {
+		$backup_dir = AGENT_BUILDER_BACKUPS_DIR;
+
+		File_Manager::ensure_protected_dir( $backup_dir, true );
+
+		$created = $timestamp ? \DateTimeImmutable::createFromFormat( 'Ymd-His', $timestamp, new \DateTimeZone( 'UTC' ) ) : false;
+		$meta    = array(
+			'original_rel' => $relative,
+			'created'      => $created ? $created->format( 'Y-m-d H:i:s' ) : gmdate( 'Y-m-d H:i:s' ),
+		);
+
+		$backup_path = $backup_dir . '/' . self::new_backup_name( $relative, $timestamp );
+
+		if ( File_Manager::put_guarded_contents( $backup_path, wp_json_encode( $meta ) . "\n" . $content ) ) {
+			return $backup_path;
+		}
+
+		return null;
+	}
+
+	/**
 	 * Create a timestamped backup of a file before modification.
 	 *
-	 * Backups are stored in wp-content/agentic-backups/ with the format
-	 * {Ymd-His}_{safe_path}. Returns the backup path on success or null
-	 * if the source file does not exist or the copy fails.
+	 * Backups are stored in wp-content/agentic-backups/ as
+	 * {Ymd-His}_{random}_{slug}.php: an exit-guarded file (see
+	 * File_Manager::put_guarded_contents()) holding a one-line JSON header
+	 * with the original relative path, then the original content. Returns
+	 * the backup path on success or null if the source file does not exist
+	 * or the write fails.
 	 *
 	 * @param string $full_path Absolute path to the file to back up.
 	 * @return string|null Backup file path or null on failure.
@@ -677,20 +795,14 @@ class Tool_Helpers {
 			return null;
 		}
 
-		$backup_dir = AGENT_BUILDER_BACKUPS_DIR;
-
-		File_Manager::ensure_protected_dir( $backup_dir );
-
-		$relative    = str_replace( array( ABSPATH, WP_CONTENT_DIR . '/' ), '', $full_path );
-		$safe_name   = str_replace( '/', '__', $relative );
-		$timestamp   = gmdate( 'Ymd-His' );
-		$backup_path = $backup_dir . '/' . $timestamp . '_' . $safe_name;
-
-		if ( File_Manager::copy( $full_path, $backup_path ) ) {
-			return $backup_path;
+		$content = File_Manager::get_contents( $full_path );
+		if ( false === $content ) {
+			return null;
 		}
 
-		return null;
+		$relative = ltrim( str_replace( array( ABSPATH, WP_CONTENT_DIR . '/' ), '', $full_path ), '/' );
+
+		return self::write_file_backup( $relative, $content );
 	}
 
 	/**
@@ -708,7 +820,7 @@ class Tool_Helpers {
 			return array();
 		}
 
-		$files   = glob( $backup_dir . '/*' );
+		$files   = glob( $backup_dir . '/*.php' );
 		$backups = array();
 
 		if ( ! is_array( $files ) ) {
@@ -716,38 +828,27 @@ class Tool_Helpers {
 		}
 
 		foreach ( $files as $file ) {
-			if ( is_dir( $file ) ) {
-				continue;
-			}
-
 			$basename = basename( $file );
 
-			// Skip index.php or .htaccess security files.
-			if ( in_array( $basename, array( 'index.php', '.htaccess' ), true ) ) {
+			// Skips index.php and anything that isn't a protected backup.
+			if ( ! preg_match( self::BACKUP_NAME_PATTERN, $basename, $m ) ) {
 				continue;
 			}
 
-			// Parse timestamp and original path from filename: {Ymd-His}_{safe_path}.
-			if ( ! preg_match( '/^(\d{8}-\d{6})_(.+)$/', $basename, $m ) ) {
+			$head   = File_Manager::get_guarded_contents( $file, 4096 );
+			$parsed = false === $head ? null : self::parse_file_backup_payload( $head );
+			if ( null === $parsed ) {
 				continue;
 			}
 
-			$timestamp_raw = $m[1];
-			$safe_name     = $m[2];
-
-			// Reconstruct the original path.
-			$relative = str_replace( '__', '/', $safe_name );
-
-			// Determine original absolute path. Files from ABSPATH (like robots.txt, llms.txt)
-			// won't have a wp-content prefix. Files from wp-content will.
-			if ( str_starts_with( $relative, 'plugins/' ) || str_starts_with( $relative, 'themes/' ) || str_starts_with( $relative, 'agentic-agents/' ) ) {
-				$original = WP_CONTENT_DIR . '/' . $relative;
-			} else {
-				$original = ABSPATH . $relative;
+			$relative = $parsed['meta']['original_rel'];
+			$original = self::resolve_backup_original( $relative );
+			if ( null === $original ) {
+				continue;
 			}
 
 			// Parse the timestamp.
-			$dt = \DateTimeImmutable::createFromFormat( 'Ymd-His', $timestamp_raw, new \DateTimeZone( 'UTC' ) );
+			$dt = \DateTimeImmutable::createFromFormat( 'Ymd-His', $m[1], new \DateTimeZone( 'UTC' ) );
 
 			$backups[] = array(
 				'file'            => $basename,
@@ -755,7 +856,7 @@ class Tool_Helpers {
 				'original'        => $original,
 				'original_rel'    => $relative,
 				'original_exists' => file_exists( $original ),
-				'size'            => (int) filesize( $file ),
+				'size'            => max( 0, (int) filesize( $file ) - strlen( File_Manager::GUARD_HEADER ) - $parsed['header_len'] ),
 				'created'         => $dt ? $dt->format( 'Y-m-d H:i:s' ) : '',
 			);
 		}
@@ -767,7 +868,7 @@ class Tool_Helpers {
 	}
 
 	/**
-	 * Restore a backup by copying it over the original file.
+	 * Restore a backup by writing its content over the original file.
 	 *
 	 * @param string $backup_filename The backup filename (not a full path).
 	 * @return array{success: bool, message: string, original?: string}
@@ -784,26 +885,30 @@ class Tool_Helpers {
 			);
 		}
 
-		// Parse the original path from the filename.
-		if ( ! preg_match( '/^\d{8}-\d{6}_(.+)$/', $backup_filename, $m ) ) {
+		if ( ! preg_match( self::BACKUP_NAME_PATTERN, $backup_filename ) ) {
 			return array(
 				'success' => false,
 				'message' => 'Invalid backup filename format.',
 			);
 		}
 
-		$relative = str_replace( '__', '/', $m[1] );
+		$payload  = File_Manager::get_guarded_contents( $backup_path );
+		$parsed   = false === $payload ? null : self::parse_file_backup_payload( $payload );
+		$original = null === $parsed ? null : self::resolve_backup_original( $parsed['meta']['original_rel'] );
 
-		if ( str_starts_with( $relative, 'plugins/' ) || str_starts_with( $relative, 'themes/' ) || str_starts_with( $relative, 'agentic-agents/' ) ) {
-			$original = WP_CONTENT_DIR . '/' . $relative;
-		} else {
-			$original = ABSPATH . $relative;
+		if ( null === $parsed || null === $original ) {
+			return array(
+				'success' => false,
+				'message' => 'Invalid or corrupted backup file.',
+			);
 		}
+
+		$relative = $parsed['meta']['original_rel'];
 
 		// Back up the current version before restoring (so restore is itself reversible).
 		self::backup_file( $original );
 
-		if ( File_Manager::copy( $backup_path, $original, true ) ) {
+		if ( File_Manager::put_contents( $original, $parsed['content'] ) ) {
 			return array(
 				'success'  => true,
 				'message'  => 'Restored ' . $relative . ' from backup.',
@@ -815,6 +920,105 @@ class Tool_Helpers {
 			'success' => false,
 			'message' => 'Failed to copy backup file. Check permissions.',
 		);
+	}
+
+	/**
+	 * Count backups still stored in the old plain-text format.
+	 *
+	 * Normally 0 once migrate_legacy_backups() has run; used by the Site
+	 * Health private-storage test.
+	 *
+	 * @return int
+	 */
+	public static function count_unprotected_backups(): int {
+		$count = 0;
+
+		$all = glob( AGENT_BUILDER_BACKUPS_DIR . '/*' );
+		foreach ( is_array( $all ) ? $all : array() as $file ) {
+			$basename = basename( $file );
+			if ( ! is_dir( $file ) && ! preg_match( self::BACKUP_NAME_PATTERN, $basename ) && preg_match( '/^\d{8}-\d{6}_/', $basename ) ) {
+				++$count;
+			}
+		}
+
+		$json = glob( AGENT_BUILDER_BACKUPS_DIR . '/' . self::DB_BACKUP_SUBDIR . '/*.json' );
+
+		return $count + ( is_array( $json ) ? count( $json ) : 0 );
+	}
+
+	/**
+	 * Convert plain-text backups from older versions to the protected format, once.
+	 *
+	 * Older versions wrote file backups as {Ymd-His}_{path__with__dunders}
+	 * and table backups as db/{Ymd-His}_{table}.json — readable over HTTP
+	 * on any server that ignores .htaccess. Each one is rewritten as a
+	 * guarded .php file (keeping its timestamp, so retention order and the
+	 * Backups screen are unchanged) and the plain file is deleted. A legacy
+	 * file that cannot be converted is deleted anyway: a world-readable copy
+	 * of site data is a worse outcome than losing an old snapshot. Also
+	 * upgrades both private directories to the deny-all .htaccess/web.config.
+	 *
+	 * Runs from Activator::maybe_upgrade() and is gated by
+	 * BACKUP_FORMAT_OPTION, so it costs one autoloaded option read after the
+	 * first pass.
+	 *
+	 * @param bool $force Run even if already recorded as done.
+	 * @return int Number of legacy files converted.
+	 */
+	public static function migrate_legacy_backups( bool $force = false ): int {
+		if ( ! $force && (int) get_option( self::BACKUP_FORMAT_OPTION, 0 ) >= self::BACKUP_FORMAT_VERSION ) {
+			return 0;
+		}
+
+		$converted = 0;
+
+		if ( defined( 'AGENT_BUILDER_KNOWLEDGE_DIR' ) && is_dir( AGENT_BUILDER_KNOWLEDGE_DIR ) ) {
+			File_Manager::ensure_protected_dir( AGENT_BUILDER_KNOWLEDGE_DIR, true );
+		}
+
+		$backup_dir = AGENT_BUILDER_BACKUPS_DIR;
+		if ( is_dir( $backup_dir ) ) {
+			File_Manager::ensure_protected_dir( $backup_dir, true );
+
+			// File backups: {Ymd-His}_{relative path with / as __}.
+			$legacy_files = glob( $backup_dir . '/*' );
+			foreach ( is_array( $legacy_files ) ? $legacy_files : array() as $file ) {
+				$basename = basename( $file );
+				if ( is_dir( $file ) || preg_match( self::BACKUP_NAME_PATTERN, $basename ) || ! preg_match( '/^(\d{8}-\d{6})_(.+)$/', $basename, $m ) ) {
+					continue;
+				}
+
+				$content = File_Manager::get_contents( $file );
+				if ( false !== $content && null !== self::write_file_backup( str_replace( '__', '/', $m[2] ), $content, $m[1] ) ) {
+					++$converted;
+				}
+				wp_delete_file( $file );
+			}
+
+			// Table backups: db/{Ymd-His}_{table}.json.
+			$db_dir = $backup_dir . '/' . self::DB_BACKUP_SUBDIR;
+			if ( is_dir( $db_dir ) ) {
+				File_Manager::ensure_protected_dir( $db_dir, true );
+
+				$legacy_json = glob( $db_dir . '/*.json' );
+				foreach ( is_array( $legacy_json ) ? $legacy_json : array() as $file ) {
+					if ( ! preg_match( '/^(\d{8}-\d{6})_([A-Za-z0-9_]+)\.json$/', basename( $file ), $m ) ) {
+						wp_delete_file( $file );
+						continue;
+					}
+
+					$json = File_Manager::get_contents( $file );
+					if ( false !== $json && File_Manager::put_guarded_contents( $db_dir . '/' . self::new_backup_name( $m[2], $m[1] ), $json ) ) {
+						++$converted;
+					}
+					wp_delete_file( $file );
+				}
+			}
+		}
+
+		update_option( self::BACKUP_FORMAT_OPTION, self::BACKUP_FORMAT_VERSION );
+
+		return $converted;
 	}
 
 	// =========================================================================
@@ -999,7 +1203,9 @@ class Tool_Helpers {
 	}
 
 	/**
-	 * Create a JSON backup of a database table (full or row-level).
+	 * Create a JSON backup of a database table (full or row-level), stored
+	 * as an exit-guarded .php file with an unguessable name (see
+	 * BACKUP_NAME_PATTERN).
 	 *
 	 * - Tables with <= DB_BACKUP_ROW_THRESHOLD rows: full table dump.
 	 * - Larger tables: row-level dump using the hint + arguments to build a
@@ -1025,15 +1231,14 @@ class Tool_Helpers {
 
 		// Protects the shared AGENT_BUILDER_BACKUPS_DIR root even if this runs
 		// before backup_file() ever has — idempotent, cheap to call again.
-		File_Manager::ensure_protected_dir( AGENT_BUILDER_BACKUPS_DIR );
+		File_Manager::ensure_protected_dir( AGENT_BUILDER_BACKUPS_DIR, true );
 
 		$backup_dir = AGENT_BUILDER_BACKUPS_DIR . '/' . self::DB_BACKUP_SUBDIR;
-		wp_mkdir_p( $backup_dir );
+		File_Manager::ensure_protected_dir( $backup_dir, true );
 
 		// Throttle: skip if a backup for this table was created in the last 60s.
-		$existing = glob( $backup_dir . '/*_' . $table . '.json' );
-		if ( is_array( $existing ) && ! empty( $existing ) ) {
-			sort( $existing );
+		$existing = self::list_table_backup_files( $table );
+		if ( ! empty( $existing ) ) {
 			$newest = end( $existing );
 			if ( filemtime( $newest ) > ( time() - 60 ) ) {
 				return null;
@@ -1074,9 +1279,8 @@ class Tool_Helpers {
 		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$rows = $wpdb->get_results( "SELECT * FROM `{$full_table}`", ARRAY_A );
 
-		$timestamp = gmdate( 'Ymd-His' );
-		$filename  = $timestamp . '_' . $table . '.json';
-		$path      = $backup_dir . '/' . $filename;
+		$filename = self::new_backup_name( $table );
+		$path     = $backup_dir . '/' . $filename;
 
 		$payload = array(
 			'table'     => $full_table,
@@ -1086,9 +1290,7 @@ class Tool_Helpers {
 			'rows'      => $rows,
 		);
 
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
-		$written = file_put_contents( $path, (string) wp_json_encode( $payload ) );
-		if ( false === $written ) {
+		if ( ! File_Manager::put_guarded_contents( $path, (string) wp_json_encode( $payload ) ) ) {
 			return null;
 		}
 
@@ -1123,9 +1325,8 @@ class Tool_Helpers {
 			return null;
 		}
 
-		$timestamp = gmdate( 'Ymd-His' );
-		$filename  = $timestamp . '_' . $table . '.json';
-		$path      = $backup_dir . '/' . $filename;
+		$filename = self::new_backup_name( $table );
+		$path     = $backup_dir . '/' . $filename;
 
 		$payload = array(
 			'table'      => $full_table,
@@ -1137,9 +1338,7 @@ class Tool_Helpers {
 			'rows'       => $rows,
 		);
 
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
-		$written = file_put_contents( $path, (string) wp_json_encode( $payload ) );
-		if ( false === $written ) {
+		if ( ! File_Manager::put_guarded_contents( $path, (string) wp_json_encode( $payload ) ) ) {
 			return null;
 		}
 
@@ -1154,19 +1353,41 @@ class Tool_Helpers {
 	 * @param string $table Unprefixed table name.
 	 */
 	private static function prune_table_backups( string $table ): void {
-		$backup_dir = AGENT_BUILDER_BACKUPS_DIR . '/' . self::DB_BACKUP_SUBDIR;
-		$files      = glob( $backup_dir . '/*_' . $table . '.json' );
+		$files = self::list_table_backup_files( $table );
 
-		if ( ! is_array( $files ) || count( $files ) <= self::DB_BACKUP_KEEP ) {
+		if ( count( $files ) <= self::DB_BACKUP_KEEP ) {
 			return;
 		}
-
-		sort( $files );
 
 		$to_delete = array_slice( $files, 0, count( $files ) - self::DB_BACKUP_KEEP );
 		foreach ( $to_delete as $file ) {
 			wp_delete_file( $file );
 		}
+	}
+
+	/**
+	 * Absolute paths of one table's protected backups, oldest first.
+	 *
+	 * Matches the table name exactly (a plain glob on *_options would also
+	 * match e.g. *_agent_builder_options).
+	 *
+	 * @param string $table Unprefixed table name.
+	 * @return string[]
+	 */
+	private static function list_table_backup_files( string $table ): array {
+		$backup_dir = AGENT_BUILDER_BACKUPS_DIR . '/' . self::DB_BACKUP_SUBDIR;
+		$matches    = array();
+
+		$files = glob( $backup_dir . '/*.php' );
+		foreach ( is_array( $files ) ? $files : array() as $file ) {
+			if ( preg_match( self::BACKUP_NAME_PATTERN, basename( $file ), $m ) && $m[3] === $table ) {
+				$matches[ $m[1] . '|' . filemtime( $file ) . '|' . basename( $file ) ] = $file;
+			}
+		}
+
+		ksort( $matches );
+
+		return array_values( $matches );
 	}
 
 	/**
@@ -1181,7 +1402,7 @@ class Tool_Helpers {
 			return array();
 		}
 
-		$files   = glob( $backup_dir . '/*.json' );
+		$files   = glob( $backup_dir . '/*.php' );
 		$backups = array();
 
 		if ( ! is_array( $files ) ) {
@@ -1191,17 +1412,17 @@ class Tool_Helpers {
 		foreach ( $files as $file ) {
 			$basename = basename( $file );
 
-			if ( ! preg_match( '/^(\d{8}-\d{6})_(.+)\.json$/', $basename, $m ) ) {
+			// Skips index.php and anything that isn't a protected backup.
+			if ( ! preg_match( self::BACKUP_NAME_PATTERN, $basename, $m ) ) {
 				continue;
 			}
 
 			$timestamp_raw = $m[1];
-			$table_short   = $m[2];
-			$size          = (int) filesize( $file );
+			$table_short   = $m[3];
+			$size          = max( 0, (int) filesize( $file ) - strlen( File_Manager::GUARD_HEADER ) );
 
 			// Quick parse header fields without loading all rows.
-			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
-			$head = (string) file_get_contents( $file, false, null, 0, 512 );
+			$head = (string) File_Manager::get_guarded_contents( $file, 512 );
 
 			$row_count = 0;
 			if ( preg_match( '/"row_count"\s*:\s*(\d+)/', $head, $rc ) ) {
@@ -1234,7 +1455,7 @@ class Tool_Helpers {
 	}
 
 	/**
-	 * Restore a database table from a JSON backup.
+	 * Restore a database table from a protected JSON backup.
 	 *
 	 * Handles both full backups (truncate + re-insert) and partial backups
 	 * (delete matching rows + re-insert). Creates a backup of the current
@@ -1254,17 +1475,16 @@ class Tool_Helpers {
 			);
 		}
 
-		if ( ! preg_match( '/^\d{8}-\d{6}_(.+)\.json$/', $backup_filename, $m ) ) {
+		if ( ! preg_match( self::BACKUP_NAME_PATTERN, $backup_filename, $m ) ) {
 			return array(
 				'success' => false,
 				'message' => 'Invalid backup filename format.',
 			);
 		}
 
-		$table_short = $m[1];
+		$table_short = $m[3];
 
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
-		$json = (string) file_get_contents( $backup_path );
+		$json = (string) File_Manager::get_guarded_contents( $backup_path );
 		$data = json_decode( $json, true );
 
 		if ( ! is_array( $data ) || empty( $data['table'] ) || ! isset( $data['rows'] ) ) {

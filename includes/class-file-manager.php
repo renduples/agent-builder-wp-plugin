@@ -128,6 +128,59 @@ HTACCESS;
 WEBCONFIG;
 
 	/**
+	 * Apache: deny every request into a private storage directory
+	 * (agentic-backups, agentic-knowledge). Nothing in those directories is
+	 * ever meant to be fetched over HTTP — the plugin only reads them from
+	 * disk — so unlike PROTECTIVE_HTACCESS this also denies static files
+	 * such as .json, .md and .txt. Defense-in-depth only: nginx ignores
+	 * .htaccess, which is why backups are additionally stored as
+	 * exit-guarded .php files with unguessable names (see
+	 * put_guarded_contents()).
+	 */
+	private const PRIVATE_HTACCESS = <<<'HTACCESS'
+# Agent Builder private storage — never served over the web.
+Options -Indexes
+<IfModule mod_authz_core.c>
+	Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+	Order allow,deny
+	Deny from all
+</IfModule>
+HTACCESS;
+
+	/**
+	 * IIS equivalent of PRIVATE_HTACCESS: no PHP handler, and request
+	 * filtering rejects every file extension (allowUnlisted="false").
+	 */
+	private const PRIVATE_WEB_CONFIG = <<<'WEBCONFIG'
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+	<system.webServer>
+		<handlers>
+			<remove name="PHP_via_FastCGI" />
+			<remove name="PHP" />
+		</handlers>
+		<security>
+			<requestFiltering>
+				<fileExtensions allowUnlisted="false" />
+			</requestFiltering>
+		</security>
+		<directoryBrowse enabled="false" />
+	</system.webServer>
+</configuration>
+WEBCONFIG;
+
+	/**
+	 * First line of every guarded storage file (see put_guarded_contents()).
+	 *
+	 * If a web server ever executes the file, PHP stops before the payload;
+	 * if it refuses to execute it (Apache/IIS rules above), the request is
+	 * denied outright. Either way the payload after this line is never sent.
+	 */
+	public const GUARD_HEADER = "<?php exit; ?>\n";
+
+	/**
 	 * Cached direct filesystem instance, false when unavailable.
 	 *
 	 * @var \WP_Filesystem_Direct|false|null  null = not yet initialised.
@@ -354,10 +407,17 @@ WEBCONFIG;
 	 * files are never overwritten, so a site owner's own customisation of
 	 * any of these is left alone.
 	 *
-	 * @param string $path Absolute directory path.
+	 * With $deny_all set (agentic-backups, agentic-knowledge) the .htaccess
+	 * and web.config deny every request into the directory, not only script
+	 * execution — those directories are only ever read from disk. An
+	 * existing file still wins, except an unmodified copy of the older
+	 * execution-only rules, which is upgraded in place.
+	 *
+	 * @param string $path     Absolute directory path.
+	 * @param bool   $deny_all Deny all web access, not just script execution.
 	 * @return bool True if the directory exists (or was created) afterward.
 	 */
-	public static function ensure_protected_dir( string $path ): bool {
+	public static function ensure_protected_dir( string $path, bool $deny_all = false ): bool {
 		if ( ! self::mkdir( $path ) ) {
 			return false;
 		}
@@ -366,14 +426,23 @@ WEBCONFIG;
 
 		$protections = array(
 			'index.php'   => "<?php\n// Silence is golden.\n",
-			'.htaccess'   => self::PROTECTIVE_HTACCESS,
-			'web.config'  => self::PROTECTIVE_WEB_CONFIG,
+			'.htaccess'   => $deny_all ? self::PRIVATE_HTACCESS : self::PROTECTIVE_HTACCESS,
+			'web.config'  => $deny_all ? self::PRIVATE_WEB_CONFIG : self::PROTECTIVE_WEB_CONFIG,
+		);
+		$superseded  = array(
+			'.htaccess'  => self::PROTECTIVE_HTACCESS,
+			'web.config' => self::PROTECTIVE_WEB_CONFIG,
 		);
 
 		foreach ( $protections as $filename => $content ) {
 			$file = $path . '/' . $filename;
 			if ( file_exists( $file ) ) {
-				continue;
+				// Upgrade the plugin's own older execution-only rules to the
+				// deny-all ones; anything the site owner edited is left alone.
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+				if ( ! $deny_all || ! isset( $superseded[ $filename ] ) || file_get_contents( $file ) !== $superseded[ $filename ] ) {
+					continue;
+				}
 			}
 			// Native write, not self::put_contents(): .htaccess is on this
 			// class's own write denylist by design (no *tool* may ever write
@@ -388,6 +457,98 @@ WEBCONFIG;
 		}
 
 		return true;
+	}
+
+	/**
+	 * Write a private storage file as an exit-guarded .php file.
+	 *
+	 * The file starts with GUARD_HEADER, so a direct HTTP request either
+	 * executes it (PHP exits before the payload) or is denied by the
+	 * directory's .htaccess/web.config — on any server, nginx included, the
+	 * payload is never served. Callers also give each file an unguessable
+	 * random name component.
+	 *
+	 * Only ever writes inside AGENT_BUILDER_BACKUPS_DIR or
+	 * AGENT_BUILDER_KNOWLEDGE_DIR, only a plain "name.php" file name, and
+	 * only with the hardcoded guard first — so, unlike put_contents(), the
+	 * .php extension is allowed here: this is the plugin's own storage
+	 * format, never code and never a tool-chosen path.
+	 *
+	 * @param string $path    Absolute file path (must end in .php).
+	 * @param string $payload Data to store after the guard line.
+	 * @return bool True on success.
+	 */
+	public static function put_guarded_contents( string $path, string $payload ): bool {
+		if ( ! self::is_private_storage_path( $path ) ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( 'Agentic File_Manager: blocked guarded write outside private storage: ' . $path );
+			return false;
+		}
+
+		// Native write, like ensure_protected_dir(): put_contents() denies
+		// .php by design, and this is the one trusted internal writer of the
+		// guarded format.
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+		$result = false !== file_put_contents( $path, self::GUARD_HEADER . $payload );
+		if ( $result ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_chmod
+			chmod( $path, self::SAFE_FILE_MODE );
+		}
+		return $result;
+	}
+
+	/**
+	 * Read a file written by put_guarded_contents(), without the guard line.
+	 *
+	 * @param string   $path   Absolute file path.
+	 * @param int|null $length Read at most this many payload bytes (null = all).
+	 * @return string|false Payload, or false if missing or not guarded.
+	 */
+	public static function get_guarded_contents( string $path, ?int $length = null ): string|false {
+		if ( ! file_exists( $path ) ) {
+			return false;
+		}
+
+		$guard_len = strlen( self::GUARD_HEADER );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		$raw = null === $length ? file_get_contents( $path ) : file_get_contents( $path, false, null, 0, $guard_len + max( 0, $length ) );
+		if ( false === $raw || ! str_starts_with( $raw, self::GUARD_HEADER ) ) {
+			return false;
+		}
+
+		return (string) substr( $raw, $guard_len );
+	}
+
+	/**
+	 * Whether $path is a plain "*.php" file directly inside (or below) one of
+	 * the plugin's private storage directories.
+	 *
+	 * @param string $path Absolute file path.
+	 * @return bool
+	 */
+	private static function is_private_storage_path( string $path ): bool {
+		$name = basename( $path );
+		if ( ! preg_match( '/^[A-Za-z0-9_-]+\.php$/', $name ) || 'index.php' === $name ) {
+			return false;
+		}
+
+		$dir = realpath( dirname( $path ) );
+		if ( false === $dir ) {
+			return false;
+		}
+		$dir = trailingslashit( wp_normalize_path( $dir ) );
+
+		foreach ( array( 'AGENT_BUILDER_BACKUPS_DIR', 'AGENT_BUILDER_KNOWLEDGE_DIR' ) as $constant ) {
+			if ( ! defined( $constant ) ) {
+				continue;
+			}
+			$root = realpath( (string) constant( $constant ) );
+			if ( false !== $root && str_starts_with( $dir, trailingslashit( wp_normalize_path( $root ) ) ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**

@@ -2,8 +2,9 @@
 /**
  * Site Health test for Agent Builder background tasks.
  *
- * Registers a single direct test, `agent_builder_background_runs`, on the
- * WordPress Site Health screen. The test's database queries only run when
+ * Registers two direct tests on the WordPress Site Health screen:
+ * `agent_builder_background_runs` and `agent_builder_private_storage`
+ * (automatic backups and knowledge files must not be downloadable). The test's database queries only run when
  * WordPress actually builds the Site Health screen (or the WP-CLI / REST Site
  * Health endpoints), never on an ordinary page load — the `site_status_tests`
  * filter is only applied from `WP_Site_Health::get_tests()`.
@@ -32,6 +33,11 @@ class Site_Health {
 	 * Site Health test slug.
 	 */
 	private const TEST_SLUG = 'agent_builder_background_runs';
+
+	/**
+	 * Site Health slug of the private-storage exposure test.
+	 */
+	private const STORAGE_TEST_SLUG = 'agent_builder_private_storage';
 
 	/**
 	 * Option holding the timestamp of the last completed hourly health-check tick.
@@ -69,15 +75,20 @@ class Site_Health {
 	}
 
 	/**
-	 * Register the background-tasks test with WordPress Site Health.
+	 * Register the Agent Builder tests with WordPress Site Health.
 	 *
 	 * @param array $tests Existing direct/async test definitions.
-	 * @return array Tests with the background-tasks direct test appended.
+	 * @return array Tests with the Agent Builder direct tests appended.
 	 */
 	public static function add_tests( array $tests ): array {
 		$tests['direct'][ self::TEST_SLUG ] = array(
 			'label' => __( 'Agent Builder: background tasks', 'agent-builder' ),
 			'test'  => array( __CLASS__, 'test_background_runs' ),
+		);
+
+		$tests['direct'][ self::STORAGE_TEST_SLUG ] = array(
+			'label' => __( 'Agent Builder: private files are not public', 'agent-builder' ),
+			'test'  => array( __CLASS__, 'test_private_storage' ),
 		);
 
 		return $tests;
@@ -118,6 +129,163 @@ class Site_Health {
 			'actions'     => self::build_actions( $cron_stale, $stuck_runs, $stale_approvals ),
 			'test'        => self::TEST_SLUG,
 		);
+	}
+
+	/**
+	 * Run the private-storage Site Health test.
+	 *
+	 * Writes a throwaway probe file into wp-content/agentic-backups and
+	 * wp-content/agentic-knowledge, requests it over HTTP from the site
+	 * itself (a loopback request — nothing leaves the server) and deletes it
+	 * again. Backups get two probes: a plain .txt (is the folder readable at
+	 * all?) and an exit-guarded .php in the real backup format (could a
+	 * backup's content ever be read?). If the loopback request fails the
+	 * test is skipped rather than reported as a problem.
+	 *
+	 * @return array{label:string,status:string,badge:array{label:string,color:string},description:string,actions:string,test:string}
+	 */
+	public static function test_private_storage(): array {
+		$readable = array();
+		$checked  = false;
+		$critical = false;
+
+		$dirs = array(
+			'backups'   => defined( 'AGENT_BUILDER_BACKUPS_DIR' ) ? AGENT_BUILDER_BACKUPS_DIR : '',
+			'knowledge' => defined( 'AGENT_BUILDER_KNOWLEDGE_DIR' ) ? AGENT_BUILDER_KNOWLEDGE_DIR : '',
+		);
+
+		foreach ( $dirs as $key => $dir ) {
+			if ( '' === $dir || ! is_dir( $dir ) ) {
+				continue; // Nothing stored there yet.
+			}
+
+			$plain = self::probe_storage_dir( $dir, false );
+			if ( null !== $plain ) {
+				$checked = true;
+				if ( $plain ) {
+					$readable[] = $key;
+				}
+			}
+
+			if ( 'backups' === $key && true === self::probe_storage_dir( $dir, true ) ) {
+				$critical = true;
+			}
+		}
+
+		// Leftover plain-text backups are only a real leak if the folder is readable.
+		if ( in_array( 'backups', $readable, true ) && Tool_Helpers::count_unprotected_backups() > 0 ) {
+			$critical = true;
+		}
+
+		$label = __( 'Agent Builder: private files are not public', 'agent-builder' );
+		$badge = array(
+			'label' => __( 'Security', 'agent-builder' ),
+			'color' => 'blue',
+		);
+
+		if ( ! $checked && ! $critical ) {
+			return array(
+				'label'       => $label,
+				'status'      => 'good',
+				'badge'       => $badge,
+				'description' => '<p>' . __( 'Agent Builder could not request its own folders over the web (the loopback request failed, or nothing is stored yet), so this check was skipped. Automatic backups are stored in a format the web server will not hand out either way.', 'agent-builder' ) . '</p>',
+				'actions'     => '',
+				'test'        => self::STORAGE_TEST_SLUG,
+			);
+		}
+
+		if ( ! $critical && empty( $readable ) ) {
+			return array(
+				'label'       => $label,
+				'status'      => 'good',
+				'badge'       => $badge,
+				'description' => '<p>' . __( 'Automatic backups and knowledge files in wp-content cannot be downloaded from the web.', 'agent-builder' ) . '</p>',
+				'actions'     => '',
+				'test'        => self::STORAGE_TEST_SLUG,
+			);
+		}
+
+		$folders = array();
+		foreach ( $readable as $key ) {
+			$folders[] = '<code>wp-content/agentic-' . esc_html( $key ) . '/</code>';
+		}
+
+		if ( $critical ) {
+			$label       = __( 'Agent Builder backups can be downloaded from the web', 'agent-builder' );
+			$description = '<p>' . __( 'Copies of site data that Agent Builder saves before an agent changes something can be read by anyone who requests them. Block web access to the folders below, then delete backups you no longer need on the Approvals → Backups screen.', 'agent-builder' ) . '</p>';
+		} else {
+			$label       = __( 'Agent Builder folders are readable from the web', 'agent-builder' );
+			$description = '<p>' . sprintf(
+				/* translators: %s: comma-separated folder names. */
+				__( 'Your web server hands out files from %s. Automatic backups stay protected because they are stored in a format the server will not serve, but knowledge files (your agents\' reference notes) can be read by anyone who knows their address.', 'agent-builder' ),
+				implode( ', ', $folders )
+			) . '</p>';
+		}
+
+		$snippet = "location ~* ^/wp-content/agentic-(backups|knowledge)/ {\n\tdeny all;\n}";
+		$actions = '<p>' . __( 'Apache and IIS follow the .htaccess and web.config files Agent Builder places in these folders. On nginx, add this rule to the site\'s server block and reload nginx:', 'agent-builder' ) . '</p><pre><code>' . esc_html( $snippet ) . '</code></pre>';
+
+		return array(
+			'label'       => $label,
+			'status'      => $critical ? 'critical' : 'recommended',
+			'badge'       => array(
+				'label' => __( 'Security', 'agent-builder' ),
+				'color' => $critical ? 'red' : 'orange',
+			),
+			'description' => $description,
+			'actions'     => $actions,
+			'test'        => self::STORAGE_TEST_SLUG,
+		);
+	}
+
+	/**
+	 * Write a probe into $dir, fetch it with a loopback request, delete it.
+	 *
+	 * @param string $dir     Absolute directory under WP_CONTENT_DIR.
+	 * @param bool   $guarded Probe the exit-guarded .php backup format instead of a plain .txt file.
+	 * @return bool|null True if the probe content came back over HTTP, false if not, null if the check could not run.
+	 */
+	public static function probe_storage_dir( string $dir, bool $guarded ): ?bool {
+		$content_dir = wp_normalize_path( untrailingslashit( WP_CONTENT_DIR ) );
+		$dir         = wp_normalize_path( untrailingslashit( $dir ) );
+		if ( ! str_starts_with( $dir, $content_dir . '/' ) ) {
+			return null;
+		}
+
+		$token  = bin2hex( random_bytes( 12 ) );
+		$marker = 'agent-builder-probe-' . $token;
+		$name   = 'agentic-probe-' . $token . ( $guarded ? '.php' : '.txt' );
+		$path   = $dir . '/' . $name;
+
+		$written = $guarded
+			? File_Manager::put_guarded_contents( $path, $marker )
+			: File_Manager::put_contents( $path, $marker );
+		if ( ! $written ) {
+			return null;
+		}
+
+		$response = wp_remote_get(
+			content_url( substr( $dir, strlen( $content_dir ) + 1 ) . '/' . $name ),
+			array(
+				'timeout'     => 5,
+				'redirection' => 3,
+				/** This filter is documented in wp-includes/class-wp-http-streams.php */
+				'sslverify'   => apply_filters( 'https_local_ssl_verify', false ), // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WordPress core filter.
+			)
+		);
+
+		wp_delete_file( $path );
+
+		if ( is_wp_error( $response ) ) {
+			return null;
+		}
+
+		$code = (int) wp_remote_retrieve_response_code( $response );
+		if ( 0 === $code || $code >= 500 ) {
+			return null;
+		}
+
+		return 200 === $code && str_contains( (string) wp_remote_retrieve_body( $response ), $marker );
 	}
 
 	/**
