@@ -129,7 +129,7 @@ class Checker_Comments_Queue extends Site_Brief_Checker {
 						'status' => 'spam',
 						'total'  => $spam_total,
 					),
-					'proposed_action'  => __( 'Queue cleanup_spam_comments for approval. The scan will not delete anything.', 'agent-builder' ),
+					'proposed_action'  => __( 'Queue a spam cleanup for your approval. The scan will not delete anything.', 'agent-builder' ),
 					'action_risk'      => 'medium',
 					'raw'              => array( 'total' => $spam_total ),
 				)

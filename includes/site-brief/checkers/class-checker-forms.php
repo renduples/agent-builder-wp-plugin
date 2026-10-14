@@ -94,7 +94,7 @@ class Checker_Forms extends Site_Brief_Checker {
 					),
 					'evidence'         => implode( ', ', $titles ),
 					'evidence_payload' => $zero,
-					'proposed_action'  => __( 'This is a diagnose card only. There is no mail-deliverability tool in this version.', 'agent-builder' ),
+					'proposed_action'  => __( 'For information only. Site Brief cannot test email delivery in this version.', 'agent-builder' ),
 					'action_risk'      => 'none',
 					'approve'          => array( 'type' => 'none' ),
 					'raw'              => array( 'count' => count( $zero ) ),
@@ -130,7 +130,7 @@ class Checker_Forms extends Site_Brief_Checker {
 								'total'   => $total,
 								'week'    => $week,
 							),
-							'proposed_action'  => __( 'Diagnose card only. No mail-server tool is in the tree.', 'agent-builder' ),
+							'proposed_action'  => __( 'For information only. Site Brief cannot check your mail server.', 'agent-builder' ),
 							'action_risk'      => 'none',
 							'approve'          => array( 'type' => 'none' ),
 							'raw'              => array(

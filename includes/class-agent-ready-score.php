@@ -68,23 +68,70 @@ class Agent_Ready_Score {
 	 * @return void
 	 */
 	public static function init(): void {
-		add_action( self::CRON_HOOK, array( self::class, 'rescan' ) );
+		add_action( self::CRON_HOOK, array( self::class, 'scheduled_rescan' ) );
 		if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
 			wp_schedule_event( time(), 'weekly', self::CRON_HOOK );
 		}
+
+		// A stored score reflects the agents that were active when it ran —
+		// e.g. a scan taken before the first-run seed activated the bundled
+		// agents would keep saying "No agents are active yet". Flag it stale
+		// whenever the active-agents list changes so the next view rescans.
+		add_action( 'update_option_agent_builder_active_agents', array( self::class, 'mark_stale' ) );
+		add_action( 'add_option_agent_builder_active_agents', array( self::class, 'mark_stale' ) );
 	}
 
 	/**
-	 * Get the last computed score, computing it once if none exists yet.
+	 * Get the last computed score, computing it once if none exists yet (or
+	 * the stored one is stale).
 	 *
 	 * @return array Score payload: {overall, grade, categories, checked_at}.
 	 */
 	public static function get_latest(): array {
-		$stored = get_option( self::OPTION, array() );
-		if ( is_array( $stored ) && ! empty( $stored ) && isset( $stored['overall'] ) ) {
+		$stored = self::get_stored();
+		if ( ! empty( $stored ) && empty( $stored['stale'] ) ) {
 			return $stored;
 		}
 		return self::compute();
+	}
+
+	/**
+	 * The stored score without computing one — empty when this site has
+	 * never been scanned.
+	 *
+	 * @return array Score payload, or an empty array.
+	 */
+	public static function get_stored(): array {
+		$stored = get_option( self::OPTION, array() );
+		return ( is_array( $stored ) && isset( $stored['overall'] ) ) ? $stored : array();
+	}
+
+	/**
+	 * Mark the stored score as out of date (no-op when never scanned).
+	 *
+	 * @return void
+	 */
+	public static function mark_stale(): void {
+		$stored = self::get_stored();
+		if ( empty( $stored ) || ! empty( $stored['stale'] ) ) {
+			return;
+		}
+		$stored['stale'] = true;
+		update_option( self::OPTION, $stored, false );
+	}
+
+	/**
+	 * Weekly cron: refresh a score the admin has already run. A site that was
+	 * never scanned stays "not scanned" until someone runs the first scan,
+	 * rather than getting a grade computed in the background mid-setup.
+	 *
+	 * @return void
+	 */
+	public static function scheduled_rescan(): void {
+		if ( empty( self::get_stored() ) ) {
+			return;
+		}
+		self::compute();
 	}
 
 	/**
@@ -182,9 +229,22 @@ class Agent_Ready_Score {
 	 * @return array Check result.
 	 */
 	private static function check_mcp_server_reachable(): array {
-		$all_slugs = class_exists( '\\Agentic_Agent_Registry' )
-			? array_keys( \Agentic_Agent_Registry::get_instance()->get_all_instances() )
-			: array();
+		$all_slugs = array();
+		if ( class_exists( '\\Agentic_Agent_Registry' ) ) {
+			// Loaded instances plus the stored active list, so a request where
+			// agents have not been instantiated (cron, early hooks) still sees
+			// the agents the admin has active.
+			$registry  = \Agentic_Agent_Registry::get_instance();
+			$active    = $registry->get_active_agents();
+			$all_slugs = array_values(
+				array_unique(
+					array_merge(
+						array_keys( $registry->get_all_instances() ),
+						array_map( 'strval', is_array( $active ) ? $active : array() )
+					)
+				)
+			);
+		}
 
 		if ( empty( $all_slugs ) ) {
 			return self::result( 0, 'Capability exposure', 'high', true, 'No agents are active yet.' );

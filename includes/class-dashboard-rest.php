@@ -479,8 +479,11 @@ class Dashboard_REST {
 	 * @return array<string,mixed>
 	 */
 	private static function agent_ready_summary(): array {
-		if ( ! class_exists( Agent_Ready_Score::class ) ) {
+		// No completed scan yet: the card shows "Not scanned yet" and a scan
+		// button instead of a grade computed before the site is set up.
+		if ( ! class_exists( Agent_Ready_Score::class ) || empty( Agent_Ready_Score::get_stored() ) ) {
 			return array(
+				'scanned' => false,
 				'overall' => 0,
 				'grade'   => '',
 				'top_fix' => null,
@@ -500,6 +503,7 @@ class Dashboard_REST {
 		}
 
 		return array(
+			'scanned' => true,
 			'overall' => (int) ( $score['overall'] ?? 0 ),
 			'grade'   => (string) ( $score['grade'] ?? '' ),
 			'top_fix' => $top_fix,

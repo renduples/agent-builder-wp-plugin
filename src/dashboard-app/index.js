@@ -283,7 +283,7 @@ function SiteBriefPanel() {
 			<div className="agentic-card-header agentic-flex-between">
 				<h2>{ __( 'Site Brief', 'agent-builder' ) }</h2>
 			</div>
-			<p className="agentic-site-brief-lede">
+			<p className="agentic-site-brief-lede" id="agentic-site-brief-lede">
 				{ __(
 					'A read-only look at this site. Assign an agent to investigate a finding together — nothing changes until you agree.',
 					'agent-builder'
@@ -348,13 +348,19 @@ function SiteBriefPanel() {
 
 			{ ! scanned && ! isRunning && (
 				<p>
-					<Button
-						variant="primary"
-						onClick={ runScan }
-						disabled={ ! canRun }
+					{ /* A native <button> (not a styled div) so it is in the
+					     accessibility tree, focusable, and named by its text.
+					     aria-disabled keeps it focusable when the user lacks
+					     the run capability. */ }
+					<button
+						type="button"
+						className="button button-primary agentic-site-brief-scan"
+						onClick={ canRun ? runScan : undefined }
+						aria-disabled={ canRun ? undefined : 'true' }
+						aria-describedby="agentic-site-brief-lede"
 					>
 						{ __( 'Scan this site', 'agent-builder' ) }
-					</Button>
+					</button>
 				</p>
 			) }
 
@@ -976,9 +982,73 @@ function TasksCard( { data, dnd } ) {
 	);
 }
 
-function AgentReadyCard( { data, dnd } ) {
+function AgentReadyCard( { data, dnd, onScanned } ) {
 	const ready = data.agent_ready || {};
 	const overall = Number( ready.overall || 0 );
+	const [ scanning, setScanning ] = useState( false );
+	const [ scanError, setScanError ] = useState( '' );
+
+	const runFirstScan = () => {
+		setScanning( true );
+		setScanError( '' );
+		apiFetch( { path: 'agentic/v1/score/rescan', method: 'POST' } )
+			.then( () => ( onScanned ? onScanned() : null ) )
+			.catch( ( e ) => {
+				setScanError(
+					e.message || __( 'Scan failed.', 'agent-builder' )
+				);
+			} )
+			.finally( () => setScanning( false ) );
+	};
+
+	// Fresh install: no completed scan yet — say so and offer the scan,
+	// instead of a red grade computed before the site is set up.
+	if ( false === ready.scanned ) {
+		return (
+			<Card
+				cardId="agent-ready"
+				{ ...dnd }
+				title={ __( 'Site Passport', 'agent-builder' ) }
+				headerLink={
+					<a
+						className="agentic-card-header-link"
+						href={ data.urls?.agent_ready }
+					>
+						{ __( 'View Details →', 'agent-builder' ) }
+					</a>
+				}
+			>
+				<div className="agentic-status-grid">
+					<StatusTile label={ __( 'Site Score', 'agent-builder' ) }>
+						{ __( 'Not scanned yet', 'agent-builder' ) }
+					</StatusTile>
+				</div>
+				<p className="agentic-text-muted">
+					{ __(
+						'Check how ready this site is for AI agents. The scan runs on this site only and changes nothing.',
+						'agent-builder'
+					) }
+				</p>
+				{ scanError && (
+					<p className="agentic-status-error" role="alert">
+						{ scanError }
+					</p>
+				) }
+				<p>
+					<Button
+						variant="secondary"
+						onClick={ runFirstScan }
+						isBusy={ scanning }
+						disabled={ scanning }
+					>
+						{ scanning
+							? __( 'Scanning…', 'agent-builder' )
+							: __( 'Scan now', 'agent-builder' ) }
+					</Button>
+				</p>
+			</Card>
+		);
+	}
 	const gradeClass =
 		overall >= 75
 			? 'agentic-status-active'
@@ -1889,7 +1959,14 @@ function DashboardApp() {
 			case 'safety':
 				return <SafetyCard key={ id } data={ data } dnd={ dnd } />;
 			case 'agent-ready':
-				return <AgentReadyCard key={ id } data={ data } dnd={ dnd } />;
+				return (
+					<AgentReadyCard
+						key={ id }
+						data={ data }
+						dnd={ dnd }
+						onScanned={ load }
+					/>
+				);
 			case 'tasks':
 				return <TasksCard key={ id } data={ data } dnd={ dnd } />;
 			case 'activity':

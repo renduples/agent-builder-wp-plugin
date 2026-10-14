@@ -59,7 +59,7 @@ $agentic_signup_tts_voices     = array(
 
 		<h1><?php esc_html_e( 'Connect to Agentic AI', 'agent-builder' ); ?></h1>
 		<p class="subtitle">
-			<?php esc_html_e( 'Connect your AI agents to an LLM Provider with just one click.', 'agent-builder' ); ?>
+			<?php esc_html_e( 'Connect Agent Builder to an AI service with just one click.', 'agent-builder' ); ?>
 			<br><?php esc_html_e( 'Free daily credits, no payment info required.', 'agent-builder' ); ?>
 		</p>
 
@@ -83,7 +83,7 @@ $agentic_signup_tts_voices     = array(
 				<label for="agentic-signup-email"><?php esc_html_e( 'Email Address', 'agent-builder' ); ?></label>
 				<input type="email" id="agentic-signup-email" name="email" value="<?php echo esc_attr( $agentic_signup_email ); ?>">
 				<p class="agentic-field-note"><?php esc_html_e( 'Free daily credits and API key will be sent to this email address.', 'agent-builder' ); ?></p>
-				<p class="agentic-inline-error" id="agentic-email-error" hidden></p>
+				<p class="agentic-inline-error" id="agentic-email-error" role="alert" hidden></p>
 			</div>
 
 			<div class="agentic-signup-field">
@@ -176,6 +176,11 @@ $agentic_signup_tts_voices     = array(
 				<div class="agentic-config-cell agentic-config-explanation" id="agentic-explain-video"></div>
 			</div>
 
+			<p class="agentic-field-note agentic-credits-note" id="agentic-credits-note">
+				<strong><?php esc_html_e( 'What are credits?', 'agent-builder' ); ?></strong>
+				<?php esc_html_e( 'Agentic AI measures usage in credits ("cr"); 1 credit is US$0.01. Your free daily quota is used first. After that, each request uses credits at the top-up rate shown for the model or voice you pick. The Credits light in the Chat header tells you when credits are running low or have run out.', 'agent-builder' ); ?>
+			</p>
+
 			<!-- ── Consent ──────────────────────────────────── -->
 			<div class="agentic-signup-consent" id="agentic-signup-consent">
 				<label>
@@ -183,7 +188,7 @@ $agentic_signup_tts_voices     = array(
 					<?php
 					printf(
 						/* translators: 1: opening link tag, 2: closing link tag */
-						esc_html__( 'I agree to the %1$sTerms & Conditions%2$s', 'agent-builder' ),
+						esc_html__( 'I agree to the %1$sTerms of Service%2$s', 'agent-builder' ),
 						'<a href="https://agentic-plugin.com/terms-of-service/" target="_blank" rel="noopener">',
 						'</a>'
 					);
@@ -200,7 +205,9 @@ $agentic_signup_tts_voices     = array(
 					);
 					?>
 				</label>
-				<p class="agentic-inline-error" id="agentic-consent-error" hidden></p>
+				<div class="notice notice-error inline agentic-consent-error" id="agentic-consent-error" role="alert" hidden>
+					<p id="agentic-consent-error-text"></p>
+				</div>
 			</div>
 
 			<div class="agentic-signup-actions">
@@ -216,7 +223,7 @@ $agentic_signup_tts_voices     = array(
 			<?php
 			printf(
 				/* translators: 1: opening link tag, 2: closing link tag */
-				esc_html__( '%1$sSkip — I will pay for tokens with my own LLM Provider.%2$s', 'agent-builder' ),
+				esc_html__( '%1$sSkip — I will pay for tokens with my own AI provider.%2$s', 'agent-builder' ),
 				'<a href="' . esc_url( admin_url( 'admin.php?page=agentic-setup' ) ) . '">',
 				'</a>'
 			);
@@ -244,6 +251,7 @@ $agentic_signup_tts_voices     = array(
 	var emailInput   = document.getElementById( 'agentic-signup-email' );
 	var emailError   = document.getElementById( 'agentic-email-error' );
 	var consentError = document.getElementById( 'agentic-consent-error' );
+	var consentText  = document.getElementById( 'agentic-consent-error-text' );
 	var pricingUrl   = <?php echo wp_json_encode( $agentic_pricing_url ); ?>;
 
 	// ── Explanation metadata ──────────────────────────────────────────────────
@@ -280,6 +288,10 @@ $agentic_signup_tts_voices     = array(
 		'gemini-2.5-pro'        : 'Pro',
 		'gemma-4-26b'           : 'Gemma 4'
 	};
+
+	// Models shown by their short name in the main list, in this order.
+	var friendlyModels   = [ 'gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.5-pro' ];
+	var otherModelsLabel = <?php echo wp_json_encode( __( 'Other models', 'agent-builder' ) ); ?>;
 
 	var llmDescriptions = {
 		'gemini-2.5-flash'      : <?php echo wp_json_encode( __( 'Fast and capable. Best balance of speed and quality for most tasks.', 'agent-builder' ) ); ?>,
@@ -321,12 +333,12 @@ $agentic_signup_tts_voices     = array(
 		return parseFloat( n.toFixed( 4 ) ).toString();
 	}
 
-	function renderExpl( elId, title, body, quotaLine, costLine ) {
+	function renderExpl( elId, title, body, quotaLine, costLine, quotaNone ) {
 		var el   = document.getElementById( elId );
 		if ( ! el ) return;
 		var html = '<strong>' + escHtml( title ) + '</strong>';
 		if ( body )      html += '<p>' + escHtml( body ) + '</p>';
-		if ( quotaLine ) html += '<p class="explain-quota">' + escHtml( quotaLine ) + '</p>';
+		if ( quotaLine ) html += '<p class="explain-quota' + ( quotaNone ? ' is-none' : '' ) + '">' + escHtml( quotaLine ) + '</p>';
 		if ( costLine )  html += '<p class="explain-cost">'  + escHtml( costLine  ) + '</p>';
 		el.innerHTML = html;
 	}
@@ -378,15 +390,17 @@ $agentic_signup_tts_voices     = array(
 		var desc = videoDescriptions[ val ] || '';
 		var quotaLine = '';
 		var costLine  = '';
+		var quotaNone = false;
 		if ( freeQuota.videogen_day !== undefined ) {
-			quotaLine = freeQuota.videogen_day === 0
-				? 'Free daily quota: not included in free plan'
+			quotaNone = freeQuota.videogen_day === 0;
+			quotaLine = quotaNone
+				? <?php echo wp_json_encode( __( 'Free daily quota: not included in the free plan', 'agent-builder' ) ); ?>
 				: 'Free daily quota: ' + freeQuota.videogen_day + ' videos / day';
 		}
 		if ( videoOps[ val ] !== undefined ) {
 			costLine = 'Top-up: ' + videoOps[ val ] + ' credits / second';
 		}
-		renderExpl( 'agentic-explain-video', name, desc, quotaLine, costLine );
+		renderExpl( 'agentic-explain-video', name, desc, quotaLine, costLine, quotaNone );
 	}
 
 	// Render immediately with fallback data (no quota/cost lines yet).
@@ -411,6 +425,12 @@ $agentic_signup_tts_voices     = array(
 	document.getElementById( 'agentic-signup-video-model' ).addEventListener( 'change', updateVideoExpl );
 
 	function clearConsentError() {
+		if ( terms.checked ) {
+			terms.removeAttribute( 'aria-invalid' );
+		}
+		if ( privacy.checked ) {
+			privacy.removeAttribute( 'aria-invalid' );
+		}
 		if ( terms.checked && privacy.checked ) {
 			consentError.hidden = true;
 		}
@@ -451,13 +471,25 @@ $agentic_signup_tts_voices     = array(
 	// ── Pricing endpoint fetch ────────────────────────────────────────────────
 
 	function repopulateSelect( selectEl, options, defaultVal ) {
-		var prev = selectEl.value;
+		var prev   = selectEl.value;
+		var groups = {};
 		selectEl.innerHTML = '';
 		options.forEach( function ( opt ) {
 			var o         = document.createElement( 'option' );
 			o.value       = opt.value;
 			o.textContent = opt.label;
-			selectEl.appendChild( o );
+			if ( opt.group ) {
+				if ( ! groups[ opt.group ] ) {
+					groups[ opt.group ]       = document.createElement( 'optgroup' );
+					groups[ opt.group ].label = opt.group;
+				}
+				groups[ opt.group ].appendChild( o );
+			} else {
+				selectEl.appendChild( o );
+			}
+		} );
+		Object.keys( groups ).forEach( function ( label ) {
+			selectEl.appendChild( groups[ label ] );
 		} );
 		var ids    = options.map( function ( o ) { return o.value; } );
 		selectEl.value = ids.indexOf( prev ) !== -1       ? prev
@@ -486,9 +518,22 @@ $agentic_signup_tts_voices     = array(
 			} );
 
 			if ( modelIds.length ) {
-				var llmOpts = modelIds.map( function ( id ) {
-					return { value: id, label: llmShortLabels[ id ] || id };
+				// Friendly names (Flash, Flash Lite, Pro) are the main list;
+				// every other model the service offers is still selectable,
+				// grouped under "Other models" by its own name.
+				var friendlyOpts = [];
+				var otherOpts    = [];
+				modelIds.forEach( function ( id ) {
+					if ( friendlyModels.indexOf( id ) !== -1 ) {
+						friendlyOpts.push( { value: id, label: llmShortLabels[ id ] } );
+					} else {
+						otherOpts.push( { value: id, label: llmShortLabels[ id ] || id, group: otherModelsLabel } );
+					}
 				} );
+				friendlyOpts.sort( function ( a, b ) {
+					return friendlyModels.indexOf( a.value ) - friendlyModels.indexOf( b.value );
+				} );
+				var llmOpts = friendlyOpts.concat( otherOpts );
 				repopulateSelect( document.getElementById( 'agentic-signup-model' ),        llmOpts, 'gemini-2.5-flash' );
 				repopulateSelect( document.getElementById( 'agentic-signup-vision-model' ), llmOpts, 'gemini-2.5-flash' );
 			}
@@ -532,8 +577,11 @@ $agentic_signup_tts_voices     = array(
 		consentError.hidden = true;
 
 		if ( ! terms.checked || ! privacy.checked ) {
-			consentError.textContent = <?php echo wp_json_encode( __( 'Please agree to the Terms & Conditions and Privacy Policy.', 'agent-builder' ) ); ?>;
-			consentError.hidden      = false;
+			consentText.textContent = <?php echo wp_json_encode( __( 'Please agree to the Terms of Service and Privacy Policy.', 'agent-builder' ) ); ?>;
+			consentError.hidden     = false;
+			terms.setAttribute( 'aria-invalid', terms.checked ? 'false' : 'true' );
+			privacy.setAttribute( 'aria-invalid', privacy.checked ? 'false' : 'true' );
+			( terms.checked ? privacy : terms ).focus();
 			return;
 		}
 
