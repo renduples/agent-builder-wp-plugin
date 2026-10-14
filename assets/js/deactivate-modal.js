@@ -18,6 +18,14 @@
 	var modal      = null;
 	var overlay    = null;
 	var deactivateUrl = '';
+	var i18n          = ( typeof agenticDeactivate !== 'undefined' && agenticDeactivate.i18n ) || {};
+
+	/* Escape a translated string before it goes into innerHTML. */
+	function escHtml( str ) {
+		var div = document.createElement( 'div' );
+		div.textContent = String( str );
+		return div.innerHTML;
+	}
 
 	/* ─── Reasons shown in the cancellation feedback step ─── */
 	var REASONS = [
@@ -66,7 +74,7 @@
 						'<span class="adm-option-icon">🗑️</span>' +
 						'<span class="adm-option-body">' +
 							'<strong>Delete all plugin data</strong>' +
-							'<small>Conversations, logs, API keys, agent settings and all database tables will be permanently removed.</small>' +
+							'<small>' + escHtml( i18n.deleteDescription || 'When you delete the plugin, conversations, logs, API keys, settings, every Agent Builder database table (including the agents and skills you created or bought), automatic backups and knowledge files are permanently removed. Agent folders you built in wp-content/agentic-agents are kept.' ) + '</small>' +
 						'</span>' +
 					'</label>' +
 				'</div>' +
@@ -143,7 +151,7 @@
 
 				if ( deleteData ) {
 					/* Confirm destructive action */
-					agenticUI.confirm( 'All Agent Builder data will be permanently deleted. This cannot be undone. Continue?', { danger: true, confirmText: 'Delete everything' } ).then( function ( ok ) {
+					agenticUI.confirm( i18n.deleteConfirm || 'When you delete the plugin, all Agent Builder data, including the agents and skills you created or bought and all automatic backups, will be permanently deleted. This cannot be undone. Continue?', { danger: true, confirmText: i18n.deleteConfirmButton || 'Delete everything' } ).then( function ( ok ) {
 						if ( ! ok ) {
 							return;
 						}

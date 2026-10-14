@@ -164,7 +164,7 @@ On WordPress 6.9+, Agent Builder provides bidirectional integration: (1) **Outbo
 **Tools:** Single, permission-controlled actions an agent can execute (e.g., `create_draft_post`, `get_site_health`). **Skills:** Pre-packaged instruction sets and tool workflows following the open `agentskills.io` standard that teach agents multi-step capabilities without writing code.
 
 = What happens to my data if I delete the plugin? =
-Uninstall keeps your data unless you check “Delete all plugin data” on the deactivation dialog. If you do choose to delete, conversation history, options, custom tables, and the agents and skills you created or imported are all removed.
+Uninstall keeps your data unless you check “Delete all plugin data” on the deactivation dialog. If you do choose to delete, conversation history, options, custom tables, the agents and skills you created or imported, automatic backups (wp-content/agentic-backups) and knowledge files (wp-content/agentic-knowledge) are all removed. Agent folders you built yourself in wp-content/agentic-agents are kept.
 
 = Is this plugin translated into other languages? =
 The interface text is written in English, and the `.pot` translation template is included so you (or [translate.wordpress.org](https://translate.wordpress.org/)) can generate your own `.mo`/`.json` translation files for your site's locale. Pre-built translations for 11 languages ship with Agent Builder Pro.
