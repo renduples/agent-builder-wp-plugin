@@ -5,9 +5,9 @@
 | Field | Value |
 |-------|-------|
 | Slug | `wordpress-assistant` |
-| Version | 1.3.0 |
+| Version | 1.3.1 |
 | Category | Starter |
-| Author | Agentic Community |
+| Author | Agent Builder |
 | Required Capabilities | `read` |
 
 ## What It Does
