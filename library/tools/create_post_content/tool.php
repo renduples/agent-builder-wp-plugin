@@ -150,6 +150,11 @@ class Create_Post_Content extends \Agentic\Tool_Base {
 			$post_data['post_author'] = (int) $arguments['author_id'];
 		}
 
+		// Save block markup so the post opens as real blocks, not one Classic block.
+		if ( \Agentic\Tool_Helpers::should_save_as_blocks( $post_type ) ) {
+			$post_data['post_content'] = \Agentic\Tool_Helpers::to_block_markup( $post_data['post_content'] );
+		}
+
 		$post_id = wp_insert_post( $post_data, true );
 		if ( is_wp_error( $post_id ) ) {
 			return array( 'error' => $post_id->get_error_message() );

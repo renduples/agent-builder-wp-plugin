@@ -28,8 +28,10 @@ import {
 	TextareaControl,
 } from '@wordpress/components';
 import { AdminPage, Panel } from '../shared/components';
-import { ProposalCard } from '../shared/chat-embed';
+import { ContentPreview, ProposalCard } from '../shared/chat-embed';
 import { ResultCards } from '../shared/result-card';
+// Shared, escaping markdown renderer (also used by the chat surfaces).
+import AgenticMarkdown from '../../assets/js/agentic-markdown';
 
 const RUNS_PATH = 'agentic/v1/runs';
 const NOTIFICATIONS_PATH = 'agentic/v1/notifications';
@@ -68,6 +70,51 @@ const APPROVAL_SUMMARY_LABELS = {
 	post_type: __( 'Post type', 'agent-builder' ),
 	post_id: __( 'Post', 'agent-builder' ),
 };
+
+// Outcome chip for a run step (Runs_REST::describe_step() `status`), mapped
+// onto the existing run status chip colours.
+const STEP_STATUS = {
+	done: { chip: 'completed', label: __( 'Done', 'agent-builder' ) },
+	failed: { chip: 'failed', label: __( 'Failed', 'agent-builder' ) },
+	blocked: { chip: 'error', label: __( 'Blocked', 'agent-builder' ) },
+	waiting: { chip: 'waiting', label: __( 'Waiting', 'agent-builder' ) },
+	approved: { chip: 'completed', label: __( 'Approved', 'agent-builder' ) },
+	rejected: { chip: 'cancelled', label: __( 'Rejected', 'agent-builder' ) },
+};
+
+function StepItem( { step, hideReasoning } ) {
+	const tools = Array.isArray( step.tools ) ? step.tools : [];
+	const outcome = STEP_STATUS[ step.status ];
+	return (
+		<li>
+			<span className="agentic-tasks-steps__head">
+				<span className="agentic-tasks-steps__action">
+					{ step.label || humanize( step.action ) }
+					{ tools.length > 0 && (
+						<span className="agentic-tasks-steps__tools">
+							{ ': ' + tools.join( ', ' ) }
+						</span>
+					) }
+				</span>
+				{ outcome && (
+					<span
+						className={ `agentic-react-status agentic-react-status--${ outcome.chip }` }
+					>
+						{ outcome.label }
+					</span>
+				) }
+			</span>
+			<span className="agentic-tasks-steps__time">
+				{ formatTime( step.created_at ) }
+			</span>
+			{ step.reasoning && ! hideReasoning && (
+				<span className="agentic-tasks-steps__reasoning">
+					{ step.reasoning }
+				</span>
+			) }
+		</li>
+	);
+}
 
 function statusGroup( status ) {
 	if ( WAITING_STATUSES.includes( status ) ) {
@@ -132,6 +179,78 @@ function StatusChip( { status } ) {
 			{ label }
 		</span>
 	);
+}
+
+/**
+ * Keep the WordPress chrome badges in step with what the Tasks screen shows,
+ * without a reload: the admin-bar bell badge counts unread notifications; the
+ * Tasks menu badge counts waiting runs + unread notifications (mirrors
+ * Admin_Bar_Inbox::add_node() and the Tasks submenu title).
+ *
+ * @param {number} unread  Unread notifications.
+ * @param {number} waiting Runs waiting on the user.
+ */
+function syncChromeBadges( unread, waiting ) {
+	const setBadge = ( host, selector, make, count ) => {
+		if ( ! host ) {
+			return;
+		}
+		let badge = host.querySelector( selector );
+		if ( count <= 0 ) {
+			if ( badge ) {
+				badge.remove();
+			}
+			return;
+		}
+		if ( ! badge ) {
+			badge = make();
+			host.appendChild( badge );
+		}
+		return badge;
+	};
+
+	const barLink = document.querySelector(
+		'#wp-admin-bar-agentic-inbox > .ab-item'
+	);
+	const barBadge = setBadge(
+		barLink,
+		'.agentic-inbox-badge',
+		() => {
+			const el = document.createElement( 'span' );
+			el.className = 'agentic-inbox-badge';
+			el.style.cssText =
+				'display:inline-block;margin-left:5px;background:#d63638;color:#fff;border-radius:9px;padding:0 6px;font-size:11px;line-height:18px;font-weight:600;';
+			return el;
+		},
+		unread
+	);
+	if ( barBadge ) {
+		barBadge.textContent = String( unread );
+	}
+
+	const total = unread + waiting;
+	const menuLink = document.querySelector(
+		'#adminmenu a[href$="page=agentic-tasks"]'
+	);
+	const menuBadge = setBadge(
+		menuLink,
+		'.awaiting-mod',
+		() => {
+			const el = document.createElement( 'span' );
+			const inner = document.createElement( 'span' );
+			inner.className = 'pending-count';
+			el.appendChild( inner );
+			return el;
+		},
+		total
+	);
+	if ( menuBadge ) {
+		menuBadge.className = `awaiting-mod count-${ total }`;
+		const inner = menuBadge.querySelector( '.pending-count' );
+		if ( inner ) {
+			inner.textContent = String( total );
+		}
+	}
 }
 
 function bootConfig() {
@@ -266,20 +385,27 @@ function TasksApp() {
 	// Load the inbox and, once the user is actually looking at it (the Tasks
 	// screen is the notification centre), mark everything read via the
 	// nonce-protected POST. A bare page GET must never mark read (M11 §7).
+	// Polled refreshes (silent) re-run this so a notification that lands while
+	// the screen is open appears without a reload; new unread rows are marked
+	// read only while the tab is actually visible.
 	const notifMarkedRef = useRef( false );
-	const loadNotifications = useCallback( () => {
-		setNotifLoading( true );
+	const loadNotifications = useCallback( ( silent ) => {
+		if ( ! silent ) {
+			setNotifLoading( true );
+		}
 		apiFetch( { path: `${ NOTIFICATIONS_PATH }?per_page=50` } )
 			.then( ( res ) => {
 				const rows = Array.isArray( res.notifications )
 					? res.notifications
 					: [];
+				const unread = rows.filter( ( n ) => ! n.read_at ).length;
 				setNotifications( rows );
-				setUnreadCount(
-					rows.filter( ( n ) => ! n.read_at ).length
-				);
+				setUnreadCount( unread );
 				setNotifError( '' );
-				if ( ! notifMarkedRef.current ) {
+				const shouldMark =
+					! notifMarkedRef.current ||
+					( unread > 0 && 'visible' === document.visibilityState );
+				if ( shouldMark ) {
 					notifMarkedRef.current = true;
 					apiFetch( {
 						path: `${ NOTIFICATIONS_PATH }/read`,
@@ -291,16 +417,25 @@ function TasksApp() {
 				}
 			} )
 			.catch( ( err ) => {
-				setNotifError(
-					err.message ||
-						__( 'Could not load notifications.', 'agent-builder' )
-				);
+				if ( ! silent ) {
+					setNotifError(
+						err.message ||
+							__(
+								'Could not load notifications.',
+								'agent-builder'
+							)
+					);
+				}
 			} )
-			.finally( () => setNotifLoading( false ) );
+			.finally( () => {
+				if ( ! silent ) {
+					setNotifLoading( false );
+				}
+			} );
 	}, [] );
 
 	useEffect( () => {
-		loadNotifications();
+		loadNotifications( false );
 	}, [ loadNotifications ] );
 
 	const visibleRuns = useMemo(
@@ -314,13 +449,34 @@ function TasksApp() {
 	const hasActiveInTab = visibleRuns.some( ( r ) =>
 		NON_TERMINAL.includes( r.status )
 	);
+	// The same poll refreshes the notification list, and one trailing refresh
+	// runs after polling stops: the "finished" notification is written as the
+	// run completes, so it can land just after the last runs tick.
 	useEffect( () => {
 		if ( ! hasActiveInTab ) {
 			return;
 		}
-		const id = setInterval( () => loadRuns( true ), 3000 );
-		return () => clearInterval( id );
-	}, [ hasActiveInTab, loadRuns ] );
+		const id = setInterval( () => {
+			loadRuns( true );
+			loadNotifications( true );
+		}, 3000 );
+		return () => {
+			clearInterval( id );
+			setTimeout( () => loadNotifications( true ), 1500 );
+		};
+	}, [ hasActiveInTab, loadRuns, loadNotifications ] );
+
+	// Mirror the counts into the admin-bar bell and the Tasks menu badge once
+	// both lists have loaded.
+	const waitingCount = runs.filter( ( r ) =>
+		WAITING_STATUSES.includes( r.status )
+	).length;
+	useEffect( () => {
+		if ( loading || notifLoading ) {
+			return;
+		}
+		syncChromeBadges( unreadCount, waitingCount );
+	}, [ loading, notifLoading, unreadCount, waitingCount ] );
 
 	// Load the drawer the moment a run is opened, and poll GET /runs/{id} every
 	// 2s while that run is still non-terminal, so its live step list keeps up.
@@ -455,6 +611,8 @@ function TasksApp() {
 
 	const run = drawer?.run || null;
 	const isNonTerminal = run && NON_TERMINAL.includes( run.status );
+	const resultText = String( run?.result_summary?.text || '' ).trim();
+	const steps = Array.isArray( drawer?.steps ) ? drawer.steps : [];
 	const awaiting = drawer?.awaiting || null;
 	const isApprovalAwaiting = awaiting && awaiting.action !== undefined;
 
@@ -570,23 +728,45 @@ function TasksApp() {
 						</p>
 					) : (
 						<div className="agentic-tasks-list">
-							{ notifications.slice( 0, 20 ).map( ( n ) => (
-								<div key={ n.id } className="agentic-tasks-row">
-									<div className="agentic-tasks-row__main">
-										<strong>{ n.title }</strong>
-										{ n.body && (
-											<span className="agentic-tasks-row__excerpt">
-												{ n.body }
+							{ notifications.slice( 0, 20 ).map( ( n ) => {
+								const inner = (
+									<>
+										<div className="agentic-tasks-row__main">
+											<strong>{ n.title }</strong>
+											{ n.body && (
+												<span className="agentic-tasks-row__excerpt">
+													{ n.body }
+												</span>
+											) }
+										</div>
+										<div className="agentic-tasks-row__meta">
+											<span className="agentic-tasks-row__elapsed">
+												{ formatTime( n.created_at ) }
 											</span>
-										) }
+										</div>
+									</>
+								);
+								return n.run_id ? (
+									<button
+										key={ n.id }
+										type="button"
+										className="agentic-tasks-row"
+										onClick={ () => {
+											setDrawerActionError( '' );
+											setDrawerRunId( n.run_id );
+										} }
+									>
+										{ inner }
+									</button>
+								) : (
+									<div
+										key={ n.id }
+										className="agentic-tasks-row agentic-tasks-row--static"
+									>
+										{ inner }
 									</div>
-									<div className="agentic-tasks-row__meta">
-										<span className="agentic-tasks-row__elapsed">
-											{ formatTime( n.created_at ) }
-										</span>
-									</div>
-								</div>
-							) ) }
+								);
+							} ) }
 						</div>
 					) }
 				</Panel>
@@ -706,6 +886,25 @@ function TasksApp() {
 								</Notice>
 							) }
 
+							{ resultText && (
+								<div className="agentic-tasks-drawer__result">
+									<h4 className="agentic-tasks-drawer__section">
+										{ __( 'Result', 'agent-builder' ) }
+									</h4>
+									<div
+										className="agentic-tasks-drawer__result-body"
+										// AgenticMarkdown escapes the text before applying
+										// its small markdown subset (scheme-checked links).
+										dangerouslySetInnerHTML={ {
+											__html: AgenticMarkdown.render(
+												resultText,
+												{ codeBlock: 'plain' }
+											),
+										} }
+									/>
+								</div>
+							) }
+
 							<ResultCards cards={ run?.result_summary?.cards } />
 
 							{ isApprovalAwaiting ? (
@@ -727,32 +926,39 @@ function TasksApp() {
 								</Notice>
 							) }
 
-							<h4 className="agentic-tasks-drawer__section">
-								{ __( 'Steps', 'agent-builder' ) }
-							</h4>
-							{ ! ( drawer.steps || [] ).length ? (
-								<p className="agentic-react-muted">
-									{ __( 'No steps recorded yet.', 'agent-builder' ) }
-								</p>
-							) : (
-								<ul className="agentic-tasks-steps">
-									{ drawer.steps.map( ( s, i ) => (
-										<li key={ s.id || i }>
-											<span className="agentic-tasks-steps__action">
-												{ humanize( s.action ) }
-											</span>
-											<span className="agentic-tasks-steps__time">
-												{ formatTime( s.created_at ) }
-											</span>
-											{ s.reasoning && (
-												<span className="agentic-tasks-steps__reasoning">
-													{ s.reasoning }
-												</span>
-											) }
-										</li>
-									) ) }
-								</ul>
-							) }
+							<details
+								className="agentic-tasks-drawer__steps"
+								open={ isNonTerminal || ! resultText }
+							>
+								<summary className="agentic-tasks-drawer__section">
+									{ __( 'Steps', 'agent-builder' ) }
+									{ steps.length > 0
+										? ` (${ steps.length })`
+										: '' }
+								</summary>
+								{ ! steps.length ? (
+									<p className="agentic-react-muted">
+										{ __(
+											'No steps recorded yet.',
+											'agent-builder'
+										) }
+									</p>
+								) : (
+									<ul className="agentic-tasks-steps">
+										{ steps.map( ( s, i ) => (
+											<StepItem
+												key={ s.id || i }
+												step={ s }
+												hideReasoning={
+													!! resultText &&
+													'autonomous_chat_complete' ===
+														s.action
+												}
+											/>
+										) ) }
+									</ul>
+								) }
+							</details>
 
 							<Flex justify="flex-end" className="agentic-tasks-drawer__actions">
 								{ isNonTerminal && (
@@ -853,6 +1059,7 @@ function ApprovalCard( { approval, busy, onDecide } ) {
 						) ) }
 				</div>
 			) }
+			<ContentPreview text={ approval.content_preview } />
 			{ approval.reasoning && (
 				<p className="agentic-tasks-approval__reasoning">
 					{ approval.reasoning }

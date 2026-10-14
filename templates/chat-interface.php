@@ -110,12 +110,14 @@ if ( $agentic_default_agent_id && isset( $agentic_agents[ $agentic_default_agent
 			</div>
 		</div>
 		<div class="agentic-chat-actions">
-			<div class="agentic-status-leds" id="agentic-status-leds" aria-live="polite" title="System status">
-				<span class="agentic-led agentic-led-unknown" data-led="ai" title="AI service: checking…">
-					<span class="agentic-led-dot"></span><span class="agentic-led-label"><?php esc_html_e( 'AI', 'agent-builder' ); ?></span>
+			<div class="agentic-status-leds" id="agentic-status-leds" role="group" aria-label="<?php esc_attr_e( 'System status', 'agent-builder' ); ?>">
+				<span class="agentic-led agentic-led-unknown" data-led="ai" tabindex="0" title="<?php esc_attr_e( 'AI service: checking…', 'agent-builder' ); ?>">
+					<span class="agentic-led-dot" aria-hidden="true"></span><span class="agentic-led-label" aria-hidden="true"><?php esc_html_e( 'AI', 'agent-builder' ); ?></span>
+					<span class="screen-reader-text agentic-led-sr"><?php esc_html_e( 'AI service: checking…', 'agent-builder' ); ?></span>
 				</span>
-				<span class="agentic-led agentic-led-unknown" data-led="credits" title="Credits: checking…">
-					<span class="agentic-led-dot"></span><span class="agentic-led-label"><?php esc_html_e( 'Credits', 'agent-builder' ); ?></span>
+				<span class="agentic-led agentic-led-unknown" data-led="credits" tabindex="0" title="<?php esc_attr_e( 'Credits: checking…', 'agent-builder' ); ?>">
+					<span class="agentic-led-dot" aria-hidden="true"></span><span class="agentic-led-label" aria-hidden="true"><?php esc_html_e( 'Credits', 'agent-builder' ); ?></span>
+					<span class="screen-reader-text agentic-led-sr"><?php esc_html_e( 'Credits: checking…', 'agent-builder' ); ?></span>
 				</span>
 			</div>
 			<button id="agentic-history-btn" class="agentic-btn-secondary" title="Chat History">

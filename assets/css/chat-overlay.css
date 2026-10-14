@@ -314,6 +314,39 @@
     color: var(--aco-text-muted);
 }
 
+.agentic-overlay-proposal-content {
+    padding: 8px 12px;
+    font-size: 12px;
+    color: var(--aco-text);
+    line-height: 1.5;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.agentic-overlay-proposal-content-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: var(--aco-text-muted);
+}
+
+.agentic-overlay-proposal-content-body {
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+.agentic-overlay-proposal-content-toggle {
+    margin-top: 4px;
+    padding: 0;
+    background: none;
+    border: none;
+    color: var(--aco-primary);
+    font-size: 12px;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
 .agentic-overlay-proposal-toggle {
     display: block;
     width: 100%;
