@@ -39,8 +39,8 @@ if ( ! empty( $agentic_force_agent ) ) {
 		$agentic_default_agent_id = sanitize_key( $_COOKIE['agentic_last_agent'] );
 	}
 
-	if ( ! $agentic_default_agent_id && isset( $agentic_agents['wordpress-assistant'] ) ) {
-		$agentic_default_agent_id = 'wordpress-assistant';
+	if ( ! $agentic_default_agent_id || ! isset( $agentic_agents[ $agentic_default_agent_id ] ) ) {
+		$agentic_default_agent_id = \Agentic\Admin_Menu_Handler::default_agent_slug( array_keys( $agentic_agents ) );
 	}
 }
 
