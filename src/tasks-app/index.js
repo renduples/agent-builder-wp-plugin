@@ -28,7 +28,7 @@ import {
 	TextareaControl,
 } from '@wordpress/components';
 import { AdminPage, Panel } from '../shared/components';
-import { ProposalCard } from '../shared/chat-embed';
+import { ContentPreview, ProposalCard } from '../shared/chat-embed';
 import { ResultCards } from '../shared/result-card';
 
 const RUNS_PATH = 'agentic/v1/runs';
@@ -853,6 +853,7 @@ function ApprovalCard( { approval, busy, onDecide } ) {
 						) ) }
 				</div>
 			) }
+			<ContentPreview text={ approval.content_preview } />
 			{ approval.reasoning && (
 				<p className="agentic-tasks-approval__reasoning">
 					{ approval.reasoning }

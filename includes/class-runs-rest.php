@@ -611,13 +611,20 @@ class Runs_REST {
 			// A title/status/type summary of the tool arguments, matching the
 			// chat proposal card's summary, so the Tasks approval card is not
 			// blind about *what* the tool is about to touch.
-			$row['summary'] = Tool_Executor::summarize_arguments( is_array( $row['params'] ) ? $row['params'] : array() );
+			$row['summary']         = Tool_Executor::summarize_arguments( is_array( $row['params'] ) ? $row['params'] : array() );
+			$row['content_preview'] = Tool_Executor::content_preview( is_array( $row['params'] ) ? $row['params'] : array() );
 
 			return $row;
 		}
 
 		if ( 'proposal' === $type ) {
-			return Agent_Proposals::get( $id );
+			$proposal = Agent_Proposals::get( $id );
+			if ( is_array( $proposal ) ) {
+				$params                      = is_array( $proposal['params'] ?? null ) ? $proposal['params'] : array();
+				$proposal['summary']         = Tool_Executor::summarize_arguments( $params );
+				$proposal['content_preview'] = Tool_Executor::content_preview( $params );
+			}
+			return $proposal;
 		}
 
 		return null;

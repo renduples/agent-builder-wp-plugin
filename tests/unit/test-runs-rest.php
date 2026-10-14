@@ -472,6 +472,45 @@ class Test_Runs_REST extends TestCase {
 	}
 
 	/**
+	 * A run paused on a create-post proposal exposes the proposal's argument
+	 * summary and a plain-text content preview, so the Tasks card shows what
+	 * is being approved — never raw HTML.
+	 */
+	public function test_awaiting_proposal_includes_content_preview(): void {
+		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $admin );
+
+		$run    = Agent_Run::begin(
+			self::AGENT,
+			array( 'kind' => 'task', 'user_id' => $admin, 'task_text' => 'Write a welcome post' )
+		);
+		$run_id = $run->get_run_id();
+
+		$proposal = \Agentic\Agent_Proposals::create(
+			'create_post_content',
+			array(
+				'title'   => 'Hello from Agent Builder',
+				'status'  => 'draft',
+				'content' => '<p>Welcome, <em>visitors</em>!</p><p>Second paragraph.</p>',
+			),
+			self::AGENT,
+			'Creates a new post or page with content.',
+			'',
+			$run_id,
+			$admin
+		);
+		$run->mark_waiting( 'proposal', (string) $proposal['id'], array() );
+		Agent_Run::reset_current_for_tests();
+
+		$resp = $this->request( 'GET', '/runs/' . $run_id );
+		$this->assertSame( 200, $resp->get_status() );
+
+		$awaiting = $resp->get_data()['awaiting'];
+		$this->assertSame( 'Hello from Agent Builder', $awaiting['summary']['title'] );
+		$this->assertSame( "Welcome, visitors!\nSecond paragraph.", $awaiting['content_preview'] );
+	}
+
+	/**
 	 * agent_builder_before_task_dispatch returning a WP_Error short-circuits the
 	 * request: the error is surfaced and no run row is created.
 	 */

@@ -37,6 +37,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Tool_Executor {
 
 	/**
+	 * Maximum characters of content shown in an approval card's content preview.
+	 */
+	const CONTENT_PREVIEW_MAX = 5000;
+
+	/**
 	 * Tool loader instance.
 	 *
 	 * @var Tool_Loader
@@ -236,6 +241,36 @@ class Tool_Executor {
 		}
 
 		return $summary;
+	}
+
+	/**
+	 * Plain-text preview of the content a create/update tool is about to write.
+	 *
+	 * Shown on approval/proposal cards so the user can read what they are
+	 * approving, not just its title. Block comments and HTML tags are removed
+	 * (block-level closers become line breaks), entities decoded and the result
+	 * capped, so it is always safe to render as text — never as HTML.
+	 *
+	 * @param array $arguments Tool arguments.
+	 * @return string Plain text, '' when the call carries no content.
+	 */
+	public static function content_preview( array $arguments ): string {
+		$content = $arguments['content'] ?? '';
+		if ( ! is_scalar( $content ) || '' === trim( (string) $content ) ) {
+			return '';
+		}
+
+		$text = preg_replace( '/<!--.*?-->/s', '', (string) $content );
+		$text = preg_replace( '#<br\s*/?>|</(p|h[1-6]|li|div|blockquote|pre|tr|figure|ul|ol|table)>#i', '$0' . "\n", (string) $text );
+		$text = html_entity_decode( wp_strip_all_tags( (string) $text ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		$text = preg_replace( "/[ \t]+/", ' ', $text );
+		$text = trim( (string) preg_replace( "/\s*\n\s*/", "\n", (string) $text ) );
+
+		if ( mb_strlen( $text ) > self::CONTENT_PREVIEW_MAX ) {
+			$text = rtrim( mb_substr( $text, 0, self::CONTENT_PREVIEW_MAX ) ) . '…';
+		}
+
+		return $text;
 	}
 
 	/**
@@ -530,16 +565,17 @@ class Tool_Executor {
 			);
 
 			return array(
-				'status'      => 'confirmation_required',
-				'proposal_id' => $proposal['id'],
-				'message'     => sprintf(
+				'status'          => 'confirmation_required',
+				'proposal_id'     => $proposal['id'],
+				'message'         => sprintf(
 					'%s Approve or reject it below.',
 					'' === $reason
 						? sprintf( '“%s” can change your site, so it needs your approval first.', $label )
 						: sprintf( '“%s” needs your approval first: %s', $label, $reason )
 				),
-				'reason'      => $reason,
-				'summary'     => self::summarize_arguments( $arguments ),
+				'reason'          => $reason,
+				'summary'         => self::summarize_arguments( $arguments ),
+				'content_preview' => self::content_preview( $arguments ),
 			);
 		}
 

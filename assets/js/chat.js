@@ -1562,6 +1562,49 @@
         return proposal.kind === 'approval' ? renderApprovalCard(proposal) : renderProposal(proposal);
     }
 
+    // Plain-text preview of the content a create/update proposal will write
+    // (server-built content_preview: tags stripped, entities decoded). Always
+    // rendered via textContent, never innerHTML. Long previews are clipped to
+    // ~600 characters with a "Show full content" toggle.
+    function renderContentPreview(text, prefix) {
+        const i18n = (typeof agenticChat !== 'undefined' && agenticChat.i18n) || {};
+        const limit = 600;
+        const full = String(text);
+        const clipped = full.length > limit ? full.slice(0, limit).replace(/\s+\S*$/, '') + '…' : full;
+
+        const wrap = document.createElement('div');
+        wrap.className = prefix + '-content';
+
+        const label = document.createElement('strong');
+        label.className = prefix + '-content-label';
+        label.textContent = i18n.contentPreview || 'Content preview';
+        wrap.appendChild(label);
+
+        const body = document.createElement('div');
+        body.className = prefix + '-content-body';
+        body.textContent = clipped;
+        wrap.appendChild(body);
+
+        if (clipped !== full) {
+            const toggle = document.createElement('button');
+            toggle.type = 'button';
+            toggle.className = prefix + '-content-toggle';
+            toggle.setAttribute('aria-expanded', 'false');
+            toggle.textContent = i18n.showFullContent || 'Show full content';
+            toggle.addEventListener('click', function () {
+                const expanded = toggle.getAttribute('aria-expanded') === 'true';
+                body.textContent = expanded ? clipped : full;
+                toggle.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+                toggle.textContent = expanded
+                    ? (i18n.showFullContent || 'Show full content')
+                    : (i18n.showLessContent || 'Show less');
+            });
+            wrap.appendChild(toggle);
+        }
+
+        return wrap;
+    }
+
     // Render a proposal card with diff and approve/reject buttons
     function renderProposal(proposal) {
         const card = document.createElement('div');
@@ -1608,6 +1651,10 @@
                 });
                 card.appendChild(summaryDiv);
             }
+        }
+
+        if (proposal.content_preview) {
+            card.appendChild(renderContentPreview(proposal.content_preview, 'agentic-proposal'));
         }
 
         // Diff view

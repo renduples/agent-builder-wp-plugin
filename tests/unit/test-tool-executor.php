@@ -1222,4 +1222,34 @@ class Test_Tool_Executor extends TestCase {
 			ARRAY_A
 		);
 	}
+	/**
+	 * content_preview() turns create/update content into readable plain text
+	 * for the approval card: block comments and tags stripped, block closers
+	 * become line breaks, entities decoded, scripts never survive as markup.
+	 */
+	public function test_content_preview_is_plain_text(): void {
+		$preview = Tool_Executor::content_preview(
+			array(
+				'title'   => 'Hello',
+				'content' => "<!-- wp:paragraph -->\n<p>Welcome &amp; <strong>hello</strong>.</p>\n<!-- /wp:paragraph --><h2>Next</h2><script>alert(1)</script><ul><li>One</li><li>Two</li></ul>",
+			)
+		);
+
+		$this->assertSame( "Welcome & hello.\nNext\nOne\nTwo", $preview );
+		$this->assertStringNotContainsString( '<', $preview );
+		$this->assertStringNotContainsString( 'alert', $preview );
+	}
+
+	/**
+	 * content_preview() is empty without content and capped for long content.
+	 */
+	public function test_content_preview_empty_and_capped(): void {
+		$this->assertSame( '', Tool_Executor::content_preview( array( 'title' => 'No body' ) ) );
+		$this->assertSame( '', Tool_Executor::content_preview( array( 'content' => array( 'not', 'scalar' ) ) ) );
+
+		$long    = str_repeat( 'a', Tool_Executor::CONTENT_PREVIEW_MAX + 50 );
+		$preview = Tool_Executor::content_preview( array( 'content' => '<p>' . $long . '</p>' ) );
+		$this->assertSame( Tool_Executor::CONTENT_PREVIEW_MAX + 1, mb_strlen( $preview ) );
+		$this->assertStringEndsWith( '…', $preview );
+	}
 }

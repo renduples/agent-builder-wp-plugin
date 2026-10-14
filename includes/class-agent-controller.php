@@ -1324,12 +1324,13 @@ class Agent_Controller {
 			if ( 'confirmation_required' === $tr_status || ! empty( $tr['result']['pending_proposal'] ) ) {
 				$result['pending_proposal'] = true;
 				$result['proposal']         = array(
-					'kind'        => 'proposal',
-					'id'          => $tr['result']['proposal_id'],
-					'description' => $tr['result']['description'] ?? $tr['result']['reason'] ?? '',
-					'diff'        => $tr['result']['diff'] ?? '',
-					'tool'        => $tr['tool'],
-					'summary'     => $tr['result']['summary'] ?? array(),
+					'kind'            => 'proposal',
+					'id'              => $tr['result']['proposal_id'],
+					'description'     => $tr['result']['description'] ?? $tr['result']['reason'] ?? '',
+					'diff'            => $tr['result']['diff'] ?? '',
+					'tool'            => $tr['tool'],
+					'summary'         => $tr['result']['summary'] ?? array(),
+					'content_preview' => (string) ( $tr['result']['content_preview'] ?? '' ),
 				);
 				break; // One proposal per response.
 			}

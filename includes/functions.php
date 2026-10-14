@@ -62,6 +62,10 @@ function agent_builder_chat_i18n(): array {
 		'summaryStatus'       => __( 'Status', 'agent-builder' ),
 		'summaryPostType'     => __( 'Post type', 'agent-builder' ),
 		'summaryPost'         => __( 'Post', 'agent-builder' ),
+		// Content preview on a Proposed Change card (create/update post or page).
+		'contentPreview'      => __( 'Content preview', 'agent-builder' ),
+		'showFullContent'     => __( 'Show full content', 'agent-builder' ),
+		'showLessContent'     => __( 'Show less', 'agent-builder' ),
 		// Live activity pane (collapsible "Working…" step list).
 		'working'             => __( 'Working…', 'agent-builder' ),
 		'workingDone'         => __( 'Working complete', 'agent-builder' ),
