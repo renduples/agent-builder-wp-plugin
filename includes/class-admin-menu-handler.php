@@ -807,8 +807,10 @@ class Admin_Menu_Handler {
 		}
 
 		if ( current_user_can( 'manage_options' ) && ! get_option( 'agent_builder_onboarding_complete' ) ) {
+			// No <strong>: core styles every <strong> in the plugin-title
+			// column as a block (the plugin name), which breaks the row.
 			$plugin_links['finish_setup'] = sprintf(
-				'<a href="%s"><strong>%s</strong></a>',
+				'<a href="%s" style="font-weight:600">%s</a>',
 				esc_url( admin_url( 'admin.php?page=agentic-signup' ) ),
 				esc_html__( 'Finish setup', 'agent-builder' )
 			);
