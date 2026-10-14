@@ -443,6 +443,28 @@ function TasksApp() {
 		loadNotifications( false );
 	}, [ loadNotifications ] );
 
+	// Notifications that arrived while the tab was in the background are
+	// marked read once the user comes back to it.
+	useEffect( () => {
+		const onVisible = () => {
+			if ( 'visible' === document.visibilityState ) {
+				loadNotifications( true );
+			}
+		};
+		document.addEventListener( 'visibilitychange', onVisible );
+		return () =>
+			document.removeEventListener( 'visibilitychange', onVisible );
+	}, [ loadNotifications ] );
+
+	// The "Task assigned" confirmation clears itself after a few seconds.
+	useEffect( () => {
+		if ( ! assignDone ) {
+			return;
+		}
+		const id = setTimeout( () => setAssignDone( '' ), 6000 );
+		return () => clearTimeout( id );
+	}, [ assignDone ] );
+
 	const visibleRuns = useMemo(
 		() => runs.filter( ( r ) => statusGroup( r.status ) === activeTab ),
 		[ runs, activeTab ]

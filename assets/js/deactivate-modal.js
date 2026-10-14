@@ -269,13 +269,13 @@
 				e.preventDefault();
 				deactivateUrl = deactivateLink.href;
 				buildModal();
-				/* Trigger transition on next frame so CSS animation fires */
-				requestAnimationFrame( function () {
-					requestAnimationFrame( function () {
-						overlay.classList.add( 'adm-visible' );
-						modal.querySelector( '.adm-close' ).focus();
-					} );
-				} );
+				/* Trigger the transition after the first paint so the CSS
+				   animation fires. A timer (unlike requestAnimationFrame) still
+				   runs when the browser throttles a background window. */
+				setTimeout( function () {
+					overlay.classList.add( 'adm-visible' );
+					modal.querySelector( '.adm-close' ).focus();
+				}, 20 );
 			} );
 		} );
 	}
