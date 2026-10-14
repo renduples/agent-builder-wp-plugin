@@ -405,6 +405,8 @@
             setTimeout(function() {
                 sendMessage(agenticChat.initialMessage);
             }, 600);
+        } else {
+            restoreDraft();
         }
 
         // P0 Basic Multi-Agent Orchestration: show professional handoff banner when applicable.
@@ -829,10 +831,46 @@
         // Save selected agent to cookie (read server-side to avoid redirect flash)
         document.cookie = 'agentic_last_agent=' + encodeURIComponent(newAgentId) + ';path=/;max-age=31536000;SameSite=Lax';
         
+        // Keep what the user was typing: the reload below would otherwise drop
+        // it. restoreDraft() puts it back into the composer after the reload.
+        saveDraft();
+
         // Reload page with new agent (simplest approach for full state reset)
         const url = new URL(window.location.href);
         url.searchParams.set('agent', newAgentId);
         window.location.href = url.toString();
+    }
+
+    // Unsent composer text survives an agent switch (which reloads the page).
+    // Stored in sessionStorage (this tab only), keyed per site so multisite
+    // installs on one domain don't share drafts; cleared once restored or sent.
+    function draftKey() {
+        const site = (typeof agenticChat !== 'undefined' && agenticChat.restUrl) ? agenticChat.restUrl : window.location.host;
+        return 'agentic_chat_draft:' + site;
+    }
+    function saveDraft() {
+        if (!input) return;
+        try {
+            if (input.value.trim()) {
+                sessionStorage.setItem(draftKey(), input.value);
+            } else {
+                sessionStorage.removeItem(draftKey());
+            }
+        } catch (err) {}
+    }
+    function clearDraft() {
+        try { sessionStorage.removeItem(draftKey()); } catch (err) {}
+    }
+    function restoreDraft() {
+        if (!input) return;
+        let draft = null;
+        try { draft = sessionStorage.getItem(draftKey()); } catch (err) {}
+        clearDraft();
+        if (!draft || input.value.trim()) return;
+        input.value = draft;
+        autoResize();
+        input.focus();
+        input.setSelectionRange(draft.length, draft.length);
     }
 
     // Handle form submission
@@ -868,6 +906,7 @@
         // Clear input and image
         input.value = '';
         input.style.height = 'auto';
+        clearDraft();
         clearPendingImage();
 
         // Add to history
