@@ -34,3 +34,6 @@ prompt_test_results.md
 # WP.org submission zips — build artifacts from bin/export-wporg-tree.sh, never commit
 *.zip
 /dist/
+
+# Abilities manifest signatures (generated per-install using the site key)
+abilities-signature

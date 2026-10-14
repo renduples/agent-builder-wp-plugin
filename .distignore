@@ -45,3 +45,6 @@ languages/*.po
 languages/*.mo
 languages/*.json
 SECURITY.md
+
+# Per-install HMAC signatures (written on activation with the site key).
+abilities-signature
