@@ -5,9 +5,9 @@
 | Field | Value |
 |-------|-------|
 | Slug | `assistant-trainer` |
-| Version | 1.2.1 |
+| Version | 1.2.2 |
 | Category | Developer |
-| Author | Agentic Community |
+| Author | Agent Builder |
 | Required Capabilities | `manage_options` |
 
 ## Tools

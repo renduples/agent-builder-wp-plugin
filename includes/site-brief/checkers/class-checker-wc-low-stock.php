@@ -113,7 +113,7 @@ class Checker_Wc_Low_Stock extends Site_Brief_Checker {
 					),
 					'evidence'         => implode( ', ', $names ),
 					'evidence_payload' => array( 'count' => $count ),
-					'proposed_action'  => __( 'Open Products to restock. wc_update_stock is high-risk and is not run from Site Brief.', 'agent-builder' ),
+					'proposed_action'  => __( 'Open Products to restock. Site Brief does not change stock levels.', 'agent-builder' ),
 					'action_risk'      => 'high',
 					'raw'              => array( 'count' => $count ),
 				)

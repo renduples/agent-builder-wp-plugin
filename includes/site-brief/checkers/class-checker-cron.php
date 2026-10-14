@@ -81,7 +81,7 @@ class Checker_Cron extends Site_Brief_Checker {
 					),
 					'evidence'         => __( 'Scheduled events are running late. Site Brief does not trigger cron in this version.', 'agent-builder' ),
 					'evidence_payload' => array( 'overdue' => $overdue ),
-					'proposed_action'  => __( 'Check DISABLE_WP_CRON and your host’s real cron. No write is queued.', 'agent-builder' ),
+					'proposed_action'  => __( 'Check whether WP-Cron is turned off in wp-config.php and that your host runs a real cron job. Nothing is changed.', 'agent-builder' ),
 					'action_risk'      => 'none',
 					'approve'          => array( 'type' => 'none' ),
 					'raw'              => array( 'overdue' => $overdue ),

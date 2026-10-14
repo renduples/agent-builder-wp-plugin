@@ -282,11 +282,16 @@ function TasksApp() {
 	const [ loadError, setLoadError ] = useState( '' );
 	const [ activeTab, setActiveTab ] = useState( 'active' );
 
-	// Composer state. Default the selected agent to the first accessible one so
-	// the Assign button is usable without the user re-picking an agent that is
-	// already on screen (the drawer previously opened with an empty select, which
-	// left the button disabled).
-	const [ assignAgent, setAssignAgent ] = useState( agents[0]?.id || '' );
+	// Composer state. Default the selected agent to the general-purpose
+	// WordPress Assistant (cfg.defaultAgent), falling back to the first
+	// accessible agent, so the Assign button is usable without the user
+	// re-picking an agent (the drawer previously opened with an empty select,
+	// which left the button disabled).
+	const [ assignAgent, setAssignAgent ] = useState(
+		( cfg.defaultAgent && agents.some( ( a ) => a.id === cfg.defaultAgent )
+			? cfg.defaultAgent
+			: agents[ 0 ]?.id ) || ''
+	);
 	const [ assignTask, setAssignTask ] = useState( '' );
 	const [ assigning, setAssigning ] = useState( false );
 	const [ assignError, setAssignError ] = useState( '' );

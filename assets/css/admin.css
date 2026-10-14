@@ -95,6 +95,14 @@
 	margin: 0 0 12px;
 	color: #50575e;
 }
+.agentic-site-brief-scan:focus-visible {
+	outline: 2px solid #2271b1;
+	outline-offset: 2px;
+}
+.agentic-site-brief-scan[aria-disabled="true"] {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
 .agentic-site-brief-progress {
 	display: flex;
 	align-items: flex-start;
@@ -2280,6 +2288,21 @@
 	color: #00a32a;
 	font-size: 12px;
 	margin-top: 6px;
+}
+.agentic-config-explanation .explain-quota.is-none {
+	color: #646970;
+}
+.agentic-credits-note {
+	margin: 12px 0 0;
+	font-size: 12px;
+	line-height: 1.5;
+}
+.agentic-signup-consent .agentic-consent-error {
+	margin: 8px 0 0;
+}
+.agentic-signup-consent input[aria-invalid="true"] {
+	outline: 2px solid #d63638;
+	outline-offset: 1px;
 }
 .agentic-config-explanation .explain-cost {
 	color: #a7aaad;
@@ -4743,6 +4766,12 @@ font-size: 12px; font-weight: 600;
 	align-items: center;
 	gap: 8px;
 	margin: 0 0 8px;
+}
+/* Hidden on screens that render their own per-screen toggle (see
+   render_global_mode_switch()); needed because display:flex above would
+   otherwise override the hidden attribute. */
+#agentic-global-mode-switch[hidden] {
+	display: none;
 }
 .agentic-global-mode__label {
 	font-size: 12px;

@@ -1261,6 +1261,106 @@ final class Activator {
 	}
 
 	/**
+	 * Transient that asks the next admin request to open Quick Start once.
+	 * Holds the ID of the user who activated the plugin.
+	 */
+	public const ACTIVATION_REDIRECT_TRANSIENT = 'agent_builder_activation_redirect';
+
+	/**
+	 * Bundled agents that only make sense on a WooCommerce store. They are
+	 * activated on seed only when WooCommerce is active.
+	 */
+	private const WOOCOMMERCE_AGENTS = array( 'storefront-assistant' );
+
+	/**
+	 * Remember that the plugin was just activated, so the next admin page load
+	 * can open the setup screen once.
+	 *
+	 * Never set for network-wide, bulk or WP-CLI / AJAX activations — those
+	 * keep the dismissible "Finish Setup" notice as the only reminder.
+	 *
+	 * @param bool $network_wide Whether this is a network-wide activation.
+	 * @return void
+	 */
+	public static function flag_activation_redirect( bool $network_wide = false ): void {
+		if ( $network_wide || is_network_admin() || wp_doing_ajax() || ( defined( 'WP_CLI' ) && WP_CLI ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only check; core already verified the activation request.
+		$action = isset( $_REQUEST['action'] ) ? sanitize_key( wp_unslash( $_REQUEST['action'] ) ) : '';
+		if ( 'activate-selected' === $action || isset( $_GET['activate-multi'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only check.
+			return;
+		}
+
+		set_transient( self::ACTIVATION_REDIRECT_TRANSIENT, get_current_user_id(), MINUTE_IN_SECONDS );
+	}
+
+	/**
+	 * Whether this admin request should take the one-time post-activation
+	 * redirect to the setup screen. Consumes the flag whenever it decides,
+	 * so the redirect can only ever happen once.
+	 *
+	 * @return bool
+	 */
+	public static function should_activation_redirect(): bool {
+		if ( false === get_transient( self::ACTIVATION_REDIRECT_TRANSIENT ) ) {
+			return false;
+		}
+
+		// Leave the flag for a real page view — never redirect these requests.
+		if ( wp_doing_ajax() || wp_doing_cron() || ( defined( 'WP_CLI' ) && WP_CLI ) || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
+			return false;
+		}
+
+		delete_transient( self::ACTIVATION_REDIRECT_TRANSIENT );
+
+		// Bulk activation lands on plugins.php?activate-multi=true; leave the admin there.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only check.
+		if ( is_network_admin() || isset( $_GET['activate-multi'] ) ) {
+			return false;
+		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return false;
+		}
+
+		return ! get_option( 'agent_builder_onboarding_complete' );
+	}
+
+	/**
+	 * Open Quick Start once after activation (hooked to admin_init).
+	 *
+	 * @return void
+	 */
+	public static function maybe_activation_redirect(): void {
+		if ( ! self::should_activation_redirect() ) {
+			return;
+		}
+
+		wp_safe_redirect( admin_url( 'admin.php?page=agentic-signup' ) );
+		exit;
+	}
+
+	/**
+	 * Work out the active-agents list after a seed: every bundled agent is
+	 * added, except WooCommerce-only agents on a site without WooCommerce.
+	 * Agents that are already active always stay active.
+	 *
+	 * @param string[] $bundled_slugs      Bundled agent slugs found on disk.
+	 * @param string[] $active_agents      Currently active agent slugs.
+	 * @param bool     $woocommerce_active Whether WooCommerce is active.
+	 * @return string[] New active-agents list.
+	 */
+	public static function merge_bundled_active_agents( array $bundled_slugs, array $active_agents, bool $woocommerce_active ): array {
+		if ( ! $woocommerce_active ) {
+			$bundled_slugs = array_diff( $bundled_slugs, self::WOOCOMMERCE_AGENTS );
+		}
+
+		return array_values( array_unique( array_merge( $active_agents, $bundled_slugs ) ) );
+	}
+
+	/**
 	 * Set one-time activation flags.
 	 *
 	 * @return void
@@ -1383,10 +1483,11 @@ final class Activator {
 		}
 
 		$active_agents = get_option( 'agent_builder_active_agents', array() );
-		$merged        = array_unique( array_merge( $active_agents, $bundled_slugs ) );
-		$newly_added   = array_diff( $bundled_slugs, $active_agents );
+		$active_agents = is_array( $active_agents ) ? $active_agents : array();
+		$merged        = self::merge_bundled_active_agents( $bundled_slugs, $active_agents, class_exists( 'WooCommerce' ) );
+		$newly_added   = array_diff( $merged, $active_agents );
 
-		update_option( 'agent_builder_active_agents', array_values( $merged ) );
+		update_option( 'agent_builder_active_agents', $merged );
 
 		// Generate abilities.json integrity hashes for bundled agents.
 		include_once AGENT_BUILDER_DIR . 'includes/class-abilities-manifest.php';
