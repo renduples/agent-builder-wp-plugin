@@ -69,7 +69,7 @@ class Test_Tool_Executor extends TestCase {
 		if ( ! is_dir( $dir ) ) {
 			return;
 		}
-		foreach ( glob( $dir . '/*_options.json' ) ?: array() as $file ) {
+		foreach ( glob( $dir . '/*_options.php' ) ?: array() as $file ) {
 			unlink( $file );
 		}
 	}
@@ -246,7 +246,7 @@ class Test_Tool_Executor extends TestCase {
 	public function test_allow_path_backs_up_table_before_executing_non_readonly_tool(): void {
 		update_option( 'agent_builder_approval_auto_max_risk', Risk_Level::HIGH );
 
-		$before = glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*_options.json' ) ?: array();
+		$before = glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*_options.php' ) ?: array();
 		$this->assertCount( 0, $before, 'precondition: no stale options backup from a prior test' );
 
 		$result = $this->make_executor()->execute(
@@ -260,7 +260,7 @@ class Test_Tool_Executor extends TestCase {
 		$this->assertSame( 'written-value', get_option( 'agent_builder_test_allow_opt' ) );
 		$this->assertTrue( $result['updated'] ?? false );
 
-		$after = glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*_options.json' ) ?: array();
+		$after = glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*_options.php' ) ?: array();
 		$this->assertCount( 1, $after, 'backup_tables_for_tool() should have written one options backup' );
 
 		// The write must have been logged to the operations ledger too
@@ -309,7 +309,7 @@ class Test_Tool_Executor extends TestCase {
 	 * A read-only tool never triggers a table backup, even under 'allow'.
 	 */
 	public function test_readonly_tool_never_triggers_a_backup(): void {
-		$before = glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*_options.json' ) ?: array();
+		$before = glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*_options.php' ) ?: array();
 
 		$this->make_executor()->execute(
 			'list_posts',
@@ -319,7 +319,7 @@ class Test_Tool_Executor extends TestCase {
 			'chat'
 		);
 
-		$after = glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*_options.json' ) ?: array();
+		$after = glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*_options.php' ) ?: array();
 		$this->assertSame( count( $before ), count( $after ) );
 	}
 
@@ -1156,7 +1156,7 @@ class Test_Tool_Executor extends TestCase {
 	 * before a non-readonly tool runs.
 	 */
 	public function test_execute_approved_backs_up_table_before_non_readonly_execution(): void {
-		$before = glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*_options.json' ) ?: array();
+		$before = glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*_options.php' ) ?: array();
 		$this->assertCount( 0, $before, 'precondition: no stale options backup from a prior test' );
 
 		$result = $this->make_executor()->execute_approved(
@@ -1170,7 +1170,7 @@ class Test_Tool_Executor extends TestCase {
 
 		$this->assertSame( 'backed-up', get_option( 'agent_builder_test_approved_backup_opt' ) );
 
-		$after = glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*_options.json' ) ?: array();
+		$after = glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*_options.php' ) ?: array();
 		$this->assertCount( 1, $after, 'execute_approved() must take a pre-write backup' );
 	}
 

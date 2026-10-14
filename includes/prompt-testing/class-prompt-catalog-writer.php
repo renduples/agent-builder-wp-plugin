@@ -188,7 +188,7 @@ final class Prompt_Catalog_Writer {
 			return $local;
 		}
 
-		\Agentic\File_Manager::ensure_protected_dir( dirname( $local ) );
+		\Agentic\File_Manager::ensure_protected_dir( dirname( $local ), true );
 
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Local catalog file read as data.
 		$contents = (string) file_get_contents( $path );

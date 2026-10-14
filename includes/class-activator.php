@@ -279,6 +279,10 @@ final class Activator {
 		self::maybe_add_awaiting_tool_call_id_column();
 		self::maybe_add_proposals_listener_id_column();
 		self::migrate_default_agent_mode_option();
+		// One-time (option-gated): converts plain-text backups written by
+		// older versions to the exit-guarded format — see
+		// Tool_Helpers::migrate_legacy_backups().
+		Tool_Helpers::migrate_legacy_backups();
 
 		$stored = (string) get_option( 'agent_builder_db_schema_version', '' );
 		if ( AGENT_BUILDER_DB_VERSION === $stored ) {

@@ -418,6 +418,11 @@ final class Plugin {
 				'ajaxUrl'         => admin_url( 'admin-ajax.php' ),
 				'nonce'           => wp_create_nonce( 'agentic_plugin_deactivate' ),
 				'canSendFeedback' => (bool) get_option( 'agent_builder_service_consent' ),
+				'i18n'            => array(
+					'deleteDescription'   => __( 'When you delete the plugin, conversations, logs, API keys, settings, every Agent Builder database table (including the agents and skills you created or bought), automatic backups and knowledge files are permanently removed. Agent folders you built in wp-content/agentic-agents are kept.', 'agent-builder' ),
+					'deleteConfirm'       => __( 'When you delete the plugin, all Agent Builder data, including the agents and skills you created or bought and all automatic backups, will be permanently deleted. This cannot be undone. Continue?', 'agent-builder' ),
+					'deleteConfirmButton' => __( 'Delete everything', 'agent-builder' ),
+				),
 			)
 		);
 	}

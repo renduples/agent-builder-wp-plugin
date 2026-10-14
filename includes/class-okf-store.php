@@ -65,7 +65,7 @@ class Okf_Store {
 		// Protects the whole AGENT_BUILDER_KNOWLEDGE_DIR tree (Apache/IIS config
 		// applies to subdirectories automatically), not just this one bundle
 		// — idempotent, so calling it again on every request is cheap.
-		File_Manager::ensure_protected_dir( AGENT_BUILDER_KNOWLEDGE_DIR );
+		File_Manager::ensure_protected_dir( AGENT_BUILDER_KNOWLEDGE_DIR, true );
 
 		$dir = self::bundle_dir( $agent_slug );
 		if ( ! wp_mkdir_p( $dir ) ) {
