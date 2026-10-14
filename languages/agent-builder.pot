@@ -3,13 +3,13 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Agent Builder 4.4.0\n"
-"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/agent-builder\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/agent-builder-wp-plugin\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-14T13:35:01+00:00\n"
+"POT-Creation-Date: 2026-10-14T13:53:13+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: agent-builder\n"
@@ -353,7 +353,7 @@ msgstr ""
 #: src/admin-pages/views/SkillsView.js:213
 #: src/settings-app/index.js:1718
 #: src/settings-app/index.js:2391
-#: src/tasks-app/index.js:662
+#: src/tasks-app/index.js:684
 msgid "Agent"
 msgstr ""
 
@@ -605,14 +605,14 @@ msgstr ""
 #: admin/approvals.php:219
 #: src/admin-pages/views/ApprovalsView.js:825
 #: src/shared/chat-embed.js:215
-#: src/tasks-app/index.js:1098
+#: src/tasks-app/index.js:1120
 msgid "Approve"
 msgstr ""
 
 #: admin/approvals.php:222
 #: src/admin-pages/views/ApprovalsView.js:838
 #: src/shared/chat-embed.js:223
-#: src/tasks-app/index.js:1106
+#: src/tasks-app/index.js:1128
 msgid "Reject"
 msgstr ""
 
@@ -1393,7 +1393,7 @@ msgstr ""
 #: src/admin-pages/views/SkillsView.js:363
 #: src/admin-pages/views/ToolsView.js:111
 #: src/dashboard-app/index.js:1474
-#: src/tasks-app/index.js:978
+#: src/tasks-app/index.js:1000
 msgid "Cancel"
 msgstr ""
 
@@ -1696,7 +1696,7 @@ msgstr ""
 #: admin/deployment/deployment-scheduled-tasks.php:325
 #: admin/run-task.php:94
 #: includes/class-gdpr.php:909
-#: src/tasks-app/index.js:672
+#: src/tasks-app/index.js:694
 msgid "Task"
 msgstr ""
 
@@ -3338,7 +3338,7 @@ msgstr ""
 #: src/knowledge-wizard/index.js:363
 #: src/settings-app/index.js:2724
 #: src/shared/components.js:91
-#: src/tasks-app/index.js:862
+#: src/tasks-app/index.js:884
 msgid "Loading…"
 msgstr ""
 
@@ -5290,7 +5290,7 @@ msgstr ""
 #: includes/class-admin-bar-inbox.php:56
 #: includes/class-admin-menu-handler.php:92
 #: src/dashboard-app/index.js:914
-#: src/tasks-app/index.js:637
+#: src/tasks-app/index.js:659
 msgid "Tasks"
 msgstr ""
 
@@ -5415,7 +5415,7 @@ msgid "Agent Chat"
 msgstr ""
 
 #: includes/class-admin-menu-handler.php:425
-#: src/tasks-app/index.js:644
+#: src/tasks-app/index.js:666
 msgid "Assign a task"
 msgstr ""
 
@@ -6568,8 +6568,8 @@ msgid "Are you sure?"
 msgstr ""
 
 #: includes/class-chat-assets.php:64
-#: src/tasks-app/index.js:716
-#: src/tasks-app/index.js:717
+#: src/tasks-app/index.js:738
+#: src/tasks-app/index.js:739
 msgid "Notifications"
 msgstr ""
 
@@ -6826,7 +6826,7 @@ msgid "Run ID"
 msgstr ""
 
 #: includes/class-gdpr.php:913
-#: src/tasks-app/index.js:897
+#: src/tasks-app/index.js:919
 msgid "Result"
 msgstr ""
 
@@ -9085,6 +9085,7 @@ msgid "Select a provider first to see available models."
 msgstr ""
 
 #: src/admin-list/index.js:31
+#: src/shared/result-card.js:87
 msgid "Items"
 msgstr ""
 
@@ -12131,7 +12132,7 @@ msgid "Done — change applied."
 msgstr ""
 
 #: src/shared/chat-embed.js:142
-#: src/tasks-app/index.js:1028
+#: src/tasks-app/index.js:1050
 msgid "Needs Your Approval"
 msgstr ""
 
@@ -12203,12 +12204,10 @@ msgstr ""
 msgid "Download"
 msgstr ""
 
-#: src/shared/result-card.js:85
-msgid "Listed"
-msgstr ""
-
-#: src/shared/result-card.js:89
-msgid "items"
+#. translators: 1: what was listed (e.g. Posts), 2: number of items.
+#: src/shared/result-card.js:86
+#, js-format
+msgid "%1$s (%2$d)"
 msgstr ""
 
 #: src/tasks-app/index.js:54
@@ -12265,115 +12264,115 @@ msgstr ""
 msgid "Could not load notifications."
 msgstr ""
 
-#: src/tasks-app/index.js:529
+#: src/tasks-app/index.js:551
 msgid "Choose an agent and describe the task."
 msgstr ""
 
-#: src/tasks-app/index.js:542
+#: src/tasks-app/index.js:564
 msgid "Task assigned — it will start running shortly."
 msgstr ""
 
-#: src/tasks-app/index.js:548
+#: src/tasks-app/index.js:570
 msgid "Could not assign the task."
 msgstr ""
 
-#: src/tasks-app/index.js:564
+#: src/tasks-app/index.js:586
 msgid "Could not cancel this run."
 msgstr ""
 
-#: src/tasks-app/index.js:585
+#: src/tasks-app/index.js:607
 msgid "Could not retry this run."
 msgstr ""
 
-#: src/tasks-app/index.js:606
+#: src/tasks-app/index.js:628
 msgid "Could not record that decision."
 msgstr ""
 
-#: src/tasks-app/index.js:638
+#: src/tasks-app/index.js:660
 msgid "Assign a task to an agent and it runs in the background — you’ll be pinged when it finishes or pauses for your OK."
 msgstr ""
 
-#: src/tasks-app/index.js:647
+#: src/tasks-app/index.js:669
 msgid "You can view tasks, but you don’t have permission to assign new ones."
 msgstr ""
 
-#: src/tasks-app/index.js:654
+#: src/tasks-app/index.js:676
 msgid "No agents are available to assign tasks to."
 msgstr ""
 
-#: src/tasks-app/index.js:666
+#: src/tasks-app/index.js:688
 msgid "The agent that will work on this task."
 msgstr ""
 
-#: src/tasks-app/index.js:675
+#: src/tasks-app/index.js:697
 msgid "Describe what you want the agent to do…"
 msgstr ""
 
-#: src/tasks-app/index.js:679
+#: src/tasks-app/index.js:701
 msgid "Be specific — the agent works from this description alone."
 msgstr ""
 
-#: src/tasks-app/index.js:703
+#: src/tasks-app/index.js:725
 msgid "Assigning…"
 msgstr ""
 
-#: src/tasks-app/index.js:704
+#: src/tasks-app/index.js:726
 msgid "Assign"
 msgstr ""
 
-#: src/tasks-app/index.js:728
+#: src/tasks-app/index.js:750
 msgid "Loading notifications…"
 msgstr ""
 
-#: src/tasks-app/index.js:732
+#: src/tasks-app/index.js:754
 msgid "No notifications yet."
 msgstr ""
 
-#: src/tasks-app/index.js:779
+#: src/tasks-app/index.js:801
 msgid "Runs"
 msgstr ""
 
-#: src/tasks-app/index.js:810
+#: src/tasks-app/index.js:832
 msgid "Loading tasks…"
 msgstr ""
 
-#: src/tasks-app/index.js:814
+#: src/tasks-app/index.js:836
 msgid "Nothing here."
 msgstr ""
 
-#: src/tasks-app/index.js:842
-#: src/tasks-app/index.js:883
+#: src/tasks-app/index.js:864
+#: src/tasks-app/index.js:905
 msgid "tokens"
 msgstr ""
 
-#: src/tasks-app/index.js:855
+#: src/tasks-app/index.js:877
 msgid "Run details"
 msgstr ""
 
-#: src/tasks-app/index.js:877
+#: src/tasks-app/index.js:899
 msgid "·"
 msgstr ""
 
-#: src/tasks-app/index.js:939
+#: src/tasks-app/index.js:961
 msgid "Steps"
 msgstr ""
 
-#: src/tasks-app/index.js:946
+#: src/tasks-app/index.js:968
 msgid "No steps recorded yet."
 msgstr ""
 
-#: src/tasks-app/index.js:990
+#: src/tasks-app/index.js:1012
 msgid "Retry"
 msgstr ""
 
-#: src/tasks-app/index.js:998
+#: src/tasks-app/index.js:1020
 msgid "This run is no longer available."
 msgstr ""
 
-#: src/tasks-app/index.js:1081
+#: src/tasks-app/index.js:1103
 msgid "Hide arguments"
 msgstr ""
 
-#: src/tasks-app/index.js:1082
+#: src/tasks-app/index.js:1104
 msgid "Show arguments"
 msgstr ""

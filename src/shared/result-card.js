@@ -6,7 +6,7 @@
  * a run/approval that produced a post, file, or list result normalizes to a small
  * card here. Unknown card types render nothing.
  */
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import AgenticMarkdown from '../../assets/js/agentic-markdown';
 
 const CARD_STYLE = {
@@ -81,12 +81,12 @@ function ResultCard( { card } ) {
 			);
 		}
 	} else if ( 'list' === card.type ) {
-		heading =
-			__( 'Listed', 'agent-builder' ) +
-			' ' +
-			( card.count || 0 ) +
-			' ' +
-			( card.title || __( 'items', 'agent-builder' ) ).toLowerCase();
+		heading = sprintf(
+			/* translators: 1: what was listed (e.g. Posts), 2: number of items. */
+			__( '%1$s (%2$d)', 'agent-builder' ),
+			card.title || __( 'Items', 'agent-builder' ),
+			card.count || 0
+		);
 		const items = ( card.items || [] ).slice( 0, 5 );
 		if ( items.length ) {
 			detail = (
