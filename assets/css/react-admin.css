@@ -1910,6 +1910,47 @@
 	border-bottom: 0;
 }
 
+.agentic-tasks-steps__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.agentic-tasks-steps__action {
+	font-weight: 600;
+}
+
+.agentic-tasks-steps__tools {
+	font-weight: 400;
+}
+
+.agentic-tasks-drawer__steps > summary {
+	cursor: pointer;
+	font-weight: 600;
+}
+
+.agentic-tasks-drawer__result-body {
+	padding: 12px 14px;
+	border: 1px solid #e0e0e0;
+	border-radius: 6px;
+	background: #f6f7f7;
+	line-height: 1.6;
+	overflow-wrap: anywhere;
+}
+
+.agentic-tasks-drawer__result-body > :first-child {
+	margin-top: 0;
+}
+
+.agentic-tasks-drawer__result-body > :last-child {
+	margin-bottom: 0;
+}
+
+.agentic-tasks-drawer__result-body pre {
+	overflow-x: auto;
+}
+
 .agentic-tasks-steps__action {
 	font-weight: 600;
 }

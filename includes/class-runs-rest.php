@@ -665,10 +665,69 @@ class Runs_REST {
 			if ( is_array( $decoded ) ) {
 				$row['details'] = $decoded;
 			}
+			$row = array_merge( $row, self::describe_step( $row ) );
 		}
 		unset( $row );
 
 		return $rows;
+	}
+
+	/**
+	 * Human-readable description of one run step for the Run details modal.
+	 *
+	 * Adds `label` (what happened, translated), `tools` (friendly names of the
+	 * tools involved) and `status` ('done', 'failed', 'blocked', 'waiting',
+	 * 'approved', 'rejected' or '' when the step has no outcome of its own), so
+	 * the modal can show "Used a tool: Get post" instead of "tool call".
+	 *
+	 * @param array<string, mixed> $row Audit-log row (details decoded).
+	 * @return array{label: string, tools: string[], status: string}
+	 */
+	public static function describe_step( array $row ): array {
+		$action  = (string) ( $row['action'] ?? '' );
+		$target  = (string) ( $row['target_type'] ?? '' );
+		$details = is_array( $row['details'] ?? null ) ? $row['details'] : array();
+
+		$tool_slugs = array();
+		if ( 'tool_choice' === $action ) {
+			$tool_slugs = array_filter( array_map( 'strval', (array) ( $details['tools'] ?? array() ) ) );
+		} elseif ( 0 === strpos( $action, 'tool_' ) || 0 === strpos( $action, 'proposal_' ) ) {
+			$tool_slugs = '' !== $target ? array( $target ) : array();
+		}
+		$tools = array_values( array_unique( array_map( array( Tool_Executor::class, 'friendly_tool_name' ), $tool_slugs ) ) );
+
+		$map = array(
+			'autonomous_chat_start'    => array( __( 'Started the task', 'agent-builder' ), '' ),
+			'autonomous_chat_complete' => array( __( 'Finished the task', 'agent-builder' ), 'done' ),
+			'autonomous_chat_error'    => array( __( 'The task hit an error', 'agent-builder' ), 'failed' ),
+			'tool_choice'              => array( __( 'Decided to use', 'agent-builder' ), '' ),
+			'tool_call'                => array( __( 'Used a tool', 'agent-builder' ), 'done' ),
+			'tool_blocked'             => array( __( 'Tool blocked', 'agent-builder' ), 'blocked' ),
+			'tool_execution_failed'    => array( __( 'Tool failed', 'agent-builder' ), 'failed' ),
+			'tool_error_feedback'      => array( __( 'Tool failed — the agent tried again', 'agent-builder' ), 'failed' ),
+			'tool_queued'              => array( __( 'Queued for admin approval', 'agent-builder' ), 'waiting' ),
+			'tool_confirm'             => array( __( 'Asked for your approval', 'agent-builder' ), 'waiting' ),
+			'tool_approval_consumed'   => array( __( 'Used your approval', 'agent-builder' ), 'approved' ),
+			'proposal_created'         => array( __( 'Proposed a change', 'agent-builder' ), 'waiting' ),
+			'proposal_approved'        => array( __( 'Change approved', 'agent-builder' ), 'approved' ),
+			'proposal_rejected'        => array( __( 'Change rejected', 'agent-builder' ), 'rejected' ),
+			'approval_approved'        => array( __( 'Change approved', 'agent-builder' ), 'approved' ),
+			'approval_rejected'        => array( __( 'Change rejected', 'agent-builder' ), 'rejected' ),
+			'agent_delegation'         => array( __( 'Handed off to another agent', 'agent-builder' ), '' ),
+		);
+
+		if ( isset( $map[ $action ] ) ) {
+			list( $label, $status ) = $map[ $action ];
+		} else {
+			$label  = Audit_Log::human_action( $action );
+			$status = '';
+		}
+
+		return array(
+			'label'  => $label,
+			'tools'  => $tools,
+			'status' => $status,
+		);
 	}
 
 	/**

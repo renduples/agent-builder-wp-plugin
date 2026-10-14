@@ -30,6 +30,8 @@ import {
 import { AdminPage, Panel } from '../shared/components';
 import { ContentPreview, ProposalCard } from '../shared/chat-embed';
 import { ResultCards } from '../shared/result-card';
+// Shared, escaping markdown renderer (also used by the chat surfaces).
+import AgenticMarkdown from '../../assets/js/agentic-markdown';
 
 const RUNS_PATH = 'agentic/v1/runs';
 const NOTIFICATIONS_PATH = 'agentic/v1/notifications';
@@ -68,6 +70,51 @@ const APPROVAL_SUMMARY_LABELS = {
 	post_type: __( 'Post type', 'agent-builder' ),
 	post_id: __( 'Post', 'agent-builder' ),
 };
+
+// Outcome chip for a run step (Runs_REST::describe_step() `status`), mapped
+// onto the existing run status chip colours.
+const STEP_STATUS = {
+	done: { chip: 'completed', label: __( 'Done', 'agent-builder' ) },
+	failed: { chip: 'failed', label: __( 'Failed', 'agent-builder' ) },
+	blocked: { chip: 'error', label: __( 'Blocked', 'agent-builder' ) },
+	waiting: { chip: 'waiting', label: __( 'Waiting', 'agent-builder' ) },
+	approved: { chip: 'completed', label: __( 'Approved', 'agent-builder' ) },
+	rejected: { chip: 'cancelled', label: __( 'Rejected', 'agent-builder' ) },
+};
+
+function StepItem( { step, hideReasoning } ) {
+	const tools = Array.isArray( step.tools ) ? step.tools : [];
+	const outcome = STEP_STATUS[ step.status ];
+	return (
+		<li>
+			<span className="agentic-tasks-steps__head">
+				<span className="agentic-tasks-steps__action">
+					{ step.label || humanize( step.action ) }
+					{ tools.length > 0 && (
+						<span className="agentic-tasks-steps__tools">
+							{ ': ' + tools.join( ', ' ) }
+						</span>
+					) }
+				</span>
+				{ outcome && (
+					<span
+						className={ `agentic-react-status agentic-react-status--${ outcome.chip }` }
+					>
+						{ outcome.label }
+					</span>
+				) }
+			</span>
+			<span className="agentic-tasks-steps__time">
+				{ formatTime( step.created_at ) }
+			</span>
+			{ step.reasoning && ! hideReasoning && (
+				<span className="agentic-tasks-steps__reasoning">
+					{ step.reasoning }
+				</span>
+			) }
+		</li>
+	);
+}
 
 function statusGroup( status ) {
 	if ( WAITING_STATUSES.includes( status ) ) {
@@ -564,6 +611,8 @@ function TasksApp() {
 
 	const run = drawer?.run || null;
 	const isNonTerminal = run && NON_TERMINAL.includes( run.status );
+	const resultText = String( run?.result_summary?.text || '' ).trim();
+	const steps = Array.isArray( drawer?.steps ) ? drawer.steps : [];
 	const awaiting = drawer?.awaiting || null;
 	const isApprovalAwaiting = awaiting && awaiting.action !== undefined;
 
@@ -837,6 +886,25 @@ function TasksApp() {
 								</Notice>
 							) }
 
+							{ resultText && (
+								<div className="agentic-tasks-drawer__result">
+									<h4 className="agentic-tasks-drawer__section">
+										{ __( 'Result', 'agent-builder' ) }
+									</h4>
+									<div
+										className="agentic-tasks-drawer__result-body"
+										// AgenticMarkdown escapes the text before applying
+										// its small markdown subset (scheme-checked links).
+										dangerouslySetInnerHTML={ {
+											__html: AgenticMarkdown.render(
+												resultText,
+												{ codeBlock: 'plain' }
+											),
+										} }
+									/>
+								</div>
+							) }
+
 							<ResultCards cards={ run?.result_summary?.cards } />
 
 							{ isApprovalAwaiting ? (
@@ -858,32 +926,39 @@ function TasksApp() {
 								</Notice>
 							) }
 
-							<h4 className="agentic-tasks-drawer__section">
-								{ __( 'Steps', 'agent-builder' ) }
-							</h4>
-							{ ! ( drawer.steps || [] ).length ? (
-								<p className="agentic-react-muted">
-									{ __( 'No steps recorded yet.', 'agent-builder' ) }
-								</p>
-							) : (
-								<ul className="agentic-tasks-steps">
-									{ drawer.steps.map( ( s, i ) => (
-										<li key={ s.id || i }>
-											<span className="agentic-tasks-steps__action">
-												{ humanize( s.action ) }
-											</span>
-											<span className="agentic-tasks-steps__time">
-												{ formatTime( s.created_at ) }
-											</span>
-											{ s.reasoning && (
-												<span className="agentic-tasks-steps__reasoning">
-													{ s.reasoning }
-												</span>
-											) }
-										</li>
-									) ) }
-								</ul>
-							) }
+							<details
+								className="agentic-tasks-drawer__steps"
+								open={ isNonTerminal || ! resultText }
+							>
+								<summary className="agentic-tasks-drawer__section">
+									{ __( 'Steps', 'agent-builder' ) }
+									{ steps.length > 0
+										? ` (${ steps.length })`
+										: '' }
+								</summary>
+								{ ! steps.length ? (
+									<p className="agentic-react-muted">
+										{ __(
+											'No steps recorded yet.',
+											'agent-builder'
+										) }
+									</p>
+								) : (
+									<ul className="agentic-tasks-steps">
+										{ steps.map( ( s, i ) => (
+											<StepItem
+												key={ s.id || i }
+												step={ s }
+												hideReasoning={
+													!! resultText &&
+													'autonomous_chat_complete' ===
+														s.action
+												}
+											/>
+										) ) }
+									</ul>
+								) }
+							</details>
 
 							<Flex justify="flex-end" className="agentic-tasks-drawer__actions">
 								{ isNonTerminal && (

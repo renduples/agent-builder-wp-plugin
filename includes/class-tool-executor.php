@@ -147,7 +147,7 @@ class Tool_Executor {
 	 * @param string $tool_name Tool slug.
 	 * @return string
 	 */
-	private static function friendly_tool_name( string $tool_name ): string {
+	public static function friendly_tool_name( string $tool_name ): string {
 		$label = trim( str_replace( '_', ' ', $tool_name ) );
 
 		return '' === $label ? $tool_name : ucfirst( $label );
