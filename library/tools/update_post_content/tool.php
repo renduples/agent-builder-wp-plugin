@@ -121,6 +121,10 @@ class Update_Post_Content extends \Agentic\Tool_Base {
 		}
 		if ( isset( $arguments['content'] ) ) {
 			$post_data['post_content'] = wp_kses_post( $arguments['content'] );
+			// Save block markup so the post opens as real blocks, not one Classic block.
+			if ( \Agentic\Tool_Helpers::should_save_as_blocks( $post->post_type ) ) {
+				$post_data['post_content'] = \Agentic\Tool_Helpers::to_block_markup( $post_data['post_content'] );
+			}
 		}
 		if ( isset( $arguments['excerpt'] ) ) {
 			$post_data['post_excerpt'] = sanitize_textarea_field( $arguments['excerpt'] );

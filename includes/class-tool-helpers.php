@@ -569,6 +569,211 @@ class Tool_Helpers {
 	}
 
 	/**
+	 * Whether agent-written content for this post type should be saved as block markup.
+	 *
+	 * True when the post type is edited in the block editor, so posts agents
+	 * create open as real blocks instead of a single Classic block. Filterable
+	 * via `agent_builder_save_as_blocks`.
+	 *
+	 * @param string $post_type Post type slug.
+	 * @return bool
+	 */
+	public static function should_save_as_blocks( string $post_type ): bool {
+		if ( function_exists( 'use_block_editor_for_post_type' ) ) {
+			$enabled = use_block_editor_for_post_type( $post_type );
+		} else {
+			$object  = get_post_type_object( $post_type );
+			$enabled = $object && ! empty( $object->show_in_rest ) && post_type_supports( $post_type, 'editor' );
+		}
+
+		/**
+		 * Filter whether agent-written content is converted to block markup.
+		 *
+		 * @param bool   $enabled   Whether to convert.
+		 * @param string $post_type Post type slug.
+		 */
+		return (bool) apply_filters( 'agent_builder_save_as_blocks', $enabled, $post_type );
+	}
+
+	// phpcs:disable WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Native DOMDocument/DOMNode property names (childNodes, nodeName, nodeType, textContent).
+
+	/**
+	 * Convert plain HTML (or plain text) post content into block markup.
+	 *
+	 * Content that already contains block comments is returned untouched.
+	 * Otherwise the content is run through wpautop() — mirroring how classic
+	 * content was rendered, since the_content skips wpautop once blocks are
+	 * present — and each top-level element is wrapped in a block comment:
+	 * paragraphs, headings and simple lists become core blocks; anything else
+	 * (tables, figures, attributes the core block would not reproduce) becomes
+	 * a core/html block, which the editor always accepts as valid.
+	 *
+	 * @param string $content Post content (already sanitised).
+	 * @return string Block markup.
+	 */
+	public static function to_block_markup( string $content ): string {
+		if ( '' === trim( $content ) || has_blocks( $content ) || ! class_exists( '\DOMDocument' ) ) {
+			return $content;
+		}
+
+		$html = wpautop( $content );
+
+		$dom      = new \DOMDocument();
+		$previous = libxml_use_internal_errors( true );
+		$loaded   = $dom->loadHTML( '<?xml encoding="UTF-8"><div id="agent-builder-root">' . $html . '</div>', LIBXML_HTML_NODEFDTD | LIBXML_NOERROR | LIBXML_NOWARNING );
+		libxml_clear_errors();
+		libxml_use_internal_errors( $previous );
+
+		$root = $loaded ? $dom->getElementById( 'agent-builder-root' ) : null;
+		if ( ! $root ) {
+			return $content;
+		}
+
+		$blocks = array();
+		$inline = '';
+		foreach ( iterator_to_array( $root->childNodes ) as $node ) {
+			// Stray inline content between block elements is gathered into a paragraph.
+			if ( XML_ELEMENT_NODE !== $node->nodeType || ! self::is_block_level( $node->nodeName ) ) {
+				if ( XML_COMMENT_NODE === $node->nodeType ) {
+					continue;
+				}
+				$inline .= $dom->saveHTML( $node );
+				continue;
+			}
+
+			if ( '' !== trim( $inline ) ) {
+				$blocks[] = self::paragraph_block( trim( $inline ) );
+			}
+			$inline = '';
+
+			$blocks[] = self::element_to_block( $dom, $node );
+		}
+		if ( '' !== trim( $inline ) ) {
+			$blocks[] = self::paragraph_block( trim( $inline ) );
+		}
+
+		return implode( "\n\n", $blocks );
+	}
+
+	/**
+	 * Whether a tag name is a block-level element for to_block_markup().
+	 *
+	 * @param string $tag Lower-case tag name.
+	 * @return bool
+	 */
+	private static function is_block_level( string $tag ): bool {
+		return in_array(
+			strtolower( $tag ),
+			array( 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'blockquote', 'pre', 'table', 'figure', 'hr', 'div', 'section', 'img', 'iframe', 'form', 'dl', 'address', 'details' ),
+			true
+		);
+	}
+
+	/**
+	 * Wrap one top-level element in the matching block comment.
+	 *
+	 * @param \DOMDocument $dom  Owning document.
+	 * @param \DOMElement  $node Top-level element.
+	 * @return string Block markup for the element.
+	 */
+	private static function element_to_block( \DOMDocument $dom, \DOMElement $node ): string {
+		$tag = strtolower( $node->nodeName );
+
+		// Only attribute-free elements map cleanly onto core blocks; anything
+		// carrying classes, styles or ids is kept verbatim in an HTML block.
+		if ( $node->hasAttributes() ) {
+			return self::html_block( (string) $dom->saveHTML( $node ) );
+		}
+
+		if ( 'p' === $tag ) {
+			return self::paragraph_block( self::inner_html( $dom, $node ) );
+		}
+
+		if ( preg_match( '/^h([1-6])$/', $tag, $m ) ) {
+			$level = (int) $m[1];
+			$attrs = 2 === $level ? '' : ' ' . wp_json_encode( array( 'level' => $level ) );
+			return "<!-- wp:heading{$attrs} -->\n<h{$level} class=\"wp-block-heading\">" . self::inner_html( $dom, $node ) . "</h{$level}>\n<!-- /wp:heading -->";
+		}
+
+		if ( 'ul' === $tag || 'ol' === $tag ) {
+			return self::list_block( $dom, $node );
+		}
+
+		if ( 'hr' === $tag ) {
+			return "<!-- wp:separator -->\n<hr class=\"wp-block-separator has-alpha-channel-opacity\"/>\n<!-- /wp:separator -->";
+		}
+
+		return self::html_block( (string) $dom->saveHTML( $node ) );
+	}
+
+	/**
+	 * Build a core/list block (with core/list-item inner blocks) for a simple list.
+	 *
+	 * Lists with nested lists or non-<li> children fall back to an HTML block.
+	 *
+	 * @param \DOMDocument $dom  Owning document.
+	 * @param \DOMElement  $node The <ul>/<ol> element.
+	 * @return string Block markup.
+	 */
+	private static function list_block( \DOMDocument $dom, \DOMElement $node ): string {
+		$tag   = strtolower( $node->nodeName );
+		$items = array();
+
+		foreach ( $node->childNodes as $child ) {
+			if ( XML_TEXT_NODE === $child->nodeType && '' === trim( (string) $child->textContent ) ) {
+				continue;
+			}
+			if ( XML_ELEMENT_NODE !== $child->nodeType || 'li' !== strtolower( $child->nodeName ) || $child->hasAttributes()
+				|| $child->getElementsByTagName( 'ul' )->length || $child->getElementsByTagName( 'ol' )->length ) {
+				return self::html_block( (string) $dom->saveHTML( $node ) );
+			}
+			$items[] = "<!-- wp:list-item -->\n<li>" . self::inner_html( $dom, $child ) . "</li>\n<!-- /wp:list-item -->";
+		}
+
+		// WordPress 6.6 added the wp-block-list class to the list block's saved markup.
+		$class = version_compare( (string) get_bloginfo( 'version' ), '6.6', '>=' ) ? ' class="wp-block-list"' : '';
+		$attrs = 'ol' === $tag ? ' {"ordered":true}' : '';
+
+		return "<!-- wp:list{$attrs} -->\n<{$tag}{$class}>" . implode( '', $items ) . "</{$tag}>\n<!-- /wp:list -->";
+	}
+
+	/**
+	 * Wrap inline HTML in a core/paragraph block.
+	 *
+	 * @param string $inner Paragraph inner HTML.
+	 * @return string Block markup.
+	 */
+	private static function paragraph_block( string $inner ): string {
+		return "<!-- wp:paragraph -->\n<p>" . $inner . "</p>\n<!-- /wp:paragraph -->";
+	}
+
+	/**
+	 * Wrap raw HTML in a core/html block.
+	 *
+	 * @param string $html Element HTML.
+	 * @return string Block markup.
+	 */
+	private static function html_block( string $html ): string {
+		return "<!-- wp:html -->\n" . trim( $html ) . "\n<!-- /wp:html -->";
+	}
+
+	/**
+	 * Serialise an element's children (its inner HTML).
+	 *
+	 * @param \DOMDocument $dom  Owning document.
+	 * @param \DOMNode     $node Element.
+	 * @return string Inner HTML.
+	 */
+	private static function inner_html( \DOMDocument $dom, \DOMNode $node ): string {
+		$html = '';
+		foreach ( $node->childNodes as $child ) {
+			$html .= $dom->saveHTML( $child );
+		}
+		return trim( $html );
+	}
+	// phpcs:enable WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
+
+	/**
 	 * Convert numeric AI Radar score to letter grade.
 	 *
 	 * @param int|float $score Score from 0 to 100.
