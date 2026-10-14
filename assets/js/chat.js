@@ -1242,8 +1242,10 @@
                     const isQuota = response.status === 429 || response.status === 402;
                     const msg = addMessage(data.response || agenticChat.i18n.errorGeneric, 'agent');
                     if (isQuota && msg) msg.classList.add('agentic-quota-error');
-                    if (isQuota) setLed('credits', 'error', 'Credits: exhausted \u2014 add credits or use your own API key');
+                    if (isQuota) setLed('credits', 'error', ledText('ledCreditsExhausted', 'Credits: exhausted \u2014 add credits or use your own API key'));
                 } else {
+                    aiConnected = true;
+                    setLed('ai', 'ok', ledText('ledAiConnected', 'AI service: connected'));
                     conversationHistory.push({ role: 'assistant', content: data.response });
                     saveConversation();
                     totalTokens += data.tokens_used || 0;
@@ -1269,7 +1271,8 @@
             }
         } catch (error) {
             console.error('Chat error:', error);
-            setLed('ai', 'error', 'AI service: connection failed');
+            aiConnected = false;
+            setLed('ai', 'error', ledText('ledAiFailed', 'AI service: connection failed'));
             const msg = error.name === 'AbortError'
                 ? agenticChat.i18n.errorTimeout
                 : agenticChat.i18n.errorConnection;
@@ -1400,24 +1403,43 @@
 
     // ── Chat History Panel ──
 
-    // Status LEDs (AI connectivity + credits).
+    // Status LEDs (AI connectivity + credits). Each light carries its state as
+    // a tooltip and as screen-reader text, so the dot colour is never the only
+    // signal: green = OK, amber = needs attention soon, red = blocked, grey =
+    // not known yet.
+    function ledText(key, fallback) {
+        return (agenticChat.i18n && agenticChat.i18n[key]) || fallback;
+    }
+    // Once a reply succeeds the AI light reads "connected"; a later status
+    // poll (which only knows "configured") must not downgrade it to "ready".
+    var aiConnected = false;
     function setLed(which, level, title) {
         var el = document.querySelector('.agentic-led[data-led="' + which + '"]');
         if (!el) return;
         el.classList.remove('agentic-led-ok', 'agentic-led-warn', 'agentic-led-error', 'agentic-led-unknown');
         el.classList.add('agentic-led-' + level);
-        if (title) el.title = title;
+        if (title) {
+            el.title = title;
+            var sr = el.querySelector('.agentic-led-sr');
+            if (sr) sr.textContent = title;
+        }
     }
     function applyStatusLeds(d) {
         if (!d) return;
-        if (d.configured === false) { setLed('ai', 'error', 'No AI provider configured'); }
-        else if (d.ai === 'ok') { setLed('ai', 'ok', 'AI service: connected'); }
-        else if (d.ai === 'unreachable') { setLed('ai', 'error', 'AI service: unreachable'); }
-        else { setLed('ai', 'unknown', 'AI service: unknown'); }
-        if (d.credits === 'ok') { setLed('credits', 'ok', 'Credits: OK'); }
-        else if (d.credits === 'exhausted') { setLed('credits', 'error', 'Credits: exhausted \u2014 add credits or use your own API key'); }
-        else if (d.credits === 'low') { setLed('credits', 'warn', 'Credits: running low'); }
-        else { setLed('credits', 'unknown', 'Credits: unknown'); }
+        if (d.configured === false || d.ai === 'not_configured') { aiConnected = false; setLed('ai', 'error', ledText('ledAiNotConfigured', 'AI service: not configured')); }
+        else if (aiConnected) { setLed('ai', 'ok', ledText('ledAiConnected', 'AI service: connected')); }
+        else if (d.ai === 'ready' || d.ai === 'ok') { setLed('ai', 'ok', ledText('ledAiReady', 'AI service: ready (%s)').replace('%s', d.provider_label || d.provider || '')); }
+        else if (d.ai === 'unreachable') { setLed('ai', 'error', ledText('ledAiFailed', 'AI service: connection failed')); }
+        else { setLed('ai', 'unknown', ledText('ledAiUnknown', 'AI service: status unknown')); }
+
+        // Credits only apply to the hosted service; with your own API key the
+        // light is hidden rather than left grey and meaningless.
+        var creditsEl = document.querySelector('.agentic-led[data-led="credits"]');
+        if (creditsEl) creditsEl.hidden = d.credits === 'not_applicable';
+        if (d.credits === 'ok') { setLed('credits', 'ok', ledText('ledCreditsOk', 'Credits: available')); }
+        else if (d.credits === 'exhausted') { setLed('credits', 'error', ledText('ledCreditsExhausted', 'Credits: exhausted \u2014 add credits or use your own API key')); }
+        else if (d.credits === 'low') { setLed('credits', 'warn', ledText('ledCreditsLow', 'Credits: running low')); }
+        else if (d.credits !== 'not_applicable') { setLed('credits', 'unknown', ledText('ledCreditsUnknown', 'Credits: not checked yet')); }
     }
     function fetchStatus() {
         if (typeof agenticChat === 'undefined' || !agenticChat.restUrl) return;

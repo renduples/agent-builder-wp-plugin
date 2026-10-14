@@ -68,10 +68,22 @@ function agent_builder_chat_i18n(): array {
 		'showLessContent'     => __( 'Show less', 'agent-builder' ),
 		// Live activity pane (collapsible "Working…" step list).
 		'working'             => __( 'Working…', 'agent-builder' ),
-		'workingDone'         => __( 'Working complete', 'agent-builder' ),
+		'workingDone'         => __( 'Done', 'agent-builder' ),
 		'gateConfirm'         => __( 'Waiting for approval', 'agent-builder' ),
 		'gateQueue'           => __( 'Queued for approval', 'agent-builder' ),
 		'gateBlock'           => __( 'Blocked by policy', 'agent-builder' ),
+		// Header status lights: tooltip + accessible label for each state.
+		'ledAiChecking'       => __( 'AI service: checking…', 'agent-builder' ),
+		/* translators: %s is the AI provider name, e.g. "OpenAI" */
+		'ledAiReady'          => __( 'AI service: ready (%s)', 'agent-builder' ),
+		'ledAiConnected'      => __( 'AI service: connected', 'agent-builder' ),
+		'ledAiNotConfigured'  => __( 'AI service: not configured — add a provider in Settings', 'agent-builder' ),
+		'ledAiFailed'         => __( 'AI service: connection failed', 'agent-builder' ),
+		'ledAiUnknown'        => __( 'AI service: status unknown', 'agent-builder' ),
+		'ledCreditsOk'        => __( 'Credits: available', 'agent-builder' ),
+		'ledCreditsLow'       => __( 'Credits: running low', 'agent-builder' ),
+		'ledCreditsExhausted' => __( 'Credits: exhausted — add credits or use your own API key', 'agent-builder' ),
+		'ledCreditsUnknown'   => __( 'Credits: not checked yet — shown after your first message', 'agent-builder' ),
 		// Skills UX (M15-d): Save as skill + Teach a task recording.
 		'saveAsSkill'         => __( 'Save as skill', 'agent-builder' ),
 		'teachTask'           => __( 'Teach a task', 'agent-builder' ),

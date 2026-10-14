@@ -848,13 +848,30 @@
 .agentic-led-ok {
     color: var(--ac-text-secondary);
 }
+/* Visually hidden state text for screen readers (front end may lack core's .screen-reader-text). */
+.agentic-led-sr {
+    position: absolute !important;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+.agentic-led:focus-visible {
+    outline: 2px solid var(--ac-accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
 .agentic-led-warn .agentic-led-dot {
     background: #f59e0b;
     box-shadow: 0 0 6px rgba(245, 158, 11, 0.7);
     animation: agentic-led-pulse 1.6s ease-in-out infinite;
 }
 .agentic-led-warn {
-    color: #fcd34d;
+    color: var(--ac-text-secondary);
 }
 .agentic-led-error .agentic-led-dot {
     background: #ef4444;
@@ -862,7 +879,7 @@
     animation: agentic-led-pulse 1.1s ease-in-out infinite;
 }
 .agentic-led-error {
-    color: #fca5a5;
+    color: var(--ac-text-secondary);
 }
 .agentic-led-unknown .agentic-led-dot {
     background: #6b7280;
