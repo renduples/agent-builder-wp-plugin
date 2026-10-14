@@ -7,6 +7,8 @@
 >
 > Updates then arrive in your normal WordPress update screen.
 >
+> This download is the **self-hosted build** of Agent Builder: the same plugin as the code in this repository, packaged with its libraries and an updater that checks agentic-plugin.com. When Agent Builder is listed on WordPress.org you will also be able to install it from **Plugins → Add Plugin** by searching for "Agent Builder".
+>
 > ⚠️ Don't use GitHub's green **Code → Download ZIP** button. That is the source code, not an installable plugin: it is missing required libraries and unzips under the wrong folder name.
 
 **Version:** 4.4.0

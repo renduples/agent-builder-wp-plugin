@@ -78,7 +78,7 @@ Save a conversation as a skill, teach a task by demonstrating it once, or write 
 = Automatic Installation =
 
 1. Log in to your WordPress admin dashboard.
-2. Navigate to **Plugins → Add New Plugin**.
+2. Navigate to **Plugins → Add Plugin** (**Add New Plugin** in older WordPress versions).
 3. Search for **Agent Builder**.
 4. Click **Install Now**, then click **Activate**.
 5. The Quick Start wizard will guide you through connecting your preferred AI provider in under two minutes.
@@ -86,7 +86,7 @@ Save a conversation as a skill, teach a task by demonstrating it once, or write 
 = Manual Installation =
 
 1. Download the plugin ZIP file.
-2. Go to **Plugins → Add New Plugin → Upload Plugin**.
+2. Go to **Plugins → Add Plugin → Upload Plugin**.
 3. Select the `.zip` file and click **Install Now**.
 4. Activate the plugin through the WordPress Plugins menu.
 5. Navigate to **Agent Builder → Settings** to connect your LLM provider.
@@ -343,6 +343,14 @@ If you create approval rules, each tool call an agent proposes is also checked a
 == Changelog ==
 
 = 4.4.0 - 2026-10-01 =
+* Safer backups: automatic pre-change backups are now private on every web server (guarded files with random names), existing backups are converted on upgrade, and Site Health warns if backup or knowledge files can be read from the web.
+* Uninstall with "Delete all plugin data" now also removes the backup and knowledge folders.
+* Activation opens Quick Start; the plugins list gains Settings and Finish setup links.
+* Approval cards show a preview of the content you are approving.
+* Tasks: notifications and badges update live; run details show the result first, with readable steps.
+* Posts written by agents are saved as blocks, so they open as normal blocks in the editor.
+* Chat keeps your typed message when you switch agent, the message box stays on screen, and the AI and Credits indicators explain their state.
+* Dashboard shows "Not scanned yet" until the first Agent-Ready scan instead of a misleading score; Site Brief and setup wording is clearer.
 * Hosted Agentic AI sign-up now records which version of the Terms of Service the administrator accepted, and the sign-up request is refused unless both the Terms and Privacy Policy boxes are ticked.
 * New Tasks screen: hand a job to an agent and it runs in the background — low-risk steps happen automatically, anything that needs your judgement waits under "Waiting on you".
 * Autonomous tasks: agents now run approved low-risk tools on their own, pausing only when a step needs your OK.
