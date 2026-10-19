@@ -50,7 +50,7 @@ class Enable_Webmcp_Defaults extends \Agentic\Tool_Base {
 	}
 
 	public function get_description(): string {
-		return 'Expose a small, curated set of genuinely public-safe, readonly tools (search_content, and the WooCommerce browsing/cart-reading tools where WooCommerce is active) to the WebMCP frontend surface. Never overwrites a tool the site owner already explicitly opted out (webmcp_expose:false), and never expands this list to arbitrary readonly/low-risk tools.';
+		return 'Expose a small, curated set of genuinely public-safe, readonly tools (search_content, and the WooCommerce browsing/cart-reading tools where WooCommerce is active) to the WebMCP frontend surface, and turn the WebMCP Bridge on if it is off (exposed tools do nothing while it is off). Never overwrites a tool the site owner already explicitly opted out (webmcp_expose:false), and never expands this list to arbitrary readonly/low-risk tools.';
 	}
 
 	public function get_category(): string {
@@ -69,6 +69,14 @@ class Enable_Webmcp_Defaults extends \Agentic\Tool_Base {
 	}
 
 	public function execute( array $arguments ): array {
+		// Exposed tools are only served while the bridge is on, so the
+		// defaults include switching it on.
+		$bridge_enabled = false;
+		if ( ! \Agentic\Webmcp_Bridge::is_enabled() ) {
+			update_option( \Agentic\Webmcp_Bridge::OPTION_ENABLED, '1', true );
+			$bridge_enabled = true;
+		}
+
 		$slugs = class_exists( '\\Agentic_Agent_Registry' )
 			? array_keys( \Agentic_Agent_Registry::get_instance()->get_all_instances() )
 			: array();
@@ -140,6 +148,7 @@ class Enable_Webmcp_Defaults extends \Agentic\Tool_Base {
 				'updated_agents' => $updated_agents,
 				'exposed_tools'  => $exposed_tools,
 				'skipped_agents' => $skipped,
+				'bridge_enabled' => $bridge_enabled,
 			)
 		);
 	}

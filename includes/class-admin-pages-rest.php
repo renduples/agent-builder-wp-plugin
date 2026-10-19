@@ -512,6 +512,20 @@ class Admin_Pages_REST {
 		$executor  = new Tool_Executor( Tool_Loader::get_instance(), new Audit_Log() );
 		$result    = $executor->execute( $tool_name, $arguments, 'agent-ready-score', 'autonomous', 'admin_action' );
 
+		// The executor can block, queue or park a tool instead of running it.
+		// Say so rather than reporting success while nothing changed.
+		if ( ! is_array( $result ) || empty( $result['success'] ) ) {
+			$message = is_array( $result ) ? (string) ( $result['error'] ?? $result['message'] ?? '' ) : '';
+			return new \WP_Error(
+				'fix_not_applied',
+				'' !== $message
+					/* translators: %s: reason the fix did not run. */
+					? sprintf( __( 'The fix was not applied: %s', 'agent-builder' ), $message )
+					: __( 'The fix was not applied.', 'agent-builder' ),
+				array( 'status' => 422 )
+			);
+		}
+
 		return new \WP_REST_Response(
 			array(
 				'result' => $result,
