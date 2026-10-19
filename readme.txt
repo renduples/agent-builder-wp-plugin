@@ -349,6 +349,7 @@ If you create approval rules, each tool call an agent proposes is also checked a
 * Approval cards show a preview of the content you are approving.
 * Tasks: notifications and badges update live; run details show the result first, with readable steps.
 * Posts written by agents are saved as blocks, so they open as normal blocks in the editor.
+* Site Passport: "Fix now" on the WebMCP check now turns the WebMCP Bridge on; a fix that cannot run says why, and "Fix now" is only offered where it can help.
 * Chat keeps your typed message when you switch agent, the message box stays on screen, and the AI and Credits indicators explain their state.
 * Dashboard shows "Not scanned yet" until the first Agent-Ready scan instead of a misleading score; Site Brief and setup wording is clearer.
 * Hosted Agentic AI sign-up now records which version of the Terms of Service the administrator accepted, and the sign-up request is refused unless both the Terms and Privacy Policy boxes are ticked.

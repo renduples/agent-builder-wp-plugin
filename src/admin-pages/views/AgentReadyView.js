@@ -77,6 +77,7 @@ const FIX_TOOL_FOR_CHECK = {
 function AgentReadyView( { data, reload } ) {
 	const [ applying, setApplying ] = useState( '' );
 	const [ error, setError ] = useState( '' );
+	const [ notice, setNotice ] = useState( '' );
 	const score = data.score || {};
 	const categories = score.categories || {};
 
@@ -87,13 +88,28 @@ function AgentReadyView( { data, reload } ) {
 		}
 		setApplying( checkId );
 		setError( '' );
+		setNotice( '' );
 		const args = 'well_known_manifest' === checkId ? { enabled: true } : {};
 		apiFetch( {
 			path: 'agentic/v1/admin-page',
 			method: 'POST',
 			data: { action_name: 'apply_free_fix', tool_name: toolName, arguments: args },
 		} )
-			.then( () => reload( { silent: true } ) )
+			.then( ( res ) => {
+				// The response carries a fresh score: if the check still does
+				// not pass, say why instead of silently showing the same row.
+				const after = res?.score?.categories?.[ checkId ];
+				if ( after && 'pass' !== after.status ) {
+					setNotice(
+						sprintf(
+							/* translators: %s: why the check still fails. */
+							__( 'The fix ran, but this check still needs attention: %s', 'agent-builder' ),
+							after.detail || ''
+						)
+					);
+				}
+				return reload( { silent: true } );
+			} )
 			.catch( ( e ) => setError( e.message || __( 'Could not apply that fix.', 'agent-builder' ) ) )
 			.finally( () => setApplying( '' ) );
 	};
@@ -143,6 +159,11 @@ function AgentReadyView( { data, reload } ) {
 			{ error && (
 				<Notice status="error" isDismissible onRemove={ () => setError( '' ) }>
 					{ error }
+				</Notice>
+			) }
+			{ notice && ! error && (
+				<Notice status="warning" isDismissible onRemove={ () => setNotice( '' ) }>
+					{ notice }
 				</Notice>
 			) }
 

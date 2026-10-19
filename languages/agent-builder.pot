@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-14T13:53:13+00:00\n"
+"POT-Creation-Date: 2026-10-19T09:49:15+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: agent-builder\n"
@@ -168,7 +168,7 @@ msgstr[1] ""
 #: includes/admin-pages/class-tools-payload.php:24
 #: includes/class-admin-menu-handler.php:131
 #: includes/class-admin-menu-handler.php:437
-#: includes/class-admin-menu-handler.php:1046
+#: includes/class-admin-menu-handler.php:1048
 #: includes/class-admin-settings-rest.php:192
 #: src/settings-app/index.js:1631
 msgid "Agents"
@@ -194,7 +194,7 @@ msgstr ""
 #: admin/signup.php:276
 #: admin/train-data.php:84
 #: admin/train-data.php:118
-#: includes/class-admin-menu-handler.php:1280
+#: includes/class-admin-menu-handler.php:1282
 #: includes/class-admin-settings-rest.php:216
 #: src/dashboard-app/index.js:1586
 #: src/interface-settings/index.js:182
@@ -211,7 +211,7 @@ msgstr ""
 #: admin/signup.php:280
 #: admin/train-data.php:87
 #: admin/train-data.php:121
-#: includes/class-admin-menu-handler.php:1283
+#: includes/class-admin-menu-handler.php:1285
 #: includes/class-admin-settings-rest.php:221
 #: src/dashboard-app/index.js:414
 #: src/dashboard-app/index.js:1416
@@ -344,7 +344,7 @@ msgstr ""
 #: includes/class-gdpr.php:776
 #: includes/class-gdpr.php:901
 #: includes/class-skill-drafter.php:401
-#: src/admin-pages/views/AgentReadyView.js:206
+#: src/admin-pages/views/AgentReadyView.js:227
 #: src/admin-pages/views/AgentsView.js:533
 #: src/admin-pages/views/ApprovalsView.js:713
 #: src/admin-pages/views/RoutinesView.js:444
@@ -880,7 +880,7 @@ msgstr ""
 #: includes/admin-pages/class-tools-payload.php:237
 #: includes/class-admin-menu-handler.php:215
 #: includes/class-admin-menu-handler.php:474
-#: includes/class-admin-menu-handler.php:1060
+#: includes/class-admin-menu-handler.php:1062
 #: src/admin-pages/index.js:120
 #: src/admin-pages/views/SafetyCenterView.js:805
 #: src/agent-wizard/index.js:766
@@ -2762,7 +2762,7 @@ msgstr ""
 
 #. translators: %s: link to Terms of Service
 #: admin/settings-llm.php:272
-#: includes/class-admin-menu-handler.php:1556
+#: includes/class-admin-menu-handler.php:1558
 #: src/admin-pages/views/AdminPageFooter.js:41
 #: src/dashboard-app/index.js:615
 #: src/settings-app/index.js:109
@@ -2872,7 +2872,7 @@ msgstr ""
 #: includes/class-admin-menu-handler.php:300
 #: includes/class-admin-menu-handler.php:495
 #: includes/class-admin-menu-handler.php:805
-#: includes/class-admin-menu-handler.php:1096
+#: includes/class-admin-menu-handler.php:1098
 #: includes/class-admin-notice-manager.php:147
 #: src/settings-app/index.js:2992
 msgid "Settings"
@@ -3023,7 +3023,7 @@ msgid "Off by default. Bring-your-own-key providers work without this. Enable on
 msgstr ""
 
 #: admin/settings/tab-security.php:335
-#: src/admin-pages/views/AgentReadyView.js:207
+#: src/admin-pages/views/AgentReadyView.js:228
 #: src/admin-pages/views/ToolsView.js:516
 msgid "Tool"
 msgstr ""
@@ -3500,7 +3500,7 @@ msgstr ""
 #: includes/admin-pages/class-skills-payload.php:96
 #: includes/class-admin-menu-handler.php:227
 #: includes/class-admin-menu-handler.php:481
-#: includes/class-admin-menu-handler.php:1066
+#: includes/class-admin-menu-handler.php:1068
 msgid "Skills"
 msgstr ""
 
@@ -4028,7 +4028,7 @@ msgid "No tools found. Activate agents to see their available tools."
 msgstr ""
 
 #: admin/tools.php:401
-#: src/admin-pages/views/AgentReadyView.js:178
+#: src/admin-pages/views/AgentReadyView.js:199
 #: src/admin-pages/views/ToolsView.js:519
 #: src/agent-wizard/index.js:450
 #: src/agent-wizard/index.js:743
@@ -4275,7 +4275,7 @@ msgstr ""
 #: includes/admin-pages/class-train-payload.php:35
 #: includes/class-admin-menu-handler.php:206
 #: includes/class-admin-menu-handler.php:443
-#: includes/class-admin-menu-handler.php:1074
+#: includes/class-admin-menu-handler.php:1076
 #: src/agent-wizard/index.js:34
 #: src/agent-wizard/index.js:774
 #: src/settings-app/index.js:347
@@ -4965,7 +4965,7 @@ msgid "Tool list blocked if manifest signature fails."
 msgstr ""
 
 #: includes/admin-pages/class-safety-center-payload.php:151
-#: includes/class-admin-menu-handler.php:1503
+#: includes/class-admin-menu-handler.php:1505
 msgid "Safety Center summarizes existing operator controls. It does not change how tools, approvals, or Emergency Stop work."
 msgstr ""
 
@@ -5156,11 +5156,11 @@ msgstr ""
 #: includes/class-admin-ajax.php:595
 #: includes/class-admin-ajax.php:1305
 #: includes/class-admin-ajax.php:1400
-#: includes/class-admin-pages-rest.php:705
-#: includes/class-admin-pages-rest.php:794
-#: includes/class-admin-pages-rest.php:849
-#: includes/class-admin-pages-rest.php:1245
-#: includes/class-admin-pages-rest.php:1474
+#: includes/class-admin-pages-rest.php:719
+#: includes/class-admin-pages-rest.php:808
+#: includes/class-admin-pages-rest.php:863
+#: includes/class-admin-pages-rest.php:1259
+#: includes/class-admin-pages-rest.php:1488
 #: includes/class-okf-admin.php:52
 #: includes/class-runs-rest.php:351
 #: includes/class-runs-rest.php:391
@@ -5213,7 +5213,7 @@ msgid "run_wp_cli tool not found. Visit the Tools page first."
 msgstr ""
 
 #: includes/class-admin-ajax.php:603
-#: includes/class-admin-pages-rest.php:1096
+#: includes/class-admin-pages-rest.php:1110
 msgid "Missing agent slug."
 msgstr ""
 
@@ -5322,7 +5322,7 @@ msgid "Agent Builder — Dashboard"
 msgstr ""
 
 #: includes/class-admin-menu-handler.php:74
-#: includes/class-admin-menu-handler.php:1039
+#: includes/class-admin-menu-handler.php:1041
 #: includes/class-admin-surfaces.php:129
 msgid "Dashboard"
 msgstr ""
@@ -5410,7 +5410,7 @@ msgid "Agent Builder — Get Started"
 msgstr ""
 
 #: includes/class-admin-menu-handler.php:419
-#: includes/class-admin-menu-handler.php:1859
+#: includes/class-admin-menu-handler.php:1861
 msgid "Agent Chat"
 msgstr ""
 
@@ -5431,202 +5431,202 @@ msgstr ""
 msgid "You do not have permission to change update settings."
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:813
+#: includes/class-admin-menu-handler.php:815
 msgid "Finish setup"
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:961
+#: includes/class-admin-menu-handler.php:963
 msgid "This Agent Builder page doesn't exist"
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:962
+#: includes/class-admin-menu-handler.php:964
 msgid "That page is not part of Agent Builder. It may have been removed or renamed."
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:963
-#: includes/class-admin-menu-handler.php:984
+#: includes/class-admin-menu-handler.php:965
+#: includes/class-admin-menu-handler.php:986
 msgid "Back to the Agent Builder dashboard"
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:968
+#: includes/class-admin-menu-handler.php:970
 msgid "Page not found"
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:981
+#: includes/class-admin-menu-handler.php:983
 msgid "Connect an AI provider to unlock this screen"
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:982
+#: includes/class-admin-menu-handler.php:984
 msgid "This Agent Builder screen becomes available once an AI provider is connected. Connecting takes about a minute and unlocks agents, chat, and knowledge."
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:983
+#: includes/class-admin-menu-handler.php:985
 msgid "Go to Quick Start"
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:989
+#: includes/class-admin-menu-handler.php:991
 #: includes/class-dashboard-rest.php:280
 msgid "Connect an AI provider"
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:1004
-#: includes/class-admin-menu-handler.php:1019
+#: includes/class-admin-menu-handler.php:1006
+#: includes/class-admin-menu-handler.php:1021
 msgid "Administrator access required"
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:1005
+#: includes/class-admin-menu-handler.php:1007
 msgid "Agent Builder can only be set up and managed by a site administrator. Your account does not have the required permissions, so we cannot continue here."
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:1006
+#: includes/class-admin-menu-handler.php:1008
 msgid "Please sign in with an administrator account, or ask a user with administrator access to complete the setup."
 msgstr ""
 
 #. translators: %s: site administrator email address, rendered as a mailto link.
-#: includes/class-admin-menu-handler.php:1010
+#: includes/class-admin-menu-handler.php:1012
 #, php-format
 msgid "Need help? Contact your site administrator at %s."
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:1014
+#: includes/class-admin-menu-handler.php:1016
 msgid "Back to the WordPress dashboard"
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:1053
+#: includes/class-admin-menu-handler.php:1055
 msgid "Tools & Skills"
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:1081
+#: includes/class-admin-menu-handler.php:1083
 msgid "Logs"
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:1088
+#: includes/class-admin-menu-handler.php:1090
 msgid "Providers & Keys"
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:1187
+#: includes/class-admin-menu-handler.php:1189
 msgid "Agent Builder sections"
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:1276
+#: includes/class-admin-menu-handler.php:1278
 msgid "Site-wide interface mode"
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:1277
+#: includes/class-admin-menu-handler.php:1279
 msgid "Site-wide"
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:1486
+#: includes/class-admin-menu-handler.php:1488
 #: src/settings-app/index.js:78
 msgid "Settings control how agents behave on this site. Changes are stored locally and take effect for new conversations."
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:1488
+#: includes/class-admin-menu-handler.php:1490
 msgid "The dashboard summarizes agents, approvals, activity, and providers at a glance. Open any card's own page for full control."
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:1490
+#: includes/class-admin-menu-handler.php:1492
 #: src/admin-pages/views/AdminPageFooter.js:10
 msgid "Agents only use the tools you allow. Higher-risk actions still follow Approvals and your safety settings."
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:1492
+#: includes/class-admin-menu-handler.php:1494
 msgid "Knowledge stays on your site for the free wiki; hosted vector features require Agent Builder Pro."
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:1494
+#: includes/class-admin-menu-handler.php:1496
 msgid "Per-agent instructions shape tone and greetings. Site-wide knowledge belongs in the Knowledge Wiki."
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:1496
+#: includes/class-admin-menu-handler.php:1498
 msgid "Local memory is optional and site-owned. Turn it off if you prefer agents not to retain short notes across chats."
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:1499
+#: includes/class-admin-menu-handler.php:1501
 msgid "Approvals keep high-risk tool calls under human control before they change your site."
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:1501
+#: includes/class-admin-menu-handler.php:1503
 msgid "Assign a task and the agent runs it in the background — you'll be pinged when it finishes or pauses for your OK."
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:1505
+#: includes/class-admin-menu-handler.php:1507
 msgid "Activity helps you understand what agents did. Logs are local; retention follows your Security settings."
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:1508
+#: includes/class-admin-menu-handler.php:1510
 msgid "Interface settings change how chat looks and how agents address people. Theme applies to admin and frontend chat."
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:1509
+#: includes/class-admin-menu-handler.php:1511
 msgid "Agent chat features apply site-wide. Per-agent provider/model overrides only when needed. Emergency stop deactivates all agents."
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:1510
+#: includes/class-admin-menu-handler.php:1512
 msgid "API keys stay on your site. Only connected providers can be set as the site default."
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:1511
+#: includes/class-admin-menu-handler.php:1513
 msgid "Role privileges control who can administer the plugin and chat with agents. Administrators always retain full access."
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:1512
+#: includes/class-admin-menu-handler.php:1514
 msgid "Security settings include consent, retention, scanning, and request rate limits. Review Approvals for high-risk actions."
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:1513
+#: includes/class-admin-menu-handler.php:1515
 msgid "Advanced integrations and API endpoints. Prefer connected providers on the Providers tab for everyday use."
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:1547
+#: includes/class-admin-menu-handler.php:1549
 #: src/admin-pages/views/AdminPageFooter.js:23
 #: src/dashboard-app/index.js:593
 #: src/settings-app/index.js:91
 msgid "Need help?"
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:1548
+#: includes/class-admin-menu-handler.php:1550
 #: src/admin-pages/views/AdminPageFooter.js:25
 #: src/dashboard-app/index.js:599
 #: src/settings-app/index.js:93
 msgid "Visit our Support Center"
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:1550
+#: includes/class-admin-menu-handler.php:1552
 #: src/admin-pages/views/AdminPageFooter.js:29
 #: src/dashboard-app/index.js:603
 #: src/settings-app/index.js:97
 msgid "Documentation"
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:1558
+#: includes/class-admin-menu-handler.php:1560
 #: src/admin-pages/views/AdminPageFooter.js:52
 #: src/dashboard-app/index.js:626
 #: src/settings-app/index.js:120
 msgid "Privacy Policy"
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:1560
+#: includes/class-admin-menu-handler.php:1562
 #: src/admin-pages/views/AdminPageFooter.js:62
 #: src/dashboard-app/index.js:636
 #: src/settings-app/index.js:130
 msgid "GDPR Policy"
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:1859
+#: includes/class-admin-menu-handler.php:1861
 #: assets/js/gutenberg-blocks.js:160
 msgid "Online"
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:1873
+#: includes/class-admin-menu-handler.php:1875
 msgid "Manage Agent Deployments"
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:1902
+#: includes/class-admin-menu-handler.php:1904
 msgid "Per-agent override (Settings → Agents)"
 msgstr ""
 
-#: includes/class-admin-menu-handler.php:1903
+#: includes/class-admin-menu-handler.php:1905
 msgid "Site default (Settings → Providers)"
 msgstr ""
 
@@ -5736,100 +5736,110 @@ msgstr ""
 msgid "Unknown fix."
 msgstr ""
 
-#: includes/class-admin-pages-rest.php:538
+#. translators: %s: reason the fix did not run.
+#: includes/class-admin-pages-rest.php:523
+#, php-format
+msgid "The fix was not applied: %s"
+msgstr ""
+
+#: includes/class-admin-pages-rest.php:524
+msgid "The fix was not applied."
+msgstr ""
+
+#: includes/class-admin-pages-rest.php:552
 msgid "Unknown agent or tool."
 msgstr ""
 
-#: includes/class-admin-pages-rest.php:553
+#: includes/class-admin-pages-rest.php:567
 msgid "This tool's risk is too high to expose to WebMCP."
 msgstr ""
 
-#: includes/class-admin-pages-rest.php:563
+#: includes/class-admin-pages-rest.php:577
 msgid "This agent's manifest file is not writable."
 msgstr ""
 
-#: includes/class-admin-pages-rest.php:602
+#: includes/class-admin-pages-rest.php:616
 msgid "Unknown provider."
 msgstr ""
 
-#: includes/class-admin-pages-rest.php:614
+#: includes/class-admin-pages-rest.php:628
 msgid "No API key configured for this provider."
 msgstr ""
 
-#: includes/class-admin-pages-rest.php:672
+#: includes/class-admin-pages-rest.php:686
 msgid "Connected successfully."
 msgstr ""
 
 #. translators: %d: HTTP status code.
-#: includes/class-admin-pages-rest.php:681
+#: includes/class-admin-pages-rest.php:695
 #, php-format
 msgid "Connection failed (HTTP %d)."
 msgstr ""
 
-#: includes/class-admin-pages-rest.php:724
+#: includes/class-admin-pages-rest.php:738
 msgid "Please confirm you accept the increased risk for “Trust more”."
 msgstr ""
 
-#: includes/class-admin-pages-rest.php:730
+#: includes/class-admin-pages-rest.php:744
 msgid "Enter a valid email address."
 msgstr ""
 
-#: includes/class-admin-pages-rest.php:799
-#: includes/class-admin-pages-rest.php:857
+#: includes/class-admin-pages-rest.php:813
+#: includes/class-admin-pages-rest.php:871
 msgid "Invalid approval request."
 msgstr ""
 
-#: includes/class-admin-pages-rest.php:970
+#: includes/class-admin-pages-rest.php:984
 msgid "Security check failed. Please reload the Activity page and try exporting again."
 msgstr ""
 
-#: includes/class-admin-pages-rest.php:973
+#: includes/class-admin-pages-rest.php:987
 msgid "You do not have permission to export logs."
 msgstr ""
 
-#: includes/class-admin-pages-rest.php:1050
+#: includes/class-admin-pages-rest.php:1064
 msgid "Security check failed. Please reload the Skills page and try exporting again."
 msgstr ""
 
-#: includes/class-admin-pages-rest.php:1053
+#: includes/class-admin-pages-rest.php:1067
 msgid "You do not have permission to export skills."
 msgstr ""
 
-#: includes/class-admin-pages-rest.php:1060
+#: includes/class-admin-pages-rest.php:1074
 msgid "Skill not found."
 msgstr ""
 
-#: includes/class-admin-pages-rest.php:1088
+#: includes/class-admin-pages-rest.php:1102
 msgid "Security check failed. Please reload the Agents page and try exporting again."
 msgstr ""
 
-#: includes/class-admin-pages-rest.php:1091
+#: includes/class-admin-pages-rest.php:1105
 msgid "You do not have permission to export agents."
 msgstr ""
 
-#: includes/class-admin-pages-rest.php:1146
+#: includes/class-admin-pages-rest.php:1160
 msgid "Security check failed. Please reload the Skills page and try importing again."
 msgstr ""
 
-#: includes/class-admin-pages-rest.php:1149
+#: includes/class-admin-pages-rest.php:1163
 msgid "You do not have permission to import skills."
 msgstr ""
 
-#: includes/class-admin-pages-rest.php:1274
-#: includes/class-admin-pages-rest.php:1278
+#: includes/class-admin-pages-rest.php:1288
+#: includes/class-admin-pages-rest.php:1292
 #: includes/class-relay-connect.php:327
 msgid "Unknown agent."
 msgstr ""
 
-#: includes/class-admin-pages-rest.php:1418
+#: includes/class-admin-pages-rest.php:1432
 msgid "No agents to reorder."
 msgstr ""
 
-#: includes/class-admin-pages-rest.php:1506
+#: includes/class-admin-pages-rest.php:1520
 msgid "You do not have permission to import agents."
 msgstr ""
 
-#: includes/class-admin-pages-rest.php:1510
+#: includes/class-admin-pages-rest.php:1524
 msgid "Security check failed. Please reload the Agents page and try importing again."
 msgstr ""
 
@@ -6478,7 +6488,7 @@ msgid "An AI agent wants to make a change that needs your OK before it runs."
 msgstr ""
 
 #: includes/class-approval-queue.php:274
-#: src/admin-pages/views/AgentReadyView.js:209
+#: src/admin-pages/views/AgentReadyView.js:230
 #: src/admin-pages/views/ToolsView.js:526
 msgid "Risk"
 msgstr ""
@@ -9169,64 +9179,70 @@ msgstr ""
 msgid "No one-click fix yet."
 msgstr ""
 
-#: src/admin-pages/views/AgentReadyView.js:97
-msgid "Could not apply that fix."
+#. translators: %s: why the check still fails.
+#: src/admin-pages/views/AgentReadyView.js:106
+#, js-format
+msgid "The fix ran, but this check still needs attention: %s"
 msgstr ""
 
 #: src/admin-pages/views/AgentReadyView.js:113
+msgid "Could not apply that fix."
+msgstr ""
+
+#: src/admin-pages/views/AgentReadyView.js:129
 msgid "Could not change that setting."
 msgstr ""
 
-#: src/admin-pages/views/AgentReadyView.js:126
+#: src/admin-pages/views/AgentReadyView.js:142
 msgid "Could not submit to the directory."
 msgstr ""
 
-#: src/admin-pages/views/AgentReadyView.js:138
+#: src/admin-pages/views/AgentReadyView.js:154
 msgid "Could not change exposure."
 msgstr ""
 
-#: src/admin-pages/views/AgentReadyView.js:158
+#: src/admin-pages/views/AgentReadyView.js:179
 msgid "Let AI agents access my site (turn on the WebMCP Bridge)"
 msgstr ""
 
-#: src/admin-pages/views/AgentReadyView.js:166
+#: src/admin-pages/views/AgentReadyView.js:187
 msgid "Submit to Directory"
 msgstr ""
 
-#: src/admin-pages/views/AgentReadyView.js:172
+#: src/admin-pages/views/AgentReadyView.js:193
 msgid "All checks"
 msgstr ""
 
-#: src/admin-pages/views/AgentReadyView.js:177
+#: src/admin-pages/views/AgentReadyView.js:198
 msgid "Check"
 msgstr ""
 
-#: src/admin-pages/views/AgentReadyView.js:179
+#: src/admin-pages/views/AgentReadyView.js:200
 msgid "Score"
 msgstr ""
 
-#: src/admin-pages/views/AgentReadyView.js:180
+#: src/admin-pages/views/AgentReadyView.js:201
 msgid "Detail"
 msgstr ""
 
-#: src/admin-pages/views/AgentReadyView.js:196
+#: src/admin-pages/views/AgentReadyView.js:217
 msgid "WebMCP tool exposure"
 msgstr ""
 
-#: src/admin-pages/views/AgentReadyView.js:199
+#: src/admin-pages/views/AgentReadyView.js:220
 msgid "No tools are currently exposed to agents via WebMCP."
 msgstr ""
 
-#: src/admin-pages/views/AgentReadyView.js:208
+#: src/admin-pages/views/AgentReadyView.js:229
 msgid "Context"
 msgstr ""
 
-#: src/admin-pages/views/AgentReadyView.js:210
+#: src/admin-pages/views/AgentReadyView.js:231
 msgid "Exposed"
 msgstr ""
 
 #. translators: 1: submission status, 2: date.
-#: src/admin-pages/views/AgentReadyView.js:237
+#: src/admin-pages/views/AgentReadyView.js:258
 #, js-format
 msgid "Directory submission: %1$s (%2$s)"
 msgstr ""

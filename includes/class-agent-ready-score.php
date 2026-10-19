@@ -247,11 +247,11 @@ class Agent_Ready_Score {
 		}
 
 		if ( empty( $all_slugs ) ) {
-			return self::result( 0, 'Capability exposure', 'high', true, 'No agents are active yet.' );
+			return self::result( 0, 'Capability exposure', 'high', false, 'No agents are active yet.' );
 		}
 
 		if ( ! class_exists( '\\Agentic_Relay_Connect' ) ) {
-			return self::result( 0, 'Capability exposure', 'high', true, 'MCP relay unavailable.' );
+			return self::result( 0, 'Capability exposure', 'high', false, 'MCP relay unavailable.' );
 		}
 
 		$slugs = array_values( array_filter( $all_slugs, array( '\\Agentic_Relay_Connect', 'is_mcp_enabled' ) ) );
@@ -262,11 +262,19 @@ class Agent_Ready_Score {
 
 		$ready_count  = 0;
 		$worst_reason = '';
+		$resignable   = false;
 		foreach ( $slugs as $slug ) {
 			$readiness = \Agentic_Relay_Connect::mcp_readiness( $slug );
 			if ( ! empty( $readiness['ready'] ) ) {
 				++$ready_count;
-			} elseif ( '' === $worst_reason ) {
+				continue;
+			}
+			// The one-click fix re-signs manifests, so it only helps when a
+			// signature mismatch is what blocks the agent.
+			if ( ! \Agentic\Abilities_Manifest::verify_integrity( $slug ) ) {
+				$resignable = true;
+			}
+			if ( '' === $worst_reason ) {
 				$worst_reason = sprintf( '%s: %s', $slug, $readiness['reason'] ?? 'Not ready.' );
 			}
 		}
@@ -276,7 +284,7 @@ class Agent_Ready_Score {
 			? sprintf( 'All %d agent(s) with MCP enabled expose a working server.', count( $slugs ) )
 			: $worst_reason;
 
-		return self::result( $score, 'Capability exposure', 'high', true, $detail );
+		return self::result( $score, 'Capability exposure', 'high', 100 === $score || $resignable, $detail );
 	}
 
 	/**
