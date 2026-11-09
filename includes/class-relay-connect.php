@@ -10,7 +10,7 @@
  * this class has no outbound connection to any Agentic-owned server at all.
  *
  * (An earlier version of this class also ran an auto-connect flow that
- * minted an Application Password and POSTed it to mcp.agentic-plugin.com on
+ * minted an Application Password and POSTed it to an Agentic-owned relay on
  * an admin's approval. That code path has been removed outright — see
  * docs/SUBMISSION-NOTES.md — not reworded or gated, because relaying a real
  * WordPress credential off-site is unacceptable regardless of the approval
