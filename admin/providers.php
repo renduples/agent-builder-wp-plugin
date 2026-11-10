@@ -329,11 +329,12 @@ if ( $agentic_edit_slug ) {
 			<tr>
 				<th scope="row"><label for="provider_api_key">API Key</label></th>
 				<td>
+					<?php // The stored key is never sent to the browser; a blank submit means "keep the current key" (Provider_Registry::upsert()). ?>
 					<input type="password" id="provider_api_key" name="provider_api_key"
 						class="regular-text"
-						value="<?php echo esc_attr( $agentic_current_api_key ); ?>"
+						value=""
 						autocomplete="new-password"
-						placeholder="<?php echo $agentic_current_api_key ? esc_attr( '••••••••' . substr( $agentic_current_api_key, -4 ) ) : ''; ?>">
+						placeholder="<?php echo $agentic_current_api_key ? esc_attr( '•••••••• saved — enter a new key to replace it' ) : ''; ?>">
 					<p class="description">
 						<?php if ( $agentic_current_api_key ) : ?>
 						Key is stored. Leave blank to keep the current key, or enter a new value to replace it.

@@ -169,6 +169,9 @@ Uninstall keeps your data unless you check “Delete all plugin data” on the d
 = Is this plugin translated into other languages? =
 The interface text is written in English, and the `.pot` translation template is included so you (or [translate.wordpress.org](https://translate.wordpress.org/)) can generate your own `.mo`/`.json` translation files for your site's locale. Pre-built translations for 11 languages ship with Agent Builder Pro.
 
+= Where is the source code for the bundled JavaScript? =
+The files in `build/` are compiled with @wordpress/scripts from the unminified sources in this plugin's `src/` directory. The full development repository, including the build tooling and test suite, is at https://github.com/renduples/agent-builder-wp-plugin.
+
 == Screenshots ==
 
 1. Tasks — Assign a job in plain English and the agent works in the background. Run details show the result and every step it took.
