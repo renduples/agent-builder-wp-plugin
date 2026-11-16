@@ -23,7 +23,7 @@ class Add_Custom_Js extends Tool_Base {
 	}
 
 	public function get_description(): string {
-		return 'Store a custom JavaScript snippet for later reference (e.g. for a developer to add manually, or for a future release to enqueue). Snippets are saved to the database only — Agent Builder does not currently output them on the frontend.';
+		return 'Store a custom JavaScript snippet for later reference (e.g. for a developer to add manually, or for a future release to enqueue). Snippets are saved to the database only — Siteloom does not currently output them on the frontend.';
 	}
 
 	public function get_category(): string {

@@ -14,13 +14,13 @@
  * The registry methods are exactly what those global functions call internally
  * (see wp-includes/abilities-api.php), so behaviour — including the
  * wp_abilities_api_init / _categories_init timing safeguards — is identical.
- * Using the OOP API keeps Agent Builder's "Requires at least: 6.4" intact (the
+ * Using the OOP API keeps Siteloom's "Requires at least: 6.4" intact (the
  * deliberate pre-WordPress-7 bridge positioning) while avoiding hard
  * references to global functions that do not exist on older WordPress.
  *
  * @package    Agent_Builder
  * @subpackage Includes
- * @author     Agent Builder Team <support@agentic-plugin.com>
+ * @author     Siteloom Team <support@agentic-plugin.com>
  * @license    GPL-2.0-or-later https://www.gnu.org/licenses/gpl-2.0.html
  * @link       https://agentic-plugin.com
  * @since      2.9.272

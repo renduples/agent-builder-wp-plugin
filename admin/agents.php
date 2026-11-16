@@ -6,7 +6,7 @@
  *
  * @package    Agent_Builder
  * @subpackage Admin
- * @author     Agent Builder Team <support@agentic-plugin.com>
+ * @author     Siteloom Team <support@agentic-plugin.com>
  * @license    GPL-2.0-or-later https://www.gnu.org/licenses/gpl-2.0.html
  * @link       https://agentic-plugin.com
  * @since      0.2.0
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'agent_builder_manage_agents' ) ) {
-	wp_die( esc_html__( 'You do not have permission to access this page.', 'agent-builder' ) );
+	wp_die( esc_html__( 'You do not have permission to access this page.', 'siteloom' ) );
 }
 
 // Pro-only: optional consent wall for in-dashboard agent update checks.
@@ -28,30 +28,30 @@ if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'agent_builde
 if ( class_exists( 'Agentic\Agent_Updates' ) && \Agentic\Agent_Updates::needs_consent() ) {
 	?>
 	<div class="wrap">
-		<h1><?php esc_html_e( 'AI Agents', 'agent-builder' ); ?></h1>
+		<h1><?php esc_html_e( 'AI Agents', 'siteloom' ); ?></h1>
 
 		<div style="max-width:680px;margin:48px auto;background:#fff;border:1px solid #c3c4c7;border-radius:4px;padding:40px 48px;box-shadow:0 1px 3px rgba(0,0,0,.07);">
 			<div style="text-align:center;margin-bottom:32px;">
 				<span style="font-size:48px;line-height:1;" aria-hidden="true">🔄</span>
-				<h2 style="font-size:22px;font-weight:600;margin:16px 0 8px;"><?php esc_html_e( 'Enable Automatic Agent Updates?', 'agent-builder' ); ?></h2>
-				<p style="color:#646970;font-size:14px;margin:0;"><?php esc_html_e( 'Agent Builder can check agentic-plugin.com for newer versions of your installed AI agents.', 'agent-builder' ); ?></p>
+				<h2 style="font-size:22px;font-weight:600;margin:16px 0 8px;"><?php esc_html_e( 'Enable Automatic Agent Updates?', 'siteloom' ); ?></h2>
+				<p style="color:#646970;font-size:14px;margin:0;"><?php esc_html_e( 'Siteloom can check agentic-plugin.com for newer versions of your installed AI agents.', 'siteloom' ); ?></p>
 			</div>
 
 			<ul style="margin:0 0 28px 0;padding:0;list-style:none;">
 				<li style="display:flex;gap:12px;align-items:flex-start;margin-bottom:16px;">
 					<span style="color:#00a32a;font-size:18px;flex-shrink:0;line-height:1.4;" aria-hidden="true">✓</span>
-					<span><strong><?php esc_html_e( 'Security patches delivered fast', 'agent-builder' ); ?></strong><br>
-					<span style="color:#646970;font-size:13px;"><?php esc_html_e( 'Agent vulnerabilities can be exploited silently. Updates close those gaps before bad actors find them.', 'agent-builder' ); ?></span></span>
+					<span><strong><?php esc_html_e( 'Security patches delivered fast', 'siteloom' ); ?></strong><br>
+					<span style="color:#646970;font-size:13px;"><?php esc_html_e( 'Agent vulnerabilities can be exploited silently. Updates close those gaps before bad actors find them.', 'siteloom' ); ?></span></span>
 				</li>
 				<li style="display:flex;gap:12px;align-items:flex-start;margin-bottom:16px;">
 					<span style="color:#00a32a;font-size:18px;flex-shrink:0;line-height:1.4;" aria-hidden="true">✓</span>
-					<span><strong><?php esc_html_e( 'Better agent performance', 'agent-builder' ); ?></strong><br>
-					<span style="color:#646970;font-size:13px;"><?php esc_html_e( 'Agent logic, prompts, and tool integrations are continuously improved. Updates mean your agents work smarter.', 'agent-builder' ); ?></span></span>
+					<span><strong><?php esc_html_e( 'Better agent performance', 'siteloom' ); ?></strong><br>
+					<span style="color:#646970;font-size:13px;"><?php esc_html_e( 'Agent logic, prompts, and tool integrations are continuously improved. Updates mean your agents work smarter.', 'siteloom' ); ?></span></span>
 				</li>
 				<li style="display:flex;gap:12px;align-items:flex-start;">
 					<span style="color:#00a32a;font-size:18px;flex-shrink:0;line-height:1.4;" aria-hidden="true">✓</span>
-					<span><strong><?php esc_html_e( 'You stay in control', 'agent-builder' ); ?></strong><br>
-					<span style="color:#646970;font-size:13px;"><?php esc_html_e( 'Updates are never applied automatically — you review and install each one yourself, exactly like WordPress plugins.', 'agent-builder' ); ?></span></span>
+					<span><strong><?php esc_html_e( 'You stay in control', 'siteloom' ); ?></strong><br>
+					<span style="color:#646970;font-size:13px;"><?php esc_html_e( 'Updates are never applied automatically — you review and install each one yourself, exactly like WordPress plugins.', 'siteloom' ); ?></span></span>
 				</li>
 			</ul>
 
@@ -60,7 +60,7 @@ if ( class_exists( 'Agentic\Agent_Updates' ) && \Agentic\Agent_Updates::needs_co
 				printf(
 					wp_kses(
 						/* translators: %1$s: agentic-plugin.com URL, %2$s: Privacy Policy URL */
-						__( 'When enabled, your installed agent slugs and version numbers are sent to <a href="%1$s" target="_blank" rel="noopener">agentic-plugin.com</a> to check for updates. No personal data, passwords, or site content are included. See our <a href="%2$s" target="_blank" rel="noopener">Privacy Policy</a>.', 'agent-builder' ),
+						__( 'When enabled, your installed agent slugs and version numbers are sent to <a href="%1$s" target="_blank" rel="noopener">agentic-plugin.com</a> to check for updates. No personal data, passwords, or site content are included. See our <a href="%2$s" target="_blank" rel="noopener">Privacy Policy</a>.', 'siteloom' ),
 						array(
 							'a' => array(
 								'href'   => array(),
@@ -78,15 +78,15 @@ if ( class_exists( 'Agentic\Agent_Updates' ) && \Agentic\Agent_Updates::needs_co
 			<form method="post" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
 				<?php wp_nonce_field( 'agentic_updates_consent', '_wpnonce_updates_consent' ); ?>
 				<button type="submit" name="agentic_updates_consent" value="enable" class="button button-primary button-large">
-					<?php esc_html_e( 'Enable Agent Updates', 'agent-builder' ); ?>
+					<?php esc_html_e( 'Enable Agent Updates', 'siteloom' ); ?>
 				</button>
 				<button type="submit" name="agentic_updates_consent" value="disable" class="button button-large">
-					<?php esc_html_e( 'No Thanks', 'agent-builder' ); ?>
+					<?php esc_html_e( 'No Thanks', 'siteloom' ); ?>
 				</button>
 			</form>
 
 			<p style="text-align:center;margin:20px 0 0;font-size:12px;color:#a7aaad;">
-				<?php esc_html_e( 'This preference resets if you deactivate and reactivate the plugin.', 'agent-builder' ); ?>
+				<?php esc_html_e( 'This preference resets if you deactivate and reactivate the plugin.', 'siteloom' ); ?>
 			</p>
 		</div>
 	</div>
@@ -118,7 +118,7 @@ if ( $agentic_agent_action && $agentic_slug && isset( $_GET['_wpnonce'] ) && wp_
 				$agentic_chat_url    = admin_url( 'admin.php?page=' . $agentic_page_slug . '&agent=' . $agentic_slug );
 				$agentic_message     = sprintf(
 				/* translators: 1: agent name, 2: chat URL */
-					__( '%1$s activated. <a href="%2$s">Chat with this agent now →</a>', 'agent-builder' ),
+					__( '%1$s activated. <a href="%2$s">Chat with this agent now →</a>', 'siteloom' ),
 					esc_html( $agentic_agent_name ),
 					esc_url( $agentic_chat_url )
 				);
@@ -130,7 +130,7 @@ if ( $agentic_agent_action && $agentic_slug && isset( $_GET['_wpnonce'] ) && wp_
 			if ( is_wp_error( $agentic_result ) ) {
 				$agentic_agent_error = $agentic_result->get_error_message();
 			} else {
-				$agentic_message = __( 'Agent deactivated.', 'agent-builder' );
+				$agentic_message = __( 'Agent deactivated.', 'siteloom' );
 			}
 			break;
 
@@ -139,7 +139,7 @@ if ( $agentic_agent_action && $agentic_slug && isset( $_GET['_wpnonce'] ) && wp_
 			if ( is_wp_error( $agentic_result ) ) {
 				$agentic_agent_error = $agentic_result->get_error_message();
 			} else {
-				$agentic_message = __( 'Agent deleted.', 'agent-builder' );
+				$agentic_message = __( 'Agent deleted.', 'siteloom' );
 			}
 			break;
 	}
@@ -179,7 +179,7 @@ if (
 	if ( $agentic_bulk_done ) {
 		$agentic_message = sprintf(
 			/* translators: 1: number of agents, 2: action label */
-			_n( '%1$d agent %2$s.', '%1$d agents %2$s.', $agentic_bulk_done, 'agent-builder' ),
+			_n( '%1$d agent %2$s.', '%1$d agents %2$s.', $agentic_bulk_done, 'siteloom' ),
 			$agentic_bulk_done,
 			$agentic_bulk_action . 'd'
 		);
@@ -230,19 +230,19 @@ wp_enqueue_style( 'agentic-react-admin', AGENT_BUILDER_URL . 'assets/css/react-a
 <div class="wrap agentic-agents-page">
 	<div class="agentic-react-admin__page-head">
 		<div>
-			<h1 class="wp-heading-inline"><?php esc_html_e( 'Agents', 'agent-builder' ); ?></h1>
+			<h1 class="wp-heading-inline"><?php esc_html_e( 'Agents', 'siteloom' ); ?></h1>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-agent-wizard' ) ); ?>" class="page-title-action">
-				<?php esc_html_e( 'Add an agent', 'agent-builder' ); ?>
+				<?php esc_html_e( 'Add an agent', 'siteloom' ); ?>
 			</a>
 		</div>
-		<span class="agentic-page-mode-toggle" role="group" aria-label="<?php esc_attr_e( 'Interface mode for the Agents screen only', 'agent-builder' ); ?>">
-			<span class="agentic-page-mode-toggle__label"><?php esc_html_e( 'This screen', 'agent-builder' ); ?></span>
+		<span class="agentic-page-mode-toggle" role="group" aria-label="<?php esc_attr_e( 'Interface mode for the Agents screen only', 'siteloom' ); ?>">
+			<span class="agentic-page-mode-toggle__label"><?php esc_html_e( 'This screen', 'siteloom' ); ?></span>
 			<span class="agentic-screen-mode-toggle" id="agentic-agents-mode-toggle">
 				<button type="button" class="button button-small<?php echo ! $agentic_agents_advanced ? ' button-primary' : ''; ?>" data-mode="basic">
-					<?php esc_html_e( 'Basic', 'agent-builder' ); ?>
+					<?php esc_html_e( 'Basic', 'siteloom' ); ?>
 				</button>
 				<button type="button" class="button button-small<?php echo $agentic_agents_advanced ? ' button-primary' : ''; ?>" data-mode="advanced">
-					<?php esc_html_e( 'Advanced', 'agent-builder' ); ?>
+					<?php esc_html_e( 'Advanced', 'siteloom' ); ?>
 				</button>
 			</span>
 		</span>
@@ -264,7 +264,7 @@ wp_enqueue_style( 'agentic-react-admin', AGENT_BUILDER_URL . 'assets/css/react-a
 	<?php endif; ?>
 
 	<?php if ( empty( $agentic_agents ) ) : ?>
-		<p><?php esc_html_e( 'No agents installed yet.', 'agent-builder' ); ?></p>
+		<p><?php esc_html_e( 'No agents installed yet.', 'siteloom' ); ?></p>
 	<?php else : ?>
 		<div class="agentic-agents-basic">
 			<?php foreach ( $agentic_agents as $agentic_slug => $agentic_agent ) : ?>
@@ -275,7 +275,7 @@ wp_enqueue_style( 'agentic-react-admin', AGENT_BUILDER_URL . 'assets/css/react-a
 				if ( '' === $agentic_desc ) {
 					// Bundled agents always ship a description in agent.json;
 					// this fallback is for a custom/user agent with none set.
-					$agentic_desc = __( 'An AI agent for this site.', 'agent-builder' );
+					$agentic_desc = __( 'An AI agent for this site.', 'siteloom' );
 				}
 				?>
 				<div class="agentic-agents-basic__card">
@@ -283,7 +283,7 @@ wp_enqueue_style( 'agentic-react-admin', AGENT_BUILDER_URL . 'assets/css/react-a
 					<p class="agentic-agents-basic__desc"><?php echo esc_html( $agentic_desc ); ?></p>
 					<p class="agentic-agents-basic__actions">
 						<a href="<?php echo esc_url( $agentic_chat_url ); ?>" class="button button-primary">
-							<?php esc_html_e( 'Chat', 'agent-builder' ); ?>
+							<?php esc_html_e( 'Chat', 'siteloom' ); ?>
 						</a>
 					</p>
 				</div>
@@ -312,27 +312,27 @@ wp_enqueue_style( 'agentic-react-admin', AGENT_BUILDER_URL . 'assets/css/react-a
 		<li class="all">
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-agents' ) ); ?>"
 		class="<?php echo 'all' === $agentic_filter ? 'current' : ''; ?>">
-				<?php esc_html_e( 'All', 'agent-builder' ); ?>
+				<?php esc_html_e( 'All', 'siteloom' ); ?>
 				<span class="count">(<?php echo esc_html( $agentic_all_count ); ?>)</span>
 			</a> |
 		</li>
 		<li class="active">
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-agents&agent_status=active' ) ); ?>"
 				class="<?php echo 'active' === $agentic_filter ? 'current' : ''; ?>">
-				<?php esc_html_e( 'Active', 'agent-builder' ); ?>
+				<?php esc_html_e( 'Active', 'siteloom' ); ?>
 				<span class="count">(<?php echo esc_html( $agentic_active_count ); ?>)</span>
 			</a> |
 		</li>
 		<li class="inactive">
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-agents&agent_status=inactive' ) ); ?>"
 				class="<?php echo 'inactive' === $agentic_filter ? 'current' : ''; ?>">
-				<?php esc_html_e( 'Inactive', 'agent-builder' ); ?>
+				<?php esc_html_e( 'Inactive', 'siteloom' ); ?>
 				<span class="count">(<?php echo esc_html( $agentic_inactive_count ); ?>)</span>
 			</a> |
 		</li>
 		<li class="available">
 			<a href="<?php echo esc_url( $agentic_marketplace_url ); ?>" target="_blank" rel="noopener noreferrer">
-				<?php esc_html_e( 'Community Agents', 'agent-builder' ); ?>
+				<?php esc_html_e( 'Community Agents', 'siteloom' ); ?>
 				<span class="dashicons dashicons-external" style="font-size:14px;width:14px;height:14px;vertical-align:middle;" aria-hidden="true"></span>
 			</a>
 		</li>
@@ -344,14 +344,14 @@ wp_enqueue_style( 'agentic-react-admin', AGENT_BUILDER_URL . 'assets/css/react-a
 	<!-- Tablenav Top -->
 	<div class="tablenav top">
 		<div class="alignleft actions bulkactions">
-			<label for="bulk-action-selector-top" class="screen-reader-text"><?php esc_html_e( 'Select bulk action', 'agent-builder' ); ?></label>
+			<label for="bulk-action-selector-top" class="screen-reader-text"><?php esc_html_e( 'Select bulk action', 'siteloom' ); ?></label>
 			<select name="bulk_action" id="bulk-action-selector-top">
-				<option value="-1"><?php esc_html_e( 'Bulk actions', 'agent-builder' ); ?></option>
-				<option value="activate"><?php esc_html_e( 'Activate', 'agent-builder' ); ?></option>
-				<option value="deactivate"><?php esc_html_e( 'Deactivate', 'agent-builder' ); ?></option>
-				<option value="delete"><?php esc_html_e( 'Delete', 'agent-builder' ); ?></option>
+				<option value="-1"><?php esc_html_e( 'Bulk actions', 'siteloom' ); ?></option>
+				<option value="activate"><?php esc_html_e( 'Activate', 'siteloom' ); ?></option>
+				<option value="deactivate"><?php esc_html_e( 'Deactivate', 'siteloom' ); ?></option>
+				<option value="delete"><?php esc_html_e( 'Delete', 'siteloom' ); ?></option>
 			</select>
-			<input type="submit" id="doaction" class="button action" value="<?php esc_attr_e( 'Apply', 'agent-builder' ); ?>" onclick="return agentic_confirm_bulk(this);">
+			<input type="submit" id="doaction" class="button action" value="<?php esc_attr_e( 'Apply', 'siteloom' ); ?>" onclick="return agentic_confirm_bulk(this);">
 		</div>
 		<br class="clear">
 	</div>
@@ -364,19 +364,19 @@ wp_enqueue_style( 'agentic-react-admin', AGENT_BUILDER_URL . 'assets/css/react-a
 					<input type="checkbox" id="cb-select-all-1">
 				</td>
 				<th scope="col" class="manage-column column-name column-primary">
-					<?php esc_html_e( 'Agent', 'agent-builder' ); ?>
+					<?php esc_html_e( 'Agent', 'siteloom' ); ?>
 				</th>
 				<th scope="col" class="manage-column column-description">
-					<?php esc_html_e( 'Description', 'agent-builder' ); ?>
+					<?php esc_html_e( 'Description', 'siteloom' ); ?>
 				</th>
 				<th scope="col" class="manage-column column-mcp agentic-connector-col">
-					<?php esc_html_e( 'MCP', 'agent-builder' ); ?>
+					<?php esc_html_e( 'MCP', 'siteloom' ); ?>
 				</th>
 				<th scope="col" class="manage-column column-webmcp agentic-connector-col">
-					<?php esc_html_e( 'WebMCP', 'agent-builder' ); ?>
+					<?php esc_html_e( 'WebMCP', 'siteloom' ); ?>
 				</th>
 				<th scope="col" class="manage-column column-whatsapp agentic-connector-col">
-					<?php esc_html_e( 'WhatsApp', 'agent-builder' ); ?>
+					<?php esc_html_e( 'WhatsApp', 'siteloom' ); ?>
 				</th>
 			</tr>
 		</thead>
@@ -384,7 +384,7 @@ wp_enqueue_style( 'agentic-react-admin', AGENT_BUILDER_URL . 'assets/css/react-a
 			<?php if ( empty( $agentic_agents ) ) : ?>
 				<tr class="no-items">
 					<td class="colspanchange" colspan="6">
-						<?php esc_html_e( 'No agents installed yet.', 'agent-builder' ); ?>
+						<?php esc_html_e( 'No agents installed yet.', 'siteloom' ); ?>
 					</td>
 				</tr>
 			<?php else : ?>
@@ -416,25 +416,25 @@ wp_enqueue_style( 'agentic-react-admin', AGENT_BUILDER_URL . 'assets/css/react-a
 									?>
 						<span class="chat">
 								<a href="<?php echo esc_url( admin_url( 'admin.php?page=' . $agentic_page_slug . '&agent=' . $agentic_slug ) ); ?>" class="agentic-text-fw600">
-											<?php esc_html_e( 'Chat', 'agent-builder' ); ?>
+											<?php esc_html_e( 'Chat', 'siteloom' ); ?>
 										</a> |
 									</span>
 									<span class="deactivate">
 										<a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-agents&action=deactivate&agent=' . $agentic_slug . '&_wpnonce=' . $agentic_nonce ) ); ?>">
-											<?php esc_html_e( 'Deactivate', 'agent-builder' ); ?>
+											<?php esc_html_e( 'Deactivate', 'siteloom' ); ?>
 										</a>
 									</span>
 								<?php else : ?>
 									<span class="activate">
 										<a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-agents&action=activate&agent=' . $agentic_slug . '&_wpnonce=' . $agentic_nonce ) ); ?>">
-											<?php esc_html_e( 'Activate', 'agent-builder' ); ?>
+											<?php esc_html_e( 'Activate', 'siteloom' ); ?>
 										</a> |
 									</span>
 									<span class="delete">
 										<a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-agents&action=delete&agent=' . $agentic_slug . '&_wpnonce=' . $agentic_nonce ) ); ?>"
 											class="delete"
-											data-agentic-confirm="<?php echo esc_attr( __( 'Are you sure you want to delete this agent?', 'agent-builder' ) ); ?>" data-agentic-confirm-danger data-agentic-confirm-ok="<?php echo esc_attr( __( 'Delete', 'agent-builder' ) ); ?>">
-											<?php esc_html_e( 'Delete', 'agent-builder' ); ?>
+											data-agentic-confirm="<?php echo esc_attr( __( 'Are you sure you want to delete this agent?', 'siteloom' ) ); ?>" data-agentic-confirm-danger data-agentic-confirm-ok="<?php echo esc_attr( __( 'Delete', 'siteloom' ) ); ?>">
+											<?php esc_html_e( 'Delete', 'siteloom' ); ?>
 										</a>
 									</span>
 								<?php endif; ?>
@@ -449,7 +449,7 @@ wp_enqueue_style( 'agentic-react-admin', AGENT_BUILDER_URL . 'assets/css/react-a
 									<span class="agent-version">
 									<?php
 									/* translators: %s: agent version number */
-									printf( esc_html__( 'Version %s', 'agent-builder' ), esc_html( $agentic_agent['version'] ) );
+									printf( esc_html__( 'Version %s', 'siteloom' ), esc_html( $agentic_agent['version'] ) );
 									?>
 									</span>
 									<span class="separator">|</span>
@@ -457,7 +457,7 @@ wp_enqueue_style( 'agentic-react-admin', AGENT_BUILDER_URL . 'assets/css/react-a
 
 								<?php if ( ! empty( $agentic_agent['author'] ) ) : ?>
 									<span class="agent-author">
-										<?php esc_html_e( 'By', 'agent-builder' ); ?>
+										<?php esc_html_e( 'By', 'siteloom' ); ?>
 										<?php if ( ! empty( $agentic_agent['author_uri'] ) ) : ?>
 											<a href="<?php echo esc_url( $agentic_agent['author_uri'] ); ?>" target="_blank">
 												<?php echo esc_html( $agentic_agent['author'] ); ?>
@@ -472,9 +472,9 @@ wp_enqueue_style( 'agentic-react-admin', AGENT_BUILDER_URL . 'assets/css/react-a
 								<?php if ( null !== \Agentic\Abilities_Manifest::load( $agentic_slug ) ) : ?>
 									<?php $agentic_sig_ok = \Agentic\Abilities_Manifest::verify_integrity( $agentic_slug ); ?>
 									<span class="agent-signature">
-										<?php esc_html_e( 'Signature:', 'agent-builder' ); ?>
+										<?php esc_html_e( 'Signature:', 'siteloom' ); ?>
 										<span class="agentic-signature-badge <?php echo $agentic_sig_ok ? 'pass' : 'mismatch'; ?>">
-											<?php echo $agentic_sig_ok ? esc_html__( 'Pass', 'agent-builder' ) : esc_html__( 'Mismatch', 'agent-builder' ); ?>
+											<?php echo $agentic_sig_ok ? esc_html__( 'Pass', 'siteloom' ) : esc_html__( 'Mismatch', 'siteloom' ); ?>
 										</span>
 									</span>
 									<span class="separator">|</span>
@@ -491,7 +491,7 @@ wp_enqueue_style( 'agentic-react-admin', AGENT_BUILDER_URL . 'assets/css/react-a
 									<span class="agent-capabilities">
 										<?php
 										/* translators: %s: comma-separated list of agent capabilities */                                       printf(
-											esc_html__( 'Capabilities: %s', 'agent-builder' ),
+											esc_html__( 'Capabilities: %s', 'siteloom' ),
 											esc_html( implode( ', ', $agentic_agent['capabilities'] ) )
 										);
 										?>
@@ -499,32 +499,32 @@ wp_enqueue_style( 'agentic-react-admin', AGENT_BUILDER_URL . 'assets/css/react-a
 								<?php endif; ?>
 							</div>
 						</td>
-						<td class="column-mcp agentic-connector-cell" data-colname="<?php esc_attr_e( 'MCP', 'agent-builder' ); ?>">
+						<td class="column-mcp agentic-connector-cell" data-colname="<?php esc_attr_e( 'MCP', 'siteloom' ); ?>">
 							<?php if ( $agentic_mcp_ok ) : ?>
-								<span class="dashicons dashicons-yes-alt agentic-di-green" aria-hidden="true" title="<?php esc_attr_e( 'Reachable via MCP', 'agent-builder' ); ?>"></span>
-								<span class="screen-reader-text"><?php esc_html_e( 'Reachable via MCP', 'agent-builder' ); ?></span>
+								<span class="dashicons dashicons-yes-alt agentic-di-green" aria-hidden="true" title="<?php esc_attr_e( 'Reachable via MCP', 'siteloom' ); ?>"></span>
+								<span class="screen-reader-text"><?php esc_html_e( 'Reachable via MCP', 'siteloom' ); ?></span>
 							<?php else : ?>
-								<?php $agentic_mcp_reason = $agentic_mcp['reason'] ?? __( 'Not reachable via MCP', 'agent-builder' ); ?>
+								<?php $agentic_mcp_reason = $agentic_mcp['reason'] ?? __( 'Not reachable via MCP', 'siteloom' ); ?>
 								<span class="dashicons dashicons-no agentic-di-red" aria-hidden="true" title="<?php echo esc_attr( $agentic_mcp_reason ); ?>"></span>
 								<span class="screen-reader-text"><?php echo esc_html( $agentic_mcp_reason ); ?></span>
 							<?php endif; ?>
 						</td>
-						<td class="column-webmcp agentic-connector-cell" data-colname="<?php esc_attr_e( 'WebMCP', 'agent-builder' ); ?>">
+						<td class="column-webmcp agentic-connector-cell" data-colname="<?php esc_attr_e( 'WebMCP', 'siteloom' ); ?>">
 							<?php if ( $agentic_webmcp_ok ) : ?>
-								<span class="dashicons dashicons-yes-alt agentic-di-green" aria-hidden="true" title="<?php esc_attr_e( 'Reachable via WebMCP', 'agent-builder' ); ?>"></span>
-								<span class="screen-reader-text"><?php esc_html_e( 'Reachable via WebMCP', 'agent-builder' ); ?></span>
+								<span class="dashicons dashicons-yes-alt agentic-di-green" aria-hidden="true" title="<?php esc_attr_e( 'Reachable via WebMCP', 'siteloom' ); ?>"></span>
+								<span class="screen-reader-text"><?php esc_html_e( 'Reachable via WebMCP', 'siteloom' ); ?></span>
 							<?php else : ?>
-								<span class="dashicons dashicons-no agentic-di-red" aria-hidden="true" title="<?php esc_attr_e( 'Not reachable via WebMCP', 'agent-builder' ); ?>"></span>
-								<span class="screen-reader-text"><?php esc_html_e( 'Not reachable via WebMCP', 'agent-builder' ); ?></span>
+								<span class="dashicons dashicons-no agentic-di-red" aria-hidden="true" title="<?php esc_attr_e( 'Not reachable via WebMCP', 'siteloom' ); ?>"></span>
+								<span class="screen-reader-text"><?php esc_html_e( 'Not reachable via WebMCP', 'siteloom' ); ?></span>
 							<?php endif; ?>
 						</td>
-						<td class="column-whatsapp agentic-connector-cell" data-colname="<?php esc_attr_e( 'WhatsApp', 'agent-builder' ); ?>">
+						<td class="column-whatsapp agentic-connector-cell" data-colname="<?php esc_attr_e( 'WhatsApp', 'siteloom' ); ?>">
 							<?php if ( $agentic_whatsapp_ok ) : ?>
-								<span class="dashicons dashicons-yes-alt agentic-di-green" aria-hidden="true" title="<?php esc_attr_e( 'Reachable via WhatsApp', 'agent-builder' ); ?>"></span>
-								<span class="screen-reader-text"><?php esc_html_e( 'Reachable via WhatsApp', 'agent-builder' ); ?></span>
+								<span class="dashicons dashicons-yes-alt agentic-di-green" aria-hidden="true" title="<?php esc_attr_e( 'Reachable via WhatsApp', 'siteloom' ); ?>"></span>
+								<span class="screen-reader-text"><?php esc_html_e( 'Reachable via WhatsApp', 'siteloom' ); ?></span>
 							<?php else : ?>
-								<span class="dashicons dashicons-no agentic-di-red" aria-hidden="true" title="<?php esc_attr_e( 'Not reachable via WhatsApp', 'agent-builder' ); ?>"></span>
-								<span class="screen-reader-text"><?php esc_html_e( 'Not reachable via WhatsApp', 'agent-builder' ); ?></span>
+								<span class="dashicons dashicons-no agentic-di-red" aria-hidden="true" title="<?php esc_attr_e( 'Not reachable via WhatsApp', 'siteloom' ); ?>"></span>
+								<span class="screen-reader-text"><?php esc_html_e( 'Not reachable via WhatsApp', 'siteloom' ); ?></span>
 							<?php endif; ?>
 						</td>
 					</tr>
@@ -540,7 +540,7 @@ wp_enqueue_style( 'agentic-react-admin', AGENT_BUILDER_URL . 'assets/css/react-a
 											printf(
 												wp_kses(
 													/* translators: 1: assistant name 2: new version number 3: details URL 4: zip download URL 5: slug 6: nonce */
-													__( 'There is a new version of <strong>%1$s</strong> available. <a href="%3$s" target="_blank">View version %2$s details</a> or <a href="#" class="agentic-update-now" data-slug="%5$s" data-nonce="%6$s" data-url="%4$s">update now</a>.', 'agent-builder' ),
+													__( 'There is a new version of <strong>%1$s</strong> available. <a href="%3$s" target="_blank">View version %2$s details</a> or <a href="#" class="agentic-update-now" data-slug="%5$s" data-nonce="%6$s" data-url="%4$s">update now</a>.', 'siteloom' ),
 													array(
 														'strong' => array(),
 														'a'      => array(
@@ -566,7 +566,7 @@ wp_enqueue_style( 'agentic-react-admin', AGENT_BUILDER_URL . 'assets/css/react-a
 											printf(
 												wp_kses(
 													/* translators: 1: assistant name 2: new version number 3: details URL */
-													__( 'There is a new version of <strong>%1$s</strong> available. <a href="%3$s" target="_blank">View version %2$s details</a>.', 'agent-builder' ),
+													__( 'There is a new version of <strong>%1$s</strong> available. <a href="%3$s" target="_blank">View version %2$s details</a>.', 'siteloom' ),
 													array(
 														'strong' => array(),
 														'a'      => array(
@@ -596,19 +596,19 @@ wp_enqueue_style( 'agentic-react-admin', AGENT_BUILDER_URL . 'assets/css/react-a
 					<input type="checkbox" id="cb-select-all-2">
 				</td>
 				<th scope="col" class="manage-column column-name column-primary">
-					<?php esc_html_e( 'Agent', 'agent-builder' ); ?>
+					<?php esc_html_e( 'Agent', 'siteloom' ); ?>
 				</th>
 				<th scope="col" class="manage-column column-description">
-					<?php esc_html_e( 'Description', 'agent-builder' ); ?>
+					<?php esc_html_e( 'Description', 'siteloom' ); ?>
 				</th>
 				<th scope="col" class="manage-column column-mcp agentic-connector-col">
-					<?php esc_html_e( 'MCP', 'agent-builder' ); ?>
+					<?php esc_html_e( 'MCP', 'siteloom' ); ?>
 				</th>
 				<th scope="col" class="manage-column column-webmcp agentic-connector-col">
-					<?php esc_html_e( 'WebMCP', 'agent-builder' ); ?>
+					<?php esc_html_e( 'WebMCP', 'siteloom' ); ?>
 				</th>
 				<th scope="col" class="manage-column column-whatsapp agentic-connector-col">
-					<?php esc_html_e( 'WhatsApp', 'agent-builder' ); ?>
+					<?php esc_html_e( 'WhatsApp', 'siteloom' ); ?>
 				</th>
 			</tr>
 		</tfoot>
@@ -618,14 +618,14 @@ wp_enqueue_style( 'agentic-react-admin', AGENT_BUILDER_URL . 'assets/css/react-a
 	<!-- Tablenav Bottom -->
 	<div class="tablenav bottom">
 		<div class="alignleft actions bulkactions">
-			<label for="bulk-action-selector-bottom" class="screen-reader-text"><?php esc_html_e( 'Select bulk action', 'agent-builder' ); ?></label>
+			<label for="bulk-action-selector-bottom" class="screen-reader-text"><?php esc_html_e( 'Select bulk action', 'siteloom' ); ?></label>
 			<select name="bulk_action" id="bulk-action-selector-bottom">
-				<option value="-1"><?php esc_html_e( 'Bulk actions', 'agent-builder' ); ?></option>
-				<option value="activate"><?php esc_html_e( 'Activate', 'agent-builder' ); ?></option>
-				<option value="deactivate"><?php esc_html_e( 'Deactivate', 'agent-builder' ); ?></option>
-				<option value="delete"><?php esc_html_e( 'Delete', 'agent-builder' ); ?></option>
+				<option value="-1"><?php esc_html_e( 'Bulk actions', 'siteloom' ); ?></option>
+				<option value="activate"><?php esc_html_e( 'Activate', 'siteloom' ); ?></option>
+				<option value="deactivate"><?php esc_html_e( 'Deactivate', 'siteloom' ); ?></option>
+				<option value="delete"><?php esc_html_e( 'Delete', 'siteloom' ); ?></option>
 			</select>
-			<input type="submit" id="doaction2" class="button action" value="<?php esc_attr_e( 'Apply', 'agent-builder' ); ?>" onclick="return agentic_confirm_bulk(this);">
+			<input type="submit" id="doaction2" class="button action" value="<?php esc_attr_e( 'Apply', 'siteloom' ); ?>" onclick="return agentic_confirm_bulk(this);">
 		</div>
 		<br class="clear">
 	</div>
@@ -658,15 +658,15 @@ if ( $agentic_agents_advanced ) {
 			'ajaxUrl'    => admin_url( 'admin-ajax.php' ),
 			'hasUpdates' => class_exists( '\Agentic\Agent_Updates' ),
 			'i18n'       => array(
-				'selectAction'  => __( 'Please select a bulk action.', 'agent-builder' ),
-				'selectAgent'   => __( 'Please select at least one agent.', 'agent-builder' ),
-				'confirmDelete' => __( 'Are you sure you want to delete the selected agents?', 'agent-builder' ),
-				'delete'        => __( 'Delete', 'agent-builder' ),
-				'updating'      => __( 'Updating…', 'agent-builder' ),
-				'updateFailed'  => __( 'Update failed: ', 'agent-builder' ),
-				'unknownError'  => __( 'Unknown error.', 'agent-builder' ),
-				'updateNow'     => __( 'update now', 'agent-builder' ),
-				'networkError'  => __( 'Update failed due to a network error.', 'agent-builder' ),
+				'selectAction'  => __( 'Please select a bulk action.', 'siteloom' ),
+				'selectAgent'   => __( 'Please select at least one agent.', 'siteloom' ),
+				'confirmDelete' => __( 'Are you sure you want to delete the selected agents?', 'siteloom' ),
+				'delete'        => __( 'Delete', 'siteloom' ),
+				'updating'      => __( 'Updating…', 'siteloom' ),
+				'updateFailed'  => __( 'Update failed: ', 'siteloom' ),
+				'unknownError'  => __( 'Unknown error.', 'siteloom' ),
+				'updateNow'     => __( 'update now', 'siteloom' ),
+				'networkError'  => __( 'Update failed due to a network error.', 'siteloom' ),
 			),
 		),
 		'agenticAgentsList',

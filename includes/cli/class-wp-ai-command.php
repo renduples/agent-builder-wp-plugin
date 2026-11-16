@@ -1,6 +1,6 @@
 <?php
 /**
- * WP-CLI subcommands for the WordPress 7.0+ AI substrate (and Agent Builder bridge).
+ * WP-CLI subcommands for the WordPress 7.0+ AI substrate (and Siteloom bridge).
  *
  * Provides first-class access to detection, native Abilities, Connectors preference,
  * and the extensibility bridge we built so everything (and better) works on older WP too.
@@ -61,7 +61,7 @@ class WP_AI_Command extends \WP_CLI_Command {
 	 */
 	public function status( array $args, array $assoc_args ): void {
 		if ( ! class_exists( '\\Agentic\\WP_AI_Detection' ) ) {
-			\WP_CLI::error( 'WP_AI_Detection not available. Is the Agent Builder plugin loaded?' );
+			\WP_CLI::error( 'WP_AI_Detection not available. Is the Siteloom plugin loaded?' );
 		}
 
 		$matrix = \Agentic\WP_AI_Detection::get_feature_matrix();
@@ -79,7 +79,7 @@ class WP_AI_Command extends \WP_CLI_Command {
 	}
 
 	/**
-	 * List registered abilities (core WP + Agent Builder providers + bridge enhancements).
+	 * List registered abilities (core WP + Siteloom providers + bridge enhancements).
 	 *
 	 * This surfaces both native WP 7.0 abilities and the ones we emit/enhance for
 	 * consistent agent experience across WP versions (the "bridge").
@@ -182,10 +182,10 @@ class WP_AI_Command extends \WP_CLI_Command {
 	}
 
 	/**
-	 * Test-execute an ability (native WP7 or via Agent Builder bridge/tools).
+	 * Test-execute an ability (native WP7 or via Siteloom bridge/tools).
 	 *
 	 * Useful for verifying that abilities registered by core, other plugins, or
-	 * Agent Builder (including enhanced ones and Cloudflare etc. tools) actually work.
+	 * Siteloom (including enhanced ones and Cloudflare etc. tools) actually work.
 	 *
 	 * Respects permission callbacks where possible.
 	 *
@@ -276,7 +276,7 @@ class WP_AI_Command extends \WP_CLI_Command {
 	 *
 	 * Tries (in order):
 	 * 1. Direct WP ability by exact name (wp_get_abilities + execute + perm check).
-	 * 2. Agent Builder bridge execute_ability (for function_name style names).
+	 * 2. Siteloom bridge execute_ability (for function_name style names).
 	 * 3. Tool_Loader for agent-builder/* tools (maps names).
 	 *
 	 * @param string $name  Ability or tool identifier.
@@ -344,7 +344,7 @@ class WP_AI_Command extends \WP_CLI_Command {
 		}
 
 		return array(
-			'error' => "No execution path found for '{$name}'. Is the ability/tool registered and Agent Builder fully loaded?",
+			'error' => "No execution path found for '{$name}'. Is the ability/tool registered and Siteloom fully loaded?",
 		);
 	}
 }

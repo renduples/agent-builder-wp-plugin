@@ -74,10 +74,10 @@ class Checker_Caching extends Site_Brief_Checker {
 		return array(
 			$this->card(
 				array(
-					'title'            => __( 'No page cache detected', 'agent-builder' ),
-					'evidence'         => __( 'A page cache plugin (or advanced-cache.php drop-in) was not found. Site Brief will not turn caching on.', 'agent-builder' ),
+					'title'            => __( 'No page cache detected', 'siteloom' ),
+					'evidence'         => __( 'A page cache plugin (or advanced-cache.php drop-in) was not found. Site Brief will not turn caching on.', 'siteloom' ),
 					'evidence_payload' => array( 'page_cache' => false ),
-					'proposed_action'  => __( 'Install or turn on a page cache plugin from the Plugins screen if you want one. Site Brief cannot set up caching for you.', 'agent-builder' ),
+					'proposed_action'  => __( 'Install or turn on a page cache plugin from the Plugins screen if you want one. Site Brief cannot set up caching for you.', 'siteloom' ),
 					'action_risk'      => 'none',
 					'raw'              => array( 'page_cache' => $page ),
 				)

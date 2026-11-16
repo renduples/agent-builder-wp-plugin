@@ -156,31 +156,31 @@ class Webmcp_Bridge {
 	 */
 	public static function permission_execute( \WP_REST_Request $request ): bool|\WP_Error {
 		if ( ! self::is_enabled() ) {
-			return new \WP_Error( 'webmcp_disabled', __( 'The WebMCP Bridge is turned off.', 'agent-builder' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'webmcp_disabled', __( 'The WebMCP Bridge is turned off.', 'siteloom' ), array( 'status' => 403 ) );
 		}
 
 		$tool_name  = sanitize_key( (string) $request->get_param( 'tool_name' ) );
 		$agent_slug = sanitize_key( (string) $request->get_param( 'agent_slug' ) );
 
 		if ( '' === $tool_name || ! Tools_Registry::is_enabled( $tool_name ) ) {
-			return new \WP_Error( 'unknown_tool', __( 'Unknown or disabled tool.', 'agent-builder' ), array( 'status' => 404 ) );
+			return new \WP_Error( 'unknown_tool', __( 'Unknown or disabled tool.', 'siteloom' ), array( 'status' => 404 ) );
 		}
 
 		if ( ! self::is_tool_webmcp_safe( $tool_name, $agent_slug ) ) {
-			return new \WP_Error( 'webmcp_unsafe_tool', __( 'This tool cannot be exposed to WebMCP.', 'agent-builder' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'webmcp_unsafe_tool', __( 'This tool cannot be exposed to WebMCP.', 'siteloom' ), array( 'status' => 403 ) );
 		}
 
 		$exposure = self::find_exposure( $agent_slug, $tool_name );
 		if ( null === $exposure ) {
-			return new \WP_Error( 'webmcp_not_exposed', __( 'This tool is not exposed for this agent.', 'agent-builder' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'webmcp_not_exposed', __( 'This tool is not exposed for this agent.', 'siteloom' ), array( 'status' => 403 ) );
 		}
 
 		if ( ! self::context_matches_request( $exposure['webmcp_context'], $request ) ) {
-			return new \WP_Error( 'webmcp_wrong_context', __( 'This tool is not exposed in this context.', 'agent-builder' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'webmcp_wrong_context', __( 'This tool is not exposed in this context.', 'siteloom' ), array( 'status' => 403 ) );
 		}
 
 		if ( ! self::is_same_origin( $request ) ) {
-			return new \WP_Error( 'webmcp_cross_origin', __( 'Cross-origin WebMCP calls are not allowed.', 'agent-builder' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'webmcp_cross_origin', __( 'Cross-origin WebMCP calls are not allowed.', 'siteloom' ), array( 'status' => 403 ) );
 		}
 
 		// ANONYMOUS_SAFE_TOOLS is vetted safe for literally anyone — logged in
@@ -211,14 +211,14 @@ class Webmcp_Bridge {
 		// being logged in, the same way HIGH/EXTREME risk can never be
 		// reached via MCP no matter what a manifest declares.
 		if ( ! is_user_logged_in() ) {
-			return new \WP_Error( 'webmcp_login_required', __( 'You must be logged in to use this action.', 'agent-builder' ), array( 'status' => 401 ) );
+			return new \WP_Error( 'webmcp_login_required', __( 'You must be logged in to use this action.', 'siteloom' ), array( 'status' => 401 ) );
 		}
 
 		// Logged in: always the tool's own required capability — readonly
 		// no longer bypasses this. A tool's own risk/capability floor is what
 		// governs any authenticated caller, the same as it would via chat.
 		if ( ! current_user_can( \Agentic_MCP_Server::required_capability_for_tool( $tool_name ) ) ) {
-			return new \WP_Error( 'webmcp_forbidden', __( 'You do not have permission to use this action.', 'agent-builder' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'webmcp_forbidden', __( 'You do not have permission to use this action.', 'siteloom' ), array( 'status' => 403 ) );
 		}
 
 		return true;
@@ -252,7 +252,7 @@ class Webmcp_Bridge {
 		if ( Risk_Level::MEDIUM === $risk ) {
 			$description = sprintf(
 				/* translators: %s: tool name. */
-				__( 'This site would like to run "%s".', 'agent-builder' ),
+				__( 'This site would like to run "%s".', 'siteloom' ),
 				$tool_name
 			);
 			$proposal = Agent_Proposals::create( $tool_name, $arguments, $agent_slug, $description );
@@ -288,13 +288,13 @@ class Webmcp_Bridge {
 	 */
 	public static function permission_confirm( \WP_REST_Request $request ): bool|\WP_Error {
 		if ( ! self::is_enabled() ) {
-			return new \WP_Error( 'webmcp_disabled', __( 'The WebMCP Bridge is turned off.', 'agent-builder' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'webmcp_disabled', __( 'The WebMCP Bridge is turned off.', 'siteloom' ), array( 'status' => 403 ) );
 		}
 
 		$proposal_id = sanitize_text_field( (string) $request->get_param( 'proposal_id' ) );
 		$proposal    = Agent_Proposals::get( $proposal_id );
 		if ( ! $proposal ) {
-			return new \WP_Error( 'proposal_not_found', __( 'This confirmation has expired or was not found.', 'agent-builder' ), array( 'status' => 404 ) );
+			return new \WP_Error( 'proposal_not_found', __( 'This confirmation has expired or was not found.', 'siteloom' ), array( 'status' => 404 ) );
 		}
 
 		$tool_name  = (string) $proposal['tool'];
@@ -302,15 +302,15 @@ class Webmcp_Bridge {
 
 		$exposure = self::find_exposure( $agent_slug, $tool_name );
 		if ( ! self::is_tool_webmcp_safe( $tool_name, $agent_slug ) || null === $exposure ) {
-			return new \WP_Error( 'webmcp_not_exposed', __( 'This tool is no longer exposed for this agent.', 'agent-builder' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'webmcp_not_exposed', __( 'This tool is no longer exposed for this agent.', 'siteloom' ), array( 'status' => 403 ) );
 		}
 
 		if ( ! self::context_matches_request( $exposure['webmcp_context'], $request ) ) {
-			return new \WP_Error( 'webmcp_wrong_context', __( 'This tool is not exposed in this context.', 'agent-builder' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'webmcp_wrong_context', __( 'This tool is not exposed in this context.', 'siteloom' ), array( 'status' => 403 ) );
 		}
 
 		if ( ! self::is_same_origin( $request ) ) {
-			return new \WP_Error( 'webmcp_cross_origin', __( 'Cross-origin WebMCP calls are not allowed.', 'agent-builder' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'webmcp_cross_origin', __( 'Cross-origin WebMCP calls are not allowed.', 'siteloom' ), array( 'status' => 403 ) );
 		}
 
 		// Confirmations only ever exist for MEDIUM-risk tools (see execute_tool()
@@ -321,7 +321,7 @@ class Webmcp_Bridge {
 		// login here, which a truly anonymous-reads-only setup should avoid
 		// by keeping readonly tools at NONE/LOW.
 		if ( ! is_user_logged_in() || ! current_user_can( \Agentic_MCP_Server::required_capability_for_tool( $tool_name ) ) ) {
-			return new \WP_Error( 'webmcp_forbidden', __( 'You do not have permission to confirm this action.', 'agent-builder' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'webmcp_forbidden', __( 'You do not have permission to confirm this action.', 'siteloom' ), array( 'status' => 403 ) );
 		}
 
 		return true;

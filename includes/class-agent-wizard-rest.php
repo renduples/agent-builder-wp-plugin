@@ -168,12 +168,12 @@ class Agent_Wizard_REST {
 	public static function create_agent( \WP_REST_Request $request ) {
 		$name = sanitize_text_field( (string) $request->get_param( 'name' ) );
 		if ( '' === trim( $name ) ) {
-			return new \WP_Error( 'missing_name', __( 'An agent name is required.', 'agent-builder' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'missing_name', __( 'An agent name is required.', 'siteloom' ), array( 'status' => 400 ) );
 		}
 
 		$description = sanitize_textarea_field( (string) $request->get_param( 'description' ) );
 		if ( '' === trim( $description ) ) {
-			return new \WP_Error( 'missing_description', __( 'A short description is required.', 'agent-builder' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'missing_description', __( 'A short description is required.', 'siteloom' ), array( 'status' => 400 ) );
 		}
 
 		$slug = sanitize_title( (string) $request->get_param( 'slug' ) );
@@ -181,7 +181,7 @@ class Agent_Wizard_REST {
 			$slug = sanitize_title( $name );
 		}
 		if ( '' === $slug ) {
-			return new \WP_Error( 'invalid_slug', __( 'Could not derive a valid slug from the agent name.', 'agent-builder' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'invalid_slug', __( 'Could not derive a valid slug from the agent name.', 'siteloom' ), array( 'status' => 400 ) );
 		}
 
 		// Reject collisions early with a friendly message (the underlying tool
@@ -192,7 +192,7 @@ class Agent_Wizard_REST {
 			return new \WP_Error(
 				'slug_exists',
 				/* translators: %s: agent slug. */
-				sprintf( __( 'An agent named "%s" already exists. Choose a different name.', 'agent-builder' ), $slug ),
+				sprintf( __( 'An agent named "%s" already exists. Choose a different name.', 'siteloom' ), $slug ),
 				array( 'status' => 409 )
 			);
 		}
@@ -244,7 +244,7 @@ class Agent_Wizard_REST {
 			$create_tool = $loader->get( 'create_agent_files' );
 		}
 		if ( null === $create_tool ) {
-			return new \WP_Error( 'tool_unavailable', __( 'The agent creation tool is unavailable.', 'agent-builder' ), array( 'status' => 500 ) );
+			return new \WP_Error( 'tool_unavailable', __( 'The agent creation tool is unavailable.', 'siteloom' ), array( 'status' => 500 ) );
 		}
 
 		$result = $create_tool->execute(

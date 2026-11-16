@@ -96,7 +96,7 @@ class Github_Api extends \Agentic\Tool_Base {
 				'Authorization'        => 'Bearer ' . $token,
 				'Accept'               => 'application/vnd.github+json',
 				'X-GitHub-Api-Version' => '2022-11-28',
-				'User-Agent'           => 'Agent-Builder-WordPress/' . AGENT_BUILDER_VERSION,
+				'User-Agent'           => 'Siteloom-WordPress/' . AGENT_BUILDER_VERSION,
 			),
 			'timeout' => 20,
 		);

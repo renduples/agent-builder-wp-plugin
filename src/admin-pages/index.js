@@ -33,7 +33,7 @@ function AdminPagesApp() {
 		return (
 			<div className="agentic-admin">
 				<p>
-					<Spinner /> { __( 'Loading…', 'agent-builder' ) }
+					<Spinner /> { __( 'Loading…', 'siteloom' ) }
 				</p>
 				<AdminPageFooter footer={ footer } />
 			</div>
@@ -44,7 +44,7 @@ function AdminPagesApp() {
 		return (
 			<div className="agentic-admin">
 				<Notice status="error" isDismissible={ false }>
-					{ state.error || __( 'Unavailable.', 'agent-builder' ) }
+					{ state.error || __( 'Unavailable.', 'siteloom' ) }
 				</Notice>
 				<AdminPageFooter footer={ footer } />
 			</div>
@@ -112,12 +112,12 @@ function AdminPagesApp() {
 			break;
 		default:
 			body = (
-				<p>{ __( 'Unknown page.', 'agent-builder' ) }</p>
+				<p>{ __( 'Unknown page.', 'siteloom' ) }</p>
 			);
 	}
 
 	const panelTitle =
-		data.panel_title || data.title || __( 'Tools', 'agent-builder' );
+		data.panel_title || data.title || __( 'Tools', 'siteloom' );
 
 	// The Skills chat embed already brings its own bordered container/header
 	// (assets/css/chat.css) — wrapping it in the plain white Panel card too

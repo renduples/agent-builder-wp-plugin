@@ -1,14 +1,14 @@
 <?php
 /**
- * Abilities Bridge - Connects Agent Builder tools to the WordPress Abilities API
+ * Abilities Bridge - Connects Siteloom tools to the WordPress Abilities API
  *
- * On WordPress 6.9+, registers Agent Builder core tools as WordPress abilities
+ * On WordPress 6.9+, registers Siteloom core tools as WordPress abilities
  * and ingests third-party abilities as agent tools. On older WordPress versions,
  * this class is never loaded.
  *
  * @package    Agent_Builder
  * @subpackage Includes
- * @author     Agent Builder Team <support@agentic-plugin.com>
+ * @author     Siteloom Team <support@agentic-plugin.com>
  * @license    GPL-2.0-or-later https://www.gnu.org/licenses/gpl-2.0.html
  * @link       https://agentic-plugin.com
  * @since      1.9.0
@@ -26,10 +26,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 
 /**
- * Bridge between Agent Builder tools and the WordPress Abilities API (6.9+).
+ * Bridge between Siteloom tools and the WordPress Abilities API (6.9+).
  *
  * Two-way integration:
- * 1. Registers Agent Builder core tools as WP abilities (outbound)
+ * 1. Registers Siteloom core tools as WP abilities (outbound)
  *    → Makes tools discoverable via MCP, REST API, Command Palette
  * 2. Ingests third-party WP abilities as agent tools (inbound)
  *    → Agents can use abilities registered by other plugins
@@ -77,7 +77,7 @@ class Abilities_Bridge {
 	}
 
 	/**
-	 * Register ability categories for Agent Builder tools.
+	 * Register ability categories for Siteloom tools.
 	 *
 	 * @return void
 	 */
@@ -85,16 +85,16 @@ class Abilities_Bridge {
 		WP_Optional_API::register_ability_category(
 			self::CATEGORY_READ,
 			array(
-				'label'       => __( 'Agent Builder — Read', 'agent-builder' ),
-				'description' => __( 'Read-only WordPress data access tools from the Agent Builder plugin.', 'agent-builder' ),
+				'label'       => __( 'Siteloom — Read', 'siteloom' ),
+				'description' => __( 'Read-only WordPress data access tools from the Siteloom plugin.', 'siteloom' ),
 			)
 		);
 
 		WP_Optional_API::register_ability_category(
 			self::CATEGORY_WRITE,
 			array(
-				'label'       => __( 'Agent Builder — Write', 'agent-builder' ),
-				'description' => __( 'WordPress data modification tools from the Agent Builder plugin.', 'agent-builder' ),
+				'label'       => __( 'Siteloom — Write', 'siteloom' ),
+				'description' => __( 'WordPress data modification tools from the Siteloom plugin.', 'siteloom' ),
 			)
 		);
 	}
@@ -246,7 +246,7 @@ class Abilities_Bridge {
 			$instructions                         = "Use the '{$label}' ability when the user needs to {$description}. Always respect the permission model.";
 			$ability_args['meta']['instructions'] = $instructions;
 
-			// Mark as coming from Agent Builder for the native Ability_Function_Resolver.
+			// Mark as coming from Siteloom for the native Ability_Function_Resolver.
 			$ability_args['meta']['agent_builder_tool'] = $tool_name;
 		}
 

@@ -1,12 +1,12 @@
 ---
 name: user-privilege-management
-description: "Use this skill whenever the user asks about or wants to change which WordPress roles can administer Agent Builder or use its AI agents, set daily usage limits per role, or allow/block anonymous frontend chat. Trigger on requests like 'which roles can access plugin settings', 'let editors use the audit log', 'stop subscribers from chatting with agents', 'how many messages can each role send per day', or 'can visitors who aren't logged in use the chat widget'. Do NOT trigger for investigating or securing an individual account (last login, inactivity, locking one user) — that's the user-admin skill's domain."
+description: "Use this skill whenever the user asks about or wants to change which WordPress roles can administer Siteloom or use its AI agents, set daily usage limits per role, or allow/block anonymous frontend chat. Trigger on requests like 'which roles can access plugin settings', 'let editors use the audit log', 'stop subscribers from chatting with agents', 'how many messages can each role send per day', or 'can visitors who aren't logged in use the chat widget'. Do NOT trigger for investigating or securing an individual account (last login, inactivity, locking one user) — that's the user-admin skill's domain."
 allowed-tools: manage_user_privileges
 ---
 
 # User Privilege Management
 
-Agent Builder gates two kinds of access by WordPress role: **plugin administration** (dashboard, agents, audit log, tools, settings) and **AI agent interaction** (chat surfaces, viewing the agent list), plus a per-role **daily usage limit** on chat messages/tokens, and a site-wide toggle for **anonymous frontend chat**. Administrators always retain full access no matter what these settings say. Every change here writes to the same storage the classic Settings > Users tab uses — a change made here shows up there, and vice versa.
+Siteloom gates two kinds of access by WordPress role: **plugin administration** (dashboard, agents, audit log, tools, settings) and **AI agent interaction** (chat surfaces, viewing the agent list), plus a per-role **daily usage limit** on chat messages/tokens, and a site-wide toggle for **anonymous frontend chat**. Administrators always retain full access no matter what these settings say. Every change here writes to the same storage the classic Settings > Users tab uses — a change made here shows up there, and vice versa.
 
 ## Available Tools
 

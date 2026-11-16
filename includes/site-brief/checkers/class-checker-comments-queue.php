@@ -92,19 +92,19 @@ class Checker_Comments_Queue extends Site_Brief_Checker {
 					'subject'          => 'hold',
 					'title'            => sprintf(
 						/* translators: %d: number of comments. */
-						_n( '%d comment is awaiting moderation', '%d comments are awaiting moderation', $held_total, 'agent-builder' ),
+						_n( '%d comment is awaiting moderation', '%d comments are awaiting moderation', $held_total, 'siteloom' ),
 						$held_total
 					),
 					'evidence'         => sprintf(
 						/* translators: %d: number of held comments. */
-						__( '%d held comments in the moderation queue.', 'agent-builder' ),
+						__( '%d held comments in the moderation queue.', 'siteloom' ),
 						$held_total
 					),
 					'evidence_payload' => array(
 						'status' => 'hold',
 						'total'  => $held_total,
 					),
-					'proposed_action'  => __( 'Open the Comments screen to review held comments.', 'agent-builder' ),
+					'proposed_action'  => __( 'Open the Comments screen to review held comments.', 'siteloom' ),
 					'action_risk'      => 'medium',
 					'raw'              => array( 'total' => $held_total ),
 				)
@@ -117,19 +117,19 @@ class Checker_Comments_Queue extends Site_Brief_Checker {
 					'subject'          => 'spam',
 					'title'            => sprintf(
 						/* translators: %d: number of spam comments. */
-						_n( '%d spam comment is queued', '%d spam comments are queued', $spam_total, 'agent-builder' ),
+						_n( '%d spam comment is queued', '%d spam comments are queued', $spam_total, 'siteloom' ),
 						$spam_total
 					),
 					'evidence'         => sprintf(
 						/* translators: %d: spam count. */
-						__( '%d comments marked as spam.', 'agent-builder' ),
+						__( '%d comments marked as spam.', 'siteloom' ),
 						$spam_total
 					),
 					'evidence_payload' => array(
 						'status' => 'spam',
 						'total'  => $spam_total,
 					),
-					'proposed_action'  => __( 'Queue a spam cleanup for your approval. The scan will not delete anything.', 'agent-builder' ),
+					'proposed_action'  => __( 'Queue a spam cleanup for your approval. The scan will not delete anything.', 'siteloom' ),
 					'action_risk'      => 'medium',
 					'raw'              => array( 'total' => $spam_total ),
 				)

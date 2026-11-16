@@ -3,10 +3,10 @@
  * Ability Provider Interface
  *
  * Allows plugins and themes to expose groups of WordPress Abilities
- * that Agent Builder (and the native WP AI Client on 7.0+) can discover,
+ * that Siteloom (and the native WP AI Client on 7.0+) can discover,
  * orchestrate, and safely execute.
  *
- * This is the fundamental extensibility point that makes Agent Builder
+ * This is the fundamental extensibility point that makes Siteloom
  * loved by developers: any plugin can register an Ability Provider and
  * instantly make its capabilities available to agents without custom
  * integration code.

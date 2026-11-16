@@ -1,0 +1,132 @@
+{
+  "translation-revision-date": "2026-08-20 16:00+0000",
+  "generator": "WP-CLI/2.12.0",
+  "source": "src/deploy-wizard/index.js",
+  "domain": "messages",
+  "locale_data": {
+    "messages": {
+      "": {
+        "domain": "messages",
+        "lang": "pt_BR",
+        "plural-forms": "nplurals=2; plural=(n > 1);"
+      },
+      "Position": [
+        "Posição"
+      ],
+      "Everywhere": [
+        "Em todo lugar"
+      ],
+      "Back": [
+        "Voltar"
+      ],
+      "Loading…": [
+        "Carregando…"
+      ],
+      "Publish": [
+        "Publicar"
+      ],
+      "Could not load the wizard.": [
+        "Não foi possível carregar o assistente de configuração."
+      ],
+      "Continue": [
+        "Continuar"
+      ],
+      "Chat widget": [
+        "Widget de chat"
+      ],
+      "A floating chat bubble visitors can open on your site.": [
+        "Um balão de chat flutuante que os visitantes podem abrir no seu site."
+      ],
+      "Admin bar": [
+        "Barra de administração"
+      ],
+      "A quick-chat menu in the WordPress toolbar for logged-in admins.": [
+        "Um menu de chat rápido na barra de ferramentas do WordPress para administradores conectados."
+      ],
+      "Ask AI launcher": [
+        "Iniciador Perguntar à IA"
+      ],
+      "A contextual \"Ask AI\" prompt on admin screens like Plugins or Media.": [
+        "Um prompt contextual \"Perguntar à IA\" em telas administrativas como Plugins ou Mídia."
+      ],
+      "Gutenberg block": [
+        "Bloco do Gutenberg"
+      ],
+      "Makes this agent insertable as a block in any post or page.": [
+        "Permite inserir este agente como um bloco em qualquer post ou página."
+      ],
+      "Agent & surface": [
+        "Agente e superfície"
+      ],
+      "Configure": [
+        "Configurar"
+      ],
+      "Admin only": [
+        "Apenas administração"
+      ],
+      "Front end only": [
+        "Apenas front-end"
+      ],
+      "Single posts/pages only": [
+        "Apenas posts/páginas individuais"
+      ],
+      "Homepage only": [
+        "Apenas página inicial"
+      ],
+      "Something went wrong publishing this agent.": [
+        "Algo deu errado ao publicar este agente."
+      ],
+      "No active agents yet. Activate or train an agent first, then come back to publish it.": [
+        "Ainda não há agentes ativos. Ative ou treine um agente primeiro e depois volte para publicá-lo."
+      ],
+      "Go to Agents": [
+        "Ir para Agentes"
+      ],
+      "%1$s is published on %2$s!": [
+        "%1$s foi publicado em %2$s!"
+      ],
+      "Fine-tune this further, or publish on another surface.": [
+        "Faça mais ajustes ou publique em outra superfície."
+      ],
+      "Publish on another surface": [
+        "Publicar em outra superfície"
+      ],
+      "Manage in Publish": [
+        "Gerenciar em Publicar"
+      ],
+      "Back to Dashboard": [
+        "Voltar ao painel"
+      ],
+      "Which agent?": [
+        "Qual agente?"
+      ],
+      "Where should people reach it?": [
+        "Onde as pessoas devem encontrá-lo?"
+      ],
+      "Nothing else to configure — saving makes this agent available to insert as a block from any post or page editor.": [
+        "Não há mais nada a configurar — ao salvar, este agente ficará disponível para ser inserido como bloco em qualquer editor de post ou página."
+      ],
+      "Bottom right": [
+        "Canto inferior direito"
+      ],
+      "Bottom left": [
+        "Canto inferior esquerdo"
+      ],
+      "Show on": [
+        "Exibir em"
+      ],
+      "Only show to logged-in visitors": [
+        "Exibir apenas para visitantes conectados"
+      ],
+      "Ask AI launchers are already turned on for some admin screens. Saving makes %s the agent that answers them, replacing the current choice — the screens themselves stay as configured.": [
+        "Os iniciadores Perguntar à IA já estão ativados em algumas telas administrativas. Ao salvar, %s passa a ser o agente que responde a elas, substituindo a escolha atual — as telas em si permanecem como configuradas."
+      ],
+      "Which admin screens?": [
+        "Quais telas administrativas?"
+      ],
+      "Wizard steps": [
+        ""
+      ]
+    }
+  }
+}

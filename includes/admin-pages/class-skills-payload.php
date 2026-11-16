@@ -21,12 +21,12 @@ class Skills_Payload {
 			: ( 'advanced' === get_option( 'agent_builder_ui_mode', 'basic' ) );
 
 		$source_labels = array(
-			'core'      => __( 'Core', 'agent-builder' ),
-			'agentic'   => __( 'Agentic', 'agent-builder' ),
-			'clawhub'   => __( 'ClawHub', 'agent-builder' ),
-			'wordpress' => __( 'WordPress.org', 'agent-builder' ),
-			'anthropic' => __( 'Anthropic', 'agent-builder' ),
-			'draft'     => __( 'Draft', 'agent-builder' ),
+			'core'      => __( 'Core', 'siteloom' ),
+			'agentic'   => __( 'Agentic', 'siteloom' ),
+			'clawhub'   => __( 'ClawHub', 'siteloom' ),
+			'wordpress' => __( 'WordPress.org', 'siteloom' ),
+			'anthropic' => __( 'Anthropic', 'siteloom' ),
+			'draft'     => __( 'Draft', 'siteloom' ),
 		);
 
 		// Map agent slugs to their display names for the Agent column, same
@@ -65,7 +65,7 @@ class Skills_Payload {
 			// present so the React view can split draft rows out into the Drafts
 			// section regardless of mode.
 			if ( $is_advanced ) {
-				$row['source_label'] = $source_labels[ $source ] ?? __( 'Local', 'agent-builder' );
+				$row['source_label'] = $source_labels[ $source ] ?? __( 'Local', 'siteloom' );
 				$row['export_url']   = wp_nonce_url( admin_url( 'admin-post.php?action=agentic_export_skill&skill_id=' . $id ), 'agentic_export_skill' );
 			}
 			$rows[] = $row;
@@ -93,27 +93,27 @@ class Skills_Payload {
 
 		return array(
 			'page'        => 'skills',
-			'title'       => __( 'Skills', 'agent-builder' ),
-			'description' => __( 'Instructions that teach agents when and how to use tools.', 'agent-builder' ),
+			'title'       => __( 'Skills', 'siteloom' ),
+			'description' => __( 'Instructions that teach agents when and how to use tools.', 'siteloom' ),
 			'rows'        => $rows,
 			'is_advanced' => $is_advanced,
 			'assistant'   => $assistant,
 			'actions'     => array(
 				array(
-					'label'   => __( 'Create Skill', 'agent-builder' ),
+					'label'   => __( 'Create Skill', 'siteloom' ),
 					'url'     => admin_url( 'admin.php?page=agentic-skills&skill_view=new' ),
 					'primary' => true,
 				),
 				array(
-					'label' => __( 'Import SKILL.md', 'agent-builder' ),
+					'label' => __( 'Import SKILL.md', 'siteloom' ),
 					'url'   => admin_url( 'admin.php?page=agentic-skills&skill_view=new' ),
 				),
 				array(
-					'label' => __( 'Teach a task', 'agent-builder' ),
+					'label' => __( 'Teach a task', 'siteloom' ),
 					'url'   => admin_url( 'admin.php?page=agentic-chat&teach_task=1' ),
 				),
 				array(
-					'label' => __( 'Browse Community', 'agent-builder' ),
+					'label' => __( 'Browse Community', 'siteloom' ),
 					'url'   => admin_url( 'admin.php?page=agentic-skills&skill_view=hub' ),
 				),
 			),

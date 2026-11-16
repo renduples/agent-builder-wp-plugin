@@ -30,21 +30,21 @@ import { __, sprintf } from '@wordpress/i18n';
 const CFG = ( typeof window !== 'undefined' && window.agenticKnowledgeWizard ) || {};
 
 const SOURCES = [
-	{ key: 'paste', label: __( 'Paste text', 'agent-builder' ) },
-	{ key: 'upload', label: __( 'Upload a file', 'agent-builder' ) },
-	{ key: 'pages', label: __( 'Pick existing pages', 'agent-builder' ) },
+	{ key: 'paste', label: __( 'Paste text', 'siteloom' ) },
+	{ key: 'upload', label: __( 'Upload a file', 'siteloom' ) },
+	{ key: 'pages', label: __( 'Pick existing pages', 'siteloom' ) },
 ];
 
 const STEPS = [
-	{ key: 'source', label: __( 'Source', 'agent-builder' ) },
-	{ key: 'details', label: __( 'Title & tags', 'agent-builder' ) },
+	{ key: 'source', label: __( 'Source', 'siteloom' ) },
+	{ key: 'details', label: __( 'Title & tags', 'siteloom' ) },
 ];
 
 function Stepper( { current } ) {
 	return (
 		<ol
 			className="agentic-wizard-steps"
-			aria-label={ __( 'Wizard steps', 'agent-builder' ) }
+			aria-label={ __( 'Wizard steps', 'siteloom' ) }
 		>
 			{ STEPS.map( ( stepItem, index ) => (
 				<li
@@ -105,7 +105,7 @@ function App() {
 				.catch( ( err ) =>
 					setPageError(
 						err.message ||
-							__( 'Could not load pages.', 'agent-builder' )
+							__( 'Could not load pages.', 'siteloom' )
 					)
 				);
 		}, 300 );
@@ -129,7 +129,7 @@ function App() {
 			setFileError(
 				__(
 					'Please choose a plain text or Markdown file (.txt or .md).',
-					'agent-builder'
+					'siteloom'
 				)
 			);
 			return;
@@ -144,7 +144,7 @@ function App() {
 		};
 		reader.onerror = () =>
 			setFileError(
-				__( 'Could not read that file.', 'agent-builder' )
+				__( 'Could not read that file.', 'siteloom' )
 			);
 		reader.readAsText( file );
 	};
@@ -191,7 +191,7 @@ function App() {
 					err.message ||
 						__(
 							'Something went wrong saving this knowledge.',
-							'agent-builder'
+							'siteloom'
 						)
 				)
 			)
@@ -206,14 +206,14 @@ function App() {
 						{ '📚 ' }
 						{ sprintf(
 							/* translators: %s: the knowledge title. */
-							__( '"%s" is saved!', 'agent-builder' ),
+							__( '"%s" is saved!', 'siteloom' ),
 							title
 						) }
 					</h2>
 					<p>
 						{ __(
 							'Your agents can now use this. Add another, or review it in the full Knowledge Wiki.',
-							'agent-builder'
+							'siteloom'
 						) }
 					</p>
 					<Flex justify="flex-start" gap={ 3 } wrap>
@@ -231,7 +231,7 @@ function App() {
 									setTags( '' );
 								} }
 							>
-								{ __( 'Add another', 'agent-builder' ) }
+								{ __( 'Add another', 'siteloom' ) }
 							</Button>
 						</FlexItem>
 						<FlexItem>
@@ -241,12 +241,12 @@ function App() {
 									done.knowledge_url || CFG.knowledgeUrl
 								}
 							>
-								{ __( 'View Knowledge Wiki', 'agent-builder' ) }
+								{ __( 'View Knowledge Wiki', 'siteloom' ) }
 							</Button>
 						</FlexItem>
 						<FlexItem>
 							<Button variant="tertiary" href={ CFG.dashboardUrl }>
-								{ __( 'Back to Dashboard', 'agent-builder' ) }
+								{ __( 'Back to Dashboard', 'siteloom' ) }
 							</Button>
 						</FlexItem>
 					</Flex>
@@ -270,7 +270,7 @@ function App() {
 				{ step === 0 && (
 					<Fragment>
 						<p className="agentic-wizard-sublabel">
-							{ __( 'Where is this knowledge coming from?', 'agent-builder' ) }
+							{ __( 'Where is this knowledge coming from?', 'siteloom' ) }
 						</p>
 						<Flex gap={ 2 } wrap justify="flex-start" className="agentic-mb-12">
 							{ SOURCES.map( ( s ) => (
@@ -291,10 +291,10 @@ function App() {
 
 						{ source === 'paste' && (
 							<TextareaControl
-								label={ __( 'Paste the text', 'agent-builder' ) }
+								label={ __( 'Paste the text', 'siteloom' ) }
 								help={ __(
 									'A fact, policy, FAQ answer — anything you want your agents to know is true.',
-									'agent-builder'
+									'siteloom'
 								) }
 								value={ text }
 								onChange={ setText }
@@ -308,7 +308,7 @@ function App() {
 									className="agentic-wizard-sublabel"
 									htmlFor="agentic-knowledge-wizard-file"
 								>
-									{ __( 'Upload a text or Markdown file', 'agent-builder' ) }
+									{ __( 'Upload a text or Markdown file', 'siteloom' ) }
 								</label>
 								<input
 									id="agentic-knowledge-wizard-file"
@@ -327,14 +327,14 @@ function App() {
 									<p className="agentic-wizard-hint">
 										{ sprintf(
 											/* translators: %s: file name. */
-											__( 'Loaded "%s" — you can review and edit the text below.', 'agent-builder' ),
+											__( 'Loaded "%s" — you can review and edit the text below.', 'siteloom' ),
 											fileName
 										) }
 									</p>
 								) }
 								{ text && (
 									<TextareaControl
-										label={ __( 'File contents', 'agent-builder' ) }
+										label={ __( 'File contents', 'siteloom' ) }
 										value={ text }
 										onChange={ setText }
 										rows={ 8 }
@@ -346,10 +346,10 @@ function App() {
 						{ source === 'pages' && (
 							<Fragment>
 								<TextControl
-									label={ __( 'Search your pages and posts', 'agent-builder' ) }
+									label={ __( 'Search your pages and posts', 'siteloom' ) }
 									value={ pageQuery }
 									onChange={ setPageQuery }
-									placeholder={ __( 'Leave blank to see recent pages', 'agent-builder' ) }
+									placeholder={ __( 'Leave blank to see recent pages', 'siteloom' ) }
 									__next40pxDefaultSize
 								/>
 								{ pageError && (
@@ -360,12 +360,12 @@ function App() {
 								{ pageResults === null && ! pageError && (
 									<div className="agentic-wizard-loading">
 										<Spinner />{ ' ' }
-										{ __( 'Loading…', 'agent-builder' ) }
+										{ __( 'Loading…', 'siteloom' ) }
 									</div>
 								) }
 								{ pageResults && pageResults.length === 0 && (
 									<p className="agentic-wizard-hint">
-										{ __( 'No matching pages or posts.', 'agent-builder' ) }
+										{ __( 'No matching pages or posts.', 'siteloom' ) }
 									</p>
 								) }
 								{ pageResults && pageResults.length > 0 && (
@@ -385,7 +385,7 @@ function App() {
 									<p className="agentic-wizard-hint">
 										{ sprintf(
 											/* translators: %s: number of selected pages. */
-											__( '%s page(s)/post(s) selected.', 'agent-builder' ),
+											__( '%s page(s)/post(s) selected.', 'siteloom' ),
 											String( selectedPageIds.length )
 										) }
 									</p>
@@ -398,20 +398,20 @@ function App() {
 				{ step === 1 && (
 					<Fragment>
 						<TextControl
-							label={ __( 'Title', 'agent-builder' ) }
+							label={ __( 'Title', 'siteloom' ) }
 							help={ __(
 								'A short, clear name, e.g. "Return policy" or "Support hours".',
-								'agent-builder'
+								'siteloom'
 							) }
 							value={ title }
 							onChange={ setTitle }
 							__next40pxDefaultSize
 						/>
 						<TextControl
-							label={ __( 'Tags (optional)', 'agent-builder' ) }
+							label={ __( 'Tags (optional)', 'siteloom' ) }
 							help={ __(
 								'Comma-separated, e.g. billing, returns, policy.',
-								'agent-builder'
+								'siteloom'
 							) }
 							value={ tags }
 							onChange={ setTags }
@@ -429,7 +429,7 @@ function App() {
 								onClick={ () => setStep( step - 1 ) }
 								disabled={ submitting }
 							>
-								{ __( 'Back', 'agent-builder' ) }
+								{ __( 'Back', 'siteloom' ) }
 							</Button>
 						) }
 					</FlexItem>
@@ -440,7 +440,7 @@ function App() {
 								onClick={ () => setStep( 1 ) }
 								disabled={ ! canLeaveSource() }
 							>
-								{ __( 'Continue', 'agent-builder' ) }
+								{ __( 'Continue', 'siteloom' ) }
 							</Button>
 						) : (
 							<Button
@@ -449,7 +449,7 @@ function App() {
 								isBusy={ submitting }
 								disabled={ ! canSave() }
 							>
-								{ __( 'Save knowledge', 'agent-builder' ) }
+								{ __( 'Save knowledge', 'siteloom' ) }
 							</Button>
 						) }
 					</FlexItem>

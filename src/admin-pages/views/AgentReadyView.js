@@ -4,14 +4,14 @@ import { __, sprintf } from '@wordpress/i18n';
 import { Button, Notice, ToggleControl } from '@wordpress/components';
 
 const AGENT_READY_CHECK_LABELS = {
-	mcp_server_reachable: __( 'MCP server reachable', 'agent-builder' ),
-	webmcp_tools_registered: __( 'WebMCP tools registered', 'agent-builder' ),
-	approval_gate_configured: __( 'Approval gate configured', 'agent-builder' ),
-	llms_txt_present: __( 'llms.txt present', 'agent-builder' ),
-	robots_ai_directives: __( 'AI crawler directives in robots.txt', 'agent-builder' ),
-	schema_org_present: __( 'Organization/WebSite schema', 'agent-builder' ),
-	well_known_manifest: __( 'WebMCP discovery manifest', 'agent-builder' ),
-	commerce_readiness: __( 'Commerce readiness', 'agent-builder' ),
+	mcp_server_reachable: __( 'MCP server reachable', 'siteloom' ),
+	webmcp_tools_registered: __( 'WebMCP tools registered', 'siteloom' ),
+	approval_gate_configured: __( 'Approval gate configured', 'siteloom' ),
+	llms_txt_present: __( 'llms.txt present', 'siteloom' ),
+	robots_ai_directives: __( 'AI crawler directives in robots.txt', 'siteloom' ),
+	schema_org_present: __( 'Organization/WebSite schema', 'siteloom' ),
+	well_known_manifest: __( 'WebMCP discovery manifest', 'siteloom' ),
+	commerce_readiness: __( 'Commerce readiness', 'siteloom' ),
 };
 
 // Checks whose only fix path today is the bundled AI Radar agent (a chat
@@ -30,7 +30,7 @@ function AgentReadyFixList( { categories, onApplyFix, applying } ) {
 	if ( 0 === entries.length ) {
 		return (
 			<p className="agentic-react-lead">
-				{ __( 'Nothing urgent — every check looks good.', 'agent-builder' ) }
+				{ __( 'Nothing urgent — every check looks good.', 'siteloom' ) }
 			</p>
 		);
 	}
@@ -48,15 +48,15 @@ function AgentReadyFixList( { categories, onApplyFix, applying } ) {
 							disabled={ Boolean( applying ) }
 							onClick={ () => onApplyFix( id ) }
 						>
-							{ __( 'Fix now', 'agent-builder' ) }
+							{ __( 'Fix now', 'siteloom' ) }
 						</Button>
 					) : AI_RADAR_FIXABLE_CHECKS.includes( id ) ? (
 						<Button variant="link" href="admin.php?page=agentic-chat&agent=ai-radar">
-							{ __( 'Fix this with AI Radar →', 'agent-builder' ) }
+							{ __( 'Fix this with AI Radar →', 'siteloom' ) }
 						</Button>
 					) : (
 						<span className="agentic-react-muted">
-							{ __( 'No one-click fix yet.', 'agent-builder' ) }
+							{ __( 'No one-click fix yet.', 'siteloom' ) }
 						</span>
 					) }
 				</li>
@@ -103,14 +103,14 @@ function AgentReadyView( { data, reload } ) {
 					setNotice(
 						sprintf(
 							/* translators: %s: why the check still fails. */
-							__( 'The fix ran, but this check still needs attention: %s', 'agent-builder' ),
+							__( 'The fix ran, but this check still needs attention: %s', 'siteloom' ),
 							after.detail || ''
 						)
 					);
 				}
 				return reload( { silent: true } );
 			} )
-			.catch( ( e ) => setError( e.message || __( 'Could not apply that fix.', 'agent-builder' ) ) )
+			.catch( ( e ) => setError( e.message || __( 'Could not apply that fix.', 'siteloom' ) ) )
 			.finally( () => setApplying( '' ) );
 	};
 
@@ -126,7 +126,7 @@ function AgentReadyView( { data, reload } ) {
 			},
 		} )
 			.then( () => reload( { silent: true } ) )
-			.catch( ( e ) => setError( e.message || __( 'Could not change that setting.', 'agent-builder' ) ) );
+			.catch( ( e ) => setError( e.message || __( 'Could not change that setting.', 'siteloom' ) ) );
 	};
 
 	const [ submitting, setSubmitting ] = useState( false );
@@ -139,7 +139,7 @@ function AgentReadyView( { data, reload } ) {
 			data: { action_name: 'submit_to_directory' },
 		} )
 			.then( () => reload( { silent: true } ) )
-			.catch( ( e ) => setError( e.message || __( 'Could not submit to the directory.', 'agent-builder' ) ) )
+			.catch( ( e ) => setError( e.message || __( 'Could not submit to the directory.', 'siteloom' ) ) )
 			.finally( () => setSubmitting( false ) );
 	};
 
@@ -151,7 +151,7 @@ function AgentReadyView( { data, reload } ) {
 			data: { action_name: 'toggle_webmcp_expose', agent_slug: agentSlug, tool_name: toolName, expose },
 		} )
 			.then( () => reload( { silent: true } ) )
-			.catch( ( e ) => setError( e.message || __( 'Could not change exposure.', 'agent-builder' ) ) );
+			.catch( ( e ) => setError( e.message || __( 'Could not change exposure.', 'siteloom' ) ) );
 	};
 
 	return (
@@ -176,7 +176,7 @@ function AgentReadyView( { data, reload } ) {
 
 			<div className="agentic-agent-ready-webmcp-toggle">
 				<ToggleControl
-					label={ __( 'Let AI agents access my site (turn on the WebMCP Bridge)', 'agent-builder' ) }
+					label={ __( 'Let AI agents access my site (turn on the WebMCP Bridge)', 'siteloom' ) }
 					checked={ Boolean( data.webmcp_enabled ) }
 					onChange={ toggleWebmcp }
 				/>
@@ -184,21 +184,21 @@ function AgentReadyView( { data, reload } ) {
 
 			<p>
 				<Button variant="secondary" isBusy={ submitting } disabled={ submitting } onClick={ submitToDirectory }>
-					{ __( 'Submit to Directory', 'agent-builder' ) }
+					{ __( 'Submit to Directory', 'siteloom' ) }
 				</Button>
 			</p>
 
 			{ data.is_advanced && (
 				<>
-					<h3>{ __( 'All checks', 'agent-builder' ) }</h3>
+					<h3>{ __( 'All checks', 'siteloom' ) }</h3>
 					<div className="agentic-react-table-wrap">
 						<table className="agentic-react-table">
 							<thead>
 								<tr>
-									<th>{ __( 'Check', 'agent-builder' ) }</th>
-									<th>{ __( 'Category', 'agent-builder' ) }</th>
-									<th>{ __( 'Score', 'agent-builder' ) }</th>
-									<th>{ __( 'Detail', 'agent-builder' ) }</th>
+									<th>{ __( 'Check', 'siteloom' ) }</th>
+									<th>{ __( 'Category', 'siteloom' ) }</th>
+									<th>{ __( 'Score', 'siteloom' ) }</th>
+									<th>{ __( 'Detail', 'siteloom' ) }</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -214,21 +214,21 @@ function AgentReadyView( { data, reload } ) {
 						</table>
 					</div>
 
-					<h3>{ __( 'WebMCP tool exposure', 'agent-builder' ) }</h3>
+					<h3>{ __( 'WebMCP tool exposure', 'siteloom' ) }</h3>
 					{ 0 === ( data.webmcp_matrix || [] ).length ? (
 						<p className="agentic-react-muted">
-							{ __( 'No tools are currently exposed to agents via WebMCP.', 'agent-builder' ) }
+							{ __( 'No tools are currently exposed to agents via WebMCP.', 'siteloom' ) }
 						</p>
 					) : (
 					<div className="agentic-react-table-wrap">
 						<table className="agentic-react-table">
 							<thead>
 								<tr>
-									<th>{ __( 'Agent', 'agent-builder' ) }</th>
-									<th>{ __( 'Tool', 'agent-builder' ) }</th>
-									<th>{ __( 'Context', 'agent-builder' ) }</th>
-									<th>{ __( 'Risk', 'agent-builder' ) }</th>
-									<th>{ __( 'Exposed', 'agent-builder' ) }</th>
+									<th>{ __( 'Agent', 'siteloom' ) }</th>
+									<th>{ __( 'Tool', 'siteloom' ) }</th>
+									<th>{ __( 'Context', 'siteloom' ) }</th>
+									<th>{ __( 'Risk', 'siteloom' ) }</th>
+									<th>{ __( 'Exposed', 'siteloom' ) }</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -255,7 +255,7 @@ function AgentReadyView( { data, reload } ) {
 						<p className="agentic-react-muted">
 							{ sprintf(
 								/* translators: 1: submission status, 2: date. */
-								__( 'Directory submission: %1$s (%2$s)', 'agent-builder' ),
+								__( 'Directory submission: %1$s (%2$s)', 'siteloom' ),
 								data.directory_status.status,
 								data.directory_status.submitted_at
 							) }

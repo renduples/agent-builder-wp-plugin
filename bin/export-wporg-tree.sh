@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Build a WordPress.org submission tree from this checkout.
 # Usage: bin/export-wporg-tree.sh [destination-dir]
-# Default destination: /tmp/agent-builder
-# Also writes a sibling zip (e.g. /tmp/agent-builder.zip). That zip is a
+# Default destination: /tmp/siteloom
+# Also writes a sibling zip (e.g. /tmp/siteloom.zip). That zip is a
 # build artifact — gitignored, never commit it.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-DEST="${1:-/tmp/agent-builder}"
+DEST="${1:-/tmp/siteloom}"
 DEST="$(mkdir -p "$DEST" && cd "$DEST" && pwd)"
 IGNORE="$ROOT/.distignore"
 

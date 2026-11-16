@@ -1,5 +1,5 @@
 /**
- * Shared WordPress-components building blocks for Agent Builder admin.
+ * Shared WordPress-components building blocks for Siteloom admin.
  */
 import { useState } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
@@ -88,7 +88,7 @@ export function Panel( {
 				{ isLoading ? (
 					<p>
 						<Spinner />{ ' ' }
-						{ __( 'Loading…', 'agent-builder' ) }
+						{ __( 'Loading…', 'siteloom' ) }
 					</p>
 				) : (
 					children
@@ -110,8 +110,8 @@ export function SaveBar( { onSave, saving, label } ) {
 					disabled={ saving }
 				>
 					{ saving
-						? __( 'Saving…', 'agent-builder' )
-						: label || __( 'Save changes', 'agent-builder' ) }
+						? __( 'Saving…', 'siteloom' )
+						: label || __( 'Save changes', 'siteloom' ) }
 				</Button>
 			</FlexItem>
 		</Flex>
@@ -132,7 +132,7 @@ export function StatusNotice( { error, saved, onDismissSaved } ) {
 					isDismissible
 					onRemove={ onDismissSaved }
 				>
-					{ __( 'Settings saved.', 'agent-builder' ) }
+					{ __( 'Settings saved.', 'siteloom' ) }
 				</Notice>
 			) }
 		</>
@@ -186,7 +186,7 @@ export function ScreenModeToggle( { screen, isAdvanced, onChanged } ) {
 				disabled={ busy }
 				onClick={ () => setMode( 'basic' ) }
 			>
-				{ __( 'Basic', 'agent-builder' ) }
+				{ __( 'Basic', 'siteloom' ) }
 			</button>
 			<button
 				type="button"
@@ -197,12 +197,12 @@ export function ScreenModeToggle( { screen, isAdvanced, onChanged } ) {
 				disabled={ busy }
 				onClick={ () => setMode( 'advanced' ) }
 			>
-				{ __( 'Advanced', 'agent-builder' ) }
+				{ __( 'Advanced', 'siteloom' ) }
 			</button>
 			<InfoTip
 				text={ __(
 					'Only changes this screen. Other screens and your site-wide default (Settings → Interface) are unaffected.',
-					'agent-builder'
+					'siteloom'
 				) }
 			/>
 		</span>
@@ -230,7 +230,7 @@ export function InfoTip( { text, children } ) {
 				<button
 					type="button"
 					className="agentic-react-infotip"
-					aria-label={ __( 'More info', 'agent-builder' ) }
+					aria-label={ __( 'More info', 'siteloom' ) }
 				>
 					?
 				</button>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="665" height="665" version="1.1" viewBox="0 0 665 665" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <linearGradient id="linearGradient7" x1="180.43" x2="840.67" y1="480.82" y2="480.82" gradientTransform="translate(-176.97 -149.1)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#5b56db" offset=".20209"/>
+   <stop stop-color="#ab4ff3" offset="1"/>
+  </linearGradient>
+  <linearGradient id="linearGradient12" x1="267.09" x2="699.04" y1="497.46" y2="497.46" gradientTransform="translate(-176.97 -149.1)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#5b56db" offset=".19686"/>
+   <stop stop-color="#ab4ff3" offset="1"/>
+  </linearGradient>
+ </defs>
+ <path d="m335.95 44.173-332.48 572.39 136.51 2.0273 193.27-356.81 195.98 357.49 134.48-2.7031zm-1.3516 54.062 284.5 490.62-73.66 2.7031-210.17-385.2-210.84 385.87-74.336-2.7031z" fill="url(#linearGradient7)"/>
+ <g>
+  <circle cx="513.68" cy="187.1" r="30" fill="#ab4ff3" image-rendering="auto"/>
+  <circle cx="96.265" cy="481.06" r="30" fill="#5b56db"/>
+  <circle cx="497.75" cy="349.08" r="30" fill="#ab4ff3"/>
+ </g>
+ <path d="m513.01 185.41c-19.117 53.145-61.123 92.895-98.19 133.78-63.838 64.243-142.06 99.569-223.18 135.72-29.326 11.816-67.487 19.269-98.288 26.489 36.229 5.7362 71.577-7.6965 107.38-10.99 86.286-14.141 164.82-54.442 245.28-86.488 18.833-9.303 39.217-19.255 54.164-33.623" fill="none" stroke="url(#linearGradient12)" stroke-width="21.9"/>
+</svg>

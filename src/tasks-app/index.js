@@ -45,41 +45,41 @@ const DONE_STATUSES = [ 'completed', 'failed', 'aborted', 'cancelled', 'error' ]
 const NON_TERMINAL = [ ...ACTIVE_STATUSES, ...WAITING_STATUSES ];
 
 const TABS = [
-	{ id: 'active', label: __( 'Active', 'agent-builder' ) },
-	{ id: 'waiting', label: __( 'Waiting on you', 'agent-builder' ) },
-	{ id: 'done', label: __( 'Done', 'agent-builder' ) },
+	{ id: 'active', label: __( 'Active', 'siteloom' ) },
+	{ id: 'waiting', label: __( 'Waiting on you', 'siteloom' ) },
+	{ id: 'done', label: __( 'Done', 'siteloom' ) },
 ];
 
 const STATUS_LABELS = {
-	queued: __( 'Queued', 'agent-builder' ),
-	running: __( 'Running', 'agent-builder' ),
-	continuing: __( 'Continuing', 'agent-builder' ),
-	waiting: __( 'Waiting', 'agent-builder' ),
-	completed: __( 'Completed', 'agent-builder' ),
-	failed: __( 'Failed', 'agent-builder' ),
-	aborted: __( 'Aborted', 'agent-builder' ),
-	cancelled: __( 'Cancelled', 'agent-builder' ),
-	error: __( 'Error', 'agent-builder' ),
+	queued: __( 'Queued', 'siteloom' ),
+	running: __( 'Running', 'siteloom' ),
+	continuing: __( 'Continuing', 'siteloom' ),
+	waiting: __( 'Waiting', 'siteloom' ),
+	completed: __( 'Completed', 'siteloom' ),
+	failed: __( 'Failed', 'siteloom' ),
+	aborted: __( 'Aborted', 'siteloom' ),
+	cancelled: __( 'Cancelled', 'siteloom' ),
+	error: __( 'Error', 'siteloom' ),
 };
 
 // Human labels for the tool-argument summary rows on the approval card. Mirrors
 // the proposal-card summary labels in shared/chat-embed.js.
 const APPROVAL_SUMMARY_LABELS = {
-	title: __( 'Title', 'agent-builder' ),
-	status: __( 'Status', 'agent-builder' ),
-	post_type: __( 'Post type', 'agent-builder' ),
-	post_id: __( 'Post', 'agent-builder' ),
+	title: __( 'Title', 'siteloom' ),
+	status: __( 'Status', 'siteloom' ),
+	post_type: __( 'Post type', 'siteloom' ),
+	post_id: __( 'Post', 'siteloom' ),
 };
 
 // Outcome chip for a run step (Runs_REST::describe_step() `status`), mapped
 // onto the existing run status chip colours.
 const STEP_STATUS = {
-	done: { chip: 'completed', label: __( 'Done', 'agent-builder' ) },
-	failed: { chip: 'failed', label: __( 'Failed', 'agent-builder' ) },
-	blocked: { chip: 'error', label: __( 'Blocked', 'agent-builder' ) },
-	waiting: { chip: 'waiting', label: __( 'Waiting', 'agent-builder' ) },
-	approved: { chip: 'completed', label: __( 'Approved', 'agent-builder' ) },
-	rejected: { chip: 'cancelled', label: __( 'Rejected', 'agent-builder' ) },
+	done: { chip: 'completed', label: __( 'Done', 'siteloom' ) },
+	failed: { chip: 'failed', label: __( 'Failed', 'siteloom' ) },
+	blocked: { chip: 'error', label: __( 'Blocked', 'siteloom' ) },
+	waiting: { chip: 'waiting', label: __( 'Waiting', 'siteloom' ) },
+	approved: { chip: 'completed', label: __( 'Approved', 'siteloom' ) },
+	rejected: { chip: 'cancelled', label: __( 'Rejected', 'siteloom' ) },
 };
 
 function StepItem( { step, hideReasoning } ) {
@@ -341,7 +341,7 @@ function TasksApp() {
 			} )
 			.catch( ( err ) => {
 				setLoadError(
-					err.message || __( 'Could not load tasks.', 'agent-builder' )
+					err.message || __( 'Could not load tasks.', 'siteloom' )
 				);
 			} )
 			.finally( () => {
@@ -371,7 +371,7 @@ function TasksApp() {
 			.catch( ( err ) => {
 				if ( drawerRunIdRef.current === id ) {
 					setDrawerError(
-						err.message || __( 'Could not load this run.', 'agent-builder' )
+						err.message || __( 'Could not load this run.', 'siteloom' )
 					);
 				}
 			} )
@@ -427,7 +427,7 @@ function TasksApp() {
 						err.message ||
 							__(
 								'Could not load notifications.',
-								'agent-builder'
+								'siteloom'
 							)
 					);
 				}
@@ -548,7 +548,7 @@ function TasksApp() {
 		}
 		const task = assignTask.trim();
 		if ( ! assignAgent || ! task ) {
-			setAssignError( __( 'Choose an agent and describe the task.', 'agent-builder' ) );
+			setAssignError( __( 'Choose an agent and describe the task.', 'siteloom' ) );
 			return;
 		}
 		setAssigning( true );
@@ -561,13 +561,13 @@ function TasksApp() {
 		} )
 			.then( () => {
 				setAssignTask( '' );
-				setAssignDone( __( 'Task assigned — it will start running shortly.', 'agent-builder' ) );
+				setAssignDone( __( 'Task assigned — it will start running shortly.', 'siteloom' ) );
 				setActiveTab( 'active' );
 				loadRuns( true );
 			} )
 			.catch( ( err ) =>
 				setAssignError(
-					err.message || __( 'Could not assign the task.', 'agent-builder' )
+					err.message || __( 'Could not assign the task.', 'siteloom' )
 				)
 			)
 			.finally( () => setAssigning( false ) );
@@ -583,7 +583,7 @@ function TasksApp() {
 			.then( refreshAll )
 			.catch( ( err ) =>
 				setDrawerActionError(
-					err.message || __( 'Could not cancel this run.', 'agent-builder' )
+					err.message || __( 'Could not cancel this run.', 'siteloom' )
 				)
 			)
 			.finally( () => setDrawerBusy( '' ) );
@@ -604,7 +604,7 @@ function TasksApp() {
 			} )
 			.catch( ( err ) =>
 				setDrawerActionError(
-					err.message || __( 'Could not retry this run.', 'agent-builder' )
+					err.message || __( 'Could not retry this run.', 'siteloom' )
 				)
 			)
 			.finally( () => setDrawerBusy( '' ) );
@@ -625,7 +625,7 @@ function TasksApp() {
 			.then( refreshAll )
 			.catch( ( err ) =>
 				setDrawerActionError(
-					err.message || __( 'Could not record that decision.', 'agent-builder' )
+					err.message || __( 'Could not record that decision.', 'siteloom' )
 				)
 			)
 			.finally( () => setDrawerBusy( '' ) );
@@ -656,51 +656,51 @@ function TasksApp() {
 	return (
 		<div className="agentic-admin">
 			<AdminPage
-				title={ __( 'Tasks', 'agent-builder' ) }
+				title={ __( 'Tasks', 'siteloom' ) }
 				description={ __(
 					'Assign a task to an agent and it runs in the background — you’ll be pinged when it finishes or pauses for your OK.',
-					'agent-builder'
+					'siteloom'
 				) }
 				wide
 			>
-				<Panel title={ __( 'Assign a task', 'agent-builder' ) }>
+				<Panel title={ __( 'Assign a task', 'siteloom' ) }>
 					{ ! canRun ? (
 						<Notice status="info" isDismissible={ false }>
 							{ __(
 								'You can view tasks, but you don’t have permission to assign new ones.',
-								'agent-builder'
+								'siteloom'
 							) }
 						</Notice>
 					) : ! agents.length ? (
 						<Notice status="info" isDismissible={ false }>
 							{ __(
 								'No agents are available to assign tasks to.',
-								'agent-builder'
+								'siteloom'
 							) }
 						</Notice>
 					) : (
 						<form onSubmit={ assign }>
 							<SelectControl
-								label={ __( 'Agent', 'agent-builder' ) }
+								label={ __( 'Agent', 'siteloom' ) }
 								value={ assignAgent }
 								options={ agentOptions }
 								onChange={ setAssignAgent }
 								help={ __(
 									'The agent that will work on this task.',
-									'agent-builder'
+									'siteloom'
 								) }
 							/>
 							<TextareaControl
-								label={ __( 'Task', 'agent-builder' ) }
+								label={ __( 'Task', 'siteloom' ) }
 								value={ assignTask }
 								onChange={ setAssignTask }
 								placeholder={ __(
 									'Describe what you want the agent to do…',
-									'agent-builder'
+									'siteloom'
 								) }
 								help={ __(
 									'Be specific — the agent works from this description alone.',
-									'agent-builder'
+									'siteloom'
 								) }
 							/>
 							{ assignError && (
@@ -722,8 +722,8 @@ function TasksApp() {
 										disabled={ assigning || ! assignAgent || ! assignTask.trim() }
 									>
 										{ assigning
-											? __( 'Assigning…', 'agent-builder' )
-											: __( 'Assign', 'agent-builder' ) }
+											? __( 'Assigning…', 'siteloom' )
+											: __( 'Assign', 'siteloom' ) }
 									</Button>
 								</FlexItem>
 							</Flex>
@@ -735,8 +735,8 @@ function TasksApp() {
 				<Panel
 					title={
 						unreadCount > 0
-							? `${ __( 'Notifications', 'agent-builder' ) } (${ unreadCount })`
-							: __( 'Notifications', 'agent-builder' )
+							? `${ __( 'Notifications', 'siteloom' ) } (${ unreadCount })`
+							: __( 'Notifications', 'siteloom' )
 					}
 				>
 					{ notifError && (
@@ -747,11 +747,11 @@ function TasksApp() {
 					{ notifLoading ? (
 						<p>
 							<Spinner />{ ' ' }
-							{ __( 'Loading notifications…', 'agent-builder' ) }
+							{ __( 'Loading notifications…', 'siteloom' ) }
 						</p>
 					) : ! notifications.length ? (
 						<p className="agentic-react-muted">
-							{ __( 'No notifications yet.', 'agent-builder' ) }
+							{ __( 'No notifications yet.', 'siteloom' ) }
 						</p>
 					) : (
 						<div className="agentic-tasks-list">
@@ -798,7 +798,7 @@ function TasksApp() {
 					) }
 				</Panel>
 
-				<Panel title={ __( 'Runs', 'agent-builder' ) }>
+				<Panel title={ __( 'Runs', 'siteloom' ) }>
 					<div className="agentic-react-tabs agentic-tasks-tabs">
 						{ TABS.map( ( t ) => {
 							const count = runs.filter(
@@ -829,11 +829,11 @@ function TasksApp() {
 
 					{ loading ? (
 						<p>
-							<Spinner /> { __( 'Loading tasks…', 'agent-builder' ) }
+							<Spinner /> { __( 'Loading tasks…', 'siteloom' ) }
 						</p>
 					) : ! visibleRuns.length ? (
 						<p className="agentic-react-muted">
-							{ __( 'Nothing here.', 'agent-builder' ) }
+							{ __( 'Nothing here.', 'siteloom' ) }
 						</p>
 					) : (
 						<div className="agentic-tasks-list">
@@ -861,7 +861,7 @@ function TasksApp() {
 										{ isAdvanced && r.tokens_used > 0 && (
 											<span className="agentic-tasks-row__tokens">
 												{ r.tokens_used }{ ' ' }
-												{ __( 'tokens', 'agent-builder' ) }
+												{ __( 'tokens', 'siteloom' ) }
 											</span>
 										) }
 									</div>
@@ -874,14 +874,14 @@ function TasksApp() {
 
 			{ drawerRunId && (
 				<Modal
-					title={ __( 'Run details', 'agent-builder' ) }
+					title={ __( 'Run details', 'siteloom' ) }
 					onRequestClose={ closeDrawer }
 					className="agentic-tasks-drawer"
 				>
 					<div id="agent-builder-tasks-drawer-slot" />
 					{ drawerLoading ? (
 						<p>
-							<Spinner /> { __( 'Loading…', 'agent-builder' ) }
+							<Spinner /> { __( 'Loading…', 'siteloom' ) }
 						</p>
 					) : drawerError ? (
 						<Notice status="error" isDismissible={ false }>
@@ -896,13 +896,13 @@ function TasksApp() {
 							<p className="agentic-tasks-drawer__task">{ run.task_text }</p>
 							<p className="agentic-react-muted">
 								{ formatTime( run.started_at ) }{ ' ' }
-								{ __( '·', 'agent-builder' ) }{ ' ' }
+								{ __( '·', 'siteloom' ) }{ ' ' }
 								{ formatElapsed( run, Date.now() ) }
 								{ isAdvanced && run.tokens_used > 0 && (
 									<>
 										{ ' · ' }
 										{ run.tokens_used }{ ' ' }
-										{ __( 'tokens', 'agent-builder' ) }
+										{ __( 'tokens', 'siteloom' ) }
 									</>
 								) }
 							</p>
@@ -916,7 +916,7 @@ function TasksApp() {
 							{ resultText && (
 								<div className="agentic-tasks-drawer__result">
 									<h4 className="agentic-tasks-drawer__section">
-										{ __( 'Result', 'agent-builder' ) }
+										{ __( 'Result', 'siteloom' ) }
 									</h4>
 									<div
 										className="agentic-tasks-drawer__result-body"
@@ -958,7 +958,7 @@ function TasksApp() {
 								open={ isNonTerminal || ! resultText }
 							>
 								<summary className="agentic-tasks-drawer__section">
-									{ __( 'Steps', 'agent-builder' ) }
+									{ __( 'Steps', 'siteloom' ) }
 									{ steps.length > 0
 										? ` (${ steps.length })`
 										: '' }
@@ -967,7 +967,7 @@ function TasksApp() {
 									<p className="agentic-react-muted">
 										{ __(
 											'No steps recorded yet.',
-											'agent-builder'
+											'siteloom'
 										) }
 									</p>
 								) : (
@@ -997,7 +997,7 @@ function TasksApp() {
 											disabled={ !! drawerBusy }
 											onClick={ cancelRun }
 										>
-											{ __( 'Cancel', 'agent-builder' ) }
+											{ __( 'Cancel', 'siteloom' ) }
 										</Button>
 									</FlexItem>
 								) }
@@ -1009,7 +1009,7 @@ function TasksApp() {
 											disabled={ !! drawerBusy }
 											onClick={ retryRun }
 										>
-											{ __( 'Retry', 'agent-builder' ) }
+											{ __( 'Retry', 'siteloom' ) }
 										</Button>
 									</FlexItem>
 								) }
@@ -1017,7 +1017,7 @@ function TasksApp() {
 						</>
 					) : (
 						<p className="agentic-react-muted">
-							{ __( 'This run is no longer available.', 'agent-builder' ) }
+							{ __( 'This run is no longer available.', 'siteloom' ) }
 						</p>
 					) }
 				</Modal>
@@ -1047,7 +1047,7 @@ function ApprovalCard( { approval, busy, onDecide } ) {
 	return (
 		<div className="agentic-proposal-card agentic-tasks-approval">
 			<div className="agentic-proposal-header">
-				{ __( 'Needs Your Approval', 'agent-builder' ) }
+				{ __( 'Needs Your Approval', 'siteloom' ) }
 			</div>
 			<div className="agentic-tasks-approval__action">
 				<code>{ humanize( approval.action ) }</code>
@@ -1100,8 +1100,8 @@ function ApprovalCard( { approval, busy, onDecide } ) {
 						onClick={ () => setShowArgs( ! showArgs ) }
 					>
 						{ showArgs
-							? '▼ ' + __( 'Hide arguments', 'agent-builder' )
-							: '▶ ' + __( 'Show arguments', 'agent-builder' ) }
+							? '▼ ' + __( 'Hide arguments', 'siteloom' )
+							: '▶ ' + __( 'Show arguments', 'siteloom' ) }
 					</button>
 					{ showArgs && (
 						<pre className="agentic-proposal-diff">
@@ -1117,7 +1117,7 @@ function ApprovalCard( { approval, busy, onDecide } ) {
 					className="agentic-proposal-btn agentic-proposal-approve"
 					onClick={ () => onDecide( 'approve' ) }
 				>
-					{ __( 'Approve', 'agent-builder' ) }
+					{ __( 'Approve', 'siteloom' ) }
 				</button>
 				<button
 					type="button"
@@ -1125,7 +1125,7 @@ function ApprovalCard( { approval, busy, onDecide } ) {
 					className="agentic-proposal-btn agentic-proposal-reject"
 					onClick={ () => onDecide( 'reject' ) }
 				>
-					{ __( 'Reject', 'agent-builder' ) }
+					{ __( 'Reject', 'siteloom' ) }
 				</button>
 			</div>
 		</div>

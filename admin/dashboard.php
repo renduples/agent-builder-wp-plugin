@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'agent_builder_view_dashboard' ) ) {
-	wp_die( esc_html__( 'You do not have permission to access this page.', 'agent-builder' ) );
+	wp_die( esc_html__( 'You do not have permission to access this page.', 'siteloom' ) );
 }
 
 \Agentic\Plugin::get_instance()->load_chat_components();
@@ -31,5 +31,5 @@ if ( class_exists( '\Agentic\React_Admin' ) && \Agentic\React_Admin::enqueue( 'd
 if ( class_exists( '\Agentic\React_Admin' ) ) {
 	\Agentic\React_Admin::missing_build_notice( 'dashboard-app' );
 } else {
-	echo '<div class="wrap"><p>' . esc_html__( 'Dashboard assets unavailable.', 'agent-builder' ) . '</p></div>';
+	echo '<div class="wrap"><p>' . esc_html__( 'Dashboard assets unavailable.', 'siteloom' ) . '</p></div>';
 }

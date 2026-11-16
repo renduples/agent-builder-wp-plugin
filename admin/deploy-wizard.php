@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! current_user_can( 'manage_options' ) ) {
-	wp_die( esc_html__( 'You do not have permission to access this page.', 'agent-builder' ) );
+	wp_die( esc_html__( 'You do not have permission to access this page.', 'siteloom' ) );
 }
 
 $agentic_dw_asset_file = AGENT_BUILDER_DIR . 'build/deploy-wizard.asset.php';
@@ -34,7 +34,7 @@ if ( file_exists( $agentic_dw_asset_file ) ) {
 		true
 	);
 	wp_enqueue_style( 'wp-components' );
-	wp_set_script_translations( 'agentic-deploy-wizard', 'agent-builder', AGENT_BUILDER_DIR . 'languages' );
+	wp_set_script_translations( 'agentic-deploy-wizard', 'siteloom', AGENT_BUILDER_DIR . 'languages' );
 
 	wp_localize_script(
 		'agentic-deploy-wizard',
@@ -51,18 +51,18 @@ if ( file_exists( $agentic_dw_asset_file ) ) {
 }
 ?>
 <div class="wrap agentic-deploy-wizard-wrap">
-	<h1><?php esc_html_e( 'Publish Your Agent', 'agent-builder' ); ?></h1>
+	<h1><?php esc_html_e( 'Publish Your Agent', 'siteloom' ); ?></h1>
 	<p class="agentic-wizard-intro">
-		<?php esc_html_e( 'Get an agent in front of people in a few quick steps. You can fine-tune it later from Publish.', 'agent-builder' ); ?>
+		<?php esc_html_e( 'Get an agent in front of people in a few quick steps. You can fine-tune it later from Publish.', 'siteloom' ); ?>
 	</p>
 
 	<div id="agentic-deploy-wizard-root">
-		<p><?php esc_html_e( 'Loading the publish wizard…', 'agent-builder' ); ?></p>
+		<p><?php esc_html_e( 'Loading the publish wizard…', 'siteloom' ); ?></p>
 	</div>
 
 	<noscript>
 		<div class="notice notice-warning">
-			<p><?php esc_html_e( 'The publish wizard needs JavaScript enabled. You can also publish agents from the Publish page.', 'agent-builder' ); ?></p>
+			<p><?php esc_html_e( 'The publish wizard needs JavaScript enabled. You can also publish agents from the Publish page.', 'siteloom' ); ?></p>
 		</div>
 	</noscript>
 </div>

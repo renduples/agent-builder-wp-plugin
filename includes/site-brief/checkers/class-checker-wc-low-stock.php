@@ -54,7 +54,7 @@ class Checker_Wc_Low_Stock extends Site_Brief_Checker {
 	 * {@inheritdoc}
 	 */
 	public function get_label(): string {
-		return __( 'Low stock', 'agent-builder' );
+		return __( 'Low stock', 'siteloom' );
 	}
 
 	/**
@@ -108,12 +108,12 @@ class Checker_Wc_Low_Stock extends Site_Brief_Checker {
 				array(
 					'title'            => sprintf(
 						/* translators: %d: low-stock products. */
-						_n( '%d product is below the stock threshold', '%d products are below the stock threshold', $count, 'agent-builder' ),
+						_n( '%d product is below the stock threshold', '%d products are below the stock threshold', $count, 'siteloom' ),
 						$count
 					),
 					'evidence'         => implode( ', ', $names ),
 					'evidence_payload' => array( 'count' => $count ),
-					'proposed_action'  => __( 'Open Products to restock. Site Brief does not change stock levels.', 'agent-builder' ),
+					'proposed_action'  => __( 'Open Products to restock. Site Brief does not change stock levels.', 'siteloom' ),
 					'action_risk'      => 'high',
 					'raw'              => array( 'count' => $count ),
 				)

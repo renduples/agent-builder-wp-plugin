@@ -74,28 +74,28 @@ class GDPR {
 			return;
 		}
 
-		$content = '<h2>' . __( 'AI Chat & Agent Data', 'agent-builder' ) . '</h2>'
-			. '<p>' . __( 'This site uses the Agent Builder plugin to provide AI-powered chat agents. When you interact with the chat interface, the following data is collected and processed:', 'agent-builder' ) . '</p>'
+		$content = '<h2>' . __( 'AI Chat & Agent Data', 'siteloom' ) . '</h2>'
+			. '<p>' . __( 'This site uses the Siteloom plugin to provide AI-powered chat agents. When you interact with the chat interface, the following data is collected and processed:', 'siteloom' ) . '</p>'
 			. '<ul>'
-			. '<li>' . __( '<strong>Chat messages</strong> — Your messages and AI responses are stored in our database for conversation history and audit purposes. Messages are automatically deleted after the configured retention period (default: 30 days).', 'agent-builder' ) . '</li>'
-			. '<li>' . __( '<strong>User identity</strong> — If you are logged in, your WordPress user ID is associated with your chat sessions. Anonymous visitors are identified by session ID only.', 'agent-builder' ) . '</li>'
-			. '<li>' . __( '<strong>Security events</strong> — IP addresses and security-related actions (login attempts, permission checks) may be logged. IP addresses are anonymized by default.', 'agent-builder' ) . '</li>'
-			. '<li>' . __( '<strong>Audit trail</strong> — Actions performed by AI agents on your behalf (content edits, settings changes) are logged with your user ID for accountability.', 'agent-builder' ) . '</li>'
+			. '<li>' . __( '<strong>Chat messages</strong> — Your messages and AI responses are stored in our database for conversation history and audit purposes. Messages are automatically deleted after the configured retention period (default: 30 days).', 'siteloom' ) . '</li>'
+			. '<li>' . __( '<strong>User identity</strong> — If you are logged in, your WordPress user ID is associated with your chat sessions. Anonymous visitors are identified by session ID only.', 'siteloom' ) . '</li>'
+			. '<li>' . __( '<strong>Security events</strong> — IP addresses and security-related actions (login attempts, permission checks) may be logged. IP addresses are anonymized by default.', 'siteloom' ) . '</li>'
+			. '<li>' . __( '<strong>Audit trail</strong> — Actions performed by AI agents on your behalf (content edits, settings changes) are logged with your user ID for accountability.', 'siteloom' ) . '</li>'
 			. '</ul>'
-			. '<h2>' . __( 'Third-Party AI Services', 'agent-builder' ) . '</h2>'
-			. '<p>' . __( 'Chat messages are sent to the configured AI provider for processing. The site administrator chooses which provider is used. Possible providers include Agentic AI, OpenAI, Anthropic, Google, Mistral, and others. Each provider has its own privacy policy governing how your messages are processed.', 'agent-builder' ) . '</p>'
-			. '<h2>' . __( 'Agentic Plugin Services', 'agent-builder' ) . '</h2>'
-			. '<p>' . __( 'With user consent, the plugin can register for an API key with agentic-plugin.com. The following data is sent: site URL, site name, and admin email address. This data is used for API key provisioning and quota metering.', 'agent-builder' ) . '</p>'
-			. '<h2>' . __( 'Cookies', 'agent-builder' ) . '</h2>'
-			. '<p>' . __( 'The plugin sets two cookies on the frontend:', 'agent-builder' ) . '</p>'
+			. '<h2>' . __( 'Third-Party AI Services', 'siteloom' ) . '</h2>'
+			. '<p>' . __( 'Chat messages are sent to the configured AI provider for processing. The site administrator chooses which provider is used. Possible providers include Agentic AI, OpenAI, Anthropic, Google, Mistral, and others. Each provider has its own privacy policy governing how your messages are processed.', 'siteloom' ) . '</p>'
+			. '<h2>' . __( 'Agentic Plugin Services', 'siteloom' ) . '</h2>'
+			. '<p>' . __( 'With user consent, the plugin can register for an API key with agentic-plugin.com. The following data is sent: site URL, site name, and admin email address. This data is used for API key provisioning and quota metering.', 'siteloom' ) . '</p>'
+			. '<h2>' . __( 'Cookies', 'siteloom' ) . '</h2>'
+			. '<p>' . __( 'The plugin sets two cookies on the frontend:', 'siteloom' ) . '</p>'
 			. '<ul>'
-			. '<li>' . __( '<strong>agentic_consent_given</strong> — Records that you accepted the chat privacy notice (1 year).', 'agent-builder' ) . '</li>'
-			. '<li>' . __( '<strong>agentic_last_agent</strong> — Remembers your last-used AI agent for convenience (1 year).', 'agent-builder' ) . '</li>'
+			. '<li>' . __( '<strong>agentic_consent_given</strong> — Records that you accepted the chat privacy notice (1 year).', 'siteloom' ) . '</li>'
+			. '<li>' . __( '<strong>agentic_last_agent</strong> — Remembers your last-used AI agent for convenience (1 year).', 'siteloom' ) . '</li>'
 			. '</ul>'
-			. '<h2>' . __( 'Data Retention & Deletion', 'agent-builder' ) . '</h2>'
-			. '<p>' . __( 'Chat history and audit logs are automatically deleted after 30 days (configurable by the site administrator). You can request export or deletion of your personal data through the WordPress privacy tools (Settings → Privacy).', 'agent-builder' ) . '</p>';
+			. '<h2>' . __( 'Data Retention & Deletion', 'siteloom' ) . '</h2>'
+			. '<p>' . __( 'Chat history and audit logs are automatically deleted after 30 days (configurable by the site administrator). You can request export or deletion of your personal data through the WordPress privacy tools (Settings → Privacy).', 'siteloom' ) . '</p>';
 
-		wp_add_privacy_policy_content( 'Agent Builder', wp_kses_post( wpautop( $content, false ) ) );
+		wp_add_privacy_policy_content( 'Siteloom AI Agents', wp_kses_post( wpautop( $content, false ) ) );
 	}
 
 	// -------------------------------------------------------------------------
@@ -110,31 +110,31 @@ class GDPR {
 	 */
 	public static function register_exporters( array $exporters ): array {
 		$exporters[] = array(
-			'exporter_friendly_name' => __( 'Agent Builder – Chat History', 'agent-builder' ),
+			'exporter_friendly_name' => __( 'Siteloom – Chat History', 'siteloom' ),
 			'callback'               => array( __CLASS__, 'export_chat_history' ),
 		);
 		$exporters[] = array(
-			'exporter_friendly_name' => __( 'Agent Builder – Security Log', 'agent-builder' ),
+			'exporter_friendly_name' => __( 'Siteloom – Security Log', 'siteloom' ),
 			'callback'               => array( __CLASS__, 'export_security_log' ),
 		);
 		$exporters[] = array(
-			'exporter_friendly_name' => __( 'Agent Builder – Audit Log', 'agent-builder' ),
+			'exporter_friendly_name' => __( 'Siteloom – Audit Log', 'siteloom' ),
 			'callback'               => array( __CLASS__, 'export_audit_log' ),
 		);
 		$exporters[] = array(
-			'exporter_friendly_name' => __( 'Agent Builder – Jobs', 'agent-builder' ),
+			'exporter_friendly_name' => __( 'Siteloom – Jobs', 'siteloom' ),
 			'callback'               => array( __CLASS__, 'export_jobs' ),
 		);
 		$exporters[] = array(
-			'exporter_friendly_name' => __( 'Agent Builder – Notifications', 'agent-builder' ),
+			'exporter_friendly_name' => __( 'Siteloom – Notifications', 'siteloom' ),
 			'callback'               => array( __CLASS__, 'export_notifications' ),
 		);
 		$exporters[] = array(
-			'exporter_friendly_name' => __( 'Agent Builder – Email Preferences', 'agent-builder' ),
+			'exporter_friendly_name' => __( 'Siteloom – Email Preferences', 'siteloom' ),
 			'callback'               => array( __CLASS__, 'export_notify_optout' ),
 		);
 		$exporters[] = array(
-			'exporter_friendly_name' => __( 'Agent Builder – Runs', 'agent-builder' ),
+			'exporter_friendly_name' => __( 'Siteloom – Runs', 'siteloom' ),
 			'callback'               => array( __CLASS__, 'export_runs' ),
 		);
 		return $exporters;
@@ -190,27 +190,27 @@ class GDPR {
 		foreach ( $rows as $row ) {
 			$export_items[] = array(
 				'group_id'    => 'agentic_chat',
-				'group_label' => __( 'AI Chat History', 'agent-builder' ),
+				'group_label' => __( 'AI Chat History', 'siteloom' ),
 				'item_id'     => 'chat-' . $row->session_id . '-' . $row->created_at,
 				'data'        => array(
 					array(
-						'name'  => __( 'Session ID', 'agent-builder' ),
+						'name'  => __( 'Session ID', 'siteloom' ),
 						'value' => $row->session_id,
 					),
 					array(
-						'name'  => __( 'Agent', 'agent-builder' ),
+						'name'  => __( 'Agent', 'siteloom' ),
 						'value' => $row->agent_id,
 					),
 					array(
-						'name'  => __( 'Role', 'agent-builder' ),
+						'name'  => __( 'Role', 'siteloom' ),
 						'value' => $row->role,
 					),
 					array(
-						'name'  => __( 'Message', 'agent-builder' ),
+						'name'  => __( 'Message', 'siteloom' ),
 						'value' => $row->content,
 					),
 					array(
-						'name'  => __( 'Date', 'agent-builder' ),
+						'name'  => __( 'Date', 'siteloom' ),
 						'value' => $row->created_at,
 					),
 				),
@@ -273,23 +273,23 @@ class GDPR {
 		foreach ( $rows as $row ) {
 			$export_items[] = array(
 				'group_id'    => 'agentic_security',
-				'group_label' => __( 'AI Security Log', 'agent-builder' ),
+				'group_label' => __( 'AI Security Log', 'siteloom' ),
 				'item_id'     => 'sec-' . $row->created_at,
 				'data'        => array(
 					array(
-						'name'  => __( 'Event', 'agent-builder' ),
+						'name'  => __( 'Event', 'siteloom' ),
 						'value' => $row->event_type,
 					),
 					array(
-						'name'  => __( 'IP Address', 'agent-builder' ),
+						'name'  => __( 'IP Address', 'siteloom' ),
 						'value' => $row->ip_address,
 					),
 					array(
-						'name'  => __( 'Message', 'agent-builder' ),
+						'name'  => __( 'Message', 'siteloom' ),
 						'value' => $row->message,
 					),
 					array(
-						'name'  => __( 'Date', 'agent-builder' ),
+						'name'  => __( 'Date', 'siteloom' ),
 						'value' => $row->created_at,
 					),
 				),
@@ -314,31 +314,31 @@ class GDPR {
 	 */
 	public static function register_erasers( array $erasers ): array {
 		$erasers[] = array(
-			'eraser_friendly_name' => __( 'Agent Builder – Chat History', 'agent-builder' ),
+			'eraser_friendly_name' => __( 'Siteloom – Chat History', 'siteloom' ),
 			'callback'             => array( __CLASS__, 'erase_chat_history' ),
 		);
 		$erasers[] = array(
-			'eraser_friendly_name' => __( 'Agent Builder – Security Log', 'agent-builder' ),
+			'eraser_friendly_name' => __( 'Siteloom – Security Log', 'siteloom' ),
 			'callback'             => array( __CLASS__, 'erase_security_log' ),
 		);
 		$erasers[] = array(
-			'eraser_friendly_name' => __( 'Agent Builder – Audit Log', 'agent-builder' ),
+			'eraser_friendly_name' => __( 'Siteloom – Audit Log', 'siteloom' ),
 			'callback'             => array( __CLASS__, 'erase_audit_log' ),
 		);
 		$erasers[] = array(
-			'eraser_friendly_name' => __( 'Agent Builder – Jobs', 'agent-builder' ),
+			'eraser_friendly_name' => __( 'Siteloom – Jobs', 'siteloom' ),
 			'callback'             => array( __CLASS__, 'erase_jobs' ),
 		);
 		$erasers[] = array(
-			'eraser_friendly_name' => __( 'Agent Builder – Notifications', 'agent-builder' ),
+			'eraser_friendly_name' => __( 'Siteloom – Notifications', 'siteloom' ),
 			'callback'             => array( __CLASS__, 'erase_notifications' ),
 		);
 		$erasers[] = array(
-			'eraser_friendly_name' => __( 'Agent Builder – Email Preferences', 'agent-builder' ),
+			'eraser_friendly_name' => __( 'Siteloom – Email Preferences', 'siteloom' ),
 			'callback'             => array( __CLASS__, 'erase_notify_optout' ),
 		);
 		$erasers[] = array(
-			'eraser_friendly_name' => __( 'Agent Builder – Runs', 'agent-builder' ),
+			'eraser_friendly_name' => __( 'Siteloom – Runs', 'siteloom' ),
 			'callback'             => array( __CLASS__, 'erase_runs' ),
 		);
 		return $erasers;
@@ -481,35 +481,35 @@ class GDPR {
 		foreach ( $rows as $row ) {
 			$export_items[] = array(
 				'group_id'    => 'agentic_audit',
-				'group_label' => __( 'AI Audit Log', 'agent-builder' ),
+				'group_label' => __( 'AI Audit Log', 'siteloom' ),
 				'item_id'     => 'audit-' . $row->created_at,
 				'data'        => array(
 					array(
-						'name'  => __( 'Agent', 'agent-builder' ),
+						'name'  => __( 'Agent', 'siteloom' ),
 						'value' => $row->agent_id,
 					),
 					array(
-						'name'  => __( 'Action', 'agent-builder' ),
+						'name'  => __( 'Action', 'siteloom' ),
 						'value' => $row->action,
 					),
 					array(
-						'name'  => __( 'Target Type', 'agent-builder' ),
+						'name'  => __( 'Target Type', 'siteloom' ),
 						'value' => $row->target_type ?? '',
 					),
 					array(
-						'name'  => __( 'Target ID', 'agent-builder' ),
+						'name'  => __( 'Target ID', 'siteloom' ),
 						'value' => $row->target_id ?? '',
 					),
 					array(
-						'name'  => __( 'Details', 'agent-builder' ),
+						'name'  => __( 'Details', 'siteloom' ),
 						'value' => $row->details ?? '',
 					),
 					array(
-						'name'  => __( 'Reasoning', 'agent-builder' ),
+						'name'  => __( 'Reasoning', 'siteloom' ),
 						'value' => $row->reasoning ?? '',
 					),
 					array(
-						'name'  => __( 'Date', 'agent-builder' ),
+						'name'  => __( 'Date', 'siteloom' ),
 						'value' => $row->created_at,
 					),
 				),
@@ -572,35 +572,35 @@ class GDPR {
 		foreach ( $rows as $row ) {
 			$export_items[] = array(
 				'group_id'    => 'agent_builder_jobs',
-				'group_label' => __( 'AI Jobs', 'agent-builder' ),
+				'group_label' => __( 'AI Jobs', 'siteloom' ),
 				'item_id'     => 'job-' . $row->id,
 				'data'        => array(
 					array(
-						'name'  => __( 'Job ID', 'agent-builder' ),
+						'name'  => __( 'Job ID', 'siteloom' ),
 						'value' => $row->id,
 					),
 					array(
-						'name'  => __( 'Agent', 'agent-builder' ),
+						'name'  => __( 'Agent', 'siteloom' ),
 						'value' => $row->agent_id ?? '',
 					),
 					array(
-						'name'  => __( 'Status', 'agent-builder' ),
+						'name'  => __( 'Status', 'siteloom' ),
 						'value' => $row->status,
 					),
 					array(
-						'name'  => __( 'Message', 'agent-builder' ),
+						'name'  => __( 'Message', 'siteloom' ),
 						'value' => $row->message ?? '',
 					),
 					array(
-						'name'  => __( 'Request', 'agent-builder' ),
+						'name'  => __( 'Request', 'siteloom' ),
 						'value' => $row->request_data ?? '',
 					),
 					array(
-						'name'  => __( 'Response', 'agent-builder' ),
+						'name'  => __( 'Response', 'siteloom' ),
 						'value' => $row->response_data ?? '',
 					),
 					array(
-						'name'  => __( 'Date', 'agent-builder' ),
+						'name'  => __( 'Date', 'siteloom' ),
 						'value' => $row->created_at,
 					),
 				),
@@ -749,43 +749,43 @@ class GDPR {
 		foreach ( $rows as $row ) {
 			$export_items[] = array(
 				'group_id'    => 'agent_builder_notifications',
-				'group_label' => __( 'Agent Activity Notifications', 'agent-builder' ),
+				'group_label' => __( 'Agent Activity Notifications', 'siteloom' ),
 				'item_id'     => 'notif-' . $row->id,
 				'data'        => array(
 					array(
-						'name'  => __( 'Type', 'agent-builder' ),
+						'name'  => __( 'Type', 'siteloom' ),
 						'value' => $row->type,
 					),
 					array(
-						'name'  => __( 'Severity', 'agent-builder' ),
+						'name'  => __( 'Severity', 'siteloom' ),
 						'value' => $row->severity,
 					),
 					array(
-						'name'  => __( 'Title', 'agent-builder' ),
+						'name'  => __( 'Title', 'siteloom' ),
 						'value' => $row->title,
 					),
 					array(
-						'name'  => __( 'Body', 'agent-builder' ),
+						'name'  => __( 'Body', 'siteloom' ),
 						'value' => $row->body,
 					),
 					array(
-						'name'  => __( 'Link', 'agent-builder' ),
+						'name'  => __( 'Link', 'siteloom' ),
 						'value' => $row->link,
 					),
 					array(
-						'name'  => __( 'Agent', 'agent-builder' ),
+						'name'  => __( 'Agent', 'siteloom' ),
 						'value' => $row->agent_id ?? '',
 					),
 					array(
-						'name'  => __( 'Run', 'agent-builder' ),
+						'name'  => __( 'Run', 'siteloom' ),
 						'value' => $row->run_id ?? '',
 					),
 					array(
-						'name'  => __( 'Read', 'agent-builder' ),
+						'name'  => __( 'Read', 'siteloom' ),
 						'value' => $row->read_at ?? '',
 					),
 					array(
-						'name'  => __( 'Date', 'agent-builder' ),
+						'name'  => __( 'Date', 'siteloom' ),
 						'value' => $row->created_at,
 					),
 				),
@@ -826,12 +826,12 @@ class GDPR {
 			'data' => array(
 				array(
 					'group_id'    => 'agent_builder_email_prefs',
-					'group_label' => __( 'Agent Activity Email Preferences', 'agent-builder' ),
+					'group_label' => __( 'Agent Activity Email Preferences', 'siteloom' ),
 					'item_id'     => 'notify-optout',
 					'data'        => array(
 						array(
-							'name'  => __( 'Opted out of agent activity email', 'agent-builder' ),
-							'value' => '1' === (string) $value ? __( 'Yes', 'agent-builder' ) : __( 'No', 'agent-builder' ),
+							'name'  => __( 'Opted out of agent activity email', 'siteloom' ),
+							'value' => '1' === (string) $value ? __( 'Yes', 'siteloom' ) : __( 'No', 'siteloom' ),
 						),
 					),
 				),
@@ -890,39 +890,39 @@ class GDPR {
 		foreach ( $rows as $row ) {
 			$export_items[] = array(
 				'group_id'    => 'agent_builder_runs',
-				'group_label' => __( 'Agent Background Runs', 'agent-builder' ),
+				'group_label' => __( 'Agent Background Runs', 'siteloom' ),
 				'item_id'     => 'run-' . $row->run_id,
 				'data'        => array(
 					array(
-						'name'  => __( 'Run ID', 'agent-builder' ),
+						'name'  => __( 'Run ID', 'siteloom' ),
 						'value' => $row->run_id,
 					),
 					array(
-						'name'  => __( 'Agent', 'agent-builder' ),
+						'name'  => __( 'Agent', 'siteloom' ),
 						'value' => $row->root_agent,
 					),
 					array(
-						'name'  => __( 'Status', 'agent-builder' ),
+						'name'  => __( 'Status', 'siteloom' ),
 						'value' => $row->status,
 					),
 					array(
-						'name'  => __( 'Task', 'agent-builder' ),
+						'name'  => __( 'Task', 'siteloom' ),
 						'value' => $row->task_text ?? '',
 					),
 					array(
-						'name'  => __( 'Result', 'agent-builder' ),
+						'name'  => __( 'Result', 'siteloom' ),
 						'value' => $row->result_summary ?? '',
 					),
 					array(
-						'name'  => __( 'Error', 'agent-builder' ),
+						'name'  => __( 'Error', 'siteloom' ),
 						'value' => $row->error ?? '',
 					),
 					array(
-						'name'  => __( 'Started', 'agent-builder' ),
+						'name'  => __( 'Started', 'siteloom' ),
 						'value' => $row->started_at ?? '',
 					),
 					array(
-						'name'  => __( 'Finished', 'agent-builder' ),
+						'name'  => __( 'Finished', 'siteloom' ),
 						'value' => $row->finished_at ?? '',
 					),
 				),

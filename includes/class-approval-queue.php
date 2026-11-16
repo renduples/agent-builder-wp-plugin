@@ -8,7 +8,7 @@
  *
  * @package    Agent_Builder
  * @subpackage Includes
- * @author     Agent Builder Team <support@agentic-plugin.com>
+ * @author     Siteloom Team <support@agentic-plugin.com>
  * @license    GPL-2.0-or-later https://www.gnu.org/licenses/gpl-2.0.html
  * @link       https://agentic-plugin.com
  * @since      0.1.0
@@ -53,7 +53,7 @@ class Approval_Queue {
 			return;
 		}
 
-		// Agent Builder screens only — the approvals queue has its own menu
+		// Siteloom screens only — the approvals queue has its own menu
 		// badge and notifications, so this never follows the admin around
 		// the rest of wp-admin.
 		if ( ! Admin_Notice_Manager::is_plugin_admin_screen() ) {
@@ -256,30 +256,30 @@ class Approval_Queue {
 
 		$subject = sprintf(
 			/* translators: %s: site name */
-			__( '[%s] Agent action waiting for your approval', 'agent-builder' ),
+			__( '[%s] Agent action waiting for your approval', 'siteloom' ),
 			wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES )
 		);
 
-		$body  = '<p style="margin:0 0 12px;">' . esc_html__( 'An AI agent wants to make a change that needs your OK before it runs.', 'agent-builder' ) . '</p>';
+		$body  = '<p style="margin:0 0 12px;">' . esc_html__( 'An AI agent wants to make a change that needs your OK before it runs.', 'siteloom' ) . '</p>';
 		$body .= '<ul style="margin:0 0 16px;padding-left:18px;">';
-		$body .= '<li><strong>' . esc_html__( 'Action', 'agent-builder' ) . ':</strong> ' . esc_html( $label ) . '</li>';
-		$body .= '<li><strong>' . esc_html__( 'Agent', 'agent-builder' ) . ':</strong> ' . esc_html( $agent ) . '</li>';
-		$body .= '<li><strong>' . esc_html__( 'Risk', 'agent-builder' ) . ':</strong> ' . esc_html( $risk_level ) . '</li>';
+		$body .= '<li><strong>' . esc_html__( 'Action', 'siteloom' ) . ':</strong> ' . esc_html( $label ) . '</li>';
+		$body .= '<li><strong>' . esc_html__( 'Agent', 'siteloom' ) . ':</strong> ' . esc_html( $agent ) . '</li>';
+		$body .= '<li><strong>' . esc_html__( 'Risk', 'siteloom' ) . ':</strong> ' . esc_html( $risk_level ) . '</li>';
 		if ( $reasoning ) {
-			$body .= '<li><strong>' . esc_html__( 'Why', 'agent-builder' ) . ':</strong> ' . esc_html( wp_strip_all_tags( $reasoning ) ) . '</li>';
+			$body .= '<li><strong>' . esc_html__( 'Why', 'siteloom' ) . ':</strong> ' . esc_html( wp_strip_all_tags( $reasoning ) ) . '</li>';
 		}
 		if ( $skipped > 0 ) {
 			$body .= '<li>' . esc_html(
 				sprintf(
 					/* translators: %d: number of additional pending items since last email */
-					__( 'Plus about %d more request(s) while email was paused to avoid spam.', 'agent-builder' ),
+					__( 'Plus about %d more request(s) while email was paused to avoid spam.', 'siteloom' ),
 					$skipped
 				)
 			) . '</li>';
 		}
 		$body .= '</ul>';
-		$body .= '<p style="margin:0 0 12px;"><a href="' . esc_url( $queue_url ) . '">' . esc_html__( 'Review approvals in WordPress admin', 'agent-builder' ) . '</a></p>';
-		$body .= '<p style="margin:0;font-size:12px;color:#646970;">' . esc_html__( 'You can turn these emails off under Approvals → Preferences.', 'agent-builder' ) . '</p>';
+		$body .= '<p style="margin:0 0 12px;"><a href="' . esc_url( $queue_url ) . '">' . esc_html__( 'Review approvals in WordPress admin', 'siteloom' ) . '</a></p>';
+		$body .= '<p style="margin:0;font-size:12px;color:#646970;">' . esc_html__( 'You can turn these emails off under Approvals → Preferences.', 'siteloom' ) . '</p>';
 
 		// Record the same notice in the notification inbox so it surfaces on the
 		// admin-bar count and Tasks screen, not just in email. The email below
@@ -296,7 +296,7 @@ class Approval_Queue {
 		if ( $notify_user_id > 0 ) {
 			$notify_body = sprintf(
 				/* translators: 1: action label, 2: agent name, 3: risk level */
-				__( '%1$s by %2$s (risk: %3$s)', 'agent-builder' ),
+				__( '%1$s by %2$s (risk: %3$s)', 'siteloom' ),
 				$label,
 				$agent,
 				$risk_level
@@ -310,7 +310,7 @@ class Approval_Queue {
 				'approval_pending',
 				sprintf(
 					/* translators: %s: action label */
-					__( 'Approval needed: %s', 'agent-builder' ),
+					__( 'Approval needed: %s', 'siteloom' ),
 					$label
 				),
 				$notify_body,
@@ -328,9 +328,9 @@ class Approval_Queue {
 				$to,
 				$subject,
 				array(
-					'heading' => __( 'Approval needed', 'agent-builder' ),
+					'heading' => __( 'Approval needed', 'siteloom' ),
 					'body'    => $body,
-					'from'    => 'Agent Builder <support@agentic-plugin.com>',
+					'from'    => 'Siteloom AI Agents <support@agentic-plugin.com>',
 				)
 			);
 		}

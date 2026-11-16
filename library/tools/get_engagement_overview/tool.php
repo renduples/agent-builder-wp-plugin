@@ -80,7 +80,7 @@ class Get_Engagement_Overview extends \Agentic\Tool_Base {
 			$result['site_kit'] = array(
 				'connected'   => true,
 				'analytics_4' => ! empty( $analytics_settings ),
-				'note'        => 'For detailed GA4 metrics (bounce rate, session duration, pages per session), view the Site Kit dashboard. Agent Builder reads available cached data.',
+				'note'        => 'For detailed GA4 metrics (bounce rate, session duration, pages per session), view the Site Kit dashboard. Siteloom reads available cached data.',
 			);
 		} else {
 			$result['site_kit'] = array(

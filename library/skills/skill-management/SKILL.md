@@ -13,7 +13,7 @@ A skill is a reusable set of instructions an agent loads on demand when it recog
 | Tool | When to use |
 |---|---|
 | `manage_skill` | List, read, create, update, delete, or reset a skill. |
-| `browse_community_skills` | Browse or import skills other people have already published (WordPress.org's official repository, or Agent Builder's curated recommended feed). |
+| `browse_community_skills` | Browse or import skills other people have already published (WordPress.org's official repository, or Siteloom's curated recommended feed). |
 | `agents_available` | Confirm a tool name actually exists before referencing it in a skill, or check which agents are active. |
 
 ## Workflows
@@ -53,7 +53,7 @@ A skill is a reusable set of instructions an agent loads on demand when it recog
 
 ## Rules
 
-- Always confirm before editing, deleting, or resetting a **core** skill — that's customizing something Agent Builder maintains. Creating a new skill, or editing a local one the user made, is low-risk and doesn't need the same caution.
+- Always confirm before editing, deleting, or resetting a **core** skill — that's customizing something Siteloom maintains. Creating a new skill, or editing a local one the user made, is low-risk and doesn't need the same caution.
 - Never fabricate a tool name in a skill's `allowed-tools` or tool table — verify it exists first.
 - Validation warnings (missing description, etc.) are advisory — mention them, don't block on them.
 - If a skill already exists for what's being described, update it instead of creating a near-duplicate — list first when unsure.

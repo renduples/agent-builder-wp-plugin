@@ -1,0 +1,435 @@
+{
+  "translation-revision-date": "2026-08-20 16:00+0000",
+  "generator": "WP-CLI/2.12.0",
+  "source": "src/dashboard-app/index.js",
+  "domain": "messages",
+  "locale_data": {
+    "messages": {
+      "": {
+        "domain": "messages",
+        "lang": "nl_NL",
+        "plural-forms": "nplurals=2; plural=(n != 1);"
+      },
+      "Active": [
+        "Actief"
+      ],
+      "Community Agents": [
+        "Community-agents"
+      ],
+      "Status": [
+        "Status"
+      ],
+      "Basic": [
+        "Basis"
+      ],
+      "Advanced": [
+        "Geavanceerd"
+      ],
+      "Saving…": [
+        "Opslaan…"
+      ],
+      "Comments": [
+        "Reacties"
+      ],
+      "Media": [
+        "Media"
+      ],
+      "WooCommerce": [
+        "WooCommerce"
+      ],
+      "Cancel": [
+        "Annuleren"
+      ],
+      "Security": [
+        "Beveiliging"
+      ],
+      "Activity": [
+        "Activiteit"
+      ],
+      "Default": [
+        "Standaard"
+      ],
+      "Model": [
+        "Model"
+      ],
+      "Terms of Service": [
+        "Servicevoorwaarden"
+      ],
+      "Health": [
+        "Status"
+      ],
+      "Test": [
+        "Testen"
+      ],
+      "Version": [
+        "Versie"
+      ],
+      "License": [
+        "Licentie"
+      ],
+      "Need help?": [
+        "Hulp nodig?"
+      ],
+      "Visit our Support Center": [
+        "Bezoek ons Supportcentrum"
+      ],
+      "Documentation": [
+        "Documentatie"
+      ],
+      "Privacy Policy": [
+        "Privacybeleid"
+      ],
+      "GDPR Policy": [
+        "AVG-beleid"
+      ],
+      "Forms": [
+        "Formulieren"
+      ],
+      "Maintenance": [
+        "Onderhoud"
+      ],
+      "Pro": [
+        "Pro"
+      ],
+      "Dismiss": [
+        "Sluiten"
+      ],
+      "General": [
+        "Algemeen"
+      ],
+      "Provider": [
+        "Provider"
+      ],
+      "Test failed.": [
+        "Test mislukt."
+      ],
+      "View Activity →": [
+        "Activiteit bekijken →"
+      ],
+      "Total Actions": [
+        "Totaal aantal acties"
+      ],
+      "Tokens Used": [
+        "Gebruikte tokens"
+      ],
+      "Est. Cost": [
+        "Gesch. kosten"
+      ],
+      "Estimated Usage": [
+        "Geschat verbruik"
+      ],
+      "Active Agents": [
+        "Actieve agents"
+      ],
+      "Uploaded Agents": [
+        "Geüploade agents"
+      ],
+      "User-Created Agents": [
+        "Door gebruikers aangemaakte agents"
+      ],
+      "The dashboard summarizes agents, approvals, activity, and providers at a glance.": [
+        "Het dashboard vat agents, goedkeuringen, activiteit en providers in één oogopslag samen."
+      ],
+      "Drag to rearrange": [
+        "Sleep om te herschikken"
+      ],
+      "Drag to rearrange dashboard card": [
+        "Sleep om de dashboardkaart te herschikken"
+      ],
+      "Manage License →": [
+        "Licentie beheren →"
+      ],
+      "Renew": [
+        "Verlengen"
+      ],
+      "Schema": [
+        "Schema"
+      ],
+      "Pending Jobs": [
+        "Wachtende taken"
+      ],
+      "abandoned — auto-recovered": [
+        "afgebroken — automatisch hersteld"
+      ],
+      "Running Jobs": [
+        "Lopende taken"
+      ],
+      "stuck — auto-recovered": [
+        "vastgelopen — automatisch hersteld"
+      ],
+      "Completed Jobs": [
+        "Voltooide taken"
+      ],
+      "Approvals & Backups": [
+        "Goedkeuringen & back-ups"
+      ],
+      "View Approvals →": [
+        "Goedkeuringen bekijken →"
+      ],
+      "Pending Approvals": [
+        "Openstaande goedkeuringen"
+      ],
+      "Completed Approvals": [
+        "Afgeronde goedkeuringen"
+      ],
+      "Files Backed Up": [
+        "Back-ups van bestanden"
+      ],
+      "DB Tables Backed Up": [
+        "Back-ups van DB-tabellen"
+      ],
+      "%s waiting for your OK.": [
+        "%s wacht op uw akkoord."
+      ],
+      "Connected Providers": [
+        "Verbonden providers"
+      ],
+      "Manage Providers →": [
+        "Providers beheren →"
+      ],
+      "No AI providers connected.": [
+        "Geen AI-providers verbonden."
+      ],
+      "Run the Setup Wizard": [
+        "De installatiewizard uitvoeren"
+      ],
+      "Testing…": [
+        "Bezig met testen…"
+      ],
+      "EMERGENCY STOP: deactivate and log agent states, cancel all jobs, and disconnect providers. Continue?": [
+        "NOODSTOP: agents deactiveren en hun status vastleggen, alle taken annuleren en providers loskoppelen. Doorgaan?"
+      ],
+      "Turn off emergency stop?": [
+        "Noodstop uitschakelen?"
+      ],
+      "Emergency stop restore finished with warnings:": [
+        "Herstel na noodstop is voltooid met waarschuwingen:"
+      ],
+      "Quick Actions": [
+        "Snelle acties"
+      ],
+      "Manage Actions →": [
+        "Acties beheren →"
+      ],
+      "Configure now": [
+        "Nu configureren"
+      ],
+      "Choose which links appear in Quick Actions. Setup Wizard is always available.": [
+        "Kies welke links in Snelle acties verschijnen. De installatiewizard is altijd beschikbaar."
+      ],
+      "Required": [
+        "Vereist"
+      ],
+      "Save Quick Actions": [
+        "Snelle acties opslaan"
+      ],
+      "Disable All Agents": [
+        "Alle agents uitschakelen"
+      ],
+      "ACTIVE": [
+        "ACTIEF"
+      ],
+      "Emergency stop": [
+        "Noodstop"
+      ],
+      ": deactivate and log agent states, cancels all jobs and disconnects providers.": [
+        ": agents deactiveren en hun status vastleggen, annuleert alle taken en koppelt providers los."
+      ],
+      "Interface Settings": [
+        "Interface-instellingen"
+      ],
+      "Manage Interface →": [
+        "Interface beheren →"
+      ],
+      "Default interface:": [
+        "Standaardinterface:"
+      ],
+      "Used by any screen you have not set individually. Tools, Approvals, and Activity each have their own Basic/Advanced switch now.": [
+        "Wordt gebruikt door elk scherm dat u niet afzonderlijk hebt ingesteld. Tools, Goedkeuringen en Activiteit hebben nu elk hun eigen schakelaar Basis/Geavanceerd."
+      ],
+      "Reset every screen back to your default interface? Any screen you switched individually will lose that override.": [
+        "Alle schermen terugzetten naar uw standaardinterface? Elk scherm dat u afzonderlijk hebt gewijzigd, verliest die instelling."
+      ],
+      "Reset all screens to my default": [
+        "Alle schermen terugzetten naar mijn standaard"
+      ],
+      "Automatic Agent Updates": [
+        "Automatische agentupdates"
+      ],
+      "Keep installed agents updated automatically. Opt out any time.": [
+        "Houd geïnstalleerde agents automatisch bijgewerkt. U kunt zich op elk moment afmelden."
+      ],
+      "Browse →": [
+        "Doorbladeren →"
+      ],
+      "Discover and install agents created by the WordPress community.": [
+        "Ontdek en installeer agents die door de WordPress-community zijn gemaakt."
+      ],
+      "Getting Started": [
+        "Aan de slag"
+      ],
+      "%1$d of %2$d steps complete": [
+        "%1$d van %2$d stappen voltooid"
+      ],
+      "Could not load dashboard.": [
+        "Kon het dashboard niet laden."
+      ],
+      "Loading dashboard…": [
+        "Dashboard wordt geladen…"
+      ],
+      "Dashboard unavailable.": [
+        "Dashboard niet beschikbaar."
+      ],
+      "Saving layout…": [
+        "Lay-out wordt opgeslagen…"
+      ],
+      "Reset layout": [
+        "Lay-out herstellen"
+      ],
+      "Drag ⋮⋮ to rearrange cards": [
+        "Sleep ⋮⋮ om kaarten te herschikken"
+      ],
+      "Emergency stop is ACTIVE": [
+        "Noodstop is ACTIEF"
+      ],
+      "All agents are deactivated, jobs are cancelled, and LLM providers are disconnected. Chat and agent activation are blocked.": [
+        "Alle agents zijn gedeactiveerd, taken zijn geannuleerd en LLM-providers zijn losgekoppeld. Chat en het activeren van agents zijn geblokkeerd."
+      ],
+      "Manage Interface": [
+        "Interface beheren"
+      ],
+      "Site Passport": [
+        ""
+      ],
+      "Tasks": [
+        ""
+      ],
+      "Plugin updates": [
+        ""
+      ],
+      "Store": [
+        ""
+      ],
+      "Performance": [
+        ""
+      ],
+      "Could not load checks.": [
+        ""
+      ],
+      "Could not save that change.": [
+        ""
+      ],
+      "Hide checks": [
+        ""
+      ],
+      "Configure checks": [
+        ""
+      ],
+      "Not applicable on this site.": [
+        ""
+      ],
+      "Could not load Site Brief.": [
+        ""
+      ],
+      "Scan failed.": [
+        ""
+      ],
+      "Could not update that card.": [
+        ""
+      ],
+      "Site Brief": [
+        ""
+      ],
+      "A read-only look at this site. Assign an agent to investigate a finding together — nothing changes until you agree.": [
+        ""
+      ],
+      "Scan this site": [
+        ""
+      ],
+      "No urgent items. Last scan %s.": [
+        ""
+      ],
+      "Scan again": [
+        ""
+      ],
+      "Assigned to %s on %s": [
+        ""
+      ],
+      "This finding needs a premium agent. Opens the marketplace in a new tab to get it.": [
+        ""
+      ],
+      "Get %s": [
+        ""
+      ],
+      "Open the recommended agent in chat with this finding, to investigate and fix it together": [
+        ""
+      ],
+      "Assign Agent": [
+        ""
+      ],
+      "Dismiss to hide this card. It will not return unless the finding changes.": [
+        ""
+      ],
+      "Not now leaves it for later. It may reappear on the next scan.": [
+        ""
+      ],
+      "Not now": [
+        ""
+      ],
+      "Show all (%d)": [
+        ""
+      ],
+      "Store this month: %1$s orders, %2$s %3$s.": [
+        ""
+      ],
+      "The version of Siteloom’s database structure. Updates automatically when needed — you don’t need to do anything here.": [
+        ""
+      ],
+      "Open Safety Center →": [
+        ""
+      ],
+      "Open Tasks →": [
+        ""
+      ],
+      "Waiting on you": [
+        ""
+      ],
+      "No tasks running. Assign one and you’ll be pinged when it finishes.": [
+        ""
+      ],
+      "%s more — open Tasks to see them all.": [
+        ""
+      ],
+      "View Details →": [
+        ""
+      ],
+      "Site Score": [
+        ""
+      ],
+      "Not scanned yet": [
+        ""
+      ],
+      "Check how ready this site is for AI agents. The scan runs on this site only and changes nothing.": [
+        ""
+      ],
+      "Scanning…": [
+        ""
+      ],
+      "Scan now": [
+        ""
+      ],
+      "Fix now →": [
+        ""
+      ],
+      "All agents are stopped —": [
+        ""
+      ],
+      "resume in Safety Center": [
+        ""
+      ],
+      "Chat agent offline —": [
+        ""
+      ]
+    }
+  }
+}

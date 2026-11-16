@@ -43,7 +43,7 @@ are the ones that matter before a WordPress.org reviewer opens the plugin.
 Asked *"I want a chat box on my website so visitors can ask questions"*, it replied:
 
 > No agents are currently available on your site for chat widgets. You'll need to create one
-> first (e.g., **via Agent Builder Pro or similar tools**)…
+> first (e.g., **via Siteloom Pro or similar tools**)…
 
 There are **12 active agents** on that site. Two problems, both serious:
 
@@ -51,7 +51,7 @@ There are **12 active agents** on that site. Two problems, both serious:
    pricing, rating, download count"* — but **not** `get_agent_list` (*"all installed agents and
    their status"*). It queried the download catalogue, got nothing, and concluded the site has
    no agents.
-2. It then recommended **Agent Builder Pro**. Pro upsell surfaces were deliberately removed
+2. It then recommended **Siteloom Pro**. Pro upsell surfaces were deliberately removed
    from the free build (`c19d845`). An agent volunteering a paid upgrade unprompted is a
    guideline risk, and it did so while giving factually wrong information.
 
@@ -132,16 +132,16 @@ Forbidding them outright would make agents worse on exactly the sites most inves
 
 The Pro recommendation in P49 was not the model improvising. It was **written into the system
 prompt**: *"if nothing free fits, say so and mention that additional specialist agents are
-available separately through Agent Builder Pro."*
+available separately through Siteloom Pro."*
 
 Grepping the rest found the same instruction in four more places the admin UI never renders:
 
 | File | What it told the agent |
 |---|---|
-| `agent-orchestrator/templates/system-prompt.txt` | mention Agent Builder Pro if nothing free fits |
-| `assistant-trainer/templates/system-prompt.txt` | specialist needs "available separately through Agent Builder Pro" |
+| `agent-orchestrator/templates/system-prompt.txt` | mention Siteloom Pro if nothing free fits |
+| `assistant-trainer/templates/system-prompt.txt` | specialist needs "available separately through Siteloom Pro" |
 | `support-triage/templates/system-prompt.txt` | mention Pro's "deeper support-automation options" |
-| `seo-optimizer/templates/system-prompt.txt` | route to "Agent Builder Pro if nothing free fits" |
+| `seo-optimizer/templates/system-prompt.txt` | route to "Siteloom Pro if nothing free fits" |
 | `library/knowledge/platform-knowledge.txt` | a full Pro feature list, loaded into two agents' context |
 
 `c19d845` removed Pro upsell surfaces and pricing URLs from the free build, but only from code

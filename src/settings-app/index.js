@@ -1,5 +1,5 @@
 /**
- * Agent Builder Settings — full React app (WordPress components).
+ * Siteloom Settings — full React app (WordPress components).
  */
 import { createRoot, useEffect, useMemo, useState } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
@@ -45,7 +45,7 @@ function useSettingsBootstrap() {
 					loading: false,
 					error:
 						err.message ||
-						__( 'Could not load settings.', 'agent-builder' ),
+						__( 'Could not load settings.', 'siteloom' ),
 					bootstrap: null,
 				} )
 			);
@@ -77,7 +77,7 @@ function SettingsPageFooter( { tab } ) {
 		f.policy ||
 		__(
 			'Settings control how agents behave on this site. Changes are stored locally and take effect for new conversations.',
-			'agent-builder'
+			'siteloom'
 		);
 
 	return (
@@ -88,13 +88,13 @@ function SettingsPageFooter( { tab } ) {
 						{ policy }{ ' ' }
 					</span>
 				) }
-				{ __( 'Need help?', 'agent-builder' ) }{ ' ' }
+				{ __( 'Need help?', 'siteloom' ) }{ ' ' }
 				<a href={ supportUrl } target="_blank" rel="noopener noreferrer">
-					{ __( 'Visit our Support Center', 'agent-builder' ) }
+					{ __( 'Visit our Support Center', 'siteloom' ) }
 				</a>
 				{ ' | ' }
 				<a href={ docUrl } target="_blank" rel="noopener noreferrer">
-					{ __( 'Documentation', 'agent-builder' ) }
+					{ __( 'Documentation', 'siteloom' ) }
 				</a>
 			</span>
 			<span className="agentic-page-footer-right">
@@ -106,7 +106,7 @@ function SettingsPageFooter( { tab } ) {
 					target="_blank"
 					rel="noopener noreferrer"
 				>
-					{ __( 'Terms of Service', 'agent-builder' ) }
+					{ __( 'Terms of Service', 'siteloom' ) }
 				</a>
 				{ ' | ' }
 				<a
@@ -117,7 +117,7 @@ function SettingsPageFooter( { tab } ) {
 					target="_blank"
 					rel="noopener noreferrer"
 				>
-					{ __( 'Privacy Policy', 'agent-builder' ) }
+					{ __( 'Privacy Policy', 'siteloom' ) }
 				</a>
 				{ ' | ' }
 				<a
@@ -127,7 +127,7 @@ function SettingsPageFooter( { tab } ) {
 					target="_blank"
 					rel="noopener noreferrer"
 				>
-					{ __( 'GDPR Policy', 'agent-builder' ) }
+					{ __( 'GDPR Policy', 'siteloom' ) }
 				</a>
 			</span>
 		</div>
@@ -169,7 +169,7 @@ function SettingsNav( { bootstrap, active, onChange, filter } ) {
 			<input
 				type="search"
 				className="agentic-settings-app__search"
-				placeholder={ __( 'Search settings…', 'agent-builder' ) }
+				placeholder={ __( 'Search settings…', 'siteloom' ) }
 				value={ filter }
 				onChange={ ( e ) => onChange( { type: 'filter', value: e.target.value } ) }
 			/>
@@ -239,7 +239,7 @@ function SettingsNav( { bootstrap, active, onChange, filter } ) {
 					disabled={ hatchBusy }
 					onClick={ () => setSettingsMode( 'advanced' ) }
 				>
-					{ __( 'Advanced settings', 'agent-builder' ) }
+					{ __( 'Advanced settings', 'siteloom' ) }
 				</button>
 			) : (
 				<button
@@ -248,7 +248,7 @@ function SettingsNav( { bootstrap, active, onChange, filter } ) {
 					disabled={ hatchBusy }
 					onClick={ () => setSettingsMode( 'basic' ) }
 				>
-					{ __( 'Hide advanced settings', 'agent-builder' ) }
+					{ __( 'Hide advanced settings', 'siteloom' ) }
 				</button>
 			) }
 		</aside>
@@ -280,7 +280,7 @@ function InterfaceTab( {
 			! window.confirm(
 				__(
 					'Reset every screen back to your default interface? Any screen you switched individually will lose that override.',
-					'agent-builder'
+					'siteloom'
 				)
 			)
 		) {
@@ -295,7 +295,7 @@ function InterfaceTab( {
 	};
 	return (
 		<Panel
-			title={ __( 'Interface', 'agent-builder' ) }
+			title={ __( 'Interface', 'siteloom' ) }
 			actions={ modeToggle }
 			footer={ <SaveBar onSave={ onSave } saving={ saving } /> }
 		>
@@ -305,19 +305,19 @@ function InterfaceTab( {
 				onDismissSaved={ clearSaved }
 			/>
 			<RadioControl
-				label={ __( 'Default interface mode', 'agent-builder' ) }
+				label={ __( 'Default interface mode', 'siteloom' ) }
 				selected={ data.ui_mode || 'basic' }
 				options={ [
-					{ label: __( 'Basic', 'agent-builder' ), value: 'basic' },
+					{ label: __( 'Basic', 'siteloom' ), value: 'basic' },
 					{
-						label: __( 'Advanced', 'agent-builder' ),
+						label: __( 'Advanced', 'siteloom' ),
 						value: 'advanced',
 					},
 				] }
 				onChange={ ( v ) => setData( { ...data, ui_mode: v } ) }
 				help={ __(
 					'Starting point for screens you have not switched individually. Basic is guided and uses plain language; Advanced shows every control.',
-					'agent-builder'
+					'siteloom'
 				) }
 			/>
 			<Button
@@ -326,7 +326,7 @@ function InterfaceTab( {
 				disabled={ resetting }
 				onClick={ resetScreens }
 			>
-				{ __( 'Reset all screens to my default', 'agent-builder' ) }
+				{ __( 'Reset all screens to my default', 'siteloom' ) }
 			</Button>
 			<hr
 				className="agentic-react-section-sep"
@@ -337,25 +337,25 @@ function InterfaceTab( {
 				} }
 			/>
 			{ isAdvanced && (
-			<Section title={ __( 'How agents address people', 'agent-builder' ) }>
+			<Section title={ __( 'How agents address people', 'siteloom' ) }>
 				<p className="agentic-react-muted" style={ { marginTop: 0 } }>
 					{ __(
 						'Site knowledge and standing guidance are under',
-						'agent-builder'
+						'siteloom'
 					) }{ ' ' }
 					<a href="admin.php?page=agentic-train-data">
-						{ __( 'Knowledge', 'agent-builder' ) }
+						{ __( 'Knowledge', 'siteloom' ) }
 					</a>
 					{ '. ' }
 					{ __(
 						'Per-agent personality is under Knowledge → Instructions.',
-						'agent-builder'
+						'siteloom'
 					) }
 				</p>
 				<TextControl
 					label={ __(
 						'What should agents call administrators?',
-						'agent-builder'
+						'siteloom'
 					) }
 					value={ data.admin_address || '' }
 					onChange={ ( v ) =>
@@ -363,7 +363,7 @@ function InterfaceTab( {
 					}
 					help={ __(
 						'Leave blank to use the WordPress display name.',
-						'agent-builder'
+						'siteloom'
 					) }
 					__nextHasNoMarginBottom
 					__next40pxDefaultSize
@@ -372,7 +372,7 @@ function InterfaceTab( {
 				<TextControl
 					label={ __(
 						'What should agents call frontend visitors?',
-						'agent-builder'
+						'siteloom'
 					) }
 					value={ data.frontend_address || '' }
 					onChange={ ( v ) =>
@@ -383,11 +383,11 @@ function InterfaceTab( {
 				/>
 			</Section>
 			) }
-			<Section title={ __( 'Chat theme', 'agent-builder' ) }>
+			<Section title={ __( 'Chat theme', 'siteloom' ) }>
 				<p className="agentic-react-muted" style={ { marginTop: 0 } }>
 					{ __(
 						'Visual theme for admin chat and frontend shortcodes. Click a preview to select.',
-						'agent-builder'
+						'siteloom'
 					) }
 				</p>
 				<div className="agentic-theme-grid">
@@ -454,7 +454,7 @@ function InterfaceTab( {
 										>
 											{ __(
 												'AI Agent',
-												'agent-builder'
+												'siteloom'
 											) }
 										</span>
 									</div>
@@ -474,7 +474,7 @@ function InterfaceTab( {
 										>
 											{ __(
 												'Hello! How can I help?',
-												'agent-builder'
+												'siteloom'
 											) }
 										</span>
 									</div>
@@ -495,7 +495,7 @@ function InterfaceTab( {
 										>
 											{ __(
 												'Update my homepage',
-												'agent-builder'
+												'siteloom'
 											) }
 										</span>
 									</div>
@@ -516,7 +516,7 @@ function InterfaceTab( {
 					<>
 				<div style={ { marginTop: 16 } }>
 					<SelectControl
-						label={ __( 'Chat font', 'agent-builder' ) }
+						label={ __( 'Chat font', 'siteloom' ) }
 						value={ data.global_font || '' }
 						options={ data.font_options || [] }
 						onChange={ ( v ) =>
@@ -530,7 +530,7 @@ function InterfaceTab( {
 					<ToggleControl
 						label={ __(
 							'Use theme accent colour',
-							'agent-builder'
+							'siteloom'
 						) }
 						checked={ useThemeAccent }
 						onChange={ ( v ) =>
@@ -549,7 +549,7 @@ function InterfaceTab( {
 					<div style={ { marginTop: 12 } }>
 						<BaseControl
 							id="agentic-accent"
-							label={ __( 'Accent colour', 'agent-builder' ) }
+							label={ __( 'Accent colour', 'siteloom' ) }
 							__nextHasNoMarginBottom
 						>
 							<input
@@ -581,7 +581,7 @@ function InterfaceTab( {
 				<ToggleControl
 					label={ __(
 						'Show the Getting Started checklist on the dashboard',
-						'agent-builder'
+						'siteloom'
 					) }
 					checked={ !! data.show_onboarding }
 					onChange={ ( v ) =>
@@ -606,27 +606,27 @@ function ProvidersTab( { data } ) {
 	const nonce = data.provider_nonce || '';
 
 	return (
-		<Panel title={ __( 'Providers', 'agent-builder' ) }>
+		<Panel title={ __( 'Providers', 'siteloom' ) }>
 			<p className="agentic-react-lead">
 				{ __(
 					'Configure the AI providers available on this site. Only a connected provider can be set as the site default.',
-					'agent-builder'
+					'siteloom'
 				) }
 			</p>
 			<p>
 				<Button variant="primary" href={ data.add_url }>
-					{ __( 'Add Provider', 'agent-builder' ) }
+					{ __( 'Add Provider', 'siteloom' ) }
 				</Button>
 			</p>
 			<div className="agentic-react-table-wrap">
 				<table className="agentic-react-table">
 					<thead>
 						<tr>
-							<th>{ __( 'Status', 'agent-builder' ) }</th>
-							<th>{ __( 'Name', 'agent-builder' ) }</th>
-							<th>{ __( 'Slug', 'agent-builder' ) }</th>
-							<th>{ __( 'Model', 'agent-builder' ) }</th>
-							<th>{ __( 'Actions', 'agent-builder' ) }</th>
+							<th>{ __( 'Status', 'siteloom' ) }</th>
+							<th>{ __( 'Name', 'siteloom' ) }</th>
+							<th>{ __( 'Slug', 'siteloom' ) }</th>
+							<th>{ __( 'Model', 'siteloom' ) }</th>
+							<th>{ __( 'Actions', 'siteloom' ) }</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -640,10 +640,10 @@ function ProvidersTab( { data } ) {
 										}
 									/>{ ' ' }
 									{ row.connected
-										? __( 'Connected', 'agent-builder' )
+										? __( 'Connected', 'siteloom' )
 										: __(
 												'Not connected',
-												'agent-builder'
+												'siteloom'
 										  ) }
 								</td>
 								<td>
@@ -663,7 +663,7 @@ function ProvidersTab( { data } ) {
 								</td>
 								<td className="agentic-providers-actions">
 									<a href={ row.edit_url }>
-										{ __( 'Edit', 'agent-builder' ) }
+										{ __( 'Edit', 'siteloom' ) }
 									</a>
 									{ row.is_default && (
 										<>
@@ -671,7 +671,7 @@ function ProvidersTab( { data } ) {
 											<span className="agentic-react-badge">
 												{ __(
 													'Default',
-													'agent-builder'
+													'siteloom'
 												) }
 											</span>
 										</>
@@ -710,7 +710,7 @@ function ProvidersTab( { data } ) {
 												>
 													{ __(
 														'Set Default',
-														'agent-builder'
+														'siteloom'
 													) }
 												</button>
 											</form>
@@ -725,7 +725,7 @@ function ProvidersTab( { data } ) {
 			<p className="agentic-react-muted" style={ { marginTop: 12 } }>
 				{ __(
 					'API keys: use Edit on a provider. Setting a default updates the global provider and model used by agents.',
-					'agent-builder'
+					'siteloom'
 				) }
 			</p>
 		</Panel>
@@ -746,17 +746,17 @@ function SecurityTab( {
 	const agentMode = data.default_agent_mode || 'supervised';
 	let agentModeHelp = __(
 		'Agents propose actions for you to approve before anything changes. Recommended for most sites.',
-		'agent-builder'
+		'siteloom'
 	);
 	if ( agentMode === 'autonomous' ) {
 		agentModeHelp = __(
 			'Agents act immediately without waiting for your OK. Use only if you trust them on this site.',
-			'agent-builder'
+			'siteloom'
 		);
 	} else if ( agentMode === 'readonly' ) {
 		agentModeHelp = __(
 			'Agents can chat but cannot change anything on the site.',
-			'agent-builder'
+			'siteloom'
 		);
 	}
 	const modeToggle = (
@@ -768,7 +768,7 @@ function SecurityTab( {
 	);
 	return (
 		<Panel
-			title={ __( 'Security', 'agent-builder' ) }
+			title={ __( 'Security', 'siteloom' ) }
 			actions={ modeToggle }
 			footer={ <SaveBar onSave={ onSave } saving={ saving } /> }
 		>
@@ -778,19 +778,19 @@ function SecurityTab( {
 				onDismissSaved={ clearSaved }
 			/>
 			<SelectControl
-				label={ __( 'Default agent mode', 'agent-builder' ) }
+				label={ __( 'Default agent mode', 'siteloom' ) }
 				value={ agentMode }
 				options={ [
 					{
-						label: __( 'Supervised', 'agent-builder' ),
+						label: __( 'Supervised', 'siteloom' ),
 						value: 'supervised',
 					},
 					{
-						label: __( 'Autonomous', 'agent-builder' ),
+						label: __( 'Autonomous', 'siteloom' ),
 						value: 'autonomous',
 					},
 					{
-						label: __( 'Read-only', 'agent-builder' ),
+						label: __( 'Read-only', 'siteloom' ),
 						value: 'readonly',
 					},
 				] }
@@ -803,10 +803,10 @@ function SecurityTab( {
 			/>
 			<div style={ { height: 16 } } />
 			<ToggleControl
-				label={ __( 'Message scanning', 'agent-builder' ) }
+				label={ __( 'Message scanning', 'siteloom' ) }
 				help={ __(
 					'Blocks common injection patterns and flags personal data in chat messages.',
-					'agent-builder'
+					'siteloom'
 				) }
 				checked={ !! data.message_scanning }
 				onChange={ ( v ) =>
@@ -816,10 +816,10 @@ function SecurityTab( {
 			/>
 			<div style={ { height: 8 } } />
 			<ToggleControl
-				label={ __( 'Require chat consent', 'agent-builder' ) }
+				label={ __( 'Require chat consent', 'siteloom' ) }
 				help={ __(
 					'Ask visitors to agree before chatting. Required in some regions.',
-					'agent-builder'
+					'siteloom'
 				) }
 				checked={ !! data.chat_consent_enabled }
 				onChange={ ( v ) =>
@@ -830,7 +830,7 @@ function SecurityTab( {
 			{ data.chat_consent_enabled && (
 				<div style={ { marginTop: 12 } }>
 					<TextareaControl
-						label={ __( 'Consent text', 'agent-builder' ) }
+						label={ __( 'Consent text', 'siteloom' ) }
 						value={ data.chat_consent_text || '' }
 						onChange={ ( v ) =>
 							setData( { ...data, chat_consent_text: v } )
@@ -842,17 +842,17 @@ function SecurityTab( {
 			) }
 			<div style={ { height: 16 } } />
 			<SelectControl
-				label={ __( 'Agent activity email', 'agent-builder' ) }
+				label={ __( 'Agent activity email', 'siteloom' ) }
 				value={ data.notify_email || 'daily' }
 				options={ [
-					{ label: __( 'Off', 'agent-builder' ), value: 'off' },
-					{ label: __( 'Daily digest', 'agent-builder' ), value: 'daily' },
-					{ label: __( 'Instant', 'agent-builder' ), value: 'instant' },
+					{ label: __( 'Off', 'siteloom' ), value: 'off' },
+					{ label: __( 'Daily digest', 'siteloom' ), value: 'daily' },
+					{ label: __( 'Instant', 'siteloom' ), value: 'instant' },
 				] }
 				onChange={ ( v ) => setData( { ...data, notify_email: v } ) }
 				help={ __(
 					'How administrators are emailed about agent activity. Users can opt out individually from their own profile.',
-					'agent-builder'
+					'siteloom'
 				) }
 				__nextHasNoMarginBottom
 				__next40pxDefaultSize
@@ -861,11 +861,11 @@ function SecurityTab( {
 			<TextControl
 				label={ __(
 					'Conversation retention (days)',
-					'agent-builder'
+					'siteloom'
 				) }
 				help={ __(
 					'How long to keep chat history. 0 means keep forever.',
-					'agent-builder'
+					'siteloom'
 				) }
 				type="number"
 				value={ String( data.retention_conversations ?? 30 ) }
@@ -882,7 +882,7 @@ function SecurityTab( {
 				<>
 			<div style={ { height: 12 } } />
 			<TextControl
-				label={ __( 'Audit log retention (days)', 'agent-builder' ) }
+				label={ __( 'Audit log retention (days)', 'siteloom' ) }
 				type="number"
 				value={ String( data.retention_audit_log ?? 30 ) }
 				onChange={ ( v ) =>
@@ -896,10 +896,10 @@ function SecurityTab( {
 			/>
 			<div style={ { height: 16 } } />
 			<ToggleControl
-				label={ __( 'Refresh model catalog from Agentic', 'agent-builder' ) }
+				label={ __( 'Refresh model catalog from Agentic', 'siteloom' ) }
 				help={ __(
 					'Off by default. When on, a daily cron fetches model names and list prices from agentic-plugin.com. BYOK providers work without this; enable it only if you want the curated catalog.',
-					'agent-builder'
+					'siteloom'
 				) }
 				checked={ !! data.allow_platform_sync }
 				onChange={ ( v ) =>
@@ -908,17 +908,17 @@ function SecurityTab( {
 				__nextHasNoMarginBottom
 			/>
 			<div style={ { height: 24 } } />
-			<Section title={ __( 'Request Rate Limits', 'agent-builder' ) }>
+			<Section title={ __( 'Request Rate Limits', 'siteloom' ) }>
 				<p className="agentic-react-muted" style={ { marginTop: 0 } }>
 					{ __(
 						'IP-based throttle applied before role-based daily quotas. Protects against rapid-fire requests.',
-						'agent-builder'
+						'siteloom'
 					) }
 				</p>
 				<TextControl
 					label={ __(
 						'Authenticated users (requests per minute)',
-						'agent-builder'
+						'siteloom'
 					) }
 					type="number"
 					value={ String( data.rate_limit_authenticated ?? 30 ) }
@@ -935,7 +935,7 @@ function SecurityTab( {
 				<TextControl
 					label={ __(
 						'Anonymous visitors (requests per minute)',
-						'agent-builder'
+						'siteloom'
 					) }
 					type="number"
 					value={ String( data.rate_limit_anonymous ?? 10 ) }
@@ -1071,10 +1071,10 @@ function UsersTab( {
 	if ( ! isAdvanced ) {
 		return (
 			<AdminPage
-				title={ __( 'Users', 'agent-builder' ) }
+				title={ __( 'Users', 'siteloom' ) }
 				description={ __(
 					'Control who can administer the plugin and use AI agents.',
-					'agent-builder'
+					'siteloom'
 				) }
 				actions={ modeToggle }
 			>
@@ -1088,9 +1088,9 @@ function UsersTab( {
 	}
 
 	return (
-		<AdminPage title={ __( 'Users', 'agent-builder' ) } actions={ modeToggle }>
+		<AdminPage title={ __( 'Users', 'siteloom' ) } actions={ modeToggle }>
 		<Panel
-			title={ __( 'Users', 'agent-builder' ) }
+			title={ __( 'Users', 'siteloom' ) }
 			footer={ <SaveBar onSave={ saveUsers } saving={ saving } /> }
 		>
 			<StatusNotice
@@ -1101,22 +1101,22 @@ function UsersTab( {
 			<p className="agentic-react-lead">
 				{ __(
 					'Control which WordPress roles can administer the plugin and interact with AI agents. Administrators always retain full access.',
-					'agent-builder'
+					'siteloom'
 				) }
 			</p>
 			<p className="agentic-react-muted">
 				{ __(
-					'These rules apply site-wide. A user needs at least one ticked box to access the corresponding feature. Removing a role from all plugin privileges will hide the Agent Builder menu from that role entirely.',
-					'agent-builder'
+					'These rules apply site-wide. A user needs at least one ticked box to access the corresponding feature. Removing a role from all plugin privileges will hide the Siteloom menu from that role entirely.',
+					'siteloom'
 				) }
 			</p>
 
 			{ /* Plugin Administration */ }
-			<Section title={ __( 'Plugin Administration', 'agent-builder' ) }>
+			<Section title={ __( 'Plugin Administration', 'siteloom' ) }>
 				<p className="agentic-react-muted" style={ { marginTop: 0 } }>
 					{ __(
-						'Who can access and configure the Agent Builder admin pages.',
-						'agent-builder'
+						'Who can access and configure the Siteloom admin pages.',
+						'siteloom'
 					) }
 				</p>
 				<div className="agentic-react-table-wrap agentic-users-matrix">
@@ -1124,7 +1124,7 @@ function UsersTab( {
 						<thead>
 							<tr>
 								<th>
-									{ __( 'Permission', 'agent-builder' ) }
+									{ __( 'Permission', 'siteloom' ) }
 								</th>
 								{ roles.map( ( r ) => (
 									<th
@@ -1171,7 +1171,7 @@ function UsersTab( {
 													r.slug === 'administrator'
 														? __(
 																'Administrators always have full access',
-																'agent-builder'
+																'siteloom'
 														  )
 														: p.label
 												}
@@ -1193,11 +1193,11 @@ function UsersTab( {
 			</Section>
 
 			{ /* AI Agents */ }
-			<Section title={ __( 'AI Agents', 'agent-builder' ) }>
+			<Section title={ __( 'AI Agents', 'siteloom' ) }>
 				<p className="agentic-react-muted" style={ { marginTop: 0 } }>
 					{ __(
 						'Who can chat with and interact with installed AI agents, and how much they may use per day.',
-						'agent-builder'
+						'siteloom'
 					) }
 				</p>
 				<div className="agentic-react-table-wrap agentic-users-matrix">
@@ -1207,15 +1207,15 @@ function UsersTab( {
 								<th>
 									{ __(
 										'Permission / Limit',
-										'agent-builder'
+										'siteloom'
 									) }
 								</th>
 								<th className="agentic-users-matrix__role">
-									{ __( 'Visitor', 'agent-builder' ) }
+									{ __( 'Visitor', 'siteloom' ) }
 									<div className="agentic-react-muted">
 										{ __(
 											'Not logged in',
-											'agent-builder'
+											'siteloom'
 										) }
 									</div>
 								</th>
@@ -1255,7 +1255,7 @@ function UsersTab( {
 												}
 												title={ __(
 													'Allow non-logged-in visitors to use frontend chat',
-													'agent-builder'
+													'siteloom'
 												) }
 												onChange={ ( e ) =>
 													setData( {
@@ -1289,7 +1289,7 @@ function UsersTab( {
 													r.slug === 'administrator'
 														? __(
 																'Administrators always have full access',
-																'agent-builder'
+																'siteloom'
 														  )
 														: p.label
 												}
@@ -1312,13 +1312,13 @@ function UsersTab( {
 									<strong>
 										{ __(
 											'Daily Limits',
-											'agent-builder'
+											'siteloom'
 										) }
 									</strong>{ ' ' }
 									<span className="agentic-react-muted">
 										{ __(
 											'0 = unlimited, resets at midnight UTC. Administrators are never limited.',
-											'agent-builder'
+											'siteloom'
 										) }
 									</span>
 								</td>
@@ -1329,18 +1329,18 @@ function UsersTab( {
 										<strong>
 											{ __(
 												'Queries / day',
-												'agent-builder'
+												'siteloom'
 											) }
 										</strong>
 										<span
 											className="agentic-users-matrix__help"
 											title={ __(
 												'Max AI chat messages per user per day.',
-												'agent-builder'
+												'siteloom'
 											) }
 											aria-label={ __(
 												'Max AI chat messages per user per day.',
-												'agent-builder'
+												'siteloom'
 											) }
 										>
 											?
@@ -1401,18 +1401,18 @@ function UsersTab( {
 										<strong>
 											{ __(
 												'Tokens / day',
-												'agent-builder'
+												'siteloom'
 											) }
 										</strong>
 										<span
 											className="agentic-users-matrix__help"
 											title={ __(
 												'Max AI tokens consumed per user per day.',
-												'agent-builder'
+												'siteloom'
 											) }
 											aria-label={ __(
 												'Max AI tokens consumed per user per day.',
-												'agent-builder'
+												'siteloom'
 											) }
 										>
 											?
@@ -1475,7 +1475,7 @@ function UsersTab( {
 			<p className="agentic-react-muted">
 				{ __(
 					'How enforcement works: these settings control WordPress admin menu visibility, admin bar chat access, the REST chat API, and AJAX task triggers. Unchecked roles are blocked at the server, not just hidden in the UI. Request rate limits are under Security.',
-					'agent-builder'
+					'siteloom'
 				) }
 			</p>
 		</Panel>
@@ -1486,7 +1486,7 @@ function UsersTab( {
 function MemoryTab( { data, setData, onSave, saving, error, saved, clearSaved } ) {
 	return (
 		<Panel
-			title={ __( 'Memory', 'agent-builder' ) }
+			title={ __( 'Memory', 'siteloom' ) }
 			footer={ <SaveBar onSave={ onSave } saving={ saving } /> }
 		>
 			<StatusNotice
@@ -1497,12 +1497,12 @@ function MemoryTab( { data, setData, onSave, saving, error, saved, clearSaved } 
 			<p className="agentic-react-lead">
 				{ __(
 					'Persistent key-value memory agents use across conversations.',
-					'agent-builder'
+					'siteloom'
 				) }
 			</p>
 			<TextControl
-				label={ __( 'Default memory TTL (days)', 'agent-builder' ) }
-				help={ __( '0 = never expires', 'agent-builder' ) }
+				label={ __( 'Default memory TTL (days)', 'siteloom' ) }
+				help={ __( '0 = never expires', 'siteloom' ) }
 				type="number"
 				value={ String( data.ttl_days ?? 30 ) }
 				onChange={ ( v ) =>
@@ -1516,7 +1516,7 @@ function MemoryTab( { data, setData, onSave, saving, error, saved, clearSaved } 
 			/>
 			<div style={ { height: 12 } } />
 			<ToggleControl
-				label={ __( 'Enable local browser memory', 'agent-builder' ) }
+				label={ __( 'Enable local browser memory', 'siteloom' ) }
 				checked={ !! data.local_memory_enabled }
 				onChange={ ( v ) =>
 					setData( { ...data, local_memory_enabled: v } )
@@ -1589,7 +1589,7 @@ function AgentsTab( { data, setData, onSave, saving, error, saved, clearSaved } 
 			label:
 				p.name +
 				( p.slug === defaultProviderSlug
-					? ' ' + __( '(default)', 'agent-builder' )
+					? ' ' + __( '(default)', 'siteloom' )
 					: '' ),
 			value: p.slug,
 		} ) );
@@ -1628,7 +1628,7 @@ function AgentsTab( { data, setData, onSave, saving, error, saved, clearSaved } 
 
 	return (
 		<Panel
-			title={ __( 'Agents', 'agent-builder' ) }
+			title={ __( 'Agents', 'siteloom' ) }
 			footer={ <SaveBar onSave={ onSave } saving={ saving } /> }
 		>
 			<StatusNotice
@@ -1639,32 +1639,32 @@ function AgentsTab( { data, setData, onSave, saving, error, saved, clearSaved } 
 			<p className="agentic-react-lead">
 				{ __(
 					'Chat capabilities and per-agent provider/model. Set the site default provider on the Providers tab. Theme is under Interface.',
-					'agent-builder'
+					'siteloom'
 				) }
 			</p>
-			<Section title={ __( 'Chat features', 'agent-builder' ) }>
+			<Section title={ __( 'Chat features', 'siteloom' ) }>
 				<p className="agentic-react-muted" style={ { marginTop: 0 } }>
 					{ __(
 						'Features available in agent chat.',
-						'agent-builder'
+						'siteloom'
 					) }
 				</p>
 				<ToggleControl
-					label={ __( 'Audio input', 'agent-builder' ) }
+					label={ __( 'Audio input', 'siteloom' ) }
 					checked={ !! data.chat_audio }
 					onChange={ ( v ) => setData( { ...data, chat_audio: v } ) }
 					__nextHasNoMarginBottom
 				/>
 				<div style={ { height: 8 } } />
 				<ToggleControl
-					label={ __( 'Text-to-speech', 'agent-builder' ) }
+					label={ __( 'Text-to-speech', 'siteloom' ) }
 					checked={ !! data.chat_tts }
 					onChange={ ( v ) => setData( { ...data, chat_tts: v } ) }
 					__nextHasNoMarginBottom
 				/>
 				<div style={ { height: 8 } } />
 				<ToggleControl
-					label={ __( 'Vision / image input', 'agent-builder' ) }
+					label={ __( 'Vision / image input', 'siteloom' ) }
 					checked={ !! data.chat_vision }
 					onChange={ ( v ) =>
 						setData( { ...data, chat_vision: v } )
@@ -1673,10 +1673,10 @@ function AgentsTab( { data, setData, onSave, saving, error, saved, clearSaved } 
 				/>
 				<div style={ { height: 8 } } />
 				<ToggleControl
-					label={ __( 'Hide “Powered by Agent Builder” branding', 'agent-builder' ) }
+					label={ __( 'Hide “Powered by Siteloom” branding', 'siteloom' ) }
 					help={ __(
 						'On by default. Uncheck only if you want a small credit line in the chat footer.',
-						'agent-builder'
+						'siteloom'
 					) }
 					checked={ !! data.chat_whitelabel }
 					onChange={ ( v ) =>
@@ -1686,10 +1686,10 @@ function AgentsTab( { data, setData, onSave, saving, error, saved, clearSaved } 
 				/>
 				<div style={ { height: 8 } } />
 				<ToggleControl
-					label={ __( 'Show the WhatsApp Pro promo in admin chat', 'agent-builder' ) }
+					label={ __( 'Show the WhatsApp Pro promo in admin chat', 'siteloom' ) }
 					help={ __(
 						'Off by default. When on, admin chat shows a link to the WhatsApp connector.',
-						'agent-builder'
+						'siteloom'
 					) }
 					checked={ !! data.show_whatsapp_cta }
 					onChange={ ( v ) =>
@@ -1698,16 +1698,16 @@ function AgentsTab( { data, setData, onSave, saving, error, saved, clearSaved } 
 					__nextHasNoMarginBottom
 				/>
 			</Section>
-			<Section title={ __( 'Active agent overrides', 'agent-builder' ) }>
+			<Section title={ __( 'Active agent overrides', 'siteloom' ) }>
 				<p className="agentic-react-muted" style={ { marginTop: 0 } }>
 					{ __(
 						'Each row starts on the site default provider and model (Providers tab). Change only the agents that need a different setup.',
-						'agent-builder'
+						'siteloom'
 					) }
 				</p>
 				{ ! agents.length ? (
 					<p className="agentic-react-muted">
-						{ __( 'No active agents.', 'agent-builder' ) }
+						{ __( 'No active agents.', 'siteloom' ) }
 					</p>
 				) : (
 					<div className="agentic-react-table-wrap agentic-agents-overrides">
@@ -1715,13 +1715,13 @@ function AgentsTab( { data, setData, onSave, saving, error, saved, clearSaved } 
 							<thead>
 								<tr>
 									<th>
-										{ __( 'Agent', 'agent-builder' ) }
+										{ __( 'Agent', 'siteloom' ) }
 									</th>
 									<th>
-										{ __( 'Provider', 'agent-builder' ) }
+										{ __( 'Provider', 'siteloom' ) }
 									</th>
 									<th>
-										{ __( 'Model', 'agent-builder' ) }
+										{ __( 'Model', 'siteloom' ) }
 									</th>
 								</tr>
 							</thead>
@@ -1743,7 +1743,7 @@ function AgentsTab( { data, setData, onSave, saving, error, saved, clearSaved } 
 													' ' +
 													__(
 														'provider',
-														'agent-builder'
+														'siteloom'
 													)
 												}
 												onChange={ ( e ) => {
@@ -1797,7 +1797,7 @@ function AgentsTab( { data, setData, onSave, saving, error, saved, clearSaved } 
 													' ' +
 													__(
 														'model',
-														'agent-builder'
+														'siteloom'
 													)
 												}
 												onChange={ ( e ) => {
@@ -1861,15 +1861,15 @@ function AgentsTab( { data, setData, onSave, saving, error, saved, clearSaved } 
 				} }
 			>
 				<ToggleControl
-					label={ __( 'Disable All Agents', 'agent-builder' ) }
+					label={ __( 'Disable All Agents', 'siteloom' ) }
 					help={
 						<span className="agentic-emergency-stop-hint">
 							<strong className="agentic-emergency-stop-text">
-								{ __( 'Emergency stop', 'agent-builder' ) }
+								{ __( 'Emergency stop', 'siteloom' ) }
 							</strong>
 							{ __(
 								': deactivate and log agent states, cancels all jobs and disconnects providers.',
-								'agent-builder'
+								'siteloom'
 							) }
 						</span>
 					}
@@ -1878,11 +1878,11 @@ function AgentsTab( { data, setData, onSave, saving, error, saved, clearSaved } 
 						const msg = v
 							? __(
 									'EMERGENCY STOP: deactivate and log agent states, cancel all jobs, and disconnect providers. Continue?',
-									'agent-builder'
+									'siteloom'
 							  )
 							: __(
 									'Turn off emergency stop?',
-									'agent-builder'
+									'siteloom'
 							  );
 						if ( ! window.confirm( msg ) ) {
 							return;
@@ -1918,7 +1918,7 @@ function InstructionsTab( { data, setData, onSave, saving, error, saved, clearSa
 
 	return (
 		<Panel
-			title={ __( 'Instructions', 'agent-builder' ) }
+			title={ __( 'Instructions', 'siteloom' ) }
 			footer={ <SaveBar onSave={ onSave } saving={ saving } /> }
 		>
 			<StatusNotice
@@ -1929,15 +1929,15 @@ function InstructionsTab( { data, setData, onSave, saving, error, saved, clearSa
 			<p className="agentic-react-lead">
 				{ __(
 					'Customise greetings and personality notes per agent.',
-					'agent-builder'
+					'siteloom'
 				) }
 			</p>
 			{ ! agents.length ? (
-				<p>{ __( 'No agents installed.', 'agent-builder' ) }</p>
+				<p>{ __( 'No agents installed.', 'siteloom' ) }</p>
 			) : (
 				<>
 					<SelectControl
-						label={ __( 'Select agent', 'agent-builder' ) }
+						label={ __( 'Select agent', 'siteloom' ) }
 						value={ current?.slug || '' }
 						options={ agents.map( ( a ) => ( {
 							label: a.name,
@@ -1952,7 +1952,7 @@ function InstructionsTab( { data, setData, onSave, saving, error, saved, clearSa
 							<TextareaControl
 								label={ __(
 									'Welcome message',
-									'agent-builder'
+									'siteloom'
 								) }
 								value={ current.welcome_message || '' }
 								onChange={ ( v ) =>
@@ -1965,7 +1965,7 @@ function InstructionsTab( { data, setData, onSave, saving, error, saved, clearSa
 							<TextareaControl
 								label={ __(
 									'Persona notes',
-									'agent-builder'
+									'siteloom'
 								) }
 								value={ current.notes || '' }
 								onChange={ ( v ) => update( 'notes', v ) }
@@ -1976,7 +1976,7 @@ function InstructionsTab( { data, setData, onSave, saving, error, saved, clearSa
 							<TextControl
 								label={ __(
 									'Response style',
-									'agent-builder'
+									'siteloom'
 								) }
 								value={ current.response_style || '' }
 								onChange={ ( v ) =>
@@ -1996,20 +1996,20 @@ function InstructionsTab( { data, setData, onSave, saving, error, saved, clearSa
 function ApisTab( { data } ) {
 	const services = data.services || [];
 	return (
-		<Panel title={ __( 'APIs', 'agent-builder' ) }>
+		<Panel title={ __( 'APIs', 'siteloom' ) }>
 			<p className="agentic-react-lead">
 				{ __(
 					'Third-party API keys used by agent tools.',
-					'agent-builder'
+					'siteloom'
 				) }
 			</p>
 			<div className="agentic-react-table-wrap">
 				<table className="agentic-react-table">
 					<thead>
 						<tr>
-							<th>{ __( 'Service', 'agent-builder' ) }</th>
-							<th>{ __( 'Status', 'agent-builder' ) }</th>
-							<th>{ __( 'Key', 'agent-builder' ) }</th>
+							<th>{ __( 'Service', 'siteloom' ) }</th>
+							<th>{ __( 'Status', 'siteloom' ) }</th>
+							<th>{ __( 'Key', 'siteloom' ) }</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -2022,7 +2022,7 @@ function ApisTab( { data } ) {
 											<ExternalLink href={ s.key_url }>
 												{ __(
 													'Get a key',
-													'agent-builder'
+													'siteloom'
 												) }
 											</ExternalLink>
 										</div>
@@ -2036,10 +2036,10 @@ function ApisTab( { data } ) {
 										}
 									/>{ ' ' }
 									{ s.configured
-										? __( 'Configured', 'agent-builder' )
+										? __( 'Configured', 'siteloom' )
 										: __(
 												'Not configured',
-												'agent-builder'
+												'siteloom'
 										  ) }
 								</td>
 								<td>
@@ -2100,7 +2100,7 @@ function EndpointsTab( { data, setData, onSave, saving, error, saved, clearSaved
 						ok: false,
 						message:
 							err.message ||
-							__( 'Test failed.', 'agent-builder' ),
+							__( 'Test failed.', 'siteloom' ),
 					},
 				} ) );
 			} );
@@ -2108,25 +2108,25 @@ function EndpointsTab( { data, setData, onSave, saving, error, saved, clearSaved
 
 	return (
 		<>
-			<Panel title={ __( 'Endpoints', 'agent-builder' ) }>
+			<Panel title={ __( 'Endpoints', 'siteloom' ) }>
 				<p className="agentic-react-lead">
 					{ data.note ||
 						__(
 							'REST endpoints for integrations.',
-							'agent-builder'
+							'siteloom'
 						) }
 				</p>
 				<p>
-					<strong>{ __( 'Namespace', 'agent-builder' ) }:</strong>{ ' ' }
+					<strong>{ __( 'Namespace', 'siteloom' ) }:</strong>{ ' ' }
 					<code>{ data.rest_namespace }</code>
 				</p>
 				<p>
-					<strong>{ __( 'Base URL', 'agent-builder' ) }:</strong>{ ' ' }
+					<strong>{ __( 'Base URL', 'siteloom' ) }:</strong>{ ' ' }
 					<code>{ data.rest_url }</code>
 				</p>
 			</Panel>
 			<Panel
-				title={ __( 'Agentic Services', 'agent-builder' ) }
+				title={ __( 'Agentic Services', 'siteloom' ) }
 				footer={
 					<SaveBar onSave={ () => onSave() } saving={ saving } />
 				}
@@ -2139,7 +2139,7 @@ function EndpointsTab( { data, setData, onSave, saving, error, saved, clearSaved
 				<p className="agentic-react-lead">
 					{ __(
 						'Base URLs the plugin calls for AI chat, knowledge search, and media generation. Leave these on their defaults unless you’re self-hosting a proxy or support asked you to change one.',
-						'agent-builder'
+						'siteloom'
 					) }
 				</p>
 				{ services.map( ( svc ) => {
@@ -2179,8 +2179,8 @@ function EndpointsTab( { data, setData, onSave, saving, error, saved, clearSaved
 									onClick={ () => testService( svc.slug ) }
 								>
 									{ t.testing
-										? __( 'Testing…', 'agent-builder' )
-										: __( 'Test', 'agent-builder' ) }
+										? __( 'Testing…', 'siteloom' )
+										: __( 'Test', 'siteloom' ) }
 								</Button>
 							</div>
 							{ null !== ( t.ok ?? null ) && (
@@ -2197,7 +2197,7 @@ function EndpointsTab( { data, setData, onSave, saving, error, saved, clearSaved
 							{ svc.is_custom && (
 								<p style={ { margin: '6px 0 0' } }>
 									<span className="agentic-react-lead">
-										{ __( 'Default:', 'agent-builder' ) }{ ' ' }
+										{ __( 'Default:', 'siteloom' ) }{ ' ' }
 										<code>{ svc.default_url }</code>
 									</span>{ ' ' }
 									<Button
@@ -2208,7 +2208,7 @@ function EndpointsTab( { data, setData, onSave, saving, error, saved, clearSaved
 									>
 										{ __(
 											'Reset to default',
-											'agent-builder'
+											'siteloom'
 										) }
 									</Button>
 								</p>
@@ -2258,7 +2258,7 @@ function MCPTab( { data } ) {
 						ok: false,
 						message:
 							err.message ||
-							__( 'Test failed.', 'agent-builder' ),
+							__( 'Test failed.', 'siteloom' ),
 					},
 				} ) );
 			} );
@@ -2297,39 +2297,39 @@ function MCPTab( { data } ) {
 
 	return (
 		<>
-			<Panel title={ __( 'MCP', 'agent-builder' ) }>
+			<Panel title={ __( 'MCP', 'siteloom' ) }>
 				<p className="agentic-react-lead">
 					{ __(
 						'The Model Context Protocol (MCP) lets AI apps you connect yourself (Claude Desktop, Cursor, Grok and others) talk directly to this site and use an agent\'s tools. MCP is off for every agent until an administrator turns it on below.',
-						'agent-builder'
+						'siteloom'
 					) }
 				</p>
 				<Notice status="warning" isDismissible={ false }>
 					<p>
 						{ __(
 							'Turning MCP on for an agent lets any AI app you connect act on this site with the permissions of the WordPress user whose Application Password it uses. Only enable it for agents you need, and only connect apps you trust.',
-							'agent-builder'
+							'siteloom'
 						) }
 					</p>
 				</Notice>
 			</Panel>
 
-			<Panel title={ __( 'Agent endpoints', 'agent-builder' ) }>
+			<Panel title={ __( 'Agent endpoints', 'siteloom' ) }>
 				<p className="agentic-react-lead">
 					{ __(
 						'Each agent has its own MCP URL, scoped to only the tools that agent is allowed to use.',
-						'agent-builder'
+						'siteloom'
 					) }
 				</p>
 				<div className="agentic-react-table-wrap">
 					<table className="agentic-react-table">
 						<thead>
 							<tr>
-								<th>{ __( 'Agent', 'agent-builder' ) }</th>
-								<th>{ __( 'MCP URL', 'agent-builder' ) }</th>
-								<th>{ __( 'Enabled', 'agent-builder' ) }</th>
-								<th>{ __( 'Status', 'agent-builder' ) }</th>
-								<th>{ __( 'Connected', 'agent-builder' ) }</th>
+								<th>{ __( 'Agent', 'siteloom' ) }</th>
+								<th>{ __( 'MCP URL', 'siteloom' ) }</th>
+								<th>{ __( 'Enabled', 'siteloom' ) }</th>
+								<th>{ __( 'Status', 'siteloom' ) }</th>
+								<th>{ __( 'Connected', 'siteloom' ) }</th>
 								<th />
 							</tr>
 						</thead>
@@ -2353,11 +2353,11 @@ function MCPTab( { data } ) {
 												{ copied[ a.slug ]
 													? __(
 															'Copied!',
-															'agent-builder'
+															'siteloom'
 													  )
 													: __(
 															'Copy',
-															'agent-builder'
+															'siteloom'
 													  ) }
 											</Button>
 										</td>
@@ -2370,7 +2370,7 @@ function MCPTab( { data } ) {
 															/* translators: %s: agent name */
 															__(
 																'Enable MCP: %s',
-																'agent-builder'
+																'siteloom'
 															),
 															a.name
 														) }
@@ -2393,13 +2393,13 @@ function MCPTab( { data } ) {
 											{ a.ready
 												? __(
 														'Ready',
-														'agent-builder'
+														'siteloom'
 												  )
 												: a.reason }
 										</td>
 										<td>
 											{ a.last_connected ||
-												__( 'Never connected', 'agent-builder' ) }
+												__( 'Never connected', 'siteloom' ) }
 										</td>
 										<td>
 											<Button
@@ -2415,11 +2415,11 @@ function MCPTab( { data } ) {
 												{ t.testing
 													? __(
 															'Testing…',
-															'agent-builder'
+															'siteloom'
 													  )
 													: __(
 															'Test',
-															'agent-builder'
+															'siteloom'
 													  ) }
 											</Button>
 											{ null !== ( t.ok ?? null ) && (
@@ -2449,24 +2449,24 @@ function MCPTab( { data } ) {
 				</div>
 			</Panel>
 
-			<Panel title={ __( 'Connecting an AI app', 'agent-builder' ) }>
+			<Panel title={ __( 'Connecting an AI app', 'siteloom' ) }>
 				<ol>
 					<li>
 						{ __(
 							'Turn on MCP for the agent you want to use, above.',
-							'agent-builder'
+							'siteloom'
 						) }
 					</li>
 					<li>
 						{ __(
-							'Create an Application Password in your own WordPress profile (Users > Profile > Application Passwords). Agent Builder never creates or stores one for you.',
-							'agent-builder'
+							'Create an Application Password in your own WordPress profile (Users > Profile > Application Passwords). Siteloom never creates or stores one for you.',
+							'siteloom'
 						) }{ ' ' }
 						{ data.profile_url && (
 							<a href={ data.profile_url }>
 								{ __(
 									'Open your profile',
-									'agent-builder'
+									'siteloom'
 								) }
 							</a>
 						) }
@@ -2474,14 +2474,14 @@ function MCPTab( { data } ) {
 					<li>
 						{ __(
 							'In your AI app, add the agent\'s MCP URL and sign in with your WordPress username and that Application Password.',
-							'agent-builder'
+							'siteloom'
 						) }
 					</li>
 				</ol>
 				<p className="agentic-react-lead">
 					{ __(
 						'The app can only use the tools that agent is allowed to use, limited to what your WordPress user may do. High-risk tools are never available over MCP, and actions that normally need your approval still wait for it. To disconnect an app, revoke its Application Password in your profile or turn MCP off for the agent.',
-						'agent-builder'
+						'siteloom'
 					) }
 				</p>
 				{ unattendedWrites.length > 0 && (
@@ -2490,7 +2490,7 @@ function MCPTab( { data } ) {
 							<strong>
 								{ __(
 									'These actions need your approval before they run. Requests from an AI app appear in Approvals:',
-									'agent-builder'
+									'siteloom'
 								) }
 							</strong>
 						</p>
@@ -2504,7 +2504,7 @@ function MCPTab( { data } ) {
 						{ data.approvals_url && (
 							<p>
 								<a href={ data.approvals_url }>
-									{ __( 'Open Approvals', 'agent-builder' ) }
+									{ __( 'Open Approvals', 'siteloom' ) }
 								</a>
 							</p>
 						) }
@@ -2556,7 +2556,7 @@ function ClassicHtmlTab( { tab, title } ) {
 					err.message ||
 						__(
 							'Could not load this settings panel.',
-							'agent-builder'
+							'siteloom'
 						)
 				);
 			} );
@@ -2593,7 +2593,7 @@ function ClassicHtmlTab( { tab, title } ) {
 			{ loading && (
 				<p>
 					<Spinner />{ ' ' }
-					{ __( 'Loading…', 'agent-builder' ) }
+					{ __( 'Loading…', 'siteloom' ) }
 				</p>
 			) }
 			{ error && (
@@ -2708,7 +2708,7 @@ function SettingsApp() {
 					window.alert(
 						__(
 							'Settings saved with warnings:',
-							'agent-builder'
+							'siteloom'
 						) +
 							'\n\n' +
 							warnings.join( '\n' )
@@ -2740,7 +2740,7 @@ function SettingsApp() {
 				setSaving( false );
 				setError(
 					err.message ||
-						__( 'Could not save settings.', 'agent-builder' )
+						__( 'Could not save settings.', 'siteloom' )
 				);
 			} );
 	};
@@ -2750,7 +2750,7 @@ function SettingsApp() {
 			<div className="wrap">
 				<p>
 					<Spinner />{ ' ' }
-					{ __( 'Loading settings…', 'agent-builder' ) }
+					{ __( 'Loading settings…', 'siteloom' ) }
 				</p>
 			</div>
 		);
@@ -2761,7 +2761,7 @@ function SettingsApp() {
 			<div className="wrap">
 				<Notice status="error" isDismissible={ false }>
 					{ boot.error ||
-						__( 'Settings unavailable.', 'agent-builder' ) }
+						__( 'Settings unavailable.', 'siteloom' ) }
 				</Notice>
 			</div>
 		);
@@ -2842,7 +2842,7 @@ function SettingsApp() {
 						title={ tab }
 						message={ __(
 							'This tab is available via the classic view or an add-on.',
-							'agent-builder'
+							'siteloom'
 						) }
 					/>
 				);
@@ -2861,7 +2861,7 @@ function SettingsApp() {
 
 	return (
 		<div className="wrap agentic-admin">
-			<AdminPage title={ __( 'Settings', 'agent-builder' ) }>
+			<AdminPage title={ __( 'Settings', 'siteloom' ) }>
 				<div className="agentic-settings-app">
 					<SettingsNav
 						bootstrap={ boot.bootstrap }

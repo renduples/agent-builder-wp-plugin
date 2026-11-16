@@ -4,7 +4,7 @@
  *
  * @package    Agent_Builder
  * @subpackage Includes
- * @author     Agent Builder Team <support@agentic-plugin.com>
+ * @author     Siteloom Team <support@agentic-plugin.com>
  * @license    GPL-2.0-or-later https://www.gnu.org/licenses/gpl-2.0.html
  * @link       https://agentic-plugin.com
  * @since      0.1.0
@@ -645,7 +645,7 @@ class REST_API {
 				echo 'data: ' . wp_json_encode(
 					array(
 						'type'    => 'error',
-						'message' => __( 'Something went wrong.', 'agent-builder' ),
+						'message' => __( 'Something went wrong.', 'siteloom' ),
 					)
 				) . "\n\n";
 				flush();
@@ -654,7 +654,7 @@ class REST_API {
 			return new \WP_REST_Response(
 				array(
 					'error'    => true,
-					'response' => __( 'Something went wrong. The issue has been reported to your site administrator.', 'agent-builder' ),
+					'response' => __( 'Something went wrong. The issue has been reported to your site administrator.', 'siteloom' ),
 				),
 				500
 			);
@@ -682,7 +682,7 @@ class REST_API {
 			// User-facing errors (quota limits, free tier) are shown as-is.
 			// Technical errors are replaced with a safe generic message.
 			if ( empty( $response['user_facing'] ) ) {
-				$response['response'] = __( 'Something went wrong. The issue has been reported to your site administrator.', 'agent-builder' );
+				$response['response'] = __( 'Something went wrong. The issue has been reported to your site administrator.', 'siteloom' );
 			} else {
 				// Notify admin that a user hit their quota (throttled to once per day).
 				self::maybe_notify_admin_quota_reached( $user_id );
@@ -1162,14 +1162,14 @@ class REST_API {
 		$ok_message = 'reject' === $action
 			? sprintf(
 				/* translators: %s: action name */
-				__( 'Rejected — “%s” will not run.', 'agent-builder' ),
+				__( 'Rejected — “%s” will not run.', 'siteloom' ),
 				$action_label
 			)
 			: sprintf(
 				/* translators: 1: action name, 2: agent name */
-				__( 'Approved “%1$s” for %2$s.', 'agent-builder' ),
+				__( 'Approved “%1$s” for %2$s.', 'siteloom' ),
 				$action_label,
-				$agent_label ? $agent_label : __( 'agent', 'agent-builder' )
+				$agent_label ? $agent_label : __( 'agent', 'siteloom' )
 			);
 
 		return $this->api_success(
@@ -1405,7 +1405,7 @@ class REST_API {
 				'ran'     => true,
 				'success' => false,
 				/* translators: %s: tool name */
-				'message' => sprintf( __( '“%s” failed while running.', 'agent-builder' ), $label ),
+				'message' => sprintf( __( '“%s” failed while running.', 'siteloom' ), $label ),
 				'detail'  => $e->getMessage(),
 			);
 		}
@@ -1428,7 +1428,7 @@ class REST_API {
 			} elseif ( isset( $result['post_id'] ) ) {
 				$detail = sprintf(
 					/* translators: %d: post ID */
-					__( 'Post ID %d', 'agent-builder' ),
+					__( 'Post ID %d', 'siteloom' ),
 					(int) $result['post_id']
 				);
 			}
@@ -1451,12 +1451,12 @@ class REST_API {
 			'message' => $success
 				? sprintf(
 					/* translators: %s: tool name */
-					__( '“%s” completed successfully.', 'agent-builder' ),
+					__( '“%s” completed successfully.', 'siteloom' ),
 					$label
 				)
 				: sprintf(
 					/* translators: %s: tool name */
-					__( '“%s” ran but reported a problem.', 'agent-builder' ),
+					__( '“%s” ran but reported a problem.', 'siteloom' ),
 					$label
 				),
 			'detail'  => $detail,
@@ -1538,10 +1538,10 @@ class REST_API {
 		$raw_path = $params['path'] ?? '';
 
 		if ( ! is_string( $raw_path ) || '' === trim( $raw_path ) ) {
-			return $this->refuse_code_change( $approval, $raw_path, 'missing_path', __( 'Could not write file — no path was given.', 'agent-builder' ) );
+			return $this->refuse_code_change( $approval, $raw_path, 'missing_path', __( 'Could not write file — no path was given.', 'siteloom' ) );
 		}
 
-		$denied = __( 'Could not write file — path is not allowed.', 'agent-builder' );
+		$denied = __( 'Could not write file — path is not allowed.', 'siteloom' );
 
 		// Reject traversal and Windows/NTFS path tricks outright — never strip.
 		if ( str_contains( $raw_path, "\0" ) || str_contains( $raw_path, '\\' ) || str_contains( $raw_path, '::' ) ) {
@@ -1560,7 +1560,7 @@ class REST_API {
 			return $this->refuse_code_change( $approval, $raw_path, 'outside_uploads', $denied );
 		}
 
-		$bad_type = __( 'Could not write file — this file type is not allowed.', 'agent-builder' );
+		$bad_type = __( 'Could not write file — this file type is not allowed.', 'siteloom' );
 
 		if ( ! $this->is_inert_write_target( $target_subpath ) ) {
 			return $this->refuse_code_change( $approval, $raw_path, 'extension_not_allowed', $bad_type );
@@ -1573,7 +1573,7 @@ class REST_API {
 		$full_path    = $real_uploads ? realpath( trailingslashit( $real_uploads ) . $rest ) : false;
 
 		if ( ! $real_uploads || ! $full_path ) {
-			return $this->refuse_code_change( $approval, $raw_path, 'unresolvable_path', __( 'Could not write file — invalid path.', 'agent-builder' ) );
+			return $this->refuse_code_change( $approval, $raw_path, 'unresolvable_path', __( 'Could not write file — invalid path.', 'siteloom' ) );
 		}
 
 		// Post-realpath containment: a symlink inside uploads cannot escape it.
@@ -1584,7 +1584,7 @@ class REST_API {
 		// Only overwrite an existing regular file — never a directory, and
 		// never a device/fifo/special file.
 		if ( ! is_file( $full_path ) ) {
-			return $this->refuse_code_change( $approval, $raw_path, 'not_a_regular_file', __( 'Could not write file — invalid path.', 'agent-builder' ) );
+			return $this->refuse_code_change( $approval, $raw_path, 'not_a_regular_file', __( 'Could not write file — invalid path.', 'siteloom' ) );
 		}
 
 		// The resolved target must be inert too, not just the requested name.
@@ -1598,7 +1598,7 @@ class REST_API {
 			return array(
 				'ran'     => false,
 				'success' => false,
-				'message' => __( 'Could not write file — no content was given.', 'agent-builder' ),
+				'message' => __( 'Could not write file — no content was given.', 'siteloom' ),
 			);
 		}
 
@@ -1606,7 +1606,7 @@ class REST_API {
 			return array(
 				'ran'     => false,
 				'success' => false,
-				'message' => __( 'File was not writable.', 'agent-builder' ),
+				'message' => __( 'File was not writable.', 'siteloom' ),
 			);
 		}
 
@@ -1616,7 +1616,7 @@ class REST_API {
 			return array(
 				'ran'     => true,
 				'success' => false,
-				'message' => __( 'File write failed.', 'agent-builder' ),
+				'message' => __( 'File write failed.', 'siteloom' ),
 				'detail'  => $target_subpath,
 			);
 		}
@@ -1624,7 +1624,7 @@ class REST_API {
 		return array(
 			'ran'     => true,
 			'success' => true,
-			'message' => __( 'File updated successfully.', 'agent-builder' ),
+			'message' => __( 'File updated successfully.', 'siteloom' ),
 			'detail'  => $target_subpath,
 		);
 	}
@@ -1969,7 +1969,7 @@ class REST_API {
 			: 'An anonymous visitor';
 		$settings_url = admin_url( 'admin.php?page=agentic-settings' );
 
-		$subject = sprintf( '[%s] Agent Builder — AI Rate Limit Reached', $site );
+		$subject = sprintf( '[%s] Siteloom — AI Rate Limit Reached', $site );
 
 		$body  = '<p style="margin:0 0 16px;">A user on <strong>' . esc_html( $site ) . '</strong> has hit a rate limit with your configured AI provider.</p>';
 		$body .= '<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 16px;">';
@@ -1977,7 +1977,7 @@ class REST_API {
 		$body .= '<tr><td style="padding:4px 12px 4px 0;font-weight:600;color:#1d2327;">Date</td><td style="padding:4px 0;">' . esc_html( wp_date( 'F j, Y' ) ) . '</td></tr>';
 		$body .= '</table>';
 		$body .= '<p style="margin:0 0 8px;">To keep the experience seamless, consider switching AI providers or reviewing your current provider\'s plan in Settings.</p>';
-		$body .= '<p style="margin:0;font-size:12px;color:#787c82;">This notification is sent at most once per day. Manage your AI provider in <a href="' . esc_url( $settings_url ) . '" style="color:#787c82;">Agent Builder → Settings</a>.</p>';
+		$body .= '<p style="margin:0;font-size:12px;color:#787c82;">This notification is sent at most once per day. Manage your AI provider in <a href="' . esc_url( $settings_url ) . '" style="color:#787c82;">Siteloom → Settings</a>.</p>';
 
 		Email_Helper::send(
 			$admin_email,
@@ -2626,7 +2626,7 @@ class REST_API {
 
 		if ( empty( $api_key ) ) {
 			wp_send_json_error(
-				array( 'error' => 'TTS requires connecting an Agentic AI account — go to Agent Builder → Settings → Providers and connect Agentic AI.' ),
+				array( 'error' => 'TTS requires connecting an Agentic AI account — go to Siteloom → Settings → Providers and connect Agentic AI.' ),
 				503
 			);
 			return;
@@ -2666,7 +2666,7 @@ class REST_API {
 			$raw  = isset( $data['detail'] ) && is_scalar( $data['detail'] ) ? sanitize_text_field( (string) $data['detail'] ) : 'TTS service error (HTTP ' . $code . ')';
 			if ( 429 === (int) $code || 402 === (int) $code ) {
 				// Pass through the server's error message; fall back to a generic one.
-				$msg = ! empty( $raw ) ? $raw : __( 'Text-to-speech rate limit reached. Please try again later.', 'agent-builder' );
+				$msg = ! empty( $raw ) ? $raw : __( 'Text-to-speech rate limit reached. Please try again later.', 'siteloom' );
 			} else {
 				$msg = $raw;
 			}
@@ -2910,7 +2910,7 @@ class REST_API {
 			return new \WP_REST_Response(
 				array(
 					'success' => false,
-					'error'   => __( 'Not found.', 'agent-builder' ),
+					'error'   => __( 'Not found.', 'siteloom' ),
 				),
 				404
 			);

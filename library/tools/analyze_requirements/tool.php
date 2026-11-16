@@ -321,7 +321,7 @@ class Analyze_Requirements extends Tool_Base {
 		$desc_lower = strtolower( $description );
 
 		// Platform knowledge is useful for agents that interact with users about the platform,
-		// guide them, or need awareness of Agent Builder features and documentation.
+		// guide them, or need awareness of Siteloom features and documentation.
 		$platform_triggers = array(
 			'guide',
 			'help',
@@ -336,6 +336,7 @@ class Analyze_Requirements extends Tool_Base {
 			'explain',
 			'documentation',
 			'agent builder',
+			'siteloom',
 			'platform',
 			'feature',
 			'deploy',

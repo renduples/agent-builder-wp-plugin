@@ -138,7 +138,7 @@ WEBCONFIG;
 	 * put_guarded_contents()).
 	 */
 	private const PRIVATE_HTACCESS = <<<'HTACCESS'
-# Agent Builder private storage — never served over the web.
+# Siteloom private storage — never served over the web.
 Options -Indexes
 <IfModule mod_authz_core.c>
 	Require all denied

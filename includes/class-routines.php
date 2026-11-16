@@ -112,14 +112,14 @@ class Routines {
 		if ( null === $row ) {
 			return array(
 				'ok'    => false,
-				'error' => __( 'Routine not found.', 'agent-builder' ),
+				'error' => __( 'Routine not found.', 'siteloom' ),
 			);
 		}
 
 		if ( ! self::is_routine( $row ) ) {
 			return array(
 				'ok'    => false,
-				'error' => __( 'Not a routine.', 'agent-builder' ),
+				'error' => __( 'Not a routine.', 'siteloom' ),
 			);
 		}
 
@@ -140,7 +140,7 @@ class Routines {
 					self::restore_paused( $id );
 					return array(
 						'ok'    => false,
-						'error' => __( 'Unknown schedule.', 'agent-builder' ),
+						'error' => __( 'Unknown schedule.', 'siteloom' ),
 					);
 				}
 
@@ -152,7 +152,7 @@ class Routines {
 					self::restore_paused( $id );
 					return array(
 						'ok'    => false,
-						'error' => __( 'Failed to reschedule routine.', 'agent-builder' ),
+						'error' => __( 'Failed to reschedule routine.', 'siteloom' ),
 					);
 				}
 			}
@@ -378,7 +378,7 @@ class Routines {
 		} else {
 			return array(
 				'ok'    => false,
-				'error' => __( 'Invalid routine kind.', 'agent-builder' ),
+				'error' => __( 'Invalid routine kind.', 'siteloom' ),
 			);
 		}
 
@@ -396,7 +396,7 @@ class Routines {
 		if ( null === $deployment_id ) {
 			return array(
 				'ok'    => false,
-				'error' => __( 'Routine was saved but its deployment row could not be resolved.', 'agent-builder' ),
+				'error' => __( 'Routine was saved but its deployment row could not be resolved.', 'siteloom' ),
 			);
 		}
 
@@ -460,14 +460,14 @@ class Routines {
 		if ( null === $row ) {
 			return array(
 				'ok'    => false,
-				'error' => __( 'Routine not found.', 'agent-builder' ),
+				'error' => __( 'Routine not found.', 'siteloom' ),
 			);
 		}
 
 		if ( ! self::is_routine( $row ) ) {
 			return array(
 				'ok'    => false,
-				'error' => __( 'Not a routine.', 'agent-builder' ),
+				'error' => __( 'Not a routine.', 'siteloom' ),
 			);
 		}
 
@@ -479,7 +479,7 @@ class Routines {
 		if ( ! $agent ) {
 			return array(
 				'ok'    => false,
-				'error' => __( 'Agent not found or not active.', 'agent-builder' ),
+				'error' => __( 'Agent not found or not active.', 'siteloom' ),
 			);
 		}
 
@@ -491,7 +491,7 @@ class Routines {
 			if ( null === $user_task ) {
 				return array(
 					'ok'    => false,
-					'error' => __( 'Routine task not found.', 'agent-builder' ),
+					'error' => __( 'Routine task not found.', 'siteloom' ),
 				);
 			}
 
@@ -518,7 +518,7 @@ class Routines {
 		if ( '' === $run_id || $run_id === $before_run_id ) {
 			return array(
 				'ok'    => false,
-				'error' => __( 'The test run did not produce a run.', 'agent-builder' ),
+				'error' => __( 'The test run did not produce a run.', 'siteloom' ),
 			);
 		}
 

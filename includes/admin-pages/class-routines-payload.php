@@ -37,9 +37,9 @@ class Routines_Payload {
 
 		return array(
 			'page'        => 'routines',
-			'title'       => __( 'Routines', 'agent-builder' ),
-			'panel_title' => __( 'Routines', 'agent-builder' ),
-			'description' => __( 'Scheduled tasks and event listeners that run your agents automatically. Pause, resume, test, or delete them here.', 'agent-builder' ),
+			'title'       => __( 'Routines', 'siteloom' ),
+			'panel_title' => __( 'Routines', 'siteloom' ),
+			'description' => __( 'Scheduled tasks and event listeners that run your agents automatically. Pause, resume, test, or delete them here.', 'siteloom' ),
 			'docs_url'    => 'https://agentic-plugin.com/documentation/routines/',
 			'agents'      => $agents,
 			'cron_stale'  => \Agentic\Site_Health::cron_is_stale(),

@@ -1,19 +1,19 @@
-# Agent Builder
+# Siteloom
 
 > ### ⬇️ Install in WordPress (no coding needed)
 > 1. **[Download agent-builder.zip](https://agentic-plugin.com/downloads/agent-builder.zip)**. It is always the latest version.
 > 2. In your WordPress admin, go to **Plugins → Add Plugin → Upload Plugin**, choose the file, and click **Install Now**.
-> 3. Click **Activate**. Agent Builder opens a short setup wizard to connect your AI provider.
+> 3. Click **Activate**. Siteloom opens a short setup wizard to connect your AI provider.
 >
 > Updates then arrive in your normal WordPress update screen.
 >
-> This download is the **self-hosted build** of Agent Builder: the same plugin as the code in this repository, packaged with its libraries and an updater that checks agentic-plugin.com. When Agent Builder is listed on WordPress.org you will also be able to install it from **Plugins → Add Plugin** by searching for "Agent Builder".
+> This download is the **self-hosted build** of Siteloom: the same plugin as the code in this repository, packaged with its libraries and an updater that checks agentic-plugin.com. When Siteloom is listed on WordPress.org you will also be able to install it from **Plugins → Add Plugin** by searching for "Siteloom".
 >
 > ⚠️ Don't use GitHub's green **Code → Download ZIP** button. That is the source code, not an installable plugin: it is missing required libraries and unzips under the wrong folder name.
 
 **Version:** 4.4.0
 
-Free [Agent Builder](https://agentic-plugin.com/) WordPress plugin.
+Free [Siteloom](https://agentic-plugin.com/) WordPress plugin.
 
 - **Plugin slug:** `agent-builder`
 - **License:** GPL-2.0-or-later
@@ -60,7 +60,7 @@ More at [Community Agents](https://agentic-plugin.com/community-agents/).
 2. Optional document tools: `composer install --no-dev`
 3. Optional rebuild admin React: `npm ci && npm run build`
    Pre-built assets already ship in `build/`.
-4. Activate **Agent Builder** in WordPress.
+4. Activate **Siteloom** in WordPress.
 
 ## Project structure
 

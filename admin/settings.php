@@ -4,7 +4,7 @@
  *
  * @package    Agent_Builder
  * @subpackage Admin
- * @author     Agent Builder Team <support@agentic-plugin.com>
+ * @author     Siteloom Team <support@agentic-plugin.com>
  * @license    GPL-2.0-or-later https://www.gnu.org/licenses/gpl-2.0.html
  * @link       https://agentic-plugin.com
  * @since      0.1.0
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // Handle form submission.
 if ( ! current_user_can( 'agent_builder_manage_settings' ) && ! current_user_can( 'manage_options' ) ) {
-	wp_die( esc_html__( 'You do not have permission to access this page.', 'agent-builder' ) );
+	wp_die( esc_html__( 'You do not have permission to access this page.', 'siteloom' ) );
 }
 
 // Account tab removed — see Admin_Menu_Handler::maybe_redirect_removed_account_tab().
@@ -166,7 +166,7 @@ if ( isset( $_POST['agentic_save_settings'] ) && check_admin_referer( 'agentic_s
 		if ( isset( $agentic_reset_defaults[ $agentic_reset_section ] ) ) {
 			$agentic_reset_defaults[ $agentic_reset_section ]['handler']();
 			\Agentic\Security_Log::log_system( 'settings_changed', 'reset_defaults', array( 'section' => $agentic_reset_section ) );
-			echo '<div class="notice notice-success"><p>' . esc_html__( 'Settings reset to defaults.', 'agent-builder' ) . '</p></div>';
+			echo '<div class="notice notice-success"><p>' . esc_html__( 'Settings reset to defaults.', 'siteloom' ) . '</p></div>';
 		}
 	}
 
@@ -534,9 +534,9 @@ if ( isset( $_POST['agentic_save_settings'] ) && check_admin_referer( 'agentic_s
 			$agentic_global_prov_reg      = \Agentic\Provider_Registry::get( $agentic_global_provider );
 			$agentic_global_provider_name = $agentic_global_prov_reg['name'] ?? ucfirst( $agentic_global_provider );
 			/* translators: %s is the name of the LLM provider set as global default. */
-			echo '<div class="notice notice-success"><p>' . sprintf( esc_html__( 'Settings saved with %s as Global provider.', 'agent-builder' ), '<strong>' . esc_html( $agentic_global_provider_name ) . '</strong>' ) . '</p></div>';
+			echo '<div class="notice notice-success"><p>' . sprintf( esc_html__( 'Settings saved with %s as Global provider.', 'siteloom' ), '<strong>' . esc_html( $agentic_global_provider_name ) . '</strong>' ) . '</p></div>';
 		} else {
-			echo '<div class="notice notice-success"><p>' . esc_html__( 'Settings saved.', 'agent-builder' ) . '</p></div>';
+			echo '<div class="notice notice-success"><p>' . esc_html__( 'Settings saved.', 'siteloom' ) . '</p></div>';
 		}
 	}
 }
@@ -578,7 +578,7 @@ $agentic_rate_limit_auth = get_option( 'agent_builder_rate_limit_authenticated',
 $agentic_rate_limit_anon = get_option( 'agent_builder_rate_limit_anonymous', 10 );
 ?>
 <div class="wrap agentic-admin agentic-settings-wrap">
-	<h1><?php esc_html_e( 'Settings', 'agent-builder' ); ?></h1>
+	<h1><?php esc_html_e( 'Settings', 'siteloom' ); ?></h1>
 
 	<?php
 	$agentic_active_tab = isset( $_GET['tab'] ) ? sanitize_text_field( wp_unslash( $_GET['tab'] ) ) : 'interface';
@@ -599,13 +599,13 @@ $agentic_rate_limit_anon = get_option( 'agent_builder_rate_limit_anonymous', 10 
 		exit;
 	}
 	$agentic_tabs = array(
-		'interface' => __( 'Interface', 'agent-builder' ),
-		'agents'    => __( 'Agents', 'agent-builder' ),
-		'providers' => __( 'Providers', 'agent-builder' ),
-		'users'     => __( 'Users', 'agent-builder' ),
-		'security'  => __( 'Security', 'agent-builder' ),
-		'apis'      => __( 'APIs', 'agent-builder' ),
-		'endpoints' => __( 'Endpoints', 'agent-builder' ),
+		'interface' => __( 'Interface', 'siteloom' ),
+		'agents'    => __( 'Agents', 'siteloom' ),
+		'providers' => __( 'Providers', 'siteloom' ),
+		'users'     => __( 'Users', 'siteloom' ),
+		'security'  => __( 'Security', 'siteloom' ),
+		'apis'      => __( 'APIs', 'siteloom' ),
+		'endpoints' => __( 'Endpoints', 'siteloom' ),
 	);
 
 	// Allow add-ons (for example Pro) to add settings tabs without editing free core files.
@@ -622,12 +622,12 @@ $agentic_rate_limit_anon = get_option( 'agent_builder_rate_limit_anonymous', 10 
 	// tab) falls back to the Basic cluster so it can never disappear from the UI.
 	$agentic_tab_groups = array(
 		'basic'    => array(
-			'label' => __( 'Basic', 'agent-builder' ),
+			'label' => __( 'Basic', 'siteloom' ),
 			// Users sits immediately above Security.
 			'slugs' => array( 'interface', 'agents', 'providers', 'license', 'users', 'security', 'health' ),
 		),
 		'advanced' => array(
-			'label' => __( 'Advanced', 'agent-builder' ),
+			'label' => __( 'Advanced', 'siteloom' ),
 			'slugs' => array( 'apis', 'endpoints' ),
 		),
 	);
@@ -655,9 +655,9 @@ $agentic_rate_limit_anon = get_option( 'agent_builder_rate_limit_anonymous', 10 
 	<div class="agentic-settings-shell">
 		<aside class="agentic-settings-sidebar">
 			<div class="agentic-settings-search">
-				<input type="search" id="agentic-settings-filter" autocomplete="off" placeholder="<?php esc_attr_e( 'Search settings…', 'agent-builder' ); ?>" aria-label="<?php esc_attr_e( 'Search settings', 'agent-builder' ); ?>" />
+				<input type="search" id="agentic-settings-filter" autocomplete="off" placeholder="<?php esc_attr_e( 'Search settings…', 'siteloom' ); ?>" aria-label="<?php esc_attr_e( 'Search settings', 'siteloom' ); ?>" />
 			</div>
-			<nav class="agentic-settings-nav" aria-label="<?php esc_attr_e( 'Settings sections', 'agent-builder' ); ?>">
+			<nav class="agentic-settings-nav" aria-label="<?php esc_attr_e( 'Settings sections', 'siteloom' ); ?>">
 				<?php foreach ( $agentic_tab_groups as $agentic_group_key => $agentic_group ) : ?>
 					<?php
 					$agentic_group_tabs = $agentic_grouped[ $agentic_group_key ];
@@ -676,7 +676,7 @@ $agentic_rate_limit_anon = get_option( 'agent_builder_rate_limit_anonymous', 10 
 						</ul>
 					</div>
 				<?php endforeach; ?>
-				<p class="agentic-settings-nav-empty" hidden><?php esc_html_e( 'No settings match your search.', 'agent-builder' ); ?></p>
+				<p class="agentic-settings-nav-empty" hidden><?php esc_html_e( 'No settings match your search.', 'siteloom' ); ?></p>
 			</nav>
 		</aside>
 
@@ -729,7 +729,7 @@ $agentic_rate_limit_anon = get_option( 'agent_builder_rate_limit_anonymous', 10 
 
 		<div class="agentic-settings-panel__footer">
 			<button type="submit" name="agentic_save_settings" class="button button-primary agentic-settings-save" value="1">
-				<?php esc_html_e( 'Save changes', 'agent-builder' ); ?>
+				<?php esc_html_e( 'Save changes', 'siteloom' ); ?>
 			</button>
 		</div>
 	</form>

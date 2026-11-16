@@ -1,6 +1,6 @@
 <?php
 /**
- * Uninstall handler for Agent Builder.
+ * Uninstall handler for Siteloom.
  *
  * Cleans up all plugin data (options, tables, cron, user meta, transients,
  * and the chat page) when the plugin is deleted via WordPress admin.

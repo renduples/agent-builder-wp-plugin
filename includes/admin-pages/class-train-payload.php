@@ -32,8 +32,8 @@ class Train_Payload {
 		return array(
 			'page'        => 'train-data',
 			'tab'         => $tab,
-			'title'       => __( 'Knowledge', 'agent-builder' ),
-			'description' => __( 'Wiki concepts (OKF) and optional Pro vector store.', 'agent-builder' ),
+			'title'       => __( 'Knowledge', 'siteloom' ),
+			'description' => __( 'Wiki concepts (OKF) and optional Pro vector store.', 'siteloom' ),
 			'is_pro'      => false,
 			'concepts'    => $concepts,
 			'tabs'        => array_values(
@@ -41,12 +41,12 @@ class Train_Payload {
 					array(
 						array(
 							'id'    => 'wiki',
-							'label' => __( 'Knowledge Wiki', 'agent-builder' ),
+							'label' => __( 'Knowledge Wiki', 'siteloom' ),
 							'url'   => admin_url( 'admin.php?page=agentic-train-data&tab=wiki' ),
 						),
 						$is_pro ? array(
 							'id'    => 'vector',
-							'label' => __( 'Vector Store', 'agent-builder' ),
+							'label' => __( 'Vector Store', 'siteloom' ),
 							'url'   => admin_url( 'admin.php?page=agentic-train-data&tab=vector' ),
 						) : null,
 					)

@@ -10,7 +10,7 @@
  *
  * @package    Agent_Builder
  * @subpackage Admin
- * @author     Agent Builder Team <support@agentic-plugin.com>
+ * @author     Siteloom Team <support@agentic-plugin.com>
  * @license    GPL-2.0-or-later https://www.gnu.org/licenses/gpl-2.0.html
  * @link       https://agentic-plugin.com
  * @since      2.3.0
@@ -122,7 +122,7 @@ if (
 		)
 	);
 
-	$agentic_notice = __( 'Editor sidebar settings saved.', 'agent-builder' );
+	$agentic_notice = __( 'Editor sidebar settings saved.', 'siteloom' );
 }
 
 // Load agents and registry.
@@ -207,9 +207,9 @@ unset( $agentic_all_post_types['attachment'] );
 
 <div class="agentic-tab-section">
 
-	<h2><?php esc_html_e( 'Sidebar Agent', 'agent-builder' ); ?></h2>
+	<h2><?php esc_html_e( 'Sidebar Agent', 'siteloom' ); ?></h2>
 	<p>
-		<?php esc_html_e( 'Add an AI agent panel inside the block editor. When enabled, a sidebar panel appears while your team edits posts or pages — with full awareness of the current draft (title, content, post type, and status).', 'agent-builder' ); ?>
+		<?php esc_html_e( 'Add an AI agent panel inside the block editor. When enabled, a sidebar panel appears while your team edits posts or pages — with full awareness of the current draft (title, content, post type, and status).', 'siteloom' ); ?>
 	</p>
 
 	<form method="post" action="">
@@ -218,29 +218,29 @@ unset( $agentic_all_post_types['attachment'] );
 		<table class="form-table" role="presentation">
 
 			<tr>
-				<th scope="row"><?php esc_html_e( 'Enable Sidebar Agent', 'agent-builder' ); ?></th>
+				<th scope="row"><?php esc_html_e( 'Enable Sidebar Agent', 'siteloom' ); ?></th>
 				<td>
 					<label>
 						<input type="checkbox" name="agentic_sidebar_enabled" value="1"
 							<?php checked( '1', $agentic_sidebar_settings['enabled'] ); ?>>
-						<?php esc_html_e( 'Show an AI agent panel in the Gutenberg block editor', 'agent-builder' ); ?>
+						<?php esc_html_e( 'Show an AI agent panel in the Gutenberg block editor', 'siteloom' ); ?>
 					</label>
 				</td>
 			</tr>
 
 			<tr>
-				<th scope="row"><?php esc_html_e( 'Agents', 'agent-builder' ); ?></th>
+				<th scope="row"><?php esc_html_e( 'Agents', 'siteloom' ); ?></th>
 				<td>
 					<?php if ( empty( $agentic_all_agents ) ) : ?>
 						<p class="description agentic-status-error">
-							<?php esc_html_e( 'No active agents found. Activate at least one agent first.', 'agent-builder' ); ?>
+							<?php esc_html_e( 'No active agents found. Activate at least one agent first.', 'siteloom' ); ?>
 						</p>
 					<?php else : ?>
 						<table class="agentic-role-table">
 							<thead>
 								<tr>
-									<th class="agentic-th-sm-dim-l"><?php esc_html_e( 'Show in sidebar', 'agent-builder' ); ?></th>
-									<th class="agentic-th-sm-dim"><?php esc_html_e( 'Pre-selected', 'agent-builder' ); ?></th>
+									<th class="agentic-th-sm-dim-l"><?php esc_html_e( 'Show in sidebar', 'siteloom' ); ?></th>
+									<th class="agentic-th-sm-dim"><?php esc_html_e( 'Pre-selected', 'siteloom' ); ?></th>
 								</tr>
 							</thead>
 							<tbody>
@@ -260,7 +260,7 @@ unset( $agentic_all_post_types['attachment'] );
 										<input type="radio"
 											name="agentic_sidebar_default_agent"
 											value="<?php echo esc_attr( $agentic_slug ); ?>"
-											aria-label="<?php echo esc_attr( sprintf( /* translators: %s: agent name */ __( 'Pre-select %s', 'agent-builder' ), $agentic_agent->get_name() ) ); ?>"
+											aria-label="<?php echo esc_attr( sprintf( /* translators: %s: agent name */ __( 'Pre-select %s', 'siteloom' ), $agentic_agent->get_name() ) ); ?>"
 											<?php checked( $agentic_slug, $agentic_sidebar_settings['agent_slug'] ); ?>>
 									</td>
 								</tr>
@@ -268,14 +268,14 @@ unset( $agentic_all_post_types['attachment'] );
 							</tbody>
 						</table>
 						<p class="description agentic-mt-6">
-							<?php esc_html_e( 'Tick the agents that appear in the editor sidebar. The pre-selected agent opens by default; switching is available in-sidebar when more than one is ticked.', 'agent-builder' ); ?>
+							<?php esc_html_e( 'Tick the agents that appear in the editor sidebar. The pre-selected agent opens by default; switching is available in-sidebar when more than one is ticked.', 'siteloom' ); ?>
 						</p>
 					<?php endif; ?>
 				</td>
 			</tr>
 
 			<tr>
-				<th scope="row"><?php esc_html_e( 'Post Types', 'agent-builder' ); ?></th>
+				<th scope="row"><?php esc_html_e( 'Post Types', 'siteloom' ); ?></th>
 				<td>
 					<?php foreach ( $agentic_all_post_types as $agentic_pt_slug => $agentic_pt ) : ?>
 						<label class="agentic-field-label">
@@ -288,61 +288,61 @@ unset( $agentic_all_post_types['attachment'] );
 						</label>
 					<?php endforeach; ?>
 					<p class="description">
-						<?php esc_html_e( 'Show the sidebar panel when editing these post types. Leave all unchecked to hide the sidebar everywhere.', 'agent-builder' ); ?>
+						<?php esc_html_e( 'Show the sidebar panel when editing these post types. Leave all unchecked to hide the sidebar everywhere.', 'siteloom' ); ?>
 					</p>
 				</td>
 			</tr>
 
 			<tr>
 				<th scope="row">
-					<label for="agentic_sidebar_agent_mode"><?php esc_html_e( 'Confirmation Mode', 'agent-builder' ); ?></label>
+					<label for="agentic_sidebar_agent_mode"><?php esc_html_e( 'Confirmation Mode', 'siteloom' ); ?></label>
 				</th>
 				<td>
 					<select id="agentic_sidebar_agent_mode" name="agentic_sidebar_agent_mode">
 						<option value="autonomous" <?php selected( 'autonomous', $agentic_sidebar_settings['agent_mode'] ); ?>>
-							<?php esc_html_e( 'Autonomous — execute actions immediately (recommended)', 'agent-builder' ); ?>
+							<?php esc_html_e( 'Autonomous — execute actions immediately (recommended)', 'siteloom' ); ?>
 						</option>
 						<option value="supervised" <?php selected( 'supervised', $agentic_sidebar_settings['agent_mode'] ); ?>>
-							<?php esc_html_e( 'Supervised — medium-risk actions create a proposal before executing', 'agent-builder' ); ?>
+							<?php esc_html_e( 'Supervised — medium-risk actions create a proposal before executing', 'siteloom' ); ?>
 						</option>
 					</select>
 					<p class="description">
-						<?php esc_html_e( 'Use Autonomous mode unless you need strict oversight.', 'agent-builder' ); ?>
+						<?php esc_html_e( 'Use Autonomous mode unless you need strict oversight.', 'siteloom' ); ?>
 					</p>
 				</td>
 			</tr>
 
 			<tr>
-				<th scope="row"><?php esc_html_e( 'Context Injection', 'agent-builder' ); ?></th>
+				<th scope="row"><?php esc_html_e( 'Context Injection', 'siteloom' ); ?></th>
 				<td>
 					<label>
 						<input type="checkbox" name="agentic_sidebar_inject_context" value="1"
 							<?php checked( '1', $agentic_sidebar_settings['inject_context'] ); ?>>
-						<?php esc_html_e( 'Automatically share the current draft title and content with the agent on the first message', 'agent-builder' ); ?>
+						<?php esc_html_e( 'Automatically share the current draft title and content with the agent on the first message', 'siteloom' ); ?>
 					</label>
 					<p class="description">
-						<?php esc_html_e( 'The agent will be aware of what you are writing. Content is sent only when you open the chat — nothing is shared automatically.', 'agent-builder' ); ?>
+						<?php esc_html_e( 'The agent will be aware of what you are writing. Content is sent only when you open the chat — nothing is shared automatically.', 'siteloom' ); ?>
 					</p>
 				</td>
 			</tr>
 
 			<tr>
-			<th scope="row"><?php esc_html_e( 'Content Writer Toolbar', 'agent-builder' ); ?></th>
+			<th scope="row"><?php esc_html_e( 'Content Writer Toolbar', 'siteloom' ); ?></th>
 			<td>
 				<label>
 					<input type="checkbox" name="agentic_toolbar_enabled" value="1"
 						<?php checked( '1', $agentic_sidebar_settings['toolbar_enabled'] ); ?>>
-						<?php esc_html_e( 'Enable the inline AI toolbar (Magic Wand)', 'agent-builder' ); ?>
+						<?php esc_html_e( 'Enable the inline AI toolbar (Magic Wand)', 'siteloom' ); ?>
 					</label>
 					<p class="description">
-						<?php esc_html_e( 'When enabled, shows a Magic Wand in the editor Block Toolbar. Click on it to open or close the Sidebar Agent.', 'agent-builder' ); ?>
+						<?php esc_html_e( 'When enabled, shows a Magic Wand in the editor Block Toolbar. Click on it to open or close the Sidebar Agent.', 'siteloom' ); ?>
 					</p>
 				</td>
 			</tr>
 
 		</table>
 
-		<?php submit_button( __( 'Save Settings', 'agent-builder' ), 'primary', 'agentic_save_admin_ui' ); ?>
+		<?php submit_button( __( 'Save Settings', 'siteloom' ), 'primary', 'agentic_save_admin_ui' ); ?>
 
 	</form>
 

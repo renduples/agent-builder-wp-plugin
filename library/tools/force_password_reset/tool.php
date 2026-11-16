@@ -103,14 +103,14 @@ class Force_Password_Reset extends \Agentic\Tool_Base {
 		if ( ! is_wp_error( $key ) ) {
 			$reset_url = network_site_url( "wp-login.php?action=rp&key={$key}&login=" . rawurlencode( $user->user_login ), 'login' );
 
-			$message = sprintf( __( 'A password reset has been requested for the following account:', 'agent-builder' ) ) . "\r\n\r\n";
+			$message = sprintf( __( 'A password reset has been requested for the following account:', 'siteloom' ) ) . "\r\n\r\n";
 			/* translators: %s: site name */
-			$message .= sprintf( __( 'Site: %s', 'agent-builder' ), get_bloginfo( 'name' ) ) . "\r\n";
+			$message .= sprintf( __( 'Site: %s', 'siteloom' ), get_bloginfo( 'name' ) ) . "\r\n";
 			/* translators: %s: username */
-			$message .= sprintf( __( 'Username: %s', 'agent-builder' ), $user->user_login ) . "\r\n\r\n";
-			$message .= __( 'To reset your password, visit the following address:', 'agent-builder' ) . "\r\n\r\n";
+			$message .= sprintf( __( 'Username: %s', 'siteloom' ), $user->user_login ) . "\r\n\r\n";
+			$message .= __( 'To reset your password, visit the following address:', 'siteloom' ) . "\r\n\r\n";
 			$message .= $reset_url . "\r\n\r\n";
-			$message .= __( 'This password reset was initiated by your site administrator for security purposes.', 'agent-builder' ) . "\r\n";
+			$message .= __( 'This password reset was initiated by your site administrator for security purposes.', 'siteloom' ) . "\r\n";
 
 			$subject = sprintf( '[%s] Password Reset (Security)', get_bloginfo( 'name' ) );
 

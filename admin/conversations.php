@@ -22,7 +22,7 @@ if ( isset( $_GET['delete_session'], $_GET['_wpnonce'] )
 ) {
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 	$wpdb->delete( $agentic_conv_table, array( 'session_id' => sanitize_key( wp_unslash( $_GET['delete_session'] ) ) ), array( '%s' ) );
-	$agentic_conv_notice = __( 'Conversation deleted.', 'agent-builder' );
+	$agentic_conv_notice = __( 'Conversation deleted.', 'siteloom' );
 }
 
 // ── Filters ──────────────────────────────────────────────────────────────────
@@ -115,11 +115,11 @@ $agentic_cv_registry  = \Agentic_Agent_Registry::get_instance();
 $agentic_cv_instances = $agentic_cv_registry->get_all_instances();
 ?>
 <p class="agentic-page-desc">
-	<?php esc_html_e( 'Every message exchanged between users and your AI agents, grouped by session so you can read each conversation in full.', 'agent-builder' ); ?>
-	<?php esc_html_e( 'Use this tab to review what was said, spot common questions, and verify agents are responding appropriately.', 'agent-builder' ); ?>
-	<?php esc_html_e( 'Token usage and action history are in the', 'agent-builder' ); ?>
-	<a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-audit-log&tab=audit' ) ); ?>"><?php esc_html_e( 'Audit', 'agent-builder' ); ?></a>
-	<?php esc_html_e( 'tab.', 'agent-builder' ); ?>
+	<?php esc_html_e( 'Every message exchanged between users and your AI agents, grouped by session so you can read each conversation in full.', 'siteloom' ); ?>
+	<?php esc_html_e( 'Use this tab to review what was said, spot common questions, and verify agents are responding appropriately.', 'siteloom' ); ?>
+	<?php esc_html_e( 'Token usage and action history are in the', 'siteloom' ); ?>
+	<a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-audit-log&tab=audit' ) ); ?>"><?php esc_html_e( 'Audit', 'siteloom' ); ?></a>
+	<?php esc_html_e( 'tab.', 'siteloom' ); ?>
 </p>
 
 	<?php if ( $agentic_conv_notice ) : ?>
@@ -159,9 +159,9 @@ $agentic_cv_instances = $agentic_cv_registry->get_all_instances();
 		<input type="hidden" name="period" value="<?php echo esc_attr( $agentic_cv_period ); ?>">
 		<div class="tablenav top">
 			<div class="alignleft actions">
-				<label for="agentic-cv-agent" class="screen-reader-text"><?php esc_html_e( 'Filter by agent', 'agent-builder' ); ?></label>
+				<label for="agentic-cv-agent" class="screen-reader-text"><?php esc_html_e( 'Filter by agent', 'siteloom' ); ?></label>
 				<select name="cv_agent" id="agentic-cv-agent">
-					<option value=""><?php esc_html_e( 'All Agents', 'agent-builder' ); ?></option>
+					<option value=""><?php esc_html_e( 'All Agents', 'siteloom' ); ?></option>
 					<?php foreach ( $agentic_cv_agents as $agentic_cv_ag ) : ?>
 						<?php
 						$agentic_cv_ag_inst  = $agentic_cv_instances[ $agentic_cv_ag ] ?? null;
@@ -171,13 +171,13 @@ $agentic_cv_instances = $agentic_cv_registry->get_all_instances();
 					<?php endforeach; ?>
 				</select>
 
-				<label for="agentic-cv-user" class="screen-reader-text"><?php esc_html_e( 'Filter by user ID', 'agent-builder' ); ?></label>
-				<input type="number" id="agentic-cv-user" name="cv_user" value="<?php echo $agentic_cv_user ? esc_attr( $agentic_cv_user ) : ''; ?>" placeholder="<?php esc_attr_e( 'User ID', 'agent-builder' ); ?>" min="0" class="agentic-input-100">
+				<label for="agentic-cv-user" class="screen-reader-text"><?php esc_html_e( 'Filter by user ID', 'siteloom' ); ?></label>
+				<input type="number" id="agentic-cv-user" name="cv_user" value="<?php echo $agentic_cv_user ? esc_attr( $agentic_cv_user ) : ''; ?>" placeholder="<?php esc_attr_e( 'User ID', 'siteloom' ); ?>" min="0" class="agentic-input-100">
 
-				<label for="agentic-cv-search" class="screen-reader-text"><?php esc_html_e( 'Search messages', 'agent-builder' ); ?></label>
-				<input type="text" id="agentic-cv-search" name="cv_search" value="<?php echo esc_attr( $agentic_cv_search ); ?>" placeholder="<?php esc_attr_e( 'Search messages…', 'agent-builder' ); ?>" class="agentic-input-220">
+				<label for="agentic-cv-search" class="screen-reader-text"><?php esc_html_e( 'Search messages', 'siteloom' ); ?></label>
+				<input type="text" id="agentic-cv-search" name="cv_search" value="<?php echo esc_attr( $agentic_cv_search ); ?>" placeholder="<?php esc_attr_e( 'Search messages…', 'siteloom' ); ?>" class="agentic-input-220">
 
-				<input type="submit" class="button" value="<?php esc_attr_e( 'Filter', 'agent-builder' ); ?>">
+				<input type="submit" class="button" value="<?php esc_attr_e( 'Filter', 'siteloom' ); ?>">
 				<?php if ( $agentic_cv_agent || $agentic_cv_user || $agentic_cv_search ) : ?>
 					<a href="
 					<?php
@@ -192,14 +192,14 @@ $agentic_cv_instances = $agentic_cv_registry->get_all_instances();
 						)
 					);
 					?>
-								" class="button"><?php esc_html_e( 'Clear', 'agent-builder' ); ?></a>
+								" class="button"><?php esc_html_e( 'Clear', 'siteloom' ); ?></a>
 				<?php endif; ?>
 			</div>
 			<div class="tablenav-pages" style="line-height:30px;color:#646970;font-size:13px;">
 				<?php
 				printf(
 					/* translators: %d: session count */
-					esc_html__( '%d conversations', 'agent-builder' ),
+					esc_html__( '%d conversations', 'siteloom' ),
 					absint( $agentic_cv_total )
 				);
 				?>
@@ -210,21 +210,21 @@ $agentic_cv_instances = $agentic_cv_registry->get_all_instances();
 
 	<?php if ( empty( $agentic_cv_sessions ) ) : ?>
 		<div class="agentic-empty-state">
-			<p><?php esc_html_e( 'No conversations found.', 'agent-builder' ); ?></p>
+			<p><?php esc_html_e( 'No conversations found.', 'siteloom' ); ?></p>
 		</div>
 	<?php else : ?>
 	<table class="widefat striped" id="agentic-conv-table">
 			<thead>
 				<tr>
-					<th class="agentic-col-180"><?php esc_html_e( 'Agent', 'agent-builder' ); ?></th>
-					<th class="agentic-col-120"><?php esc_html_e( 'User', 'agent-builder' ); ?></th>
-					<th><?php esc_html_e( 'First Message', 'agent-builder' ); ?></th>
-					<th class="agentic-col-60 agentic-td-center"><?php esc_html_e( 'Msgs', 'agent-builder' ); ?></th>
-					<th class="agentic-col-200"><?php esc_html_e( 'Tools', 'agent-builder' ); ?></th>
-					<th class="agentic-col-60 agentic-td-center"><?php esc_html_e( 'Rating', 'agent-builder' ); ?></th>
-					<th class="agentic-col-130"><?php esc_html_e( 'Started', 'agent-builder' ); ?></th>
-					<th class="agentic-col-130"><?php esc_html_e( 'Last Message', 'agent-builder' ); ?></th>
-					<th class="agentic-col-100"><?php esc_html_e( 'Details', 'agent-builder' ); ?></th>
+					<th class="agentic-col-180"><?php esc_html_e( 'Agent', 'siteloom' ); ?></th>
+					<th class="agentic-col-120"><?php esc_html_e( 'User', 'siteloom' ); ?></th>
+					<th><?php esc_html_e( 'First Message', 'siteloom' ); ?></th>
+					<th class="agentic-col-60 agentic-td-center"><?php esc_html_e( 'Msgs', 'siteloom' ); ?></th>
+					<th class="agentic-col-200"><?php esc_html_e( 'Tools', 'siteloom' ); ?></th>
+					<th class="agentic-col-60 agentic-td-center"><?php esc_html_e( 'Rating', 'siteloom' ); ?></th>
+					<th class="agentic-col-130"><?php esc_html_e( 'Started', 'siteloom' ); ?></th>
+					<th class="agentic-col-130"><?php esc_html_e( 'Last Message', 'siteloom' ); ?></th>
+					<th class="agentic-col-100"><?php esc_html_e( 'Details', 'siteloom' ); ?></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -233,7 +233,7 @@ $agentic_cv_instances = $agentic_cv_registry->get_all_instances();
 					$agentic_cv_s_inst    = $agentic_cv_instances[ $agentic_cv_s['agent_id'] ] ?? null;
 					$agentic_cv_s_label   = $agentic_cv_s_inst ? $agentic_cv_s_inst->get_name() : ucwords( str_replace( '-', ' ', $agentic_cv_s['agent_id'] ) );
 					$agentic_cv_s_user    = $agentic_cv_s['user_id'] ? get_user_by( 'id', $agentic_cv_s['user_id'] ) : null;
-					$agentic_cv_s_name    = $agentic_cv_s_user ? $agentic_cv_s_user->display_name : __( 'Anonymous', 'agent-builder' );
+					$agentic_cv_s_name    = $agentic_cv_s_user ? $agentic_cv_s_user->display_name : __( 'Anonymous', 'siteloom' );
 					$agentic_cv_s_preview = mb_strimwidth( $agentic_cv_s['preview'] ?? '', 0, 120, '...' );
 					// Parse aggregated tools — GROUP_CONCAT produces comma-joined JSON arrays, e.g. '["a","b"],["c"]'.
 					$agentic_cv_s_tools = array();
@@ -274,9 +274,9 @@ $agentic_cv_instances = $agentic_cv_registry->get_all_instances();
 					</td>
 					<td class="agentic-td-center" style="font-size:18px;">
 						<?php if ( '1' === (string) $agentic_cv_s['feedback'] ) : ?>
-							<span title="<?php esc_attr_e( 'Thumbs up', 'agent-builder' ); ?>" style="color:#22863a;">&#128077;</span>
+							<span title="<?php esc_attr_e( 'Thumbs up', 'siteloom' ); ?>" style="color:#22863a;">&#128077;</span>
 						<?php elseif ( '-1' === (string) $agentic_cv_s['feedback'] ) : ?>
-							<span title="<?php esc_attr_e( 'Thumbs down', 'agent-builder' ); ?>" style="color:#cb2431;">&#128078;</span>
+							<span title="<?php esc_attr_e( 'Thumbs down', 'siteloom' ); ?>" style="color:#cb2431;">&#128078;</span>
 						<?php else : ?>
 							<span class="agentic-text-subtle">&mdash;</span>
 						<?php endif; ?>
@@ -287,7 +287,7 @@ $agentic_cv_instances = $agentic_cv_registry->get_all_instances();
 						<details class="agentic-conv-details" data-session="<?php echo esc_attr( $agentic_cv_s['session_id'] ); ?>">
 							<summary>View</summary>
 						</details>
-						<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=agentic-audit-log&tab=conversations&delete_session=' . $agentic_cv_s['session_id'] ), 'agentic_conv_delete_' . $agentic_cv_s['session_id'] ) ); ?>" class="agentic-link-danger" style="font-size:12px;display:block;margin-top:4px;" data-agentic-confirm="<?php echo esc_attr( __( 'Delete this conversation?', 'agent-builder' ) ); ?>" data-agentic-confirm-danger data-agentic-confirm-ok="<?php echo esc_attr( __( 'Delete', 'agent-builder' ) ); ?>"><?php esc_html_e( 'Delete', 'agent-builder' ); ?></a>
+						<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=agentic-audit-log&tab=conversations&delete_session=' . $agentic_cv_s['session_id'] ), 'agentic_conv_delete_' . $agentic_cv_s['session_id'] ) ); ?>" class="agentic-link-danger" style="font-size:12px;display:block;margin-top:4px;" data-agentic-confirm="<?php echo esc_attr( __( 'Delete this conversation?', 'siteloom' ) ); ?>" data-agentic-confirm-danger data-agentic-confirm-ok="<?php echo esc_attr( __( 'Delete', 'siteloom' ) ); ?>"><?php esc_html_e( 'Delete', 'siteloom' ); ?></a>
 					</td>
 				</tr>
 				<?php endforeach; ?>
@@ -327,14 +327,14 @@ $agentic_cv_instances = $agentic_cv_registry->get_all_instances();
 			<?php
 			printf(
 				/* translators: %d: number of days */
-				esc_html__( 'Conversations are automatically deleted after %d days.', 'agent-builder' ),
+				esc_html__( 'Conversations are automatically deleted after %d days.', 'siteloom' ),
 				(int) $agentic_cv_retention
 			);
 			?>
 		<?php else : ?>
-			<?php esc_html_e( 'Conversations are kept indefinitely (no retention limit set).', 'agent-builder' ); ?>
+			<?php esc_html_e( 'Conversations are kept indefinitely (no retention limit set).', 'siteloom' ); ?>
 		<?php endif; ?>
-		<a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-settings&tab=security' ) ); ?>"><?php esc_html_e( 'Change retention settings', 'agent-builder' ); ?></a>
+		<a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-settings&tab=security' ) ); ?>"><?php esc_html_e( 'Change retention settings', 'siteloom' ); ?></a>
 	</p>
 
 <?php

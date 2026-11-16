@@ -11,7 +11,7 @@
  *
  * @package    Agent_Builder
  * @subpackage Includes
- * @author     Agent Builder Team <support@agentic-plugin.com>
+ * @author     Siteloom Team <support@agentic-plugin.com>
  * @license    GPL-2.0-or-later https://www.gnu.org/licenses/gpl-2.0.html
  * @link       https://agentic-plugin.com
  * @since      2.10.0
@@ -138,7 +138,7 @@ final class Manifest_Agent extends Agent_Base {
 	 */
 	public function get_author(): string {
 		$author = (string) ( $this->manifest['author'] ?? '' );
-		return '' !== $author ? $author : __( 'Assistant Trainer', 'agent-builder' );
+		return '' !== $author ? $author : __( 'Assistant Trainer', 'siteloom' );
 	}
 
 	/**

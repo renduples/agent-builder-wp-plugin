@@ -7,7 +7,7 @@ function TabBar( { tabs, active, className = '' } ) {
 	return (
 		<nav
 			className={ `agentic-react-tabs ${ className }`.trim() }
-			aria-label={ __( 'Sections', 'agent-builder' ) }
+			aria-label={ __( 'Sections', 'siteloom' ) }
 		>
 			{ tabs.map( ( t ) => (
 				<a

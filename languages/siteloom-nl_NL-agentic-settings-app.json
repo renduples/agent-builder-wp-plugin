@@ -1,0 +1,648 @@
+{
+  "translation-revision-date": "2026-08-20 16:00+0000",
+  "generator": "WP-CLI/2.12.0",
+  "source": "src/settings-app/index.js",
+  "domain": "messages",
+  "locale_data": {
+    "messages": {
+      "": {
+        "domain": "messages",
+        "lang": "nl_NL",
+        "plural-forms": "nplurals=2; plural=(n != 1);"
+      },
+      "AI Agents": [
+        "AI-agents"
+      ],
+      "Agents": [
+        "Agents"
+      ],
+      "Agent": [
+        "Agent"
+      ],
+      "Actions": [
+        "Acties"
+      ],
+      "Status": [
+        "Status"
+      ],
+      "Basic": [
+        "Basis"
+      ],
+      "Advanced": [
+        "Geavanceerd"
+      ],
+      "No agents installed.": [
+        "Geen agents geïnstalleerd."
+      ],
+      "Users": [
+        "Gebruikers"
+      ],
+      "Enabled": [
+        "Ingeschakeld"
+      ],
+      "Edit": [
+        "Bewerken"
+      ],
+      "No active agents.": [
+        "Geen actieve agents."
+      ],
+      "Security": [
+        "Beveiliging"
+      ],
+      "Add Provider": [
+        "Provider toevoegen"
+      ],
+      "Connected": [
+        "Verbonden"
+      ],
+      "Not connected": [
+        "Niet verbonden"
+      ],
+      "Default": [
+        "Standaard"
+      ],
+      "Set Default": [
+        "Als standaard instellen"
+      ],
+      "Service": [
+        "Service"
+      ],
+      "Base URL": [
+        "Basis-URL"
+      ],
+      "Default:": [
+        "Standaard:"
+      ],
+      "Model": [
+        "Model"
+      ],
+      "Terms of Service": [
+        "Servicevoorwaarden"
+      ],
+      "Key": [
+        "Sleutel"
+      ],
+      "Settings": [
+        "Instellingen"
+      ],
+      "Interface": [
+        "Interface"
+      ],
+      "Providers": [
+        "Providers"
+      ],
+      "APIs": [
+        "API's"
+      ],
+      "Endpoints": [
+        "Endpoints"
+      ],
+      "Search settings…": [
+        "Instellingen zoeken…"
+      ],
+      "What should agents call administrators?": [
+        "Hoe moeten agents beheerders noemen?"
+      ],
+      "What should agents call frontend visitors?": [
+        "Hoe moeten agents bezoekers op de frontend noemen?"
+      ],
+      "Show the WhatsApp Pro promo in admin chat": [
+        "WhatsApp Pro-promo in de beheerchat tonen"
+      ],
+      "Test": [
+        "Testen"
+      ],
+      "Supervised": [
+        "Onder toezicht"
+      ],
+      "Autonomous": [
+        "Autonoom"
+      ],
+      "Loading…": [
+        "Laden…"
+      ],
+      "Name": [
+        "Naam"
+      ],
+      "Instructions": [
+        "Instructies"
+      ],
+      "Memory": [
+        "Geheugen"
+      ],
+      "Knowledge": [
+        "Kennis"
+      ],
+      "Settings control how agents behave on this site. Changes are stored locally and take effect for new conversations.": [
+        "Instellingen bepalen hoe agenten zich op deze site gedragen. Wijzigingen worden lokaal opgeslagen en gelden voor nieuwe gesprekken."
+      ],
+      "Need help?": [
+        "Hulp nodig?"
+      ],
+      "Visit our Support Center": [
+        "Bezoek ons Supportcentrum"
+      ],
+      "Documentation": [
+        "Documentatie"
+      ],
+      "Privacy Policy": [
+        "Privacybeleid"
+      ],
+      "GDPR Policy": [
+        "AVG-beleid"
+      ],
+      "MCP": [
+        "MCP"
+      ],
+      "Copied!": [
+        "Gekopieerd!"
+      ],
+      "Copy": [
+        "Kopiëren"
+      ],
+      "Provider": [
+        "Provider"
+      ],
+      "Test failed.": [
+        "Test mislukt."
+      ],
+      "Testing…": [
+        "Bezig met testen…"
+      ],
+      "EMERGENCY STOP: deactivate and log agent states, cancel all jobs, and disconnect providers. Continue?": [
+        "NOODSTOP: agents deactiveren en hun status vastleggen, alle taken annuleren en providers loskoppelen. Doorgaan?"
+      ],
+      "Turn off emergency stop?": [
+        "Noodstop uitschakelen?"
+      ],
+      "Disable All Agents": [
+        "Alle agents uitschakelen"
+      ],
+      "Emergency stop": [
+        "Noodstop"
+      ],
+      ": deactivate and log agent states, cancels all jobs and disconnects providers.": [
+        ": agents deactiveren en hun status vastleggen, annuleert alle taken en koppelt providers los."
+      ],
+      "Reset every screen back to your default interface? Any screen you switched individually will lose that override.": [
+        "Alle schermen terugzetten naar uw standaardinterface? Elk scherm dat u afzonderlijk hebt gewijzigd, verliest die instelling."
+      ],
+      "Reset all screens to my default": [
+        "Alle schermen terugzetten naar mijn standaard"
+      ],
+      "Show the Getting Started checklist on the dashboard": [
+        "Toon de checklist Aan de slag op het dashboard"
+      ],
+      "Chat font": [
+        "Chatlettertype"
+      ],
+      "Use theme accent colour": [
+        "Accentkleur van het thema gebruiken"
+      ],
+      "Accent colour": [
+        "Accentkleur"
+      ],
+      "Could not load settings.": [
+        "Kon de instellingen niet laden."
+      ],
+      "Default interface mode": [
+        "Standaard interfacemodus"
+      ],
+      "How agents address people": [
+        "Hoe agenten mensen aanspreken"
+      ],
+      "Site knowledge and standing guidance are under": [
+        "Sitekennis en vaste richtlijnen vindt u onder"
+      ],
+      "Per-agent personality is under Knowledge → Instructions.": [
+        "De persoonlijkheid per agent vindt u onder Kennis → Instructies."
+      ],
+      "Leave blank to use the WordPress display name.": [
+        "Laat leeg om de WordPress-weergavenaam te gebruiken."
+      ],
+      "Chat theme": [
+        "Chatthema"
+      ],
+      "Visual theme for admin chat and frontend shortcodes. Click a preview to select.": [
+        "Visueel thema voor de beheerchat en frontend-shortcodes. Klik op een voorbeeld om te selecteren."
+      ],
+      "AI Agent": [
+        "AI-agent"
+      ],
+      "Hello! How can I help?": [
+        "Hallo! Hoe kan ik u helpen?"
+      ],
+      "Update my homepage": [
+        "Werk mijn homepage bij"
+      ],
+      "Configure the AI providers available on this site. Only a connected provider can be set as the site default.": [
+        "Configureer de AI-providers die op deze site beschikbaar zijn. Alleen een verbonden provider kan als standaard voor de site worden ingesteld."
+      ],
+      "Slug": [
+        "Slug"
+      ],
+      "API keys: use Edit on a provider. Setting a default updates the global provider and model used by agents.": [
+        "API-sleutels: gebruik Bewerken bij een provider. Het instellen van een standaard werkt de globale provider en het model bij die door agenten worden gebruikt."
+      ],
+      "Default agent mode": [
+        "Standaard agentmodus"
+      ],
+      "Read-only": [
+        "Alleen-lezen"
+      ],
+      "Message scanning": [
+        "Berichten scannen"
+      ],
+      "Require chat consent": [
+        "Toestemming voor chat vereisen"
+      ],
+      "Consent text": [
+        "Toestemmingstekst"
+      ],
+      "Conversation retention (days)": [
+        "Bewaartermijn gesprekken (dagen)"
+      ],
+      "Audit log retention (days)": [
+        "Bewaartermijn auditlogboek (dagen)"
+      ],
+      "Refresh model catalog from Agentic": [
+        "Modelcatalogus van Agentic vernieuwen"
+      ],
+      "Off by default. When on, a daily cron fetches model names and list prices from agentic-plugin.com. BYOK providers work without this; enable it only if you want the curated catalog.": [
+        "Standaard uit. Indien ingeschakeld haalt een dagelijkse cron modelnamen en catalogusprijzen op van agentic-plugin.com. BYOK-providers werken zonder dit; schakel het alleen in als u de samengestelde catalogus wilt."
+      ],
+      "Request Rate Limits": [
+        "Aanvraaglimieten"
+      ],
+      "IP-based throttle applied before role-based daily quotas. Protects against rapid-fire requests.": [
+        "IP-gebaseerde beperking die vóór de rolgebaseerde dagquota wordt toegepast. Beschermt tegen snel opeenvolgende aanvragen."
+      ],
+      "Authenticated users (requests per minute)": [
+        "Geverifieerde gebruikers (aanvragen per minuut)"
+      ],
+      "Anonymous visitors (requests per minute)": [
+        "Anonieme bezoekers (aanvragen per minuut)"
+      ],
+      "Control who can administer the plugin and use AI agents.": [
+        "Bepaal wie de plugin mag beheren en AI-agents mag gebruiken."
+      ],
+      "Control which WordPress roles can administer the plugin and interact with AI agents. Administrators always retain full access.": [
+        "Bepaal welke WordPress-rollen de plugin mogen beheren en met AI-agents mogen communiceren. Beheerders behouden altijd volledige toegang."
+      ],
+      "These rules apply site-wide. A user needs at least one ticked box to access the corresponding feature. Removing a role from all plugin privileges will hide the Siteloom menu from that role entirely.": [
+        "Deze regels gelden voor de hele site. Een gebruiker heeft minstens één aangevinkt vakje nodig om toegang te krijgen tot de betreffende functie. Als u een rol uit alle pluginrechten verwijdert, wordt het Siteloom-menu volledig verborgen voor die rol."
+      ],
+      "Plugin Administration": [
+        "Pluginbeheer"
+      ],
+      "Who can access and configure the Siteloom admin pages.": [
+        "Wie toegang heeft tot de beheerpagina's va Siteloom en deze mag configureren."
+      ],
+      "Permission": [
+        "Rechten"
+      ],
+      "Administrators always have full access": [
+        "Beheerders hebben altijd volledige toegang"
+      ],
+      "Who can chat with and interact with installed AI agents, and how much they may use per day.": [
+        "Wie met geïnstalleerde AI-agents mag chatten en communiceren, en hoeveel zij per dag mogen gebruiken."
+      ],
+      "Permission / Limit": [
+        "Rechten / limiet"
+      ],
+      "Visitor": [
+        "Bezoeker"
+      ],
+      "Not logged in": [
+        "Niet ingelogd"
+      ],
+      "Allow non-logged-in visitors to use frontend chat": [
+        "Sta niet-ingelogde bezoekers toe de frontend-chat te gebruiken"
+      ],
+      "Daily Limits": [
+        "Daglimieten"
+      ],
+      "0 = unlimited, resets at midnight UTC. Administrators are never limited.": [
+        "0 = onbeperkt, wordt om middernacht UTC gereset. Beheerders worden nooit beperkt."
+      ],
+      "Queries / day": [
+        "Query's / dag"
+      ],
+      "Max AI chat messages per user per day.": [
+        "Maximaal aantal AI-chatberichten per gebruiker per dag."
+      ],
+      "Tokens / day": [
+        "Tokens / dag"
+      ],
+      "Max AI tokens consumed per user per day.": [
+        "Maximaal aantal verbruikte AI-tokens per gebruiker per dag."
+      ],
+      "How enforcement works: these settings control WordPress admin menu visibility, admin bar chat access, the REST chat API, and AJAX task triggers. Unchecked roles are blocked at the server, not just hidden in the UI. Request rate limits are under Security.": [
+        "Hoe de handhaving werkt: deze instellingen bepalen de zichtbaarheid van het WordPress-beheermenu, chattoegang via de adminbalk, de REST-chat-API en AJAX-taaktriggers. Niet-aangevinkte rollen worden op de server geblokkeerd, niet alleen verborgen in de interface. Aanvraaglimieten vindt u onder Beveiliging."
+      ],
+      "Persistent key-value memory agents use across conversations.": [
+        "Permanent sleutel-waardegeheugen dat agents in verschillende gesprekken gebruiken."
+      ],
+      "Default memory TTL (days)": [
+        "Standaard TTL van het geheugen (dagen)"
+      ],
+      "0 = never expires": [
+        "0 = verloopt nooit"
+      ],
+      "Enable local browser memory": [
+        "Lokaal browsergeheugen inschakelen"
+      ],
+      "(default)": [
+        "(standaard)"
+      ],
+      "Chat capabilities and per-agent provider/model. Set the site default provider on the Providers tab. Theme is under Interface.": [
+        "Chatmogelijkheden en provider/model per agent. Stel de standaardprovider voor de site in op het tabblad Providers. Het thema vindt u onder Interface."
+      ],
+      "Chat features": [
+        "Chatfuncties"
+      ],
+      "Features available in agent chat.": [
+        "Functies die beschikbaar zijn in de agentchat."
+      ],
+      "Audio input": [
+        "Audio-invoer"
+      ],
+      "Text-to-speech": [
+        "Tekst-naar-spraak"
+      ],
+      "Vision / image input": [
+        "Vision / afbeeldingsinvoer"
+      ],
+      "Hide “Powered by Siteloom” branding": [
+        "Branding “Mogelijk gemaakt door Siteloom” verbergen"
+      ],
+      "On by default. Uncheck only if you want a small credit line in the chat footer.": [
+        "Standaard aan. Vink dit alleen uit als u een kleine vermelding in de chatvoettekst wilt."
+      ],
+      "Off by default. When on, admin chat shows a link to the WhatsApp connector.": [
+        "Standaard uit. Indien ingeschakeld toont de beheerchat een link naar de WhatsApp-connector."
+      ],
+      "Active agent overrides": [
+        "Overschrijvingen voor actieve agents"
+      ],
+      "Each row starts on the site default provider and model (Providers tab). Change only the agents that need a different setup.": [
+        "Elke rij begint met de standaardprovider en het standaardmodel van de site (tabblad Providers). Wijzig alleen de agenten die een andere configuratie nodig hebben."
+      ],
+      "provider": [
+        "provider"
+      ],
+      "model": [
+        "model"
+      ],
+      "Customise greetings and personality notes per agent.": [
+        "Pas begroetingen en persoonlijkheidsnotities per agent aan."
+      ],
+      "Select agent": [
+        "Selecteer agent"
+      ],
+      "Welcome message": [
+        "Welkomstbericht"
+      ],
+      "Persona notes": [
+        "Persona-notities"
+      ],
+      "Response style": [
+        "Antwoordstijl"
+      ],
+      "Third-party API keys used by agent tools.": [
+        "API-sleutels van derden die door agenttools worden gebruikt."
+      ],
+      "Get a key": [
+        "Een sleutel aanvragen"
+      ],
+      "Configured": [
+        "Geconfigureerd"
+      ],
+      "Not configured": [
+        "Niet geconfigureerd"
+      ],
+      "REST endpoints for integrations.": [
+        "REST-endpoints voor integraties."
+      ],
+      "Namespace": [
+        "Namespace"
+      ],
+      "Agentic Services": [
+        "Agentic Services"
+      ],
+      "Base URLs the plugin calls for AI chat, knowledge search, and media generation. Leave these on their defaults unless you’re self-hosting a proxy or support asked you to change one.": [
+        "Basis-URL's die de plugin aanroept voor AI-chat, kennis zoeken en het genereren van media. Laat deze op de standaardwaarden staan, tenzij u zelf een proxy host of support u heeft gevraagd er een te wijzigen."
+      ],
+      "Reset to default": [
+        "Terugzetten naar standaard"
+      ],
+      "Agent endpoints": [
+        "Agent-endpoints"
+      ],
+      "Each agent has its own MCP URL, scoped to only the tools that agent is allowed to use.": [
+        "Elke agent heeft een eigen MCP-URL, beperkt tot alleen de tools die die agent mag gebruiken."
+      ],
+      "MCP URL": [
+        "MCP-URL"
+      ],
+      "Ready": [
+        "Gereed"
+      ],
+      "Could not load this settings panel.": [
+        "Kon dit instellingenpaneel niet laden."
+      ],
+      "Settings saved with warnings:": [
+        "Instellingen opgeslagen met waarschuwingen:"
+      ],
+      "Could not save settings.": [
+        "Kon de instellingen niet opslaan."
+      ],
+      "Loading settings…": [
+        "Instellingen worden geladen…"
+      ],
+      "Settings unavailable.": [
+        "Instellingen niet beschikbaar."
+      ],
+      "This tab is available via the classic view or an add-on.": [
+        "Dit tabblad is beschikbaar via de klassieke weergave of een add-on."
+      ],
+      "Agent activity email": [
+        ""
+      ],
+      "Off": [
+        ""
+      ],
+      "Advanced settings": [
+        ""
+      ],
+      "Hide advanced settings": [
+        ""
+      ],
+      "Starting point for screens you have not switched individually. Basic is guided and uses plain language; Advanced shows every control.": [
+        ""
+      ],
+      "Agents propose actions for you to approve before anything changes. Recommended for most sites.": [
+        ""
+      ],
+      "Agents act immediately without waiting for your OK. Use only if you trust them on this site.": [
+        ""
+      ],
+      "Agents can chat but cannot change anything on the site.": [
+        ""
+      ],
+      "Blocks common injection patterns and flags personal data in chat messages.": [
+        ""
+      ],
+      "Ask visitors to agree before chatting. Required in some regions.": [
+        ""
+      ],
+      "Daily digest": [
+        ""
+      ],
+      "Instant": [
+        ""
+      ],
+      "How administrators are emailed about agent activity. Users can opt out individually from their own profile.": [
+        ""
+      ],
+      "How long to keep chat history. 0 means keep forever.": [
+        ""
+      ],
+      "The Model Context Protocol (MCP) lets AI apps you connect yourself (Claude Desktop, Cursor, Grok and others) talk directly to this site and use an agent's tools. MCP is off for every agent until an administrator turns it on below.": [
+        ""
+      ],
+      "Turning MCP on for an agent lets any AI app you connect act on this site with the permissions of the WordPress user whose Application Password it uses. Only enable it for agents you need, and only connect apps you trust.": [
+        ""
+      ],
+      "Enable MCP: %s": [
+        ""
+      ],
+      "Never connected": [
+        ""
+      ],
+      "Connecting an AI app": [
+        ""
+      ],
+      "Turn on MCP for the agent you want to use, above.": [
+        ""
+      ],
+      "Create an Application Password in your own WordPress profile (Users > Profile > Application Passwords). Siteloom never creates or stores one for you.": [
+        ""
+      ],
+      "Open your profile": [
+        ""
+      ],
+      "In your AI app, add the agent's MCP URL and sign in with your WordPress username and that Application Password.": [
+        ""
+      ],
+      "The app can only use the tools that agent is allowed to use, limited to what your WordPress user may do. High-risk tools are never available over MCP, and actions that normally need your approval still wait for it. To disconnect an app, revoke its Application Password in your profile or turn MCP off for the agent.": [
+        ""
+      ],
+      "These actions need your approval before they run. Requests from an AI app appear in Approvals:": [
+        ""
+      ],
+      "Open Approvals": [
+        ""
+      ],
+      "Saving…": [
+        "Opslaan…"
+      ],
+      "Settings saved.": [
+        "Instellingen opgeslagen."
+      ],
+      "Save changes": [
+        "Wijzigingen opslaan"
+      ],
+      "Only changes this screen. Other screens and your site-wide default (Settings → Interface) are unaffected.": [
+        "Wijzigt alleen dit scherm. Andere schermen en uw sitebrede standaard (Instellingen → Interface) blijven ongewijzigd."
+      ],
+      "More info": [
+        "Meer info"
+      ],
+      "Approve": [
+        "Goedkeuren"
+      ],
+      "Reject": [
+        "Afwijzen"
+      ],
+      "Check the Agents page": [
+        "Bekijk de pagina Agents"
+      ],
+      "Send": [
+        "Verzenden"
+      ],
+      "Connection error. Please try again.": [
+        "Verbindingsfout. Probeer het opnieuw."
+      ],
+      "Title": [
+        "Titel"
+      ],
+      "Deny": [
+        "Weigeren"
+      ],
+      "Something went wrong.": [
+        "Er is iets misgegaan."
+      ],
+      "Try asking": [
+        "Probeer eens te vragen"
+      ],
+      "Denied — no change made.": [
+        "Geweigerd — geen wijziging doorgevoerd."
+      ],
+      "Done — change applied.": [
+        "Klaar — wijziging toegepast."
+      ],
+      "Needs Your Approval": [
+        "Uw goedkeuring vereist"
+      ],
+      "Proposed Change": [
+        "Voorgestelde wijziging"
+      ],
+      "The agent wants to make a change.": [
+        "De agent wil een wijziging doorvoeren."
+      ],
+      "Hide Diff": [
+        "\\u25bc Verschil verbergen"
+      ],
+      "Show Diff": [
+        "\\u25b6 Verschil tonen"
+      ],
+      "Allow Once": [
+        "Eenmaal toestaan"
+      ],
+      "Allow this Session": [
+        "Deze sessie toestaan"
+      ],
+      "Always Allow": [
+        "Altijd toestaan"
+      ],
+      "This assistant": [
+        "Deze agent"
+      ],
+      "is still activating.": [
+        "wordt nog geactiveerd."
+      ],
+      "is thinking…": [
+        "denkt na…"
+      ],
+      "Ask": [
+        "Vraag"
+      ],
+      "Post type": [
+        ""
+      ],
+      "Post": [
+        ""
+      ],
+      "Content preview": [
+        ""
+      ],
+      "Show full content": [
+        ""
+      ],
+      "Show less": [
+        ""
+      ]
+    }
+  }
+}

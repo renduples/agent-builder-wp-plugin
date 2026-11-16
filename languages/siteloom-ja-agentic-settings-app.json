@@ -1,0 +1,648 @@
+{
+  "translation-revision-date": "2026-08-20 16:00+0000",
+  "generator": "WP-CLI/2.12.0",
+  "source": "src/settings-app/index.js",
+  "domain": "messages",
+  "locale_data": {
+    "messages": {
+      "": {
+        "domain": "messages",
+        "lang": "ja",
+        "plural-forms": "nplurals=1; plural=0;"
+      },
+      "AI Agents": [
+        "AI エージェント"
+      ],
+      "Agents": [
+        "エージェント"
+      ],
+      "Agent": [
+        "エージェント"
+      ],
+      "Actions": [
+        "操作"
+      ],
+      "Status": [
+        "ステータス"
+      ],
+      "Basic": [
+        "基本"
+      ],
+      "Advanced": [
+        "詳細"
+      ],
+      "No agents installed.": [
+        "エージェントがインストールされていません。"
+      ],
+      "Users": [
+        "ユーザー"
+      ],
+      "Enabled": [
+        "有効"
+      ],
+      "Edit": [
+        "編集"
+      ],
+      "No active agents.": [
+        "有効なエージェントはありません。"
+      ],
+      "Security": [
+        "セキュリティ"
+      ],
+      "Add Provider": [
+        "プロバイダーを追加"
+      ],
+      "Connected": [
+        "接続済み"
+      ],
+      "Not connected": [
+        "未接続"
+      ],
+      "Default": [
+        "デフォルト"
+      ],
+      "Set Default": [
+        "デフォルトに設定"
+      ],
+      "Service": [
+        "サービス"
+      ],
+      "Base URL": [
+        "ベース URL"
+      ],
+      "Default:": [
+        "デフォルト:"
+      ],
+      "Model": [
+        "モデル"
+      ],
+      "Terms of Service": [
+        "利用規約"
+      ],
+      "Key": [
+        "キー"
+      ],
+      "Settings": [
+        "設定"
+      ],
+      "Interface": [
+        "インターフェース"
+      ],
+      "Providers": [
+        "プロバイダー"
+      ],
+      "APIs": [
+        "API"
+      ],
+      "Endpoints": [
+        "エンドポイント"
+      ],
+      "Search settings…": [
+        "設定を検索…"
+      ],
+      "What should agents call administrators?": [
+        "エージェントは管理者をどう呼びますか？"
+      ],
+      "What should agents call frontend visitors?": [
+        "エージェントはフロントエンドの訪問者をどう呼びますか？"
+      ],
+      "Show the WhatsApp Pro promo in admin chat": [
+        "管理画面チャットに WhatsApp Pro の案内を表示"
+      ],
+      "Test": [
+        "テスト"
+      ],
+      "Supervised": [
+        "承認制"
+      ],
+      "Autonomous": [
+        "自律"
+      ],
+      "Loading…": [
+        "読み込み中…"
+      ],
+      "Name": [
+        "名前"
+      ],
+      "Instructions": [
+        "指示"
+      ],
+      "Memory": [
+        "メモリー"
+      ],
+      "Knowledge": [
+        "ナレッジ"
+      ],
+      "Settings control how agents behave on this site. Changes are stored locally and take effect for new conversations.": [
+        "設定は、このサイトでのエージェントの動作を制御します。変更はローカルに保存され、新しい会話から反映されます。"
+      ],
+      "Need help?": [
+        "お困りですか？"
+      ],
+      "Visit our Support Center": [
+        "サポートセンターを見る"
+      ],
+      "Documentation": [
+        "ドキュメント"
+      ],
+      "Privacy Policy": [
+        "プライバシーポリシー"
+      ],
+      "GDPR Policy": [
+        "GDPR ポリシー"
+      ],
+      "MCP": [
+        "MCP"
+      ],
+      "Copied!": [
+        "コピーしました。"
+      ],
+      "Copy": [
+        "コピー"
+      ],
+      "Provider": [
+        "プロバイダー"
+      ],
+      "Test failed.": [
+        "テストに失敗しました。"
+      ],
+      "Testing…": [
+        "テストしています…"
+      ],
+      "EMERGENCY STOP: deactivate and log agent states, cancel all jobs, and disconnect providers. Continue?": [
+        "緊急停止: エージェントを無効化して状態を記録し、すべてのジョブをキャンセルし、プロバイダーの接続を解除します。続行しますか？"
+      ],
+      "Turn off emergency stop?": [
+        "緊急停止を解除しますか？"
+      ],
+      "Disable All Agents": [
+        "すべてのエージェントを無効化"
+      ],
+      "Emergency stop": [
+        "緊急停止"
+      ],
+      ": deactivate and log agent states, cancels all jobs and disconnects providers.": [
+        ": エージェントを無効化して状態を記録し、すべてのジョブをキャンセルして、プロバイダーの接続を解除します。"
+      ],
+      "Reset every screen back to your default interface? Any screen you switched individually will lose that override.": [
+        "すべての画面をデフォルトのインターフェースに戻しますか？個別に切り替えた画面は、その設定が失われます。"
+      ],
+      "Reset all screens to my default": [
+        "すべての画面をデフォルトに戻す"
+      ],
+      "Show the Getting Started checklist on the dashboard": [
+        "ダッシュボードに「はじめに」チェックリストを表示する"
+      ],
+      "Chat font": [
+        "チャットのフォント"
+      ],
+      "Use theme accent colour": [
+        "テーマのアクセントカラーを使用する"
+      ],
+      "Accent colour": [
+        "アクセントカラー"
+      ],
+      "Could not load settings.": [
+        "設定を読み込めませんでした。"
+      ],
+      "Default interface mode": [
+        "デフォルトのインターフェースモード"
+      ],
+      "How agents address people": [
+        "エージェントによる呼びかけ方"
+      ],
+      "Site knowledge and standing guidance are under": [
+        "サイトのナレッジと常設の指示は次の場所にあります:"
+      ],
+      "Per-agent personality is under Knowledge → Instructions.": [
+        "エージェントごとの個性は、ナレッジ → 指示で設定します。"
+      ],
+      "Leave blank to use the WordPress display name.": [
+        "空欄のままにすると、WordPress の表示名が使用されます。"
+      ],
+      "Chat theme": [
+        "チャットテーマ"
+      ],
+      "Visual theme for admin chat and frontend shortcodes. Click a preview to select.": [
+        "管理画面のチャットとフロントエンドのショートコードで使用するビジュアルテーマです。プレビューをクリックして選択してください。"
+      ],
+      "AI Agent": [
+        "AI エージェント"
+      ],
+      "Hello! How can I help?": [
+        "こんにちは！どのようなご用件でしょうか？"
+      ],
+      "Update my homepage": [
+        "ホームページを更新して"
+      ],
+      "Configure the AI providers available on this site. Only a connected provider can be set as the site default.": [
+        "このサイトで利用できる AI プロバイダーを設定します。サイトのデフォルトに設定できるのは、接続済みのプロバイダーのみです。"
+      ],
+      "Slug": [
+        "スラッグ"
+      ],
+      "API keys: use Edit on a provider. Setting a default updates the global provider and model used by agents.": [
+        "API キー: プロバイダーの「編集」から設定します。デフォルトを設定すると、エージェントが使用するグローバルなプロバイダーとモデルが更新されます。"
+      ],
+      "Default agent mode": [
+        "デフォルトのエージェントモード"
+      ],
+      "Read-only": [
+        "読み取り専用"
+      ],
+      "Message scanning": [
+        "メッセージスキャン"
+      ],
+      "Require chat consent": [
+        "チャットの同意を必須にする"
+      ],
+      "Consent text": [
+        "同意文"
+      ],
+      "Conversation retention (days)": [
+        "会話の保持期間（日）"
+      ],
+      "Audit log retention (days)": [
+        "監査ログの保持期間（日）"
+      ],
+      "Refresh model catalog from Agentic": [
+        "Agentic からモデルカタログを更新"
+      ],
+      "Off by default. When on, a daily cron fetches model names and list prices from agentic-plugin.com. BYOK providers work without this; enable it only if you want the curated catalog.": [
+        "既定ではオフです。オンにすると、毎日の cron が agentic-plugin.com からモデル名と定価を取得します。BYOK プロバイダーはこの設定なしで動作します。厳選カタログが必要な場合のみ有効にしてください。"
+      ],
+      "Request Rate Limits": [
+        "リクエストのレート制限"
+      ],
+      "IP-based throttle applied before role-based daily quotas. Protects against rapid-fire requests.": [
+        "ロール別の 1 日あたりの割り当てより前に適用される、IP ベースの制限です。短時間に集中するリクエストを防ぎます。"
+      ],
+      "Authenticated users (requests per minute)": [
+        "認証済みユーザー（1 分あたりのリクエスト数）"
+      ],
+      "Anonymous visitors (requests per minute)": [
+        "匿名の訪問者（1 分あたりのリクエスト数）"
+      ],
+      "Control who can administer the plugin and use AI agents.": [
+        "プラグインを管理し、AI エージェントを利用できるユーザーを制御します。"
+      ],
+      "Control which WordPress roles can administer the plugin and interact with AI agents. Administrators always retain full access.": [
+        "プラグインを管理し、AI エージェントを利用できる WordPress のロールを制御します。管理者は常に完全なアクセス権を保持します。"
+      ],
+      "These rules apply site-wide. A user needs at least one ticked box to access the corresponding feature. Removing a role from all plugin privileges will hide the Siteloom menu from that role entirely.": [
+        "これらのルールはサイト全体に適用されます。対応する機能を利用するには、少なくとも 1 つのチェックボックスがオンになっている必要があります。すべてのプラグイン権限からロールを外すと、そのロールには Siteloom のメニューが一切表示されなくなります。"
+      ],
+      "Plugin Administration": [
+        "プラグインの管理"
+      ],
+      "Who can access and configure the Siteloom admin pages.": [
+        "Siteloom の管理ページにアクセスし、設定できるユーザーを指定します。"
+      ],
+      "Permission": [
+        "権限"
+      ],
+      "Administrators always have full access": [
+        "管理者は常に完全なアクセス権を持ちます"
+      ],
+      "Who can chat with and interact with installed AI agents, and how much they may use per day.": [
+        "インストール済みの AI エージェントとチャットして操作できるユーザーと、1 日あたりの利用量を指定します。"
+      ],
+      "Permission / Limit": [
+        "権限 / 上限"
+      ],
+      "Visitor": [
+        "訪問者"
+      ],
+      "Not logged in": [
+        "未ログイン"
+      ],
+      "Allow non-logged-in visitors to use frontend chat": [
+        "未ログインの訪問者にフロントエンドチャットの利用を許可する"
+      ],
+      "Daily Limits": [
+        "1 日あたりの上限"
+      ],
+      "0 = unlimited, resets at midnight UTC. Administrators are never limited.": [
+        "0 = 無制限。UTC の午前 0 時にリセットされます。管理者が制限されることはありません。"
+      ],
+      "Queries / day": [
+        "1 日あたりのクエリ数"
+      ],
+      "Max AI chat messages per user per day.": [
+        "ユーザーごとの 1 日あたりの AI チャットメッセージ数の上限です。"
+      ],
+      "Tokens / day": [
+        "1 日あたりのトークン数"
+      ],
+      "Max AI tokens consumed per user per day.": [
+        "ユーザーごとの 1 日あたりに消費できる AI トークン数の上限です。"
+      ],
+      "How enforcement works: these settings control WordPress admin menu visibility, admin bar chat access, the REST chat API, and AJAX task triggers. Unchecked roles are blocked at the server, not just hidden in the UI. Request rate limits are under Security.": [
+        "適用の仕組み: これらの設定は、WordPress 管理メニューの表示、管理バーからのチャットアクセス、REST チャット API、AJAX タスクのトリガーを制御します。チェックが外れたロールは、UI で非表示になるだけでなく、サーバー側でブロックされます。リクエストのレート制限は「セキュリティ」にあります。"
+      ],
+      "Persistent key-value memory agents use across conversations.": [
+        "エージェントが会話をまたいで使用する、永続的なキーバリュー形式のメモリです。"
+      ],
+      "Default memory TTL (days)": [
+        "メモリのデフォルト TTL（日）"
+      ],
+      "0 = never expires": [
+        "0 = 無期限"
+      ],
+      "Enable local browser memory": [
+        "ブラウザーのローカルメモリを有効にする"
+      ],
+      "(default)": [
+        "（デフォルト）"
+      ],
+      "Chat capabilities and per-agent provider/model. Set the site default provider on the Providers tab. Theme is under Interface.": [
+        "チャット機能と、エージェントごとのプロバイダー/モデルを設定します。サイトのデフォルトプロバイダーは「プロバイダー」タブで設定します。テーマは「インターフェース」にあります。"
+      ],
+      "Chat features": [
+        "チャット機能"
+      ],
+      "Features available in agent chat.": [
+        "エージェントのチャットで利用できる機能です。"
+      ],
+      "Audio input": [
+        "音声入力"
+      ],
+      "Text-to-speech": [
+        "音声読み上げ"
+      ],
+      "Vision / image input": [
+        "画像入力（ビジョン）"
+      ],
+      "Hide “Powered by Siteloom” branding": [
+        "「Powered by Siteloom」ブランディングを非表示"
+      ],
+      "On by default. Uncheck only if you want a small credit line in the chat footer.": [
+        "既定ではオンです。チャットフッターに小さなクレジット行を表示したい場合のみオフにしてください。"
+      ],
+      "Off by default. When on, admin chat shows a link to the WhatsApp connector.": [
+        "既定ではオフです。オンにすると、管理画面のチャットに WhatsApp コネクターへのリンクが表示されます。"
+      ],
+      "Active agent overrides": [
+        "有効なエージェントの個別設定"
+      ],
+      "Each row starts on the site default provider and model (Providers tab). Change only the agents that need a different setup.": [
+        "各行は、サイトのデフォルトのプロバイダーとモデル（「プロバイダー」タブ）が初期値です。別の設定が必要なエージェントのみ変更してください。"
+      ],
+      "provider": [
+        "プロバイダー"
+      ],
+      "model": [
+        "モデル"
+      ],
+      "Customise greetings and personality notes per agent.": [
+        "エージェントごとに、挨拶や個性に関するメモをカスタマイズします。"
+      ],
+      "Select agent": [
+        "エージェントを選択"
+      ],
+      "Welcome message": [
+        "ウェルカムメッセージ"
+      ],
+      "Persona notes": [
+        "ペルソナのメモ"
+      ],
+      "Response style": [
+        "応答スタイル"
+      ],
+      "Third-party API keys used by agent tools.": [
+        "エージェントのツールが使用するサードパーティの API キーです。"
+      ],
+      "Get a key": [
+        "キーを取得"
+      ],
+      "Configured": [
+        "設定済み"
+      ],
+      "Not configured": [
+        "未設定"
+      ],
+      "REST endpoints for integrations.": [
+        "連携用の REST エンドポイントです。"
+      ],
+      "Namespace": [
+        "名前空間"
+      ],
+      "Agentic Services": [
+        "Agentic Services"
+      ],
+      "Base URLs the plugin calls for AI chat, knowledge search, and media generation. Leave these on their defaults unless you’re self-hosting a proxy or support asked you to change one.": [
+        "プラグインが AI チャット、ナレッジ検索、メディア生成のために呼び出すベース URL です。プロキシを自己ホストしている場合や、サポートから変更を指示された場合を除き、デフォルトのままにしてください。"
+      ],
+      "Reset to default": [
+        "デフォルトに戻す"
+      ],
+      "Agent endpoints": [
+        "エージェントのエンドポイント"
+      ],
+      "Each agent has its own MCP URL, scoped to only the tools that agent is allowed to use.": [
+        "各エージェントには専用の MCP URL があり、そのエージェントが使用を許可されたツールだけにスコープされます。"
+      ],
+      "MCP URL": [
+        "MCP URL"
+      ],
+      "Ready": [
+        "準備完了"
+      ],
+      "Could not load this settings panel.": [
+        "この設定パネルを読み込めませんでした。"
+      ],
+      "Settings saved with warnings:": [
+        "設定を保存しましたが、警告があります:"
+      ],
+      "Could not save settings.": [
+        "設定を保存できませんでした。"
+      ],
+      "Loading settings…": [
+        "設定を読み込んでいます…"
+      ],
+      "Settings unavailable.": [
+        "設定を利用できません。"
+      ],
+      "This tab is available via the classic view or an add-on.": [
+        "このタブは、クラシック表示またはアドオンから利用できます。"
+      ],
+      "Agent activity email": [
+        ""
+      ],
+      "Off": [
+        ""
+      ],
+      "Advanced settings": [
+        ""
+      ],
+      "Hide advanced settings": [
+        ""
+      ],
+      "Starting point for screens you have not switched individually. Basic is guided and uses plain language; Advanced shows every control.": [
+        ""
+      ],
+      "Agents propose actions for you to approve before anything changes. Recommended for most sites.": [
+        ""
+      ],
+      "Agents act immediately without waiting for your OK. Use only if you trust them on this site.": [
+        ""
+      ],
+      "Agents can chat but cannot change anything on the site.": [
+        ""
+      ],
+      "Blocks common injection patterns and flags personal data in chat messages.": [
+        ""
+      ],
+      "Ask visitors to agree before chatting. Required in some regions.": [
+        ""
+      ],
+      "Daily digest": [
+        ""
+      ],
+      "Instant": [
+        ""
+      ],
+      "How administrators are emailed about agent activity. Users can opt out individually from their own profile.": [
+        ""
+      ],
+      "How long to keep chat history. 0 means keep forever.": [
+        ""
+      ],
+      "The Model Context Protocol (MCP) lets AI apps you connect yourself (Claude Desktop, Cursor, Grok and others) talk directly to this site and use an agent's tools. MCP is off for every agent until an administrator turns it on below.": [
+        ""
+      ],
+      "Turning MCP on for an agent lets any AI app you connect act on this site with the permissions of the WordPress user whose Application Password it uses. Only enable it for agents you need, and only connect apps you trust.": [
+        ""
+      ],
+      "Enable MCP: %s": [
+        ""
+      ],
+      "Never connected": [
+        ""
+      ],
+      "Connecting an AI app": [
+        ""
+      ],
+      "Turn on MCP for the agent you want to use, above.": [
+        ""
+      ],
+      "Create an Application Password in your own WordPress profile (Users > Profile > Application Passwords). Siteloom never creates or stores one for you.": [
+        ""
+      ],
+      "Open your profile": [
+        ""
+      ],
+      "In your AI app, add the agent's MCP URL and sign in with your WordPress username and that Application Password.": [
+        ""
+      ],
+      "The app can only use the tools that agent is allowed to use, limited to what your WordPress user may do. High-risk tools are never available over MCP, and actions that normally need your approval still wait for it. To disconnect an app, revoke its Application Password in your profile or turn MCP off for the agent.": [
+        ""
+      ],
+      "These actions need your approval before they run. Requests from an AI app appear in Approvals:": [
+        ""
+      ],
+      "Open Approvals": [
+        ""
+      ],
+      "Saving…": [
+        "保存中…"
+      ],
+      "Settings saved.": [
+        "設定を保存しました。"
+      ],
+      "Save changes": [
+        "変更を保存"
+      ],
+      "Only changes this screen. Other screens and your site-wide default (Settings → Interface) are unaffected.": [
+        "この画面にのみ適用されます。他の画面やサイト全体のデフォルト（設定 → インターフェース）には影響しません。"
+      ],
+      "More info": [
+        "詳細情報"
+      ],
+      "Approve": [
+        "承認"
+      ],
+      "Reject": [
+        "却下"
+      ],
+      "Check the Agents page": [
+        "エージェントページを確認"
+      ],
+      "Send": [
+        "送信"
+      ],
+      "Connection error. Please try again.": [
+        "接続エラーです。もう一度お試しください。"
+      ],
+      "Title": [
+        "タイトル"
+      ],
+      "Deny": [
+        "拒否"
+      ],
+      "Something went wrong.": [
+        "問題が発生しました。"
+      ],
+      "Try asking": [
+        "こんな質問はいかがですか"
+      ],
+      "Denied — no change made.": [
+        "却下しました — 変更は行われませんでした。"
+      ],
+      "Done — change applied.": [
+        "完了 — 変更を適用しました。"
+      ],
+      "Needs Your Approval": [
+        "承認が必要です"
+      ],
+      "Proposed Change": [
+        "提案された変更"
+      ],
+      "The agent wants to make a change.": [
+        "エージェントが変更を行おうとしています。"
+      ],
+      "Hide Diff": [
+        "\\u25bc 差分を非表示"
+      ],
+      "Show Diff": [
+        "\\u25b6 差分を表示"
+      ],
+      "Allow Once": [
+        "今回のみ許可"
+      ],
+      "Allow this Session": [
+        "このセッション中は許可"
+      ],
+      "Always Allow": [
+        "常に許可"
+      ],
+      "This assistant": [
+        "このエージェント"
+      ],
+      "is still activating.": [
+        "はまだ有効化中です。"
+      ],
+      "is thinking…": [
+        "が考えています…"
+      ],
+      "Ask": [
+        "質問"
+      ],
+      "Post type": [
+        ""
+      ],
+      "Post": [
+        ""
+      ],
+      "Content preview": [
+        ""
+      ],
+      "Show full content": [
+        ""
+      ],
+      "Show less": [
+        ""
+      ]
+    }
+  }
+}

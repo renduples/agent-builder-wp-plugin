@@ -94,7 +94,7 @@ class Get_Image_Pricing extends \Agentic\Tool_Base {
 		}
 
 		if ( empty( $api_key ) ) {
-			return array( 'error' => 'Agentic Image Generation requires connecting an Agentic AI account — go to Agent Builder → Settings → Providers and connect Agentic AI.' );
+			return array( 'error' => 'Agentic Image Generation requires connecting an Agentic AI account — go to Siteloom → Settings → Providers and connect Agentic AI.' );
 		}
 
 		$response = wp_remote_get(

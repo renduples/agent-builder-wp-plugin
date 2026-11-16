@@ -9,7 +9,7 @@ function AdminPageFooter( { footer } ) {
 		f.policy ||
 		__(
 			'Agents only use the tools you allow. Higher-risk actions still follow Approvals and your safety settings.',
-			'agent-builder'
+			'siteloom'
 		);
 
 	return (
@@ -20,13 +20,13 @@ function AdminPageFooter( { footer } ) {
 						{ policy }{ ' ' }
 					</span>
 				) }
-				{ __( 'Need help?', 'agent-builder' ) }{ ' ' }
+				{ __( 'Need help?', 'siteloom' ) }{ ' ' }
 				<a href={ supportUrl } target="_blank" rel="noopener noreferrer">
-					{ __( 'Visit our Support Center', 'agent-builder' ) }
+					{ __( 'Visit our Support Center', 'siteloom' ) }
 				</a>
 				{ ' | ' }
 				<a href={ docUrl } target="_blank" rel="noopener noreferrer">
-					{ __( 'Documentation', 'agent-builder' ) }
+					{ __( 'Documentation', 'siteloom' ) }
 				</a>
 			</span>
 			<span className="agentic-page-footer-right">
@@ -38,7 +38,7 @@ function AdminPageFooter( { footer } ) {
 					target="_blank"
 					rel="noopener noreferrer"
 				>
-					{ __( 'Terms of Service', 'agent-builder' ) }
+					{ __( 'Terms of Service', 'siteloom' ) }
 				</a>
 				{ ' | ' }
 				<a
@@ -49,7 +49,7 @@ function AdminPageFooter( { footer } ) {
 					target="_blank"
 					rel="noopener noreferrer"
 				>
-					{ __( 'Privacy Policy', 'agent-builder' ) }
+					{ __( 'Privacy Policy', 'siteloom' ) }
 				</a>
 				{ ' | ' }
 				<a
@@ -59,7 +59,7 @@ function AdminPageFooter( { footer } ) {
 					target="_blank"
 					rel="noopener noreferrer"
 				>
-					{ __( 'GDPR Policy', 'agent-builder' ) }
+					{ __( 'GDPR Policy', 'siteloom' ) }
 				</a>
 			</span>
 		</div>

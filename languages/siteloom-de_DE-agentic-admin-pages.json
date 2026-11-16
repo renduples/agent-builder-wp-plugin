@@ -1,0 +1,1452 @@
+{
+  "translation-revision-date": "2026-08-20 16:00+0000",
+  "generator": "WP-CLI/2.12.0",
+  "source": "src/admin-pages/index.js",
+  "domain": "messages",
+  "locale_data": {
+    "messages": {
+      "": {
+        "domain": "messages",
+        "lang": "de_DE",
+        "plural-forms": "nplurals=2; plural=(n != 1);"
+      },
+      "Tools": [
+        "Tools"
+      ],
+      "Loading…": [
+        "Wird geladen…"
+      ],
+      "Unavailable.": [
+        "Nicht verfügbar."
+      ],
+      "Unknown page.": [
+        "Unbekannte Seite."
+      ],
+      "Basic": [
+        "Basis"
+      ],
+      "Advanced": [
+        "Erweitert"
+      ],
+      "Saving…": [
+        "Wird gespeichert…"
+      ],
+      "Settings saved.": [
+        "Einstellungen gespeichert."
+      ],
+      "Save changes": [
+        "Änderungen speichern"
+      ],
+      "Only changes this screen. Other screens and your site-wide default (Settings → Interface) are unaffected.": [
+        "Ändert nur diese Ansicht. Andere Ansichten und Ihre website-weite Standardeinstellung (Einstellungen → Oberfläche) bleiben unverändert."
+      ],
+      "More info": [
+        "Weitere Informationen"
+      ],
+      "Approve": [
+        "Genehmigen"
+      ],
+      "Reject": [
+        "Ablehnen"
+      ],
+      "Status": [
+        "Status"
+      ],
+      "Check the Agents page": [
+        "Zur Agenten-Seite"
+      ],
+      "Send": [
+        "Senden"
+      ],
+      "Connection error. Please try again.": [
+        "Verbindungsfehler. Bitte versuchen Sie es erneut."
+      ],
+      "Title": [
+        "Titel"
+      ],
+      "Deny": [
+        "Ablehnen"
+      ],
+      "Something went wrong.": [
+        "Etwas ist schiefgelaufen."
+      ],
+      "Try asking": [
+        "Fragen Sie doch einmal"
+      ],
+      "Denied — no change made.": [
+        "Abgelehnt — keine Änderung vorgenommen."
+      ],
+      "Done — change applied.": [
+        "Fertig — Änderung übernommen."
+      ],
+      "Needs Your Approval": [
+        "Ihre Genehmigung erforderlich"
+      ],
+      "Proposed Change": [
+        "Vorgeschlagene Änderung"
+      ],
+      "The agent wants to make a change.": [
+        "Der Agent möchte eine Änderung vornehmen."
+      ],
+      "Hide Diff": [
+        "\\u25bc Diff ausblenden"
+      ],
+      "Show Diff": [
+        "\\u25b6 Diff anzeigen"
+      ],
+      "Allow Once": [
+        "Einmal erlauben"
+      ],
+      "Allow this Session": [
+        "Diese Sitzung erlauben"
+      ],
+      "Always Allow": [
+        "Immer erlauben"
+      ],
+      "This assistant": [
+        "Dieser Agent"
+      ],
+      "is still activating.": [
+        "wird noch aktiviert."
+      ],
+      "is thinking…": [
+        "denkt nach…"
+      ],
+      "Ask": [
+        "Fragen"
+      ],
+      "Post type": [
+        ""
+      ],
+      "Post": [
+        ""
+      ],
+      "Content preview": [
+        ""
+      ],
+      "Show full content": [
+        ""
+      ],
+      "Show less": [
+        ""
+      ],
+      "Delete": [
+        "Löschen"
+      ],
+      "Agent": [
+        "Agent"
+      ],
+      "Priority": [
+        "Priorität"
+      ],
+      "Cancel": [
+        "Abbrechen"
+      ],
+      "Enabled": [
+        "Aktiviert"
+      ],
+      "Edit": [
+        "Bearbeiten"
+      ],
+      "Ask me first…": [
+        ""
+      ],
+      "Allow automatically…": [
+        ""
+      ],
+      "Never…": [
+        ""
+      ],
+      "All agents": [
+        ""
+      ],
+      "Describe the rule in plain language first.": [
+        ""
+      ],
+      "Could not save the rule.": [
+        ""
+      ],
+      "Edit rule": [
+        ""
+      ],
+      "Add rule": [
+        ""
+      ],
+      "Applies to": [
+        ""
+      ],
+      "Choose one agent, or “All agents” to apply the rule to every agent on this site.": [
+        ""
+      ],
+      "Rule": [
+        ""
+      ],
+      "Ask me first before publishing anything.": [
+        ""
+      ],
+      "Describe what the agent should do in plain language.": [
+        ""
+      ],
+      "Effect": [
+        ""
+      ],
+      "Lower numbers run first when more than one rule matches.": [
+        ""
+      ],
+      "Save rule": [
+        ""
+      ],
+      "Could not load rules.": [
+        ""
+      ],
+      "Rule enabled.": [
+        ""
+      ],
+      "Rule disabled.": [
+        ""
+      ],
+      "Could not update the rule.": [
+        ""
+      ],
+      "Delete this rule? Agents will no longer follow it.": [
+        ""
+      ],
+      "Rule deleted.": [
+        ""
+      ],
+      "Could not delete the rule.": [
+        ""
+      ],
+      "Rule saved.": [
+        ""
+      ],
+      "Rules tell agents how much to ask before acting. An agent pauses for anything a rule asks about, and runs automatically when a rule allows it.": [
+        ""
+      ],
+      "Only administrators can add or edit rules.": [
+        ""
+      ],
+      "Loading rules…": [
+        ""
+      ],
+      "No rules yet": [
+        ""
+      ],
+      "Add a rule to decide how much an agent should ask before it changes your site.": [
+        ""
+      ],
+      "Safe to run automatically — read-only, no approval needed.": [
+        "Kann gefahrlos automatisch ausgeführt werden – nur lesend, keine Genehmigung erforderlich."
+      ],
+      "Runs automatically by default; may read data that includes personal information.": [
+        "Wird standardmäßig automatisch ausgeführt; liest möglicherweise Daten, die personenbezogene Informationen enthalten."
+      ],
+      "Changes something — agents pause for your in-chat confirmation first.": [
+        "Verändert etwas – Agenten halten inne und bitten zuerst im Chat um Ihre Bestätigung."
+      ],
+      "A significant or bulk change — waits in the Approvals queue for you to allow it.": [
+        "Eine erhebliche oder umfangreiche Änderung – wartet in der Genehmigungswarteschlange auf Ihre Freigabe."
+      ],
+      "Too risky to allow at all — hidden from agents entirely, cannot be enabled.": [
+        "Zu riskant, um überhaupt zugelassen zu werden – für Agenten vollständig ausgeblendet und nicht aktivierbar."
+      ],
+      "Description": [
+        "Beschreibung"
+      ],
+      "Actions": [
+        "Aktionen"
+      ],
+      "On": [
+        "An"
+      ],
+      "Content": [
+        "Inhalte"
+      ],
+      "Comments": [
+        "Kommentare"
+      ],
+      "Users": [
+        "Benutzer"
+      ],
+      "Media": [
+        "Medien"
+      ],
+      "WooCommerce": [
+        "WooCommerce"
+      ],
+      "Plugins & Themes": [
+        "Plugins & Themes"
+      ],
+      "— choose an event —": [
+        "— Ereignis wählen —"
+      ],
+      "Custom": [
+        "Benutzerdefiniert"
+      ],
+      "Custom hook name…": [
+        "Benutzerdefinierter Hook-Name…"
+      ],
+      "Enter any WordPress action hook name.": [
+        "Geben Sie einen beliebigen WordPress-Action-Hook-Namen ein."
+      ],
+      "Prompt": [
+        "Prompt"
+      ],
+      "Lower numbers run first. Default is 10.": [
+        "Niedrigere Zahlen werden zuerst ausgeführt. Standard ist 10."
+      ],
+      "Schedule": [
+        "Zeitplan"
+      ],
+      "Describe what the agent should do on each run…": [
+        "Beschreiben Sie, was der Agent bei jeder Ausführung tun soll…"
+      ],
+      "Name": [
+        "Name"
+      ],
+      "Prompt is required.": [
+        "Ein Prompt ist erforderlich."
+      ],
+      "Delete failed.": [
+        "Löschen fehlgeschlagen."
+      ],
+      "Skill": [
+        "Skill"
+      ],
+      "Deleted “%s”.": [
+        ""
+      ],
+      "Once Hourly": [
+        ""
+      ],
+      "Twice Daily": [
+        ""
+      ],
+      "Once Daily": [
+        ""
+      ],
+      "Once Weekly": [
+        ""
+      ],
+      "post saved or updated": [
+        ""
+      ],
+      "post published": [
+        ""
+      ],
+      "draft published": [
+        ""
+      ],
+      "scheduled post goes live": [
+        ""
+      ],
+      "post updated": [
+        ""
+      ],
+      "post permanently deleted": [
+        ""
+      ],
+      "post moved to trash": [
+        ""
+      ],
+      "post restored from trash": [
+        ""
+      ],
+      "new comment inserted": [
+        ""
+      ],
+      "comment submitted": [
+        ""
+      ],
+      "comment edited": [
+        ""
+      ],
+      "comment deleted": [
+        ""
+      ],
+      "comment marked spam": [
+        ""
+      ],
+      "new user registered": [
+        ""
+      ],
+      "user profile updated": [
+        ""
+      ],
+      "user logged in": [
+        ""
+      ],
+      "user logged out": [
+        ""
+      ],
+      "user deleted": [
+        ""
+      ],
+      "password reset": [
+        ""
+      ],
+      "file uploaded": [
+        ""
+      ],
+      "attachment updated": [
+        ""
+      ],
+      "attachment deleted": [
+        ""
+      ],
+      "new order created": [
+        ""
+      ],
+      "order status changed": [
+        ""
+      ],
+      "payment completed": [
+        ""
+      ],
+      "product low stock": [
+        ""
+      ],
+      "product out of stock": [
+        ""
+      ],
+      "plugin activated": [
+        ""
+      ],
+      "plugin deactivated": [
+        ""
+      ],
+      "plugin/theme updated": [
+        ""
+      ],
+      "theme switched": [
+        ""
+      ],
+      "Choose an agent.": [
+        ""
+      ],
+      "Choose or enter a hook name.": [
+        ""
+      ],
+      "Could not save the routine.": [
+        ""
+      ],
+      "Edit routine: %s": [
+        ""
+      ],
+      "Routine": [
+        ""
+      ],
+      "Add routine": [
+        ""
+      ],
+      "No agents are available to run a routine.": [
+        ""
+      ],
+      "Scheduled task": [
+        ""
+      ],
+      "Event listener": [
+        ""
+      ],
+      "The routine type cannot be changed after creation.": [
+        ""
+      ],
+      "Optional — auto-generated if blank.": [
+        ""
+      ],
+      "Describe what the agent should do when this event fires…": [
+        ""
+      ],
+      "Optional short note.": [
+        ""
+      ],
+      "WordPress event": [
+        ""
+      ],
+      "Custom hook name": [
+        ""
+      ],
+      "Skill slug": [
+        ""
+      ],
+      "Optional. The slug of a skill to attach to this routine.": [
+        ""
+      ],
+      "Save routine": [
+        ""
+      ],
+      "Could not load history.": [
+        ""
+      ],
+      "No runs yet. Use “Test run” to run this routine once now.": [
+        ""
+      ],
+      "%d tokens": [
+        ""
+      ],
+      "%d steps": [
+        ""
+      ],
+      "View in Tasks": [
+        ""
+      ],
+      "History: %s": [
+        ""
+      ],
+      "Could not load routines.": [
+        ""
+      ],
+      "Routine paused.": [
+        ""
+      ],
+      "Routine resumed.": [
+        ""
+      ],
+      "Test run started (run %s).": [
+        ""
+      ],
+      "Test run started.": [
+        ""
+      ],
+      "Delete “%s”? This cannot be undone.": [
+        ""
+      ],
+      "No routines yet. Routines run your agents on a schedule or in response to site events.": [
+        ""
+      ],
+      "Trigger": [
+        ""
+      ],
+      "Next run": [
+        ""
+      ],
+      "Last status": [
+        ""
+      ],
+      "On / Off": [
+        ""
+      ],
+      "Off": [
+        ""
+      ],
+      "Pause": [
+        ""
+      ],
+      "Resume": [
+        ""
+      ],
+      "Test run": [
+        ""
+      ],
+      "History": [
+        ""
+      ],
+      "Scheduled background tasks are overdue (no recent cron tick). Routines on a schedule will not run until WP-Cron ticks again.": [
+        ""
+      ],
+      "Check Site Health": [
+        ""
+      ],
+      "Routine created.": [
+        ""
+      ],
+      "Routine saved.": [
+        ""
+      ],
+      "Action": [
+        "Aktion"
+      ],
+      "Dismiss": [
+        "Ausblenden"
+      ],
+      "An agent tried to run this specific action and paused here first. Nothing happens until you decide — approve to let it run once, or reject to cancel it.": [
+        "Ein Agent wollte genau diese Aktion ausführen und hat hier zuerst innegehalten. Es geschieht nichts, bis Sie entscheiden – genehmigen Sie die Aktion, um sie einmalig auszuführen, oder lehnen Sie sie ab, um sie abzubrechen."
+      ],
+      "Current": [
+        "Aktuell"
+      ],
+      "Recording your approval…": [
+        "Ihre Genehmigung wird erfasst…"
+      ],
+      "Running the approved action…": [
+        "Die genehmigte Aktion wird ausgeführt…"
+      ],
+      "Confirming result…": [
+        "Ergebnis wird bestätigt…"
+      ],
+      "Rejecting this request…": [
+        "Diese Anfrage wird abgelehnt…"
+      ],
+      "Rejected — the action will not run.": [
+        "Abgelehnt – die Aktion wird nicht ausgeführt."
+      ],
+      "Request rejected": [
+        "Anfrage abgelehnt"
+      ],
+      "Approved, but the action could not be started.": [
+        "Genehmigt, aber die Aktion konnte nicht gestartet werden."
+      ],
+      "Action completed successfully.": [
+        "Aktion erfolgreich abgeschlossen."
+      ],
+      "Action ran but reported a problem.": [
+        "Die Aktion wurde ausgeführt, hat aber ein Problem gemeldet."
+      ],
+      "Approval recorded": [
+        "Genehmigung erfasst"
+      ],
+      "Done — agent task finished": [
+        "Fertig – Agenten-Aufgabe abgeschlossen"
+      ],
+      "Finished with errors — check detail below": [
+        "Mit Fehlern abgeschlossen – Details siehe unten"
+      ],
+      "Approved and completed.": [
+        "Genehmigt und abgeschlossen."
+      ],
+      "Could not update that item.": [
+        "Dieses Element konnte nicht aktualisiert werden."
+      ],
+      "Approve all %d actions in this group? They will run in order.": [
+        "Alle %d Aktionen in dieser Gruppe genehmigen? Sie werden der Reihe nach ausgeführt."
+      ],
+      "Reject all %d actions in this group?": [
+        "Alle %d Aktionen in dieser Gruppe ablehnen?"
+      ],
+      "Approved %d actions.": [
+        "%d Aktionen genehmigt."
+      ],
+      "Rejected %d actions.": [
+        "%d Aktionen abgelehnt."
+      ],
+      "Stopped after %1$d of %2$d — %3$s": [
+        "Gestoppt nach %1$d von %2$d — %3$s"
+      ],
+      "one action failed.": [
+        "eine Aktion ist fehlgeschlagen."
+      ],
+      "%1$d succeeded, %2$d failed.": [
+        "%1$d erfolgreich, %2$d fehlgeschlagen."
+      ],
+      "Could not process that group.": [
+        "Diese Gruppe konnte nicht verarbeitet werden."
+      ],
+      "Check the box to accept the increased risk before choosing “Trust more”.": [
+        "Aktivieren Sie das Kontrollkästchen, um das erhöhte Risiko zu akzeptieren, bevor Sie „Mehr vertrauen“ wählen."
+      ],
+      "Preferences saved.": [
+        "Einstellungen gespeichert."
+      ],
+      "Could not save preferences.": [
+        "Einstellungen konnten nicht gespeichert werden."
+      ],
+      "Advanced view shows technical detail.": [
+        "Die erweiterte Ansicht zeigt technische Details."
+      ],
+      "Simple view for non-technical admins.": [
+        "Einfache Ansicht für nicht-technische Administratoren."
+      ],
+      "Complete": [
+        "Abgeschlossen"
+      ],
+      "Needs attention": [
+        "Erfordert Aufmerksamkeit"
+      ],
+      "Working…": [
+        "Wird ausgeführt…"
+      ],
+      "Preferences": [
+        "Einstellungen"
+      ],
+      "Choose how closely you want to watch agents, and whether we should email you when something is waiting.": [
+        "Legen Sie fest, wie genau Sie Agenten beaufsichtigen möchten und ob wir Ihnen eine E-Mail senden sollen, wenn etwas wartet."
+      ],
+      "I understand agents may change my site with less waiting, and I accept that increased risk.": [
+        "Ich verstehe, dass Agenten meine Website mit weniger Wartezeit verändern können, und ich akzeptiere dieses erhöhte Risiko."
+      ],
+      "Save “Trust more” preference": [
+        "Einstellung „Mehr vertrauen“ speichern"
+      ],
+      "Email me when an action is waiting for approval": [
+        "Mich per E-Mail benachrichtigen, wenn eine Aktion auf Genehmigung wartet"
+      ],
+      "Send alerts to": [
+        "Benachrichtigungen senden an"
+      ],
+      "Save email preferences": [
+        "E-Mail-Einstellungen speichern"
+      ],
+      "Waiting for you": [
+        "Wartet auf Sie"
+      ],
+      "You’re all caught up": [
+        "Sie sind auf dem neuesten Stand"
+      ],
+      "Approvals pause any action an agent rates as risky until you say yes — nothing waiting here means nothing is on hold right now.": [
+        "Genehmigungen halten jede Aktion an, die ein Agent als riskant einstuft, bis Sie zustimmen – wenn hier nichts wartet, ist derzeit nichts in der Warteschleife."
+      ],
+      "When an agent needs permission for a bigger change, it will show up here": [
+        "Wenn ein Agent eine Erlaubnis für eine größere Änderung benötigt, erscheint sie hier"
+      ],
+      " — and we’ll email you.": [
+        " – und wir senden Ihnen eine E-Mail."
+      ],
+      "%1$s · %2$d actions · %3$s ago": [
+        "%1$s · %2$d Aktionen · vor %3$s"
+      ],
+      "Approve all": [
+        "Alle genehmigen"
+      ],
+      "Reject all": [
+        "Alle ablehnen"
+      ],
+      "Agents back up files and database tables automatically before changing them.": [
+        "Agenten sichern Dateien und Datenbanktabellen automatisch, bevor sie diese verändern."
+      ],
+      "View backups and restore": [
+        "Backups ansehen und wiederherstellen"
+      ],
+      "Rules": [
+        ""
+      ],
+      "Grants": [
+        ""
+      ],
+      "Tool": [
+        "Tool"
+      ],
+      "Category": [
+        "Kategorie"
+      ],
+      "Risk": [
+        "Risiko"
+      ],
+      "MCP server reachable": [
+        ""
+      ],
+      "WebMCP tools registered": [
+        ""
+      ],
+      "Approval gate configured": [
+        ""
+      ],
+      "llms.txt present": [
+        ""
+      ],
+      "AI crawler directives in robots.txt": [
+        ""
+      ],
+      "Organization/WebSite schema": [
+        ""
+      ],
+      "WebMCP discovery manifest": [
+        ""
+      ],
+      "Commerce readiness": [
+        ""
+      ],
+      "Nothing urgent — every check looks good.": [
+        ""
+      ],
+      "Fix now": [
+        ""
+      ],
+      "Fix this with AI Radar →": [
+        ""
+      ],
+      "No one-click fix yet.": [
+        ""
+      ],
+      "The fix ran, but this check still needs attention: %s": [
+        ""
+      ],
+      "Could not apply that fix.": [
+        ""
+      ],
+      "Could not change that setting.": [
+        ""
+      ],
+      "Could not submit to the directory.": [
+        ""
+      ],
+      "Could not change exposure.": [
+        ""
+      ],
+      "Let AI agents access my site (turn on the WebMCP Bridge)": [
+        ""
+      ],
+      "Submit to Directory": [
+        ""
+      ],
+      "All checks": [
+        ""
+      ],
+      "Check": [
+        ""
+      ],
+      "Score": [
+        ""
+      ],
+      "Detail": [
+        ""
+      ],
+      "WebMCP tool exposure": [
+        ""
+      ],
+      "No tools are currently exposed to agents via WebMCP.": [
+        ""
+      ],
+      "Context": [
+        ""
+      ],
+      "Exposed": [
+        ""
+      ],
+      "Directory submission: %1$s (%2$s)": [
+        ""
+      ],
+      "Source": [
+        "Quelle"
+      ],
+      "None": [
+        "Keine"
+      ],
+      "Low": [
+        "Niedrig"
+      ],
+      "Close": [
+        "Schließen"
+      ],
+      "Profile applied: %1$d tools on, %2$d tools off.": [
+        "Profil angewendet: %1$d Tools ein, %2$d Tools aus."
+      ],
+      "Could not apply profile.": [
+        "Profil konnte nicht angewendet werden."
+      ],
+      "These profiles control which tools every agent may use. Approvals still apply for riskier actions.": [
+        "Diese Profile steuern, welche Tools jeder Agent verwenden darf. Für riskantere Aktionen gelten weiterhin Genehmigungen."
+      ],
+      "Switch to Advanced (top right) for the full tool-by-tool list.": [
+        "Wechseln Sie oben rechts zu Erweitert für die vollständige Tool-für-Tool-Liste."
+      ],
+      "Tools were customized outside a profile. Choose a card below to reset to a simple safety level.": [
+        "Die Tools wurden außerhalb eines Profils angepasst. Wählen Sie unten eine Karte, um auf eine einfache Sicherheitsstufe zurückzusetzen."
+      ],
+      "Up to %s risk": [
+        "Bis Risikostufe %s"
+      ],
+      "Right now: %1$d tools on, %2$d off · highest enabled risk: %3$s": [
+        "Aktuell: %1$d Tools ein, %2$d aus · höchste aktivierte Risikostufe: %3$s"
+      ],
+      "All risks": [
+        "Alle Risikostufen"
+      ],
+      "Medium": [
+        "Mittel"
+      ],
+      "High": [
+        "Hoch"
+      ],
+      "Extreme": [
+        "Extrem"
+      ],
+      "Toggle failed.": [
+        "Umschalten fehlgeschlagen."
+      ],
+      "You are in Advanced view (full tool list).": [
+        "Sie befinden sich in der erweiterten Ansicht (vollständige Tool-Liste)."
+      ],
+      "Search tools…": [
+        "Tools durchsuchen…"
+      ],
+      "1 tool": [
+        "1 Tool"
+      ],
+      "tools": [
+        "Tools"
+      ],
+      "Filter by risk": [
+        "Nach Risiko filtern"
+      ],
+      "No tools match this search or risk filter.": [
+        "Keine Tools entsprechen dieser Suche oder diesem Risikofilter."
+      ],
+      "No tools in this category.": [
+        "Keine Tools in dieser Kategorie."
+      ],
+      "none": [
+        "keine"
+      ],
+      "Enable high-risk tool?": [
+        ""
+      ],
+      "This tool cannot be enabled": [
+        ""
+      ],
+      "Enable tool": [
+        ""
+      ],
+      "can make a significant change to your site.": [
+        ""
+      ],
+      "Why this is high-risk: %s": [
+        ""
+      ],
+      "If an agent uses this tool later, the action will still wait for human review in the Approvals queue before it runs.": [
+        ""
+      ],
+      "Enabling this tool makes it available to eligible agents. It does not run the tool immediately.": [
+        ""
+      ],
+      "is marked Extreme Risk.": [
+        ""
+      ],
+      "Extreme-risk tools are hidden from agents entirely and blocked from running, because they are too risky for normal use.": [
+        ""
+      ],
+      "can affect account access": [
+        ""
+      ],
+      "moves money": [
+        ""
+      ],
+      "can permanently remove data": [
+        ""
+      ],
+      "changes the deployed codebase": [
+        ""
+      ],
+      "Enabled: %s": [
+        ""
+      ],
+      "Could not load page.": [
+        "Die Seite konnte nicht geladen werden."
+      ],
+      "Active": [
+        "Aktiv"
+      ],
+      "Inactive": [
+        "Inaktiv"
+      ],
+      "Activate": [
+        "Aktivieren"
+      ],
+      "Deactivate": [
+        "Deaktivieren"
+      ],
+      "No agents installed yet.": [
+        "Noch keine Agenten installiert."
+      ],
+      "Chat": [
+        "Chat"
+      ],
+      "Author": [
+        "Autor"
+      ],
+      "Version": [
+        "Version"
+      ],
+      "Import": [
+        "Importieren"
+      ],
+      "Export": [
+        "Exportieren"
+      ],
+      "A short description is required.": [
+        "Eine Kurzbeschreibung ist erforderlich."
+      ],
+      "Remove image": [
+        "Bild entfernen"
+      ],
+      "Create agent": [
+        "Agent erstellen"
+      ],
+      "Slug": [
+        "Slug"
+      ],
+      "An AI agent for this site.": [
+        ""
+      ],
+      "Pinned": [
+        ""
+      ],
+      "Assign task": [
+        ""
+      ],
+      "Duplicate": [
+        ""
+      ],
+      "Choose agent avatar": [
+        ""
+      ],
+      "Use this image": [
+        ""
+      ],
+      "Could not save the profile.": [
+        ""
+      ],
+      "Edit profile: %s": [
+        ""
+      ],
+      "Set image": [
+        ""
+      ],
+      "Leave empty to use the agent’s built-in name.": [
+        ""
+      ],
+      "Standing description": [
+        ""
+      ],
+      "Shown where this agent is introduced to other agents.": [
+        ""
+      ],
+      "Emoji avatar": [
+        ""
+      ],
+      "Used when no image is set.": [
+        ""
+      ],
+      "Pin to top": [
+        ""
+      ],
+      "Hide agent": [
+        ""
+      ],
+      "Save profile": [
+        ""
+      ],
+      "A name is required.": [
+        ""
+      ],
+      "Could not create the agent.": [
+        ""
+      ],
+      "New agent": [
+        ""
+      ],
+      "Support assistant": [
+        ""
+      ],
+      "What should it do?": [
+        ""
+      ],
+      "Answers customer questions using our knowledge base.": [
+        ""
+      ],
+      "Optional. Standing instructions the agent always follows.": [
+        ""
+      ],
+      "Import agent": [
+        ""
+      ],
+      "Choose a .zip agent template exported from this plugin.": [
+        ""
+      ],
+      "Saving order…": [
+        ""
+      ],
+      "Agent “%s” imported.": [
+        ""
+      ],
+      "Import failed. Check the .zip file and try again.": [
+        ""
+      ],
+      "Duplicated as “%s”.": [
+        ""
+      ],
+      "Export failed.": [
+        ""
+      ],
+      "Delete “%s”? This removes the agent and its files.": [
+        ""
+      ],
+      "Reorder failed.": [
+        ""
+      ],
+      "Created “%s”.": [
+        ""
+      ],
+      "Hidden agents (%d)": [
+        ""
+      ],
+      "Advanced view: drag rows to set the roster order.": [
+        ""
+      ],
+      "Pinned agents first, hidden agents collapsed below.": [
+        ""
+      ],
+      "Profile saved.": [
+        ""
+      ],
+      "Disabled": [
+        "Deaktiviert"
+      ],
+      "Local": [
+        "Lokal"
+      ],
+      "Draft": [
+        "Entwurf"
+      ],
+      "Delete this skill? This cannot be undone.": [
+        "Diesen Skill löschen? Dies kann nicht rückgängig gemacht werden."
+      ],
+      "Review": [
+        "Überprüfung"
+      ],
+      "Review draft": [
+        ""
+      ],
+      "Could not create the draft.": [
+        ""
+      ],
+      "Draft skill created. Review and publish it to make it available to agents.": [
+        ""
+      ],
+      "Create from text": [
+        ""
+      ],
+      "Drafts": [
+        ""
+      ],
+      "No skills match your search. Try a different keyword or clear the search.": [
+        ""
+      ],
+      "No skills installed yet. Import a recommended skill, create your own, or browse the community above.": [
+        ""
+      ],
+      "Create a skill from text": [
+        ""
+      ],
+      "Describe the task you want to teach the agent. A draft skill is generated from your description for you to review.": [
+        ""
+      ],
+      "Draft skill": [
+        ""
+      ],
+      "Approvals": [
+        "Genehmigungen"
+      ],
+      "Tokens": [
+        "Token"
+      ],
+      "Events": [
+        "Ereignisse"
+      ],
+      "Tools used": [
+        "Genutzte Tools"
+      ],
+      "This is a friendly activity feed. Technical names stay in Advanced detail when useful.": [
+        "Dies ist ein benutzerfreundlicher Aktivitäts-Feed. Technische Bezeichnungen bleiben bei Bedarf den erweiterten Details vorbehalten."
+      ],
+      "Time period": [
+        "Zeitraum"
+      ],
+      "Activity type": [
+        "Aktivitätstyp"
+      ],
+      "Search activity…": [
+        "Aktivitäten durchsuchen…"
+      ],
+      "1 event": [
+        "1 Ereignis"
+      ],
+      "events": [
+        "Ereignisse"
+      ],
+      "Download this log as a CSV file — handy to attach when emailing support about an issue.": [
+        "Laden Sie dieses Protokoll als CSV-Datei herunter – praktisch als Anhang, wenn Sie den Support per E-Mail zu einem Problem kontaktieren."
+      ],
+      "Export CSV": [
+        "CSV exportieren"
+      ],
+      "Nothing here yet": [
+        "Hier ist noch nichts"
+      ],
+      "No events match this filter. Try another period or clear search.": [
+        "Keine Ereignisse entsprechen diesem Filter. Versuchen Sie einen anderen Zeitraum oder löschen Sie die Suche."
+      ],
+      "When agents chat or use tools, their activity will show up here.": [
+        "Wenn Agenten chatten oder Tools verwenden, erscheint ihre Aktivität hier."
+      ],
+      "Log integrity:": [
+        ""
+      ],
+      "%d entries checked, chain intact.": [
+        ""
+      ],
+      "Chain broken at entry #%d — an entry was edited or deleted after the fact.": [
+        ""
+      ],
+      "Verified": [
+        ""
+      ],
+      "Tampering detected": [
+        ""
+      ],
+      "Sections": [
+        "Bereiche"
+      ],
+      "Type": [
+        "Typ"
+      ],
+      "Concept": [
+        "Konzept"
+      ],
+      "Open full Knowledge editor": [
+        "Vollständigen Wissens-Editor öffnen"
+      ],
+      "Terms of Service": [
+        "Nutzungsbedingungen"
+      ],
+      "Agents only use the tools you allow. Higher-risk actions still follow Approvals and your safety settings.": [
+        "Agenten verwenden nur die Tools, die Sie erlauben. Aktionen mit höherem Risiko unterliegen weiterhin den Genehmigungen und Ihren Sicherheitseinstellungen."
+      ],
+      "Need help?": [
+        "Brauchen Sie Hilfe?"
+      ],
+      "Visit our Support Center": [
+        "Besuchen Sie unser Support-Center"
+      ],
+      "Documentation": [
+        "Dokumentation"
+      ],
+      "Privacy Policy": [
+        "Datenschutzerklärung"
+      ],
+      "GDPR Policy": [
+        "DSGVO-Richtlinie"
+      ],
+      "Activity": [
+        "Aktivität"
+      ],
+      "EMERGENCY STOP: deactivate and log agent states, cancel all jobs, and disconnect providers. Continue?": [
+        "NOT-AUS: Agentenzustände deaktivieren und protokollieren, alle Jobs abbrechen und Anbieter trennen. Fortfahren?"
+      ],
+      "Turn off emergency stop?": [
+        "Not-Aus deaktivieren?"
+      ],
+      "Emergency stop restore finished with warnings:": [
+        "Wiederherstellung nach Not-Aus mit Warnungen abgeschlossen:"
+      ],
+      "Disable All Agents": [
+        "Alle Agenten deaktivieren"
+      ],
+      "Tool list blocked if manifest signature fails.": [
+        ""
+      ],
+      "Passport": [
+        ""
+      ],
+      "Yes": [
+        ""
+      ],
+      "No": [
+        ""
+      ],
+      "Risk inventory": [
+        ""
+      ],
+      "%1$d enabled · %2$d disabled": [
+        ""
+      ],
+      "Highest-risk tools currently enabled": [
+        ""
+      ],
+      "No high-risk or extreme-risk tools are enabled on this site right now.": [
+        ""
+      ],
+      "Manage tools": [
+        ""
+      ],
+      "Open approval settings": [
+        ""
+      ],
+      "%d more tools": [
+        ""
+      ],
+      "Per-agent tool scopes": [
+        ""
+      ],
+      "Version %1$s · %2$s": [
+        ""
+      ],
+      "MCP enabled: %s": [
+        ""
+      ],
+      "Highest risk": [
+        ""
+      ],
+      "None %1$d · Low %2$d · Medium %3$d · High %4$d · Extreme %5$d": [
+        ""
+      ],
+      "No high-risk or extreme-risk tools declared.": [
+        ""
+      ],
+      "Manage this agent": [
+        ""
+      ],
+      "No active agents on this site right now.": [
+        ""
+      ],
+      "Audit-log integrity": [
+        ""
+      ],
+      "Audit log may have been altered after the fact": [
+        ""
+      ],
+      "The verification check failed at entry #%d.": [
+        ""
+      ],
+      "The verification check failed. An entry was edited or deleted after the fact.": [
+        ""
+      ],
+      "Recommended next steps": [
+        ""
+      ],
+      "Pause agents": [
+        ""
+      ],
+      "use Emergency Stop on this page until you understand the break.": [
+        ""
+      ],
+      "Export logs": [
+        ""
+      ],
+      "download a copy of the current history before anything else changes.": [
+        ""
+      ],
+      "Review hosting and database access for unexpected changes.": [
+        ""
+      ],
+      "Last verification": [
+        ""
+      ],
+      "%d rows checked": [
+        ""
+      ],
+      "Broken at entry #%d": [
+        ""
+      ],
+      "This activity log is tamper-evident. Each entry is linked to the one before it, so if someone edits or deletes a later entry after the fact, the verification check fails.": [
+        ""
+      ],
+      "This does not stop database access by itself. It gives you evidence if the history can no longer be trusted.": [
+        ""
+      ],
+      "Entries written before this feature shipped may predate the chain and therefore define the chain start. The chain starts at entry #%d.": [
+        ""
+      ],
+      "Entries written before this feature shipped may predate the chain and therefore define the chain start. No chained entries have been recorded yet.": [
+        ""
+      ],
+      "View raw Activity / Audit log": [
+        ""
+      ],
+      "Could not change Emergency Stop.": [
+        ""
+      ],
+      "Advanced view expands every agent's tool list and shows the raw verify_chain() fields for the audit log.": [
+        ""
+      ],
+      "Tool risk inventory": [
+        ""
+      ],
+      "Highest enabled risk": [
+        ""
+      ],
+      "High-risk tools require extra care when you enable them. Review them in Tools.": [
+        ""
+      ],
+      "Review tools": [
+        ""
+      ],
+      "Approvals status": [
+        ""
+      ],
+      "%d waiting for your OK": [
+        ""
+      ],
+      "Mode: %1$s · Comfort: %2$s": [
+        ""
+      ],
+      "Actions that need your approval wait here. A queued action does not run until you approve it.": [
+        ""
+      ],
+      "Open approvals": [
+        ""
+      ],
+      "View integrity details": [
+        ""
+      ],
+      "Emergency Stop": [
+        ""
+      ],
+      "Emergency Stop turns off every active agent, cancels pending and in-progress jobs, disconnects AI providers, and blocks new agent activity until an administrator restores service.": [
+        ""
+      ],
+      "Restore agent system": [
+        ""
+      ],
+      "Active agents": [
+        ""
+      ],
+      "%d active": [
+        ""
+      ],
+      "%1$d with a high-risk tool · %2$d with MCP on": [
+        ""
+      ],
+      "View agent scopes": [
+        ""
+      ],
+      "Looking for AI discoverability and access, not safety controls?": [
+        ""
+      ],
+      "Visit Site Passport to see what outside AI systems can discover and reach on this site.": [
+        ""
+      ],
+      "Open Site Passport": [
+        ""
+      ],
+      "Related screens": [
+        ""
+      ],
+      "Revoke": [
+        "Entziehen"
+      ],
+      "Could not load grants.": [
+        ""
+      ],
+      "Stop always allowing this tool? Agents will ask again before running it.": [
+        ""
+      ],
+      "Grant revoked.": [
+        ""
+      ],
+      "Could not revoke the grant.": [
+        ""
+      ],
+      "Always-allow grants let an agent run a tool without asking first. Revoke one to make that agent pause for approval again.": [
+        ""
+      ],
+      "Loading grants…": [
+        ""
+      ],
+      "No grants yet": [
+        ""
+      ],
+      "When you choose “Allow always” on an approval, it will show up here.": [
+        ""
+      ],
+      "Grant": [
+        ""
+      ],
+      "%s — all agents": [
+        ""
+      ],
+      "%1$s — only for %2$s": [
+        ""
+      ]
+    }
+  }
+}

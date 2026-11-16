@@ -717,14 +717,14 @@
 			el(
 				PluginSidebarMoreMenuItem,
 				{ target: SIDEBAR_NAME },
-				'Agent Builder'
+				'Siteloom'
 			),
 
 			el(
 				PluginSidebar,
 				{
 					name:  SIDEBAR_NAME,
-					title: 'Agent Builder',
+					title: 'Siteloom',
 					icon:  'format-chat',
 				},
 

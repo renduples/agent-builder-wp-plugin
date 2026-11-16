@@ -17,39 +17,39 @@ class Tools_Payload {
 
 	private static function tool_category_labels(): array {
 		return array(
-			'all'                     => __( 'All', 'agent-builder' ),
-			'agents'                  => __( 'Agents', 'agent-builder' ),
-			'ai-visibility'           => __( 'AI Visibility', 'agent-builder' ),
-			'analytics'               => __( 'Analytics', 'agent-builder' ),
-			'assistant-trainer'       => __( 'Agents', 'agent-builder' ),
-			'caching'                 => __( 'Caching', 'agent-builder' ),
-			'cli'                     => __( 'CLI', 'agent-builder' ),
-			'communication'           => __( 'Communication', 'agent-builder' ),
-			'content'                 => __( 'Content', 'agent-builder' ),
-			'crm'                     => __( 'CRM', 'agent-builder' ),
-			'database'                => __( 'Database', 'agent-builder' ),
-			'dataforseo'              => __( 'DataForSEO', 'agent-builder' ),
-			'ecommerce'               => __( 'Ecommerce', 'agent-builder' ),
-			'email'                   => __( 'Email', 'agent-builder' ),
-			'files'                   => __( 'Files', 'agent-builder' ),
-			'forms'                   => __( 'Forms', 'agent-builder' ),
-			'gbp'                     => __( 'Google Business', 'agent-builder' ),
-			'git'                     => __( 'Git', 'agent-builder' ),
-			'google-search-marketing' => __( 'Search Marketing', 'agent-builder' ),
-			'google-workspace'        => __( 'Google Workspace', 'agent-builder' ),
-			'maintenance'             => __( 'Maintenance', 'agent-builder' ),
-			'media'                   => __( 'Media', 'agent-builder' ),
-			'orchestration'           => __( 'Orchestration', 'agent-builder' ),
-			'plugins'                 => __( 'Plugins', 'agent-builder' ),
-			'security'                => __( 'Security', 'agent-builder' ),
-			'seo'                     => __( 'SEO', 'agent-builder' ),
-			'site-audit'              => __( 'Site Audit', 'agent-builder' ),
-			'site-health'             => __( 'Site Health', 'agent-builder' ),
-			'themes'                  => __( 'Themes', 'agent-builder' ),
-			'users'                   => __( 'Users', 'agent-builder' ),
-			'utility'                 => __( 'Utility', 'agent-builder' ),
-			'web'                     => __( 'Web', 'agent-builder' ),
-			'wordpress'               => __( 'WordPress', 'agent-builder' ),
+			'all'                     => __( 'All', 'siteloom' ),
+			'agents'                  => __( 'Agents', 'siteloom' ),
+			'ai-visibility'           => __( 'AI Visibility', 'siteloom' ),
+			'analytics'               => __( 'Analytics', 'siteloom' ),
+			'assistant-trainer'       => __( 'Agents', 'siteloom' ),
+			'caching'                 => __( 'Caching', 'siteloom' ),
+			'cli'                     => __( 'CLI', 'siteloom' ),
+			'communication'           => __( 'Communication', 'siteloom' ),
+			'content'                 => __( 'Content', 'siteloom' ),
+			'crm'                     => __( 'CRM', 'siteloom' ),
+			'database'                => __( 'Database', 'siteloom' ),
+			'dataforseo'              => __( 'DataForSEO', 'siteloom' ),
+			'ecommerce'               => __( 'Ecommerce', 'siteloom' ),
+			'email'                   => __( 'Email', 'siteloom' ),
+			'files'                   => __( 'Files', 'siteloom' ),
+			'forms'                   => __( 'Forms', 'siteloom' ),
+			'gbp'                     => __( 'Google Business', 'siteloom' ),
+			'git'                     => __( 'Git', 'siteloom' ),
+			'google-search-marketing' => __( 'Search Marketing', 'siteloom' ),
+			'google-workspace'        => __( 'Google Workspace', 'siteloom' ),
+			'maintenance'             => __( 'Maintenance', 'siteloom' ),
+			'media'                   => __( 'Media', 'siteloom' ),
+			'orchestration'           => __( 'Orchestration', 'siteloom' ),
+			'plugins'                 => __( 'Plugins', 'siteloom' ),
+			'security'                => __( 'Security', 'siteloom' ),
+			'seo'                     => __( 'SEO', 'siteloom' ),
+			'site-audit'              => __( 'Site Audit', 'siteloom' ),
+			'site-health'             => __( 'Site Health', 'siteloom' ),
+			'themes'                  => __( 'Themes', 'siteloom' ),
+			'users'                   => __( 'Users', 'siteloom' ),
+			'utility'                 => __( 'Utility', 'siteloom' ),
+			'web'                     => __( 'Web', 'siteloom' ),
+			'wordpress'               => __( 'WordPress', 'siteloom' ),
 		);
 	}
 
@@ -167,7 +167,7 @@ class Tools_Payload {
 			'id'    => 'all',
 			'label' => sprintf(
 				/* translators: %d: tool count */
-				__( 'All (%d)', 'agent-builder' ),
+				__( 'All (%d)', 'siteloom' ),
 				(int) ( $counts['all'] ?? 0 )
 			),
 			'url'   => admin_url( 'admin.php?page=agentic-tools&tab=all' ),
@@ -197,7 +197,7 @@ class Tools_Payload {
 		}
 
 		$panel_title = 'all' === $tab
-			? __( 'All tools', 'agent-builder' )
+			? __( 'All tools', 'siteloom' )
 			: self::tool_category_label( $tab );
 
 		$is_advanced = class_exists( \Agentic\Admin_Menu_Handler::class )
@@ -234,13 +234,13 @@ class Tools_Payload {
 		return array(
 			'page'             => 'tools',
 			'tab'              => $tab,
-			'title'            => __( 'Tools', 'agent-builder' ),
+			'title'            => __( 'Tools', 'siteloom' ),
 			'panel_title'      => $is_advanced
 				? $panel_title
-				: __( 'What may agents do?', 'agent-builder' ),
+				: __( 'What may agents do?', 'siteloom' ),
 			'description'      => $is_advanced
-				? __( 'Enable or disable tools agents can use. Group by category using the tabs.', 'agent-builder' )
-				: __( 'Pick a simple safety profile. We turn tools on or off to match — no need to manage hundreds of tools one by one.', 'agent-builder' ),
+				? __( 'Enable or disable tools agents can use. Group by category using the tabs.', 'siteloom' )
+				: __( 'Pick a simple safety profile. We turn tools on or off to match — no need to manage hundreds of tools one by one.', 'siteloom' ),
 			'rows'             => $rows,
 			'tabs'             => $tabs,
 			'counts'           => $counts,
@@ -257,7 +257,7 @@ class Tools_Payload {
 			'docs_url'         => 'https://agentic-plugin.com/documentation/tools/',
 			'footer_policy'    => __(
 				'Agents only use the tools you allow. Higher-risk actions still follow Approvals and your safety settings. Provider processing of chat content is covered by our Privacy Policy.',
-				'agent-builder'
+				'siteloom'
 			),
 		);
 	}

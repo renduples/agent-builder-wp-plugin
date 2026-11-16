@@ -1,0 +1,114 @@
+{
+  "translation-revision-date": "2026-08-20 16:00+0000",
+  "generator": "WP-CLI/2.12.0",
+  "source": "src/knowledge-wizard/index.js",
+  "domain": "messages",
+  "locale_data": {
+    "messages": {
+      "": {
+        "domain": "messages",
+        "lang": "it_IT",
+        "plural-forms": "nplurals=2; plural=(n != 1);"
+      },
+      "Source": [
+        "Origine"
+      ],
+      "Back": [
+        "Indietro"
+      ],
+      "Loading…": [
+        "Caricamento…"
+      ],
+      "Title": [
+        "Titolo"
+      ],
+      "Continue": [
+        "Continua"
+      ],
+      "Back to Dashboard": [
+        "Torna alla bacheca"
+      ],
+      "Paste text": [
+        "Incolla il testo"
+      ],
+      "Upload a file": [
+        "Carica un file"
+      ],
+      "Pick existing pages": [
+        "Scegli pagine esistenti"
+      ],
+      "Title & tags": [
+        "Titolo e tag"
+      ],
+      "Could not load pages.": [
+        "Impossibile caricare le pagine."
+      ],
+      "Please choose a plain text or Markdown file (.txt or .md).": [
+        "Scegli un file di testo semplice o Markdown (.txt o .md)."
+      ],
+      "Could not read that file.": [
+        "Impossibile leggere questo file."
+      ],
+      "Something went wrong saving this knowledge.": [
+        "Si è verificato un problema durante il salvataggio di questa conoscenza."
+      ],
+      "\"%s\" is saved!": [
+        "“%s” è stato salvato!"
+      ],
+      "Your agents can now use this. Add another, or review it in the full Knowledge Wiki.": [
+        "I tuoi agenti possono ora utilizzarla. Aggiungine un'altra oppure rivedila nella Wiki della conoscenza completa."
+      ],
+      "Add another": [
+        "Aggiungine un'altra"
+      ],
+      "View Knowledge Wiki": [
+        "Visualizza la Wiki della conoscenza"
+      ],
+      "Where is this knowledge coming from?": [
+        "Da dove proviene questa conoscenza?"
+      ],
+      "Paste the text": [
+        "Incolla il testo"
+      ],
+      "A fact, policy, FAQ answer — anything you want your agents to know is true.": [
+        "Un dato di fatto, una policy, una risposta alle FAQ — qualsiasi informazione che i tuoi agenti devono considerare vera."
+      ],
+      "Upload a text or Markdown file": [
+        "Carica un file di testo o Markdown"
+      ],
+      "Loaded \"%s\" — you can review and edit the text below.": [
+        "“%s” caricato — puoi rivedere e modificare il testo qui sotto."
+      ],
+      "Search your pages and posts": [
+        "Cerca tra le tue pagine e i tuoi articoli"
+      ],
+      "Leave blank to see recent pages": [
+        "Lascia vuoto per vedere le pagine recenti"
+      ],
+      "No matching pages or posts.": [
+        "Nessuna pagina o articolo corrispondente."
+      ],
+      "%s page(s)/post(s) selected.": [
+        "%s pagine/articoli selezionati."
+      ],
+      "A short, clear name, e.g. \"Return policy\" or \"Support hours\".": [
+        "Un nome breve e chiaro, es. “Politica di reso” oppure “Orari dell'assistenza”."
+      ],
+      "Tags (optional)": [
+        "Tag (facoltativo)"
+      ],
+      "Comma-separated, e.g. billing, returns, policy.": [
+        "Separati da virgola, es. fatturazione, resi, policy."
+      ],
+      "Save knowledge": [
+        "Salva la conoscenza"
+      ],
+      "Wizard steps": [
+        ""
+      ],
+      "File contents": [
+        ""
+      ]
+    }
+  }
+}

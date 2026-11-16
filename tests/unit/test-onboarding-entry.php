@@ -361,7 +361,7 @@ class Test_Onboarding_Entry extends TestCase {
 			$strings = array_filter( array_merge( $m[1], $m[2] ) );
 
 			foreach ( $strings as $string ) {
-				if ( 'agent-builder' === $string ) {
+				if ( 'siteloom' === $string ) {
 					continue;
 				}
 				$this->assertDoesNotMatchRegularExpression(

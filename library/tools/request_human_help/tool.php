@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * The free plugin owns the event; delivery is somebody else's job. This tool
  * builds the payload, records it in the audit log, and passes it through the
- * `agentic_human_escalation` filter. Agent Builder Pro subscribes to that
+ * `agentic_human_escalation` filter. Siteloom Pro subscribes to that
  * filter and fans the escalation out to Slack and to a configured recipient.
  * With no subscriber, we fall back to emailing the site administrator so the
  * free plugin still does something useful on its own.
@@ -170,7 +170,7 @@ class Request_Human_Help extends \Agentic\Tool_Base {
 		 *   [ 'channel' => 'slack', 'success' => true ]
 		 *   [ 'channel' => 'email', 'success' => false, 'error' => 'no_recipient_configured' ]
 		 *
-		 * Agent Builder Pro attaches its Slack and email channels here.
+		 * Siteloom Pro attaches its Slack and email channels here.
 		 *
 		 * @param array $results Delivery results, one per channel.
 		 * @param array $payload Escalation details.
@@ -256,7 +256,7 @@ class Request_Human_Help extends \Agentic\Tool_Base {
 
 		$subject = sprintf(
 			/* translators: 1: urgency, 2: agent slug */
-			__( '[%1$s] %2$s needs a human', 'agent-builder' ),
+			__( '[%1$s] %2$s needs a human', 'siteloom' ),
 			strtoupper( $payload['urgency'] ),
 			$payload['agent']
 		);
@@ -265,11 +265,11 @@ class Request_Human_Help extends \Agentic\Tool_Base {
 			/* translators: 1: reason, 2: summary, 3: user name, 4: site url, 5: timestamp */
 			__(
 				"An agent asked for a person to take over.\n\nReason: %1\$s\n\nSummary:\n%2\$s\n\nUser: %3\$s\nSite: %4\$s\nTime: %5\$s\n",
-				'agent-builder'
+				'siteloom'
 			),
 			$payload['reason'],
 			$payload['summary'],
-			'' !== $payload['user_name'] ? $payload['user_name'] : __( 'not signed in', 'agent-builder' ),
+			'' !== $payload['user_name'] ? $payload['user_name'] : __( 'not signed in', 'siteloom' ),
 			$payload['site_url'],
 			$payload['timestamp']
 		);

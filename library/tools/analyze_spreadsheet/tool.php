@@ -94,7 +94,7 @@ class Analyze_Spreadsheet extends \Agentic\Tool_Base {
 	 * @return string
 	 */
 	public function get_unavailable_reason(): string {
-		return __( 'Spreadsheet tools require the PhpSpreadsheet library, which is not installed on this site.', 'agent-builder' );
+		return __( 'Spreadsheet tools require the PhpSpreadsheet library, which is not installed on this site.', 'siteloom' );
 	}
 
 	public function execute( array $arguments ): array {

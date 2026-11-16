@@ -1,0 +1,114 @@
+{
+  "translation-revision-date": "2026-08-20 16:00+0000",
+  "generator": "WP-CLI/2.12.0",
+  "source": "src/knowledge-wizard/index.js",
+  "domain": "messages",
+  "locale_data": {
+    "messages": {
+      "": {
+        "domain": "messages",
+        "lang": "es_ES",
+        "plural-forms": "nplurals=2; plural=(n != 1);"
+      },
+      "Source": [
+        "Origen"
+      ],
+      "Back": [
+        "Atrás"
+      ],
+      "Loading…": [
+        "Cargando…"
+      ],
+      "Title": [
+        "Título"
+      ],
+      "Continue": [
+        "Continuar"
+      ],
+      "Back to Dashboard": [
+        "Volver al escritorio"
+      ],
+      "Paste text": [
+        "Pegar texto"
+      ],
+      "Upload a file": [
+        "Subir un archivo"
+      ],
+      "Pick existing pages": [
+        "Elegir páginas existentes"
+      ],
+      "Title & tags": [
+        "Título y etiquetas"
+      ],
+      "Could not load pages.": [
+        "No se han podido cargar las páginas."
+      ],
+      "Please choose a plain text or Markdown file (.txt or .md).": [
+        "Elija un archivo de texto plano o Markdown (.txt o .md)."
+      ],
+      "Could not read that file.": [
+        "No se ha podido leer ese archivo."
+      ],
+      "Something went wrong saving this knowledge.": [
+        "Se ha producido un error al guardar este conocimiento."
+      ],
+      "\"%s\" is saved!": [
+        "¡«%s» se ha guardado!"
+      ],
+      "Your agents can now use this. Add another, or review it in the full Knowledge Wiki.": [
+        "Sus agentes ya pueden usarlo. Añada otro o revíselo en el wiki de conocimiento completo."
+      ],
+      "Add another": [
+        "Añadir otro"
+      ],
+      "View Knowledge Wiki": [
+        "Ver el wiki de conocimiento"
+      ],
+      "Where is this knowledge coming from?": [
+        "¿De dónde procede este conocimiento?"
+      ],
+      "Paste the text": [
+        "Pegue el texto"
+      ],
+      "A fact, policy, FAQ answer — anything you want your agents to know is true.": [
+        "Un dato, una política, una respuesta de las FAQ — cualquier cosa que quiera que sus agentes den por cierta."
+      ],
+      "Upload a text or Markdown file": [
+        "Suba un archivo de texto o Markdown"
+      ],
+      "Loaded \"%s\" — you can review and edit the text below.": [
+        "Se ha cargado «%s» — puede revisar y editar el texto a continuación."
+      ],
+      "Search your pages and posts": [
+        "Busque en sus páginas y entradas"
+      ],
+      "Leave blank to see recent pages": [
+        "Déjelo en blanco para ver las páginas recientes"
+      ],
+      "No matching pages or posts.": [
+        "No hay páginas ni entradas que coincidan."
+      ],
+      "%s page(s)/post(s) selected.": [
+        "%s página(s)/entrada(s) seleccionada(s)."
+      ],
+      "A short, clear name, e.g. \"Return policy\" or \"Support hours\".": [
+        "Un nombre breve y claro, p. ej. «Política de devoluciones» u «Horario de soporte»."
+      ],
+      "Tags (optional)": [
+        "Etiquetas (opcional)"
+      ],
+      "Comma-separated, e.g. billing, returns, policy.": [
+        "Separadas por comas, p. ej. facturación, devoluciones, política."
+      ],
+      "Save knowledge": [
+        "Guardar el conocimiento"
+      ],
+      "Wizard steps": [
+        ""
+      ],
+      "File contents": [
+        ""
+      ]
+    }
+  }
+}

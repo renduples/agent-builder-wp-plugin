@@ -6,7 +6,7 @@
   "category": "content",
   "icon": "🎬",
   "version": "1.1.0",
-  "author": "Agent Builder",
+  "author": "Siteloom",
   "author_uri": "https://agentic-plugin.com",
   "team": true,
   "capabilities": [ "edit_posts" ],

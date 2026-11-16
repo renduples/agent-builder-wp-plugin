@@ -69,7 +69,7 @@ class Toggle_File_Editing extends Tool_Base {
 		} else {
 			$instructions = $disabled
 				? 'The file editor is already disabled. Nothing to change.'
-				: 'Recommended: ask the site administrator to add this line to wp-config.php, above the line "/* That\'s all, stop editing! */": ' . $line . ' Agent Builder does not change this setting itself.';
+				: 'Recommended: ask the site administrator to add this line to wp-config.php, above the line "/* That\'s all, stop editing! */": ' . $line . ' Siteloom does not change this setting itself.';
 		}
 
 		return array(

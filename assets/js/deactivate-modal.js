@@ -1,5 +1,5 @@
 /**
- * Agent Builder — Plugin Deactivation Modal
+ * Siteloom — Plugin Deactivation Modal
  *
  * Intercepts the "Deactivate" link on the Plugins page and replaces it with
  * a two-step modal:
@@ -53,7 +53,7 @@
 		modal.innerHTML =
 			'<div class="adm-header">' +
 				'<span class="adm-icon">⚙️</span>' +
-				'<h2 id="agentic-deactivate-title">Deactivate Agent Builder</h2>' +
+				'<h2 id="agentic-deactivate-title">Deactivate Siteloom</h2>' +
 				'<button class="adm-close" aria-label="Cancel">&times;</button>' +
 			'</div>' +
 
@@ -74,7 +74,7 @@
 						'<span class="adm-option-icon">🗑️</span>' +
 						'<span class="adm-option-body">' +
 							'<strong>Delete all plugin data</strong>' +
-							'<small>' + escHtml( i18n.deleteDescription || 'When you delete the plugin, conversations, logs, API keys, settings, every Agent Builder database table (including the agents and skills you created or bought) and its data folder in uploads (the agent folders you built, automatic backups, knowledge files and generated documents) are permanently removed.' ) + '</small>' +
+							'<small>' + escHtml( i18n.deleteDescription || 'When you delete the plugin, conversations, logs, API keys, settings, every Siteloom database table (including the agents and skills you created or bought) and its data folder in uploads (the agent folders you built, automatic backups, knowledge files and generated documents) are permanently removed.' ) + '</small>' +
 						'</span>' +
 					'</label>' +
 				'</div>' +
@@ -151,7 +151,7 @@
 
 				if ( deleteData ) {
 					/* Confirm destructive action */
-					agenticUI.confirm( i18n.deleteConfirm || 'When you delete the plugin, all Agent Builder data, including the agents and skills you created or bought and all automatic backups, will be permanently deleted. This cannot be undone. Continue?', { danger: true, confirmText: i18n.deleteConfirmButton || 'Delete everything' } ).then( function ( ok ) {
+					agenticUI.confirm( i18n.deleteConfirm || 'When you delete the plugin, all Siteloom data, including the agents and skills you created or bought and all automatic backups, will be permanently deleted. This cannot be undone. Continue?', { danger: true, confirmText: i18n.deleteConfirmButton || 'Delete everything' } ).then( function ( ok ) {
 						if ( ! ok ) {
 							return;
 						}
@@ -261,7 +261,7 @@
 
 	/* ─── Intercept the Deactivate link ─── */
 	function init() {
-		var rows = document.querySelectorAll( 'tr[data-slug="agent-builder"]' );
+		var rows = document.querySelectorAll( 'tr[data-slug="siteloom"], tr[data-plugin$="/siteloom.php"]' );
 		rows.forEach( function ( row ) {
 			var deactivateLink = row.querySelector( 'a[href*="action=deactivate"]' );
 			if ( ! deactivateLink ) return;

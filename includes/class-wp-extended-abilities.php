@@ -9,7 +9,7 @@
  *
  * @package    Agent_Builder
  * @subpackage Includes
- * @author     Agent Builder Team <support@agentic-plugin.com>
+ * @author     Siteloom Team <support@agentic-plugin.com>
  * @license    GPL-2.0-or-later https://www.gnu.org/licenses/gpl-2.0.html
  * @link       https://agentic-plugin.com
  * @since      2.2.0
@@ -47,40 +47,40 @@ class WP_Extended_Abilities {
 		Abilities_API::register_category(
 			'wp-content',
 			array(
-				'label'       => __( 'WordPress Content', 'agent-builder' ),
-				'description' => __( 'Abilities for reading and managing WordPress content.', 'agent-builder' ),
+				'label'       => __( 'WordPress Content', 'siteloom' ),
+				'description' => __( 'Abilities for reading and managing WordPress content.', 'siteloom' ),
 			)
 		);
 
 		Abilities_API::register_category(
 			'wp-taxonomy',
 			array(
-				'label'       => __( 'WordPress Taxonomies', 'agent-builder' ),
-				'description' => __( 'Abilities for reading WordPress taxonomies and terms.', 'agent-builder' ),
+				'label'       => __( 'WordPress Taxonomies', 'siteloom' ),
+				'description' => __( 'Abilities for reading WordPress taxonomies and terms.', 'siteloom' ),
 			)
 		);
 
 		Abilities_API::register_category(
 			'wp-media',
 			array(
-				'label'       => __( 'WordPress Media', 'agent-builder' ),
-				'description' => __( 'Abilities for working with the WordPress media library.', 'agent-builder' ),
+				'label'       => __( 'WordPress Media', 'siteloom' ),
+				'description' => __( 'Abilities for working with the WordPress media library.', 'siteloom' ),
 			)
 		);
 
 		Abilities_API::register_category(
 			'wp-admin',
 			array(
-				'label'       => __( 'WordPress Administration', 'agent-builder' ),
-				'description' => __( 'Abilities for reading WordPress admin data: plugins, themes, options.', 'agent-builder' ),
+				'label'       => __( 'WordPress Administration', 'siteloom' ),
+				'description' => __( 'Abilities for reading WordPress admin data: plugins, themes, options.', 'siteloom' ),
 			)
 		);
 
 		Abilities_API::register_category(
 			'wp-comments',
 			array(
-				'label'       => __( 'WordPress Comments', 'agent-builder' ),
-				'description' => __( 'Abilities for working with WordPress comments.', 'agent-builder' ),
+				'label'       => __( 'WordPress Comments', 'siteloom' ),
+				'description' => __( 'Abilities for working with WordPress comments.', 'siteloom' ),
 			)
 		);
 	}
@@ -108,30 +108,30 @@ class WP_Extended_Abilities {
 		Abilities_API::register(
 			self::NS . 'get-posts',
 			array(
-				'label'               => __( 'Get Posts', 'agent-builder' ),
-				'description'         => __( 'Retrieves a list of posts matching the given criteria.', 'agent-builder' ),
+				'label'               => __( 'Get Posts', 'siteloom' ),
+				'description'         => __( 'Retrieves a list of posts matching the given criteria.', 'siteloom' ),
 				'category'            => 'wp-content',
 				'input_schema'        => array(
 					'type'                 => 'object',
 					'properties'           => array(
 						'post_type'      => array(
 							'type'        => 'string',
-							'description' => __( 'Post type slug.', 'agent-builder' ),
+							'description' => __( 'Post type slug.', 'siteloom' ),
 							'default'     => 'post',
 						),
 						'post_status'    => array(
 							'type'        => 'string',
-							'description' => __( 'Post status.', 'agent-builder' ),
+							'description' => __( 'Post status.', 'siteloom' ),
 							'default'     => 'publish',
 						),
 						'posts_per_page' => array(
 							'type'        => 'integer',
-							'description' => __( 'Number of posts to return (max 100).', 'agent-builder' ),
+							'description' => __( 'Number of posts to return (max 100).', 'siteloom' ),
 							'default'     => 10,
 						),
 						'orderby'        => array(
 							'type'        => 'string',
-							'description' => __( 'Field to order by.', 'agent-builder' ),
+							'description' => __( 'Field to order by.', 'siteloom' ),
 							'default'     => 'date',
 						),
 						'order'          => array(
@@ -141,15 +141,15 @@ class WP_Extended_Abilities {
 						),
 						's'              => array(
 							'type'        => 'string',
-							'description' => __( 'Search keyword.', 'agent-builder' ),
+							'description' => __( 'Search keyword.', 'siteloom' ),
 						),
 						'category_name'  => array(
 							'type'        => 'string',
-							'description' => __( 'Category slug to filter by.', 'agent-builder' ),
+							'description' => __( 'Category slug to filter by.', 'siteloom' ),
 						),
 						'tag'            => array(
 							'type'        => 'string',
-							'description' => __( 'Tag slug to filter by.', 'agent-builder' ),
+							'description' => __( 'Tag slug to filter by.', 'siteloom' ),
 						),
 					),
 					'additionalProperties' => false,
@@ -209,8 +209,8 @@ class WP_Extended_Abilities {
 		Abilities_API::register(
 			self::NS . 'get-post',
 			array(
-				'label'               => __( 'Get Single Post', 'agent-builder' ),
-				'description'         => __( 'Retrieves a single post by ID, including its content and metadata.', 'agent-builder' ),
+				'label'               => __( 'Get Single Post', 'siteloom' ),
+				'description'         => __( 'Retrieves a single post by ID, including its content and metadata.', 'siteloom' ),
 				'category'            => 'wp-content',
 				'input_schema'        => array(
 					'type'                 => 'object',
@@ -218,7 +218,7 @@ class WP_Extended_Abilities {
 					'properties'           => array(
 						'post_id' => array(
 							'type'        => 'integer',
-							'description' => __( 'The post ID.', 'agent-builder' ),
+							'description' => __( 'The post ID.', 'siteloom' ),
 						),
 					),
 					'additionalProperties' => false,
@@ -240,7 +240,7 @@ class WP_Extended_Abilities {
 				'execute_callback'    => static function ( $input ): array|\WP_Error {
 					$post = get_post( (int) $input['post_id'] );
 					if ( ! $post ) {
-						return new \WP_Error( 'not_found', __( 'Post not found.', 'agent-builder' ) );
+						return new \WP_Error( 'not_found', __( 'Post not found.', 'siteloom' ) );
 					}
 					return array(
 						'ID'           => $post->ID,
@@ -272,8 +272,8 @@ class WP_Extended_Abilities {
 		Abilities_API::register(
 			self::NS . 'get-post-meta',
 			array(
-				'label'               => __( 'Get Post Meta', 'agent-builder' ),
-				'description'         => __( 'Retrieves metadata for a post. Returns a specific key or all public meta.', 'agent-builder' ),
+				'label'               => __( 'Get Post Meta', 'siteloom' ),
+				'description'         => __( 'Retrieves metadata for a post. Returns a specific key or all public meta.', 'siteloom' ),
 				'category'            => 'wp-content',
 				'input_schema'        => array(
 					'type'                 => 'object',
@@ -281,12 +281,12 @@ class WP_Extended_Abilities {
 					'properties'           => array(
 						'post_id'  => array(
 							'type'        => 'integer',
-							'description' => __( 'The post ID.', 'agent-builder' ),
+							'description' => __( 'The post ID.', 'siteloom' ),
 						),
 						// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Schema definition, not a DB query argument.
 						'meta_key' => array(
 							'type'        => 'string',
-							'description' => __( 'Specific meta key to retrieve. Omit for all public meta.', 'agent-builder' ),
+							'description' => __( 'Specific meta key to retrieve. Omit for all public meta.', 'siteloom' ),
 						),
 					),
 					'additionalProperties' => false,
@@ -294,12 +294,12 @@ class WP_Extended_Abilities {
 				'execute_callback'    => static function ( $input ): array|\WP_Error {
 					$post_id = (int) $input['post_id'];
 					if ( ! get_post( $post_id ) ) {
-						return new \WP_Error( 'not_found', __( 'Post not found.', 'agent-builder' ) );
+						return new \WP_Error( 'not_found', __( 'Post not found.', 'siteloom' ) );
 					}
 					if ( ! empty( $input['meta_key'] ) ) {
 						$key = sanitize_key( $input['meta_key'] );
 						if ( Tool_Helpers::is_sensitive_name( $key ) ) {
-							return new \WP_Error( 'blocked', __( 'Access to sensitive meta keys is not allowed.', 'agent-builder' ) );
+							return new \WP_Error( 'blocked', __( 'Access to sensitive meta keys is not allowed.', 'siteloom' ) );
 						}
 						return array( $key => get_post_meta( $post_id, $key, true ) );
 					}
@@ -331,8 +331,8 @@ class WP_Extended_Abilities {
 		Abilities_API::register(
 			self::NS . 'get-post-types',
 			array(
-				'label'               => __( 'Get Post Types', 'agent-builder' ),
-				'description'         => __( 'Lists all registered public post types and their properties.', 'agent-builder' ),
+				'label'               => __( 'Get Post Types', 'siteloom' ),
+				'description'         => __( 'Lists all registered public post types and their properties.', 'siteloom' ),
 				'category'            => 'wp-content',
 				'execute_callback'    => static function (): array {
 					$types  = get_post_types( array( 'public' => true ), 'objects' );
@@ -366,8 +366,8 @@ class WP_Extended_Abilities {
 		Abilities_API::register(
 			self::NS . 'search-content',
 			array(
-				'label'               => __( 'Search Content', 'agent-builder' ),
-				'description'         => __( 'Full-text search across posts, pages, and custom post types.', 'agent-builder' ),
+				'label'               => __( 'Search Content', 'siteloom' ),
+				'description'         => __( 'Full-text search across posts, pages, and custom post types.', 'siteloom' ),
 				'category'            => 'wp-content',
 				'input_schema'        => array(
 					'type'                 => 'object',
@@ -375,16 +375,16 @@ class WP_Extended_Abilities {
 					'properties'           => array(
 						'query'     => array(
 							'type'        => 'string',
-							'description' => __( 'Search query string.', 'agent-builder' ),
+							'description' => __( 'Search query string.', 'siteloom' ),
 							'minLength'   => 1,
 						),
 						'post_type' => array(
 							'type'        => 'string',
-							'description' => __( 'Limit to a specific post type. Default: any.', 'agent-builder' ),
+							'description' => __( 'Limit to a specific post type. Default: any.', 'siteloom' ),
 						),
 						'limit'     => array(
 							'type'        => 'integer',
-							'description' => __( 'Max results (max 50).', 'agent-builder' ),
+							'description' => __( 'Max results (max 50).', 'siteloom' ),
 							'default'     => 10,
 						),
 					),
@@ -435,20 +435,20 @@ class WP_Extended_Abilities {
 		Abilities_API::register(
 			self::NS . 'get-recent-posts',
 			array(
-				'label'               => __( 'Get Recent Posts', 'agent-builder' ),
-				'description'         => __( 'Returns the most recently published posts.', 'agent-builder' ),
+				'label'               => __( 'Get Recent Posts', 'siteloom' ),
+				'description'         => __( 'Returns the most recently published posts.', 'siteloom' ),
 				'category'            => 'wp-content',
 				'input_schema'        => array(
 					'type'                 => 'object',
 					'properties'           => array(
 						'count'     => array(
 							'type'        => 'integer',
-							'description' => __( 'Number of posts (max 50).', 'agent-builder' ),
+							'description' => __( 'Number of posts (max 50).', 'siteloom' ),
 							'default'     => 5,
 						),
 						'post_type' => array(
 							'type'        => 'string',
-							'description' => __( 'Post type slug.', 'agent-builder' ),
+							'description' => __( 'Post type slug.', 'siteloom' ),
 							'default'     => 'post',
 						),
 					),
@@ -503,8 +503,8 @@ class WP_Extended_Abilities {
 		Abilities_API::register(
 			self::NS . 'get-taxonomies',
 			array(
-				'label'               => __( 'Get Taxonomies', 'agent-builder' ),
-				'description'         => __( 'Lists all registered public taxonomies.', 'agent-builder' ),
+				'label'               => __( 'Get Taxonomies', 'siteloom' ),
+				'description'         => __( 'Lists all registered public taxonomies.', 'siteloom' ),
 				'category'            => 'wp-taxonomy',
 				'execute_callback'    => static function (): array {
 					$taxonomies = get_taxonomies( array( 'public' => true ), 'objects' );
@@ -538,8 +538,8 @@ class WP_Extended_Abilities {
 		Abilities_API::register(
 			self::NS . 'get-terms',
 			array(
-				'label'               => __( 'Get Terms', 'agent-builder' ),
-				'description'         => __( 'Retrieves terms from a taxonomy (categories, tags, or custom).', 'agent-builder' ),
+				'label'               => __( 'Get Terms', 'siteloom' ),
+				'description'         => __( 'Retrieves terms from a taxonomy (categories, tags, or custom).', 'siteloom' ),
 				'category'            => 'wp-taxonomy',
 				'input_schema'        => array(
 					'type'                 => 'object',
@@ -547,32 +547,32 @@ class WP_Extended_Abilities {
 					'properties'           => array(
 						'taxonomy'   => array(
 							'type'        => 'string',
-							'description' => __( 'Taxonomy slug (e.g., category, post_tag).', 'agent-builder' ),
+							'description' => __( 'Taxonomy slug (e.g., category, post_tag).', 'siteloom' ),
 						),
 						'hide_empty' => array(
 							'type'        => 'boolean',
-							'description' => __( 'Hide terms with no posts.', 'agent-builder' ),
+							'description' => __( 'Hide terms with no posts.', 'siteloom' ),
 							'default'     => true,
 						),
 						'number'     => array(
 							'type'        => 'integer',
-							'description' => __( 'Max terms to return (max 200).', 'agent-builder' ),
+							'description' => __( 'Max terms to return (max 200).', 'siteloom' ),
 							'default'     => 50,
 						),
 						'parent'     => array(
 							'type'        => 'integer',
-							'description' => __( 'Parent term ID to filter by.', 'agent-builder' ),
+							'description' => __( 'Parent term ID to filter by.', 'siteloom' ),
 						),
 						'search'     => array(
 							'type'        => 'string',
-							'description' => __( 'Search terms by name.', 'agent-builder' ),
+							'description' => __( 'Search terms by name.', 'siteloom' ),
 						),
 					),
 					'additionalProperties' => false,
 				),
 				'execute_callback'    => static function ( $input ): array|\WP_Error {
 					if ( ! taxonomy_exists( $input['taxonomy'] ) ) {
-						return new \WP_Error( 'invalid_taxonomy', __( 'Taxonomy does not exist.', 'agent-builder' ) );
+						return new \WP_Error( 'invalid_taxonomy', __( 'Taxonomy does not exist.', 'siteloom' ) );
 					}
 					$args = array(
 						'taxonomy'   => sanitize_key( $input['taxonomy'] ),
@@ -620,8 +620,8 @@ class WP_Extended_Abilities {
 		Abilities_API::register(
 			self::NS . 'get-categories',
 			array(
-				'label'               => __( 'Get Categories', 'agent-builder' ),
-				'description'         => __( 'Returns all post categories with their hierarchy.', 'agent-builder' ),
+				'label'               => __( 'Get Categories', 'siteloom' ),
+				'description'         => __( 'Returns all post categories with their hierarchy.', 'siteloom' ),
 				'category'            => 'wp-taxonomy',
 				'input_schema'        => array(
 					'type'                 => 'object',
@@ -668,15 +668,15 @@ class WP_Extended_Abilities {
 		Abilities_API::register(
 			self::NS . 'get-tags',
 			array(
-				'label'               => __( 'Get Tags', 'agent-builder' ),
-				'description'         => __( 'Returns all post tags, sorted by usage count.', 'agent-builder' ),
+				'label'               => __( 'Get Tags', 'siteloom' ),
+				'description'         => __( 'Returns all post tags, sorted by usage count.', 'siteloom' ),
 				'category'            => 'wp-taxonomy',
 				'input_schema'        => array(
 					'type'                 => 'object',
 					'properties'           => array(
 						'number' => array(
 							'type'        => 'integer',
-							'description' => __( 'Max tags to return.', 'agent-builder' ),
+							'description' => __( 'Max tags to return.', 'siteloom' ),
 							'default'     => 50,
 						),
 					),
@@ -734,24 +734,24 @@ class WP_Extended_Abilities {
 		Abilities_API::register(
 			self::NS . 'get-media',
 			array(
-				'label'               => __( 'Get Media Items', 'agent-builder' ),
-				'description'         => __( 'Lists media library attachments with their URLs and metadata.', 'agent-builder' ),
+				'label'               => __( 'Get Media Items', 'siteloom' ),
+				'description'         => __( 'Lists media library attachments with their URLs and metadata.', 'siteloom' ),
 				'category'            => 'wp-media',
 				'input_schema'        => array(
 					'type'                 => 'object',
 					'properties'           => array(
 						'mime_type' => array(
 							'type'        => 'string',
-							'description' => __( 'Filter by MIME type (e.g., image, image/jpeg, application/pdf).', 'agent-builder' ),
+							'description' => __( 'Filter by MIME type (e.g., image, image/jpeg, application/pdf).', 'siteloom' ),
 						),
 						'count'     => array(
 							'type'        => 'integer',
-							'description' => __( 'Number of items (max 50).', 'agent-builder' ),
+							'description' => __( 'Number of items (max 50).', 'siteloom' ),
 							'default'     => 10,
 						),
 						'search'    => array(
 							'type'        => 'string',
-							'description' => __( 'Search by filename or title.', 'agent-builder' ),
+							'description' => __( 'Search by filename or title.', 'siteloom' ),
 						),
 					),
 					'additionalProperties' => false,
@@ -808,8 +808,8 @@ class WP_Extended_Abilities {
 		Abilities_API::register(
 			self::NS . 'get-image-sizes',
 			array(
-				'label'               => __( 'Get Image Sizes', 'agent-builder' ),
-				'description'         => __( 'Lists all registered image sizes and their dimensions.', 'agent-builder' ),
+				'label'               => __( 'Get Image Sizes', 'siteloom' ),
+				'description'         => __( 'Lists all registered image sizes and their dimensions.', 'siteloom' ),
 				'category'            => 'wp-media',
 				'execute_callback'    => static function (): array {
 					$sizes      = wp_get_registered_image_subsizes();
@@ -850,8 +850,8 @@ class WP_Extended_Abilities {
 		Abilities_API::register(
 			self::NS . 'get-plugins',
 			array(
-				'label'               => __( 'Get Plugins', 'agent-builder' ),
-				'description'         => __( 'Lists all installed plugins with their status (active/inactive) and version.', 'agent-builder' ),
+				'label'               => __( 'Get Plugins', 'siteloom' ),
+				'description'         => __( 'Lists all installed plugins with their status (active/inactive) and version.', 'siteloom' ),
 				'category'            => 'wp-admin',
 				'execute_callback'    => static function (): array {
 					if ( ! function_exists( 'get_plugins' ) ) {
@@ -889,8 +889,8 @@ class WP_Extended_Abilities {
 		Abilities_API::register(
 			self::NS . 'get-themes',
 			array(
-				'label'               => __( 'Get Themes', 'agent-builder' ),
-				'description'         => __( 'Lists installed themes and identifies the active theme.', 'agent-builder' ),
+				'label'               => __( 'Get Themes', 'siteloom' ),
+				'description'         => __( 'Lists installed themes and identifies the active theme.', 'siteloom' ),
 				'category'            => 'wp-admin',
 				'execute_callback'    => static function (): array {
 					$themes       = wp_get_themes();
@@ -926,8 +926,8 @@ class WP_Extended_Abilities {
 		Abilities_API::register(
 			self::NS . 'get-option',
 			array(
-				'label'               => __( 'Get Option', 'agent-builder' ),
-				'description'         => __( 'Retrieves a WordPress option value by name.', 'agent-builder' ),
+				'label'               => __( 'Get Option', 'siteloom' ),
+				'description'         => __( 'Retrieves a WordPress option value by name.', 'siteloom' ),
 				'category'            => 'wp-admin',
 				'input_schema'        => array(
 					'type'                 => 'object',
@@ -935,7 +935,7 @@ class WP_Extended_Abilities {
 					'properties'           => array(
 						'name' => array(
 							'type'        => 'string',
-							'description' => __( 'Option name (e.g., blogname, permalink_structure).', 'agent-builder' ),
+							'description' => __( 'Option name (e.g., blogname, permalink_structure).', 'siteloom' ),
 						),
 					),
 					'additionalProperties' => false,
@@ -943,7 +943,7 @@ class WP_Extended_Abilities {
 				'execute_callback'    => static function ( $input ): array|\WP_Error {
 					$name = sanitize_key( $input['name'] );
 					if ( Tool_Helpers::is_sensitive_name( $name ) ) {
-						return new \WP_Error( 'blocked', __( 'Access to sensitive options is not allowed.', 'agent-builder' ) );
+						return new \WP_Error( 'blocked', __( 'Access to sensitive options is not allowed.', 'siteloom' ) );
 					}
 					$value = get_option( $name );
 					return array(
@@ -969,24 +969,24 @@ class WP_Extended_Abilities {
 		Abilities_API::register(
 			self::NS . 'get-users',
 			array(
-				'label'               => __( 'Get Users', 'agent-builder' ),
-				'description'         => __( 'Lists WordPress users with their roles. No sensitive data is returned.', 'agent-builder' ),
+				'label'               => __( 'Get Users', 'siteloom' ),
+				'description'         => __( 'Lists WordPress users with their roles. No sensitive data is returned.', 'siteloom' ),
 				'category'            => 'wp-admin',
 				'input_schema'        => array(
 					'type'                 => 'object',
 					'properties'           => array(
 						'role'   => array(
 							'type'        => 'string',
-							'description' => __( 'Filter by role (e.g., administrator, editor, subscriber).', 'agent-builder' ),
+							'description' => __( 'Filter by role (e.g., administrator, editor, subscriber).', 'siteloom' ),
 						),
 						'number' => array(
 							'type'        => 'integer',
-							'description' => __( 'Max users to return (max 100).', 'agent-builder' ),
+							'description' => __( 'Max users to return (max 100).', 'siteloom' ),
 							'default'     => 20,
 						),
 						'search' => array(
 							'type'        => 'string',
-							'description' => __( 'Search by name, email, or login.', 'agent-builder' ),
+							'description' => __( 'Search by name, email, or login.', 'siteloom' ),
 						),
 					),
 					'additionalProperties' => false,
@@ -1038,8 +1038,8 @@ class WP_Extended_Abilities {
 		Abilities_API::register(
 			self::NS . 'get-menus',
 			array(
-				'label'               => __( 'Get Navigation Menus', 'agent-builder' ),
-				'description'         => __( 'Lists registered navigation menus and their assigned locations.', 'agent-builder' ),
+				'label'               => __( 'Get Navigation Menus', 'siteloom' ),
+				'description'         => __( 'Lists registered navigation menus and their assigned locations.', 'siteloom' ),
 				'category'            => 'wp-admin',
 				'execute_callback'    => static function (): array {
 					$menus     = wp_get_nav_menus();
@@ -1084,8 +1084,8 @@ class WP_Extended_Abilities {
 		Abilities_API::register(
 			self::NS . 'get-sidebars',
 			array(
-				'label'               => __( 'Get Sidebars & Widget Areas', 'agent-builder' ),
-				'description'         => __( 'Lists all registered widget areas (sidebars) and their active widgets.', 'agent-builder' ),
+				'label'               => __( 'Get Sidebars & Widget Areas', 'siteloom' ),
+				'description'         => __( 'Lists all registered widget areas (sidebars) and their active widgets.', 'siteloom' ),
 				'category'            => 'wp-admin',
 				'execute_callback'    => static function (): array {
 					global $wp_registered_sidebars;
@@ -1119,8 +1119,8 @@ class WP_Extended_Abilities {
 		Abilities_API::register(
 			self::NS . 'get-roles',
 			array(
-				'label'               => __( 'Get User Roles', 'agent-builder' ),
-				'description'         => __( 'Lists all registered user roles and their capabilities.', 'agent-builder' ),
+				'label'               => __( 'Get User Roles', 'siteloom' ),
+				'description'         => __( 'Lists all registered user roles and their capabilities.', 'siteloom' ),
 				'category'            => 'wp-admin',
 				'execute_callback'    => static function (): array {
 					$roles  = wp_roles();
@@ -1153,8 +1153,8 @@ class WP_Extended_Abilities {
 		Abilities_API::register(
 			self::NS . 'get-permalink-structure',
 			array(
-				'label'               => __( 'Get Permalink Structure', 'agent-builder' ),
-				'description'         => __( 'Returns the current permalink structure, rewrite rules status, and front page settings.', 'agent-builder' ),
+				'label'               => __( 'Get Permalink Structure', 'siteloom' ),
+				'description'         => __( 'Returns the current permalink structure, rewrite rules status, and front page settings.', 'siteloom' ),
 				'category'            => 'wp-admin',
 				'execute_callback'    => static function (): array {
 					return array(
@@ -1192,24 +1192,24 @@ class WP_Extended_Abilities {
 		Abilities_API::register(
 			self::NS . 'get-comments',
 			array(
-				'label'               => __( 'Get Comments', 'agent-builder' ),
-				'description'         => __( 'Retrieves comments, optionally filtered by post, status, or author.', 'agent-builder' ),
+				'label'               => __( 'Get Comments', 'siteloom' ),
+				'description'         => __( 'Retrieves comments, optionally filtered by post, status, or author.', 'siteloom' ),
 				'category'            => 'wp-comments',
 				'input_schema'        => array(
 					'type'                 => 'object',
 					'properties'           => array(
 						'post_id' => array(
 							'type'        => 'integer',
-							'description' => __( 'Filter by post ID.', 'agent-builder' ),
+							'description' => __( 'Filter by post ID.', 'siteloom' ),
 						),
 						'status'  => array(
 							'type'        => 'string',
-							'description' => __( 'Comment status: approve, hold, spam, trash, all.', 'agent-builder' ),
+							'description' => __( 'Comment status: approve, hold, spam, trash, all.', 'siteloom' ),
 							'default'     => 'approve',
 						),
 						'number'  => array(
 							'type'        => 'integer',
-							'description' => __( 'Max comments (max 100).', 'agent-builder' ),
+							'description' => __( 'Max comments (max 100).', 'siteloom' ),
 							'default'     => 20,
 						),
 					),
@@ -1266,8 +1266,8 @@ class WP_Extended_Abilities {
 		Abilities_API::register(
 			self::NS . 'get-menu-items',
 			array(
-				'label'               => __( 'Get Menu Items', 'agent-builder' ),
-				'description'         => __( 'Returns all items in a specific navigation menu with their URLs, labels, and hierarchy.', 'agent-builder' ),
+				'label'               => __( 'Get Menu Items', 'siteloom' ),
+				'description'         => __( 'Returns all items in a specific navigation menu with their URLs, labels, and hierarchy.', 'siteloom' ),
 				'category'            => 'wp-admin',
 				'input_schema'        => array(
 					'type'                 => 'object',
@@ -1275,7 +1275,7 @@ class WP_Extended_Abilities {
 					'properties'           => array(
 						'menu_id' => array(
 							'type'        => 'integer',
-							'description' => __( 'The menu term_id (get it from get-menus).', 'agent-builder' ),
+							'description' => __( 'The menu term_id (get it from get-menus).', 'siteloom' ),
 						),
 					),
 					'additionalProperties' => false,
@@ -1283,7 +1283,7 @@ class WP_Extended_Abilities {
 				'execute_callback'    => static function ( $input ): array|\WP_Error {
 					$items = wp_get_nav_menu_items( (int) $input['menu_id'] );
 					if ( false === $items ) {
-						return new \WP_Error( 'not_found', __( 'Menu not found.', 'agent-builder' ) );
+						return new \WP_Error( 'not_found', __( 'Menu not found.', 'siteloom' ) );
 					}
 					return array_map(
 						static function ( $item ) {
@@ -1319,15 +1319,15 @@ class WP_Extended_Abilities {
 		Abilities_API::register(
 			self::NS . 'get-registered-blocks',
 			array(
-				'label'               => __( 'Get Registered Blocks', 'agent-builder' ),
-				'description'         => __( 'Lists all registered Gutenberg block types with their categories and attributes.', 'agent-builder' ),
+				'label'               => __( 'Get Registered Blocks', 'siteloom' ),
+				'description'         => __( 'Lists all registered Gutenberg block types with their categories and attributes.', 'siteloom' ),
 				'category'            => 'wp-content',
 				'input_schema'        => array(
 					'type'                 => 'object',
 					'properties'           => array(
 						'namespace' => array(
 							'type'        => 'string',
-							'description' => __( 'Filter by block namespace (e.g., core, woocommerce).', 'agent-builder' ),
+							'description' => __( 'Filter by block namespace (e.g., core, woocommerce).', 'siteloom' ),
 						),
 					),
 					'additionalProperties' => false,
@@ -1372,8 +1372,8 @@ class WP_Extended_Abilities {
 		Abilities_API::register(
 			self::NS . 'get-cron-events',
 			array(
-				'label'               => __( 'Get Cron Events', 'agent-builder' ),
-				'description'         => __( 'Lists all scheduled WP-Cron events with their next run time and recurrence.', 'agent-builder' ),
+				'label'               => __( 'Get Cron Events', 'siteloom' ),
+				'description'         => __( 'Lists all scheduled WP-Cron events with their next run time and recurrence.', 'siteloom' ),
 				'category'            => 'wp-admin',
 				'execute_callback'    => static function (): array {
 					$crons  = _get_cron_array();
@@ -1411,8 +1411,8 @@ class WP_Extended_Abilities {
 		Abilities_API::register(
 			self::NS . 'get-post-revisions',
 			array(
-				'label'               => __( 'Get Post Revisions', 'agent-builder' ),
-				'description'         => __( 'Returns the revision history for a specific post.', 'agent-builder' ),
+				'label'               => __( 'Get Post Revisions', 'siteloom' ),
+				'description'         => __( 'Returns the revision history for a specific post.', 'siteloom' ),
 				'category'            => 'wp-content',
 				'input_schema'        => array(
 					'type'                 => 'object',
@@ -1420,7 +1420,7 @@ class WP_Extended_Abilities {
 					'properties'           => array(
 						'post_id' => array(
 							'type'        => 'integer',
-							'description' => __( 'The post ID to get revisions for.', 'agent-builder' ),
+							'description' => __( 'The post ID to get revisions for.', 'siteloom' ),
 						),
 					),
 					'additionalProperties' => false,
@@ -1428,7 +1428,7 @@ class WP_Extended_Abilities {
 				'execute_callback'    => static function ( $input ): array|\WP_Error {
 					$post = get_post( (int) $input['post_id'] );
 					if ( ! $post ) {
-						return new \WP_Error( 'not_found', __( 'Post not found.', 'agent-builder' ) );
+						return new \WP_Error( 'not_found', __( 'Post not found.', 'siteloom' ) );
 					}
 					$revisions = wp_get_post_revisions( $post->ID, array( 'posts_per_page' => 20 ) );
 					return array_map(
@@ -1462,8 +1462,8 @@ class WP_Extended_Abilities {
 		Abilities_API::register(
 			self::NS . 'get-site-health',
 			array(
-				'label'               => __( 'Get Site Health', 'agent-builder' ),
-				'description'         => __( 'Returns the Site Health status — overall rating and individual test results.', 'agent-builder' ),
+				'label'               => __( 'Get Site Health', 'siteloom' ),
+				'description'         => __( 'Returns the Site Health status — overall rating and individual test results.', 'siteloom' ),
 				'category'            => 'wp-admin',
 				'execute_callback'    => static function (): array {
 					if ( ! class_exists( 'WP_Site_Health' ) ) {
@@ -1508,19 +1508,19 @@ class WP_Extended_Abilities {
 		Abilities_API::register(
 			self::NS . 'get-rewrite-rules',
 			array(
-				'label'               => __( 'Get Rewrite Rules', 'agent-builder' ),
-				'description'         => __( 'Returns current URL rewrite rules with their regex patterns and query matches.', 'agent-builder' ),
+				'label'               => __( 'Get Rewrite Rules', 'siteloom' ),
+				'description'         => __( 'Returns current URL rewrite rules with their regex patterns and query matches.', 'siteloom' ),
 				'category'            => 'wp-admin',
 				'input_schema'        => array(
 					'type'                 => 'object',
 					'properties'           => array(
 						'search' => array(
 							'type'        => 'string',
-							'description' => __( 'Filter rules matching this string in pattern or query.', 'agent-builder' ),
+							'description' => __( 'Filter rules matching this string in pattern or query.', 'siteloom' ),
 						),
 						'limit'  => array(
 							'type'        => 'integer',
-							'description' => __( 'Max rules to return (max 200).', 'agent-builder' ),
+							'description' => __( 'Max rules to return (max 200).', 'siteloom' ),
 							'default'     => 50,
 						),
 					),
@@ -1568,8 +1568,8 @@ class WP_Extended_Abilities {
 		Abilities_API::register(
 			self::NS . 'get-shortcodes',
 			array(
-				'label'               => __( 'Get Registered Shortcodes', 'agent-builder' ),
-				'description'         => __( 'Lists all registered shortcode tags.', 'agent-builder' ),
+				'label'               => __( 'Get Registered Shortcodes', 'siteloom' ),
+				'description'         => __( 'Lists all registered shortcode tags.', 'siteloom' ),
 				'category'            => 'wp-content',
 				'execute_callback'    => static function (): array {
 					global $shortcode_tags;
@@ -1607,8 +1607,8 @@ class WP_Extended_Abilities {
 		Abilities_API::register(
 			self::NS . 'get-active-widgets',
 			array(
-				'label'               => __( 'Get Active Widgets', 'agent-builder' ),
-				'description'         => __( 'Lists active widget instances across all sidebars, including their settings.', 'agent-builder' ),
+				'label'               => __( 'Get Active Widgets', 'siteloom' ),
+				'description'         => __( 'Lists active widget instances across all sidebars, including their settings.', 'siteloom' ),
 				'category'            => 'wp-admin',
 				'execute_callback'    => static function (): array {
 					global $wp_registered_widgets;
@@ -1647,15 +1647,15 @@ class WP_Extended_Abilities {
 		Abilities_API::register(
 			self::NS . 'get-post-counts',
 			array(
-				'label'               => __( 'Get Post Counts', 'agent-builder' ),
-				'description'         => __( 'Returns post counts grouped by status for one or all post types.', 'agent-builder' ),
+				'label'               => __( 'Get Post Counts', 'siteloom' ),
+				'description'         => __( 'Returns post counts grouped by status for one or all post types.', 'siteloom' ),
 				'category'            => 'wp-content',
 				'input_schema'        => array(
 					'type'                 => 'object',
 					'properties'           => array(
 						'post_type' => array(
 							'type'        => 'string',
-							'description' => __( 'Post type slug. Default: all public types.', 'agent-builder' ),
+							'description' => __( 'Post type slug. Default: all public types.', 'siteloom' ),
 						),
 					),
 					'additionalProperties' => false,
@@ -1693,15 +1693,15 @@ class WP_Extended_Abilities {
 		Abilities_API::register(
 			self::NS . 'get-rest-routes',
 			array(
-				'label'               => __( 'Get REST API Routes', 'agent-builder' ),
-				'description'         => __( 'Lists all registered REST API routes with their methods and namespaces.', 'agent-builder' ),
+				'label'               => __( 'Get REST API Routes', 'siteloom' ),
+				'description'         => __( 'Lists all registered REST API routes with their methods and namespaces.', 'siteloom' ),
 				'category'            => 'wp-admin',
 				'input_schema'        => array(
 					'type'                 => 'object',
 					'properties'           => array(
 						'namespace' => array(
 							'type'        => 'string',
-							'description' => __( 'Filter by namespace (e.g., wp/v2, wc/v3).', 'agent-builder' ),
+							'description' => __( 'Filter by namespace (e.g., wp/v2, wc/v3).', 'siteloom' ),
 						),
 					),
 					'additionalProperties' => false,

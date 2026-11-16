@@ -1,6 +1,6 @@
 <?php
 /**
- * Agent Builder — MCP endpoint
+ * Siteloom — MCP endpoint
  *
  * Exposes each agent's own Model Context Protocol JSON-RPC endpoint on this
  * site (GET/POST /wp-json/agentic/{slug}/mcp) so that an AI app the site
@@ -105,14 +105,14 @@ class Agentic_MCP_Server {
 		if ( ! is_user_logged_in() ) {
 			return new \WP_Error(
 				'rest_forbidden',
-				__( 'Authentication required.', 'agent-builder' ),
+				__( 'Authentication required.', 'siteloom' ),
 				array( 'status' => 401 )
 			);
 		}
 		if ( ! current_user_can( 'edit_posts' ) ) {
 			return new \WP_Error(
 				'rest_forbidden',
-				__( 'You are not allowed to use this MCP endpoint.', 'agent-builder' ),
+				__( 'You are not allowed to use this MCP endpoint.', 'siteloom' ),
 				array( 'status' => 403 )
 			);
 		}
@@ -121,7 +121,7 @@ class Agentic_MCP_Server {
 		if ( '' === $slug || ! self::is_mcp_enabled( $slug ) ) {
 			return new \WP_Error(
 				'agentic_mcp_disabled',
-				__( 'MCP is not enabled for this agent. An administrator can turn it on in Settings > MCP.', 'agent-builder' ),
+				__( 'MCP is not enabled for this agent. An administrator can turn it on in Settings > MCP.', 'siteloom' ),
 				array( 'status' => 403 )
 			);
 		}
@@ -161,7 +161,7 @@ class Agentic_MCP_Server {
 							'protocolVersion' => '2024-11-05',
 							'capabilities'    => array( 'tools' => new \stdClass() ),
 							'serverInfo'      => array(
-								'name'    => 'Agent Builder MCP — ' . $slug,
+								'name'    => 'Siteloom MCP — ' . $slug,
 								'version' => defined( 'AGENT_BUILDER_VERSION' ) ? AGENT_BUILDER_VERSION : '1.0.0',
 							),
 						)
@@ -196,7 +196,7 @@ class Agentic_MCP_Server {
 	 * Build the MCP tools list for one agent's endpoint.
 	 *
 	 * Prefers WordPress core's native Abilities API (6.9+). On older sites
-	 * where that doesn't exist yet, falls back to Agent Builder's own tool
+	 * where that doesn't exist yet, falls back to Siteloom's own tool
 	 * registry directly — same tools, same MCP transport, no dependency on
 	 * a WordPress version this plugin's own "Requires at least: 6.4" predates.
 	 *
@@ -234,7 +234,7 @@ class Agentic_MCP_Server {
 				continue;
 			}
 
-			// Agent Builder's own abilities (agent-builder/*) go through the
+			// Siteloom's own abilities (agent-builder/*) go through the
 			// same MCP-safety posture as the registry fallback below, so a
 			// high-risk tool isn't advertised via MCP just because the site
 			// happens to be on 6.9+ — abilities from OTHER plugins are left
@@ -279,7 +279,7 @@ class Agentic_MCP_Server {
 	}
 
 	/**
-	 * Build the MCP tools list directly from Agent Builder's own tool
+	 * Build the MCP tools list directly from Siteloom's own tool
 	 * registry — the pre-6.9 fallback, since core has no Abilities API to
 	 * read from yet. Same enabled/safety posture Abilities_Bridge applies
 	 * when it registers these same tools as native abilities on newer sites.
@@ -345,25 +345,25 @@ class Agentic_MCP_Server {
 		if ( '' === $slug || ! class_exists( '\\Agentic_Agent_Registry' ) ) {
 			return array(
 				'ready'  => false,
-				'reason' => __( 'Unknown agent.', 'agent-builder' ),
+				'reason' => __( 'Unknown agent.', 'siteloom' ),
 			);
 		}
 		if ( ! \Agentic_Agent_Registry::get_instance()->get_agent_instance( $slug ) ) {
 			return array(
 				'ready'  => false,
-				'reason' => __( 'Agent is not active.', 'agent-builder' ),
+				'reason' => __( 'Agent is not active.', 'siteloom' ),
 			);
 		}
 		if ( ! class_exists( '\\Agentic\\Abilities_Manifest' ) ) {
 			return array(
 				'ready'  => false,
-				'reason' => __( 'Abilities manifest system unavailable.', 'agent-builder' ),
+				'reason' => __( 'Abilities manifest system unavailable.', 'siteloom' ),
 			);
 		}
 		if ( ! \Agentic\Abilities_Manifest::load( $slug ) ) {
 			return array(
 				'ready'  => false,
-				'reason' => __( 'No abilities.json manifest for this agent.', 'agent-builder' ),
+				'reason' => __( 'No abilities.json manifest for this agent.', 'siteloom' ),
 			);
 		}
 		if ( ! \Agentic\Abilities_Manifest::verify_integrity( $slug ) ) {
@@ -374,13 +374,13 @@ class Agentic_MCP_Server {
 			);
 			return array(
 				'ready'  => false,
-				'reason' => __( 'Manifest signature mismatch — this agent\'s tools are blocked until it is re-signed.', 'agent-builder' ),
+				'reason' => __( 'Manifest signature mismatch — this agent\'s tools are blocked until it is re-signed.', 'siteloom' ),
 			);
 		}
 		if ( ! self::is_mcp_enabled( $slug ) ) {
 			return array(
 				'ready'  => false,
-				'reason' => __( 'MCP is off for this agent.', 'agent-builder' ),
+				'reason' => __( 'MCP is off for this agent.', 'siteloom' ),
 			);
 		}
 		return array(
@@ -504,7 +504,7 @@ class Agentic_MCP_Server {
 	}
 
 	/**
-	 * Whether an Agent Builder tool should ever be listed or callable via
+	 * Whether a Siteloom tool should ever be listed or callable via
 	 * MCP — shell/code-execution/remote-install tools and anything at
 	 * HIGH/EXTREME risk stay off the MCP surface entirely, matching the
 	 * posture Abilities_Bridge already applies for the native-adapter path.
@@ -555,7 +555,7 @@ class Agentic_MCP_Server {
 	}
 
 	/**
-	 * Capability required to call a given Agent Builder tool via MCP —
+	 * Capability required to call a given Siteloom tool via MCP —
 	 * read-only tools only need edit_posts, everything else needs
 	 * manage_options. Mirrors Abilities_Bridge's own read/write split.
 	 *
@@ -572,7 +572,7 @@ class Agentic_MCP_Server {
 	}
 
 	/**
-	 * If $ability_name is one of Agent Builder's own (agent-builder/*),
+	 * If $ability_name is one of Siteloom's own (agent-builder/*),
 	 * return the underlying tool name; otherwise null (a third-party
 	 * ability this plugin has no risk model for).
 	 *
@@ -793,7 +793,7 @@ class Agentic_MCP_Server {
 	}
 
 	/**
-	 * Execute a tool directly via Agent Builder's own registry — the
+	 * Execute a tool directly via Siteloom's own registry — the
 	 * pre-6.9 fallback. Enforces the same enabled/safety checks as the
 	 * listing, plus the read/write capability check the native path gets
 	 * for free from the ability's own permission_callback.

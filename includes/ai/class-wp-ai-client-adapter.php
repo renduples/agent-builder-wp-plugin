@@ -8,7 +8,7 @@
  *
  * Only instantiated / registered when WP_AI_Detection::has_ai_client() is true.
  * Gives users the "configure once in Settings → Connectors" experience while
- * keeping every Agent Builder safety, observability, multi-agent, and approval
+ * keeping every Siteloom safety, observability, multi-agent, and approval
  * feature intact.
  *
  * @package    Agent_Builder

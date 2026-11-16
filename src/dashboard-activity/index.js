@@ -85,30 +85,30 @@ function ActivityCard() {
 	return (
 		<Fragment>
 			<div className="agentic-card-header agentic-flex-between">
-				<h2>{ __( 'Activity', 'agent-builder' ) }</h2>
+				<h2>{ __( 'Activity', 'siteloom' ) }</h2>
 				<a
 					className="agentic-card-header-link"
 					href={ activityLogUrl }
 				>
-					{ __( 'View Activity →', 'agent-builder' ) }
+					{ __( 'View Activity →', 'siteloom' ) }
 				</a>
 			</div>
 
 			{ error && (
 				<p className="agentic-status-error">
-					{ __( 'Could not load activity.', 'agent-builder' ) }
+					{ __( 'Could not load activity.', 'siteloom' ) }
 				</p>
 			) }
 
 			<div className="agentic-metrics-grid">
 				<Metric
 					value={ formatInt( activity.actions ) }
-					label={ __( 'Total Actions', 'agent-builder' ) }
+					label={ __( 'Total Actions', 'siteloom' ) }
 					href={ activityLogUrl }
 				/>
 				<Metric
 					value={ formatInt( activity.tokens ) }
-					label={ __( 'Tokens Used', 'agent-builder' ) }
+					label={ __( 'Tokens Used', 'siteloom' ) }
 					href={ usageLink }
 				/>
 				{ Number( activity.cost ) > 0 && (
@@ -116,30 +116,30 @@ function ActivityCard() {
 						value={ '$' + Number( activity.cost ).toFixed( 4 ) }
 						label={
 							isPro
-								? __( 'Est. Cost', 'agent-builder' )
-								: __( 'Estimated Usage', 'agent-builder' )
+								? __( 'Est. Cost', 'siteloom' )
+								: __( 'Estimated Usage', 'siteloom' )
 						}
 						href={ usageLink }
 					/>
 				) }
 				<Metric
 					value={ formatInt( agents.active ) }
-					label={ __( 'Active Agents', 'agent-builder' ) }
+					label={ __( 'Active Agents', 'siteloom' ) }
 					href={ buildUrl( 'agentic-agents' ) }
 				/>
 				<Metric
 					value={ formatInt( agents.uploaded ) }
-					label={ __( 'Uploaded Agents', 'agent-builder' ) }
+					label={ __( 'Uploaded Agents', 'siteloom' ) }
 					href={ buildUrl( 'agentic-agents' ) }
 				/>
 				<Metric
 					value={ formatInt( agents.user_created ) }
-					label={ __( 'User-Created Agents', 'agent-builder' ) }
+					label={ __( 'User-Created Agents', 'siteloom' ) }
 					href={ buildUrl( 'agentic-agents' ) }
 				/>
 				<Metric
 					value={ formatInt( agents.community ) }
-					label={ __( 'Community Agents', 'agent-builder' ) }
+					label={ __( 'Community Agents', 'siteloom' ) }
 					href="https://agentic-plugin.com/community-agents/"
 				/>
 			</div>
