@@ -167,7 +167,7 @@
 				if ( agenticDeactivate.canSendFeedback ) {
 					showStep( 2 );
 				} else {
-					doDeactivate( deleteData, '', '' );
+					doDeactivate( deleteData, '', '', false );
 				}
 			} );
 		}
@@ -193,7 +193,7 @@
 			/* Skip → deactivate without feedback */
 			modal.querySelector( '.adm-skip-btn' ).addEventListener( 'click', function () {
 				var deleteData = getDeleteChoice();
-				doDeactivate( deleteData, '', '' );
+				doDeactivate( deleteData, '', '', false );
 			} );
 
 			/* Submit feedback → deactivate */
@@ -202,7 +202,7 @@
 				var reasonEl   = modal.querySelector( 'input[name="adm_reason"]:checked' );
 				var reason     = reasonEl ? reasonEl.value : '';
 				var detail     = ( modal.querySelector( '#adm-reason-detail' ) || {} ).value || '';
-				doDeactivate( deleteData, reason, detail );
+				doDeactivate( deleteData, reason, detail, true );
 			} );
 		}
 	}
@@ -233,7 +233,7 @@
 	}
 
 	/* ─── Core deactivation with optional AJAX ─── */
-	function doDeactivate( deleteData, reason, detail ) {
+	function doDeactivate( deleteData, reason, detail, sendFeedback ) {
 		var spinner = modal.querySelector( '.adm-spinner' );
 		spinner.classList.remove( 'adm-hidden' );
 		modal.querySelectorAll( 'button' ).forEach( function ( b ) { b.disabled = true; } );
@@ -244,6 +244,8 @@
 		data.append( 'delete_data', deleteData ? '1' : '0' );
 		data.append( 'reason',  reason );
 		data.append( 'detail',  detail );
+		/* Only the "Submit & deactivate" button sends feedback. */
+		data.append( 'send_feedback', sendFeedback ? '1' : '0' );
 
 		fetch( agenticDeactivate.ajaxUrl, {
 			method:      'POST',

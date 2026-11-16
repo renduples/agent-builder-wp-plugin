@@ -4,7 +4,8 @@
  *
  * CRUD interface for agent skills. Skills contain SKILL.md instructions
  * that teach agents when and how to use channel-specific tools.
- * Supports local creation and ClawHub import.
+ * Supports local creation and import from the WordPress.org and Anthropic
+ * skill repositories on GitHub and the curated Agentic AI skill list.
  *
  * @package    Agent_Builder
  * @subpackage Admin
@@ -132,7 +133,7 @@ if ( isset( $_GET['skill_action'], $_GET['skill_id'], $_GET['_wpnonce'] )
 	$agentic_sk_edit_id = 0;
 }
 
-// ── Import (Agentic AI, ClawHub, or a browsable GitHub source) ─────────
+// ── Import (Agentic AI or a browsable GitHub source) ───────────────────
 if ( isset( $_POST['agentic_hub_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['agentic_hub_nonce'] ) ), 'agentic_hub_import' ) ) {
 	// Note: NOT sanitize_text_field() — it strips anything that looks like an
 	// HTML tag, which corrupts real skill content (WordPress/PHP/block-markup
@@ -144,17 +145,12 @@ if ( isset( $_POST['agentic_hub_nonce'] ) && wp_verify_nonce( sanitize_text_fiel
 	$agentic_hub_json = wp_unslash( $_POST['agentic_hub_data'] ?? '' );
 	$agentic_hub_data = json_decode( $agentic_hub_json, true );
 
-	// Normalise field names (ClawHub uses displayName/summary).
-	if ( is_array( $agentic_hub_data ) && empty( $agentic_hub_data['name'] ) && ! empty( $agentic_hub_data['displayName'] ) ) {
-		$agentic_hub_data['name'] = $agentic_hub_data['displayName'];
-	}
-
 	// Determine source. 'wordpress' and 'anthropic' are browsed straight from
 	// their official GitHub repos; 'agentic' is the curated Recommended list;
-	// anything else falls back to 'clawhub'.
-	$agentic_import_source = sanitize_key( $agentic_hub_data['source'] ?? 'clawhub' );
-	if ( ! in_array( $agentic_import_source, array( 'agentic', 'clawhub', 'wordpress', 'anthropic' ), true ) ) {
-		$agentic_import_source = 'clawhub';
+	// anything else is recorded as a local skill.
+	$agentic_import_source = sanitize_key( $agentic_hub_data['source'] ?? 'local' );
+	if ( ! in_array( $agentic_import_source, array( 'agentic', 'wordpress', 'anthropic' ), true ) ) {
+		$agentic_import_source = 'local';
 	}
 	$agentic_hub_data['source'] = $agentic_import_source;
 
@@ -234,7 +230,7 @@ $agentic_sk_instances = $agentic_sk_registry->get_all_instances();
 
 		<?php if ( $agentic_sk_is_advanced ) : ?>
 		<h3 class="agentic-th-mt-32"><?php esc_html_e( 'Or import an existing SKILL.md', 'agent-builder' ); ?></h3>
-		<p class="agentic-mb-12-text-dim"><?php esc_html_e( 'Any spec-compliant skill file — from ClawHub, Android Skills, Claude Skills, or elsewhere — can be dropped in directly.', 'agent-builder' ); ?></p>
+		<p class="agentic-mb-12-text-dim"><?php esc_html_e( 'Any spec-compliant skill file — from Android Skills, Claude Skills, or elsewhere — can be dropped in directly.', 'agent-builder' ); ?></p>
 		<?php // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only redirect flag, no state change. ?>
 		<?php if ( isset( $_GET['import_error'] ) ) : ?>
 			<div class="notice notice-error agentic-notice-mt-0"><p><?php esc_html_e( 'Could not import that file — make sure it is a valid SKILL.md (YAML frontmatter followed by Markdown).', 'agent-builder' ); ?></p></div>
@@ -424,7 +420,7 @@ $agentic_sk_instances = $agentic_sk_registry->get_all_instances();
 
 			<?php if ( 'clawhub' === $agentic_sk_source ) : ?>
 				<p class="agentic-text-dim-xs">
-					<?php esc_html_e( 'This skill was imported from ClawHub. Local edits will be preserved unless you re-import.', 'agent-builder' ); ?>
+					<?php esc_html_e( 'This skill was imported from ClawHub, which is no longer an import source. It is now a local copy you can edit freely.', 'agent-builder' ); ?>
 				</p>
 			<?php endif; ?>
 
@@ -439,8 +435,7 @@ $agentic_sk_instances = $agentic_sk_registry->get_all_instances();
 	<?php
 	// WordPress and Anthropic are browsed directly from their official GitHub
 	// repos (small, human-reviewed catalogs — no search API needed, just list
-	// everything). ClawHub is a large open-publish registry, kept behind its
-	// existing search-box flow. Basic mode only ever sees WordPress.org.
+	// everything). Basic mode only ever sees WordPress.org.
 	$agentic_sk_hub_sources = array(
 		'wordpress' => array(
 			'label'  => __( 'WordPress.org', 'agent-builder' ),
@@ -457,10 +452,6 @@ $agentic_sk_instances = $agentic_sk_registry->get_all_instances();
 			'owner'  => 'anthropics',
 			'repo'   => 'skills',
 			'branch' => 'main',
-		);
-		$agentic_sk_hub_sources['clawhub'] = array(
-			'label' => __( 'OpenClaw / ClawHub', 'agent-builder' ),
-			'type'  => 'clawhub',
 		);
 	}
 	?>
@@ -481,11 +472,6 @@ $agentic_sk_instances = $agentic_sk_registry->get_all_instances();
 		<p class="agentic-mb-12-text-dim"><?php esc_html_e( 'Browsing skills from the official WordPress.org repository.', 'agent-builder' ); ?></p>
 		<?php endif; ?>
 
-		<div id="agentic-hub-search-wrap" class="agentic-flex-gap-8-mb-20" style="display:none" hidden>
-			<input type="text" id="agentic-hub-search" class="regular-text agentic-flex-1" placeholder="<?php esc_attr_e( 'Search skills...', 'agent-builder' ); ?>" />
-			<button type="button" id="agentic-hub-search-btn" class="button button-primary"><?php esc_html_e( 'Search', 'agent-builder' ); ?></button>
-		</div>
-
 		<div id="agentic-hub-results" class="agentic-hub-results">
 			<p class="agentic-text-dim"><?php esc_html_e( 'Loading...', 'agent-builder' ); ?></p>
 		</div>
@@ -504,13 +490,9 @@ $agentic_sk_instances = $agentic_sk_registry->get_all_instances();
 		var SOURCES = <?php echo wp_json_encode( array_map( static fn( $s ) => array_intersect_key( $s, array_flip( array( 'label', 'type', 'owner', 'repo', 'branch' ) ) ), $agentic_sk_hub_sources ) ); ?>;
 
 		var switcherEl      = document.getElementById('agentic-hub-source-switcher');
-		var searchWrap       = document.getElementById('agentic-hub-search-wrap');
-		var searchInput      = document.getElementById('agentic-hub-search');
-		var searchBtn        = document.getElementById('agentic-hub-search-btn');
 		var resultsDiv       = document.getElementById('agentic-hub-results');
 		var importForm       = document.getElementById('agentic-hub-import-form');
 		var importDataField  = document.getElementById('agentic-hub-data');
-		var CLAWHUB_API      = 'https://wry-manatee-359.convex.site/api/v1';
 		var cache            = {};
 
 		function escHtml(str) {
@@ -581,11 +563,7 @@ $agentic_sk_instances = $agentic_sk_registry->get_all_instances();
 					thisBtn.disabled = true;
 					thisBtn.textContent = '<?php echo esc_js( __( 'Importing...', 'agent-builder' ) ); ?>';
 
-					if ('clawhub' === skillData.source) {
-						finishClawhubImport(skillData);
-					} else {
-						submitImport(skillData);
-					}
+					submitImport(skillData);
 				});
 			});
 		}
@@ -593,72 +571,6 @@ $agentic_sk_instances = $agentic_sk_registry->get_all_instances();
 		function submitImport(skillData) {
 			importDataField.value = JSON.stringify(skillData);
 			importForm.submit();
-		}
-
-		// ClawHub search results only carry summary metadata — fetch full
-		// detail + the actual SKILL.md body (from the openclaw/skills GitHub
-		// repo ClawHub indexes) only once the user commits to importing.
-		function finishClawhubImport(skillData) {
-			var slug = skillData.slug;
-			fetch(CLAWHUB_API + '/skills/' + encodeURIComponent(slug))
-			.then(function(r) { return r.ok ? r.json() : null; })
-			.then(function(detail) {
-				if (detail && detail.skill) {
-					skillData.description = detail.skill.summary || skillData.description;
-					if (detail.latestVersion) {
-						skillData.version = detail.latestVersion.version || skillData.version;
-					}
-					if (detail.owner) {
-						skillData.author = detail.owner.displayName || detail.owner.handle || '';
-					}
-				}
-				var ownerHandle = (detail && detail.owner) ? (detail.owner.handle || '') : '';
-				var canonicalSlug = (detail && detail.skill) ? (detail.skill.slug || slug) : slug;
-				if (ownerHandle) {
-					<?php // phpcs:ignore PluginCheck.CodeAnalysis.Offloading.OffloadedContent -- Browser-side text fetch (a Markdown doc, not a script/asset) for the explicit, user-initiated "import a community skill" action. ?>
-					return fetch('https://raw.githubusercontent.com/openclaw/skills/main/skills/' + encodeURIComponent(ownerHandle) + '/' + encodeURIComponent(canonicalSlug) + '/SKILL.md')
-					.then(function(r) { return r.ok ? r.text() : ''; })
-					.then(function(md) { skillData.content = md || ''; })
-					.catch(function() {});
-				}
-			})
-			.then(function() { submitImport(skillData); })
-			.catch(function() { submitImport(skillData); }); // Import with search data only.
-		}
-
-		function doClawhubSearch() {
-			var query = searchInput.value.trim();
-			if (!query) return;
-
-			resultsDiv.innerHTML = '<p class="agentic-text-dim"><?php echo esc_js( __( 'Searching...', 'agent-builder' ) ); ?></p>';
-			searchBtn.disabled = true;
-
-			fetch(CLAWHUB_API + '/search?q=' + encodeURIComponent(query), {
-				method: 'GET',
-				headers: { 'Accept': 'application/json' },
-			})
-			.then(function(r) {
-				if (!r.ok) throw new Error('HTTP ' + r.status);
-				return r.json();
-			})
-			.then(function(data) {
-				searchBtn.disabled = false;
-				var skills = data.results || data.items || [];
-				var items = skills.map(function(skill) {
-					return {
-						name: skill.displayName || skill.slug || 'Untitled',
-						description: skill.summary || '',
-						slug: skill.slug || '',
-						version: skill.version || '1.0.0',
-						source: 'clawhub',
-					};
-				});
-				renderResults(items, '<?php echo esc_js( __( 'No skills found. Try a different search term.', 'agent-builder' ) ); ?>');
-			})
-			.catch(function(err) {
-				searchBtn.disabled = false;
-				resultsDiv.innerHTML = '<div class="notice notice-error"><p><?php echo esc_js( __( 'Failed to connect to ClawHub. Please try again.', 'agent-builder' ) ); ?> (' + escHtml(err.message || '') + ')</p></div>';
-			});
 		}
 
 		function loadGithubSource(key, src) {
@@ -722,17 +634,7 @@ $agentic_sk_instances = $agentic_sk_registry->get_all_instances();
 				});
 			}
 			if ('github' === src.type) {
-				// .hidden alone isn't enough here — agentic-flex-gap-8-mb-20
-				// sets display:flex in an author stylesheet, which beats the
-				// browser's default [hidden]{display:none} UA rule regardless
-				// of the hidden attribute/property. Toggle display directly.
-				searchWrap.hidden = true;
-				searchWrap.style.display = 'none';
 				loadGithubSource(key, src);
-			} else {
-				searchWrap.hidden = false;
-				searchWrap.style.display = '';
-				resultsDiv.innerHTML = '<p class="agentic-text-dim"><?php echo esc_js( __( 'Enter a search term above to find skills on ClawHub.', 'agent-builder' ) ); ?></p>';
 			}
 		}
 
@@ -741,11 +643,6 @@ $agentic_sk_instances = $agentic_sk_registry->get_all_instances();
 				btn.addEventListener('click', function() { switchSource(this.dataset.source); });
 			});
 		}
-
-		searchBtn.addEventListener('click', doClawhubSearch);
-		searchInput.addEventListener('keydown', function(e) {
-			if (e.key === 'Enter') { e.preventDefault(); doClawhubSearch(); }
-		});
 
 		switchSource('wordpress');
 	})();
@@ -764,9 +661,9 @@ $agentic_sk_instances = $agentic_sk_registry->get_all_instances();
 		<!-- Recommended Skills from agentic-plugin.com -->
 		<div id="agentic-recommended-skills" class="agentic-recommended-grid">
 			<h3 class="agentic-h3-mb-8"><?php esc_html_e( 'Recommended Skills', 'agent-builder' ); ?></h3>
-			<p class="agentic-mb-12-text-dim"><?php esc_html_e( 'Curated skills verified to work with Agent Builder.', 'agent-builder' ); ?></p>
+			<p class="agentic-mb-12-text-dim"><?php esc_html_e( 'Curated skills verified to work with Agent Builder. The list is fetched from agentic-plugin.com only when you click the button below.', 'agent-builder' ); ?></p>
 			<div id="agentic-recommended-grid" class="agentic-min-h-60">
-				<p class="agentic-text-dim"><?php esc_html_e( 'Loading...', 'agent-builder' ); ?></p>
+				<button type="button" class="button" id="agentic-load-recommended"><?php esc_html_e( 'Show recommended skills', 'agent-builder' ); ?></button>
 			</div>
 		</div>
 
@@ -784,6 +681,12 @@ $agentic_sk_instances = $agentic_sk_registry->get_all_instances();
 			var importForm = document.getElementById('agentic-rec-import-form');
 			var importField = document.getElementById('agentic-rec-data');
 
+			var loadBtn = document.getElementById('agentic-load-recommended');
+			if (!loadBtn) { return; }
+			loadBtn.addEventListener('click', loadRecommended);
+
+			function loadRecommended() {
+			grid.innerHTML = '<p class="agentic-text-dim"><?php echo esc_js( __( 'Loading...', 'agent-builder' ) ); ?></p>';
 			fetch(SKILLS_API + '/featured')
 			.then(function(r) { return r.ok ? r.json() : []; })
 			.then(function(skills) {
@@ -853,15 +756,13 @@ $agentic_sk_instances = $agentic_sk_registry->get_all_instances();
 							importField.value = JSON.stringify(skillData);
 							importForm.submit();
 						});
-
-						// Track the import.
-						fetch(SKILLS_API + '/' + encodeURIComponent(slug) + '/import', { method: 'POST' }).catch(function(){});
 					});
 				});
 			})
 			.catch(function() {
 				grid.innerHTML = '<p class="agentic-text-dim"><?php echo esc_js( __( 'Could not load recommended skills. Create your own or browse the community.', 'agent-builder' ) ); ?></p>';
 			});
+			}
 
 			function escHtml(str) { var d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
 			function escAttr(str) { return str.replace(/&/g,'&amp;').replace(/'/g,'&#39;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }

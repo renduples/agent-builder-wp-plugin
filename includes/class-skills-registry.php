@@ -692,26 +692,18 @@ final class Skills_Registry {
 	}
 
 	/**
-	 * Import a skill from ClawHub data.
+	 * Import a skill from a hub source (the curated Agentic list or a GitHub skills repository).
 	 *
-	 * @param array<string, mixed> $hub_data Data from ClawHub API.
+	 * @param array<string, mixed> $hub_data Skill data (name, description, content, slug, source, ...).
 	 * @return int|false Inserted ID or false.
 	 */
 	public static function import_from_hub( array $hub_data ) {
-		// ClawHub uses slug as stable identifier; also accept _id or id.
+		// Slug is the stable identifier; also accept _id or id.
 		$source_id = $hub_data['slug'] ?? ( $hub_data['_id'] ?? ( $hub_data['id'] ?? '' ) );
 
-		// Normalise ClawHub field names.
-		if ( empty( $hub_data['name'] ) && ! empty( $hub_data['displayName'] ) ) {
-			$hub_data['name'] = $hub_data['displayName'];
-		}
-		if ( empty( $hub_data['description'] ) && ! empty( $hub_data['summary'] ) ) {
-			$hub_data['description'] = $hub_data['summary'];
-		}
-
-		$source = sanitize_key( $hub_data['source'] ?? 'clawhub' );
-		if ( ! in_array( $source, array( 'agentic', 'clawhub', 'wordpress', 'anthropic' ), true ) ) {
-			$source = 'clawhub';
+		$source = sanitize_key( $hub_data['source'] ?? 'local' );
+		if ( ! in_array( $source, array( 'agentic', 'wordpress', 'anthropic' ), true ) ) {
+			$source = 'local';
 		}
 
 		// Check if already imported from this exact source. Matching on

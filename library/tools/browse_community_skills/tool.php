@@ -6,10 +6,9 @@
  * "Browse Community Skills" hub and "Recommended Skills" grid in
  * admin/skills.php, restricted to the same two sources Basic mode's UI
  * exposes there — WordPress.org's official, human-reviewed repository and
- * Agentic's own curated feed. Anthropic's repo and ClawHub's open-publish
- * registry are Advanced-only in the UI and are not reachable through this
- * tool at all, not just hidden, so behaviour stays identical regardless of
- * site-wide mode.
+ * Agentic's own curated feed. Anthropic's repo is Advanced-only in the UI
+ * and is not reachable through this tool at all, not just hidden, so
+ * behaviour stays identical regardless of site-wide mode.
  *
  * @package    Agent_Builder
  * @subpackage Tools
@@ -331,16 +330,6 @@ class Browse_Community_Skills extends \Agentic\Tool_Base {
 		if ( ! $id ) {
 			return array( 'error' => 'Could not import this skill.' );
 		}
-
-		// Best-effort import-count tracking, matching the classic UI — never
-		// let a failure here affect the (already-successful) import result.
-		wp_remote_post(
-			self::AGENTIC_API . '/' . rawurlencode( $slug ) . '/import',
-			array(
-				'timeout'  => 5,
-				'blocking' => false,
-			)
-		);
 
 		$skill = Skills_Registry::get( $id );
 		return array(

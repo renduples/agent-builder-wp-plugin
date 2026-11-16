@@ -169,9 +169,13 @@ class Report_Issue extends \Agentic\Tool_Base {
 			}
 		}
 
-		// Live connectivity probe to the inference proxy.
+		$provider = get_option( 'agent_builder_llm_provider', 'agentic' );
+
+		// Live connectivity probe to the Agentic AI inference service — only
+		// when that is the provider this site actually uses, so diagnosing a
+		// problem with another provider never contacts agentic-plugin.com.
 		$connectivity = 'unknown';
-		if ( class_exists( '\Agentic\Service_Registry' ) ) {
+		if ( 'agentic' === $provider && class_exists( '\Agentic\Service_Registry' ) ) {
 			$health = wp_remote_get(
 				\Agentic\Service_Registry::url( 'agentic-chat', '/health' ),
 				array( 'timeout' => 5 )
@@ -180,8 +184,6 @@ class Report_Issue extends \Agentic\Tool_Base {
 				? 'ok'
 				: 'unreachable';
 		}
-
-		$provider = get_option( 'agent_builder_llm_provider', 'agentic' );
 
 		$summary = $this->summarize( $error_type, $last, $connectivity, (string) $provider );
 
@@ -213,7 +215,9 @@ class Report_Issue extends \Agentic\Tool_Base {
 			case 'none':
 				return 'unreachable' === $connectivity
 					? 'No recent agent errors were logged, but the AI service looks unreachable from this site. This is usually a network/firewall issue or the service being temporarily down.'
-					: 'No recent errors detected. The AI service is reachable and things look healthy.';
+					: ( 'ok' === $connectivity
+						? 'No recent errors detected. The AI service is reachable and things look healthy.'
+						: 'No recent agent errors were logged.' );
 			case 'insufficient_credits':
 				return 'You have run out of AI credits (the hosted AI service reports a zero balance). Add credits at agentic-plugin.com, or switch to your own API key in Settings.';
 			case 'invalid_api_key':
