@@ -373,7 +373,7 @@ final class Skills_Registry {
 	 * overwriting a customization. Rows from before source_hash existed have
 	 * no baseline to compare against, so their current content is adopted as
 	 * the baseline on first sight rather than guessed at. User-created and
-	 * ClawHub-imported skills (source !== 'core') are never touched here.
+	 * Imported skills (source !== 'core') are never touched here.
 	 *
 	 * @return array{seeded: int, refreshed: int}
 	 */
@@ -442,7 +442,7 @@ final class Skills_Registry {
 				}
 
 				// Only core-sourced rows are eligible for auto-refresh — a user
-				// skill or ClawHub import that happens to reuse a slug is untouched.
+				// skill or hub import that happens to reuse a slug is untouched.
 				if ( 'core' !== ( $existing['source'] ?? '' ) ) {
 					continue;
 				}
@@ -760,7 +760,7 @@ final class Skills_Registry {
 		// Check if already imported from this exact source. Matching on
 		// source_id alone (regardless of source) would let two different
 		// registries' skills that happen to share a slug — e.g. "pdf" exists
-		// in both Anthropic's and ClawHub's catalogs — clobber each other.
+		// in both the Anthropic and WordPress skill repositories — clobber each other.
 		if ( $source_id ) {
 			foreach ( self::get_all() as $existing ) {
 				if ( $source === $existing['source'] && $source_id === $existing['source_id'] ) {

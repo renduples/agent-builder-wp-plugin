@@ -1150,7 +1150,7 @@ class Admin_Pages_REST {
 	 * Import a SKILL.md file uploaded from the "Create Skill" gallery.
 	 *
 	 * Accepts any file matching the agentskills.io shape (YAML frontmatter +
-	 * Markdown body) — from ClawHub, Android Skills, Claude Skills, or any
+	 * Markdown body) — from Android Skills, Claude Skills, or any
 	 * other spec-compliant source. This is the file-upload counterpart to
 	 * Skills_Registry::import_from_hub(), which imports by API payload.
 	 */
