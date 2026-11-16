@@ -235,7 +235,7 @@ class Admin_Notice_Manager {
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only page identification.
-		$current_page = isset( $_GET['page'] ) ? sanitize_key( $_GET['page'] ) : '';
+		$current_page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
 		if ( 'agentic-agents' !== $current_page ) {
 			return;
 		}

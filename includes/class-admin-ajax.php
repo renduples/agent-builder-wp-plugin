@@ -181,7 +181,7 @@ class Admin_Ajax {
 			wp_send_json_error( 'Permission denied.' );
 		}
 
-		$level = sanitize_key( $_POST['level'] ?? 'daily' ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above.
+		$level = sanitize_key( wp_unslash( $_POST['level'] ?? 'daily' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above.
 		update_option( 'agent_builder_psi_notice_dismissed', $level );
 		wp_send_json_success();
 	}

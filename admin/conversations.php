@@ -17,20 +17,21 @@ $agentic_conv_table = $wpdb->prefix . 'agent_builder_conversations';
 // ── Handle delete ────────────────────────────────────────────────────────────
 $agentic_conv_notice = '';
 if ( isset( $_GET['delete_session'], $_GET['_wpnonce'] )
-	&& wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'agentic_conv_delete_' . sanitize_key( $_GET['delete_session'] ) )
+	&& current_user_can( 'manage_options' )
+	&& wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'agentic_conv_delete_' . sanitize_key( wp_unslash( $_GET['delete_session'] ) ) )
 ) {
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-	$wpdb->delete( $agentic_conv_table, array( 'session_id' => sanitize_key( $_GET['delete_session'] ) ), array( '%s' ) );
+	$wpdb->delete( $agentic_conv_table, array( 'session_id' => sanitize_key( wp_unslash( $_GET['delete_session'] ) ) ), array( '%s' ) );
 	$agentic_conv_notice = __( 'Conversation deleted.', 'agent-builder' );
 }
 
 // ── Filters ──────────────────────────────────────────────────────────────────
 // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only.
-$agentic_cv_agent  = isset( $_GET['cv_agent'] ) ? sanitize_key( $_GET['cv_agent'] ) : '';
+$agentic_cv_agent  = isset( $_GET['cv_agent'] ) ? sanitize_key( wp_unslash( $_GET['cv_agent'] ) ) : '';
 $agentic_cv_user   = isset( $_GET['cv_user'] ) ? absint( $_GET['cv_user'] ) : 0;
 $agentic_cv_search = isset( $_GET['cv_search'] ) ? sanitize_text_field( wp_unslash( $_GET['cv_search'] ) ) : '';
 $agentic_cv_page   = max( 1, absint( $_GET['cv_paged'] ?? 1 ) );
-$agentic_cv_period = sanitize_key( $_GET['period'] ?? 'week' );
+$agentic_cv_period = sanitize_key( wp_unslash( $_GET['period'] ?? 'week' ) );
 // phpcs:enable
 
 if ( ! in_array( $agentic_cv_period, array( 'day', 'week', 'month' ), true ) ) {

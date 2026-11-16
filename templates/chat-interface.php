@@ -33,10 +33,10 @@ if ( ! empty( $agentic_force_agent ) ) {
 	$agentic_default_agent_id = sanitize_key( (string) $agentic_force_agent );
 } else {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- No form submission, just URL parameter for agent selection.
-	$agentic_default_agent_id = isset( $_GET['agent'] ) ? sanitize_key( $_GET['agent'] ) : '';
+	$agentic_default_agent_id = isset( $_GET['agent'] ) ? sanitize_key( wp_unslash( $_GET['agent'] ) ) : '';
 
 	if ( ! $agentic_default_agent_id && isset( $_COOKIE['agentic_last_agent'] ) ) {
-		$agentic_default_agent_id = sanitize_key( $_COOKIE['agentic_last_agent'] );
+		$agentic_default_agent_id = sanitize_key( wp_unslash( $_COOKIE['agentic_last_agent'] ) );
 	}
 
 	if ( ! $agentic_default_agent_id || ! isset( $agentic_agents[ $agentic_default_agent_id ] ) ) {

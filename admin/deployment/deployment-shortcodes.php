@@ -78,7 +78,7 @@ if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_uns
 
 	// Create.
 	if ( isset( $_POST['agentic_create_shortcode'] ) ) {
-		$agentic_sc_style_in = sanitize_key( $_POST['agentic_sc_style'] ?? 'inline' );
+		$agentic_sc_style_in = sanitize_key( wp_unslash( $_POST['agentic_sc_style'] ?? 'inline' ) );
 		$agentic_new_label   = sanitize_text_field( wp_unslash( $_POST['agentic_sc_label'] ?? '' ) );
 		$agentic_new_agent   = sanitize_key( wp_unslash( $_POST['agentic_sc_agent'] ?? '' ) );
 
@@ -128,7 +128,7 @@ if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_uns
 		$agentic_upd_id      = absint( wp_unslash( $_POST['agentic_shortcode_id'] ?? 0 ) );
 		$agentic_upd_label   = sanitize_text_field( wp_unslash( $_POST['agentic_sc_label'] ?? '' ) );
 		$agentic_upd_agent   = sanitize_key( wp_unslash( $_POST['agentic_sc_agent'] ?? '' ) );
-		$agentic_sc_style_in = sanitize_key( $_POST['agentic_sc_style'] ?? 'inline' );
+		$agentic_sc_style_in = sanitize_key( wp_unslash( $_POST['agentic_sc_style'] ?? 'inline' ) );
 		$agentic_row         = Deployments::get( $agentic_upd_id );
 
 		if ( ! $agentic_upd_label || ! $agentic_upd_agent ) {

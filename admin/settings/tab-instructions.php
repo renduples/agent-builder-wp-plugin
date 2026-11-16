@@ -20,7 +20,7 @@ $agentic_all_agents = array_intersect_key(
 	array_flip( \Agentic_Agent_Registry::get_instance()->get_active_agents() )
 );
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-$agentic_pa_selected = isset( $_GET['edit_persona'] ) ? sanitize_key( $_GET['edit_persona'] ) : '';
+$agentic_pa_selected = isset( $_GET['edit_persona'] ) ? sanitize_key( wp_unslash( $_GET['edit_persona'] ) ) : '';
 if ( ! $agentic_pa_selected && ! empty( $agentic_all_agents ) ) {
 	$agentic_pa_selected = array_key_first( $agentic_all_agents );
 }

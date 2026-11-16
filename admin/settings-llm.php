@@ -25,7 +25,7 @@ use Agentic\Provider_Registry;
 $agentic_llm_notice = '';
 
 if ( class_exists( '\Agentic\Costs_Manager' ) && isset( $_POST['agentic_save_alerts_nonce'] ) ) {
-	if ( ! wp_verify_nonce( sanitize_key( $_POST['agentic_save_alerts_nonce'] ), 'agentic_save_alerts' ) ) {
+	if ( ! wp_verify_nonce( sanitize_key( wp_unslash( $_POST['agentic_save_alerts_nonce'] ) ), 'agentic_save_alerts' ) ) {
 		wp_die( esc_html__( 'Security check failed.', 'agent-builder' ) );
 	}
 	// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized inside save_alerts().

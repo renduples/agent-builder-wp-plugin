@@ -221,7 +221,14 @@ class Agentic_Native_Forms {
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'rest_submit_form' ),
-				'permission_callback' => '__return_true',  // Public endpoint.
+				// Public by design: this is the front-end form submission for
+				// site visitors, who may be logged out. Not read-only, so it is
+				// protected inside rest_submit_form() instead: the X-WP-Nonce
+				// (wp_rest) printed with the form is verified, the form must be
+				// an existing agentic_form post, every field is validated and
+				// sanitized against the form definition, and the per-form
+				// honeypot and optional Turnstile check reject bots.
+				'permission_callback' => '__return_true',
 				'args'                => array(
 					'id' => array( 'validate_callback' => static fn( $v ) => is_numeric( $v ) ),
 				),

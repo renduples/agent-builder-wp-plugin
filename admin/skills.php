@@ -18,6 +18,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 use Agentic\Skills_Registry;
+
+// The menu entry already requires this capability; checked again here because
+// this template processes create/edit/delete/import submissions below.
+if ( ! current_user_can( 'agent_builder_manage_tools' ) && ! current_user_can( 'manage_options' ) ) {
+	wp_die( esc_html__( 'You do not have permission to manage skills.', 'agent-builder' ), 403 );
+}
 ?>
 <div class="wrap agentic-admin">
 <h1><?php esc_html_e( 'Skills', 'agent-builder' ); ?></h1>
@@ -31,7 +37,7 @@ $agentic_sk_message = '';
 $agentic_sk_error   = '';
 
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view param.
-$agentic_sk_view = isset( $_GET['skill_view'] ) ? sanitize_key( $_GET['skill_view'] ) : 'list';
+$agentic_sk_view = isset( $_GET['skill_view'] ) ? sanitize_key( wp_unslash( $_GET['skill_view'] ) ) : 'list';
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $agentic_sk_edit_id = isset( $_GET['skill_id'] ) ? absint( $_GET['skill_id'] ) : 0;
 
@@ -169,7 +175,7 @@ $agentic_sk_edit = ( 'edit' === $agentic_sk_view && $agentic_sk_edit_id > 0 ) ? 
 // gallery instead of the form. Choosing one (or "Start from scratch")
 // re-requests with &template=KEY, which falls through to the normal form.
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only selector, no state change.
-$agentic_sk_template_key = isset( $_GET['template'] ) ? sanitize_key( $_GET['template'] ) : '';
+$agentic_sk_template_key = isset( $_GET['template'] ) ? sanitize_key( wp_unslash( $_GET['template'] ) ) : '';
 $agentic_sk_templates    = Skills_Registry::get_templates();
 $agentic_sk_show_gallery = ( 'new' === $agentic_sk_view && '' === $agentic_sk_template_key && ! isset( $_POST['agentic_skill_nonce'] ) );
 

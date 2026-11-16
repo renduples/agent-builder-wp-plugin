@@ -838,7 +838,7 @@ class Admin_Menu_Handler {
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only page identification.
-		$page = isset( $_GET['page'] ) ? sanitize_key( $_GET['page'] ) : '';
+		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
 
 		// Not an Agentic page — nothing to do.
 		if ( 'agent-builder' !== $page && ! str_starts_with( $page, 'agentic-' ) ) {
@@ -1634,9 +1634,9 @@ class Admin_Menu_Handler {
 		// Resolve agent slug (same priority as chat-interface.php: URL → cookie →
 		// WordPress Assistant, if the user has never chatted with anything yet → first).
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$agentic_chat_slug = isset( $_GET['agent'] ) ? sanitize_key( $_GET['agent'] ) : '';
+		$agentic_chat_slug = isset( $_GET['agent'] ) ? sanitize_key( wp_unslash( $_GET['agent'] ) ) : '';
 		if ( ! $agentic_chat_slug && isset( $_COOKIE['agentic_last_agent'] ) ) {
-			$agentic_chat_slug = sanitize_key( $_COOKIE['agentic_last_agent'] );
+			$agentic_chat_slug = sanitize_key( wp_unslash( $_COOKIE['agentic_last_agent'] ) );
 		}
 		if ( ! $agentic_chat_slug ) {
 			$agentic_chat_slug = self::default_agent_slug( array_keys( \Agentic_Agent_Registry::get_instance()->get_accessible_instances() ) );
