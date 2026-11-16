@@ -47,13 +47,7 @@ if ( ! $agentic_pa_selected && ! empty( $agentic_all_agents ) ) {
 		</td>
 	</tr>
 </table>
-<script>
-document.getElementById('agentic-persona-agent-select').addEventListener('change', function() {
-	var url = new URL(window.location.href);
-	url.searchParams.set('edit_persona', this.value);
-	window.location.href = url.toString();
-});
-</script>
+	<?php \Agentic\Inline_Assets::script( 'settings-tab-instructions' ); ?>
 
 	<?php
 	$agentic_pa_agent = $agentic_all_agents[ $agentic_pa_selected ] ?? null;

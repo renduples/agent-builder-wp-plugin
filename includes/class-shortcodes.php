@@ -291,18 +291,7 @@ class Shortcodes {
 		<button class="agentic-chat-trigger" data-target="<?php echo esc_attr( $container_id ); ?>">
 			<?php echo esc_html( $agent->get_icon() ); ?> Chat
 		</button>
-		<script>
-		(function() {
-			const trigger = document.querySelector('[data-target="<?php echo esc_js( $container_id ); ?>"]');
-			const container = document.getElementById('<?php echo esc_js( $container_id ); ?>');
-			if (trigger && container) {
-				container.classList.add('agentic-chat-hidden');
-				trigger.addEventListener('click', function() {
-					container.classList.toggle('agentic-chat-hidden');
-				});
-			}
-		})();
-		</script>
+			<?php Inline_Assets::script( 'chat-popup-trigger', array(), '', array(), 'assets/js/' ); ?>
 		<?php endif; ?>
 
 		<?php

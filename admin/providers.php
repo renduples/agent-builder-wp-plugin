@@ -494,117 +494,37 @@ if ( $agentic_edit_slug ) {
 </table>
 <?php endif; ?>
 
-<?php if ( $agentic_show_form && $agentic_edit_slug && $agentic_providers_advanced ) : ?>
-<script>
-(function () {
-	var slug      = <?php echo wp_json_encode( $agentic_edit_slug ); ?>;
-	var nonce     = <?php echo wp_json_encode( $agentic_models_nonce ); ?>;
-	var autoFetch = <?php echo $agentic_form_has_key ? 'true' : 'false'; ?>;
+<?php
+if ( $agentic_show_form && $agentic_edit_slug && $agentic_providers_advanced ) {
+	\Agentic\Inline_Assets::script(
+		'provider-models',
+		array(
+			'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
+			'slug'      => (string) $agentic_edit_slug,
+			'nonce'     => (string) $agentic_models_nonce,
+			'autoFetch' => (bool) $agentic_form_has_key,
+			'i18n'      => array(
+				'cached'        => __( 'Cached — click ↺ Refresh for latest.', 'agent-builder' ),
+				'loadFailed'    => __( 'Could not load models from API.', 'agent-builder' ),
+				'requestFailed' => __( 'Request failed. Is your API key saved?', 'agent-builder' ),
+			),
+		),
+		'agenticProviderModels'
+	);
+}
 
-	function getField() { return document.getElementById( 'provider_default_model' ); }
-
-	function setLoading( on ) {
-		var spinner = document.getElementById( 'agentic-model-loading' );
-		var field   = getField();
-		if ( spinner ) spinner.style.display = on ? 'inline' : 'none';
-		if ( field )   field.disabled = on;
-	}
-
-	function setStatus( msg, isError ) {
-		var el = document.getElementById( 'agentic-model-status' );
-		if ( ! el ) return;
-		el.textContent   = msg;
-		el.style.color   = isError ? '#b32d2e' : '#646970';
-		el.style.display = msg ? 'block' : 'none';
-	}
-
-	function populateSelect( models, currentVal ) {
-		var field = getField();
-		if ( ! field ) return;
-		if ( currentVal && models.indexOf( currentVal ) < 0 ) models.unshift( currentVal );
-		// Sync the Available Models textarea so saving the form persists the fetched list.
-		var ta = document.getElementById( 'provider_models' );
-		if ( ta ) ta.value = models.join( '\n' );
-		var sel  = document.createElement( 'select' );
-		sel.id   = 'provider_default_model';
-		sel.name = 'provider_default_model';
-		models.forEach( function ( m ) {
-			var opt         = document.createElement( 'option' );
-			opt.value       = m;
-			opt.textContent = m;
-			if ( m === currentVal ) opt.selected = true;
-			sel.appendChild( opt );
-		} );
-		field.parentNode.replaceChild( sel, field );
-	}
-
-	function fetchModels( force ) {
-		var field      = getField();
-		var currentVal = field ? field.value : '';
-		setLoading( true );
-		setStatus( '' );
-		var data = new FormData();
-		data.append( 'action',   'agentic_fetch_provider_models' );
-		data.append( 'nonce',    nonce );
-		data.append( 'provider', slug );
-		if ( force ) data.append( 'force', '1' );
-		fetch( ajaxurl, { method: 'POST', body: data } )
-			.then( function ( r ) { return r.json(); } )
-			.then( function ( res ) {
-				setLoading( false );
-				if ( res.success && res.data && res.data.models && res.data.models.length ) {
-					populateSelect( res.data.models, currentVal );
-					setStatus( res.data.cached ? 'Cached — click ↺ Refresh for latest.' : '' );
-				} else {
-					setStatus( ( res.data && res.data.message ) || 'Could not load models from API.', true );
-				}
-			} )
-			.catch( function () {
-				setLoading( false );
-				setStatus( 'Request failed. Is your API key saved?', true );
-			} );
-	}
-
-	document.addEventListener( 'DOMContentLoaded', function () {
-		var btn = document.getElementById( 'agentic-model-refresh' );
-		if ( btn ) btn.addEventListener( 'click', function ( e ) { e.preventDefault(); fetchModels( true ); } );
-		if ( autoFetch ) fetchModels( false );
-	} );
-}());
-</script>
-<?php endif; ?>
-
-<script>
-( function () {
-	'use strict';
-	var toggle = document.getElementById( 'agentic-providers-mode-toggle' );
-	if ( ! toggle ) {
-		return;
-	}
-	Array.prototype.forEach.call( toggle.querySelectorAll( 'button' ), function ( btn ) {
-		btn.addEventListener( 'click', function () {
-			if ( btn.disabled ) {
-				return;
-			}
-			Array.prototype.forEach.call( toggle.querySelectorAll( 'button' ), function ( b ) {
-				b.disabled = true;
-			} );
-			fetch( <?php echo wp_json_encode( esc_url_raw( rest_url( 'agentic/v1/admin-page' ) ) ); ?>, {
-				method: 'POST',
-				credentials: 'same-origin',
-				headers: {
-					'Content-Type': 'application/json',
-					'X-WP-Nonce': <?php echo wp_json_encode( wp_create_nonce( 'wp_rest' ) ); ?>
-				},
-				body: JSON.stringify( {
-					action_name: 'set_screen_mode',
-					screen: 'providers',
-					mode: btn.getAttribute( 'data-mode' )
-				} )
-			} ).then( function () {
-				window.location.reload();
-			} );
-		} );
-	} );
-} )();
-</script>
+\Agentic\Inline_Assets::script(
+	'screen-mode-toggle',
+	array(
+		'restUrl' => esc_url_raw( rest_url( 'agentic/v1/admin-page' ) ),
+		'nonce'   => wp_create_nonce( 'wp_rest' ),
+		'toggles' => array(
+			array(
+				'id'     => 'agentic-providers-mode-toggle',
+				'screen' => 'providers',
+			),
+		),
+	),
+	'agenticScreenMode'
+);
+?>

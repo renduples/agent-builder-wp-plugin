@@ -468,102 +468,24 @@ $agentic_ajax_url    = admin_url( 'admin-ajax.php' );
 		</ul>
 	</div>
 
-<script>
-(function($){
-	'use strict';
-
-	const ajaxUrl = <?php echo wp_json_encode( $agentic_ajax_url ); ?>;
-	const nonce   = <?php echo wp_json_encode( $agentic_tasks_nonce ); ?>;
-
-	function resetForm() {
-		$('#agentic-sched-editing-id').val('');
-		$('#agentic-sched-agent').val('');
-		$('#agentic-sched-recurrence').val('daily');
-		$('#agentic-sched-prompt').val('');
-		$('#agentic-sched-name').val('');
-		$('#agentic-sched-description').val('');
-		$('#agentic-sched-save').text(<?php echo wp_json_encode( __( 'Add & Schedule', 'agent-builder' ) ); ?>);
-		$('#agentic-sched-cancel').hide();
-		$('#agentic-sched-status').text('');
-	}
-
-	$('#agentic-sched-cancel').on('click', resetForm);
-
-	$('#agentic-sched-save').on('click', function(){
-		const $btn    = $(this);
-		const $status = $('#agentic-sched-status');
-		const agent   = $('#agentic-sched-agent').val();
-		const prompt  = $('#agentic-sched-prompt').val().trim();
-
-		if ( ! agent ) {
-			$status.css('color','#d63638').text(<?php echo wp_json_encode( __( 'Please choose an agent.', 'agent-builder' ) ); ?>);
-			return;
-		}
-		if ( ! prompt ) {
-			$status.css('color','#d63638').text(<?php echo wp_json_encode( __( 'Please enter a prompt.', 'agent-builder' ) ); ?>);
-			return;
-		}
-
-		$btn.prop('disabled', true).text(<?php echo wp_json_encode( __( 'Saving…', 'agent-builder' ) ); ?>);
-		$status.text('');
-
-		$.post(ajaxUrl, {
-			action      : 'agentic_save_user_scheduled_task',
-			_ajax_nonce : nonce,
-			task_id     : $('#agentic-sched-editing-id').val(),
-			agent_slug  : agent,
-			schedule    : $('#agentic-sched-recurrence').val(),
-			prompt      : prompt,
-			name        : $('#agentic-sched-name').val(),
-			description : $('#agentic-sched-description').val(),
-		})
-		.done(function(resp){
-			if (resp.success) {
-				window.location.reload();
-			} else {
-				$status.css('color','#d63638').text(resp.data || <?php echo wp_json_encode( __( 'Error saving task.', 'agent-builder' ) ); ?>);
-				$btn.prop('disabled', false).text(<?php echo wp_json_encode( __( 'Add & Schedule', 'agent-builder' ) ); ?>);
-			}
-		})
-		.fail(function(){
-			$status.css('color','#d63638').text(<?php echo wp_json_encode( __( 'Request failed.', 'agent-builder' ) ); ?>);
-			$btn.prop('disabled', false).text(<?php echo wp_json_encode( __( 'Add & Schedule', 'agent-builder' ) ); ?>);
-		});
-	});
-
-	$(document).on('click', '.agentic-sched-delete', async function(){
-		const confirmMsg = <?php echo wp_json_encode( __( 'Permanently delete this custom scheduled task?', 'agent-builder' ) ); ?>;
-		if ( window.agenticUI && typeof agenticUI.confirm === 'function' ) {
-			if ( ! await agenticUI.confirm(confirmMsg, { danger: true }) ) return;
-		} else if ( ! window.confirm(confirmMsg) ) {
-			return;
-		}
-
-		const $btn = $(this);
-		const id   = $btn.data('id');
-		$btn.prop('disabled', true);
-
-		$.post(ajaxUrl, {
-			action      : 'agentic_delete_user_scheduled_task',
-			_ajax_nonce : nonce,
-			task_id     : id,
-		})
-		.done(function(resp){
-			if (resp.success) {
-				$('#agentic-sched-row-' + id).fadeOut(300, function(){ $(this).remove(); });
-			} else {
-				$btn.prop('disabled', false);
-				if ( window.agenticUI && agenticUI.toast ) {
-					agenticUI.toast(resp.data || <?php echo wp_json_encode( __( 'Could not delete task.', 'agent-builder' ) ); ?>, 'error');
-				} else {
-					alert(resp.data || <?php echo wp_json_encode( __( 'Could not delete task.', 'agent-builder' ) ); ?>);
-				}
-			}
-		})
-		.fail(function(){
-			$btn.prop('disabled', false);
-		});
-	});
-
-})(jQuery);
-</script>
+<?php
+\Agentic\Inline_Assets::script(
+	'deployment-scheduled-tasks',
+	array(
+		'ajaxUrl' => $agentic_ajax_url,
+		'nonce'   => $agentic_tasks_nonce,
+		'i18n'    => array(
+			'addSchedule'   => __( 'Add & Schedule', 'agent-builder' ),
+			'chooseAgent'   => __( 'Please choose an agent.', 'agent-builder' ),
+			'enterPrompt'   => __( 'Please enter a prompt.', 'agent-builder' ),
+			'saving'        => __( 'Saving…', 'agent-builder' ),
+			'saveError'     => __( 'Error saving task.', 'agent-builder' ),
+			'requestFailed' => __( 'Request failed.', 'agent-builder' ),
+			'confirmDelete' => __( 'Permanently delete this custom scheduled task?', 'agent-builder' ),
+			'deleteError'   => __( 'Could not delete task.', 'agent-builder' ),
+		),
+	),
+	'agenticDeployScheduled',
+	array( 'jquery', 'agentic-ui' )
+);
+?>

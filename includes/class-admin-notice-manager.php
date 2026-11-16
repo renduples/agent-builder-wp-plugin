@@ -93,7 +93,7 @@ class Admin_Notice_Manager {
 		$setup_url = admin_url( 'admin.php?page=agentic-signup' );
 		$nonce     = wp_create_nonce( 'agentic_dismiss_setup_notice' );
 		?>
-		<div class="notice notice-info is-dismissible" id="agentic-setup-notice">
+		<div class="notice notice-info is-dismissible" id="agentic-setup-notice" data-nonce="<?php echo esc_attr( $nonce ); ?>">
 			<p>
 				<strong><?php esc_html_e( 'Agent Builder is almost ready!', 'agent-builder' ); ?></strong>
 				<?php esc_html_e( 'Finish setup to start using your AI agents.', 'agent-builder' ); ?>
@@ -103,17 +103,8 @@ class Admin_Notice_Manager {
 				</a>
 			</p>
 		</div>
-		<script>
-		( function () {
-			var notice = document.getElementById( 'agentic-setup-notice' );
-			if ( ! notice ) { return; }
-			notice.addEventListener( 'click', function ( e ) {
-				if ( ! e.target.classList.contains( 'notice-dismiss' ) ) { return; }
-				wp.ajax.post( 'agentic_dismiss_setup_notice', { nonce: <?php echo wp_json_encode( $nonce ); ?> } );
-			} );
-		} () );
-		</script>
 		<?php
+		Inline_Assets::script( 'notices', array(), '', array( 'wp-util' ) );
 	}
 
 	/**
@@ -147,18 +138,8 @@ class Admin_Notice_Manager {
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-settings' ) ); ?>" class="button"><?php esc_html_e( 'Settings', 'agent-builder' ); ?></a>
 			</p>
 		</div>
-		<script>
-		(function(){
-			var n = document.querySelector('[data-dismiss-url]');
-			if (!n) return;
-			n.querySelector('.notice-dismiss').addEventListener('click', function(){
-				var xhr = new XMLHttpRequest();
-				xhr.open('GET', n.dataset.dismissUrl);
-				xhr.send();
-			});
-		})();
-		</script>
 		<?php
+		Inline_Assets::script( 'notices', array(), '', array( 'wp-util' ) );
 	}
 
 	/**
@@ -191,7 +172,7 @@ class Admin_Notice_Manager {
 		);
 		$nonce     = wp_create_nonce( 'agentic_dismiss_activation_degraded_notice' );
 		?>
-		<div class="notice notice-warning is-dismissible" id="agentic-activation-degraded-notice">
+		<div class="notice notice-warning is-dismissible" id="agentic-activation-degraded-notice" data-nonce="<?php echo esc_attr( $nonce ); ?>">
 			<p>
 				<strong><?php esc_html_e( 'Agent Builder finished setup in a reduced state.', 'agent-builder' ); ?></strong>
 				<?php esc_html_e( 'A setup step did not complete — often a temporary hosting or database limit. The plugin is safe to use as-is.', 'agent-builder' ); ?>
@@ -199,17 +180,8 @@ class Admin_Notice_Manager {
 				<a href="<?php echo esc_url( $retry_url ); ?>"><?php esc_html_e( 'Click to retry', 'agent-builder' ); ?></a>
 			</p>
 		</div>
-		<script>
-		( function () {
-			var notice = document.getElementById( 'agentic-activation-degraded-notice' );
-			if ( ! notice ) { return; }
-			notice.addEventListener( 'click', function ( e ) {
-				if ( ! e.target.classList.contains( 'notice-dismiss' ) ) { return; }
-				wp.ajax.post( 'agentic_dismiss_activation_degraded_notice', { nonce: <?php echo wp_json_encode( $nonce ); ?> } );
-			} );
-		} () );
-		</script>
 		<?php
+		Inline_Assets::script( 'notices', array(), '', array( 'wp-util' ) );
 	}
 
 	/**
@@ -314,19 +286,7 @@ class Admin_Notice_Manager {
 				</p>
 			<?php endif; ?>
 		</div>
-		<script>
-		( function () {
-			var notice = document.getElementById( 'agentic-shadowed-agent-notice' );
-			if ( ! notice ) { return; }
-			notice.addEventListener( 'click', function ( e ) {
-				if ( ! e.target.classList.contains( 'notice-dismiss' ) ) { return; }
-				wp.ajax.post( 'agentic_dismiss_shadowed_agent_notice', {
-					nonce: notice.dataset.nonce,
-					slugs: notice.dataset.slugs,
-				} );
-			} );
-		} () );
-		</script>
 		<?php
+		Inline_Assets::script( 'notices', array(), '', array( 'wp-util' ) );
 	}
 }

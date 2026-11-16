@@ -251,8 +251,8 @@ $agentic_hosted_credits        = ( 'agentic' === get_option( 'agent_builder_llm_
 						?>
 						<tr class="model-row">
 							<td><?php echo esc_html( $agent_builder_model ); ?></td>
-							<td class="col-right"><?php echo $agentic_no_pricing ? '<span class="agentic-text-dim">—</span>' : '$' . esc_html( number_format( $agentic_m_in, 4 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></td>
-							<td class="col-right"><?php echo $agentic_no_pricing ? '<span class="agentic-text-dim">—</span>' : '$' . esc_html( number_format( $agentic_m_out, 4 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></td>
+							<td class="col-right"><?php if ( $agentic_no_pricing ) : ?><span class="agentic-text-dim">—</span><?php else : ?>$<?php echo esc_html( number_format( $agentic_m_in, 4 ) ); ?><?php endif; ?></td>
+							<td class="col-right"><?php if ( $agentic_no_pricing ) : ?><span class="agentic-text-dim">—</span><?php else : ?>$<?php echo esc_html( number_format( $agentic_m_out, 4 ) ); ?><?php endif; ?></td>
 							<td class="agentic-td-center">
 								<?php if ( $agentic_prov_active ) : ?>
 									<span class="agentic-status-active agentic-text-xxs">&#9679; <?php esc_html_e( 'Active', 'agent-builder' ); ?></span>
@@ -271,44 +271,17 @@ $agentic_hosted_credits        = ( 'agentic' === get_option( 'agent_builder_llm_
 
 <p class="agentic-llm-disclaimer"><?php /* translators: %s: link to Terms of Service */ printf( esc_html__( 'Agent Builder is not responsible for charges on your AI provider accounts. By using this plugin you agree to the %s.', 'agent-builder' ), '<a href="https://agentic-plugin.com/terms-of-service/" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Terms of Service', 'agent-builder' ) . '</a>' ); ?></p>
 
-<script>
-(function() {
-	var btn = document.getElementById('agentic-update-pricing-btn');
-	if (!btn) return;
-
-	btn.addEventListener('click', function() {
-		btn.disabled = true;
-		btn.textContent = <?php echo wp_json_encode( __( 'Updating…', 'agent-builder' ) ); ?>;
-
-		var fd = new FormData();
-		fd.append('action', 'agentic_update_model_pricing');
-		fd.append('nonce', <?php echo wp_json_encode( wp_create_nonce( 'agentic_update_model_pricing' ) ); ?>);
-
-		fetch(<?php echo wp_json_encode( admin_url( 'admin-ajax.php' ) ); ?>, {
-			method: 'POST',
-			body: fd,
-			credentials: 'same-origin'
-		})
-		.then(function(r) { return r.json(); })
-		.then(function(res) {
-			var notice = document.getElementById('agentic-llm-update-notice');
-			if (res.success) {
-				notice.className = 'notice notice-success is-dismissible';
-				notice.querySelector('p').textContent = res.data.message || 'Pricing updated.';
-				notice.style.display = '';
-				setTimeout(function() { location.reload(); }, 1200);
-			} else {
-				notice.className = 'notice notice-error is-dismissible';
-				notice.querySelector('p').textContent = res.data || 'Failed to update pricing.';
-				notice.style.display = '';
-				btn.disabled = false;
-				btn.textContent = <?php echo wp_json_encode( __( 'Get Latest Pricing', 'agent-builder' ) ); ?>;
-			}
-		})
-		.catch(function() {
-			btn.disabled = false;
-			btn.textContent = <?php echo wp_json_encode( __( 'Get Latest Pricing', 'agent-builder' ) ); ?>;
-		});
-	});
-})();
-</script>
+<?php
+\Agentic\Inline_Assets::script(
+	'settings-llm',
+	array(
+		'ajaxUrl' => esc_url_raw( admin_url( 'admin-ajax.php' ) ),
+		'nonce'   => wp_create_nonce( 'agentic_update_model_pricing' ),
+		'i18n'    => array(
+			'updating'         => __( 'Updating…', 'agent-builder' ),
+			'getLatestPricing' => __( 'Get Latest Pricing', 'agent-builder' ),
+		),
+	),
+	'agenticSettingsLlm'
+);
+?>

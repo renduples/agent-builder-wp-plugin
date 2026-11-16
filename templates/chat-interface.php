@@ -55,7 +55,6 @@ if ( $agentic_default_agent_id && isset( $agentic_agents[ $agentic_default_agent
 	$agentic_current_agent_id = $agentic_current_agent->get_id();
 }
 ?>
-<style>.agentic-chat-container{opacity:0;transition:opacity .15s ease-in}</style>
 <div id="agentic-chat" class="agentic-chat-container" data-agentic-chat-root="1" data-agent-id="<?php echo esc_attr( $agentic_current_agent_id ); ?>">
 	<div class="agentic-chat-header">
 		<div class="agentic-agent-info">

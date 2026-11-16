@@ -14,17 +14,10 @@
 	 */
 	function initConditionalLogic( form ) {
 		var wrap = form.closest( '.agentic-form-wrap' );
-		var scriptTag = wrap ? wrap.querySelector( '.agentic-form-conditions' ) : null;
-		if ( ! scriptTag ) {
-			return;
-		}
-
-		var rules;
-		try {
-			rules = JSON.parse( scriptTag.textContent );
-		} catch ( e ) {
-			return;
-		}
+		var formId = wrap ? wrap.getAttribute( 'data-form-id' ) : '';
+		// Rules are passed by PHP (wp_add_inline_script) keyed by form ID.
+		var all = window.agenticFormConditions || {};
+		var rules = formId && Object.prototype.hasOwnProperty.call( all, formId ) ? all[ formId ] : null;
 
 		if ( ! Array.isArray( rules ) || rules.length === 0 ) {
 			return;

@@ -76,21 +76,7 @@ class Approval_Queue {
 			esc_html( $count ),
 			esc_url( $url )
 		);
-		?>
-		<script>
-		( function () {
-			var notice = document.getElementById( 'agentic-pending-approval-notice' );
-			if ( ! notice ) { return; }
-			notice.addEventListener( 'click', function ( e ) {
-				if ( ! e.target.classList.contains( 'notice-dismiss' ) ) { return; }
-				wp.ajax.post( 'agentic_dismiss_pending_approval_notice', {
-					nonce: notice.dataset.nonce,
-					count: notice.dataset.count,
-				} );
-			} );
-		} () );
-		</script>
-		<?php
+		\Agentic\Inline_Assets::script( 'notices', array(), '', array( 'wp-util' ) );
 	}
 
 	/**

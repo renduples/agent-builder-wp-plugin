@@ -756,13 +756,4 @@ $agentic_rate_limit_anon = get_option( 'agent_builder_rate_limit_anonymous', 10 
 
 </div>
 
-<script>
-document.querySelectorAll('.agentic-reset-defaults').forEach(function(link) {
-	link.addEventListener('click', async function(e) {
-		e.preventDefault();
-		if (!await agenticUI.confirm('Reset these settings to their fresh-install defaults? This cannot be undone.', { danger: true, confirmText: 'Reset' })) return;
-		document.getElementById('agentic-reset-section').value = this.getAttribute('data-section');
-		this.closest('form').querySelector('[name="agentic_save_settings"]').click();
-	});
-});
-</script>
+<?php \Agentic\Inline_Assets::script( 'settings-reset-defaults', array(), '', array( 'agentic-ui' ) ); ?>

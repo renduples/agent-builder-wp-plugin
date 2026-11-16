@@ -297,100 +297,24 @@ Add / Edit Trigger Form
 	<?php esc_html_e( 'When a WordPress event fires, the matched agent is queued as an async AI task — it never blocks the current page load. WordPress hook arguments are serialised into the prompt as context.', 'agent-builder' ); ?>
 </div>
 
-<!-- =====================================================================
-	Inline JS
-	===================================================================== -->
-<script>
-(function($){
-	'use strict';
-
-	const ajaxUrl = <?php echo wp_json_encode( $agentic_ajax_url ); ?>;
-	const nonce   = <?php echo wp_json_encode( $agentic_triggers_nonce ); ?>;
-
-	function getHook() {
-		const sel = $('#agentic-trigger-hook').val();
-		return sel === '_custom'
-			? $('#agentic-trigger-custom-hook').val().trim()
-			: sel;
-	}
-
-	function resetForm() {
-		$('#agentic-trigger-editing-id').val('');
-		$('#agentic-trigger-agent').val('');
-		$('#agentic-trigger-hook').val('');
-		$('#agentic-trigger-custom').hide();
-		$('#agentic-trigger-custom-hook').val('');
-		$('#agentic-trigger-prompt').val('');
-		$('#agentic-trigger-name').val('');
-		$('#agentic-trigger-priority').val('10');
-		$('#agentic-trigger-save').text(<?php echo wp_json_encode( __( 'Add Trigger', 'agent-builder' ) ); ?>);
-		$('#agentic-trigger-cancel').hide();
-		$('#agentic-trigger-status').text('');
-	}
-
-	$('#agentic-trigger-cancel').on('click', resetForm);
-
-	$('#agentic-trigger-save').on('click', function(){
-		const $btn    = $(this);
-		const $status = $('#agentic-trigger-status');
-		const hook    = getHook();
-		const agent   = $('#agentic-trigger-agent').val();
-
-		if ( ! agent ) { $status.css('color','#d63638').text(<?php echo wp_json_encode( __( 'Please choose an agent.', 'agent-builder' ) ); ?>); return; }
-		if ( ! hook )  { $status.css('color','#d63638').text(<?php echo wp_json_encode( __( 'Please choose or enter a hook name.', 'agent-builder' ) ); ?>); return; }
-
-		$btn.prop('disabled', true).text(<?php echo wp_json_encode( __( 'Saving…', 'agent-builder' ) ); ?>);
-		$status.text('');
-
-		$.post(ajaxUrl, {
-			action      : 'agentic_save_user_trigger',
-			_ajax_nonce : nonce,
-			trigger_id  : $('#agentic-trigger-editing-id').val(),
-			agent_slug  : agent,
-			hook        : hook,
-			prompt      : $('#agentic-trigger-prompt').val(),
-			name        : $('#agentic-trigger-name').val(),
-			priority    : $('#agentic-trigger-priority').val(),
-		})
-		.done(function(resp){
-			if (resp.success) {
-				// Reload page to show new/updated row.
-				window.location.reload();
-			} else {
-				$status.css('color','#d63638').text(resp.data || <?php echo wp_json_encode( __( 'Error saving trigger.', 'agent-builder' ) ); ?>);
-				$btn.prop('disabled', false).text(<?php echo wp_json_encode( __( 'Add Trigger', 'agent-builder' ) ); ?>);
-			}
-		})
-		.fail(function(){
-			$status.css('color','#d63638').text(<?php echo wp_json_encode( __( 'Request failed.', 'agent-builder' ) ); ?>);
-			$btn.prop('disabled', false).text(<?php echo wp_json_encode( __( 'Add Trigger', 'agent-builder' ) ); ?>);
-		});
-	});
-
-	$(document).on('click', '.agentic-trigger-delete', async function(){
-		if ( ! await agenticUI.confirm(<?php echo wp_json_encode( __( 'Remove this trigger?', 'agent-builder' ) ); ?>, { danger: true }) ) return;
-
-		const $btn = $(this);
-		const id   = $btn.data('id');
-		$btn.prop('disabled', true);
-
-		$.post(ajaxUrl, {
-			action      : 'agentic_delete_user_trigger',
-			_ajax_nonce : nonce,
-			trigger_id  : id,
-		})
-		.done(function(resp){
-			if (resp.success) {
-				$('#agentic-trigger-row-' + id).fadeOut(300, function(){ $(this).remove(); });
-			} else {
-				$btn.prop('disabled', false);
-				agenticUI.toast(resp.data || <?php echo wp_json_encode( __( 'Could not delete trigger.', 'agent-builder' ) ); ?>, 'error');
-			}
-		})
-		.fail(function(){
-			$btn.prop('disabled', false);
-		});
-	});
-
-})(jQuery);
-</script>
+<?php
+\Agentic\Inline_Assets::script(
+	'deployment-event-listeners',
+	array(
+		'ajaxUrl' => $agentic_ajax_url,
+		'nonce'   => $agentic_triggers_nonce,
+		'i18n'    => array(
+			'addTrigger'    => __( 'Add Trigger', 'agent-builder' ),
+			'chooseAgent'   => __( 'Please choose an agent.', 'agent-builder' ),
+			'chooseHook'    => __( 'Please choose or enter a hook name.', 'agent-builder' ),
+			'saving'        => __( 'Saving…', 'agent-builder' ),
+			'saveError'     => __( 'Error saving trigger.', 'agent-builder' ),
+			'requestFailed' => __( 'Request failed.', 'agent-builder' ),
+			'confirmRemove' => __( 'Remove this trigger?', 'agent-builder' ),
+			'deleteError'   => __( 'Could not delete trigger.', 'agent-builder' ),
+		),
+	),
+	'agenticDeployTriggers',
+	array( 'jquery', 'agentic-ui' )
+);
+?>

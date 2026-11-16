@@ -376,10 +376,4 @@ $agentic_top_patterns = \Agentic\Security_Log::get_top_patterns( 5, $agentic_per
 	</div>
 </div>
 
-<script>
-document.getElementById('agentic-cleanup-dialog').addEventListener('click', function(e) {
-	if ( e.target === this ) {
-		this.classList.remove('active');
-	}
-});
-</script>
+<?php \Agentic\Inline_Assets::script( 'security-log' ); ?>
