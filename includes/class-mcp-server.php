@@ -380,7 +380,7 @@ class Agentic_MCP_Server {
 		if ( ! self::is_mcp_enabled( $slug ) ) {
 			return array(
 				'ready'  => false,
-				'reason' => __( 'MCP is off by default for this agent — enable it in Settings > MCP.', 'agent-builder' ),
+				'reason' => __( 'MCP is off for this agent.', 'agent-builder' ),
 			);
 		}
 		return array(
