@@ -53,6 +53,13 @@ class Approval_Queue {
 			return;
 		}
 
+		// Agent Builder screens only — the approvals queue has its own menu
+		// badge and notifications, so this never follows the admin around
+		// the rest of wp-admin.
+		if ( ! Admin_Notice_Manager::is_plugin_admin_screen() ) {
+			return;
+		}
+
 		$count = $this->get_pending_count();
 
 		if ( $count <= 0 ) {

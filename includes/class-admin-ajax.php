@@ -122,11 +122,14 @@ class Admin_Ajax {
 		// Store data-retention preference so uninstall.php can respect it.
 		update_option( 'agent_builder_deactivate_delete_data', $delete_data ? '1' : '0' );
 
-		// Forward cancellation feedback when the user has opted in (disclosed in
-		// readme.txt's External Services section — a consent-gated survey, not a
-		// license-holder perk).
-		$has_consent = get_option( 'agent_builder_service_consent' );
-		if ( $has_consent ) {
+		// Forward cancellation feedback only when the admin clicked "Submit &
+		// deactivate" (send_feedback=1) on the survey, which is itself shown
+		// only to sites that accepted the Agentic AI terms at sign-up. "Skip &
+		// deactivate" and plain deactivation send nothing. Disclosed in
+		// readme.txt's External services section.
+		$has_consent   = get_option( 'agent_builder_service_consent' );
+		$send_feedback = isset( $_POST['send_feedback'] ) && '1' === $_POST['send_feedback'];
+		if ( $has_consent && $send_feedback ) {
 			$reason = sanitize_key( wp_unslash( $_POST['reason'] ?? '' ) );
 			$detail = sanitize_textarea_field( wp_unslash( $_POST['detail'] ?? '' ) );
 			if ( ! empty( $reason ) ) {

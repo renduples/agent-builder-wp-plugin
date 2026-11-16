@@ -174,8 +174,8 @@ final class Activator {
 	private static function preflight_check(): bool {
 		global $wpdb;
 
-		if ( version_compare( PHP_VERSION, '8.1', '<' ) ) {
-			self::record( 'preflight_check', 'error', 'PHP ' . PHP_VERSION . ' is below the required 8.1' );
+		if ( version_compare( PHP_VERSION, '8.2', '<' ) ) {
+			self::record( 'preflight_check', 'error', 'PHP ' . PHP_VERSION . ' is below the required 8.2' );
 			return false;
 		}
 

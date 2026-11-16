@@ -202,7 +202,7 @@ class Read_Spreadsheet extends \Agentic\Tool_Base {
 				break;
 			}
 			if ( '' !== trim( $line ) ) {
-				$rows[] = str_getcsv( $line, $delimiter );
+				$rows[] = str_getcsv( $line, $delimiter, '"', '\\' );
 			}
 		}
 		$truncated = count( $lines ) > $max;

@@ -558,10 +558,11 @@ class Risk_Level {
 		// Contained option writes (one dashboard notice; last-12 audit history).
 		'post_admin_notice'                    => self::LOW,
 		'save_audit_result'                    => self::LOW,
-		// Globally injected into every agent. send=false is diagnose-only;
-		// send=true POSTs diagnostics + license key to agentic-plugin.com.
-		// Same band as request_human_help (outbound, not arbitrary addressee).
-		'report_issue'                         => self::LOW,
+		// Globally injected into every agent. send=true POSTs diagnostics +
+		// license key to agentic-plugin.com, so every call pauses for the
+		// admin's in-chat confirmation: nothing leaves the site unless a
+		// person clicks to allow it (WordPress.org Guidelines 7/9).
+		'report_issue'                         => self::MEDIUM,
 		// Form reads that can expose personal data (payloads, upload URLs,
 		// or aggregates built by scanning payloads).
 		'get_native_form_submissions'          => self::LOW,

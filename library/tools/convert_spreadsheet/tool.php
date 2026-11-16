@@ -228,7 +228,7 @@ class Convert_Spreadsheet extends \Agentic\Tool_Base {
 
 		foreach ( explode( "\n", rtrim( $content ) ) as $line ) {
 			if ( '' !== trim( $line ) ) {
-				$row = str_getcsv( $line, $delimiter );
+				$row = str_getcsv( $line, $delimiter, '"', '\\' );
 				$sheet->fromArray( array( $row ), null, "A{$row_num}" );
 				++$row_num;
 			}
@@ -257,7 +257,7 @@ class Convert_Spreadsheet extends \Agentic\Tool_Base {
 		$output = '';
 		foreach ( explode( "\n", rtrim( $content ) ) as $line ) {
 			if ( '' !== trim( $line ) ) {
-				$output .= $this->array_to_csv_line( str_getcsv( $line, $from ), $to );
+				$output .= $this->array_to_csv_line( str_getcsv( $line, $from, '"', '\\' ), $to );
 			}
 		}
 
