@@ -2227,20 +2227,8 @@ function MCPTab( { data } ) {
 
 	const [ tests, setTests ] = useState( {} );
 	const [ copied, setCopied ] = useState( {} );
-	const [ credentials, setCredentials ] = useState( data.credentials || [] );
 	const [ agentOverrides, setAgentOverrides ] = useState( {} );
 	const [ toggling, setToggling ] = useState( {} );
-
-	// data.credentials can still be [] on MCPTab's first render (bootstrap
-	// arrives one render before SettingsApp's tabData sync effect catches
-	// up), so re-sync once the real prop value shows up.
-	useEffect( () => {
-		setCredentials( data.credentials || [] );
-	}, [ data.credentials ] );
-	const [ creating, setCreating ] = useState( false );
-	const [ createError, setCreateError ] = useState( '' );
-	const [ newCredential, setNewCredential ] = useState( null );
-	const [ revoking, setRevoking ] = useState( '' );
 
 	const testAgent = ( slug ) => {
 		setTests( ( prev ) => ( {
@@ -2307,74 +2295,23 @@ function MCPTab( { data } ) {
 		} );
 	};
 
-	const createCredential = () => {
-		setCreating( true );
-		setCreateError( '' );
-		apiFetch( { path: REST + '/mcp-create-credential', method: 'POST' } )
-			.then( ( res ) => {
-				setCreating( false );
-				setNewCredential( res );
-				setCredentials( ( prev ) => [
-					...prev,
-					{
-						user_id: res.user_id,
-						user_login: res.user_login,
-						uuid: res.uuid,
-						created: res.created,
-						last_used: __( 'Never', 'agent-builder' ),
-					},
-				] );
-			} )
-			.catch( ( err ) => {
-				setCreating( false );
-				setCreateError(
-					err.message ||
-						__( 'Could not create credential.', 'agent-builder' )
-				);
-			} );
-	};
-
-	const revokeCredential = ( cred ) => {
-		if (
-			! window.confirm(
-				__(
-					'Revoke this Application Password? Any client using it will stop working immediately.',
-					'agent-builder'
-				)
-			)
-		) {
-			return;
-		}
-		setRevoking( cred.uuid );
-		apiFetch( {
-			path: REST + '/mcp-revoke-credential',
-			method: 'POST',
-			data: { user_id: cred.user_id, uuid: cred.uuid },
-		} )
-			.then( () => {
-				setRevoking( '' );
-				setCredentials( ( prev ) =>
-					prev.filter( ( c ) => c.uuid !== cred.uuid )
-				);
-			} )
-			.catch( () => {
-				setRevoking( '' );
-			} );
-	};
-
 	return (
 		<>
 			<Panel title={ __( 'MCP', 'agent-builder' ) }>
 				<p className="agentic-react-lead">
 					{ __(
-						'The Model Context Protocol (MCP) lets external AI apps — Claude Desktop, Cursor, and others — use your agents directly, tool calls and all. Free on every WordPress version this plugin supports — no Pro or connector required.',
+						'The Model Context Protocol (MCP) lets AI apps you connect yourself (Claude Desktop, Cursor, Grok and others) talk directly to this site and use an agent\'s tools. MCP is off for every agent until an administrator turns it on below.',
 						'agent-builder'
 					) }
 				</p>
-				<p>
-					<span className="agentic-react-led is-on" />{ ' ' }
-					<strong>{ __( 'Available', 'agent-builder' ) }</strong>
-				</p>
+				<Notice status="warning" isDismissible={ false }>
+					<p>
+						{ __(
+							'Turning MCP on for an agent lets any AI app you connect act on this site with the permissions of the WordPress user whose Application Password it uses. Only enable it for agents you need, and only connect apps you trust.',
+							'agent-builder'
+						) }
+					</p>
+				</Notice>
 			</Panel>
 
 			<Panel title={ __( 'Agent endpoints', 'agent-builder' ) }>
@@ -2512,109 +2449,47 @@ function MCPTab( { data } ) {
 				</div>
 			</Panel>
 
-			<Panel title={ __( 'Application Passwords', 'agent-builder' ) }>
+			<Panel title={ __( 'Connecting an AI app', 'agent-builder' ) }>
+				<ol>
+					<li>
+						{ __(
+							'Turn on MCP for the agent you want to use, above.',
+							'agent-builder'
+						) }
+					</li>
+					<li>
+						{ __(
+							'Create an Application Password in your own WordPress profile (Users > Profile > Application Passwords). Agent Builder never creates or stores one for you.',
+							'agent-builder'
+						) }{ ' ' }
+						{ data.profile_url && (
+							<a href={ data.profile_url }>
+								{ __(
+									'Open your profile',
+									'agent-builder'
+								) }
+							</a>
+						) }
+					</li>
+					<li>
+						{ __(
+							'In your AI app, add the agent\'s MCP URL and sign in with your WordPress username and that Application Password.',
+							'agent-builder'
+						) }
+					</li>
+				</ol>
 				<p className="agentic-react-lead">
 					{ __(
-						'Credentials for configuring an external MCP client (e.g. Cursor, Claude Desktop) with a username and password. The password is shown once, here, and is never sent anywhere else by this plugin.',
+						'The app can only use the tools that agent is allowed to use, limited to what your WordPress user may do. High-risk tools are never available over MCP, and actions that normally need your approval still wait for it. To disconnect an app, revoke its Application Password in your profile or turn MCP off for the agent.',
 						'agent-builder'
 					) }
 				</p>
-				{ createError && (
-					<Notice
-						status="error"
-						isDismissible={ false }
-						style={ { marginBottom: 16 } }
-					>
-						{ createError }
-					</Notice>
-				) }
-				{ newCredential && (
-					<Notice
-						status="success"
-						isDismissible
-						onRemove={ () => setNewCredential( null ) }
-						style={ { marginBottom: 16 } }
-					>
-						<p>
-							{ __(
-								'Password created — copy it now, it will not be shown again:',
-								'agent-builder'
-							) }
-						</p>
-						<p>
-							<code>{ newCredential.password }</code>{ ' ' }
-							<Button
-								variant="link"
-								onClick={ () =>
-									navigator.clipboard.writeText(
-										newCredential.password
-									)
-								}
-							>
-								{ __( 'Copy', 'agent-builder' ) }
-							</Button>
-						</p>
-					</Notice>
-				) }
-				<div className="agentic-react-table-wrap">
-					<table className="agentic-react-table">
-						<thead>
-							<tr>
-								<th>{ __( 'User', 'agent-builder' ) }</th>
-								<th>{ __( 'Created', 'agent-builder' ) }</th>
-								<th>{ __( 'Last used', 'agent-builder' ) }</th>
-								<th />
-							</tr>
-						</thead>
-						<tbody>
-							{ credentials.map( ( c ) => (
-								<tr key={ c.uuid }>
-									<td>{ c.user_login }</td>
-									<td>{ c.created }</td>
-									<td>
-										{ c.last_used ||
-											__( 'Never', 'agent-builder' ) }
-									</td>
-									<td>
-										<Button
-											variant="secondary"
-											isDestructive
-											isBusy={
-												revoking === c.uuid
-											}
-											disabled={
-												revoking === c.uuid
-											}
-											onClick={ () =>
-												revokeCredential( c )
-											}
-										>
-											{ __( 'Revoke', 'agent-builder' ) }
-										</Button>
-									</td>
-								</tr>
-							) ) }
-							{ ! credentials.length && (
-								<tr>
-									<td colSpan={ 4 }>
-										<em className="agentic-react-lead">
-											{ __(
-												'No Application Passwords yet.',
-												'agent-builder'
-											) }
-										</em>
-									</td>
-								</tr>
-							) }
-						</tbody>
-					</table>
-				</div>
 				{ unattendedWrites.length > 0 && (
-					<Notice status="warning" isDismissible={ false } style={ { marginBottom: 16 } }>
+					<Notice status="info" isDismissible={ false }>
 						<p>
 							<strong>
 								{ __(
-									'Unlike chat, MCP has no per-action confirmation step — any client using this password can immediately perform the following without asking you first each time:',
+									'These actions need your approval before they run. Requests from an AI app appear in Approvals:',
 									'agent-builder'
 								) }
 							</strong>
@@ -2626,18 +2501,15 @@ function MCPTab( { data } ) {
 								</li>
 							) ) }
 						</ul>
+						{ data.approvals_url && (
+							<p>
+								<a href={ data.approvals_url }>
+									{ __( 'Open Approvals', 'agent-builder' ) }
+								</a>
+							</p>
+						) }
 					</Notice>
 				) }
-				<p>
-					<Button
-						variant="primary"
-						isBusy={ creating }
-						disabled={ creating }
-						onClick={ createCredential }
-					>
-						{ __( 'Create Application Password', 'agent-builder' ) }
-					</Button>
-				</p>
 			</Panel>
 		</>
 	);

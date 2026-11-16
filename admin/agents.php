@@ -393,7 +393,7 @@ wp_enqueue_style( 'agentic-react-admin', AGENT_BUILDER_URL . 'assets/css/react-a
 					$agentic_row_class = $agentic_agent['active'] ? 'active' : 'inactive';
 					$agentic_nonce     = wp_create_nonce( 'agentic_agent_action' );
 
-					$agentic_mcp         = class_exists( '\Agentic_Relay_Connect' ) ? \Agentic_Relay_Connect::mcp_readiness( $agentic_slug ) : array(
+					$agentic_mcp         = class_exists( '\Agentic_MCP_Server' ) ? \Agentic_MCP_Server::mcp_readiness( $agentic_slug ) : array(
 						'ready'  => false,
 						'reason' => null,
 					);

@@ -213,11 +213,11 @@ class Agent_Ready_Score {
 	/**
 	 * mcp_server_reachable — Capability exposure, high weight, free-fixable.
 	 *
-	 * Reuses Agentic_Relay_Connect::mcp_readiness(), already built for the
+	 * Reuses Agentic_MCP_Server::mcp_readiness(), already built for the
 	 * Settings > MCP tab's own "ready/not ready" status per agent.
 	 *
 	 * MCP is opt-in per agent (off by default — see
-	 * Agentic_Relay_Connect::ENABLED_AGENTS_OPTION); an agent nobody has
+	 * Agentic_MCP_Server::ENABLED_AGENTS_OPTION); an agent nobody has
 	 * turned it on for isn't broken, it's the deliberate secure default, so
 	 * it's excluded from this score entirely rather than counted as a
 	 * failure — otherwise a fresh, correctly-locked-down site would always
@@ -250,11 +250,11 @@ class Agent_Ready_Score {
 			return self::result( 0, 'Capability exposure', 'high', false, 'No agents are active yet.' );
 		}
 
-		if ( ! class_exists( '\\Agentic_Relay_Connect' ) ) {
-			return self::result( 0, 'Capability exposure', 'high', false, 'MCP relay unavailable.' );
+		if ( ! class_exists( '\\Agentic_MCP_Server' ) ) {
+			return self::result( 0, 'Capability exposure', 'high', false, 'MCP endpoint unavailable.' );
 		}
 
-		$slugs = array_values( array_filter( $all_slugs, array( '\\Agentic_Relay_Connect', 'is_mcp_enabled' ) ) );
+		$slugs = array_values( array_filter( $all_slugs, array( '\\Agentic_MCP_Server', 'is_mcp_enabled' ) ) );
 
 		if ( empty( $slugs ) ) {
 			return self::result( 100, 'Capability exposure', 'high', true, 'MCP is off for every active agent — nothing to fix. Enable it for an agent in Settings > MCP if you want external AI apps like Claude Desktop or Cursor to reach it.' );
@@ -264,7 +264,7 @@ class Agent_Ready_Score {
 		$worst_reason = '';
 		$resignable   = false;
 		foreach ( $slugs as $slug ) {
-			$readiness = \Agentic_Relay_Connect::mcp_readiness( $slug );
+			$readiness = \Agentic_MCP_Server::mcp_readiness( $slug );
 			if ( ! empty( $readiness['ready'] ) ) {
 				++$ready_count;
 				continue;

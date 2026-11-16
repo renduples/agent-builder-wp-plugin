@@ -415,9 +415,9 @@ class Provider_Registry {
 	}
 
 	/**
-	 * The billing identity sent to the hosted Agentic relay.
+	 * The billing identity sent to the hosted Agentic AI service (an LLM API).
 	 *
-	 * The relay meters usage by this value — the site's license key — and
+	 * The service meters usage by this value — the site's license key — and
 	 * rejects a request without one ("This site is not activated for Agentic
 	 * hosted AI"). It is a distinct credential from the `agentic` provider's
 	 * API key: signup returns both `api_key` (authenticates the request) and
@@ -426,7 +426,7 @@ class Provider_Registry {
 	 * `agent_builder_license_key` option (see #135); this reads it back.
 	 *
 	 * The provider row's API key is NOT a valid metering identity and must not
-	 * be used as a fallback — doing so meters under the wrong id and the relay
+	 * be used as a fallback — doing so meters under the wrong id and the service
 	 * either rejects it or serves unmetered. A site with an API key but no
 	 * license key is treated as not-usable so the admin is funnelled back to
 	 * Quick Start to reconnect (which then stores the license key).

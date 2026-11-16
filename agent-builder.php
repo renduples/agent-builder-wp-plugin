@@ -555,10 +555,10 @@ final class Plugin {
 		// Global namespace classes (not autoloadable).
 		include_once AGENT_BUILDER_DIR . 'includes/class-agent-registry.php';
 		include_once AGENT_BUILDER_DIR . 'includes/class-native-forms.php';
-		include_once AGENT_BUILDER_DIR . 'includes/class-relay-connect.php';
+		include_once AGENT_BUILDER_DIR . 'includes/class-mcp-server.php';
 
-		// Relay connector — ping endpoint + site-connect approval flow.
-		\Agentic_Relay_Connect::init();
+		// Per-agent MCP endpoint on this site (off by default per agent).
+		\Agentic_MCP_Server::init();
 
 		// Shortcodes — must register before content parsing.
 		new Shortcodes();
