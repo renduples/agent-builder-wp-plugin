@@ -409,7 +409,7 @@ class Webmcp_Bridge {
 			return;
 		}
 
-		$path = wp_parse_url( (string) ( $_SERVER['REQUEST_URI'] ?? '' ), PHP_URL_PATH ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Read-only path comparison, not used as output or a file path.
+		$path = wp_parse_url( esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ?? '' ) ), PHP_URL_PATH );
 		if ( ! is_string( $path ) || ! str_ends_with( $path, '/.well-known/webmcp.json' ) ) {
 			return;
 		}
