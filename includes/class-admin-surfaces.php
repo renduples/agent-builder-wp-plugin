@@ -101,7 +101,7 @@ class Admin_Surfaces {
 			add_filter( 'media_row_actions', array( $this, 'media_row_action' ), 20, 2 );
 			// Covers Grid View (the default) — rendered client-side by Backbone
 			// (wp.media), so restrict_manage_posts never fires there at all.
-			add_action( 'admin_footer-upload.php', array( $this, 'media_grid_launcher_js' ) );
+			add_action( 'admin_enqueue_scripts', array( $this, 'media_grid_launcher_js' ) );
 		}
 
 		if ( in_array( 'users', $screens, true ) ) {
@@ -332,6 +332,49 @@ class Admin_Surfaces {
 	}
 
 	/**
+	 * Allowed HTML for launcher links, wrappers and dismiss buttons, used to
+	 * escape them late with wp_kses() when echoed.
+	 *
+	 * @return array<string, array<string, bool>>
+	 */
+	public static function launcher_allowed_html(): array {
+		return array(
+			'a'      => array(
+				'href'                => true,
+				'class'               => true,
+				'title'               => true,
+				'data-agentic-launch' => true,
+				'data-agentic-prompt' => true,
+				'data-agentic-label'  => true,
+			),
+			'span'   => array(
+				'class'       => true,
+				'aria-hidden' => true,
+				'style'       => true,
+			),
+			'button' => array(
+				'type'              => true,
+				'class'             => true,
+				'title'             => true,
+				'aria-label'        => true,
+				'data-launcher-key' => true,
+			),
+			'svg'    => array(
+				'width'   => true,
+				'height'  => true,
+				'viewbox' => true,
+				'fill'    => true,
+				'xmlns'   => true,
+			),
+			'path'   => array(
+				'd'       => true,
+				'fill'    => true,
+				'opacity' => true,
+			),
+		);
+	}
+
+	/**
 	 * Build a launcher anchor (scoped to our own markup so arbitrary DOM cannot
 	 * trigger a seeded launch). The prompt is editable in the composer; it is
 	 * never auto-sent.
@@ -365,7 +408,7 @@ class Admin_Surfaces {
 			esc_attr( (string) ( $args['prompt'] ?? '' ) ),
 			esc_attr( $label ),
 			esc_attr( $title ),
-			$icon, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG markup.
+			$icon,
 			esc_html( $label )
 		);
 	}
@@ -467,7 +510,7 @@ class Admin_Surfaces {
 		}
 		$html = $this->media_launcher_html();
 		if ( '' !== $html ) {
-			echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- media_launcher_html() returns escaped HTML.
+			echo wp_kses( $html, self::launcher_allowed_html() );
 		}
 	}
 
@@ -503,8 +546,8 @@ class Admin_Surfaces {
 
 		return sprintf(
 			'<span class="agentic-launcher-wrap agentic-launcher-wrap--toolbar">%1$s%2$s</span>',
-			$link, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- launcher_link() returns escaped HTML.
-			$this->dismiss_button( 'media' ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- dismiss_button() returns escaped HTML.
+			$link,
+			$this->dismiss_button( 'media' )
 		);
 	}
 
@@ -515,44 +558,26 @@ class Admin_Surfaces {
 	 *
 	 * .media-toolbar-secondary exists in the initial server-rendered HTML as
 	 * an empty shell, but Backbone's own AttachmentsBrowser view populates
-	 * (and in doing so, clears) it asynchronously after this admin_footer
+	 * (and in doing so, clears) it asynchronously after this footer
 	 * script has already run — an insert-once-at-parse-time approach loses
 	 * the race and gets wiped. A MutationObserver re-inserts the launcher
 	 * every time the toolbar's contents change instead of relying on timing.
 	 *
+	 * Enqueued on admin_enqueue_scripts for the Media Library screen only
+	 * (assets/js/admin/media-grid-launcher.js).
+	 *
+	 * @param string $hook_suffix Current admin page hook.
 	 * @return void
 	 */
-	public function media_grid_launcher_js(): void {
+	public function media_grid_launcher_js( $hook_suffix = '' ): void {
+		if ( 'upload.php' !== $hook_suffix ) {
+			return;
+		}
 		$html = $this->media_launcher_html();
 		if ( '' === $html ) {
 			return;
 		}
-		?>
-		<script>
-		( function () {
-			var launcherHtml = <?php echo wp_json_encode( $html ); ?>;
-
-			function insert() {
-				var toolbar = document.querySelector( '.media-toolbar-secondary' );
-				if ( ! toolbar || toolbar.querySelector( '.agentic-launcher-wrap' ) ) {
-					return;
-				}
-				var wrap = document.createElement( 'div' );
-				wrap.innerHTML = launcherHtml;
-				toolbar.appendChild( wrap.firstElementChild );
-			}
-
-			insert();
-
-			// Observe body, not the toolbar node itself — Backbone may replace
-			// the element outright rather than just clearing its contents, which
-			// would silently detach an observer bound to the original reference.
-			// insert() re-queries the toolbar fresh each time, so this stays
-			// correct regardless of which underlying node currently matches.
-			new MutationObserver( insert ).observe( document.body, { childList: true, subtree: true } );
-		} )();
-		</script>
-		<?php
+		Inline_Assets::script( 'media-grid-launcher', array( 'html' => $html ), 'agenticMediaLauncher' );
 	}
 
 	/**
@@ -676,10 +701,13 @@ class Admin_Surfaces {
 			return;
 		}
 
-		printf(
-			'<span class="agentic-launcher-wrap agentic-launcher-wrap--toolbar">%1$s%2$s</span>',
-			$link, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- launcher_link() returns escaped HTML.
-			$this->dismiss_button( 'users' ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- dismiss_button() returns escaped HTML.
+		echo wp_kses(
+			sprintf(
+				'<span class="agentic-launcher-wrap agentic-launcher-wrap--toolbar">%1$s%2$s</span>',
+				$link,
+				$this->dismiss_button( 'users' )
+			),
+			self::launcher_allowed_html()
 		);
 	}
 
@@ -825,7 +853,7 @@ class Admin_Surfaces {
 			if ( '' !== $link ) {
 				// Render each as a button-styled launcher.
 				echo '<span class="button" style="margin:0 6px 6px 0;display:inline-block;">'
-					. $link // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- launcher_link() returns escaped HTML.
+					. wp_kses( $link, self::launcher_allowed_html() )
 					. '</span>';
 			}
 		}

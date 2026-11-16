@@ -787,6 +787,7 @@ class Agent_Templates {
 		if ( ! is_array( $raw ) ) {
 			return new \WP_Error( 'invalid_abilities', __( 'abilities.json is not valid JSON.', 'agent-builder' ) );
 		}
+		$raw = self::sanitize_abilities( $raw );
 
 		$downgrades = self::risk_downgrade_errors( $raw, (array) ( $manifest['tools'] ?? array() ) );
 		if ( ! empty( $downgrades ) ) {
@@ -796,6 +797,34 @@ class Agent_Templates {
 			);
 		}
 
+		return $raw;
+	}
+
+	/**
+	 * Sanitize an imported abilities.json: every string value through
+	 * sanitize_text_field(), ability (tool) names through sanitize_key().
+	 * Numbers, booleans and null pass through unchanged.
+	 *
+	 * @param array<string, mixed> $raw Decoded abilities.json.
+	 * @return array<string, mixed>
+	 */
+	private static function sanitize_abilities( array $raw ): array {
+		$raw = map_deep(
+			$raw,
+			static function ( $value ) {
+				return is_string( $value ) ? sanitize_text_field( $value ) : $value;
+			}
+		);
+		if ( isset( $raw['abilities'] ) && is_array( $raw['abilities'] ) ) {
+			$clean = array();
+			foreach ( $raw['abilities'] as $tool => $ability ) {
+				$tool = sanitize_key( (string) $tool );
+				if ( '' !== $tool ) {
+					$clean[ $tool ] = $ability;
+				}
+			}
+			$raw['abilities'] = $clean;
+		}
 		return $raw;
 	}
 

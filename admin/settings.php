@@ -173,9 +173,8 @@ if ( isset( $_POST['agentic_save_settings'] ) && check_admin_referer( 'agentic_s
 	// Only save settings for the active tab to avoid overwriting other tabs with defaults.
 	if ( '' === $agentic_reset_section && 'agents' === $agentic_save_tab ) {
 		// Save per-agent overrides (provider, model, mode per agent slug).
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Each field is sanitized individually in the foreach loop below.
 		$agentic_raw_overrides   = isset( $_POST['agent_builder_agent_overrides'] ) && is_array( $_POST['agent_builder_agent_overrides'] )
-			? wp_unslash( $_POST['agent_builder_agent_overrides'] ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			? map_deep( wp_unslash( $_POST['agent_builder_agent_overrides'] ), 'sanitize_text_field' )
 			: array();
 		$agentic_valid_modes     = array( '', 'disabled', 'supervised', 'autonomous' );
 		$agentic_valid_providers = array_merge( array( '' ), \Agentic\Provider_Registry::get_slugs() );
@@ -326,15 +325,14 @@ if ( isset( $_POST['agentic_save_settings'] ) && check_admin_referer( 'agentic_s
 	}
 
 	if ( '' === $agentic_reset_section && 'users' === $agentic_save_tab ) {
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitised per-field inside save_settings()
 		$agentic_roles_raw = isset( $_POST['agentic_user_roles'] ) && is_array( $_POST['agentic_user_roles'] )
-			? wp_unslash( $_POST['agentic_user_roles'] ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			? map_deep( wp_unslash( $_POST['agentic_user_roles'] ), 'sanitize_text_field' )
 			: array();
 		\Agentic\User_Roles::save_settings( $agentic_roles_raw );
 
 		// Per-role usage limits.
 		$agentic_limits_raw = isset( $_POST['agentic_usage_limits'] ) && is_array( $_POST['agentic_usage_limits'] )
-			? wp_unslash( $_POST['agentic_usage_limits'] ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			? map_deep( wp_unslash( $_POST['agentic_usage_limits'] ), 'sanitize_text_field' )
 			: array();
 		\Agentic\Usage_Limits::save_limits( $agentic_limits_raw );
 
@@ -377,9 +375,8 @@ if ( isset( $_POST['agentic_save_settings'] ) && check_admin_referer( 'agentic_s
 	}
 
 	if ( '' === $agentic_reset_section && in_array( $agentic_save_tab, array( 'personas', 'instructions' ), true ) ) {
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitised per-field below
 		$agentic_personas_raw     = isset( $_POST['agent_builder_agent_personas'] ) && is_array( $_POST['agent_builder_agent_personas'] )
-			? wp_unslash( $_POST['agent_builder_agent_personas'] ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			? map_deep( wp_unslash( $_POST['agent_builder_agent_personas'] ), 'sanitize_textarea_field' )
 			: array();
 		$agentic_personas_changed = false;
 		foreach ( $agentic_personas_raw as $agentic_p_slug => $agentic_p_data ) {
@@ -746,13 +743,4 @@ $agentic_rate_limit_anon = get_option( 'agent_builder_rate_limit_anonymous', 10 
 
 </div>
 
-<script>
-document.querySelectorAll('.agentic-reset-defaults').forEach(function(link) {
-	link.addEventListener('click', async function(e) {
-		e.preventDefault();
-		if (!await agenticUI.confirm('Reset these settings to their fresh-install defaults? This cannot be undone.', { danger: true, confirmText: 'Reset' })) return;
-		document.getElementById('agentic-reset-section').value = this.getAttribute('data-section');
-		this.closest('form').querySelector('[name="agentic_save_settings"]').click();
-	});
-});
-</script>
+<?php \Agentic\Inline_Assets::script( 'settings-reset-defaults', array(), '', array( 'agentic-ui' ) ); ?>

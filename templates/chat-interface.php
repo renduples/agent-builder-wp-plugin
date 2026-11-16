@@ -33,10 +33,10 @@ if ( ! empty( $agentic_force_agent ) ) {
 	$agentic_default_agent_id = sanitize_key( (string) $agentic_force_agent );
 } else {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- No form submission, just URL parameter for agent selection.
-	$agentic_default_agent_id = isset( $_GET['agent'] ) ? sanitize_key( $_GET['agent'] ) : '';
+	$agentic_default_agent_id = isset( $_GET['agent'] ) ? sanitize_key( wp_unslash( $_GET['agent'] ) ) : '';
 
 	if ( ! $agentic_default_agent_id && isset( $_COOKIE['agentic_last_agent'] ) ) {
-		$agentic_default_agent_id = sanitize_key( $_COOKIE['agentic_last_agent'] );
+		$agentic_default_agent_id = sanitize_key( wp_unslash( $_COOKIE['agentic_last_agent'] ) );
 	}
 
 	if ( ! $agentic_default_agent_id || ! isset( $agentic_agents[ $agentic_default_agent_id ] ) ) {
@@ -55,7 +55,6 @@ if ( $agentic_default_agent_id && isset( $agentic_agents[ $agentic_default_agent
 	$agentic_current_agent_id = $agentic_current_agent->get_id();
 }
 ?>
-<style>.agentic-chat-container{opacity:0;transition:opacity .15s ease-in}</style>
 <div id="agentic-chat" class="agentic-chat-container" data-agentic-chat-root="1" data-agent-id="<?php echo esc_attr( $agentic_current_agent_id ); ?>">
 	<div class="agentic-chat-header">
 		<div class="agentic-agent-info">

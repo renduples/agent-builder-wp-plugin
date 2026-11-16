@@ -221,7 +221,14 @@ class Agentic_Native_Forms {
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'rest_submit_form' ),
-				'permission_callback' => '__return_true',  // Public endpoint.
+				// Public by design: this is the front-end form submission for
+				// site visitors, who may be logged out. Not read-only, so it is
+				// protected inside rest_submit_form() instead: the X-WP-Nonce
+				// (wp_rest) printed with the form is verified, the form must be
+				// an existing agentic_form post, every field is validated and
+				// sanitized against the form definition, and the per-form
+				// honeypot and optional Turnstile check reject bots.
+				'permission_callback' => '__return_true',
 				'args'                => array(
 					'id' => array( 'validate_callback' => static fn( $v ) => is_numeric( $v ) ),
 				),
@@ -856,8 +863,13 @@ class Agentic_Native_Forms {
 		$submit_url = rest_url( self::REST_NS . '/native-forms/' . $form_id . '/submit' );
 		$nonce      = wp_create_nonce( 'wp_rest' );
 
+		// Assets: the shortcode can render outside post_content (widgets,
+		// blocks, do_shortcode()), so make sure the script/style are queued.
+		$this->enqueue_form_assets();
+		$this->add_form_styles( $form_id, $definition['styles'] ?? array() );
+		$this->add_form_conditions( $form_id );
+
 		ob_start();
-		$this->render_form_styles( $form_id, $definition['styles'] ?? array() );
 		?>
 		<div class="agentic-form-wrap" id="agentic-form-<?php echo esc_attr( (string) $form_id ); ?>" data-form-id="<?php echo esc_attr( (string) $form_id ); ?>">
 			<form class="agentic-form"
@@ -866,14 +878,6 @@ class Agentic_Native_Forms {
 					data-submit-url="<?php echo esc_attr( $submit_url ); ?>"
 					data-nonce="<?php echo esc_attr( $nonce ); ?>">
 
-			<?php
-			// Conditional logic data for JS.
-			$conditions      = get_post_meta( $form_id, self::META_CONDITIONS, true );
-			$conditions_json = is_string( $conditions ) && '' !== $conditions ? $conditions : '';
-			if ( '' !== $conditions_json ) :
-				?>
-				<script type="application/json" class="agentic-form-conditions"><?php echo $conditions_json; // phpcs:ignore WordPress.Security.EscapeOutput -- validated JSON ?></script>
-			<?php endif; ?>
 
 				<?php foreach ( $definition['fields'] as $idx => $field ) : ?>
 					<?php $this->render_field( $field, $idx ); ?>
@@ -921,128 +925,295 @@ class Agentic_Native_Forms {
 	}
 
 	/**
-	 * Inject a scoped <style> block for per-form styling.
+	 * Pass a form's conditional-logic rules to native-forms.js.
+	 *
+	 * The stored meta is decoded and re-validated against the rule schema
+	 * (see sanitize_conditions()), then re-encoded with the JSON_HEX_* flags
+	 * by Inline_Assets. The stored string itself is never printed.
+	 *
+	 * @param int $form_id Form post ID.
+	 * @return void
+	 */
+	private function add_form_conditions( int $form_id ): void {
+		$rules = self::sanitize_conditions( get_post_meta( $form_id, self::META_CONDITIONS, true ) );
+		if ( empty( $rules ) ) {
+			return;
+		}
+		wp_add_inline_script(
+			'agentic-native-forms',
+			'window.agenticFormConditions = window.agenticFormConditions || {};'
+				. 'window.agenticFormConditions[' . (int) $form_id . '] = ' . \Agentic\Inline_Assets::json( $rules ) . ';',
+			'before'
+		);
+	}
+
+	/**
+	 * Decode and validate stored conditional-logic rules.
+	 *
+	 * Each rule must be an object with a field/target name (sanitize_key),
+	 * an allow-listed operator and action, and a plain-text value. Anything
+	 * else is dropped.
+	 *
+	 * @param mixed $raw JSON string (as stored) or already-decoded array.
+	 * @return array<int, array{field:string, operator:string, value:string, target:string, action:string}>
+	 */
+	public static function sanitize_conditions( $raw ): array {
+		if ( is_string( $raw ) ) {
+			$raw = '' === $raw ? array() : json_decode( $raw, true );
+		}
+		if ( ! is_array( $raw ) ) {
+			return array();
+		}
+
+		$operators = array( 'equals', 'not_equals', 'contains', 'not_empty', 'empty' );
+		$actions   = array( 'show', 'hide' );
+		$clean     = array();
+
+		foreach ( $raw as $rule ) {
+			if ( ! is_array( $rule ) ) {
+				continue;
+			}
+			$field    = sanitize_key( is_string( $rule['field'] ?? null ) ? $rule['field'] : '' );
+			$target   = sanitize_key( is_string( $rule['target'] ?? null ) ? $rule['target'] : '' );
+			$operator = sanitize_key( is_string( $rule['operator'] ?? null ) ? $rule['operator'] : 'equals' );
+			$action   = sanitize_key( is_string( $rule['action'] ?? null ) ? $rule['action'] : 'show' );
+			$value    = is_scalar( $rule['value'] ?? null ) ? sanitize_text_field( (string) $rule['value'] ) : '';
+
+			if ( '' === $field || '' === $target || ! in_array( $operator, $operators, true ) || ! in_array( $action, $actions, true ) ) {
+				continue;
+			}
+
+			$clean[] = array(
+				'field'    => $field,
+				'operator' => $operator,
+				'value'    => $value,
+				'target'   => $target,
+				'action'   => $action,
+			);
+		}
+
+		return $clean;
+	}
+
+	/**
+	 * Add scoped per-form CSS through the style queue.
+	 *
+	 * The CSS is built only from values that pass a strict validator for
+	 * their type (see css_color(), css_length(), css_border(),
+	 * css_font_family()); any key that fails validation is skipped, so no
+	 * stored string reaches the stylesheet unvalidated.
 	 *
 	 * @param int   $form_id Form post ID.
 	 * @param array $styles  Styles array from the form definition.
 	 * @return void
 	 */
-	private function render_form_styles( int $form_id, array $styles ): void {
+	private function add_form_styles( int $form_id, array $styles ): void {
+		$css = self::build_form_css( $form_id, $styles );
+		if ( '' !== $css ) {
+			\Agentic\Inline_Assets::style( $css, 'agentic-native-forms' );
+		}
+	}
+
+	/**
+	 * Build the scoped CSS for one form from validated style values.
+	 *
+	 * @param int   $form_id Form post ID.
+	 * @param array $styles  Styles array from the form definition.
+	 * @return string CSS rules ('' when nothing valid).
+	 */
+	public static function build_form_css( int $form_id, array $styles ): string {
 		if ( empty( $styles ) ) {
-			return;
+			return '';
 		}
 
-		$s = '#agentic-form-' . (int) $form_id;
+		// Validate every value first; only validated values are used below.
+		$color_keys  = array( 'form_background', 'label_color', 'input_text_color', 'input_background', 'input_border_color', 'input_focus_color', 'button_background', 'button_text_color', 'button_hover_background' );
+		$length_keys = array( 'max_width', 'form_padding', 'form_border_radius', 'font_size', 'field_gap', 'label_font_size', 'input_border_radius', 'input_padding', 'button_border_radius', 'button_padding', 'button_font_size' );
+
+		$v = array();
+		foreach ( $color_keys as $key ) {
+			$v[ $key ] = isset( $styles[ $key ] ) ? self::css_color( $styles[ $key ] ) : '';
+		}
+		foreach ( $length_keys as $key ) {
+			$v[ $key ] = isset( $styles[ $key ] ) ? self::css_length( $styles[ $key ] ) : '';
+		}
+		$v['form_border'] = isset( $styles['form_border'] ) ? self::css_border( $styles['form_border'] ) : '';
+		$v['font_family'] = isset( $styles['font_family'] ) ? self::css_font_family( $styles['font_family'] ) : '';
+
+		$s = '#agentic-form-' . absint( $form_id );
 		$f = $s . ' .agentic-form';
 		$i = $f . ' input:not([type=hidden]):not([type=radio]):not([type=checkbox]),' . $f . ' select,' . $f . ' textarea';
 		$b = $s . ' .agentic-form-btn';
 
+		$decl = static function ( array $map ) use ( $v ): array {
+			$out = array();
+			foreach ( $map as $property => $key ) {
+				if ( '' !== $v[ $key ] ) {
+					$out[] = $property . ':' . $v[ $key ];
+				}
+			}
+			return $out;
+		};
+
 		$rules = array();
 
-		// Wrapper / layout.
-		$wrap = array();
-		if ( isset( $styles['max_width'] ) ) {
-			$wrap[] = 'max-width:' . $styles['max_width'];
-		}
-		if ( isset( $styles['form_background'] ) ) {
-			$wrap[] = 'background:' . $styles['form_background'];
-		}
-		if ( isset( $styles['form_padding'] ) ) {
-			$wrap[] = 'padding:' . $styles['form_padding'];
-		}
-		if ( isset( $styles['form_border'] ) ) {
-			$wrap[] = 'border:' . $styles['form_border'];
-		}
-		if ( isset( $styles['form_border_radius'] ) ) {
-			$wrap[] = 'border-radius:' . $styles['form_border_radius'];
-		}
-		if ( isset( $styles['font_family'] ) ) {
-			$wrap[] = 'font-family:' . $styles['font_family'];
-		}
-		if ( isset( $styles['font_size'] ) ) {
-			$wrap[] = 'font-size:' . $styles['font_size'];
-		}
-		if ( ! empty( $wrap ) ) {
+		$wrap = $decl(
+			array(
+				'max-width'     => 'max_width',
+				'background'    => 'form_background',
+				'padding'       => 'form_padding',
+				'border'        => 'form_border',
+				'border-radius' => 'form_border_radius',
+				'font-family'   => 'font_family',
+				'font-size'     => 'font_size',
+			)
+		);
+		if ( $wrap ) {
 			$rules[] = $s . '{' . implode( ';', $wrap ) . '}';
 		}
 
-		// Field gap.
-		if ( isset( $styles['field_gap'] ) ) {
-			$rules[] = $f . ' .agentic-form-field{margin-bottom:' . $styles['field_gap'] . '}';
+		if ( '' !== $v['field_gap'] ) {
+			$rules[] = $f . ' .agentic-form-field{margin-bottom:' . $v['field_gap'] . '}';
 		}
 
-		// Labels.
-		$lbl = array();
-		if ( isset( $styles['label_color'] ) ) {
-			$lbl[] = 'color:' . $styles['label_color'];
-		}
-		if ( isset( $styles['label_font_size'] ) ) {
-			$lbl[] = 'font-size:' . $styles['label_font_size'];
-		}
-		if ( ! empty( $lbl ) ) {
+		$lbl = $decl(
+			array(
+				'color'     => 'label_color',
+				'font-size' => 'label_font_size',
+			)
+		);
+		if ( $lbl ) {
 			$rules[] = $f . ' label{' . implode( ';', $lbl ) . '}';
 		}
 
-		// Inputs.
-		$inp = array();
-		if ( isset( $styles['input_text_color'] ) ) {
-			$inp[] = 'color:' . $styles['input_text_color'];
-		}
-		if ( isset( $styles['input_background'] ) ) {
-			$inp[] = 'background:' . $styles['input_background'];
-		}
-		if ( isset( $styles['input_border_color'] ) ) {
-			$inp[] = 'border-color:' . $styles['input_border_color'];
-		}
-		if ( isset( $styles['input_border_radius'] ) ) {
-			$inp[] = 'border-radius:' . $styles['input_border_radius'];
-		}
-		if ( isset( $styles['input_padding'] ) ) {
-			$inp[] = 'padding:' . $styles['input_padding'];
-		}
-		if ( isset( $styles['font_size'] ) ) {
-			$inp[] = 'font-size:' . $styles['font_size'];
-		}
-		if ( ! empty( $inp ) ) {
+		$inp = $decl(
+			array(
+				'color'         => 'input_text_color',
+				'background'    => 'input_background',
+				'border-color'  => 'input_border_color',
+				'border-radius' => 'input_border_radius',
+				'padding'       => 'input_padding',
+				'font-size'     => 'font_size',
+			)
+		);
+		if ( $inp ) {
 			$rules[] = $i . '{' . implode( ';', $inp ) . '}';
 		}
 
-		// Input focus.
-		if ( isset( $styles['input_focus_color'] ) ) {
-			$fc      = $styles['input_focus_color'];
-			$rules[] = $f . ' input:focus,' . $f . ' select:focus,' . $f . ' textarea:focus{border-color:' . $fc . ';box-shadow:0 0 0 2px ' . $fc . '33}';
+		if ( '' !== $v['input_focus_color'] ) {
+			$fc = $v['input_focus_color'];
+			// A 20% alpha ring only for 6-digit hex; other formats get a solid ring.
+			$ring    = ( 7 === strlen( $fc ) && '#' === $fc[0] ) ? $fc . '33' : $fc;
+			$rules[] = $f . ' input:focus,' . $f . ' select:focus,' . $f . ' textarea:focus{border-color:' . $fc . ';box-shadow:0 0 0 2px ' . $ring . '}';
 		}
 
-		// Button.
-		$btn = array();
-		if ( isset( $styles['button_background'] ) ) {
-			$btn[] = 'background:' . $styles['button_background'];
-		}
-		if ( isset( $styles['button_text_color'] ) ) {
-			$btn[] = 'color:' . $styles['button_text_color'];
-		}
-		if ( isset( $styles['button_border_radius'] ) ) {
-			$btn[] = 'border-radius:' . $styles['button_border_radius'];
-		}
-		if ( isset( $styles['button_padding'] ) ) {
-			$btn[] = 'padding:' . $styles['button_padding'];
-		}
-		if ( isset( $styles['button_font_size'] ) ) {
-			$btn[] = 'font-size:' . $styles['button_font_size'];
-		}
-		if ( ! empty( $btn ) ) {
+		$btn = $decl(
+			array(
+				'background'    => 'button_background',
+				'color'         => 'button_text_color',
+				'border-radius' => 'button_border_radius',
+				'padding'       => 'button_padding',
+				'font-size'     => 'button_font_size',
+			)
+		);
+		if ( $btn ) {
 			$rules[] = $b . '{' . implode( ';', $btn ) . '}';
 		}
 
-		if ( isset( $styles['button_hover_background'] ) ) {
-			$rules[] = $b . ':hover{background:' . $styles['button_hover_background'] . '}';
+		if ( '' !== $v['button_hover_background'] ) {
+			$rules[] = $b . ':hover{background:' . $v['button_hover_background'] . '}';
 		}
 
-		if ( empty( $rules ) ) {
-			return;
-		}
+		return implode( ' ', $rules );
+	}
 
-		echo '<style>' . implode( ' ', $rules ) . '</style>'; // phpcs:ignore WordPress.Security.EscapeOutput -- values sanitised in save_native_form tool
+	/**
+	 * Validate a CSS color: hex (#rgb/#rgba/#rrggbb/#rrggbbaa), rgb()/rgba()/
+	 * hsl()/hsla() with numeric arguments, or one of a few keywords.
+	 *
+	 * @param mixed $value Raw value.
+	 * @return string The color, or '' if invalid.
+	 */
+	public static function css_color( $value ): string {
+		if ( ! is_string( $value ) ) {
+			return '';
+		}
+		$value = strtolower( trim( $value ) );
+		if ( preg_match( '/^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/', $value ) ) {
+			return $value;
+		}
+		if ( preg_match( '/^(?:rgb|rgba|hsl|hsla)\(\s*[0-9.]+%?\s*(?:,\s*[0-9.]+%?\s*){2,3}\)$/', $value ) ) {
+			return $value;
+		}
+		if ( in_array( $value, array( 'transparent', 'white', 'black', 'inherit', 'currentcolor' ), true ) ) {
+			return $value;
+		}
+		return '';
+	}
+
+	/**
+	 * Validate a CSS length or a shorthand of up to four lengths
+	 * (e.g. "14px", "1.5rem", "8px 16px", "0"). Units are allow-listed.
+	 *
+	 * @param mixed $value Raw value.
+	 * @return string The length(s), or '' if invalid.
+	 */
+	public static function css_length( $value ): string {
+		if ( is_int( $value ) || is_float( $value ) ) {
+			$value = $value . 'px';
+		}
+		if ( ! is_string( $value ) ) {
+			return '';
+		}
+		$value = strtolower( trim( preg_replace( '/\s+/', ' ', $value ) ) );
+		$one   = '(?:0|[0-9]{1,4}(?:\.[0-9]{1,3})?(?:px|em|rem|%|vw|vh|ch)|auto)';
+		return preg_match( '/^' . $one . '(?: ' . $one . '){0,3}$/', $value ) ? $value : '';
+	}
+
+	/**
+	 * Validate a border shorthand: "<width> <style> [<color>]" or "none".
+	 *
+	 * @param mixed $value Raw value.
+	 * @return string The border, or '' if invalid.
+	 */
+	public static function css_border( $value ): string {
+		if ( ! is_string( $value ) ) {
+			return '';
+		}
+		$value = strtolower( trim( preg_replace( '/\s+/', ' ', $value ) ) );
+		if ( 'none' === $value || '0' === $value ) {
+			return $value;
+		}
+		$parts = explode( ' ', $value, 3 );
+		if ( count( $parts ) < 2 ) {
+			return '';
+		}
+		$width = self::css_length( $parts[0] );
+		$style = in_array( $parts[1], array( 'solid', 'dashed', 'dotted', 'double', 'none' ), true ) ? $parts[1] : '';
+		$color = isset( $parts[2] ) ? self::css_color( $parts[2] ) : '';
+		if ( '' === $width || '' === $style || ( isset( $parts[2] ) && '' === $color ) ) {
+			return '';
+		}
+		return trim( $width . ' ' . $style . ' ' . $color );
+	}
+
+	/**
+	 * Validate a font-family list: family names made of letters, digits,
+	 * spaces, hyphens and quotes, separated by commas. No other characters
+	 * (so no ";", "{", "}", "<", "(", "\\" or url()) can get through.
+	 *
+	 * @param mixed $value Raw value.
+	 * @return string The font-family list, or '' if invalid.
+	 */
+	public static function css_font_family( $value ): string {
+		if ( ! is_string( $value ) ) {
+			return '';
+		}
+		$value = trim( $value );
+		if ( '' === $value || strlen( $value ) > 200 ) {
+			return '';
+		}
+		return preg_match( '/^[A-Za-z0-9 ,\-\'"]+$/', $value ) ? $value : '';
 	}
 
 	/**
@@ -1060,7 +1231,6 @@ class Agentic_Native_Forms {
 		$placeholder = sanitize_text_field( $field['placeholder'] ?? '' );
 		$field_id    = 'af_field_' . $idx;
 
-		$req_attr = $required ? ' required aria-required="true"' : '';
 		$req_mark = $required ? ' <span class="agentic-required" aria-hidden="true">*</span>' : '';
 		?>
 		<div class="agentic-form-field agentic-field-type-<?php echo esc_attr( $type ); ?>">
@@ -1085,12 +1255,12 @@ class Agentic_Native_Forms {
 				<textarea id="<?php echo esc_attr( $field_id ); ?>"
 							name="<?php echo esc_attr( $name ); ?>"
 							placeholder="<?php echo esc_attr( $placeholder ); ?>"
-							<?php echo $req_attr; // phpcs:ignore WordPress.Security.EscapeOutput ?> rows="4"></textarea>
+							<?php echo $required ? ' required aria-required="true"' : ''; ?> rows="4"></textarea>
 
 			<?php elseif ( 'select' === $type ) : ?>
 				<select id="<?php echo esc_attr( $field_id ); ?>"
 						name="<?php echo esc_attr( $name ); ?>"
-						<?php echo $req_attr; // phpcs:ignore WordPress.Security.EscapeOutput ?>>
+						<?php echo $required ? ' required aria-required="true"' : ''; ?>>
 					<option value=""><?php echo esc_html( ! empty( $placeholder ) ? $placeholder : '— Select —' ); ?></option>
 					<?php foreach ( (array) ( $field['options'] ?? array() ) as $opt ) : ?>
 						<?php
@@ -1116,7 +1286,7 @@ class Agentic_Native_Forms {
 									id="<?php echo esc_attr( $opt_id ); ?>"
 									name="<?php echo esc_attr( $opt_name ); ?>"
 									value="<?php echo esc_attr( (string) $opt_val ); ?>"
-									<?php echo $req_attr; // phpcs:ignore WordPress.Security.EscapeOutput ?>>
+									<?php echo $required ? ' required aria-required="true"' : ''; ?>>
 							<?php echo esc_html( (string) $opt_label ); ?>
 						</label>
 					<?php endforeach; ?>
@@ -1128,7 +1298,7 @@ class Agentic_Native_Forms {
 						name="<?php echo esc_attr( $name ); ?>"
 						placeholder="<?php echo esc_attr( $placeholder ); ?>"
 						value="<?php echo 'hidden' === $type ? esc_attr( $field['value'] ?? '' ) : ''; ?>"
-						<?php echo $req_attr; // phpcs:ignore WordPress.Security.EscapeOutput ?>>
+						<?php echo $required ? ' required aria-required="true"' : ''; ?>>
 			<?php endif; ?>
 		</div>
 		<?php
@@ -1250,6 +1420,15 @@ class Agentic_Native_Forms {
 			return;
 		}
 
+		$this->enqueue_form_assets();
+	}
+
+	/**
+	 * Enqueue the native-forms stylesheet and script (idempotent).
+	 *
+	 * @return void
+	 */
+	public function enqueue_form_assets(): void {
 		wp_enqueue_style(
 			'agentic-native-forms',
 			AGENT_BUILDER_URL . 'assets/css/native-forms.css',

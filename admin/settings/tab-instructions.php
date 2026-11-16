@@ -20,7 +20,7 @@ $agentic_all_agents = array_intersect_key(
 	array_flip( \Agentic_Agent_Registry::get_instance()->get_active_agents() )
 );
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-$agentic_pa_selected = isset( $_GET['edit_persona'] ) ? sanitize_key( $_GET['edit_persona'] ) : '';
+$agentic_pa_selected = isset( $_GET['edit_persona'] ) ? sanitize_key( wp_unslash( $_GET['edit_persona'] ) ) : '';
 if ( ! $agentic_pa_selected && ! empty( $agentic_all_agents ) ) {
 	$agentic_pa_selected = array_key_first( $agentic_all_agents );
 }
@@ -47,13 +47,7 @@ if ( ! $agentic_pa_selected && ! empty( $agentic_all_agents ) ) {
 		</td>
 	</tr>
 </table>
-<script>
-document.getElementById('agentic-persona-agent-select').addEventListener('change', function() {
-	var url = new URL(window.location.href);
-	url.searchParams.set('edit_persona', this.value);
-	window.location.href = url.toString();
-});
-</script>
+	<?php \Agentic\Inline_Assets::script( 'settings-tab-instructions' ); ?>
 
 	<?php
 	$agentic_pa_agent = $agentic_all_agents[ $agentic_pa_selected ] ?? null;
@@ -114,7 +108,8 @@ document.getElementById('agentic-persona-agent-select').addEventListener('change
 			<td>
 				<?php
 				$agentic_pa_prompts_raw   = \Agentic\Agent_Settings::get( $agentic_pa_selected, 'persona_suggested_prompts' );
-				$agentic_pa_prompts_saved = ! empty( $agentic_pa_prompts_raw ) ? ( json_decode( $agentic_pa_prompts_raw, true ) !== null ? json_decode( $agentic_pa_prompts_raw, true ) : array() ) : array();
+				$agentic_pa_prompts_dec   = is_string( $agentic_pa_prompts_raw ) && '' !== $agentic_pa_prompts_raw ? json_decode( $agentic_pa_prompts_raw, true ) : array();
+				$agentic_pa_prompts_saved = is_array( $agentic_pa_prompts_dec ) ? array_values( array_map( 'sanitize_text_field', array_filter( $agentic_pa_prompts_dec, 'is_string' ) ) ) : array();
 				$agentic_pa_has_saved     = ! empty( $agentic_pa_prompts_saved );
 				$agentic_pa_placeholders  = array( 'Prompt 1', 'Prompt 2', 'Prompt 3', 'Prompt 4' );
 				if ( ! $agentic_pa_has_saved ) {

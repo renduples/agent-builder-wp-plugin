@@ -618,7 +618,6 @@ class REST_API {
 							'data' => $data,
 						);
 					}
-					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 					echo 'data: ' . wp_json_encode( $payload ) . "\n\n";
 					if ( ob_get_level() > 0 ) {
 						ob_end_flush();
@@ -643,7 +642,6 @@ class REST_API {
 				)
 			);
 			if ( $is_stream ) {
-				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 				echo 'data: ' . wp_json_encode(
 					array(
 						'type'    => 'error',
@@ -717,7 +715,6 @@ class REST_API {
 				'pending_proposal' => ! empty( $response['pending_proposal'] ),
 				'proposal'         => $response['proposal'] ?? null,
 			);
-			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			echo 'data: ' . wp_json_encode( $end_payload ) . "\n\n";
 			flush();
 			exit;
@@ -1820,7 +1817,7 @@ class REST_API {
 			}
 
 			$status = wp_remote_retrieve_response_code( $response );
-			$body   = json_decode( wp_remote_retrieve_body( $response ), true );
+			$body   = self::decode_remote_json( $response );
 
 			if ( 200 === $status || 201 === $status ) {
 				return new \WP_REST_Response(
@@ -1835,6 +1832,7 @@ class REST_API {
 				if ( is_array( $error_msg ) ) {
 					$error_msg = wp_json_encode( $error_msg );
 				}
+				$error_msg = sanitize_text_field( (string) $error_msg );
 				return new \WP_REST_Response(
 					array(
 						'success' => false,
@@ -2153,17 +2151,18 @@ class REST_API {
 			);
 		}
 
-		$data   = json_decode( wp_remote_retrieve_body( $response ), true );
+		$data   = self::decode_remote_json( $response );
 		$models = array();
 
-		foreach ( $data['data'] ?? array() as $model ) {
-			$id = $model['id'] ?? '';
+		foreach ( self::remote_list( $data, 'data' ) as $model ) {
+			$id = self::remote_string( $model['id'] ?? '' );
 			if ( empty( $id ) ) {
 				continue;
 			}
+			$label    = self::remote_string( $model['display_name'] ?? '' );
 			$models[] = array(
 				'id'     => $id,
-				'label'  => $model['display_name'] ?? $id,
+				'label'  => '' !== $label ? $label : $id,
 				'vision' => str_contains( $id, 'claude-3' ) || str_contains( $id, 'claude-opus' ) || str_contains( $id, 'claude-sonnet' ) || str_contains( $id, 'claude-haiku' ),
 			);
 		}
@@ -2206,12 +2205,12 @@ class REST_API {
 			);
 		}
 
-		$data   = json_decode( wp_remote_retrieve_body( $response ), true );
+		$data   = self::decode_remote_json( $response );
 		$models = array();
 		$skip   = array( 'dall-e', 'whisper', 'tts', 'text-embedding', 'text-moderation', 'audio', 'realtime', 'transcribe', 'babbage', 'davinci', 'curie', 'ada-', 'computer-use', 'omni-mini', 'search' );
 
-		foreach ( $data['data'] ?? array() as $model ) {
-			$id = $model['id'] ?? '';
+		foreach ( self::remote_list( $data, 'data' ) as $model ) {
+			$id = self::remote_string( $model['id'] ?? '' );
 			if ( empty( $id ) || str_starts_with( $id, 'ft:' ) ) {
 				continue;
 			}
@@ -2283,11 +2282,11 @@ class REST_API {
 			);
 		}
 
-		$data   = json_decode( wp_remote_retrieve_body( $response ), true );
+		$data   = self::decode_remote_json( $response );
 		$models = array();
 
-		foreach ( $data['data'] ?? array() as $model ) {
-			$id = $model['id'] ?? '';
+		foreach ( self::remote_list( $data, 'data' ) as $model ) {
+			$id = self::remote_string( $model['id'] ?? '' );
 			if ( empty( $id ) ) {
 				continue;
 			}
@@ -2338,11 +2337,11 @@ class REST_API {
 			);
 		}
 
-		$data   = json_decode( wp_remote_retrieve_body( $response ), true );
+		$data   = self::decode_remote_json( $response );
 		$models = array();
 
-		foreach ( $data['data'] ?? array() as $model ) {
-			$id = $model['id'] ?? '';
+		foreach ( self::remote_list( $data, 'data' ) as $model ) {
+			$id = self::remote_string( $model['id'] ?? '' );
 			if ( empty( $id ) || str_contains( $id, 'embed' ) ) {
 				continue;
 			}
@@ -2387,12 +2386,12 @@ class REST_API {
 			);
 		}
 
-		$data   = json_decode( wp_remote_retrieve_body( $response ), true );
+		$data   = self::decode_remote_json( $response );
 		$models = array();
 
-		foreach ( $data['models'] ?? array() as $model ) {
-			$name    = $model['name'] ?? '';
-			$methods = $model['supportedGenerationMethods'] ?? array();
+		foreach ( self::remote_list( $data, 'models' ) as $model ) {
+			$name    = self::remote_string( $model['name'] ?? '' );
+			$methods = is_array( $model['supportedGenerationMethods'] ?? null ) ? $model['supportedGenerationMethods'] : array();
 			if ( ! in_array( 'generateContent', $methods, true ) ) {
 				continue;
 			}
@@ -2437,11 +2436,11 @@ class REST_API {
 			);
 		}
 
-		$data   = json_decode( wp_remote_retrieve_body( $response ), true );
+		$data   = self::decode_remote_json( $response );
 		$models = array();
 
-		foreach ( $data['models'] ?? array() as $model ) {
-			$id = $model['name'] ?? '';
+		foreach ( self::remote_list( $data, 'models' ) as $model ) {
+			$id = self::remote_string( $model['name'] ?? '' );
 			if ( empty( $id ) ) {
 				continue;
 			}
@@ -2494,11 +2493,11 @@ class REST_API {
 			);
 		}
 
-		$data   = json_decode( wp_remote_retrieve_body( $response ), true );
+		$data   = self::decode_remote_json( $response );
 		$models = array();
 
-		foreach ( $data['data'] ?? array() as $model ) {
-			$id = $model['id'] ?? '';
+		foreach ( self::remote_list( $data, 'data' ) as $model ) {
+			$id = self::remote_string( $model['id'] ?? '' );
 			if ( empty( $id ) ) {
 				continue;
 			}
@@ -2549,12 +2548,12 @@ class REST_API {
 			);
 		}
 
-		$data   = json_decode( wp_remote_retrieve_body( $response ), true );
+		$data   = self::decode_remote_json( $response );
 		$models = array();
 
-		foreach ( $data['models'] ?? array() as $model ) {
-			$id        = $model['name'] ?? '';
-			$endpoints = $model['endpoints'] ?? array();
+		foreach ( self::remote_list( $data, 'models' ) as $model ) {
+			$id        = self::remote_string( $model['name'] ?? '' );
+			$endpoints = is_array( $model['endpoints'] ?? null ) ? $model['endpoints'] : array();
 			// Only include models that support the chat endpoint.
 			if ( empty( $id ) || ! in_array( 'chat', $endpoints, true ) ) {
 				continue;
@@ -2663,8 +2662,8 @@ class REST_API {
 
 		$code = wp_remote_retrieve_response_code( $response );
 		if ( 200 !== $code ) {
-			$data = json_decode( wp_remote_retrieve_body( $response ), true );
-			$raw  = isset( $data['detail'] ) ? (string) $data['detail'] : 'TTS service error (HTTP ' . $code . ')';
+			$data = self::decode_remote_json( $response );
+			$raw  = isset( $data['detail'] ) && is_scalar( $data['detail'] ) ? sanitize_text_field( (string) $data['detail'] ) : 'TTS service error (HTTP ' . $code . ')';
 			if ( 429 === (int) $code || 402 === (int) $code ) {
 				// Pass through the server's error message; fall back to a generic one.
 				$msg = ! empty( $raw ) ? $raw : __( 'Text-to-speech rate limit reached. Please try again later.', 'agent-builder' );
@@ -2695,6 +2694,42 @@ class REST_API {
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Binary audio output.
 		echo $audio;
 		exit;
+	}
+
+	/**
+	 * Decode a remote JSON response body; always returns an array.
+	 *
+	 * @param array|\WP_Error $response wp_remote_*() response.
+	 * @return array
+	 */
+	private static function decode_remote_json( $response ): array {
+		if ( is_wp_error( $response ) ) {
+			return array();
+		}
+		$data = json_decode( (string) wp_remote_retrieve_body( $response ), true );
+		return is_array( $data ) ? $data : array();
+	}
+
+	/**
+	 * Return the array entries of a list in decoded remote data.
+	 *
+	 * @param array  $data Decoded response.
+	 * @param string $key  List key (e.g. "data", "models").
+	 * @return array<int, array>
+	 */
+	private static function remote_list( array $data, string $key ): array {
+		$list = $data[ $key ] ?? array();
+		return is_array( $list ) ? array_values( array_filter( $list, 'is_array' ) ) : array();
+	}
+
+	/**
+	 * Sanitize a scalar string field from remote data ('' for non-scalars).
+	 *
+	 * @param mixed $value Raw value.
+	 * @return string
+	 */
+	private static function remote_string( $value ): string {
+		return is_scalar( $value ) ? sanitize_text_field( (string) $value ) : '';
 	}
 
 	/**

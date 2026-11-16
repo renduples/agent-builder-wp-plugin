@@ -1164,8 +1164,7 @@ class Admin_Pages_REST {
 
 		$redirect_base = admin_url( 'admin.php?page=agentic-skills' );
 
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- $_FILES[...]['error'] is a PHP-generated integer upload-error code (UPLOAD_ERR_* constant), not user-supplied string data.
-		if ( empty( $_FILES['agentic_skill_file']['tmp_name'] ) || UPLOAD_ERR_OK !== ( $_FILES['agentic_skill_file']['error'] ?? UPLOAD_ERR_NO_FILE ) ) {
+		if ( empty( $_FILES['agentic_skill_file']['tmp_name'] ) || UPLOAD_ERR_OK !== absint( $_FILES['agentic_skill_file']['error'] ?? UPLOAD_ERR_NO_FILE ) ) {
 			wp_safe_redirect(
 				add_query_arg(
 					array(
@@ -1178,9 +1177,8 @@ class Admin_Pages_REST {
 			exit;
 		}
 
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitize_file_name() below is the actual sanitizer; this just extracts the extension for the allowlist check.
-		$uploaded_name      = wp_unslash( $_FILES['agentic_skill_file']['name'] ?? '' );
-		$uploaded_extension = strtolower( pathinfo( sanitize_file_name( $uploaded_name ), PATHINFO_EXTENSION ) );
+		$uploaded_name      = sanitize_file_name( wp_unslash( $_FILES['agentic_skill_file']['name'] ?? '' ) );
+		$uploaded_extension = strtolower( pathinfo( $uploaded_name, PATHINFO_EXTENSION ) );
 		if ( ! in_array( $uploaded_extension, self::ALLOWED_SKILL_FILE_EXTENSIONS, true ) ) {
 			wp_safe_redirect(
 				add_query_arg(
@@ -1525,22 +1523,34 @@ class Admin_Pages_REST {
 
 		$redirect_base = admin_url( 'admin.php?page=agentic-agents' );
 
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- $_FILES[...]['error'] is a PHP-generated integer upload-error code.
-		if ( empty( $_FILES['agentic_agent_file']['tmp_name'] ) || UPLOAD_ERR_OK !== ( $_FILES['agentic_agent_file']['error'] ?? UPLOAD_ERR_NO_FILE ) ) {
+		if ( empty( $_FILES['agentic_agent_file']['tmp_name'] ) || UPLOAD_ERR_OK !== absint( $_FILES['agentic_agent_file']['error'] ?? UPLOAD_ERR_NO_FILE ) ) {
 			wp_safe_redirect( add_query_arg( array( 'import_error' => 1 ), $redirect_base ) );
 			exit;
 		}
 
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitize_file_name() below is the actual sanitizer; this just extracts the extension for the allowlist.
-		$uploaded_name      = wp_unslash( $_FILES['agentic_agent_file']['name'] ?? '' );
-		$uploaded_extension = strtolower( pathinfo( sanitize_file_name( $uploaded_name ), PATHINFO_EXTENSION ) );
+		$uploaded_name      = sanitize_file_name( wp_unslash( $_FILES['agentic_agent_file']['name'] ?? '' ) );
+		$uploaded_extension = strtolower( pathinfo( $uploaded_name, PATHINFO_EXTENSION ) );
 		if ( 'zip' !== $uploaded_extension ) {
 			wp_safe_redirect( add_query_arg( array( 'import_error' => 1 ), $redirect_base ) );
 			exit;
 		}
 
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Agent_Templates::import() expects a raw $_FILES entry and sanitises via wp_handle_sideload().
-		$slug = Agent_Templates::import( $_FILES['agentic_agent_file'] );
+		// Pass a sanitized copy of the upload entry. tmp_name is PHP's own temp
+		// path and is checked with is_uploaded_file() before use.
+		$tmp_name = isset( $_FILES['agentic_agent_file']['tmp_name'] ) ? sanitize_text_field( (string) $_FILES['agentic_agent_file']['tmp_name'] ) : '';
+		if ( '' === $tmp_name || ! is_uploaded_file( $tmp_name ) ) {
+			wp_safe_redirect( add_query_arg( array( 'import_error' => 1 ), $redirect_base ) );
+			exit;
+		}
+		$slug = Agent_Templates::import(
+			array(
+				'name'     => $uploaded_name,
+				'type'     => isset( $_FILES['agentic_agent_file']['type'] ) ? sanitize_mime_type( wp_unslash( $_FILES['agentic_agent_file']['type'] ) ) : '',
+				'tmp_name' => $tmp_name,
+				'error'    => UPLOAD_ERR_OK,
+				'size'     => isset( $_FILES['agentic_agent_file']['size'] ) ? absint( $_FILES['agentic_agent_file']['size'] ) : 0,
+			)
+		);
 		if ( is_wp_error( $slug ) ) {
 			wp_safe_redirect( add_query_arg( array( 'import_error' => 1 ), $redirect_base ) );
 			exit;

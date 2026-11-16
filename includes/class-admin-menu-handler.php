@@ -838,7 +838,7 @@ class Admin_Menu_Handler {
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only page identification.
-		$page = isset( $_GET['page'] ) ? sanitize_key( $_GET['page'] ) : '';
+		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
 
 		// Not an Agentic page — nothing to do.
 		if ( 'agent-builder' !== $page && ! str_starts_with( $page, 'agentic-' ) ) {
@@ -965,8 +965,7 @@ class Admin_Menu_Handler {
 		$parts[] = '<p><a href="' . esc_url( admin_url( 'admin.php?page=agent-builder' ) ) . '">' . esc_html__( 'Back to the Agent Builder dashboard', 'agent-builder' ) . '</a></p>';
 
 		wp_die(
-			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- each $parts fragment is individually escaped (esc_html__/esc_url) above.
-			implode( '', $parts ),
+			wp_kses_post( implode( '', $parts ) ),
 			esc_html__( 'Page not found', 'agent-builder' ),
 			array( 'response' => 404 )
 		);
@@ -986,8 +985,7 @@ class Admin_Menu_Handler {
 		$parts[] = '<p><a href="' . esc_url( admin_url( 'admin.php?page=agent-builder' ) ) . '">' . esc_html__( 'Back to the Agent Builder dashboard', 'agent-builder' ) . '</a></p>';
 
 		wp_die(
-			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- each $parts fragment is individually escaped (esc_html__/esc_url) above.
-			implode( '', $parts ),
+			wp_kses_post( implode( '', $parts ) ),
 			esc_html__( 'Connect an AI provider', 'agent-builder' ),
 			array( 'response' => 403 )
 		);
@@ -1016,8 +1014,7 @@ class Admin_Menu_Handler {
 		$parts[] = '<p><a href="' . esc_url( admin_url() ) . '">' . esc_html__( 'Back to the WordPress dashboard', 'agent-builder' ) . '</a></p>';
 
 		wp_die(
-			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- each $parts fragment is individually escaped (esc_html__/esc_attr/esc_url) above.
-			implode( '', $parts ),
+			wp_kses_post( implode( '', $parts ) ),
 			esc_html__( 'Administrator access required', 'agent-builder' ),
 			array( 'response' => 403 )
 		);
@@ -1152,8 +1149,8 @@ class Admin_Menu_Handler {
 
 	/**
 	 * Advanced-mode secondary nav rail. Echoed from admin_footer (same hook
-	 * as the shared page footer) and moved to the top of `.wrap` by a small
-	 * inline script — the existing shared-chrome pattern, not a new one.
+	 * as the shared page footer) and moved to the top of `.wrap` by the
+	 * enqueued assets/js/admin/admin-chrome.js.
 	 *
 	 * Gated on the site-wide default (`is_advanced_mode()` with no $screen).
 	 * The rail spans every Agentic screen, so a per-screen content override
@@ -1218,43 +1215,14 @@ class Admin_Menu_Handler {
 				<?php endforeach; ?>
 			</ul>
 		</nav>
-		<script>
-		(function() {
-			function agenticPlaceSecondaryNav() {
-				var nav = document.getElementById( 'agentic-secondary-nav' );
-				if ( ! nav || nav.classList.contains( 'is-placed' ) ) {
-					return true;
-				}
-				var wrap = document.querySelector( '#wpbody-content .wrap' );
-				if ( ! wrap ) {
-					var root = document.getElementById( 'agentic-dashboard-app-root' );
-					if ( ! root || ! root.parentNode ) {
-						return false;
-					}
-					wrap = document.createElement( 'div' );
-					wrap.className = 'wrap agentic-admin';
-					root.parentNode.insertBefore( wrap, root );
-					wrap.appendChild( root );
-				}
-				wrap.insertBefore( nav, wrap.firstChild );
-				wrap.classList.add( 'agentic-has-secondary-nav' );
-				nav.classList.add( 'is-placed' );
-				return true;
-			}
-			if ( ! agenticPlaceSecondaryNav() ) {
-				document.addEventListener( 'DOMContentLoaded', agenticPlaceSecondaryNav );
-				window.setTimeout( agenticPlaceSecondaryNav, 0 );
-				window.setTimeout( agenticPlaceSecondaryNav, 400 );
-			}
-		})();
-		</script>
 		<?php
 	}
 
 	/**
 	 * Site-wide Basic/Advanced switch. Echoed from admin_footer (same hook
 	 * as the secondary nav and page footer) and moved to the top of `.wrap`
-	 * by a small inline script — shared chrome, not a per-template include.
+	 * by the enqueued assets/js/admin/admin-chrome.js — shared chrome, not a
+	 * per-template include.
 	 *
 	 * Reflects the site-wide `agent_builder_ui_mode` default (`is_advanced_mode()`
 	 * with no $screen), not a per-screen override. Writes through
@@ -1286,110 +1254,6 @@ class Admin_Menu_Handler {
 				</button>
 			</span>
 		</div>
-		<script>
-		(function() {
-			function agenticPlaceGlobalModeSwitch() {
-				var el = document.getElementById( 'agentic-global-mode-switch' );
-				if ( ! el || el.classList.contains( 'is-placed' ) ) {
-					return true;
-				}
-				var wrap = document.querySelector( '#wpbody-content .wrap' );
-				if ( ! wrap ) {
-					var root = document.getElementById( 'agentic-dashboard-app-root' );
-					if ( ! root || ! root.parentNode ) {
-						return false;
-					}
-					wrap = document.createElement( 'div' );
-					wrap.className = 'wrap agentic-admin';
-					root.parentNode.insertBefore( wrap, root );
-					wrap.appendChild( root );
-				}
-				wrap.insertBefore( el, wrap.firstChild );
-				wrap.classList.add( 'agentic-has-global-mode' );
-				el.classList.add( 'is-placed' );
-				return true;
-			}
-			if ( ! agenticPlaceGlobalModeSwitch() ) {
-				document.addEventListener( 'DOMContentLoaded', agenticPlaceGlobalModeSwitch );
-				window.setTimeout( agenticPlaceGlobalModeSwitch, 0 );
-				window.setTimeout( agenticPlaceGlobalModeSwitch, 400 );
-			}
-
-			// One Basic/Advanced switch per page: screens that render their own
-			// per-screen toggle (Agents, Tools, Approvals, some Settings tabs,
-			// ...) keep that one, and the site-wide switch steps aside there.
-			// It stays on every other screen (e.g. the Dashboard). Those
-			// toggles may be rendered later by React, so watch briefly.
-			function agenticHasScreenToggle() {
-				var el = document.getElementById( 'agentic-global-mode-switch' );
-				var found = document.querySelectorAll( '.agentic-screen-mode-toggle' );
-				for ( var i = 0; i < found.length; i++ ) {
-					if ( ! el || ! el.contains( found[ i ] ) ) {
-						return true;
-					}
-				}
-				return false;
-			}
-			function agenticYieldToScreenToggle() {
-				var el = document.getElementById( 'agentic-global-mode-switch' );
-				if ( el && agenticHasScreenToggle() ) {
-					el.hidden = true;
-					return true;
-				}
-				return false;
-			}
-			if ( ! agenticYieldToScreenToggle() && window.MutationObserver ) {
-				var agenticModeObserver = new MutationObserver( function () {
-					if ( agenticYieldToScreenToggle() ) {
-						agenticModeObserver.disconnect();
-					}
-				} );
-				agenticModeObserver.observe( document.body, { childList: true, subtree: true } );
-				window.setTimeout( function () {
-					agenticModeObserver.disconnect();
-				}, 10000 );
-			}
-
-			var toggle = document.getElementById( 'agentic-global-mode-switch' );
-			if ( ! toggle ) {
-				return;
-			}
-			Array.prototype.forEach.call( toggle.querySelectorAll( 'button[data-mode]' ), function ( btn ) {
-				btn.addEventListener( 'click', function () {
-					if ( btn.disabled || btn.classList.contains( 'button-primary' ) ) {
-						return;
-					}
-					Array.prototype.forEach.call( toggle.querySelectorAll( 'button[data-mode]' ), function ( b ) {
-						b.disabled = true;
-					} );
-					fetch( <?php echo wp_json_encode( esc_url_raw( rest_url( 'agentic/v1/admin-page' ) ) ); ?>, {
-						method: 'POST',
-						credentials: 'same-origin',
-						headers: {
-							'Content-Type': 'application/json',
-							'X-WP-Nonce': <?php echo wp_json_encode( wp_create_nonce( 'wp_rest' ) ); ?>
-						},
-						body: JSON.stringify( {
-							action_name: 'set_ui_mode',
-							mode: btn.getAttribute( 'data-mode' )
-						} )
-					} ).then( function ( res ) {
-						if ( ! res.ok ) {
-							Array.prototype.forEach.call( toggle.querySelectorAll( 'button[data-mode]' ), function ( b ) {
-								b.disabled = false;
-							} );
-							return;
-						}
-						window.location.reload();
-					} ).catch( function () {
-						Array.prototype.forEach.call( toggle.querySelectorAll( 'button[data-mode]' ), function ( b ) {
-							b.disabled = false;
-						} );
-					} );
-				} );
-			} );
-		})();
-		</script>
 		<?php
 	}
 
@@ -1431,39 +1295,18 @@ class Admin_Menu_Handler {
 
 		// Footer markup (promo URL is channel-aware: external on WPorg free).
 		$footer_html = $this->build_admin_footer_html( $page, $tab );
-		?>
-		<script>
-		(function() {
-			function agenticAppendPageFooter() {
-				if ( document.querySelector( '.agentic-page-footer' ) ) {
-					return true;
-				}
-				// React admin-pages (and similar) render their own footer from localized data.
-				if ( document.getElementById( 'agentic-admin-pages-root' )
-					|| document.getElementById( 'agentic-settings-app-root' )
-					|| document.getElementById( 'agentic-dashboard-app-root' ) ) {
-					return true;
-				}
-				var wrap = document.querySelector( '.wrap' );
-				if ( ! wrap ) {
-					return false;
-				}
-				var footerDiv = document.createElement( 'div' );
-				footerDiv.innerHTML = <?php echo wp_json_encode( $footer_html ); ?>;
-				if ( footerDiv.firstChild ) {
-					wrap.appendChild( footerDiv.firstChild );
-				}
-				return true;
-			}
-			// Classic pages: DOM ready. React shells skip inject (component owns footer).
-			if ( ! agenticAppendPageFooter() ) {
-				document.addEventListener( 'DOMContentLoaded', agenticAppendPageFooter );
-				window.setTimeout( agenticAppendPageFooter, 0 );
-				window.setTimeout( agenticAppendPageFooter, 400 );
-			}
-		})();
-		</script>
-		<?php
+
+		// Placement + switch wiring + footer injection live in one footer
+		// script (admin_footer runs before footer scripts are printed).
+		Inline_Assets::script(
+			'admin-chrome',
+			array(
+				'restUrl'    => esc_url_raw( rest_url( 'agentic/v1/admin-page' ) ),
+				'nonce'      => wp_create_nonce( 'wp_rest' ),
+				'footerHtml' => (string) $footer_html,
+			),
+			'agenticAdminChrome'
+		);
 	}
 
 	/**
@@ -1791,9 +1634,9 @@ class Admin_Menu_Handler {
 		// Resolve agent slug (same priority as chat-interface.php: URL → cookie →
 		// WordPress Assistant, if the user has never chatted with anything yet → first).
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$agentic_chat_slug = isset( $_GET['agent'] ) ? sanitize_key( $_GET['agent'] ) : '';
+		$agentic_chat_slug = isset( $_GET['agent'] ) ? sanitize_key( wp_unslash( $_GET['agent'] ) ) : '';
 		if ( ! $agentic_chat_slug && isset( $_COOKIE['agentic_last_agent'] ) ) {
-			$agentic_chat_slug = sanitize_key( $_COOKIE['agentic_last_agent'] );
+			$agentic_chat_slug = sanitize_key( wp_unslash( $_COOKIE['agentic_last_agent'] ) );
 		}
 		if ( ! $agentic_chat_slug ) {
 			$agentic_chat_slug = self::default_agent_slug( array_keys( \Agentic_Agent_Registry::get_instance()->get_accessible_instances() ) );
@@ -1947,6 +1790,7 @@ class Admin_Menu_Handler {
 					AGENT_BUILDER_VERSION,
 					true
 				);
+				$this->add_legacy_settings_data();
 				include AGENT_BUILDER_DIR . 'admin/settings.php';
 				return;
 			}
@@ -2006,7 +1850,27 @@ class Admin_Menu_Handler {
 			AGENT_BUILDER_VERSION,
 			true
 		);
+		$this->add_legacy_settings_data();
 		include AGENT_BUILDER_DIR . 'admin/settings.php';
+	}
+
+	/**
+	 * Pass URLs and nonces to the legacy assets/js/settings.js (no
+	 * hard-coded /wp-json/ or admin-ajax paths in the script).
+	 *
+	 * @return void
+	 */
+	private function add_legacy_settings_data(): void {
+		Inline_Assets::data(
+			'agentic-settings',
+			'agenticSettings',
+			array(
+				'restUrl'       => esc_url_raw( rest_url( 'agentic/v1/' ) ),
+				'nonce'         => wp_create_nonce( 'wp_rest' ),
+				'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
+				'settingsNonce' => wp_create_nonce( 'agentic_settings_nonce' ),
+			)
+		);
 	}
 
 	/**

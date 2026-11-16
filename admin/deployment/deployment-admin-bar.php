@@ -25,7 +25,7 @@ if (
 	&& wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), 'agentic_admin_bar_settings' )
 ) {
 	$agentic_ab_raw = isset( $_POST['agentic_ab'] ) && is_array( $_POST['agentic_ab'] )
-		? wp_unslash( $_POST['agentic_ab'] ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized per-field below.
+		? map_deep( wp_unslash( $_POST['agentic_ab'] ), 'sanitize_text_field' )
 		: array();
 
 	$agentic_ab_registry   = \Agentic_Agent_Registry::get_instance();

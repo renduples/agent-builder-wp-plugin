@@ -163,10 +163,10 @@ class Browse_Community_Skills extends \Agentic\Tool_Base {
 
 		$tree = json_decode( wp_remote_retrieve_body( $tree_response ), true );
 		$slugs = array();
-		foreach ( ( $tree['tree'] ?? array() ) as $entry ) {
-			$path = (string) ( $entry['path'] ?? '' );
+		foreach ( ( is_array( $tree ) && is_array( $tree['tree'] ?? null ) ? $tree['tree'] : array() ) as $entry ) {
+			$path = is_array( $entry ) && is_string( $entry['path'] ?? null ) ? $entry['path'] : '';
 			if ( preg_match( '#^skills/([^/]+)/SKILL\.md$#', $path, $m ) ) {
-				$slugs[] = $m[1];
+				$slugs[] = sanitize_text_field( $m[1] );
 			}
 		}
 
@@ -232,11 +232,15 @@ class Browse_Community_Skills extends \Agentic\Tool_Base {
 
 		$out = array();
 		foreach ( $skills as $skill ) {
+			if ( ! is_array( $skill ) ) {
+				continue;
+			}
+			$str   = static fn( $v ): string => is_scalar( $v ) ? (string) $v : '';
 			$out[] = array(
-				'slug'        => (string) ( $skill['slug'] ?? '' ),
-				'name'        => (string) ( $skill['name'] ?? '' ),
-				'description' => (string) ( $skill['description'] ?? '' ),
-				'version'     => (string) ( $skill['version'] ?? '1.0.0' ),
+				'slug'        => sanitize_text_field( $str( $skill['slug'] ?? '' ) ),
+				'name'        => sanitize_text_field( $str( $skill['name'] ?? '' ) ),
+				'description' => sanitize_textarea_field( $str( $skill['description'] ?? '' ) ),
+				'version'     => sanitize_text_field( $str( $skill['version'] ?? '1.0.0' ) ),
 			);
 		}
 
@@ -310,18 +314,20 @@ class Browse_Community_Skills extends \Agentic\Tool_Base {
 			return array( 'error' => sprintf( 'Could not find a recommended skill with slug "%s".', $slug ) );
 		}
 
-		$detail = json_decode( wp_remote_retrieve_body( $response ), true );
+		$detail = json_decode( (string) wp_remote_retrieve_body( $response ), true );
 		if ( ! is_array( $detail ) ) {
 			return array( 'error' => 'Could not read that skill\'s details.' );
 		}
+		// Sanitize the remote payload field by field before it is stored.
+		$detail = Skills_Registry::sanitize_hub_data( $detail );
 
 		$id = Skills_Registry::import_from_hub(
 			array(
-				'name'        => $detail['name'] ?? $slug,
-				'description' => $detail['description'] ?? '',
-				'content'     => $detail['content'] ?? '',
+				'name'        => '' !== $detail['name'] ? $detail['name'] : sanitize_text_field( $slug ),
+				'description' => $detail['description'],
+				'content'     => $detail['content'],
 				'source'      => 'agentic',
-				'source_id'   => $slug,
+				'source_id'   => sanitize_text_field( $slug ),
 				'version'     => $detail['version'] ?? '1.0.0',
 				'author'      => $detail['author'] ?? '',
 			)

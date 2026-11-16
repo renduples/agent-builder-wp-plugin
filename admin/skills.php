@@ -19,6 +19,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 use Agentic\Skills_Registry;
+
+// The menu entry already requires this capability; checked again here because
+// this template processes create/edit/delete/import submissions below.
+if ( ! current_user_can( 'agent_builder_manage_tools' ) && ! current_user_can( 'manage_options' ) ) {
+	wp_die( esc_html__( 'You do not have permission to manage skills.', 'agent-builder' ), 403 );
+}
 ?>
 <div class="wrap agentic-admin">
 <h1><?php esc_html_e( 'Skills', 'agent-builder' ); ?></h1>
@@ -32,7 +38,7 @@ $agentic_sk_message = '';
 $agentic_sk_error   = '';
 
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view param.
-$agentic_sk_view = isset( $_GET['skill_view'] ) ? sanitize_key( $_GET['skill_view'] ) : 'list';
+$agentic_sk_view = isset( $_GET['skill_view'] ) ? sanitize_key( wp_unslash( $_GET['skill_view'] ) ) : 'list';
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $agentic_sk_edit_id = isset( $_GET['skill_id'] ) ? absint( $_GET['skill_id'] ) : 0;
 
@@ -134,25 +140,16 @@ if ( isset( $_GET['skill_action'], $_GET['skill_id'], $_GET['_wpnonce'] )
 }
 
 // ── Import (Agentic AI or a browsable GitHub source) ───────────────────
-if ( isset( $_POST['agentic_hub_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['agentic_hub_nonce'] ) ), 'agentic_hub_import' ) ) {
-	// Note: NOT sanitize_text_field() — it strips anything that looks like an
-	// HTML tag, which corrupts real skill content (WordPress/PHP/block-markup
-	// examples routinely contain "<...>") once it's embedded in this JSON
-	// blob. json_decode() below fails safely on malformed input either way,
-	// and every individual field is sanitized on its own terms downstream in
-	// Skills_Registry::import_from_hub()/create().
-	// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- see comment above: sanitize_text_field() would corrupt legitimate skill content; downstream code sanitizes each field individually.
-	$agentic_hub_json = wp_unslash( $_POST['agentic_hub_data'] ?? '' );
-	$agentic_hub_data = json_decode( $agentic_hub_json, true );
-
-	// Determine source. 'wordpress' and 'anthropic' are browsed straight from
-	// their official GitHub repos; 'agentic' is the curated Recommended list;
-	// anything else is recorded as a local skill.
-	$agentic_import_source = sanitize_key( $agentic_hub_data['source'] ?? 'local' );
-	if ( ! in_array( $agentic_import_source, array( 'agentic', 'wordpress', 'anthropic' ), true ) ) {
-		$agentic_import_source = 'local';
-	}
-	$agentic_hub_data['source'] = $agentic_import_source;
+if ( isset( $_POST['agentic_hub_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['agentic_hub_nonce'] ) ), 'agentic_hub_import' ) && current_user_can( 'agent_builder_manage_tools' ) ) {
+	// The posted value is a JSON object built by skills-hub.js. It is decoded
+	// and every field is sanitized individually right away by
+	// Skills_Registry::sanitize_hub_data(). The raw JSON
+	// string itself is never used or stored: sanitize_text_field() on the
+	// whole blob would corrupt legitimate skill content (Markdown with
+	// "<...>" code examples), so sanitization happens per decoded field.
+	// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- JSON blob; decoded and sanitized field by field immediately below.
+	$agentic_hub_raw  = json_decode( wp_unslash( $_POST['agentic_hub_data'] ?? '' ), true );
+	$agentic_hub_data = is_array( $agentic_hub_raw ) ? \Agentic\Skills_Registry::sanitize_hub_data( $agentic_hub_raw ) : null;
 
 	if ( is_array( $agentic_hub_data ) && ! empty( $agentic_hub_data['name'] ) ) {
 		$agentic_imported_id = Skills_Registry::import_from_hub( $agentic_hub_data );
@@ -160,7 +157,7 @@ if ( isset( $_POST['agentic_hub_nonce'] ) && wp_verify_nonce( sanitize_text_fiel
 			$agentic_sk_message = sprintf(
 				/* translators: %s: skill name */
 				__( 'Skill "%s" imported.', 'agent-builder' ),
-				esc_html( $agentic_hub_data['name'] )
+				$agentic_hub_data['name'] // Sanitized above; the whole message is esc_html()'d on output.
 			);
 		} else {
 			$agentic_sk_error = __( 'Failed to import skill.', 'agent-builder' );
@@ -179,7 +176,7 @@ $agentic_sk_edit = ( 'edit' === $agentic_sk_view && $agentic_sk_edit_id > 0 ) ? 
 // gallery instead of the form. Choosing one (or "Start from scratch")
 // re-requests with &template=KEY, which falls through to the normal form.
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only selector, no state change.
-$agentic_sk_template_key = isset( $_GET['template'] ) ? sanitize_key( $_GET['template'] ) : '';
+$agentic_sk_template_key = isset( $_GET['template'] ) ? sanitize_key( wp_unslash( $_GET['template'] ) ) : '';
 $agentic_sk_templates    = Skills_Registry::get_templates();
 $agentic_sk_show_gallery = ( 'new' === $agentic_sk_view && '' === $agentic_sk_template_key && ! isset( $_POST['agentic_skill_nonce'] ) );
 
@@ -483,170 +480,27 @@ $agentic_sk_instances = $agentic_sk_registry->get_all_instances();
 		</form>
 	</div>
 
-	<script>
-	(function() {
-		'use strict';
-
-		var SOURCES = <?php echo wp_json_encode( array_map( static fn( $s ) => array_intersect_key( $s, array_flip( array( 'label', 'type', 'owner', 'repo', 'branch' ) ) ), $agentic_sk_hub_sources ) ); ?>;
-
-		var switcherEl      = document.getElementById('agentic-hub-source-switcher');
-		var resultsDiv       = document.getElementById('agentic-hub-results');
-		var importForm       = document.getElementById('agentic-hub-import-form');
-		var importDataField  = document.getElementById('agentic-hub-data');
-		var cache            = {};
-
-		function escHtml(str) {
-			var div = document.createElement('div');
-			div.textContent = str;
-			return div.innerHTML;
-		}
-
-		function escAttr(str) {
-			return String(str).replace(/&/g, '&amp;').replace(/'/g, '&#39;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-		}
-
-		// Minimal client-side reader for the two YAML frontmatter fields we
-		// need, mirroring Skills_Registry::parse_front_matter_identity().
-		// Handles both a plain single-line description and YAML's block
-		// scalar form ("description: |" / "description: |-" / "description: >"
-		// followed by indented lines) — real skills in the wild use both;
-		// Anthropic's own claude-api skill is block-scalar.
-		function parseFrontMatter(raw) {
-			var out = { name: '', description: '' };
-			var m = raw.match(/^---\s*\n([\s\S]*?)\n---\s*\n/);
-			if (!m) return out;
-			var fm = m[1];
-			var nm = fm.match(/^name:\s*(.+)$/m);
-			if (nm) out.name = nm[1].trim().replace(/^["']|["']$/g, '');
-
-			var block = fm.match(/^description:\s*[|>][-+]?[ \t]*\n((?:[ \t]+.*\n?)+)/m);
-			if (block) {
-				out.description = block[1].split('\n')
-					.filter(function (l) { return l.trim() !== ''; })
-					.map(function (l) { return l.trim(); })
-					.join(' ');
-			} else {
-				var dm = fm.match(/^description:\s*["']?(.*?)["']?\s*$/m);
-				if (dm) out.description = dm[1].trim();
-			}
-			return out;
-		}
-
-		function renderResults(items, emptyMessage) {
-			if (!items.length) {
-				resultsDiv.innerHTML = '<p class="agentic-text-dim">' + escHtml(emptyMessage) + '</p>';
-				return;
-			}
-			var html = '<table class="widefat striped"><thead><tr>' +
-				'<th><?php echo esc_js( __( 'Name', 'agent-builder' ) ); ?></th>' +
-				'<th><?php echo esc_js( __( 'Description', 'agent-builder' ) ); ?></th>' +
-				'<th class="agentic-col-min-90"><?php echo esc_js( __( 'Action', 'agent-builder' ) ); ?></th>' +
-				'</tr></thead><tbody>';
-			items.forEach(function(item) {
-				html += '<tr>';
-				html += '<td><strong>' + escHtml(item.name) + '</strong><br><code class="agentic-code-xs">' + escHtml(item.slug || '') + '</code></td>';
-				html += '<td>' + escHtml(item.description || '') + '</td>';
-				html += '<td><button type="button" class="button agentic-hub-import-btn" data-skill=\'' + escAttr(JSON.stringify(item)) + '\'><?php echo esc_js( __( 'Import', 'agent-builder' ) ); ?></button></td>';
-				html += '</tr>';
-			});
-			html += '</tbody></table>';
-			resultsDiv.innerHTML = html;
-			wireImportButtons();
-		}
-
-		function wireImportButtons() {
-			resultsDiv.querySelectorAll('.agentic-hub-import-btn').forEach(function(btn) {
-				btn.addEventListener('click', async function() {
-					if (!await agenticUI.confirm('<?php echo esc_js( __( 'Import this skill?', 'agent-builder' ) ); ?>', { confirmText: '<?php echo esc_js( __( 'Import', 'agent-builder' ) ); ?>' })) return;
-					var thisBtn = this;
-					var skillData = JSON.parse(thisBtn.dataset.skill);
-					thisBtn.disabled = true;
-					thisBtn.textContent = '<?php echo esc_js( __( 'Importing...', 'agent-builder' ) ); ?>';
-
-					submitImport(skillData);
-				});
-			});
-		}
-
-		function submitImport(skillData) {
-			importDataField.value = JSON.stringify(skillData);
-			importForm.submit();
-		}
-
-		function loadGithubSource(key, src) {
-			if (cache[key]) {
-				renderResults(cache[key], '<?php echo esc_js( __( 'No skills found in this repository.', 'agent-builder' ) ); ?>');
-				return;
-			}
-			resultsDiv.innerHTML = '<p class="agentic-text-dim"><?php echo esc_js( __( 'Loading...', 'agent-builder' ) ); ?></p>';
-
-			fetch('https://api.github.com/repos/' + src.owner + '/' + src.repo + '/git/trees/' + src.branch + '?recursive=1', {
-				headers: { 'Accept': 'application/vnd.github+json' },
-			})
-			.then(function(r) {
-				if (!r.ok) throw new Error('HTTP ' + r.status);
-				return r.json();
-			})
-			.then(function(data) {
-				var slugs = (data.tree || [])
-					.map(function(e) { return e.path || ''; })
-					.filter(function(p) { return /^skills\/[^\/]+\/SKILL\.md$/.test(p); })
-					.map(function(p) { return p.split('/')[1]; });
-
-				return Promise.all(slugs.map(function(slug) {
-					<?php // phpcs:ignore PluginCheck.CodeAnalysis.Offloading.OffloadedContent -- Browser-side text fetch (a Markdown doc, not a script/asset) for the explicit, user-initiated "browse community skills" action. ?>
-					var rawUrl = 'https://raw.githubusercontent.com/' + src.owner + '/' + src.repo + '/' + src.branch + '/skills/' + slug + '/SKILL.md';
-					return fetch(rawUrl)
-						.then(function(r) { return r.ok ? r.text() : ''; })
-						.then(function(raw) {
-							if (!raw) return null;
-							var fm = parseFrontMatter(raw);
-							return {
-								slug: slug,
-								name: fm.name || slug,
-								description: fm.description || '',
-								content: raw,
-								version: '1.0.0',
-								author: src.label,
-								source: key,
-							};
-						});
-				}));
-			})
-			.then(function(items) {
-				items = items.filter(Boolean);
-				items.sort(function(a, b) { return a.name.localeCompare(b.name); });
-				cache[key] = items;
-				renderResults(items, '<?php echo esc_js( __( 'No skills found in this repository.', 'agent-builder' ) ); ?>');
-			})
-			.catch(function(err) {
-				resultsDiv.innerHTML = '<div class="notice notice-error"><p>' +
-					'<?php echo esc_js( __( 'Failed to load skills from', 'agent-builder' ) ); ?> ' + escHtml(src.label) + '. (' + escHtml(err.message || '') + ')</p></div>';
-			});
-		}
-
-		function switchSource(key) {
-			var src = SOURCES[key];
-			if (!src) return;
-			if (switcherEl) {
-				switcherEl.querySelectorAll('[data-source]').forEach(function(b) {
-					b.classList.toggle('is-active', b.dataset.source === key);
-				});
-			}
-			if ('github' === src.type) {
-				loadGithubSource(key, src);
-			}
-		}
-
-		if (switcherEl) {
-			switcherEl.querySelectorAll('[data-source]').forEach(function(btn) {
-				btn.addEventListener('click', function() { switchSource(this.dataset.source); });
-			});
-		}
-
-		switchSource('wordpress');
-	})();
-	</script>
+	<?php
+	\Agentic\Inline_Assets::script(
+		'skills-hub',
+		array(
+			'sources' => array_map( static fn( $s ) => array_intersect_key( $s, array_flip( array( 'label', 'type', 'owner', 'repo', 'branch' ) ) ), $agentic_sk_hub_sources ),
+			'i18n' => array(
+				'importThisSkill'        => __( 'Import this skill?', 'agent-builder' ),
+				'import'                 => __( 'Import', 'agent-builder' ),
+				'importing'              => __( 'Importing...', 'agent-builder' ),
+				'noSkillsFoundInThis'    => __( 'No skills found in this repository.', 'agent-builder' ),
+				'name'                   => __( 'Name', 'agent-builder' ),
+				'description'            => __( 'Description', 'agent-builder' ),
+				'action'                 => __( 'Action', 'agent-builder' ),
+				'loading'                => __( 'Loading...', 'agent-builder' ),
+				'failedToLoadSkillsFrom' => __( 'Failed to load skills from', 'agent-builder' ),
+			),
+		),
+		'agenticSkillsHub',
+		array( 'agentic-ui' )
+	);
+	?>
 
 <?php else : ?>
 
@@ -673,101 +527,23 @@ $agentic_sk_instances = $agentic_sk_registry->get_all_instances();
 			<input type="hidden" name="agentic_hub_data" id="agentic-rec-data" value="" />
 		</form>
 
-		<script>
-		(function() {
-			'use strict';
-			var SKILLS_API = 'https://agentic-plugin.com/wp-json/agentic/v1/skills';
-			var grid = document.getElementById('agentic-recommended-grid');
-			var importForm = document.getElementById('agentic-rec-import-form');
-			var importField = document.getElementById('agentic-rec-data');
-
-			var loadBtn = document.getElementById('agentic-load-recommended');
-			if (!loadBtn) { return; }
-			loadBtn.addEventListener('click', loadRecommended);
-
-			function loadRecommended() {
-			grid.innerHTML = '<p class="agentic-text-dim"><?php echo esc_js( __( 'Loading...', 'agent-builder' ) ); ?></p>';
-			fetch(SKILLS_API + '/featured')
-			.then(function(r) { return r.ok ? r.json() : []; })
-			.then(function(skills) {
-				if (!skills.length) {
-					// Fallback: try search endpoint
-					return fetch(SKILLS_API + '?per_page=12')
-					.then(function(r) { return r.ok ? r.json() : { skills: [] }; })
-					.then(function(d) { return d.skills || []; });
-				}
-				return skills;
-			})
-			.then(function(skills) {
-				if (!skills || !skills.length) {
-					grid.innerHTML = '<p class="agentic-text-dim"><?php echo esc_js( __( 'No recommended skills available yet. Create your own or browse the community.', 'agent-builder' ) ); ?></p>';
-					return;
-				}
-
-				var html = '<div class="agentic-skills-js-grid">';
-				skills.forEach(function(skill) {
-					var channels = (skill.channels || []).map(function(c) {
-						return '<span class="agentic-badge-indigo-sm">' + escHtml(c) + '</span>';
-					}).join(' ');
-
-					html += '<div class="agentic-skill-card-js">';
-					html += '<div class="agentic-skill-card-head">';
-					html += '<strong class="agentic-skill-card-title">' + escHtml(skill.name) + '</strong>';
-					if (skill.featured) html += '<span class="agentic-badge-featured">Featured</span>';
-					html += '</div>';
-					html += '<p class="agentic-skill-card-desc">' + escHtml(skill.description || '') + '</p>';
-					html += '<div class="agentic-skill-card-tags">';
-					html += channels;
-					html += '<span class="agentic-skill-card-ver">v' + escHtml(skill.version || '1.0.0') + '</span>';
-					html += '</div>';
-					html += '<div class="agentic-skill-card-btns">';
-					html += '<button type="button" class="button button-small agentic-rec-import" data-slug="' + escAttr(skill.slug) + '" data-skill=\'' + escAttr(JSON.stringify(skill)) + '\'><?php echo esc_js( __( 'Import', 'agent-builder' ) ); ?></button>';
-					html += '</div>';
-					html += '</div>';
-				});
-				html += '</div>';
-				grid.innerHTML = html;
-
-				grid.querySelectorAll('.agentic-rec-import').forEach(function(btn) {
-					btn.addEventListener('click', async function() {
-						if (!await agenticUI.confirm('<?php echo esc_js( __( 'Import this skill?', 'agent-builder' ) ); ?>', { confirmText: '<?php echo esc_js( __( 'Import', 'agent-builder' ) ); ?>' })) return;
-						var slug = this.dataset.slug;
-						var skillData = JSON.parse(this.dataset.skill);
-						this.disabled = true;
-						this.textContent = '<?php echo esc_js( __( 'Importing...', 'agent-builder' ) ); ?>';
-
-						// Fetch full content from our API.
-						fetch(SKILLS_API + '/' + encodeURIComponent(slug))
-						.then(function(r) { return r.ok ? r.json() : null; })
-						.then(function(detail) {
-							var importData = {
-								name: detail ? detail.name : skillData.name,
-								description: detail ? detail.description : skillData.description,
-								content: detail ? (detail.content || '') : '',
-								version: detail ? detail.version : skillData.version,
-								author: detail ? detail.author : (skillData.author || ''),
-								slug: slug,
-								source: 'agentic',
-							};
-							importField.value = JSON.stringify(importData);
-							importForm.submit();
-						})
-						.catch(function() {
-							importField.value = JSON.stringify(skillData);
-							importForm.submit();
-						});
-					});
-				});
-			})
-			.catch(function() {
-				grid.innerHTML = '<p class="agentic-text-dim"><?php echo esc_js( __( 'Could not load recommended skills. Create your own or browse the community.', 'agent-builder' ) ); ?></p>';
-			});
-			}
-
-			function escHtml(str) { var d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
-			function escAttr(str) { return str.replace(/&/g,'&amp;').replace(/'/g,'&#39;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-		})();
-		</script>
+		<?php
+		\Agentic\Inline_Assets::script(
+			'skills-recommended',
+			array(
+				'i18n' => array(
+					'importThisSkill'                 => __( 'Import this skill?', 'agent-builder' ),
+					'import'                          => __( 'Import', 'agent-builder' ),
+					'importing'                       => __( 'Importing...', 'agent-builder' ),
+					'loading'                         => __( 'Loading...', 'agent-builder' ),
+					'noRecommendedSkillsAvailableYet' => __( 'No recommended skills available yet. Create your own or browse the community.', 'agent-builder' ),
+					'couldNotLoadRecommendedSkills'   => __( 'Could not load recommended skills. Create your own or browse the community.', 'agent-builder' ),
+				),
+			),
+			'agenticSkillsRecommended',
+			array( 'agentic-ui' )
+		);
+		?>
 
 		<?php if ( ! empty( $agentic_sk_all ) ) : ?>
 		<h3 class="agentic-th-mt-32"><?php esc_html_e( 'Your Skills', 'agent-builder' ); ?></h3>

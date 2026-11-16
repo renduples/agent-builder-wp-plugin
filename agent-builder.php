@@ -223,8 +223,7 @@ final class Plugin {
 		add_action(
 			'template_redirect',
 			function () {
-				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- wp_parse_url extracts path only; sanitize_key sanitizes slug below.
-				$path = trim( (string) wp_parse_url( wp_unslash( $_SERVER['REQUEST_URI'] ?? '' ), PHP_URL_PATH ), '/' );
+				$path = trim( (string) wp_parse_url( esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ?? '' ) ), PHP_URL_PATH ), '/' );
 				if ( strncmp( $path, 'go/', 3 ) !== 0 ) {
 					return;
 				}
@@ -278,6 +277,7 @@ final class Plugin {
 		add_action( 'admin_init', array( Activator::class, 'maybe_handle_retry_request' ), 1 );
 		add_action( 'admin_init', array( Activator::class, 'maybe_disable_cron_for_safe_mode' ) );
 		add_action( 'admin_init', array( Activator::class, 'maybe_run_deferred_seed' ) );
+		add_action( 'admin_init', array( Setup_Wizard_Handler::class, 'maybe_handle' ) );
 		add_action( 'admin_menu', array( $menu, 'register' ) );
 		add_action( 'admin_page_access_denied', array( $menu, 'maybe_show_access_notice' ) );
 		add_action( 'admin_footer', array( $menu, 'render_admin_page_links' ) );

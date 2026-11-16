@@ -692,6 +692,57 @@ final class Skills_Registry {
 	}
 
 	/**
+	 * Sanitize a decoded hub/import skill payload field by field.
+	 *
+	 * Accepts the shapes the browser sends (the curated Agentic list and
+	 * GitHub skills repositories) and returns only known keys, each with the most restrictive sanitizer that keeps it
+	 * usable. "content" is SKILL.md Markdown, which legitimately contains
+	 * "<...>" code examples, so it is kept as text (valid UTF-8, no NUL bytes)
+	 * and always escaped when displayed.
+	 *
+	 * @param array<string, mixed> $raw Decoded JSON.
+	 * @return array<string, string> Sanitized payload.
+	 */
+	public static function sanitize_hub_data( array $raw ): array {
+		$str = static function ( $value ): string {
+			return is_scalar( $value ) ? (string) $value : '';
+		};
+
+		$name        = $str( $raw['name'] ?? '' );
+		$description = $str( $raw['description'] ?? '' );
+		$content     = $str( $raw['content'] ?? '' );
+		$content     = '' !== $content ? $content : $str( $raw['skill_md'] ?? '' );
+		$content     = str_replace( "\0", '', wp_check_invalid_utf8( $content, true ) );
+
+		$source = sanitize_key( $str( $raw['source'] ?? 'local' ) );
+		if ( ! in_array( $source, array( 'agentic', 'wordpress', 'anthropic' ), true ) ) {
+			$source = 'local';
+		}
+
+		$clean = array(
+			'name'        => sanitize_text_field( $name ),
+			'description' => sanitize_textarea_field( $description ),
+			'content'     => $content,
+			'source'      => $source,
+			'version'     => sanitize_text_field( $str( $raw['version'] ?? '' ) ),
+			'author'      => sanitize_text_field( $str( $raw['author'] ?? '' ) ),
+		);
+		foreach ( array( 'slug', '_id', 'id' ) as $key ) {
+			if ( isset( $raw[ $key ] ) && is_scalar( $raw[ $key ] ) && '' !== (string) $raw[ $key ] ) {
+				$clean[ $key ] = sanitize_text_field( (string) $raw[ $key ] );
+			}
+		}
+		if ( '' === $clean['version'] ) {
+			unset( $clean['version'] );
+		}
+		if ( '' === $clean['author'] ) {
+			unset( $clean['author'] );
+		}
+
+		return $clean;
+	}
+
+	/**
 	 * Import a skill from a hub source (the curated Agentic list or a GitHub skills repository).
 	 *
 	 * @param array<string, mixed> $hub_data Skill data (name, description, content, slug, source, ...).

@@ -428,11 +428,17 @@ class Agent_Ready_Score {
 		}
 
 		$public   = (bool) get_option( 'blog_public' );
-		$site_url = wp_parse_url( site_url() );
-		$path     = ! empty( $site_url['path'] ) ? $site_url['path'] : '';
-		$output   = "User-agent: *\n";
-		$output  .= "Disallow: {$path}/wp-admin/\n";
-		$output  .= "Allow: {$path}/wp-admin/admin-ajax.php\n";
+		// Mirror core's do_robots(): paths derived from admin_url() so they are
+		// right on installs with a non-standard admin location.
+		$admin_path = (string) wp_parse_url( admin_url(), PHP_URL_PATH );
+		$ajax_path  = (string) wp_parse_url( admin_url( 'admin-ajax.php' ), PHP_URL_PATH );
+		$output     = "User-agent: *\n";
+		if ( '' !== $admin_path ) {
+			$output .= 'Disallow: ' . trailingslashit( $admin_path ) . "\n";
+		}
+		if ( '' !== $ajax_path ) {
+			$output .= 'Allow: ' . $ajax_path . "\n";
+		}
 
 		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- 'robots_txt' is a WordPress core filter this method hooks into, not a custom hook this plugin declares.
 		return (string) apply_filters( 'robots_txt', $output, $public );

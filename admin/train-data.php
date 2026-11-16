@@ -411,37 +411,13 @@ if ( $agentic_knowledge_advanced ) {
 <?php endif; ?>
 </div>
 
-<script>
-( function () {
-	'use strict';
-	var toggle = document.getElementById( 'agentic-knowledge-mode-toggle' );
-	if ( ! toggle ) {
-		return;
-	}
-	Array.prototype.forEach.call( toggle.querySelectorAll( 'button' ), function ( btn ) {
-		btn.addEventListener( 'click', function () {
-			if ( btn.disabled ) {
-				return;
-			}
-			Array.prototype.forEach.call( toggle.querySelectorAll( 'button' ), function ( b ) {
-				b.disabled = true;
-			} );
-			fetch( <?php echo wp_json_encode( esc_url_raw( rest_url( 'agentic/v1/admin-page' ) ) ); ?>, {
-				method: 'POST',
-				credentials: 'same-origin',
-				headers: {
-					'Content-Type': 'application/json',
-					'X-WP-Nonce': <?php echo wp_json_encode( wp_create_nonce( 'wp_rest' ) ); ?>
-				},
-				body: JSON.stringify( {
-					action_name: 'set_screen_mode',
-					screen: 'knowledge',
-					mode: btn.getAttribute( 'data-mode' )
-				} )
-			} ).then( function () {
-				window.location.reload();
-			} );
-		} );
-	} );
-} )();
-</script>
+<?php
+\Agentic\Inline_Assets::script(
+	'train-data',
+	array(
+		'restUrl' => esc_url_raw( rest_url( 'agentic/v1/admin-page' ) ),
+		'nonce'   => wp_create_nonce( 'wp_rest' ),
+	),
+	'agenticTrainData'
+);
+?>
