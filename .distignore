@@ -48,3 +48,4 @@ SECURITY.md
 
 # Per-install HMAC signatures (written on activation with the site key).
 abilities-signature
+creatives
