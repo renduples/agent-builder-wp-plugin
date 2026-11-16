@@ -321,6 +321,92 @@ class Test_Storage_Location extends TestCase {
 	}
 
 	/**
+	 * Single site moves, multisite copies.
+	 */
+	public function test_migration_strategy_by_install_type(): void {
+		$this->assertSame( Storage_Migration::STRATEGY_MOVE, Storage_Migration::strategy( false ) );
+		$this->assertSame( Storage_Migration::STRATEGY_COPY, Storage_Migration::strategy( true ) );
+		$this->assertSame( is_multisite(), Storage_Migration::uses_copy() );
+	}
+
+	/**
+	 * Multisite branch (forced through the filter on this single-site test
+	 * install): the shared legacy folders are copied into this site's data
+	 * root and never deleted; once copied they are no longer read for this
+	 * site, and Site Health says they can be removed by hand.
+	 */
+	public function test_multisite_migration_copies_and_keeps_shared_folders(): void {
+		add_filter( 'agent_builder_storage_migration_copy', '__return_true' );
+		$this->seed_legacy();
+
+		$result = Storage_Migration::maybe_run( true );
+
+		foreach ( array_keys( File_Manager::LEGACY_DIRS ) as $kind ) {
+			$this->assertDirectoryExists( File_Manager::legacy_dir( $kind ), $kind );
+			$this->assertSame( 0, $result[ $kind ]['left'], $kind );
+			$this->assertSame( '', $result[ $kind ]['error'], $kind );
+		}
+		// Old copies untouched.
+		$this->assertFileExists( File_Manager::legacy_dir( 'agents' ) . '/legacy-mover/agent.json' );
+		$this->assertFileExists( File_Manager::legacy_dir( 'knowledge' ) . '/legacy-mover-knowledge.txt' );
+		$this->assertFileExists( File_Manager::legacy_dir( 'backups' ) . '/db/20260101-000000_0123456789abcdef01234567_options.php' );
+		// New copies in this site's data root.
+		$this->assertFileExists( File_Manager::agents_dir() . '/legacy-mover/agent.json' );
+		$this->assertFileExists( File_Manager::agents_dir() . '/legacy-mover/templates/system-prompt.txt' );
+		$this->assertFileExists( File_Manager::knowledge_dir() . '/okf/site/index.md' );
+		$this->assertFileExists( File_Manager::backups_dir() . '/db/20260101-000000_0123456789abcdef01234567_options.php' );
+
+		$this->assertTrue( Storage_Migration::is_complete() );
+		$this->assertSame( array(), Storage_Migration::remaining_legacy_dirs() );
+		$this->assertNotContains( File_Manager::legacy_dir( 'agents' ), File_Manager::read_dirs( 'agents' ) );
+		$this->assertArrayHasKey( 'agents', Storage_Migration::shared_legacy_dirs() );
+
+		Abilities_Manifest::clear_cache();
+		$this->assertSame( File_Manager::agents_dir() . '/legacy-mover/abilities.json', Abilities_Manifest::resolve_path( 'legacy-mover' ) );
+		$this->assertTrue( Abilities_Manifest::verify_integrity( 'legacy-mover' ) );
+
+		$health = \Agentic\Site_Health::test_storage_location();
+		$this->assertSame( 'good', $health['status'] );
+		$this->assertStringContainsString( 'agentic-agents', $health['description'] );
+
+		// Second run copies nothing new and still deletes nothing.
+		$second = Storage_Migration::maybe_run( true );
+		$this->assertSame( 0, $second['agents']['moved'] + $second['knowledge']['moved'] + $second['backups']['moved'] );
+		$this->assertDirectoryExists( File_Manager::legacy_dir( 'agents' ) . '/legacy-mover' );
+
+		remove_filter( 'agent_builder_storage_migration_copy', '__return_true' );
+		$this->delete_directory( File_Manager::agents_dir() . '/legacy-mover' );
+		wp_delete_file( File_Manager::knowledge_dir() . '/legacy-mover-knowledge.txt' );
+		$this->delete_directory( File_Manager::knowledge_dir() . '/okf' );
+		$this->delete_directory( File_Manager::backups_dir() );
+	}
+
+	/**
+	 * Multisite branch: a file this site already has with different content
+	 * is kept, the old copy stays readable, and the copy is retried.
+	 */
+	public function test_multisite_migration_keeps_site_data_on_conflict(): void {
+		add_filter( 'agent_builder_storage_migration_copy', '__return_true' );
+		$this->seed_legacy();
+		File_Manager::ensure_data_dir( 'knowledge' );
+		file_put_contents( File_Manager::knowledge_dir() . '/legacy-mover-knowledge.txt', 'Site facts.' );
+
+		Storage_Migration::run();
+
+		$this->assertSame( 'Site facts.', file_get_contents( File_Manager::knowledge_dir() . '/legacy-mover-knowledge.txt' ) );
+		$this->assertSame( 'Facts.', file_get_contents( File_Manager::legacy_dir( 'knowledge' ) . '/legacy-mover-knowledge.txt' ) );
+		$this->assertFalse( Storage_Migration::is_complete() );
+		$this->assertContains( File_Manager::legacy_dir( 'knowledge' ), File_Manager::read_dirs( 'knowledge' ) );
+		$this->assertSame( 'recommended', \Agentic\Site_Health::test_storage_location()['status'] );
+
+		remove_filter( 'agent_builder_storage_migration_copy', '__return_true' );
+		wp_delete_file( File_Manager::knowledge_dir() . '/legacy-mover-knowledge.txt' );
+		$this->delete_directory( File_Manager::knowledge_dir() . '/okf' );
+		$this->delete_directory( File_Manager::agents_dir() . '/legacy-mover' );
+		$this->delete_directory( File_Manager::backups_dir() );
+	}
+
+	/**
 	 * With no legacy folders at all the migration completes immediately.
 	 */
 	public function test_migration_without_legacy_dirs_completes(): void {

@@ -336,12 +336,21 @@ WEBCONFIG;
 	 * folder once it is empty, after which this returns null and costs one
 	 * stat() per request. Nothing is ever written to the returned path.
 	 *
+	 * On multisite the old (shared) folder is copied and kept, so once this
+	 * site's copy completed it is no longer read for this site.
+	 *
 	 * @param string $kind 'agents', 'knowledge' or 'backups'.
 	 * @return string|null
 	 */
 	public static function legacy_fallback_dir( string $kind ): ?string {
 		$dir = self::legacy_dir( $kind );
-		return ( '' !== $dir && is_dir( $dir ) ) ? $dir : null;
+		if ( '' === $dir || ! is_dir( $dir ) ) {
+			return null;
+		}
+		if ( Storage_Migration::uses_copy() && Storage_Migration::is_complete() ) {
+			return null;
+		}
+		return $dir;
 	}
 
 	/**

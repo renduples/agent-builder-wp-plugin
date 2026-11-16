@@ -295,17 +295,33 @@ class Site_Health {
 			'color' => 'blue',
 		);
 		$left  = Storage_Migration::remaining_legacy_dirs();
+		$copy  = Storage_Migration::uses_copy();
 
 		if ( empty( $left ) ) {
+			$description = '<p>' . sprintf(
+				/* translators: %s: folder path. */
+				__( 'Agent Builder keeps its files (your agents, knowledge files and automatic backups) in %s.', 'agent-builder' ),
+				'<code>' . esc_html( self::display_path( File_Manager::data_dir() ) ) . '/</code>'
+			) . '</p>';
+
+			$shared = Storage_Migration::shared_legacy_dirs();
+			if ( ! empty( $shared ) ) {
+				$folders = array();
+				foreach ( $shared as $dir ) {
+					$folders[] = '<code>' . esc_html( self::display_path( $dir ) ) . '/</code>';
+				}
+				$description .= '<p>' . sprintf(
+					/* translators: %s: old folder paths. */
+					__( 'This site has copied its data out of the older folders shared by every site of the network: %s. Agent Builder no longer uses them on this site and never deletes them, because other sites copy from them the first time they load. Once every site of the network has been visited, you can delete these folders yourself.', 'agent-builder' ),
+					implode( ', ', $folders )
+				) . '</p>';
+			}
+
 			return array(
 				'label'       => __( 'Agent Builder data is stored in the uploads folder', 'agent-builder' ),
 				'status'      => 'good',
 				'badge'       => $badge,
-				'description' => '<p>' . sprintf(
-					/* translators: %s: folder path. */
-					__( 'Agent Builder keeps its files (your agents, knowledge files and automatic backups) in %s.', 'agent-builder' ),
-					'<code>' . esc_html( self::display_path( File_Manager::data_dir() ) ) . '/</code>'
-				) . '</p>',
+				'description' => $description,
 				'actions'     => '',
 				'test'        => self::LOCATION_TEST_SLUG,
 			);
@@ -329,7 +345,10 @@ class Site_Health {
 				implode( ', ', $folders ),
 				'<code>' . esc_html( self::display_path( File_Manager::data_dir() ) ) . '/</code>'
 			) . '</p>',
-			'actions'     => '<p>' . __( 'Make the old folders writable by the web server (or move their contents into the matching agents/, knowledge/ or backups/ subfolder yourself, keeping any file that already exists there). Agent Builder retries the move every hour and removes each old folder once it is empty.', 'agent-builder' ) . '</p>',
+			'actions'     => '<p>' . ( $copy
+				? __( 'Make the uploads folder writable by the web server (or copy the old folders\' contents into the matching agents/, knowledge/ or backups/ subfolder of this site yourself, keeping any file that already exists there). Agent Builder retries the copy every hour. The old folders are shared by every site of the network and are never deleted automatically.', 'agent-builder' )
+				: __( 'Make the old folders writable by the web server (or move their contents into the matching agents/, knowledge/ or backups/ subfolder yourself, keeping any file that already exists there). Agent Builder retries the move every hour and removes each old folder once it is empty.', 'agent-builder' )
+			) . '</p>',
 			'test'        => self::LOCATION_TEST_SLUG,
 		);
 	}
