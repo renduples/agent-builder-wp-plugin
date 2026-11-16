@@ -1,0 +1,435 @@
+{
+  "translation-revision-date": "2026-08-20 16:00+0000",
+  "generator": "WP-CLI/2.12.0",
+  "source": "src/dashboard-app/index.js",
+  "domain": "messages",
+  "locale_data": {
+    "messages": {
+      "": {
+        "domain": "messages",
+        "lang": "es_ES",
+        "plural-forms": "nplurals=2; plural=(n != 1);"
+      },
+      "Active": [
+        "Activos"
+      ],
+      "Community Agents": [
+        "Agentes de la comunidad"
+      ],
+      "Status": [
+        "Estado"
+      ],
+      "Basic": [
+        "Básico"
+      ],
+      "Advanced": [
+        "Avanzado"
+      ],
+      "Saving…": [
+        "Guardando…"
+      ],
+      "Comments": [
+        "Comentarios"
+      ],
+      "Media": [
+        "Medios"
+      ],
+      "WooCommerce": [
+        "WooCommerce"
+      ],
+      "Cancel": [
+        "Cancelar"
+      ],
+      "Security": [
+        "Seguridad"
+      ],
+      "Activity": [
+        "Actividad"
+      ],
+      "Default": [
+        "Por defecto"
+      ],
+      "Model": [
+        "Modelo"
+      ],
+      "Terms of Service": [
+        "Términos del servicio"
+      ],
+      "Health": [
+        "Salud"
+      ],
+      "Test": [
+        "Probar"
+      ],
+      "Version": [
+        "Versión"
+      ],
+      "License": [
+        "Licencia"
+      ],
+      "Need help?": [
+        "¿Necesita ayuda?"
+      ],
+      "Visit our Support Center": [
+        "Visite nuestro centro de soporte"
+      ],
+      "Documentation": [
+        "Documentación"
+      ],
+      "Privacy Policy": [
+        "Política de privacidad"
+      ],
+      "GDPR Policy": [
+        "Política de RGPD"
+      ],
+      "Forms": [
+        "Formularios"
+      ],
+      "Maintenance": [
+        "Mantenimiento"
+      ],
+      "Pro": [
+        "Pro"
+      ],
+      "Dismiss": [
+        "Descartar"
+      ],
+      "General": [
+        "General"
+      ],
+      "Provider": [
+        "Proveedor"
+      ],
+      "Test failed.": [
+        "La prueba ha fallado."
+      ],
+      "View Activity →": [
+        "Ver la actividad →"
+      ],
+      "Total Actions": [
+        "Acciones totales"
+      ],
+      "Tokens Used": [
+        "Tokens usados"
+      ],
+      "Est. Cost": [
+        "Coste est."
+      ],
+      "Estimated Usage": [
+        "Uso estimado"
+      ],
+      "Active Agents": [
+        "Agentes activos"
+      ],
+      "Uploaded Agents": [
+        "Agentes subidos"
+      ],
+      "User-Created Agents": [
+        "Agentes creados por el usuario"
+      ],
+      "The dashboard summarizes agents, approvals, activity, and providers at a glance.": [
+        "El panel resume de un vistazo los agentes, las aprobaciones, la actividad y los proveedores."
+      ],
+      "Drag to rearrange": [
+        "Arrastre para reorganizar"
+      ],
+      "Drag to rearrange dashboard card": [
+        "Arrastre para reorganizar la tarjeta del escritorio"
+      ],
+      "Manage License →": [
+        "Gestionar la licencia →"
+      ],
+      "Renew": [
+        "Renovar"
+      ],
+      "Schema": [
+        "Esquema"
+      ],
+      "Pending Jobs": [
+        "Trabajos pendientes"
+      ],
+      "abandoned — auto-recovered": [
+        "abandonados — recuperados automáticamente"
+      ],
+      "Running Jobs": [
+        "Trabajos en ejecución"
+      ],
+      "stuck — auto-recovered": [
+        "bloqueados — recuperados automáticamente"
+      ],
+      "Completed Jobs": [
+        "Trabajos completados"
+      ],
+      "Approvals & Backups": [
+        "Aprobaciones y copias de seguridad"
+      ],
+      "View Approvals →": [
+        "Ver las aprobaciones →"
+      ],
+      "Pending Approvals": [
+        "Aprobaciones pendientes"
+      ],
+      "Completed Approvals": [
+        "Aprobaciones completadas"
+      ],
+      "Files Backed Up": [
+        "Archivos con copia de seguridad"
+      ],
+      "DB Tables Backed Up": [
+        "Tablas de BD con copia de seguridad"
+      ],
+      "%s waiting for your OK.": [
+        "%s pendientes de su visto bueno."
+      ],
+      "Connected Providers": [
+        "Proveedores conectados"
+      ],
+      "Manage Providers →": [
+        "Gestionar los proveedores →"
+      ],
+      "No AI providers connected.": [
+        "No hay proveedores de IA conectados."
+      ],
+      "Run the Setup Wizard": [
+        "Ejecutar el asistente de configuración"
+      ],
+      "Testing…": [
+        "Probando…"
+      ],
+      "EMERGENCY STOP: deactivate and log agent states, cancel all jobs, and disconnect providers. Continue?": [
+        "PARADA DE EMERGENCIA: desactiva y registra el estado de los agentes, cancela todos los trabajos y desconecta los proveedores. ¿Continuar?"
+      ],
+      "Turn off emergency stop?": [
+        "¿Desactivar la parada de emergencia?"
+      ],
+      "Emergency stop restore finished with warnings:": [
+        "La restauración tras la parada de emergencia ha finalizado con avisos:"
+      ],
+      "Quick Actions": [
+        "Acciones rápidas"
+      ],
+      "Manage Actions →": [
+        "Gestionar las acciones →"
+      ],
+      "Configure now": [
+        "Configurar ahora"
+      ],
+      "Choose which links appear in Quick Actions. Setup Wizard is always available.": [
+        "Elija qué enlaces aparecen en Acciones rápidas. El asistente de configuración siempre está disponible."
+      ],
+      "Required": [
+        "Obligatorio"
+      ],
+      "Save Quick Actions": [
+        "Guardar las acciones rápidas"
+      ],
+      "Disable All Agents": [
+        "Desactivar todos los agentes"
+      ],
+      "ACTIVE": [
+        "ACTIVO"
+      ],
+      "Emergency stop": [
+        "Parada de emergencia"
+      ],
+      ": deactivate and log agent states, cancels all jobs and disconnects providers.": [
+        ": desactiva y registra el estado de los agentes, cancela todos los trabajos y desconecta los proveedores."
+      ],
+      "Interface Settings": [
+        "Ajustes de la interfaz"
+      ],
+      "Manage Interface →": [
+        "Gestionar la interfaz →"
+      ],
+      "Default interface:": [
+        "Interfaz predeterminada:"
+      ],
+      "Used by any screen you have not set individually. Tools, Approvals, and Activity each have their own Basic/Advanced switch now.": [
+        "Se usa en cualquier pantalla que no haya configurado de forma individual. Ahora Herramientas, Aprobaciones y Actividad tienen cada una su propio selector Básico/Avanzado."
+      ],
+      "Reset every screen back to your default interface? Any screen you switched individually will lose that override.": [
+        "¿Restablecer todas las pantallas a su interfaz predeterminada? Cualquier pantalla que haya cambiado individualmente perderá esa personalización."
+      ],
+      "Reset all screens to my default": [
+        "Restablecer todas las pantallas a mi valor predeterminado"
+      ],
+      "Automatic Agent Updates": [
+        "Actualizaciones automáticas de agentes"
+      ],
+      "Keep installed agents updated automatically. Opt out any time.": [
+        "Mantenga los agentes instalados actualizados automáticamente. Puede desactivarlo en cualquier momento."
+      ],
+      "Browse →": [
+        "Explorar →"
+      ],
+      "Discover and install agents created by the WordPress community.": [
+        "Descubra e instale agentes creados por la comunidad de WordPress."
+      ],
+      "Getting Started": [
+        "Primeros pasos"
+      ],
+      "%1$d of %2$d steps complete": [
+        "%1$d de %2$d pasos completados"
+      ],
+      "Could not load dashboard.": [
+        "No se ha podido cargar el escritorio."
+      ],
+      "Loading dashboard…": [
+        "Cargando el escritorio…"
+      ],
+      "Dashboard unavailable.": [
+        "El escritorio no está disponible."
+      ],
+      "Saving layout…": [
+        "Guardando la disposición…"
+      ],
+      "Reset layout": [
+        "Restablecer la disposición"
+      ],
+      "Drag ⋮⋮ to rearrange cards": [
+        "Arrastre ⋮⋮ para reorganizar las tarjetas"
+      ],
+      "Emergency stop is ACTIVE": [
+        "La parada de emergencia está ACTIVA"
+      ],
+      "All agents are deactivated, jobs are cancelled, and LLM providers are disconnected. Chat and agent activation are blocked.": [
+        "Todos los agentes están desactivados, los trabajos cancelados y los proveedores de LLM desconectados. El chat y la activación de agentes están bloqueados."
+      ],
+      "Manage Interface": [
+        "Gestionar la interfaz"
+      ],
+      "Site Passport": [
+        ""
+      ],
+      "Tasks": [
+        ""
+      ],
+      "Plugin updates": [
+        ""
+      ],
+      "Store": [
+        ""
+      ],
+      "Performance": [
+        ""
+      ],
+      "Could not load checks.": [
+        ""
+      ],
+      "Could not save that change.": [
+        ""
+      ],
+      "Hide checks": [
+        ""
+      ],
+      "Configure checks": [
+        ""
+      ],
+      "Not applicable on this site.": [
+        ""
+      ],
+      "Could not load Site Brief.": [
+        ""
+      ],
+      "Scan failed.": [
+        ""
+      ],
+      "Could not update that card.": [
+        ""
+      ],
+      "Site Brief": [
+        ""
+      ],
+      "A read-only look at this site. Assign an agent to investigate a finding together — nothing changes until you agree.": [
+        ""
+      ],
+      "Scan this site": [
+        ""
+      ],
+      "No urgent items. Last scan %s.": [
+        ""
+      ],
+      "Scan again": [
+        ""
+      ],
+      "Assigned to %s on %s": [
+        ""
+      ],
+      "This finding needs a premium agent. Opens the marketplace in a new tab to get it.": [
+        ""
+      ],
+      "Get %s": [
+        ""
+      ],
+      "Open the recommended agent in chat with this finding, to investigate and fix it together": [
+        ""
+      ],
+      "Assign Agent": [
+        ""
+      ],
+      "Dismiss to hide this card. It will not return unless the finding changes.": [
+        ""
+      ],
+      "Not now leaves it for later. It may reappear on the next scan.": [
+        ""
+      ],
+      "Not now": [
+        ""
+      ],
+      "Show all (%d)": [
+        ""
+      ],
+      "Store this month: %1$s orders, %2$s %3$s.": [
+        ""
+      ],
+      "The version of Siteloom’s database structure. Updates automatically when needed — you don’t need to do anything here.": [
+        ""
+      ],
+      "Open Safety Center →": [
+        ""
+      ],
+      "Open Tasks →": [
+        ""
+      ],
+      "Waiting on you": [
+        ""
+      ],
+      "No tasks running. Assign one and you’ll be pinged when it finishes.": [
+        ""
+      ],
+      "%s more — open Tasks to see them all.": [
+        ""
+      ],
+      "View Details →": [
+        ""
+      ],
+      "Site Score": [
+        ""
+      ],
+      "Not scanned yet": [
+        ""
+      ],
+      "Check how ready this site is for AI agents. The scan runs on this site only and changes nothing.": [
+        ""
+      ],
+      "Scanning…": [
+        ""
+      ],
+      "Scan now": [
+        ""
+      ],
+      "Fix now →": [
+        ""
+      ],
+      "All agents are stopped —": [
+        ""
+      ],
+      "resume in Safety Center": [
+        ""
+      ],
+      "Chat agent offline —": [
+        ""
+      ]
+    }
+  }
+}

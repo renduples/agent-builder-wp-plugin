@@ -1,0 +1,132 @@
+{
+  "translation-revision-date": "2026-08-20 16:00+0000",
+  "generator": "WP-CLI/2.12.0",
+  "source": "src/deploy-wizard/index.js",
+  "domain": "messages",
+  "locale_data": {
+    "messages": {
+      "": {
+        "domain": "messages",
+        "lang": "ru_RU",
+        "plural-forms": "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
+      },
+      "Position": [
+        "Положение"
+      ],
+      "Everywhere": [
+        "Везде"
+      ],
+      "Back": [
+        "Назад"
+      ],
+      "Loading…": [
+        "Загрузка…"
+      ],
+      "Publish": [
+        "Публикация"
+      ],
+      "Could not load the wizard.": [
+        "Не удалось загрузить мастер."
+      ],
+      "Continue": [
+        "Продолжить"
+      ],
+      "Chat widget": [
+        "Виджет чата"
+      ],
+      "A floating chat bubble visitors can open on your site.": [
+        "Плавающая кнопка чата, которую посетители могут открыть на Вашем сайте."
+      ],
+      "Admin bar": [
+        "Панель администратора"
+      ],
+      "A quick-chat menu in the WordPress toolbar for logged-in admins.": [
+        "Меню быстрого чата на панели инструментов WordPress для авторизованных администраторов."
+      ],
+      "Ask AI launcher": [
+        "Кнопка «Спросить ИИ»"
+      ],
+      "A contextual \"Ask AI\" prompt on admin screens like Plugins or Media.": [
+        "Контекстная подсказка «Спросить ИИ» на административных экранах, таких как «Плагины» или «Медиафайлы»."
+      ],
+      "Gutenberg block": [
+        "Блок Gutenberg"
+      ],
+      "Makes this agent insertable as a block in any post or page.": [
+        "Позволяет вставлять этого агента как блок в любую запись или страницу."
+      ],
+      "Agent & surface": [
+        "Агент и место размещения"
+      ],
+      "Configure": [
+        "Настроить"
+      ],
+      "Admin only": [
+        "Только в консоли"
+      ],
+      "Front end only": [
+        "Только на сайте"
+      ],
+      "Single posts/pages only": [
+        "Только отдельные записи/страницы"
+      ],
+      "Homepage only": [
+        "Только главная страница"
+      ],
+      "Something went wrong publishing this agent.": [
+        "При публикации этого агента произошла ошибка."
+      ],
+      "No active agents yet. Activate or train an agent first, then come back to publish it.": [
+        "Активных агентов пока нет. Сначала активируйте или обучите агента, затем вернитесь, чтобы опубликовать его."
+      ],
+      "Go to Agents": [
+        "Перейти к агентам"
+      ],
+      "%1$s is published on %2$s!": [
+        "%1$s опубликован: %2$s!"
+      ],
+      "Fine-tune this further, or publish on another surface.": [
+        "Продолжите настройку или опубликуйте агента в другом месте размещения."
+      ],
+      "Publish on another surface": [
+        "Опубликовать в другом месте размещения"
+      ],
+      "Manage in Publish": [
+        "Управлять в разделе «Публикация»"
+      ],
+      "Back to Dashboard": [
+        "Вернуться в консоль"
+      ],
+      "Which agent?": [
+        "Какой агент?"
+      ],
+      "Where should people reach it?": [
+        "Где пользователи смогут его найти?"
+      ],
+      "Nothing else to configure — saving makes this agent available to insert as a block from any post or page editor.": [
+        "Больше ничего настраивать не нужно — после сохранения этого агента можно будет вставить как блок в редакторе любой записи или страницы."
+      ],
+      "Bottom right": [
+        "Внизу справа"
+      ],
+      "Bottom left": [
+        "Внизу слева"
+      ],
+      "Show on": [
+        "Показывать на"
+      ],
+      "Only show to logged-in visitors": [
+        "Показывать только авторизованным посетителям"
+      ],
+      "Ask AI launchers are already turned on for some admin screens. Saving makes %s the agent that answers them, replacing the current choice — the screens themselves stay as configured.": [
+        "Кнопки «Спросить ИИ» уже включены на некоторых административных экранах. После сохранения отвечать на них будет агент %s, заменив текущий выбор — сами экраны останутся настроенными как прежде."
+      ],
+      "Which admin screens?": [
+        "Какие административные экраны?"
+      ],
+      "Wizard steps": [
+        ""
+      ]
+    }
+  }
+}

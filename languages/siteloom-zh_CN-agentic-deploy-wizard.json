@@ -1,0 +1,132 @@
+{
+  "translation-revision-date": "2026-08-20 16:00+0000",
+  "generator": "WP-CLI/2.12.0",
+  "source": "src/deploy-wizard/index.js",
+  "domain": "messages",
+  "locale_data": {
+    "messages": {
+      "": {
+        "domain": "messages",
+        "lang": "zh_CN",
+        "plural-forms": "nplurals=1; plural=0;"
+      },
+      "Position": [
+        "位置"
+      ],
+      "Everywhere": [
+        "所有位置"
+      ],
+      "Back": [
+        "返回"
+      ],
+      "Loading…": [
+        "加载中…"
+      ],
+      "Publish": [
+        "发布"
+      ],
+      "Could not load the wizard.": [
+        "无法加载向导。"
+      ],
+      "Continue": [
+        "继续"
+      ],
+      "Chat widget": [
+        "聊天小工具"
+      ],
+      "A floating chat bubble visitors can open on your site.": [
+        "访客可在您站点上打开的浮动聊天气泡。"
+      ],
+      "Admin bar": [
+        "管理工具栏"
+      ],
+      "A quick-chat menu in the WordPress toolbar for logged-in admins.": [
+        "WordPress 工具栏中供已登录管理员使用的快捷聊天菜单。"
+      ],
+      "Ask AI launcher": [
+        "“询问 AI”启动器"
+      ],
+      "A contextual \"Ask AI\" prompt on admin screens like Plugins or Media.": [
+        "在“插件”或“媒体”等管理页面上显示的上下文相关“询问 AI”提示。"
+      ],
+      "Gutenberg block": [
+        "Gutenberg 区块"
+      ],
+      "Makes this agent insertable as a block in any post or page.": [
+        "让此智能体可作为区块插入到任何文章或页面中。"
+      ],
+      "Agent & surface": [
+        "智能体与展示位置"
+      ],
+      "Configure": [
+        "配置"
+      ],
+      "Admin only": [
+        "仅限管理后台"
+      ],
+      "Front end only": [
+        "仅限前端"
+      ],
+      "Single posts/pages only": [
+        "仅限单篇文章/页面"
+      ],
+      "Homepage only": [
+        "仅限首页"
+      ],
+      "Something went wrong publishing this agent.": [
+        "发布此智能体时出错。"
+      ],
+      "No active agents yet. Activate or train an agent first, then come back to publish it.": [
+        "尚无已启用的智能体。请先启用或训练一个智能体，然后返回此处发布。"
+      ],
+      "Go to Agents": [
+        "前往“智能体”"
+      ],
+      "%1$s is published on %2$s!": [
+        "%1$s 已发布到 %2$s！"
+      ],
+      "Fine-tune this further, or publish on another surface.": [
+        "可进一步微调，或发布到其他展示位置。"
+      ],
+      "Publish on another surface": [
+        "发布到其他展示位置"
+      ],
+      "Manage in Publish": [
+        "在“发布”中管理"
+      ],
+      "Back to Dashboard": [
+        "返回仪表盘"
+      ],
+      "Which agent?": [
+        "选择哪个智能体？"
+      ],
+      "Where should people reach it?": [
+        "用户应在何处访问它？"
+      ],
+      "Nothing else to configure — saving makes this agent available to insert as a block from any post or page editor.": [
+        "无需其他配置 — 保存后即可在任意文章或页面编辑器中将此智能体作为区块插入。"
+      ],
+      "Bottom right": [
+        "右下角"
+      ],
+      "Bottom left": [
+        "左下角"
+      ],
+      "Show on": [
+        "显示位置"
+      ],
+      "Only show to logged-in visitors": [
+        "仅向已登录的访客显示"
+      ],
+      "Ask AI launchers are already turned on for some admin screens. Saving makes %s the agent that answers them, replacing the current choice — the screens themselves stay as configured.": [
+        "部分管理页面已启用“询问 AI”启动器。保存后将由 %s 负责应答，取代当前的选择 — 这些页面本身的配置保持不变。"
+      ],
+      "Which admin screens?": [
+        "哪些管理页面？"
+      ],
+      "Wizard steps": [
+        ""
+      ]
+    }
+  }
+}

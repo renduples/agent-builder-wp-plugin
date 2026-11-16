@@ -1,0 +1,648 @@
+{
+  "translation-revision-date": "2026-08-20 16:00+0000",
+  "generator": "WP-CLI/2.12.0",
+  "source": "src/settings-app/index.js",
+  "domain": "messages",
+  "locale_data": {
+    "messages": {
+      "": {
+        "domain": "messages",
+        "lang": "es_ES",
+        "plural-forms": "nplurals=2; plural=(n != 1);"
+      },
+      "AI Agents": [
+        "Agentes de IA"
+      ],
+      "Agents": [
+        "Agentes"
+      ],
+      "Agent": [
+        "Agente"
+      ],
+      "Actions": [
+        "Acciones"
+      ],
+      "Status": [
+        "Estado"
+      ],
+      "Basic": [
+        "Básico"
+      ],
+      "Advanced": [
+        "Avanzado"
+      ],
+      "No agents installed.": [
+        "No hay agentes instalados."
+      ],
+      "Users": [
+        "Usuarios"
+      ],
+      "Enabled": [
+        "Activado"
+      ],
+      "Edit": [
+        "Editar"
+      ],
+      "No active agents.": [
+        "No hay agentes activos."
+      ],
+      "Security": [
+        "Seguridad"
+      ],
+      "Add Provider": [
+        "Añadir proveedor"
+      ],
+      "Connected": [
+        "Conectado"
+      ],
+      "Not connected": [
+        "No conectado"
+      ],
+      "Default": [
+        "Por defecto"
+      ],
+      "Set Default": [
+        "Establecer por defecto"
+      ],
+      "Service": [
+        "Servicio"
+      ],
+      "Base URL": [
+        "URL base"
+      ],
+      "Default:": [
+        "Por defecto:"
+      ],
+      "Model": [
+        "Modelo"
+      ],
+      "Terms of Service": [
+        "Términos del servicio"
+      ],
+      "Key": [
+        "Clave"
+      ],
+      "Settings": [
+        "Ajustes"
+      ],
+      "Interface": [
+        "Interfaz"
+      ],
+      "Providers": [
+        "Proveedores"
+      ],
+      "APIs": [
+        "APIs"
+      ],
+      "Endpoints": [
+        "Endpoints"
+      ],
+      "Search settings…": [
+        "Buscar en los ajustes…"
+      ],
+      "What should agents call administrators?": [
+        "¿Cómo deben llamar los agentes a los administradores?"
+      ],
+      "What should agents call frontend visitors?": [
+        "¿Cómo deben llamar los agentes a los visitantes del sitio público?"
+      ],
+      "Show the WhatsApp Pro promo in admin chat": [
+        "Mostrar la promoción de WhatsApp Pro en el chat de administración"
+      ],
+      "Test": [
+        "Probar"
+      ],
+      "Supervised": [
+        "Supervisado"
+      ],
+      "Autonomous": [
+        "Autónomo"
+      ],
+      "Loading…": [
+        "Cargando…"
+      ],
+      "Name": [
+        "Nombre"
+      ],
+      "Instructions": [
+        "Instrucciones"
+      ],
+      "Memory": [
+        "Memoria"
+      ],
+      "Knowledge": [
+        "Conocimiento"
+      ],
+      "Settings control how agents behave on this site. Changes are stored locally and take effect for new conversations.": [
+        "Los ajustes controlan cómo se comportan los agentes en este sitio. Los cambios se guardan localmente y se aplican a las nuevas conversaciones."
+      ],
+      "Need help?": [
+        "¿Necesita ayuda?"
+      ],
+      "Visit our Support Center": [
+        "Visite nuestro centro de soporte"
+      ],
+      "Documentation": [
+        "Documentación"
+      ],
+      "Privacy Policy": [
+        "Política de privacidad"
+      ],
+      "GDPR Policy": [
+        "Política de RGPD"
+      ],
+      "MCP": [
+        "MCP"
+      ],
+      "Copied!": [
+        "¡Copiado!"
+      ],
+      "Copy": [
+        "Copiar"
+      ],
+      "Provider": [
+        "Proveedor"
+      ],
+      "Test failed.": [
+        "La prueba ha fallado."
+      ],
+      "Testing…": [
+        "Probando…"
+      ],
+      "EMERGENCY STOP: deactivate and log agent states, cancel all jobs, and disconnect providers. Continue?": [
+        "PARADA DE EMERGENCIA: desactiva y registra el estado de los agentes, cancela todos los trabajos y desconecta los proveedores. ¿Continuar?"
+      ],
+      "Turn off emergency stop?": [
+        "¿Desactivar la parada de emergencia?"
+      ],
+      "Disable All Agents": [
+        "Desactivar todos los agentes"
+      ],
+      "Emergency stop": [
+        "Parada de emergencia"
+      ],
+      ": deactivate and log agent states, cancels all jobs and disconnects providers.": [
+        ": desactiva y registra el estado de los agentes, cancela todos los trabajos y desconecta los proveedores."
+      ],
+      "Reset every screen back to your default interface? Any screen you switched individually will lose that override.": [
+        "¿Restablecer todas las pantallas a su interfaz predeterminada? Cualquier pantalla que haya cambiado individualmente perderá esa personalización."
+      ],
+      "Reset all screens to my default": [
+        "Restablecer todas las pantallas a mi valor predeterminado"
+      ],
+      "Show the Getting Started checklist on the dashboard": [
+        "Mostrar la lista de primeros pasos en el escritorio"
+      ],
+      "Chat font": [
+        "Fuente del chat"
+      ],
+      "Use theme accent colour": [
+        "Usar el color de acento del tema"
+      ],
+      "Accent colour": [
+        "Color de acento"
+      ],
+      "Could not load settings.": [
+        "No se han podido cargar los ajustes."
+      ],
+      "Default interface mode": [
+        "Modo de interfaz predeterminado"
+      ],
+      "How agents address people": [
+        "Cómo se dirigen los agentes a las personas"
+      ],
+      "Site knowledge and standing guidance are under": [
+        "El conocimiento del sitio y las directrices permanentes están en"
+      ],
+      "Per-agent personality is under Knowledge → Instructions.": [
+        "La personalidad de cada agente está en Conocimiento → Instrucciones."
+      ],
+      "Leave blank to use the WordPress display name.": [
+        "Déjelo en blanco para usar el nombre público de WordPress."
+      ],
+      "Chat theme": [
+        "Tema del chat"
+      ],
+      "Visual theme for admin chat and frontend shortcodes. Click a preview to select.": [
+        "Tema visual para el chat de la administración y los shortcodes de la parte pública. Haga clic en una vista previa para seleccionarlo."
+      ],
+      "AI Agent": [
+        "Agente de IA"
+      ],
+      "Hello! How can I help?": [
+        "¡Hola! ¿En qué puedo ayudarle?"
+      ],
+      "Update my homepage": [
+        "Actualiza mi página de inicio"
+      ],
+      "Configure the AI providers available on this site. Only a connected provider can be set as the site default.": [
+        "Configure los proveedores de IA disponibles en este sitio. Solo un proveedor conectado puede establecerse como predeterminado del sitio."
+      ],
+      "Slug": [
+        "Slug"
+      ],
+      "API keys: use Edit on a provider. Setting a default updates the global provider and model used by agents.": [
+        "Claves de API: use Editar en un proveedor. Al establecer un valor predeterminado se actualizan el proveedor y el modelo globales que usan los agentes."
+      ],
+      "Default agent mode": [
+        "Modo de agente predeterminado"
+      ],
+      "Read-only": [
+        "Solo lectura"
+      ],
+      "Message scanning": [
+        "Análisis de mensajes"
+      ],
+      "Require chat consent": [
+        "Requerir consentimiento para el chat"
+      ],
+      "Consent text": [
+        "Texto del consentimiento"
+      ],
+      "Conversation retention (days)": [
+        "Retención de conversaciones (días)"
+      ],
+      "Audit log retention (days)": [
+        "Retención del registro de auditoría (días)"
+      ],
+      "Refresh model catalog from Agentic": [
+        "Actualizar el catálogo de modelos desde Agentic"
+      ],
+      "Off by default. When on, a daily cron fetches model names and list prices from agentic-plugin.com. BYOK providers work without this; enable it only if you want the curated catalog.": [
+        "Desactivado de forma predeterminada. Al activarlo, un cron diario obtiene nombres de modelos y precios de lista de agentic-plugin.com. Los proveedores BYOK funcionan sin esto; actívelo solo si desea el catálogo seleccionado."
+      ],
+      "Request Rate Limits": [
+        "Límites de frecuencia de solicitudes"
+      ],
+      "IP-based throttle applied before role-based daily quotas. Protects against rapid-fire requests.": [
+        "Limitación basada en IP que se aplica antes de las cuotas diarias por perfil. Protege frente a ráfagas de solicitudes."
+      ],
+      "Authenticated users (requests per minute)": [
+        "Usuarios identificados (solicitudes por minuto)"
+      ],
+      "Anonymous visitors (requests per minute)": [
+        "Visitantes anónimos (solicitudes por minuto)"
+      ],
+      "Control who can administer the plugin and use AI agents.": [
+        "Controle quién puede administrar el plugin y usar agentes de IA."
+      ],
+      "Control which WordPress roles can administer the plugin and interact with AI agents. Administrators always retain full access.": [
+        "Controle qué perfiles de WordPress pueden administrar el plugin e interactuar con los agentes de IA. Los administradores conservan siempre el acceso completo."
+      ],
+      "These rules apply site-wide. A user needs at least one ticked box to access the corresponding feature. Removing a role from all plugin privileges will hide the Siteloom menu from that role entirely.": [
+        "Estas reglas se aplican a todo el sitio. Un usuario necesita al menos una casilla marcada para acceder a la función correspondiente. Si retira a un perfil todos los privilegios del plugin, el menú de Siteloom quedará totalmente oculto para ese perfil."
+      ],
+      "Plugin Administration": [
+        "Administración del plugin"
+      ],
+      "Who can access and configure the Siteloom admin pages.": [
+        "Quién puede acceder a las páginas de administración de Siteloom y configurarlas."
+      ],
+      "Permission": [
+        "Permiso"
+      ],
+      "Administrators always have full access": [
+        "Los administradores siempre tienen acceso completo"
+      ],
+      "Who can chat with and interact with installed AI agents, and how much they may use per day.": [
+        "Quién puede chatear e interactuar con los agentes de IA instalados y cuánto puede usarlos al día."
+      ],
+      "Permission / Limit": [
+        "Permiso / Límite"
+      ],
+      "Visitor": [
+        "Visitante"
+      ],
+      "Not logged in": [
+        "Sin sesión iniciada"
+      ],
+      "Allow non-logged-in visitors to use frontend chat": [
+        "Permitir que los visitantes sin sesión iniciada usen el chat de la parte pública"
+      ],
+      "Daily Limits": [
+        "Límites diarios"
+      ],
+      "0 = unlimited, resets at midnight UTC. Administrators are never limited.": [
+        "0 = sin límite, se reinicia a medianoche UTC. Los administradores nunca tienen límite."
+      ],
+      "Queries / day": [
+        "Consultas / día"
+      ],
+      "Max AI chat messages per user per day.": [
+        "Número máximo de mensajes de chat de IA por usuario y día."
+      ],
+      "Tokens / day": [
+        "Tokens / día"
+      ],
+      "Max AI tokens consumed per user per day.": [
+        "Número máximo de tokens de IA consumidos por usuario y día."
+      ],
+      "How enforcement works: these settings control WordPress admin menu visibility, admin bar chat access, the REST chat API, and AJAX task triggers. Unchecked roles are blocked at the server, not just hidden in the UI. Request rate limits are under Security.": [
+        "Cómo se aplica: estos ajustes controlan la visibilidad del menú de administración de WordPress, el acceso al chat desde la barra de administración, la API REST de chat y los disparadores de tareas AJAX. Los perfiles sin marcar se bloquean en el servidor, no solo se ocultan en la interfaz. Los límites de frecuencia de solicitudes están en Seguridad."
+      ],
+      "Persistent key-value memory agents use across conversations.": [
+        "Memoria persistente de clave-valor que los agentes usan entre conversaciones."
+      ],
+      "Default memory TTL (days)": [
+        "TTL de memoria predeterminado (días)"
+      ],
+      "0 = never expires": [
+        "0 = nunca caduca"
+      ],
+      "Enable local browser memory": [
+        "Activar la memoria local del navegador"
+      ],
+      "(default)": [
+        "(predeterminado)"
+      ],
+      "Chat capabilities and per-agent provider/model. Set the site default provider on the Providers tab. Theme is under Interface.": [
+        "Capacidades del chat y proveedor/modelo de cada agente. Establezca el proveedor predeterminado del sitio en la pestaña Proveedores. El tema está en Interfaz."
+      ],
+      "Chat features": [
+        "Funciones del chat"
+      ],
+      "Features available in agent chat.": [
+        "Funciones disponibles en el chat con agentes."
+      ],
+      "Audio input": [
+        "Entrada de audio"
+      ],
+      "Text-to-speech": [
+        "Texto a voz"
+      ],
+      "Vision / image input": [
+        "Visión / entrada de imágenes"
+      ],
+      "Hide “Powered by Siteloom” branding": [
+        "Ocultar la marca «Desarrollado por Siteloom»"
+      ],
+      "On by default. Uncheck only if you want a small credit line in the chat footer.": [
+        "Activado de forma predeterminada. Desmárquelo solo si desea una pequeña mención de atribución en el pie del chat."
+      ],
+      "Off by default. When on, admin chat shows a link to the WhatsApp connector.": [
+        "Desactivado de forma predeterminada. Al activarlo, el chat de administración muestra un enlace al conector de WhatsApp."
+      ],
+      "Active agent overrides": [
+        "Ajustes personalizados de los agentes activos"
+      ],
+      "Each row starts on the site default provider and model (Providers tab). Change only the agents that need a different setup.": [
+        "Cada fila parte del proveedor y el modelo predeterminados del sitio (pestaña Proveedores). Cambie solo los agentes que necesiten una configuración diferente."
+      ],
+      "provider": [
+        "proveedor"
+      ],
+      "model": [
+        "modelo"
+      ],
+      "Customise greetings and personality notes per agent.": [
+        "Personalice los saludos y las notas de personalidad de cada agente."
+      ],
+      "Select agent": [
+        "Seleccionar agente"
+      ],
+      "Welcome message": [
+        "Mensaje de bienvenida"
+      ],
+      "Persona notes": [
+        "Notas de personalidad"
+      ],
+      "Response style": [
+        "Estilo de respuesta"
+      ],
+      "Third-party API keys used by agent tools.": [
+        "Claves de API de terceros que usan las herramientas de los agentes."
+      ],
+      "Get a key": [
+        "Obtener una clave"
+      ],
+      "Configured": [
+        "Configurada"
+      ],
+      "Not configured": [
+        "Sin configurar"
+      ],
+      "REST endpoints for integrations.": [
+        "Endpoints REST para integraciones."
+      ],
+      "Namespace": [
+        "Espacio de nombres"
+      ],
+      "Agentic Services": [
+        "Agentic Services"
+      ],
+      "Base URLs the plugin calls for AI chat, knowledge search, and media generation. Leave these on their defaults unless you’re self-hosting a proxy or support asked you to change one.": [
+        "URL base a las que el plugin llama para el chat de IA, la búsqueda en el conocimiento y la generación de medios. Déjelas con sus valores predeterminados salvo que aloje su propio proxy o el soporte le haya pedido que cambie alguna."
+      ],
+      "Reset to default": [
+        "Restablecer el valor predeterminado"
+      ],
+      "Agent endpoints": [
+        "Endpoints del agente"
+      ],
+      "Each agent has its own MCP URL, scoped to only the tools that agent is allowed to use.": [
+        "Cada agente tiene su propia URL MCP, limitada únicamente a las herramientas que ese agente puede usar."
+      ],
+      "MCP URL": [
+        "URL MCP"
+      ],
+      "Ready": [
+        "Listo"
+      ],
+      "Could not load this settings panel.": [
+        "No se ha podido cargar este panel de ajustes."
+      ],
+      "Settings saved with warnings:": [
+        "Ajustes guardados con avisos:"
+      ],
+      "Could not save settings.": [
+        "No se han podido guardar los ajustes."
+      ],
+      "Loading settings…": [
+        "Cargando los ajustes…"
+      ],
+      "Settings unavailable.": [
+        "Los ajustes no están disponibles."
+      ],
+      "This tab is available via the classic view or an add-on.": [
+        "Esta pestaña está disponible a través de la vista clásica o de una extensión."
+      ],
+      "Agent activity email": [
+        ""
+      ],
+      "Off": [
+        ""
+      ],
+      "Advanced settings": [
+        ""
+      ],
+      "Hide advanced settings": [
+        ""
+      ],
+      "Starting point for screens you have not switched individually. Basic is guided and uses plain language; Advanced shows every control.": [
+        ""
+      ],
+      "Agents propose actions for you to approve before anything changes. Recommended for most sites.": [
+        ""
+      ],
+      "Agents act immediately without waiting for your OK. Use only if you trust them on this site.": [
+        ""
+      ],
+      "Agents can chat but cannot change anything on the site.": [
+        ""
+      ],
+      "Blocks common injection patterns and flags personal data in chat messages.": [
+        ""
+      ],
+      "Ask visitors to agree before chatting. Required in some regions.": [
+        ""
+      ],
+      "Daily digest": [
+        ""
+      ],
+      "Instant": [
+        ""
+      ],
+      "How administrators are emailed about agent activity. Users can opt out individually from their own profile.": [
+        ""
+      ],
+      "How long to keep chat history. 0 means keep forever.": [
+        ""
+      ],
+      "The Model Context Protocol (MCP) lets AI apps you connect yourself (Claude Desktop, Cursor, Grok and others) talk directly to this site and use an agent's tools. MCP is off for every agent until an administrator turns it on below.": [
+        ""
+      ],
+      "Turning MCP on for an agent lets any AI app you connect act on this site with the permissions of the WordPress user whose Application Password it uses. Only enable it for agents you need, and only connect apps you trust.": [
+        ""
+      ],
+      "Enable MCP: %s": [
+        ""
+      ],
+      "Never connected": [
+        ""
+      ],
+      "Connecting an AI app": [
+        ""
+      ],
+      "Turn on MCP for the agent you want to use, above.": [
+        ""
+      ],
+      "Create an Application Password in your own WordPress profile (Users > Profile > Application Passwords). Siteloom never creates or stores one for you.": [
+        ""
+      ],
+      "Open your profile": [
+        ""
+      ],
+      "In your AI app, add the agent's MCP URL and sign in with your WordPress username and that Application Password.": [
+        ""
+      ],
+      "The app can only use the tools that agent is allowed to use, limited to what your WordPress user may do. High-risk tools are never available over MCP, and actions that normally need your approval still wait for it. To disconnect an app, revoke its Application Password in your profile or turn MCP off for the agent.": [
+        ""
+      ],
+      "These actions need your approval before they run. Requests from an AI app appear in Approvals:": [
+        ""
+      ],
+      "Open Approvals": [
+        ""
+      ],
+      "Saving…": [
+        "Guardando…"
+      ],
+      "Settings saved.": [
+        "Ajustes guardados."
+      ],
+      "Save changes": [
+        "Guardar los cambios"
+      ],
+      "Only changes this screen. Other screens and your site-wide default (Settings → Interface) are unaffected.": [
+        "Solo cambia esta pantalla. Las demás pantallas y su valor predeterminado para todo el sitio (Ajustes → Interfaz) no se ven afectados."
+      ],
+      "More info": [
+        "Más información"
+      ],
+      "Approve": [
+        "Aprobar"
+      ],
+      "Reject": [
+        "Rechazar"
+      ],
+      "Check the Agents page": [
+        "Consulte la página Agentes"
+      ],
+      "Send": [
+        "Enviar"
+      ],
+      "Connection error. Please try again.": [
+        "Error de conexión. Inténtelo de nuevo."
+      ],
+      "Title": [
+        "Título"
+      ],
+      "Deny": [
+        "Denegar"
+      ],
+      "Something went wrong.": [
+        "Algo ha salido mal."
+      ],
+      "Try asking": [
+        "Pruebe a preguntar"
+      ],
+      "Denied — no change made.": [
+        "Denegado — no se ha realizado ningún cambio."
+      ],
+      "Done — change applied.": [
+        "Listo — cambio aplicado."
+      ],
+      "Needs Your Approval": [
+        "Necesita su aprobación"
+      ],
+      "Proposed Change": [
+        "Cambio propuesto"
+      ],
+      "The agent wants to make a change.": [
+        "El agente quiere realizar un cambio."
+      ],
+      "Hide Diff": [
+        "\\u25bc Ocultar diferencias"
+      ],
+      "Show Diff": [
+        "\\u25b6 Mostrar diferencias"
+      ],
+      "Allow Once": [
+        "Permitir una vez"
+      ],
+      "Allow this Session": [
+        "Permitir esta sesión"
+      ],
+      "Always Allow": [
+        "Permitir siempre"
+      ],
+      "This assistant": [
+        "Este agente"
+      ],
+      "is still activating.": [
+        "se está activando todavía."
+      ],
+      "is thinking…": [
+        "está pensando…"
+      ],
+      "Ask": [
+        "Preguntar a"
+      ],
+      "Post type": [
+        ""
+      ],
+      "Post": [
+        ""
+      ],
+      "Content preview": [
+        ""
+      ],
+      "Show full content": [
+        ""
+      ],
+      "Show less": [
+        ""
+      ]
+    }
+  }
+}

@@ -1,0 +1,1452 @@
+{
+  "translation-revision-date": "2026-08-20 16:00+0000",
+  "generator": "WP-CLI/2.12.0",
+  "source": "src/admin-pages/index.js",
+  "domain": "messages",
+  "locale_data": {
+    "messages": {
+      "": {
+        "domain": "messages",
+        "lang": "zh_CN",
+        "plural-forms": "nplurals=1; plural=0;"
+      },
+      "Tools": [
+        "工具"
+      ],
+      "Loading…": [
+        "加载中…"
+      ],
+      "Unavailable.": [
+        "不可用。"
+      ],
+      "Unknown page.": [
+        "未知页面。"
+      ],
+      "Basic": [
+        "基础"
+      ],
+      "Advanced": [
+        "高级"
+      ],
+      "Saving…": [
+        "保存中…"
+      ],
+      "Settings saved.": [
+        "设置已保存。"
+      ],
+      "Save changes": [
+        "保存更改"
+      ],
+      "Only changes this screen. Other screens and your site-wide default (Settings → Interface) are unaffected.": [
+        "仅更改当前页面。其他页面以及您的站点全局默认设置（设置 → 界面）不受影响。"
+      ],
+      "More info": [
+        "了解更多"
+      ],
+      "Approve": [
+        "批准"
+      ],
+      "Reject": [
+        "拒绝"
+      ],
+      "Status": [
+        "状态"
+      ],
+      "Check the Agents page": [
+        "查看智能体页面"
+      ],
+      "Send": [
+        "发送"
+      ],
+      "Connection error. Please try again.": [
+        "连接错误。请重试。"
+      ],
+      "Title": [
+        "标题"
+      ],
+      "Deny": [
+        "拒绝"
+      ],
+      "Something went wrong.": [
+        "出现了问题。"
+      ],
+      "Try asking": [
+        "试着问问"
+      ],
+      "Denied — no change made.": [
+        "已拒绝 — 未进行任何更改。"
+      ],
+      "Done — change applied.": [
+        "完成 — 已应用更改。"
+      ],
+      "Needs Your Approval": [
+        "需要您的批准"
+      ],
+      "Proposed Change": [
+        "拟议更改"
+      ],
+      "The agent wants to make a change.": [
+        "智能体想要进行更改。"
+      ],
+      "Hide Diff": [
+        "\\u25bc 隐藏差异"
+      ],
+      "Show Diff": [
+        "\\u25b6 显示差异"
+      ],
+      "Allow Once": [
+        "允许一次"
+      ],
+      "Allow this Session": [
+        "允许本次会话"
+      ],
+      "Always Allow": [
+        "始终允许"
+      ],
+      "This assistant": [
+        "此智能体"
+      ],
+      "is still activating.": [
+        "仍在激活中。"
+      ],
+      "is thinking…": [
+        "正在思考…"
+      ],
+      "Ask": [
+        "询问"
+      ],
+      "Post type": [
+        ""
+      ],
+      "Post": [
+        ""
+      ],
+      "Content preview": [
+        ""
+      ],
+      "Show full content": [
+        ""
+      ],
+      "Show less": [
+        ""
+      ],
+      "Safe to run automatically — read-only, no approval needed.": [
+        "可安全自动运行 — 只读操作，无需审批。"
+      ],
+      "Runs automatically by default; may read data that includes personal information.": [
+        "默认自动运行；可能会读取包含个人信息的数据。"
+      ],
+      "Changes something — agents pause for your in-chat confirmation first.": [
+        "会更改内容 — 智能体会先暂停，等待您在聊天中确认。"
+      ],
+      "A significant or bulk change — waits in the Approvals queue for you to allow it.": [
+        "重大或批量更改 — 会在审批队列中等待您的许可。"
+      ],
+      "Too risky to allow at all — hidden from agents entirely, cannot be enabled.": [
+        "风险过高，完全不予允许 — 对智能体完全隐藏，无法启用。"
+      ],
+      "Cancel": [
+        "取消"
+      ],
+      "Source": [
+        "来源"
+      ],
+      "Enabled": [
+        "已启用"
+      ],
+      "Tool": [
+        "工具"
+      ],
+      "None": [
+        "无"
+      ],
+      "Category": [
+        "分类"
+      ],
+      "Low": [
+        "低"
+      ],
+      "Risk": [
+        "风险"
+      ],
+      "Close": [
+        "关闭"
+      ],
+      "Profile applied: %1$d tools on, %2$d tools off.": [
+        "已应用配置方案：%1$d 个工具已启用，%2$d 个工具已停用。"
+      ],
+      "Could not apply profile.": [
+        "无法应用配置方案。"
+      ],
+      "These profiles control which tools every agent may use. Approvals still apply for riskier actions.": [
+        "这些配置方案控制所有智能体可使用的工具。风险较高的操作仍需审批。"
+      ],
+      "Switch to Advanced (top right) for the full tool-by-tool list.": [
+        "切换到右上角的高级模式可查看完整的逐工具列表。"
+      ],
+      "Tools were customized outside a profile. Choose a card below to reset to a simple safety level.": [
+        "工具已在配置方案之外自定义。请在下方选择一张卡片，重置为简单的安全级别。"
+      ],
+      "Up to %s risk": [
+        "最高 %s 风险"
+      ],
+      "Current": [
+        "当前"
+      ],
+      "Right now: %1$d tools on, %2$d off · highest enabled risk: %3$s": [
+        "当前：%1$d 个工具已启用，%2$d 个已停用 · 已启用的最高风险级别：%3$s"
+      ],
+      "All risks": [
+        "所有风险级别"
+      ],
+      "Medium": [
+        "中"
+      ],
+      "High": [
+        "高"
+      ],
+      "Extreme": [
+        "极高"
+      ],
+      "Toggle failed.": [
+        "切换失败。"
+      ],
+      "You are in Advanced view (full tool list).": [
+        "您正处于高级视图（完整工具列表）。"
+      ],
+      "Search tools…": [
+        "搜索工具…"
+      ],
+      "1 tool": [
+        "1 个工具"
+      ],
+      "tools": [
+        "个工具"
+      ],
+      "Filter by risk": [
+        "按风险级别筛选"
+      ],
+      "No tools match this search or risk filter.": [
+        "没有工具符合此搜索或风险级别筛选条件。"
+      ],
+      "No tools in this category.": [
+        "此类别中没有工具。"
+      ],
+      "none": [
+        "无"
+      ],
+      "Enable high-risk tool?": [
+        ""
+      ],
+      "This tool cannot be enabled": [
+        ""
+      ],
+      "Enable tool": [
+        ""
+      ],
+      "can make a significant change to your site.": [
+        ""
+      ],
+      "Why this is high-risk: %s": [
+        ""
+      ],
+      "If an agent uses this tool later, the action will still wait for human review in the Approvals queue before it runs.": [
+        ""
+      ],
+      "Enabling this tool makes it available to eligible agents. It does not run the tool immediately.": [
+        ""
+      ],
+      "is marked Extreme Risk.": [
+        ""
+      ],
+      "Extreme-risk tools are hidden from agents entirely and blocked from running, because they are too risky for normal use.": [
+        ""
+      ],
+      "can affect account access": [
+        ""
+      ],
+      "moves money": [
+        ""
+      ],
+      "can permanently remove data": [
+        ""
+      ],
+      "changes the deployed codebase": [
+        ""
+      ],
+      "Enabled: %s": [
+        ""
+      ],
+      "Terms of Service": [
+        "服务条款"
+      ],
+      "Agents only use the tools you allow. Higher-risk actions still follow Approvals and your safety settings.": [
+        "智能体只会使用您允许的工具。风险较高的操作仍需遵循审批流程和您的安全设置。"
+      ],
+      "Need help?": [
+        "需要帮助？"
+      ],
+      "Visit our Support Center": [
+        "访问我们的支持中心"
+      ],
+      "Documentation": [
+        "文档"
+      ],
+      "Privacy Policy": [
+        "隐私政策"
+      ],
+      "GDPR Policy": [
+        "GDPR 政策"
+      ],
+      "Agent": [
+        "智能体"
+      ],
+      "MCP server reachable": [
+        ""
+      ],
+      "WebMCP tools registered": [
+        ""
+      ],
+      "Approval gate configured": [
+        ""
+      ],
+      "llms.txt present": [
+        ""
+      ],
+      "AI crawler directives in robots.txt": [
+        ""
+      ],
+      "Organization/WebSite schema": [
+        ""
+      ],
+      "WebMCP discovery manifest": [
+        ""
+      ],
+      "Commerce readiness": [
+        ""
+      ],
+      "Nothing urgent — every check looks good.": [
+        ""
+      ],
+      "Fix now": [
+        ""
+      ],
+      "Fix this with AI Radar →": [
+        ""
+      ],
+      "No one-click fix yet.": [
+        ""
+      ],
+      "The fix ran, but this check still needs attention: %s": [
+        ""
+      ],
+      "Could not apply that fix.": [
+        ""
+      ],
+      "Could not change that setting.": [
+        ""
+      ],
+      "Could not submit to the directory.": [
+        ""
+      ],
+      "Could not change exposure.": [
+        ""
+      ],
+      "Let AI agents access my site (turn on the WebMCP Bridge)": [
+        ""
+      ],
+      "Submit to Directory": [
+        ""
+      ],
+      "All checks": [
+        ""
+      ],
+      "Check": [
+        ""
+      ],
+      "Score": [
+        ""
+      ],
+      "Detail": [
+        ""
+      ],
+      "WebMCP tool exposure": [
+        ""
+      ],
+      "No tools are currently exposed to agents via WebMCP.": [
+        ""
+      ],
+      "Context": [
+        ""
+      ],
+      "Exposed": [
+        ""
+      ],
+      "Directory submission: %1$s (%2$s)": [
+        ""
+      ],
+      "Revoke": [
+        "撤销"
+      ],
+      "Could not load grants.": [
+        ""
+      ],
+      "Stop always allowing this tool? Agents will ask again before running it.": [
+        ""
+      ],
+      "Grant revoked.": [
+        ""
+      ],
+      "Could not revoke the grant.": [
+        ""
+      ],
+      "Always-allow grants let an agent run a tool without asking first. Revoke one to make that agent pause for approval again.": [
+        ""
+      ],
+      "Loading grants…": [
+        ""
+      ],
+      "No grants yet": [
+        ""
+      ],
+      "When you choose “Allow always” on an approval, it will show up here.": [
+        ""
+      ],
+      "Grant": [
+        ""
+      ],
+      "%s — all agents": [
+        ""
+      ],
+      "%1$s — only for %2$s": [
+        ""
+      ],
+      "Could not load page.": [
+        "无法加载页面。"
+      ],
+      "Type": [
+        "类型"
+      ],
+      "Concept": [
+        "概念"
+      ],
+      "Open full Knowledge editor": [
+        "打开完整知识编辑器"
+      ],
+      "Delete": [
+        "删除"
+      ],
+      "Description": [
+        "描述"
+      ],
+      "Actions": [
+        "操作"
+      ],
+      "On": [
+        "开启"
+      ],
+      "Content": [
+        "内容"
+      ],
+      "Comments": [
+        "评论"
+      ],
+      "Users": [
+        "用户"
+      ],
+      "Media": [
+        "媒体"
+      ],
+      "WooCommerce": [
+        "WooCommerce"
+      ],
+      "Plugins & Themes": [
+        "插件与主题"
+      ],
+      "— choose an event —": [
+        "— 选择事件 —"
+      ],
+      "Custom": [
+        "自定义"
+      ],
+      "Custom hook name…": [
+        "自定义钩子名称…"
+      ],
+      "Enter any WordPress action hook name.": [
+        "输入任意 WordPress 动作钩子名称。"
+      ],
+      "Prompt": [
+        "提示词"
+      ],
+      "Priority": [
+        "优先级"
+      ],
+      "Lower numbers run first. Default is 10.": [
+        "数字越小越先运行。默认值为 10。"
+      ],
+      "Schedule": [
+        "计划"
+      ],
+      "Describe what the agent should do on each run…": [
+        "描述智能体每次运行时应执行的操作…"
+      ],
+      "Edit": [
+        "编辑"
+      ],
+      "Name": [
+        "名称"
+      ],
+      "Prompt is required.": [
+        "提示词为必填项。"
+      ],
+      "Delete failed.": [
+        "删除失败。"
+      ],
+      "Skill": [
+        "技能"
+      ],
+      "Deleted “%s”.": [
+        ""
+      ],
+      "Once Hourly": [
+        ""
+      ],
+      "Twice Daily": [
+        ""
+      ],
+      "Once Daily": [
+        ""
+      ],
+      "Once Weekly": [
+        ""
+      ],
+      "post saved or updated": [
+        ""
+      ],
+      "post published": [
+        ""
+      ],
+      "draft published": [
+        ""
+      ],
+      "scheduled post goes live": [
+        ""
+      ],
+      "post updated": [
+        ""
+      ],
+      "post permanently deleted": [
+        ""
+      ],
+      "post moved to trash": [
+        ""
+      ],
+      "post restored from trash": [
+        ""
+      ],
+      "new comment inserted": [
+        ""
+      ],
+      "comment submitted": [
+        ""
+      ],
+      "comment edited": [
+        ""
+      ],
+      "comment deleted": [
+        ""
+      ],
+      "comment marked spam": [
+        ""
+      ],
+      "new user registered": [
+        ""
+      ],
+      "user profile updated": [
+        ""
+      ],
+      "user logged in": [
+        ""
+      ],
+      "user logged out": [
+        ""
+      ],
+      "user deleted": [
+        ""
+      ],
+      "password reset": [
+        ""
+      ],
+      "file uploaded": [
+        ""
+      ],
+      "attachment updated": [
+        ""
+      ],
+      "attachment deleted": [
+        ""
+      ],
+      "new order created": [
+        ""
+      ],
+      "order status changed": [
+        ""
+      ],
+      "payment completed": [
+        ""
+      ],
+      "product low stock": [
+        ""
+      ],
+      "product out of stock": [
+        ""
+      ],
+      "plugin activated": [
+        ""
+      ],
+      "plugin deactivated": [
+        ""
+      ],
+      "plugin/theme updated": [
+        ""
+      ],
+      "theme switched": [
+        ""
+      ],
+      "Choose an agent.": [
+        ""
+      ],
+      "Choose or enter a hook name.": [
+        ""
+      ],
+      "Could not save the routine.": [
+        ""
+      ],
+      "Edit routine: %s": [
+        ""
+      ],
+      "Routine": [
+        ""
+      ],
+      "Add routine": [
+        ""
+      ],
+      "No agents are available to run a routine.": [
+        ""
+      ],
+      "Scheduled task": [
+        ""
+      ],
+      "Event listener": [
+        ""
+      ],
+      "The routine type cannot be changed after creation.": [
+        ""
+      ],
+      "Optional — auto-generated if blank.": [
+        ""
+      ],
+      "Describe what the agent should do when this event fires…": [
+        ""
+      ],
+      "Optional short note.": [
+        ""
+      ],
+      "WordPress event": [
+        ""
+      ],
+      "Custom hook name": [
+        ""
+      ],
+      "Skill slug": [
+        ""
+      ],
+      "Optional. The slug of a skill to attach to this routine.": [
+        ""
+      ],
+      "Save routine": [
+        ""
+      ],
+      "Could not load history.": [
+        ""
+      ],
+      "No runs yet. Use “Test run” to run this routine once now.": [
+        ""
+      ],
+      "%d tokens": [
+        ""
+      ],
+      "%d steps": [
+        ""
+      ],
+      "View in Tasks": [
+        ""
+      ],
+      "History: %s": [
+        ""
+      ],
+      "Could not load routines.": [
+        ""
+      ],
+      "Routine paused.": [
+        ""
+      ],
+      "Routine resumed.": [
+        ""
+      ],
+      "Test run started (run %s).": [
+        ""
+      ],
+      "Test run started.": [
+        ""
+      ],
+      "Delete “%s”? This cannot be undone.": [
+        ""
+      ],
+      "No routines yet. Routines run your agents on a schedule or in response to site events.": [
+        ""
+      ],
+      "Trigger": [
+        ""
+      ],
+      "Next run": [
+        ""
+      ],
+      "Last status": [
+        ""
+      ],
+      "On / Off": [
+        ""
+      ],
+      "Off": [
+        ""
+      ],
+      "Pause": [
+        ""
+      ],
+      "Resume": [
+        ""
+      ],
+      "Test run": [
+        ""
+      ],
+      "History": [
+        ""
+      ],
+      "Scheduled background tasks are overdue (no recent cron tick). Routines on a schedule will not run until WP-Cron ticks again.": [
+        ""
+      ],
+      "Check Site Health": [
+        ""
+      ],
+      "Routine created.": [
+        ""
+      ],
+      "Routine saved.": [
+        ""
+      ],
+      "Ask me first…": [
+        ""
+      ],
+      "Allow automatically…": [
+        ""
+      ],
+      "Never…": [
+        ""
+      ],
+      "All agents": [
+        ""
+      ],
+      "Describe the rule in plain language first.": [
+        ""
+      ],
+      "Could not save the rule.": [
+        ""
+      ],
+      "Edit rule": [
+        ""
+      ],
+      "Add rule": [
+        ""
+      ],
+      "Applies to": [
+        ""
+      ],
+      "Choose one agent, or “All agents” to apply the rule to every agent on this site.": [
+        ""
+      ],
+      "Rule": [
+        ""
+      ],
+      "Ask me first before publishing anything.": [
+        ""
+      ],
+      "Describe what the agent should do in plain language.": [
+        ""
+      ],
+      "Effect": [
+        ""
+      ],
+      "Lower numbers run first when more than one rule matches.": [
+        ""
+      ],
+      "Save rule": [
+        ""
+      ],
+      "Could not load rules.": [
+        ""
+      ],
+      "Rule enabled.": [
+        ""
+      ],
+      "Rule disabled.": [
+        ""
+      ],
+      "Could not update the rule.": [
+        ""
+      ],
+      "Delete this rule? Agents will no longer follow it.": [
+        ""
+      ],
+      "Rule deleted.": [
+        ""
+      ],
+      "Could not delete the rule.": [
+        ""
+      ],
+      "Rule saved.": [
+        ""
+      ],
+      "Rules tell agents how much to ask before acting. An agent pauses for anything a rule asks about, and runs automatically when a rule allows it.": [
+        ""
+      ],
+      "Only administrators can add or edit rules.": [
+        ""
+      ],
+      "Loading rules…": [
+        ""
+      ],
+      "No rules yet": [
+        ""
+      ],
+      "Add a rule to decide how much an agent should ask before it changes your site.": [
+        ""
+      ],
+      "Approvals": [
+        "审批"
+      ],
+      "Activity": [
+        "活动"
+      ],
+      "Needs attention": [
+        "需要处理"
+      ],
+      "EMERGENCY STOP: deactivate and log agent states, cancel all jobs, and disconnect providers. Continue?": [
+        "紧急停止：停用并记录智能体状态、取消所有任务并断开提供商连接。是否继续？"
+      ],
+      "Turn off emergency stop?": [
+        "要关闭紧急停止吗？"
+      ],
+      "Emergency stop restore finished with warnings:": [
+        "紧急停止恢复已完成，但存在警告："
+      ],
+      "Disable All Agents": [
+        "停用所有智能体"
+      ],
+      "Tool list blocked if manifest signature fails.": [
+        ""
+      ],
+      "Passport": [
+        ""
+      ],
+      "Yes": [
+        ""
+      ],
+      "No": [
+        ""
+      ],
+      "Verified": [
+        ""
+      ],
+      "Risk inventory": [
+        ""
+      ],
+      "%1$d enabled · %2$d disabled": [
+        ""
+      ],
+      "Highest-risk tools currently enabled": [
+        ""
+      ],
+      "No high-risk or extreme-risk tools are enabled on this site right now.": [
+        ""
+      ],
+      "Manage tools": [
+        ""
+      ],
+      "Open approval settings": [
+        ""
+      ],
+      "%d more tools": [
+        ""
+      ],
+      "Per-agent tool scopes": [
+        ""
+      ],
+      "Version %1$s · %2$s": [
+        ""
+      ],
+      "MCP enabled: %s": [
+        ""
+      ],
+      "Highest risk": [
+        ""
+      ],
+      "None %1$d · Low %2$d · Medium %3$d · High %4$d · Extreme %5$d": [
+        ""
+      ],
+      "No high-risk or extreme-risk tools declared.": [
+        ""
+      ],
+      "Manage this agent": [
+        ""
+      ],
+      "No active agents on this site right now.": [
+        ""
+      ],
+      "Audit-log integrity": [
+        ""
+      ],
+      "Audit log may have been altered after the fact": [
+        ""
+      ],
+      "The verification check failed at entry #%d.": [
+        ""
+      ],
+      "The verification check failed. An entry was edited or deleted after the fact.": [
+        ""
+      ],
+      "Recommended next steps": [
+        ""
+      ],
+      "Pause agents": [
+        ""
+      ],
+      "use Emergency Stop on this page until you understand the break.": [
+        ""
+      ],
+      "Export logs": [
+        ""
+      ],
+      "download a copy of the current history before anything else changes.": [
+        ""
+      ],
+      "Review hosting and database access for unexpected changes.": [
+        ""
+      ],
+      "Last verification": [
+        ""
+      ],
+      "%d rows checked": [
+        ""
+      ],
+      "Broken at entry #%d": [
+        ""
+      ],
+      "This activity log is tamper-evident. Each entry is linked to the one before it, so if someone edits or deletes a later entry after the fact, the verification check fails.": [
+        ""
+      ],
+      "This does not stop database access by itself. It gives you evidence if the history can no longer be trusted.": [
+        ""
+      ],
+      "Entries written before this feature shipped may predate the chain and therefore define the chain start. The chain starts at entry #%d.": [
+        ""
+      ],
+      "Entries written before this feature shipped may predate the chain and therefore define the chain start. No chained entries have been recorded yet.": [
+        ""
+      ],
+      "View raw Activity / Audit log": [
+        ""
+      ],
+      "Could not change Emergency Stop.": [
+        ""
+      ],
+      "Advanced view expands every agent's tool list and shows the raw verify_chain() fields for the audit log.": [
+        ""
+      ],
+      "Tool risk inventory": [
+        ""
+      ],
+      "Highest enabled risk": [
+        ""
+      ],
+      "High-risk tools require extra care when you enable them. Review them in Tools.": [
+        ""
+      ],
+      "Review tools": [
+        ""
+      ],
+      "Approvals status": [
+        ""
+      ],
+      "%d waiting for your OK": [
+        ""
+      ],
+      "Mode: %1$s · Comfort: %2$s": [
+        ""
+      ],
+      "Actions that need your approval wait here. A queued action does not run until you approve it.": [
+        ""
+      ],
+      "Open approvals": [
+        ""
+      ],
+      "View integrity details": [
+        ""
+      ],
+      "Emergency Stop": [
+        ""
+      ],
+      "Emergency Stop turns off every active agent, cancels pending and in-progress jobs, disconnects AI providers, and blocks new agent activity until an administrator restores service.": [
+        ""
+      ],
+      "Restore agent system": [
+        ""
+      ],
+      "Active agents": [
+        ""
+      ],
+      "%d active": [
+        ""
+      ],
+      "%1$d with a high-risk tool · %2$d with MCP on": [
+        ""
+      ],
+      "View agent scopes": [
+        ""
+      ],
+      "Looking for AI discoverability and access, not safety controls?": [
+        ""
+      ],
+      "Visit Site Passport to see what outside AI systems can discover and reach on this site.": [
+        ""
+      ],
+      "Open Site Passport": [
+        ""
+      ],
+      "Related screens": [
+        ""
+      ],
+      "Sections": [
+        "分区"
+      ],
+      "Tokens": [
+        "Token 数"
+      ],
+      "Events": [
+        "事件"
+      ],
+      "Tools used": [
+        "使用的工具"
+      ],
+      "This is a friendly activity feed. Technical names stay in Advanced detail when useful.": [
+        "这是易读的活动动态。技术名称会在有需要时保留在高级详情中。"
+      ],
+      "Time period": [
+        "时间范围"
+      ],
+      "Activity type": [
+        "活动类型"
+      ],
+      "Search activity…": [
+        "搜索活动…"
+      ],
+      "1 event": [
+        "1 个事件"
+      ],
+      "events": [
+        "个事件"
+      ],
+      "Download this log as a CSV file — handy to attach when emailing support about an issue.": [
+        "将此日志下载为 CSV 文件 — 在通过邮件向支持团队反馈问题时便于作为附件。"
+      ],
+      "Export CSV": [
+        "导出 CSV"
+      ],
+      "Nothing here yet": [
+        "暂无内容"
+      ],
+      "No events match this filter. Try another period or clear search.": [
+        "没有事件符合此筛选条件。请尝试其他时间范围或清除搜索。"
+      ],
+      "When agents chat or use tools, their activity will show up here.": [
+        "当智能体进行聊天或使用工具时，其活动会显示在此处。"
+      ],
+      "Log integrity:": [
+        ""
+      ],
+      "%d entries checked, chain intact.": [
+        ""
+      ],
+      "Chain broken at entry #%d — an entry was edited or deleted after the fact.": [
+        ""
+      ],
+      "Tampering detected": [
+        ""
+      ],
+      "Active": [
+        "已激活"
+      ],
+      "Inactive": [
+        "未激活"
+      ],
+      "Activate": [
+        "激活"
+      ],
+      "Deactivate": [
+        "停用"
+      ],
+      "No agents installed yet.": [
+        "尚未安装智能体。"
+      ],
+      "Chat": [
+        "聊天"
+      ],
+      "Author": [
+        "作者"
+      ],
+      "Version": [
+        "版本"
+      ],
+      "Import": [
+        "导入"
+      ],
+      "Export": [
+        "导出"
+      ],
+      "A short description is required.": [
+        "简短描述为必填项。"
+      ],
+      "Remove image": [
+        "移除图片"
+      ],
+      "Create agent": [
+        "创建智能体"
+      ],
+      "Slug": [
+        "Slug"
+      ],
+      "An AI agent for this site.": [
+        ""
+      ],
+      "Pinned": [
+        ""
+      ],
+      "Assign task": [
+        ""
+      ],
+      "Duplicate": [
+        ""
+      ],
+      "Choose agent avatar": [
+        ""
+      ],
+      "Use this image": [
+        ""
+      ],
+      "Could not save the profile.": [
+        ""
+      ],
+      "Edit profile: %s": [
+        ""
+      ],
+      "Set image": [
+        ""
+      ],
+      "Leave empty to use the agent’s built-in name.": [
+        ""
+      ],
+      "Standing description": [
+        ""
+      ],
+      "Shown where this agent is introduced to other agents.": [
+        ""
+      ],
+      "Emoji avatar": [
+        ""
+      ],
+      "Used when no image is set.": [
+        ""
+      ],
+      "Pin to top": [
+        ""
+      ],
+      "Hide agent": [
+        ""
+      ],
+      "Save profile": [
+        ""
+      ],
+      "A name is required.": [
+        ""
+      ],
+      "Could not create the agent.": [
+        ""
+      ],
+      "New agent": [
+        ""
+      ],
+      "Support assistant": [
+        ""
+      ],
+      "What should it do?": [
+        ""
+      ],
+      "Answers customer questions using our knowledge base.": [
+        ""
+      ],
+      "Rules": [
+        ""
+      ],
+      "Optional. Standing instructions the agent always follows.": [
+        ""
+      ],
+      "Import agent": [
+        ""
+      ],
+      "Choose a .zip agent template exported from this plugin.": [
+        ""
+      ],
+      "Saving order…": [
+        ""
+      ],
+      "Agent “%s” imported.": [
+        ""
+      ],
+      "Import failed. Check the .zip file and try again.": [
+        ""
+      ],
+      "Duplicated as “%s”.": [
+        ""
+      ],
+      "Export failed.": [
+        ""
+      ],
+      "Delete “%s”? This removes the agent and its files.": [
+        ""
+      ],
+      "Reorder failed.": [
+        ""
+      ],
+      "Created “%s”.": [
+        ""
+      ],
+      "Hidden agents (%d)": [
+        ""
+      ],
+      "Advanced view: drag rows to set the roster order.": [
+        ""
+      ],
+      "Pinned agents first, hidden agents collapsed below.": [
+        ""
+      ],
+      "Profile saved.": [
+        ""
+      ],
+      "Disabled": [
+        "已禁用"
+      ],
+      "Local": [
+        "本地"
+      ],
+      "Draft": [
+        "草稿"
+      ],
+      "Delete this skill? This cannot be undone.": [
+        "要删除此技能吗？此操作无法撤销。"
+      ],
+      "Review": [
+        "确认"
+      ],
+      "Review draft": [
+        ""
+      ],
+      "Could not create the draft.": [
+        ""
+      ],
+      "Draft skill created. Review and publish it to make it available to agents.": [
+        ""
+      ],
+      "Create from text": [
+        ""
+      ],
+      "Drafts": [
+        ""
+      ],
+      "No skills match your search. Try a different keyword or clear the search.": [
+        ""
+      ],
+      "No skills installed yet. Import a recommended skill, create your own, or browse the community above.": [
+        ""
+      ],
+      "Create a skill from text": [
+        ""
+      ],
+      "Describe the task you want to teach the agent. A draft skill is generated from your description for you to review.": [
+        ""
+      ],
+      "Draft skill": [
+        ""
+      ],
+      "Action": [
+        "操作"
+      ],
+      "Dismiss": [
+        "关闭"
+      ],
+      "An agent tried to run this specific action and paused here first. Nothing happens until you decide — approve to let it run once, or reject to cancel it.": [
+        "智能体尝试执行此项具体操作，并先在此暂停。在您做出决定前不会发生任何变化 — 批准可让它运行一次，拒绝则取消该操作。"
+      ],
+      "Recording your approval…": [
+        "正在记录您的审批…"
+      ],
+      "Running the approved action…": [
+        "正在执行已批准的操作…"
+      ],
+      "Confirming result…": [
+        "正在确认结果…"
+      ],
+      "Rejecting this request…": [
+        "正在拒绝此请求…"
+      ],
+      "Rejected — the action will not run.": [
+        "已拒绝 — 该操作将不会执行。"
+      ],
+      "Request rejected": [
+        "请求已拒绝"
+      ],
+      "Approved, but the action could not be started.": [
+        "已批准，但该操作无法启动。"
+      ],
+      "Action completed successfully.": [
+        "操作已成功完成。"
+      ],
+      "Action ran but reported a problem.": [
+        "操作已执行，但报告了一个问题。"
+      ],
+      "Approval recorded": [
+        "审批已记录"
+      ],
+      "Done — agent task finished": [
+        "完成 — 智能体任务已结束"
+      ],
+      "Finished with errors — check detail below": [
+        "已结束但存在错误 — 请查看下方详情"
+      ],
+      "Approved and completed.": [
+        "已批准并完成。"
+      ],
+      "Could not update that item.": [
+        "无法更新该项目。"
+      ],
+      "Approve all %d actions in this group? They will run in order.": [
+        "批准此组中的全部 %d 项操作？它们将按顺序执行。"
+      ],
+      "Reject all %d actions in this group?": [
+        "拒绝此组中的全部 %d 项操作？"
+      ],
+      "Approved %d actions.": [
+        "已批准 %d 项操作。"
+      ],
+      "Rejected %d actions.": [
+        "已拒绝 %d 项操作。"
+      ],
+      "Stopped after %1$d of %2$d — %3$s": [
+        "已完成 %2$d 项中的 %1$d 项后停止 — %3$s"
+      ],
+      "one action failed.": [
+        "有一项操作失败。"
+      ],
+      "%1$d succeeded, %2$d failed.": [
+        "%1$d 项成功，%2$d 项失败。"
+      ],
+      "Could not process that group.": [
+        "无法处理该组。"
+      ],
+      "Check the box to accept the increased risk before choosing “Trust more”.": [
+        "选择“提高信任度”之前，请勾选复选框以接受增加的风险。"
+      ],
+      "Preferences saved.": [
+        "偏好设置已保存。"
+      ],
+      "Could not save preferences.": [
+        "无法保存偏好设置。"
+      ],
+      "Advanced view shows technical detail.": [
+        "高级视图会显示技术细节。"
+      ],
+      "Simple view for non-technical admins.": [
+        "面向非技术管理员的简易视图。"
+      ],
+      "Complete": [
+        "已完成"
+      ],
+      "Working…": [
+        "处理中…"
+      ],
+      "Preferences": [
+        "偏好设置"
+      ],
+      "Choose how closely you want to watch agents, and whether we should email you when something is waiting.": [
+        "选择您希望以何种严密程度监督智能体，以及有事项待处理时是否向您发送邮件通知。"
+      ],
+      "I understand agents may change my site with less waiting, and I accept that increased risk.": [
+        "我了解智能体可能会在更少等待的情况下更改我的站点，并接受由此增加的风险。"
+      ],
+      "Save “Trust more” preference": [
+        "保存“提高信任度”偏好设置"
+      ],
+      "Email me when an action is waiting for approval": [
+        "有操作等待审批时向我发送邮件"
+      ],
+      "Send alerts to": [
+        "提醒发送至"
+      ],
+      "Save email preferences": [
+        "保存邮件偏好设置"
+      ],
+      "Waiting for you": [
+        "等待您处理"
+      ],
+      "You’re all caught up": [
+        "所有事项均已处理完毕"
+      ],
+      "Approvals pause any action an agent rates as risky until you say yes — nothing waiting here means nothing is on hold right now.": [
+        "审批会暂停智能体判定为有风险的任何操作，直到您表示同意 — 此处没有待处理事项，表示当前没有任何操作被搁置。"
+      ],
+      "When an agent needs permission for a bigger change, it will show up here": [
+        "当智能体需要获得许可以执行较大更改时，会显示在此处"
+      ],
+      " — and we’ll email you.": [
+        " — 我们还会向您发送邮件。"
+      ],
+      "%1$s · %2$d actions · %3$s ago": [
+        "%1$s · %2$d 项操作 · %3$s前"
+      ],
+      "Approve all": [
+        "全部批准"
+      ],
+      "Reject all": [
+        "全部拒绝"
+      ],
+      "Agents back up files and database tables automatically before changing them.": [
+        "智能体在更改文件和数据库表之前会自动进行备份。"
+      ],
+      "View backups and restore": [
+        "查看备份并恢复"
+      ],
+      "Grants": [
+        ""
+      ]
+    }
+  }
+}

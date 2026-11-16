@@ -56,11 +56,11 @@ ADMIN_PAGES_SHARED_PREFIX = "src/admin-pages/"
 def main() -> int:
     lang = Path("languages")
     for loc in LOCALES:
-        po = lang / f"agent-builder-{loc}.po"
-        mo = lang / f"agent-builder-{loc}.mo"
+        po = lang / f"siteloom-{loc}.po"
+        mo = lang / f"siteloom-{loc}.mo"
         subprocess.check_call(["msgfmt", "-o", str(mo), str(po)])
         # Drop previous JS packs for this locale (hashed + handle-named).
-        for old in lang.glob(f"agent-builder-{loc}-*.json"):
+        for old in lang.glob(f"siteloom-{loc}-*.json"):
             old.unlink()
         # wp i18n make-json rewrites the .po in place and drops entries.
         # Snapshot, extract JSON, then restore.
@@ -80,7 +80,7 @@ def main() -> int:
         subprocess.check_call(["msgfmt", "-o", str(mo), str(po)])
         by_source: dict[str, dict] = {}
         leftover: list[Path] = []
-        for jf in list(lang.glob(f"agent-builder-{loc}-*.json")):
+        for jf in list(lang.glob(f"siteloom-{loc}-*.json")):
             data = json.loads(jf.read_text(encoding="utf-8"))
             source = data.get("source")
             if isinstance(source, str):
@@ -92,7 +92,7 @@ def main() -> int:
             handle = SOURCE_TO_HANDLE.get(source)
             if not handle:
                 continue
-            dest = lang / f"agent-builder-{loc}-{handle}.json"
+            dest = lang / f"siteloom-{loc}-{handle}.json"
             dest.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
             renamed += 1
 
@@ -108,7 +108,7 @@ def main() -> int:
                 continue
             extra_msgs = extra.get("locale_data", {}).get("messages", {})
             for handle in handles:
-                dest = lang / f"agent-builder-{loc}-{handle}.json"
+                dest = lang / f"siteloom-{loc}-{handle}.json"
                 if not dest.exists():
                     continue
                 data = json.loads(dest.read_text(encoding="utf-8"))

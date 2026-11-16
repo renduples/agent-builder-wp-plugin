@@ -1,0 +1,114 @@
+{
+  "translation-revision-date": "2026-08-20 16:00+0000",
+  "generator": "WP-CLI/2.12.0",
+  "source": "src/knowledge-wizard/index.js",
+  "domain": "messages",
+  "locale_data": {
+    "messages": {
+      "": {
+        "domain": "messages",
+        "lang": "zh_CN",
+        "plural-forms": "nplurals=1; plural=0;"
+      },
+      "Source": [
+        "来源"
+      ],
+      "Back": [
+        "返回"
+      ],
+      "Loading…": [
+        "加载中…"
+      ],
+      "Title": [
+        "标题"
+      ],
+      "Continue": [
+        "继续"
+      ],
+      "Back to Dashboard": [
+        "返回仪表盘"
+      ],
+      "Paste text": [
+        "粘贴文本"
+      ],
+      "Upload a file": [
+        "上传文件"
+      ],
+      "Pick existing pages": [
+        "选择现有页面"
+      ],
+      "Title & tags": [
+        "标题与标签"
+      ],
+      "Could not load pages.": [
+        "无法加载页面。"
+      ],
+      "Please choose a plain text or Markdown file (.txt or .md).": [
+        "请选择纯文本或 Markdown 文件（.txt 或 .md）。"
+      ],
+      "Could not read that file.": [
+        "无法读取该文件。"
+      ],
+      "Something went wrong saving this knowledge.": [
+        "保存此知识时出错。"
+      ],
+      "\"%s\" is saved!": [
+        "“%s”已保存！"
+      ],
+      "Your agents can now use this. Add another, or review it in the full Knowledge Wiki.": [
+        "您的智能体现在可以使用它了。您可以继续添加，或在完整的知识维基中查看。"
+      ],
+      "Add another": [
+        "继续添加"
+      ],
+      "View Knowledge Wiki": [
+        "查看知识维基"
+      ],
+      "Where is this knowledge coming from?": [
+        "此知识来自何处？"
+      ],
+      "Paste the text": [
+        "粘贴文本"
+      ],
+      "A fact, policy, FAQ answer — anything you want your agents to know is true.": [
+        "事实、政策、常见问题解答 — 任何您希望智能体确信为真的内容。"
+      ],
+      "Upload a text or Markdown file": [
+        "上传文本或 Markdown 文件"
+      ],
+      "Loaded \"%s\" — you can review and edit the text below.": [
+        "已加载“%s” — 您可以在下方查看并编辑文本。"
+      ],
+      "Search your pages and posts": [
+        "搜索您的页面和文章"
+      ],
+      "Leave blank to see recent pages": [
+        "留空可查看最近的页面"
+      ],
+      "No matching pages or posts.": [
+        "没有匹配的页面或文章。"
+      ],
+      "%s page(s)/post(s) selected.": [
+        "已选择 %s 个页面/文章。"
+      ],
+      "A short, clear name, e.g. \"Return policy\" or \"Support hours\".": [
+        "简短清晰的名称，例如“退货政策”或“支持时间”。"
+      ],
+      "Tags (optional)": [
+        "标签（可选）"
+      ],
+      "Comma-separated, e.g. billing, returns, policy.": [
+        "以逗号分隔，例如：账单、退货、政策。"
+      ],
+      "Save knowledge": [
+        "保存知识"
+      ],
+      "Wizard steps": [
+        ""
+      ],
+      "File contents": [
+        ""
+      ]
+    }
+  }
+}

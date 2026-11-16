@@ -181,7 +181,7 @@ def fill(path: Path, locale: str, mapping: dict[str, str]) -> None:
 def main() -> int:
     maps = load_maps()
     for loc in LOCALES:
-        path = Path(f"languages/agent-builder-{loc}.po")
+        path = Path(f"languages/siteloom-{loc}.po")
         before = path.read_text(encoding="utf-8").count("\nmsgid ")
         fill(path, loc, maps[loc])
         after = path.read_text(encoding="utf-8").count("\nmsgid ")

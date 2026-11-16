@@ -1,0 +1,114 @@
+{
+  "translation-revision-date": "2026-08-20 16:00+0000",
+  "generator": "WP-CLI/2.12.0",
+  "source": "src/knowledge-wizard/index.js",
+  "domain": "messages",
+  "locale_data": {
+    "messages": {
+      "": {
+        "domain": "messages",
+        "lang": "nl_NL",
+        "plural-forms": "nplurals=2; plural=(n != 1);"
+      },
+      "Source": [
+        "Bron"
+      ],
+      "Back": [
+        "Terug"
+      ],
+      "Loading…": [
+        "Laden…"
+      ],
+      "Title": [
+        "Titel"
+      ],
+      "Continue": [
+        "Doorgaan"
+      ],
+      "Back to Dashboard": [
+        "Terug naar dashboard"
+      ],
+      "Paste text": [
+        "Tekst plakken"
+      ],
+      "Upload a file": [
+        "Een bestand uploaden"
+      ],
+      "Pick existing pages": [
+        "Bestaande pagina's kiezen"
+      ],
+      "Title & tags": [
+        "Titel & tags"
+      ],
+      "Could not load pages.": [
+        "Kon de pagina's niet laden."
+      ],
+      "Please choose a plain text or Markdown file (.txt or .md).": [
+        "Kies een plattetekstbestand of Markdown-bestand (.txt of .md)."
+      ],
+      "Could not read that file.": [
+        "Kon dat bestand niet lezen."
+      ],
+      "Something went wrong saving this knowledge.": [
+        "Er is iets misgegaan bij het opslaan van deze kennis."
+      ],
+      "\"%s\" is saved!": [
+        "\"%s\" is opgeslagen!"
+      ],
+      "Your agents can now use this. Add another, or review it in the full Knowledge Wiki.": [
+        "Uw agents kunnen dit nu gebruiken. Voeg er nog een toe of bekijk het in de volledige Kennis-wiki."
+      ],
+      "Add another": [
+        "Nog een toevoegen"
+      ],
+      "View Knowledge Wiki": [
+        "Kennis-wiki bekijken"
+      ],
+      "Where is this knowledge coming from?": [
+        "Waar komt deze kennis vandaan?"
+      ],
+      "Paste the text": [
+        "Plak de tekst"
+      ],
+      "A fact, policy, FAQ answer — anything you want your agents to know is true.": [
+        "Een feit, beleidsregel of FAQ-antwoord — alles waarvan u wilt dat uw agents weten dat het klopt."
+      ],
+      "Upload a text or Markdown file": [
+        "Een tekst- of Markdown-bestand uploaden"
+      ],
+      "Loaded \"%s\" — you can review and edit the text below.": [
+        "\"%s\" geladen — u kunt de tekst hieronder controleren en bewerken."
+      ],
+      "Search your pages and posts": [
+        "Zoek in uw pagina's en berichten"
+      ],
+      "Leave blank to see recent pages": [
+        "Laat leeg om recente pagina's te zien"
+      ],
+      "No matching pages or posts.": [
+        "Geen overeenkomende pagina's of berichten."
+      ],
+      "%s page(s)/post(s) selected.": [
+        "%s pagina('s)/bericht(en) geselecteerd."
+      ],
+      "A short, clear name, e.g. \"Return policy\" or \"Support hours\".": [
+        "Een korte, duidelijke naam, bijv. \"Retourbeleid\" of \"Supporturen\"."
+      ],
+      "Tags (optional)": [
+        "Tags (optioneel)"
+      ],
+      "Comma-separated, e.g. billing, returns, policy.": [
+        "Komma-gescheiden, bijv. facturatie, retouren, beleid."
+      ],
+      "Save knowledge": [
+        "Kennis opslaan"
+      ],
+      "Wizard steps": [
+        ""
+      ],
+      "File contents": [
+        ""
+      ]
+    }
+  }
+}

@@ -1,0 +1,114 @@
+{
+  "translation-revision-date": "2026-08-20 16:00+0000",
+  "generator": "WP-CLI/2.12.0",
+  "source": "src/knowledge-wizard/index.js",
+  "domain": "messages",
+  "locale_data": {
+    "messages": {
+      "": {
+        "domain": "messages",
+        "lang": "ko_KR",
+        "plural-forms": "nplurals=1; plural=0;"
+      },
+      "Source": [
+        "출처"
+      ],
+      "Back": [
+        "뒤로"
+      ],
+      "Loading…": [
+        "불러오는 중…"
+      ],
+      "Title": [
+        "제목"
+      ],
+      "Continue": [
+        "계속"
+      ],
+      "Back to Dashboard": [
+        "대시보드로 돌아가기"
+      ],
+      "Paste text": [
+        "텍스트 붙여넣기"
+      ],
+      "Upload a file": [
+        "파일 업로드"
+      ],
+      "Pick existing pages": [
+        "기존 페이지 선택"
+      ],
+      "Title & tags": [
+        "제목 및 태그"
+      ],
+      "Could not load pages.": [
+        "페이지를 불러오지 못했습니다."
+      ],
+      "Please choose a plain text or Markdown file (.txt or .md).": [
+        "일반 텍스트 또는 마크다운 파일(.txt 또는 .md)을 선택하세요."
+      ],
+      "Could not read that file.": [
+        "해당 파일을 읽지 못했습니다."
+      ],
+      "Something went wrong saving this knowledge.": [
+        "이 지식을 저장하는 중 문제가 발생했습니다."
+      ],
+      "\"%s\" is saved!": [
+        "\"%s\"이(가) 저장되었습니다!"
+      ],
+      "Your agents can now use this. Add another, or review it in the full Knowledge Wiki.": [
+        "이제 에이전트가 이 지식을 사용할 수 있습니다. 다른 지식을 추가하거나 전체 지식 위키에서 검토하세요."
+      ],
+      "Add another": [
+        "다른 항목 추가"
+      ],
+      "View Knowledge Wiki": [
+        "지식 위키 보기"
+      ],
+      "Where is this knowledge coming from?": [
+        "이 지식의 출처는 무엇인가요?"
+      ],
+      "Paste the text": [
+        "텍스트를 붙여넣으세요"
+      ],
+      "A fact, policy, FAQ answer — anything you want your agents to know is true.": [
+        "사실, 정책, FAQ 답변 등 에이전트가 참으로 알기를 원하는 모든 내용을 입력하세요."
+      ],
+      "Upload a text or Markdown file": [
+        "텍스트 또는 마크다운 파일 업로드"
+      ],
+      "Loaded \"%s\" — you can review and edit the text below.": [
+        "\"%s\"을(를) 불러왔습니다 — 아래에서 텍스트를 검토하고 편집할 수 있습니다."
+      ],
+      "Search your pages and posts": [
+        "페이지 및 글 검색"
+      ],
+      "Leave blank to see recent pages": [
+        "비워 두면 최근 페이지가 표시됩니다"
+      ],
+      "No matching pages or posts.": [
+        "일치하는 페이지나 글이 없습니다."
+      ],
+      "%s page(s)/post(s) selected.": [
+        "페이지/글 %s개를 선택했습니다."
+      ],
+      "A short, clear name, e.g. \"Return policy\" or \"Support hours\".": [
+        "짧고 명확한 이름입니다(예: \"반품 정책\" 또는 \"지원 시간\")."
+      ],
+      "Tags (optional)": [
+        "태그(선택 사항)"
+      ],
+      "Comma-separated, e.g. billing, returns, policy.": [
+        "쉼표로 구분합니다(예: 결제, 반품, 정책)."
+      ],
+      "Save knowledge": [
+        "지식 저장"
+      ],
+      "Wizard steps": [
+        ""
+      ],
+      "File contents": [
+        ""
+      ]
+    }
+  }
+}
