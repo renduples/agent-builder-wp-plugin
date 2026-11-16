@@ -173,7 +173,7 @@ def fill(path: Path, locale: str, mapping: dict[str, str]) -> None:
         if not entry.translated() and entry.msgid in mapping:
             entry.msgstr = mapping[entry.msgid]
 
-    po.metadata["Project-Id-Version"] = "Agent Builder 3.3.86"
+    po.metadata["Project-Id-Version"] = "Siteloom AI Agents"
     po.metadata["PO-Revision-Date"] = "2026-08-20 16:00+0000"
     po.save(str(path))
 
