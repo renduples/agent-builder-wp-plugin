@@ -53,7 +53,7 @@ $agentic_signup_tts_voices     = array(
 <div class="agentic-signup-wrap">
 	<div class="agentic-signup-card">
 		<div class="agentic-logo">
-			<img src="<?php echo esc_url( AGENT_BUILDER_URL . 'assets/icon.svg' ); ?>" alt="<?php esc_attr_e( 'Siteloom', 'siteloom' ); ?>">
+			<img src="<?php echo esc_url( AGENT_BUILDER_URL . 'assets/mark.svg' ); ?>" alt="<?php esc_attr_e( 'Siteloom', 'siteloom' ); ?>">
 			<span>Siteloom AI Agents</span>
 		</div>
 

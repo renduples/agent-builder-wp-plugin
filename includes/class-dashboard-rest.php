@@ -311,7 +311,7 @@ class Dashboard_REST {
 				'has_agent_updates_class' => class_exists( Agent_Updates::class ) && Agent_Updates::is_remote_check_available(),
 				'urls'                    => array(
 					'admin'         => admin_url(),
-					'icon'          => AGENT_BUILDER_URL . 'assets/icon.svg',
+					'icon'          => AGENT_BUILDER_URL . 'assets/mark.svg',
 					'signup'        => admin_url( 'admin.php?page=agentic-signup' ),
 					'license'       => admin_url( 'admin.php?page=agentic-settings&tab=license' ),
 					'providers'     => admin_url( 'admin.php?page=agentic-settings&tab=providers' ),

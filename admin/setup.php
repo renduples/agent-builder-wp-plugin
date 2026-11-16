@@ -398,7 +398,7 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 	<!-- Header -->
 	<div class="setup-header">
 		<div class="setup-logo" aria-hidden="true">
-			<img src="<?php echo esc_url( AGENT_BUILDER_URL . 'assets/icon.svg' ); ?>" width="48" height="48" alt="<?php esc_attr_e( 'Siteloom logo', 'siteloom' ); ?>">
+			<img src="<?php echo esc_url( AGENT_BUILDER_URL . 'assets/mark.svg' ); ?>" width="48" height="48" alt="<?php esc_attr_e( 'Siteloom logo', 'siteloom' ); ?>">
 		</div>
 		<h1><?php esc_html_e( 'Welcome to Siteloom AI Agents', 'siteloom' ); ?></h1>
 		<p><?php esc_html_e( 'Connect to your preferred AI Provider to get started. This takes only a few minutes.', 'siteloom' ); ?></p>

@@ -214,7 +214,7 @@ function agent_builder_setup_provider_icon( string $agentic_slug, int $size = 36
 	}
 
 	$icons = array(
-		'agentic'   => '<img src="' . esc_url( AGENT_BUILDER_URL . 'assets/icon.svg' ) . '" width="' . $s . '" height="' . $s . '" class="agentic-icon-img" alt="Agentic AI">',
+		'agentic'   => '<img src="' . esc_url( AGENT_BUILDER_URL . 'assets/agentic-ai.svg' ) . '" width="' . $s . '" height="' . $s . '" class="agentic-icon-img" alt="Agentic AI">',
 		'llama'     => '<svg xmlns="http://www.w3.org/2000/svg" width="' . $s . '" height="' . $s . '" viewBox="0 0 24 24" fill="none" role="img" aria-label="Meta Llama"><rect width="24" height="24" rx="4" fill="#0064E0"/><path d="M5 18V9.5l4 5.5 3-4.5 3 4.5 4-5.5V18" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
 		'cohere'    => '<svg xmlns="http://www.w3.org/2000/svg" width="' . $s . '" height="' . $s . '" viewBox="0 0 24 24" fill="none" role="img" aria-label="Cohere"><circle cx="12" cy="12" r="12" fill="#D18EE2"/><circle cx="12" cy="12" r="6" stroke="#fff" stroke-width="2" fill="none"/><circle cx="12" cy="5.5" r="2.5" fill="#fff"/></svg>',
 		'xai'       => '<svg xmlns="http://www.w3.org/2000/svg" width="' . $s . '" height="' . $s . '" viewBox="0 0 24 24" fill="none" role="img" aria-label="xAI"><path d="M3 3l7.5 9L3 21h2.5l6.25-7.5L17.5 21H21l-7.75-9.5L20.5 3H18l-5.75 7L7 3H3z" fill="#000"/></svg>',
