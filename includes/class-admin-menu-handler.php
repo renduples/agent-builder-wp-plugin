@@ -1334,7 +1334,7 @@ class Admin_Menu_Handler {
 		} elseif ( 'agentic-tools' === $page ) {
 			$policy = __( 'Agents only use the tools you allow. Higher-risk actions still follow Approvals and your safety settings.', 'siteloom' );
 		} elseif ( str_starts_with( $page, 'agentic-train' ) ) {
-			$policy = __( 'Knowledge stays on your site for the free wiki; hosted vector features require Siteloom Pro.', 'siteloom' );
+			$policy = __( 'Knowledge stays on your site in the Knowledge Wiki.', 'siteloom' );
 			if ( 'instructions' === $tab ) {
 				$policy = __( 'Per-agent instructions shape tone and greetings. Site-wide knowledge belongs in the Knowledge Wiki.', 'siteloom' );
 			} elseif ( 'memory' === $tab ) {

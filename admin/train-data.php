@@ -36,7 +36,10 @@ $agentic_is_pro = false;
 
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only tab param.
 $agentic_td_tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'wiki';
-if ( ! in_array( $agentic_td_tab, array( 'wiki', 'instructions', 'memory', 'vector' ), true ) ) {
+// The Vector Store tab exists only when Pro provides it; the free plugin
+// shows no tab for a feature it does not include.
+$agentic_td_allowed = $agentic_is_pro ? array( 'wiki', 'instructions', 'memory', 'vector' ) : array( 'wiki', 'instructions', 'memory' );
+if ( ! in_array( $agentic_td_tab, $agentic_td_allowed, true ) ) {
 	$agentic_td_tab = 'wiki';
 }
 
@@ -44,8 +47,10 @@ $agentic_td_tabs = array(
 	'wiki'         => __( 'Wiki', 'siteloom' ),
 	'instructions' => __( 'Instructions', 'siteloom' ),
 	'memory'       => __( 'Memory', 'siteloom' ),
-	'vector'       => __( 'Vector Store', 'siteloom' ) . ( $agentic_is_pro ? '' : ' · Pro' ),
 );
+if ( $agentic_is_pro ) {
+	$agentic_td_tabs['vector'] = __( 'Vector Store', 'siteloom' );
+}
 
 // One-line "why does this exist" tooltip per tab — these four are the ones
 // new users most often confuse with each other.
@@ -396,12 +401,6 @@ if ( $agentic_knowledge_advanced ) {
 				<?php
 			}
 			?>
-		<?php else : ?>
-			<p class="agentic-kn-pro-note">
-				<?php
-				esc_html_e( 'The free Knowledge Wiki stays fully available without Pro. Need large-scale semantic search across big document sets instead? Hosted vector RAG is available separately in Siteloom Pro.', 'siteloom' );
-				?>
-			</p>
 		<?php endif; ?>
 
 	<?php endif; ?>
