@@ -54,7 +54,7 @@ class Test_MCP_Server extends TestCase {
 		if ( $registry->is_agent_active( self::SLUG ) ) {
 			$registry->deactivate_agent( self::SLUG );
 		}
-		$dir = AGENT_BUILDER_AGENTS_DIR . '/' . self::SLUG;
+		$dir = \Agentic\File_Manager::agents_dir() . '/' . self::SLUG;
 		if ( is_dir( $dir ) ) {
 			$this->remove_dir( $dir );
 		}
@@ -283,7 +283,7 @@ class Test_MCP_Server extends TestCase {
 	 * Install and activate a fixture agent declaring one read and one write tool.
 	 */
 	private function create_agent(): void {
-		$dir = AGENT_BUILDER_AGENTS_DIR . '/' . self::SLUG;
+		$dir = \Agentic\File_Manager::agents_dir() . '/' . self::SLUG;
 		wp_mkdir_p( $dir . '/templates' );
 
 		$tools = array( self::READ_TOOL, self::WRITE_TOOL );
