@@ -91,12 +91,6 @@ class Enable_Webmcp_Defaults extends \Agentic\Tool_Base {
 				continue;
 			}
 
-			$path = \Agentic\Abilities_Manifest::resolve_path( $slug );
-			if ( ! $path || ! wp_is_writable( $path ) ) {
-				$skipped[] = $slug;
-				continue;
-			}
-
 			$changed = false;
 			foreach ( $manifest['abilities'] as $tool_name => &$entry ) {
 				if ( ! in_array( $tool_name, \Agentic\Webmcp_Bridge::ANONYMOUS_SAFE_TOOLS, true ) ) {
@@ -129,17 +123,13 @@ class Enable_Webmcp_Defaults extends \Agentic\Tool_Base {
 				continue;
 			}
 
-			$written = \Agentic\File_Manager::put_contents(
-				$path,
-				wp_json_encode( $manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES )
-			);
-			if ( false === $written ) {
+			// Bundled manifests are never rewritten: persist() stores the
+			// change as a database override for them.
+			if ( ! \Agentic\Abilities_Manifest::persist( $slug, $manifest ) ) {
 				$skipped[] = $slug;
 				continue;
 			}
 
-			\Agentic\Abilities_Manifest::clear_cache( $slug );
-			\Agentic\Abilities_Manifest::save_integrity_hash( $slug );
 			$updated_agents[] = $slug;
 		}
 

@@ -167,7 +167,6 @@ class Test_Risk_Level extends TestCase {
 			'issues a refund'               => array( 'wc_create_refund' ),
 			'destroys a form and entries'   => array( 'delete_form' ),
 			'generic option writer'         => array( 'db_update_option' ),
-			'rewrites file-edit protection' => array( 'toggle_file_editing' ),
 			'force-deletes a post'          => array( 'db_delete_post' ),
 		);
 	}

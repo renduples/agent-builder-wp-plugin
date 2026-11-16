@@ -5,9 +5,9 @@
  * Covers the extension denylist and allowed-root restrictions added for the
  * WordPress.org Plugin Developer FAQ / Guideline 8 review pass: no tool may
  * ever write an executable file (.php and friends, or .htaccess/.htpasswd),
- * and the plugin's own directory (AGENT_BUILDER_DIR) is writable only at the
- * single, fixed `library/agents/*\/abilities.json` pattern that
- * configure_approval_gate and enable_webmcp_defaults actually use.
+ * and nothing in the plugin's own directory (AGENT_BUILDER_DIR) is writable
+ * at all — bundled agents are read-only; their WebMCP settings are stored in
+ * the database (Abilities_Manifest::persist()).
  *
  * @package Agentic\Tests
  */
@@ -144,20 +144,52 @@ class Test_File_Manager extends TestCase {
 		$this->assertFileDoesNotExist( $dest );
 	}
 
-	// ─── AGENT_BUILDER_DIR narrow exception ─────────────────────────────────
+	// ─── AGENT_BUILDER_DIR is never writable ────────────────────────────────
 
 	/**
-	 * The one thing still writable under the plugin's own directory: a
-	 * bundled agent's abilities.json, matching what configure_approval_gate
-	 * and enable_webmcp_defaults actually write. Checked via is_allowed_path()
-	 * directly against a non-existent test slug — realpath()'s "parent
-	 * doesn't exist yet" fallback still resolves the string prefix check
-	 * correctly, so this never touches the real library/agents/ tree.
+	 * Not even a bundled agent's abilities.json is writable: bundled agents
+	 * are read-only (WordPress.org: never write to the plugin folder).
+	 * Checked via is_allowed_path() directly against a non-existent test
+	 * slug, so this never touches the real library/agents/ tree.
 	 */
-	public function test_agent_builder_dir_allows_abilities_json_under_library_agents(): void {
+	public function test_agent_builder_dir_rejects_abilities_json_under_library_agents(): void {
 		$path = AGENT_BUILDER_DIR . 'library/agents/_agentic_test_slug/abilities.json';
 
-		$this->assertTrue( File_Manager::is_allowed_path( $path ) );
+		$this->assertFalse( File_Manager::is_allowed_path( $path ) );
+	}
+
+	/**
+	 * The legacy wp-content/agentic-* folders are read-only migration sources.
+	 */
+	public function test_legacy_wp_content_folders_are_not_writable(): void {
+		foreach ( array( 'agents', 'knowledge', 'backups' ) as $kind ) {
+			$this->assertFalse( File_Manager::is_allowed_path( File_Manager::legacy_dir( $kind ) . '/x.json' ), $kind );
+		}
+	}
+
+	/**
+	 * The data root is built from wp_upload_dir() and the one DATA_SLUG constant.
+	 */
+	public function test_data_dir_is_in_uploads_named_after_slug(): void {
+		$uploads = wp_upload_dir( null, false );
+		$this->assertSame( untrailingslashit( $uploads['basedir'] ) . '/' . File_Manager::DATA_SLUG, File_Manager::data_dir() );
+		$this->assertSame( File_Manager::data_dir() . '/agents', File_Manager::agents_dir() );
+		$this->assertSame( File_Manager::data_dir() . '/knowledge', File_Manager::knowledge_dir() );
+		$this->assertSame( File_Manager::data_dir() . '/backups', File_Manager::backups_dir() );
+		$this->assertTrue( File_Manager::is_allowed_path( File_Manager::agents_dir() . '/a/agent.json' ) );
+	}
+
+	/**
+	 * Private data subfolders get deny-all protection; the root and exports
+	 * only the execution-denying rules (exports must stay downloadable).
+	 */
+	public function test_ensure_data_dir_protection(): void {
+		$this->assertTrue( File_Manager::ensure_data_dir( 'agents' ) );
+		$this->assertTrue( File_Manager::ensure_data_dir( 'exports' ) );
+		$this->assertFileExists( File_Manager::agents_dir() . '/index.php' );
+		$this->assertStringContainsString( 'private storage', (string) file_get_contents( File_Manager::agents_dir() . '/.htaccess' ) );
+		$this->assertStringNotContainsString( 'private storage', (string) file_get_contents( File_Manager::exports_dir() . '/.htaccess' ) );
+		$this->assertStringNotContainsString( 'private storage', (string) file_get_contents( File_Manager::data_dir() . '/.htaccess' ) );
 	}
 
 	/**
@@ -195,14 +227,13 @@ class Test_File_Manager extends TestCase {
 	// ─── Other allowed roots ─────────────────────────────────────────────────
 
 	/**
-	 * AGENT_BUILDER_BACKUPS_DIR was missing from the allowed roots entirely before
-	 * this pass — Tool_Helpers::backup_file() writes there, so it must be
-	 * allowed (still subject to the same extension denylist as everywhere
-	 * else).
+	 * The backups folder of the uploads data root is writable —
+	 * Tool_Helpers::backup_file() writes there (still subject to the same
+	 * extension denylist as everywhere else).
 	 */
 	public function test_agentic_backups_dir_is_an_allowed_root(): void {
 		$this->assertTrue(
-			File_Manager::is_allowed_path( AGENT_BUILDER_BACKUPS_DIR . '/20260101-000000_agentic-agents__test-agent__abilities.json' )
+			File_Manager::is_allowed_path( \Agentic\File_Manager::backups_dir() . '/20260101-000000_agentic-agents__test-agent__abilities.json' )
 		);
 	}
 

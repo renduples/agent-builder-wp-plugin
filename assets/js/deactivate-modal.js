@@ -74,7 +74,7 @@
 						'<span class="adm-option-icon">🗑️</span>' +
 						'<span class="adm-option-body">' +
 							'<strong>Delete all plugin data</strong>' +
-							'<small>' + escHtml( i18n.deleteDescription || 'When you delete the plugin, conversations, logs, API keys, settings, every Agent Builder database table (including the agents and skills you created or bought), automatic backups and knowledge files are permanently removed. Agent folders you built in wp-content/agentic-agents are kept.' ) + '</small>' +
+							'<small>' + escHtml( i18n.deleteDescription || 'When you delete the plugin, conversations, logs, API keys, settings, every Agent Builder database table (including the agents and skills you created or bought) and its data folder in uploads (the agent folders you built, automatic backups, knowledge files and generated documents) are permanently removed.' ) + '</small>' +
 						'</span>' +
 					'</label>' +
 				'</div>' +

@@ -248,14 +248,15 @@ class Admin_Notice_Manager {
 	}
 
 	/**
-	 * Warn when a directory in agentic-agents/ is shadowing a bundled agent.
+	 * Warn when a user agent folder (File_Manager::agents_dir()) is shadowing
+	 * a bundled agent.
 	 *
-	 * The registry loads agentic-agents/ before any plugin library, so a copy
+	 * The registry loads user agents before any plugin library, so a copy
 	 * there pins that agent to whatever is on disk: prompt, tool and risk-level
 	 * changes from plugin updates never reach it. This is reported however the
 	 * copy got there — a .uploaded marker records the route in, not consent.
 	 *
-	 * We never touch the files. agentic-agents/ belongs to the site owner.
+	 * We never touch the files. The user agents folder belongs to the site owner.
 	 */
 	public function show_shadowed_agent_notice(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -298,7 +299,7 @@ class Admin_Notice_Manager {
 				echo wp_kses(
 					sprintf(
 						/* translators: %s: comma-separated list of agent slugs. */
-						esc_html__( 'A copy of each of these agents exists in wp-content/agentic-agents/ and is loaded instead of the version bundled with the plugin: %s', 'agent-builder' ),
+						esc_html__( 'A copy of each of these agents exists in your Agent Builder agents folder (in uploads) and is loaded instead of the version bundled with the plugin: %s', 'agent-builder' ),
 						$slug_list
 					),
 					array( 'code' => array() )

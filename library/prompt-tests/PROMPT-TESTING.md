@@ -74,7 +74,7 @@ deliberate: there is no default that quietly spends money.
 | `--timeout=<seconds>` | provider default | Per-request LLM timeout. |
 | `--delay=<seconds>` | `0` | Sleep between prompts, to stay under a rate limit. |
 | `--prompts=<path>` | site copy, else shipped | Alternate catalog. Also accepted positionally. |
-| `--output=<path>` | `wp-content/agentic-knowledge/prompt-tests/prompt_test_results.md` | Where the report goes. `-` writes to stdout. |
+| `--output=<path>` | `wp-content/uploads/siteloom/knowledge/prompt-tests/prompt_test_results.md` | Where the report goes. `-` writes to stdout. |
 | `--format=<fmt>` | `md` | `md` writes the report; `table`/`json`/`csv`/`yaml` print to stdout instead. |
 | `--max-response-chars=<n>` | `2000` | Truncate responses in the report. `0` keeps them whole. |
 | `--allow-skips` | off | Exit 0 even when prompts were skipped for a missing capability. |
@@ -130,7 +130,7 @@ There are two copies, and the difference matters:
 | | Path | Role |
 |---|---|---|
 | **Shipped** | `library/prompt-tests/most_popular_prompts.md` | Ships in the plugin. Treated as read-only — a plugin update replaces it. |
-| **Yours** | `wp-content/agentic-knowledge/prompt-tests/most_popular_prompts.md` | Created the first time anything edits the catalog, by copying the shipped file. |
+| **Yours** | `wp-content/uploads/siteloom/knowledge/prompt-tests/most_popular_prompts.md` | Created the first time anything edits the catalog, by copying the shipped file. |
 
 The runner reads your copy when it exists and the shipped one otherwise, and
 `manage_prompt_catalog` always writes to your copy. So your additions survive plugin updates,
@@ -158,7 +158,7 @@ in about a second, for free. Run it after any edit.
 ## Reading the report
 
 The report is written beside your catalog, at
-`wp-content/agentic-knowledge/prompt-tests/prompt_test_results.md`, and overwritten on every
+`wp-content/uploads/siteloom/knowledge/prompt-tests/prompt_test_results.md`, and overwritten on every
 run. It contains real LLM output from your site and real cost figures, so it is deliberately
 kept out of the plugin directory and out of git.
 

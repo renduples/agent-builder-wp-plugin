@@ -94,10 +94,10 @@ class Merge_Pdfs extends \Agentic\Tool_Base {
 
 		$uploads = wp_upload_dir();
 		$base    = trailingslashit( $uploads['basedir'] );
-		$out_dir = $base . 'agentic-exports/';
-		$out_url = trailingslashit( $uploads['baseurl'] ) . 'agentic-exports/';
+		$out_dir = trailingslashit( \Agentic\File_Manager::exports_dir() );
+		$out_url = trailingslashit( \Agentic\File_Manager::exports_url() );
 
-		if ( ! wp_mkdir_p( $out_dir ) ) {
+		if ( ! \Agentic\File_Manager::ensure_data_dir( 'exports' ) ) {
 			return array( 'error' => 'Could not create exports directory.' );
 		}
 
@@ -140,7 +140,7 @@ class Merge_Pdfs extends \Agentic\Tool_Base {
 		}
 
 		return array(
-			'file_path'    => 'agentic-exports/' . $filename,
+			'file_path'    => \Agentic\File_Manager::export_relative_path( $filename ),
 			'url'          => $out_url . $filename,
 			'total_pages'  => $total_pages,
 			'sources'      => count( $resolved ),

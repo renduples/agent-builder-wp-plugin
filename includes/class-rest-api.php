@@ -1569,12 +1569,13 @@ class REST_API {
 			return $this->refuse_code_change( $approval, $raw_path, 'extension_not_allowed', $bad_type );
 		}
 
-		$repo_path    = realpath( Tool_Helpers::get_allowed_repo_base() );
-		$uploads_root = $repo_path ? trailingslashit( $repo_path ) . 'uploads/' : '';
-		$real_uploads = $uploads_root ? realpath( $uploads_root ) : false;
-		$full_path    = realpath( trailingslashit( (string) $repo_path ) . $target_subpath );
+		// "uploads/<rest>" is resolved against the real uploads directory
+		// (wp_upload_dir(), never a hard-coded wp-content/uploads).
+		$real_uploads = realpath( Tool_Helpers::get_allowed_repo_base() );
+		$rest         = ltrim( (string) substr( ltrim( $target_subpath, '/\\' ), strlen( 'uploads' ) ), '/\\' );
+		$full_path    = $real_uploads ? realpath( trailingslashit( $real_uploads ) . $rest ) : false;
 
-		if ( ! $repo_path || ! $real_uploads || ! $full_path ) {
+		if ( ! $real_uploads || ! $full_path ) {
 			return $this->refuse_code_change( $approval, $raw_path, 'unresolvable_path', __( 'Could not write file — invalid path.', 'agent-builder' ) );
 		}
 
@@ -2025,7 +2026,8 @@ class REST_API {
 	/**
 	 * Save a base64-encoded image as a temporary file in uploads and return its public URL.
 	 *
-	 * The file is placed in /uploads/agentic-tmp/ and prefixed with a unique ID.
+	 * The file is placed in the tmp folder of the uploads data root
+	 * (File_Manager::data_path( 'tmp' )) and prefixed with a unique ID.
 	 * Temporary files older than 1 hour are cleaned up on each call.
 	 *
 	 * @param string $base64    Base64-encoded image data (no header/prefix).
@@ -2041,17 +2043,13 @@ class REST_API {
 		);
 		$ext     = $ext_map[ $mime_type ] ?? 'png';
 
-		$upload_dir = wp_upload_dir();
-		$tmp_dir    = $upload_dir['basedir'] . '/agentic-tmp';
-		$tmp_url    = $upload_dir['baseurl'] . '/agentic-tmp';
+		$tmp_dir = File_Manager::data_path( 'tmp' );
+		$tmp_url = File_Manager::data_url() . '/tmp';
 
-		// Ensure directory exists.
-		if ( ! is_dir( $tmp_dir ) ) {
-			wp_mkdir_p( $tmp_dir );
-			// Add an index.php to prevent directory listing.
-			file_put_contents( $tmp_dir . '/index.php', "<?php\n/**\n * Silence is golden.\n *\n * @package Agent_Builder\n */\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
-			// Deny direct HTTP access to protect against image hotlinking / directory browsing.
-			file_put_contents( $tmp_dir . '/.htaccess', "Options -Indexes\ndeny from all\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+		// Ensure the directory exists, with index.php and deny-all
+		// .htaccess/web.config (no listing, no hotlinking).
+		if ( ! File_Manager::ensure_data_dir( 'tmp' ) ) {
+			return false;
 		}
 
 		// Cleanup files older than 1 hour.
@@ -2718,7 +2716,7 @@ class REST_API {
 	/**
 	 * Remove temp images older than 1 hour.
 	 *
-	 * @param string $dir Path to agentic-tmp directory.
+	 * @param string $dir Path to the temporary image directory.
 	 * @return void
 	 */
 	private function cleanup_temp_images( string $dir ): void {
@@ -2758,11 +2756,10 @@ class REST_API {
 	 * @return \WP_REST_Response
 	 */
 	public function handle_backup_delete( \WP_REST_Request $request ): \WP_REST_Response {
-		$file       = sanitize_file_name( $request->get_param( 'file' ) );
-		$backup_dir = AGENT_BUILDER_BACKUPS_DIR;
-		$path       = $backup_dir . '/' . $file;
+		$file = sanitize_file_name( $request->get_param( 'file' ) );
+		$path = Tool_Helpers::find_backup_file( '', $file );
 
-		if ( basename( $file ) !== $file || ! file_exists( $path ) ) {
+		if ( null === $path ) {
 			return new \WP_REST_Response(
 				array(
 					'success' => false,
@@ -2816,11 +2813,10 @@ class REST_API {
 	 * @return \WP_REST_Response
 	 */
 	public function handle_table_backup_delete( \WP_REST_Request $request ): \WP_REST_Response {
-		$file       = sanitize_file_name( $request->get_param( 'file' ) );
-		$backup_dir = AGENT_BUILDER_BACKUPS_DIR . '/' . Tool_Helpers::DB_BACKUP_SUBDIR;
-		$path       = $backup_dir . '/' . $file;
+		$file = sanitize_file_name( $request->get_param( 'file' ) );
+		$path = Tool_Helpers::find_backup_file( Tool_Helpers::DB_BACKUP_SUBDIR, $file );
 
-		if ( basename( $file ) !== $file || ! file_exists( $path ) ) {
+		if ( null === $path ) {
 			return new \WP_REST_Response(
 				array(
 					'success' => false,

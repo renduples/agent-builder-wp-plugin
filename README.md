@@ -126,7 +126,7 @@ and the parser are covered by the PHPUnit suite, so a bad tool name or agent slu
 in milliseconds rather than partway through a paid run.
 
 The catalog ships inside the plugin and is treated as read-only; the first edit copies it to
-`wp-content/agentic-knowledge/prompt-tests/`, so your additions survive plugin updates and
+`wp-content/uploads/siteloom/knowledge/prompt-tests/`, so your additions survive plugin updates and
 nothing writes inside the plugin directory.
 
 Assistant Trainer can also drive this from chat — running prompts, then proposing the tools or

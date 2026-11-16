@@ -72,7 +72,7 @@ class Delete_Agent extends Tool_Base {
 		}
 
 		// All 11 bundled agents ship inside the plugin itself (library/agents/),
-		// never inside AGENT_BUILDER_AGENTS_DIR below — so this list is a defense-in-
+		// never inside the user agents folder below — so this list is a defense-in-
 		// depth guard, not the only thing standing between this tool and the
 		// plugin's own files.
 		$protected = array(
@@ -94,11 +94,17 @@ class Delete_Agent extends Tool_Base {
 		}
 
 		// User-created agents (via the Agent Wizard or Assistant Trainer's
-		// create_agent_files) live in AGENT_BUILDER_AGENTS_DIR, not the plugin's own
+		// create_agent_files) live in File_Manager::agents_dir() (the uploads
+		// data root), not the plugin's own
 		// library/agents/ — this previously pointed at the latter via
 		// Tool_Helpers::get_library_path(), so it could never find (and
 		// therefore never delete) an actual user-created agent.
-		$agent_dir = AGENT_BUILDER_AGENTS_DIR . '/' . $slug;
+		$agent_dir = \Agentic\File_Manager::agents_dir() . '/' . $slug;
+		if ( ! is_dir( $agent_dir ) ) {
+			// Not migrated yet: an agent still in the pre-4.5 folder.
+			$legacy    = \Agentic\File_Manager::legacy_fallback_dir( 'agents' );
+			$agent_dir = null !== $legacy ? $legacy . '/' . $slug : $agent_dir;
+		}
 
 		if ( ! is_dir( $agent_dir ) ) {
 			return array( 'error' => "Agent '{$slug}' not found" );

@@ -34,16 +34,42 @@ class Abilities_Manifest {
 	private static array $cache = array();
 
 	/**
-	 * Name of the integrity signature file stored alongside abilities.json.
+	 * Name of the integrity signature file stored alongside a user agent's
+	 * abilities.json (only inside the uploads data root — see save_integrity_hash()).
 	 */
 	private const SIGNATURE_FILE = 'abilities-signature';
 
 	/**
+	 * Option holding integrity signatures for read-only manifests (bundled
+	 * agents inside a plugin, or a not-yet-migrated legacy folder), keyed by
+	 * agent slug: array{path: string, hash: string}. `path` is the md5 of the
+	 * manifest's path, so a signature never carries over to a different file
+	 * with the same slug.
+	 */
+	public const SIGNATURES_OPTION = 'agent_builder_manifest_signatures';
+
+	/**
+	 * Option holding site-owner changes to read-only manifests, keyed by
+	 * agent slug: array{path: string, overrides: array}. Merged over the
+	 * shipped file by load() — see apply_overrides() for the fields allowed.
+	 */
+	public const OVERRIDES_OPTION = 'agent_builder_manifest_overrides';
+
+	/**
+	 * Per-ability fields a read-only manifest can be overridden on. Neither
+	 * can grant a tool or change a risk level: risk floors, the extreme-risk
+	 * block and WebMCP safety checks all keep reading the shipped values.
+	 */
+	private const OVERRIDABLE_ABILITY_FIELDS = array( 'webmcp_expose', 'webmcp_context' );
+
+	/**
 	 * Resolve the filesystem path to abilities.json for a given agent.
 	 *
-	 * Searches wp-content/agentic-agents/ first, then the bundled library
-	 * directories — the same precedence Agent_Registry uses when it picks which
-	 * agent.php to load.
+	 * Searches the user agents folder in the uploads data root first
+	 * (File_Manager::agents_dir()), then — only while a storage migration is
+	 * incomplete — the pre-4.5 wp-content/agentic-agents/ folder, then the
+	 * bundled library directories: the same precedence Agent_Registry uses
+	 * when it picks which agent to load.
 	 *
 	 * The two must agree. Agent_Updates::do_update() unpacks a purchased or
 	 * uploaded agent into agents_dir, where it takes load priority over any
@@ -65,8 +91,12 @@ class Abilities_Manifest {
 	public static function resolve_path( string $agent_slug ): ?string {
 		$library_dirs = apply_filters( 'agentic_library_dirs', array( AGENT_BUILDER_DIR . 'library/agents' ) );
 
-		$paths    = array();
-		$user_dir = AGENT_BUILDER_AGENTS_DIR . '/' . $agent_slug;
+		$paths     = array();
+		$user_dirs = array( File_Manager::agents_dir() . '/' . $agent_slug );
+		$legacy    = File_Manager::legacy_fallback_dir( 'agents' );
+		if ( null !== $legacy ) {
+			$user_dirs[] = $legacy . '/' . $agent_slug;
+		}
 		// Only let an installed agents-dir manifest win when that directory is a
 		// real agent (has agent.json or a main agent.php), as the registry
 		// defines one. A partial/leftover dir (e.g. only abilities.json + a
@@ -74,8 +104,11 @@ class Abilities_Manifest {
 		// signature would make verify_integrity() fail and block the bundled
 		// agent's tools, while the registry (which needs a main file) never sees
 		// it as installed, so no shadow notice is shown. Fall through instead.
-		if ( self::is_real_agent_dir( $user_dir ) ) {
-			$paths[] = $user_dir . '/abilities.json';
+		foreach ( $user_dirs as $user_dir ) {
+			if ( self::is_real_agent_dir( $user_dir ) ) {
+				$paths[] = $user_dir . '/abilities.json';
+				break;
+			}
 		}
 		foreach ( $library_dirs as $dir ) {
 			$paths[] = trailingslashit( $dir ) . $agent_slug . '/abilities.json';
@@ -104,9 +137,12 @@ class Abilities_Manifest {
 	}
 
 	/**
-	 * Load the abilities.json for a given agent.
+	 * Load the effective abilities manifest for a given agent.
 	 *
-	 * Searches first in the library/ directory, then wp-content/agentic-agents/.
+	 * Reads the file resolve_path() picks. When that file is read-only (a
+	 * bundled agent inside a plugin directory, or a legacy folder not yet
+	 * migrated), the site owner's stored changes (OVERRIDES_OPTION) are
+	 * merged over it — see persist().
 	 *
 	 * @param string $agent_slug Agent identifier.
 	 * @return array|null Parsed manifest or null if not found.
@@ -118,11 +154,12 @@ class Abilities_Manifest {
 
 		$path = self::resolve_path( $agent_slug );
 		if ( $path ) {
-			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Local plugin file; WP_Filesystem unavailable at manifest load time.
-			$json = file_get_contents( $path );
-			$data = json_decode( $json, true );
+			$data = self::read_manifest_file( $path );
 
-			if ( JSON_ERROR_NONE === json_last_error() && self::is_valid_manifest( $data ) ) {
+			if ( null !== $data ) {
+				if ( ! self::is_writable_location( $path ) ) {
+					$data = self::apply_overrides( $data, self::get_overrides( $agent_slug, $path ) );
+				}
 				self::$cache[ $agent_slug ] = $data;
 				return $data;
 			}
@@ -130,6 +167,184 @@ class Abilities_Manifest {
 
 		self::$cache[ $agent_slug ] = null;
 		return null;
+	}
+
+	/**
+	 * Decode and validate a manifest file, without any overrides.
+	 *
+	 * @param string $path Absolute path to abilities.json.
+	 * @return array|null
+	 */
+	private static function read_manifest_file( string $path ): ?array {
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Local manifest file; WP_Filesystem unavailable at manifest load time.
+		$json = file_get_contents( $path );
+		if ( false === $json ) {
+			return null;
+		}
+		$data = json_decode( $json, true );
+
+		return ( JSON_ERROR_NONE === json_last_error() && self::is_valid_manifest( $data ) ) ? $data : null;
+	}
+
+	/**
+	 * Whether a manifest lives where the plugin may write it: the uploads
+	 * data root. Bundled agents (inside a plugin directory) and the legacy
+	 * wp-content/agentic-agents folder are read-only.
+	 *
+	 * @param string $path Absolute manifest path.
+	 * @return bool
+	 */
+	public static function is_writable_location( string $path ): bool {
+		return File_Manager::is_in_data_dir( $path );
+	}
+
+	/**
+	 * Key identifying one manifest file in the signature/override options.
+	 *
+	 * @param string $path Absolute manifest path.
+	 * @return string
+	 */
+	private static function path_key( string $path ): string {
+		return md5( wp_normalize_path( $path ) );
+	}
+
+	/**
+	 * Stored overrides for a read-only manifest at $path.
+	 *
+	 * @param string $agent_slug Agent identifier.
+	 * @param string $path       Absolute manifest path.
+	 * @return array
+	 */
+	private static function get_overrides( string $agent_slug, string $path ): array {
+		$all   = get_option( self::OVERRIDES_OPTION, array() );
+		$entry = is_array( $all ) ? ( $all[ $agent_slug ] ?? null ) : null;
+		if ( ! is_array( $entry ) || ( $entry['path'] ?? '' ) !== self::path_key( $path ) || ! is_array( $entry['overrides'] ?? null ) ) {
+			return array();
+		}
+		return $entry['overrides'];
+	}
+
+	/**
+	 * Merge stored overrides over a shipped manifest.
+	 *
+	 * Only OVERRIDABLE_ABILITY_FIELDS on abilities the shipped manifest
+	 * already declares, plus the top-level knowledge_files list, are
+	 * honoured; everything else in the stored value is ignored, so an
+	 * override can never add a tool or change a risk level.
+	 *
+	 * @param array $manifest  Shipped manifest.
+	 * @param array $overrides Stored overrides.
+	 * @return array Effective manifest.
+	 */
+	private static function apply_overrides( array $manifest, array $overrides ): array {
+		foreach ( (array) ( $overrides['abilities'] ?? array() ) as $tool_name => $fields ) {
+			if ( ! is_array( $fields ) || ! isset( $manifest['abilities'][ $tool_name ] ) || ! is_array( $manifest['abilities'][ $tool_name ] ) ) {
+				continue;
+			}
+			if ( array_key_exists( 'webmcp_expose', $fields ) ) {
+				$manifest['abilities'][ $tool_name ]['webmcp_expose'] = (bool) $fields['webmcp_expose'];
+			}
+			if ( isset( $fields['webmcp_context'] ) && in_array( $fields['webmcp_context'], array( 'frontend', 'admin', 'both' ), true ) ) {
+				$manifest['abilities'][ $tool_name ]['webmcp_context'] = $fields['webmcp_context'];
+			}
+		}
+
+		if ( isset( $overrides['knowledge_files'] ) && is_array( $overrides['knowledge_files'] ) ) {
+			$files = array_values(
+				array_filter(
+					$overrides['knowledge_files'],
+					static fn( $f ) => is_string( $f ) && '' !== $f && basename( $f ) === $f
+				)
+			);
+			if ( empty( $files ) ) {
+				unset( $manifest['knowledge_files'] );
+			} else {
+				$manifest['knowledge_files'] = $files;
+			}
+		}
+
+		return $manifest;
+	}
+
+	/**
+	 * The overridable differences between a shipped manifest and an edited copy.
+	 *
+	 * @param array $shipped Manifest as read from disk.
+	 * @param array $edited  Effective manifest after the caller's change.
+	 * @return array Overrides (empty when nothing overridable differs).
+	 */
+	private static function diff_overrides( array $shipped, array $edited ): array {
+		$overrides = array();
+
+		foreach ( (array) ( $edited['abilities'] ?? array() ) as $tool_name => $entry ) {
+			if ( ! is_array( $entry ) || ! isset( $shipped['abilities'][ $tool_name ] ) || ! is_array( $shipped['abilities'][ $tool_name ] ) ) {
+				continue;
+			}
+			foreach ( self::OVERRIDABLE_ABILITY_FIELDS as $field ) {
+				if ( ! array_key_exists( $field, $entry ) ) {
+					continue;
+				}
+				$base = $shipped['abilities'][ $tool_name ];
+				if ( ! array_key_exists( $field, $base ) || $base[ $field ] !== $entry[ $field ] ) {
+					$overrides['abilities'][ $tool_name ][ $field ] = $entry[ $field ];
+				}
+			}
+		}
+
+		$shipped_files = $shipped['knowledge_files'] ?? array();
+		$edited_files  = $edited['knowledge_files'] ?? array();
+		if ( array_values( (array) $shipped_files ) !== array_values( (array) $edited_files ) ) {
+			$overrides['knowledge_files'] = array_values( (array) $edited_files );
+		}
+
+		return $overrides;
+	}
+
+	/**
+	 * Save a changed manifest for an agent — the single write path for every
+	 * caller that edits an existing agent's abilities (WebMCP toggles, the
+	 * Agent-Ready fixes, persona knowledge files).
+	 *
+	 * A user agent in the uploads data root has its abilities.json rewritten
+	 * and re-signed, as before. A read-only manifest (bundled agents, legacy
+	 * folder) is never touched: the overridable differences are stored in
+	 * OVERRIDES_OPTION and merged back in by load(), so the effective
+	 * manifest is identical either way.
+	 *
+	 * @param string $agent_slug Agent identifier.
+	 * @param array  $manifest   Full edited manifest (as returned by load(), then changed).
+	 * @return bool Whether the change was stored.
+	 */
+	public static function persist( string $agent_slug, array $manifest ): bool {
+		$path = self::resolve_path( $agent_slug );
+		if ( ! $path ) {
+			return false;
+		}
+
+		if ( self::is_writable_location( $path ) ) {
+			return self::write_manifest( dirname( $path ), $agent_slug, $manifest );
+		}
+
+		$shipped = self::read_manifest_file( $path );
+		if ( null === $shipped ) {
+			return false;
+		}
+
+		$overrides = self::diff_overrides( $shipped, $manifest );
+		$all       = get_option( self::OVERRIDES_OPTION, array() );
+		$all       = is_array( $all ) ? $all : array();
+		if ( empty( $overrides ) ) {
+			unset( $all[ $agent_slug ] );
+		} else {
+			$all[ $agent_slug ] = array(
+				'path'      => self::path_key( $path ),
+				'overrides' => $overrides,
+			);
+		}
+		update_option( self::OVERRIDES_OPTION, $all );
+
+		self::clear_cache( $agent_slug );
+		return true;
 	}
 
 	/**
@@ -274,9 +489,10 @@ class Abilities_Manifest {
 	 * @param string $tool_name  Tool name.
 	 */
 	private static function is_listed_in_agent_json( string $agent_slug, string $tool_name ): bool {
-		$paths = array();
-		if ( defined( 'AGENT_BUILDER_AGENTS_DIR' ) ) {
-			$paths[] = trailingslashit( AGENT_BUILDER_AGENTS_DIR ) . $agent_slug . '/agent.json';
+		$paths  = array( File_Manager::agents_dir() . '/' . $agent_slug . '/agent.json' );
+		$legacy = File_Manager::legacy_fallback_dir( 'agents' );
+		if ( null !== $legacy ) {
+			$paths[] = $legacy . '/' . $agent_slug . '/agent.json';
 		}
 		if ( defined( 'AGENT_BUILDER_DIR' ) ) {
 			$paths[] = trailingslashit( AGENT_BUILDER_DIR ) . 'library/agents/' . $agent_slug . '/agent.json';
@@ -578,13 +794,17 @@ class Abilities_Manifest {
 	}
 
 	/**
-	 * Write the integrity signature file alongside abilities.json.
+	 * Record the integrity signature of an agent's abilities.json.
 	 *
-	 * Creates an abilities-signature file in the same directory. This file
-	 * is checked at runtime to detect post-install tampering.
+	 * For a user agent in the uploads data root the signature is written to
+	 * an abilities-signature file next to the manifest. For a read-only
+	 * manifest (bundled agent inside a plugin directory, or a legacy folder)
+	 * nothing is written to disk: the signature is stored in
+	 * SIGNATURES_OPTION, keyed by slug and manifest path. Either way it is
+	 * checked at runtime to detect post-install tampering.
 	 *
 	 * @param string $agent_slug Agent identifier.
-	 * @return bool Whether the signature file was written successfully.
+	 * @return bool Whether the signature was stored successfully.
 	 */
 	public static function save_integrity_hash( string $agent_slug ): bool {
 		$manifest_path = self::resolve_path( $agent_slug );
@@ -597,10 +817,47 @@ class Abilities_Manifest {
 			return false;
 		}
 
-		$sig_path = dirname( $manifest_path ) . '/' . self::SIGNATURE_FILE;
+		if ( self::is_writable_location( $manifest_path ) ) {
+			return File_Manager::put_contents( dirname( $manifest_path ) . '/' . self::SIGNATURE_FILE, $hash );
+		}
 
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
-		return false !== file_put_contents( $sig_path, $hash );
+		$all = get_option( self::SIGNATURES_OPTION, array() );
+		$all = is_array( $all ) ? $all : array();
+
+		$all[ $agent_slug ] = array(
+			'path' => self::path_key( $manifest_path ),
+			'hash' => $hash,
+		);
+		update_option( self::SIGNATURES_OPTION, $all );
+
+		return true;
+	}
+
+	/**
+	 * The recorded signature for the manifest at $manifest_path, or null when
+	 * none has been recorded yet.
+	 *
+	 * @param string $agent_slug    Agent identifier.
+	 * @param string $manifest_path Absolute manifest path.
+	 * @return string|null
+	 */
+	private static function stored_integrity_hash( string $agent_slug, string $manifest_path ): ?string {
+		if ( self::is_writable_location( $manifest_path ) ) {
+			$sig_path = dirname( $manifest_path ) . '/' . self::SIGNATURE_FILE;
+			if ( ! file_exists( $sig_path ) ) {
+				return null;
+			}
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Reading a small trusted signature file.
+			return trim( (string) file_get_contents( $sig_path ) );
+		}
+
+		$all   = get_option( self::SIGNATURES_OPTION, array() );
+		$entry = is_array( $all ) ? ( $all[ $agent_slug ] ?? null ) : null;
+		if ( ! is_array( $entry ) || ( $entry['path'] ?? '' ) !== self::path_key( $manifest_path ) ) {
+			return null;
+		}
+
+		return trim( (string) ( $entry['hash'] ?? '' ) );
 	}
 
 	/**
@@ -628,8 +885,9 @@ class Abilities_Manifest {
 
 		$path = trailingslashit( $agent_dir ) . 'abilities.json';
 
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
-		if ( false === file_put_contents( $path, $manifest_json ) ) {
+		// Only user agents in the uploads data root are written to disk;
+		// read-only manifests go through persist()'s database overrides.
+		if ( ! self::is_writable_location( $path ) || ! File_Manager::put_contents( $path, $manifest_json ) ) {
 			return false;
 		}
 
@@ -650,16 +908,14 @@ class Abilities_Manifest {
 			return true;
 		}
 
-		$sig_path = dirname( $manifest_path ) . '/' . self::SIGNATURE_FILE;
-		if ( ! file_exists( $sig_path ) ) {
+		$stored_hash = self::stored_integrity_hash( $agent_slug, $manifest_path );
+		if ( null === $stored_hash ) {
 			// No signature yet — fresh install or signature not written during activation.
 			// Sign now so the next request passes cleanly.
 			self::save_integrity_hash( $agent_slug );
 			return true;
 		}
 
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Local plugin file; reading a small trusted signature file.
-		$stored_hash = trim( file_get_contents( $sig_path ) );
 		if ( empty( $stored_hash ) ) {
 			return false;
 		}

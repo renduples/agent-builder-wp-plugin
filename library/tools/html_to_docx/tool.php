@@ -85,11 +85,10 @@ class Html_To_Docx extends \Agentic\Tool_Base {
 			$filename .= '.docx';
 		}
 
-		$uploads = wp_upload_dir();
-		$dir     = trailingslashit( $uploads['basedir'] ) . 'agentic-exports/';
-		$dir_url = trailingslashit( $uploads['baseurl'] ) . 'agentic-exports/';
+		$dir     = trailingslashit( \Agentic\File_Manager::exports_dir() );
+		$dir_url = trailingslashit( \Agentic\File_Manager::exports_url() );
 
-		if ( ! wp_mkdir_p( $dir ) ) {
+		if ( ! \Agentic\File_Manager::ensure_data_dir( 'exports' ) ) {
 			return array( 'error' => 'Could not create exports directory.' );
 		}
 
@@ -131,7 +130,7 @@ class Html_To_Docx extends \Agentic\Tool_Base {
 		}
 
 		return array(
-			'file_path'    => 'agentic-exports/' . $filename,
+			'file_path'    => \Agentic\File_Manager::export_relative_path( $filename ),
 			'url'          => $dir_url . $filename,
 			'file_size_kb' => round( filesize( $file_path ) / 1024, 1 ),
 		);

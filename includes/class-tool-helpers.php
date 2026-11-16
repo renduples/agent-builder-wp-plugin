@@ -799,12 +799,14 @@ class Tool_Helpers {
 	}
 
 	/**
-	 * Base path the agent can access (wp-content).
+	 * Base path a code_change proposal can reach: the uploads directory,
+	 * resolved at runtime with wp_upload_dir(). Proposal paths are written
+	 * as "uploads/<path>" and resolved against this directory.
 	 *
 	 * @return string
 	 */
 	public static function get_allowed_repo_base(): string {
-		return WP_CONTENT_DIR;
+		return (string) wp_upload_dir( null, false )['basedir'];
 	}
 
 	/**
@@ -907,12 +909,23 @@ class Tool_Helpers {
 	}
 
 	/**
+	 * Prefix recorded in a backup's original path for a file inside the
+	 * plugin's uploads data root (File_Manager::data_dir()), e.g.
+	 * "{data}/agents/my-agent/agent.json". Resolved at restore time, so a
+	 * backup stays valid if the uploads location changes.
+	 */
+	const DATA_ROOT_TOKEN = '{data}/';
+
+	/**
 	 * Map a backup's stored relative path back to an absolute path.
 	 *
-	 * Paths under plugins/, themes/ or agentic-agents/ are relative to
-	 * WP_CONTENT_DIR; everything else (robots.txt, llms.txt, or a path that
-	 * already starts with wp-content/) is relative to ABSPATH. Rejects any
-	 * traversal segment.
+	 * "{data}/…" paths are relative to the uploads data root. Backups made
+	 * before 4.5 of a user agent file ("agentic-agents/…") restore into the
+	 * agents folder of the data root, where that agent now lives. Paths
+	 * under plugins/ or themes/ (never created by this plugin; File_Manager
+	 * refuses to write there anyway) are relative to WP_CONTENT_DIR;
+	 * everything else (robots.txt, llms.txt, or a path that already starts
+	 * with wp-content/) is relative to ABSPATH. Rejects any traversal segment.
 	 *
 	 * @param string $relative Relative path recorded at backup time.
 	 * @return string|null Absolute path, or null if the path is unsafe.
@@ -923,11 +936,34 @@ class Tool_Helpers {
 			return null;
 		}
 
-		if ( str_starts_with( $relative, 'plugins/' ) || str_starts_with( $relative, 'themes/' ) || str_starts_with( $relative, 'agentic-agents/' ) ) {
+		if ( str_starts_with( $relative, self::DATA_ROOT_TOKEN ) ) {
+			return File_Manager::data_dir() . '/' . substr( $relative, strlen( self::DATA_ROOT_TOKEN ) );
+		}
+
+		if ( str_starts_with( $relative, File_Manager::LEGACY_DIRS['agents'] . '/' ) ) {
+			return File_Manager::agents_dir() . '/' . substr( $relative, strlen( File_Manager::LEGACY_DIRS['agents'] ) + 1 );
+		}
+
+		if ( str_starts_with( $relative, 'plugins/' ) || str_starts_with( $relative, 'themes/' ) ) {
 			return WP_CONTENT_DIR . '/' . $relative;
 		}
 
 		return ABSPATH . $relative;
+	}
+
+	/**
+	 * Locate an existing backup file by name, in the data root's backups
+	 * folder or (until it is migrated) the legacy one.
+	 *
+	 * @param string $subdir   '' for file backups, DB_BACKUP_SUBDIR for table backups.
+	 * @param string $filename Bare backup file name.
+	 * @return string|null Absolute path, or null when not found.
+	 */
+	public static function find_backup_file( string $subdir, string $filename ): ?string {
+		if ( '' === $filename || basename( $filename ) !== $filename ) {
+			return null;
+		}
+		return File_Manager::find_data_file( 'backups', ( '' === $subdir ? '' : $subdir . '/' ) . $filename );
 	}
 
 	/**
@@ -963,9 +999,9 @@ class Tool_Helpers {
 	 * @return string|null Backup path or null on failure.
 	 */
 	private static function write_file_backup( string $relative, string $content, ?string $timestamp = null ): ?string {
-		$backup_dir = AGENT_BUILDER_BACKUPS_DIR;
+		$backup_dir = File_Manager::backups_dir();
 
-		File_Manager::ensure_protected_dir( $backup_dir, true );
+		File_Manager::ensure_data_dir( 'backups' );
 
 		$created = $timestamp ? \DateTimeImmutable::createFromFormat( 'Ymd-His', $timestamp, new \DateTimeZone( 'UTC' ) ) : false;
 		$meta    = array(
@@ -985,7 +1021,8 @@ class Tool_Helpers {
 	/**
 	 * Create a timestamped backup of a file before modification.
 	 *
-	 * Backups are stored in wp-content/agentic-backups/ as
+	 * Backups are stored in the backups folder of the uploads data root
+	 * (File_Manager::backups_dir()) as
 	 * {Ymd-His}_{random}_{slug}.php: an exit-guarded file (see
 	 * File_Manager::put_guarded_contents()) holding a one-line JSON header
 	 * with the original relative path, then the original content. Returns
@@ -1005,7 +1042,11 @@ class Tool_Helpers {
 			return null;
 		}
 
-		$relative = ltrim( str_replace( array( ABSPATH, WP_CONTENT_DIR . '/' ), '', $full_path ), '/' );
+		if ( File_Manager::is_in_data_dir( $full_path ) ) {
+			$relative = self::DATA_ROOT_TOKEN . ltrim( substr( wp_normalize_path( $full_path ), strlen( wp_normalize_path( File_Manager::data_dir() ) ) ), '/' );
+		} else {
+			$relative = ltrim( str_replace( array( ABSPATH, WP_CONTENT_DIR . '/' ), '', $full_path ), '/' );
+		}
 
 		return self::write_file_backup( $relative, $content );
 	}
@@ -1019,18 +1060,12 @@ class Tool_Helpers {
 	 * @return array<int, array{file: string, path: string, original: string, original_exists: bool, size: int, created: string}>
 	 */
 	public static function get_backups(): array {
-		$backup_dir = AGENT_BUILDER_BACKUPS_DIR;
-
-		if ( ! is_dir( $backup_dir ) ) {
-			return array();
+		$files = array();
+		foreach ( File_Manager::read_dirs( 'backups' ) as $backup_dir ) {
+			$found = is_dir( $backup_dir ) ? glob( $backup_dir . '/*.php' ) : array();
+			$files = array_merge( $files, is_array( $found ) ? $found : array() );
 		}
-
-		$files   = glob( $backup_dir . '/*.php' );
 		$backups = array();
-
-		if ( ! is_array( $files ) ) {
-			return array();
-		}
 
 		foreach ( $files as $file ) {
 			$basename = basename( $file );
@@ -1079,11 +1114,9 @@ class Tool_Helpers {
 	 * @return array{success: bool, message: string, original?: string}
 	 */
 	public static function restore_backup( string $backup_filename ): array {
-		$backup_dir  = AGENT_BUILDER_BACKUPS_DIR;
-		$backup_path = $backup_dir . '/' . $backup_filename;
-
-		// Prevent directory traversal.
-		if ( basename( $backup_filename ) !== $backup_filename || ! file_exists( $backup_path ) ) {
+		// Prevent directory traversal (find_backup_file() only accepts a bare name).
+		$backup_path = self::find_backup_file( '', $backup_filename );
+		if ( null === $backup_path ) {
 			return array(
 				'success' => false,
 				'message' => 'Backup file not found.',
@@ -1138,17 +1171,20 @@ class Tool_Helpers {
 	public static function count_unprotected_backups(): int {
 		$count = 0;
 
-		$all = glob( AGENT_BUILDER_BACKUPS_DIR . '/*' );
-		foreach ( is_array( $all ) ? $all : array() as $file ) {
-			$basename = basename( $file );
-			if ( ! is_dir( $file ) && ! preg_match( self::BACKUP_NAME_PATTERN, $basename ) && preg_match( '/^\d{8}-\d{6}_/', $basename ) ) {
-				++$count;
+		foreach ( File_Manager::read_dirs( 'backups' ) as $backup_dir ) {
+			$all = glob( $backup_dir . '/*' );
+			foreach ( is_array( $all ) ? $all : array() as $file ) {
+				$basename = basename( $file );
+				if ( ! is_dir( $file ) && ! preg_match( self::BACKUP_NAME_PATTERN, $basename ) && preg_match( '/^\d{8}-\d{6}_/', $basename ) ) {
+					++$count;
+				}
 			}
+
+			$json   = glob( $backup_dir . '/' . self::DB_BACKUP_SUBDIR . '/*.json' );
+			$count += is_array( $json ) ? count( $json ) : 0;
 		}
 
-		$json = glob( AGENT_BUILDER_BACKUPS_DIR . '/' . self::DB_BACKUP_SUBDIR . '/*.json' );
-
-		return $count + ( is_array( $json ) ? count( $json ) : 0 );
+		return $count;
 	}
 
 	/**
@@ -1177,11 +1213,11 @@ class Tool_Helpers {
 
 		$converted = 0;
 
-		if ( defined( 'AGENT_BUILDER_KNOWLEDGE_DIR' ) && is_dir( AGENT_BUILDER_KNOWLEDGE_DIR ) ) {
-			File_Manager::ensure_protected_dir( AGENT_BUILDER_KNOWLEDGE_DIR, true );
+		if ( is_dir( File_Manager::knowledge_dir() ) ) {
+			File_Manager::ensure_data_dir( 'knowledge' );
 		}
 
-		$backup_dir = AGENT_BUILDER_BACKUPS_DIR;
+		$backup_dir = File_Manager::backups_dir();
 		if ( is_dir( $backup_dir ) ) {
 			File_Manager::ensure_protected_dir( $backup_dir, true );
 
@@ -1434,11 +1470,11 @@ class Tool_Helpers {
 			return null;
 		}
 
-		// Protects the shared AGENT_BUILDER_BACKUPS_DIR root even if this runs
-		// before backup_file() ever has — idempotent, cheap to call again.
-		File_Manager::ensure_protected_dir( AGENT_BUILDER_BACKUPS_DIR, true );
+		// Protects the shared backups root even if this runs before
+		// backup_file() ever has — idempotent, cheap to call again.
+		File_Manager::ensure_data_dir( 'backups' );
 
-		$backup_dir = AGENT_BUILDER_BACKUPS_DIR . '/' . self::DB_BACKUP_SUBDIR;
+		$backup_dir = File_Manager::backups_dir() . '/' . self::DB_BACKUP_SUBDIR;
 		File_Manager::ensure_protected_dir( $backup_dir, true );
 
 		// Throttle: skip if a backup for this table was created in the last 60s.
@@ -1580,7 +1616,7 @@ class Tool_Helpers {
 	 * @return string[]
 	 */
 	private static function list_table_backup_files( string $table ): array {
-		$backup_dir = AGENT_BUILDER_BACKUPS_DIR . '/' . self::DB_BACKUP_SUBDIR;
+		$backup_dir = File_Manager::backups_dir() . '/' . self::DB_BACKUP_SUBDIR;
 		$matches    = array();
 
 		$files = glob( $backup_dir . '/*.php' );
@@ -1601,18 +1637,13 @@ class Tool_Helpers {
 	 * @return array<int, array{file: string, path: string, table: string, type: string, row_count: int, size: int, created: string}>
 	 */
 	public static function get_table_backups(): array {
-		$backup_dir = AGENT_BUILDER_BACKUPS_DIR . '/' . self::DB_BACKUP_SUBDIR;
-
-		if ( ! is_dir( $backup_dir ) ) {
-			return array();
+		$files = array();
+		foreach ( File_Manager::read_dirs( 'backups' ) as $backup_root ) {
+			$backup_dir = $backup_root . '/' . self::DB_BACKUP_SUBDIR;
+			$found      = is_dir( $backup_dir ) ? glob( $backup_dir . '/*.php' ) : array();
+			$files      = array_merge( $files, is_array( $found ) ? $found : array() );
 		}
-
-		$files   = glob( $backup_dir . '/*.php' );
 		$backups = array();
-
-		if ( ! is_array( $files ) ) {
-			return array();
-		}
 
 		foreach ( $files as $file ) {
 			$basename = basename( $file );
@@ -1670,10 +1701,9 @@ class Tool_Helpers {
 	 * @return array{success: bool, message: string, table?: string, rows_restored?: int}
 	 */
 	public static function restore_table_backup( string $backup_filename ): array {
-		$backup_dir  = AGENT_BUILDER_BACKUPS_DIR . '/' . self::DB_BACKUP_SUBDIR;
-		$backup_path = $backup_dir . '/' . $backup_filename;
+		$backup_path = self::find_backup_file( self::DB_BACKUP_SUBDIR, $backup_filename );
 
-		if ( basename( $backup_filename ) !== $backup_filename || ! file_exists( $backup_path ) ) {
+		if ( null === $backup_path ) {
 			return array(
 				'success' => false,
 				'message' => 'Backup file not found.',
@@ -1714,19 +1744,20 @@ class Tool_Helpers {
 		$type = $data['type'] ?? 'full';
 
 		// Back up current state before restoring.
+		File_Manager::ensure_data_dir( 'backups/' . self::DB_BACKUP_SUBDIR );
 		if ( 'partial' === $type && ! empty( $data['key_column'] ) && isset( $data['key_value'] ) ) {
 			self::dump_table_rows(
 				$table_short,
 				$full_table,
 				$data['key_column'],
 				$data['key_value'],
-				AGENT_BUILDER_BACKUPS_DIR . '/' . self::DB_BACKUP_SUBDIR
+				File_Manager::backups_dir() . '/' . self::DB_BACKUP_SUBDIR
 			);
 		} else {
 			self::dump_full_table(
 				$table_short,
 				$full_table,
-				AGENT_BUILDER_BACKUPS_DIR . '/' . self::DB_BACKUP_SUBDIR
+				File_Manager::backups_dir() . '/' . self::DB_BACKUP_SUBDIR
 			);
 		}
 

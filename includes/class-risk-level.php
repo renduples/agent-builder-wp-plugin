@@ -442,9 +442,6 @@ class Risk_Level {
 		// blocked, but everything else (permalinks, discussion, third-party
 		// plugin options, remaining agentic_* keys) is still writable.
 		'db_update_option'                     => self::HIGH,
-		// Rewrites a security control (DISALLOW_FILE_EDIT via an agentic_*
-		// option Agent Builder defines at plugins_loaded).
-		'toggle_file_editing'                  => self::HIGH,
 		// Rewrites a security control (xmlrpc_enabled filter).
 		'toggle_xml_rpc'                       => self::HIGH,
 

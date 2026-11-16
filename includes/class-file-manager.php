@@ -129,7 +129,7 @@ WEBCONFIG;
 
 	/**
 	 * Apache: deny every request into a private storage directory
-	 * (agentic-backups, agentic-knowledge). Nothing in those directories is
+	 * (the data root's PRIVATE_SUBDIRS). Nothing in those directories is
 	 * ever meant to be fetched over HTTP — the plugin only reads them from
 	 * disk — so unlike PROTECTIVE_HTACCESS this also denies static files
 	 * such as .json, .md and .txt. Defense-in-depth only: nginx ignores
@@ -179,6 +179,262 @@ WEBCONFIG;
 	 * denied outright. Either way the payload after this line is never sent.
 	 */
 	public const GUARD_HEADER = "<?php exit; ?>\n";
+
+	/**
+	 * Name of the plugin's data folder inside the uploads directory.
+	 *
+	 * The ONE place the on-disk folder name is defined: every data path the
+	 * plugin uses is built from data_dir(), which is
+	 * wp_upload_dir()['basedir'] . '/' . DATA_SLUG. Set to the plugin's
+	 * WordPress.org slug (data goes in a folder named after the plugin), so
+	 * existing data only ever has to be moved once.
+	 */
+	public const DATA_SLUG = 'siteloom';
+
+	/**
+	 * Subfolders of the data root that must never be served over HTTP. Each
+	 * gets the deny-all .htaccess/web.config and an index.php.
+	 *
+	 * - agents:    user-created agents (agent.json, abilities.json, prompts).
+	 * - knowledge: knowledge files and the knowledge wiki.
+	 * - backups:   automatic pre-change backups (exit-guarded .php files).
+	 * - docs:      generated documentation for read-only (bundled) agents.
+	 * - tmp:       short-lived chat image uploads (cleaned after an hour).
+	 *
+	 * `exports` (documents the user downloads by URL) is public by design and
+	 * only gets the execution-denying rules.
+	 *
+	 * @var string[]
+	 */
+	public const PRIVATE_SUBDIRS = array( 'agents', 'knowledge', 'backups', 'docs', 'tmp' );
+
+	/**
+	 * Pre-4.5 storage locations directly inside wp-content, keyed by the data
+	 * root subfolder that replaced each one. Only read as a migration source
+	 * (Storage_Migration) and, while a migration is incomplete, as a
+	 * read-only fallback. Never written to.
+	 *
+	 * @var array<string, string>
+	 */
+	public const LEGACY_DIRS = array(
+		'agents'    => 'agentic-agents',
+		'knowledge' => 'agentic-knowledge',
+		'backups'   => 'agentic-backups',
+	);
+
+	/**
+	 * Absolute path of the plugin's data root:
+	 * {uploads basedir}/siteloom (no trailing slash).
+	 *
+	 * Resolved at call time with wp_upload_dir() — never hard-coded — so it
+	 * follows the upload_path option, the upload_dir filter and, on
+	 * multisite, the current site. Does not create anything.
+	 *
+	 * @return string
+	 */
+	public static function data_dir(): string {
+		$uploads = wp_upload_dir( null, false );
+		return untrailingslashit( (string) $uploads['basedir'] ) . '/' . self::DATA_SLUG;
+	}
+
+	/**
+	 * Public URL of the data root (only the exports subfolder is ever linked).
+	 *
+	 * @return string
+	 */
+	public static function data_url(): string {
+		$uploads = wp_upload_dir( null, false );
+		return untrailingslashit( (string) $uploads['baseurl'] ) . '/' . self::DATA_SLUG;
+	}
+
+	/**
+	 * Absolute path of one data subfolder, e.g. data_path( 'agents' ).
+	 *
+	 * @param string $sub Subfolder name ('' for the root).
+	 * @return string
+	 */
+	public static function data_path( string $sub = '' ): string {
+		$sub = trim( $sub, '/' );
+		return '' === $sub ? self::data_dir() : self::data_dir() . '/' . $sub;
+	}
+
+	/**
+	 * User-created agents: {data root}/agents.
+	 *
+	 * @return string
+	 */
+	public static function agents_dir(): string {
+		return self::data_path( 'agents' );
+	}
+
+	/**
+	 * Knowledge files and the knowledge wiki: {data root}/knowledge.
+	 *
+	 * @return string
+	 */
+	public static function knowledge_dir(): string {
+		return self::data_path( 'knowledge' );
+	}
+
+	/**
+	 * Automatic pre-change backups: {data root}/backups.
+	 *
+	 * @return string
+	 */
+	public static function backups_dir(): string {
+		return self::data_path( 'backups' );
+	}
+
+	/**
+	 * Generated documents the user downloads (PDF, DOCX, XLSX…): {data root}/exports.
+	 *
+	 * @return string
+	 */
+	public static function exports_dir(): string {
+		return self::data_path( 'exports' );
+	}
+
+	/**
+	 * Public URL of exports_dir().
+	 *
+	 * @return string
+	 */
+	public static function exports_url(): string {
+		return self::data_url() . '/exports';
+	}
+
+	/**
+	 * Path of an export relative to the uploads basedir, as stored in tool
+	 * results and checked by Result_Card ("siteloom/exports/<name>").
+	 *
+	 * @param string $filename Bare file name.
+	 * @return string
+	 */
+	public static function export_relative_path( string $filename ): string {
+		return self::DATA_SLUG . '/exports/' . $filename;
+	}
+
+	/**
+	 * Old wp-content/agentic-* location that a data subfolder replaced.
+	 *
+	 * @param string $kind 'agents', 'knowledge' or 'backups'.
+	 * @return string Absolute path ('' for an unknown kind). May not exist.
+	 */
+	public static function legacy_dir( string $kind ): string {
+		if ( ! isset( self::LEGACY_DIRS[ $kind ] ) ) {
+			return '';
+		}
+		return untrailingslashit( WP_CONTENT_DIR ) . '/' . self::LEGACY_DIRS[ $kind ];
+	}
+
+	/**
+	 * The legacy directory to keep READING as a fallback, or null.
+	 *
+	 * Non-null only while the old folder still exists — i.e. the one-time
+	 * move into the uploads data root has not run yet or could not move
+	 * everything (a permissions problem). Storage_Migration removes the old
+	 * folder once it is empty, after which this returns null and costs one
+	 * stat() per request. Nothing is ever written to the returned path.
+	 *
+	 * @param string $kind 'agents', 'knowledge' or 'backups'.
+	 * @return string|null
+	 */
+	public static function legacy_fallback_dir( string $kind ): ?string {
+		$dir = self::legacy_dir( $kind );
+		return ( '' !== $dir && is_dir( $dir ) ) ? $dir : null;
+	}
+
+	/**
+	 * Directories to READ a kind of data from, highest priority first: the
+	 * data root subfolder, then the legacy folder while it still exists.
+	 *
+	 * @param string $kind 'agents', 'knowledge' or 'backups'.
+	 * @return string[]
+	 */
+	public static function read_dirs( string $kind ): array {
+		$dirs   = array( self::data_path( $kind ) );
+		$legacy = self::legacy_fallback_dir( $kind );
+		if ( null !== $legacy ) {
+			$dirs[] = $legacy;
+		}
+		return $dirs;
+	}
+
+	/**
+	 * Locate an existing data file by its path relative to a data kind's
+	 * folder, checking the data root first and the legacy folder second.
+	 *
+	 * @param string $kind     'agents', 'knowledge' or 'backups'.
+	 * @param string $relative Relative path (no traversal segments).
+	 * @return string|null Absolute path, or null when no folder holds it.
+	 */
+	public static function find_data_file( string $kind, string $relative ): ?string {
+		$relative = ltrim( str_replace( '\\', '/', $relative ), '/' );
+		if ( '' === $relative || in_array( '..', explode( '/', $relative ), true ) ) {
+			return null;
+		}
+		foreach ( self::read_dirs( $kind ) as $dir ) {
+			if ( file_exists( $dir . '/' . $relative ) ) {
+				return $dir . '/' . $relative;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Create a data subfolder on demand, with its web-access protection.
+	 *
+	 * The data root itself only gets the execution-denying rules (its
+	 * exports/ subfolder must stay downloadable); every folder in
+	 * PRIVATE_SUBDIRS gets the deny-all rules.
+	 *
+	 * @param string $sub Subfolder name ('agents', 'knowledge', 'backups', 'docs', 'tmp', 'exports').
+	 * @return bool True if the folder exists afterwards.
+	 */
+	public static function ensure_data_dir( string $sub ): bool {
+		if ( ! self::ensure_protected_dir( self::data_dir() ) ) {
+			return false;
+		}
+		$first = explode( '/', trim( $sub, '/' ) )[0];
+		return self::ensure_protected_dir( self::data_path( $sub ), in_array( $first, self::PRIVATE_SUBDIRS, true ) );
+	}
+
+	/**
+	 * Whether $path is inside the uploads data root (the only place the
+	 * plugin writes its own files). Symlinks in existing parents are resolved.
+	 *
+	 * @param string $path Absolute path.
+	 * @return bool
+	 */
+	public static function is_in_data_dir( string $path ): bool {
+		$root = self::real_or_normalized( self::data_dir() );
+		$real = self::real_or_normalized( $path );
+		return str_starts_with( trailingslashit( $real ), trailingslashit( $root ) );
+	}
+
+	/**
+	 * Resolve the deepest existing ancestor of $path with realpath() and
+	 * re-append the rest; normalized to forward slashes.
+	 *
+	 * @param string $path Absolute path.
+	 * @return string
+	 */
+	private static function real_or_normalized( string $path ): string {
+		$path   = wp_normalize_path( untrailingslashit( $path ) );
+		$suffix = '';
+		$probe  = $path;
+		while ( '' !== $probe && '/' !== $probe && '.' !== $probe && ! file_exists( $probe ) ) {
+			$suffix = '/' . basename( $probe ) . $suffix;
+			$parent = dirname( $probe );
+			if ( $parent === $probe ) {
+				break;
+			}
+			$probe = $parent;
+		}
+		$real = realpath( $probe );
+		$base = false !== $real ? wp_normalize_path( $real ) : $probe;
+		return untrailingslashit( $base ) . $suffix;
+	}
 
 	/**
 	 * Cached direct filesystem instance, false when unavailable.
@@ -386,10 +642,10 @@ WEBCONFIG;
 	}
 
 	/**
-	 * Create one of the plugin's own writable directories (agentic-agents,
-	 * agentic-knowledge, agentic-backups — never the shared uploads directory,
-	 * which this plugin does not own) and seed it with execution-denying
-	 * protection, the first time it is created.
+	 * Create one of the plugin's own writable directories (the uploads data
+	 * root and its subfolders — see ensure_data_dir(); never the shared
+	 * uploads directory itself, which this plugin does not own) and seed it
+	 * with execution-denying protection, the first time it is created.
 	 *
 	 * This is defense-in-depth against a misconfigured webserver, not the
 	 * primary control: the extension denylist above is what actually stops
@@ -407,7 +663,7 @@ WEBCONFIG;
 	 * files are never overwritten, so a site owner's own customisation of
 	 * any of these is left alone.
 	 *
-	 * With $deny_all set (agentic-backups, agentic-knowledge) the .htaccess
+	 * With $deny_all set (the PRIVATE_SUBDIRS of the data root) the .htaccess
 	 * and web.config deny every request into the directory, not only script
 	 * execution — those directories are only ever read from disk. An
 	 * existing file still wins, except an unmodified copy of the older
@@ -468,8 +724,8 @@ WEBCONFIG;
 	 * payload is never served. Callers also give each file an unguessable
 	 * random name component.
 	 *
-	 * Only ever writes inside AGENT_BUILDER_BACKUPS_DIR or
-	 * AGENT_BUILDER_KNOWLEDGE_DIR, only a plain "name.php" file name, and
+	 * Only ever writes inside backups_dir() or knowledge_dir(), only a plain
+	 * "name.php" file name, and
 	 * only with the hardcoded guard first — so, unlike put_contents(), the
 	 * .php extension is allowed here: this is the plugin's own storage
 	 * format, never code and never a tool-chosen path.
@@ -538,11 +794,8 @@ WEBCONFIG;
 		}
 		$dir = trailingslashit( wp_normalize_path( $dir ) );
 
-		foreach ( array( 'AGENT_BUILDER_BACKUPS_DIR', 'AGENT_BUILDER_KNOWLEDGE_DIR' ) as $constant ) {
-			if ( ! defined( $constant ) ) {
-				continue;
-			}
-			$root = realpath( (string) constant( $constant ) );
+		foreach ( array( self::backups_dir(), self::knowledge_dir() ) as $storage_dir ) {
+			$root = realpath( $storage_dir );
 			if ( false !== $root && str_starts_with( $dir, trailingslashit( wp_normalize_path( $root ) ) ) ) {
 				return true;
 			}
@@ -589,23 +842,18 @@ WEBCONFIG;
 	/**
 	 * Check whether $path is rooted inside one of the plugin's allowed write roots.
 	 *
-	 * Write operations are restricted to:
-	 *   - The uploads directory (wp_upload_dir basedir)
-	 *   - The agentic-agents user directory (AGENT_BUILDER_AGENTS_DIR)
-	 *   - The agentic-knowledge directory (AGENT_BUILDER_KNOWLEDGE_DIR)
-	 *   - The agentic-backups directory (AGENT_BUILDER_BACKUPS_DIR)
-	 *   - `abilities.json` specifically, under the plugin's own bundled
-	 *     library/agents/ tree (AGENT_BUILDER_DIR) — see the narrow
-	 *     exception below; nothing else in the plugin directory is writable.
+	 * Write operations are restricted to the uploads directory
+	 * (wp_upload_dir() basedir), which contains the plugin's own data root
+	 * (data_dir(): user agents, knowledge, backups, exports), plus the two
+	 * named site-root files below.
 	 *
-	 * The plugin directory itself is deliberately NOT a general allowed
-	 * root: WordPress.org Plugin Developer FAQ / Guideline 8 treat a tool
-	 * that can write into the plugin's own tree as generating code intended
-	 * to run on the site. The one narrow exception exists because
-	 * configure_approval_gate/enable_webmcp_defaults rewrite a bundled
-	 * agent's abilities.json (e.g. turning off WebMCP exposure on a risky
-	 * ability) — both take no tool parameters at all, so neither the path
-	 * nor the content is ever attacker-influenced.
+	 * Nothing inside the plugin's own directory is writable — not even a
+	 * bundled agent's abilities.json: bundled agents are read-only, and the
+	 * settings that used to be written into them (WebMCP exposure, knowledge
+	 * files, integrity signatures) are stored in the database instead (see
+	 * Abilities_Manifest::persist()). Nor is anything else under wp-content
+	 * (the pre-4.5 wp-content/agentic-* folders are only read, as a
+	 * migration source).
 	 *
 	 * Throws nothing — returns false so callers can surface the failure cleanly.
 	 *
@@ -615,22 +863,13 @@ WEBCONFIG;
 	public static function is_allowed_path( string $path ): bool {
 		$allowed_roots = array();
 
-		if ( defined( 'AGENT_BUILDER_AGENTS_DIR' ) ) {
-			$allowed_roots[] = trailingslashit( AGENT_BUILDER_AGENTS_DIR );
-		}
-
-		// Knowledge Wiki (OKF) and persona knowledge files.
-		if ( defined( 'AGENT_BUILDER_KNOWLEDGE_DIR' ) ) {
-			$allowed_roots[] = trailingslashit( AGENT_BUILDER_KNOWLEDGE_DIR );
-		}
-
-		if ( defined( 'AGENT_BUILDER_BACKUPS_DIR' ) ) {
-			$allowed_roots[] = trailingslashit( AGENT_BUILDER_BACKUPS_DIR );
-		}
-
 		$upload_dir = wp_upload_dir( null, false );
 		if ( ! empty( $upload_dir['basedir'] ) ) {
 			$allowed_roots[] = trailingslashit( $upload_dir['basedir'] );
+			$real_base       = realpath( $upload_dir['basedir'] );
+			if ( false !== $real_base ) {
+				$allowed_roots[] = trailingslashit( $real_base );
+			}
 		}
 
 		// Resolve symlinks to get the real path for comparison.
@@ -641,15 +880,17 @@ WEBCONFIG;
 		}
 		$real = trailingslashit( $real ) . basename( $path );
 
-		foreach ( $allowed_roots as $root ) {
-			if ( str_starts_with( $real, $root ) ) {
-				return true;
+		// Never inside the plugin directory, even if uploads were somehow
+		// configured to live under it.
+		if ( defined( 'AGENT_BUILDER_DIR' ) ) {
+			$plugin_root = realpath( AGENT_BUILDER_DIR );
+			if ( false !== $plugin_root && str_starts_with( $real, trailingslashit( $plugin_root ) ) ) {
+				return false;
 			}
 		}
 
-		if ( defined( 'AGENT_BUILDER_DIR' ) ) {
-			$agents_library_root = trailingslashit( AGENT_BUILDER_DIR ) . 'library/agents/';
-			if ( str_starts_with( $real, $agents_library_root ) && 'abilities.json' === basename( $real ) ) {
+		foreach ( $allowed_roots as $root ) {
+			if ( str_starts_with( $real, $root ) ) {
 				return true;
 			}
 		}

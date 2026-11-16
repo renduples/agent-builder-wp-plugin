@@ -78,7 +78,7 @@ class Test_Agent_Templates extends TestCase {
 		$this->assertSame( 'source-agent-copy', $copy );
 
 		// Files exist and integrity holds.
-		$copy_dir = AGENT_BUILDER_AGENTS_DIR . '/' . $copy;
+		$copy_dir = \Agentic\File_Manager::agents_dir() . '/' . $copy;
 		$this->assertFileExists( $copy_dir . '/agent.json' );
 		$this->assertFileExists( $copy_dir . '/templates/system-prompt.txt' );
 		$this->assertFileExists( $copy_dir . '/abilities.json' );
@@ -198,7 +198,7 @@ class Test_Agent_Templates extends TestCase {
 		$this->assertNotContains( $slug, \Agentic_Agent_Registry::get_instance()->get_active_agents() );
 
 		// Files written.
-		$dir = AGENT_BUILDER_AGENTS_DIR . '/' . $slug;
+		$dir = \Agentic\File_Manager::agents_dir() . '/' . $slug;
 		$this->assertFileExists( $dir . '/agent.json' );
 		$this->assertFileExists( $dir . '/templates/system-prompt.txt' );
 		$this->assertStringContainsString( 'imported assistant', (string) file_get_contents( $dir . '/templates/system-prompt.txt' ) );
@@ -615,7 +615,7 @@ class Test_Agent_Templates extends TestCase {
 		$slug = 'partial-fail-agent';
 		$this->track( $slug );
 
-		$agent_dir = AGENT_BUILDER_AGENTS_DIR . '/' . $slug;
+		$agent_dir = \Agentic\File_Manager::agents_dir() . '/' . $slug;
 
 		$manifest = array(
 			'slug'         => $slug,
@@ -651,7 +651,7 @@ class Test_Agent_Templates extends TestCase {
 		$slug = 'already-claimed-agent';
 		$this->track( $slug );
 
-		$agent_dir = AGENT_BUILDER_AGENTS_DIR . '/' . $slug;
+		$agent_dir = \Agentic\File_Manager::agents_dir() . '/' . $slug;
 		wp_mkdir_p( $agent_dir );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture standing in for another writer's already-committed content.
 		file_put_contents( $agent_dir . '/agent.json', 'sentinel-from-another-write' );
@@ -700,8 +700,8 @@ class Test_Agent_Templates extends TestCase {
 		$slug = 'mkdir-fail-agent';
 		$this->track( $slug );
 
-		$agent_dir  = AGENT_BUILDER_AGENTS_DIR . '/' . $slug;
-		$agents_dir = AGENT_BUILDER_AGENTS_DIR;
+		$agent_dir  = \Agentic\File_Manager::agents_dir() . '/' . $slug;
+		$agents_dir = \Agentic\File_Manager::agents_dir();
 		wp_mkdir_p( $agents_dir );
 
 		$manifest = array(
@@ -886,7 +886,7 @@ class Test_Agent_Templates extends TestCase {
 	public function test_duplicate_cleans_up_on_activation_failure(): void {
 		// Source declares a tool its abilities.json omits, so write_agent()
 		// succeeds but activate_agent() fails the manifest cross-check.
-		$source_dir = AGENT_BUILDER_AGENTS_DIR . '/broken-source';
+		$source_dir = \Agentic\File_Manager::agents_dir() . '/broken-source';
 		wp_mkdir_p( $source_dir . '/templates' );
 
 		$manifest = array(
@@ -935,7 +935,7 @@ class Test_Agent_Templates extends TestCase {
 
 		$copy = 'broken-source-copy';
 		$this->assertFalse(
-			is_dir( AGENT_BUILDER_AGENTS_DIR . '/' . $copy ),
+			is_dir( \Agentic\File_Manager::agents_dir() . '/' . $copy ),
 			'Expected the failed duplicate directory to be removed'
 		);
 		$this->assertNotContains(
@@ -968,7 +968,7 @@ class Test_Agent_Templates extends TestCase {
 	 * @return string Agent directory.
 	 */
 	private function create_full_agent( string $slug, string $name, array $tools ): string {
-		$agent_dir = AGENT_BUILDER_AGENTS_DIR . '/' . $slug;
+		$agent_dir = \Agentic\File_Manager::agents_dir() . '/' . $slug;
 		wp_mkdir_p( $agent_dir . '/templates' );
 
 		$manifest = array(
@@ -1212,7 +1212,7 @@ class Test_Agent_Templates extends TestCase {
 			$registry->deactivate_agent( $slug );
 		}
 
-		$dir = AGENT_BUILDER_AGENTS_DIR . '/' . $slug;
+		$dir = \Agentic\File_Manager::agents_dir() . '/' . $slug;
 		if ( is_dir( $dir ) ) {
 			$this->delete_directory( $dir );
 		}

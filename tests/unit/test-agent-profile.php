@@ -209,7 +209,7 @@ class Test_Agent_Profile extends TestCase {
 	 * @param string $icon        Agent icon.
 	 */
 	private function create_agent( string $slug, string $name, string $description, string $icon ): void {
-		$agent_dir = AGENT_BUILDER_AGENTS_DIR . '/' . $slug;
+		$agent_dir = \Agentic\File_Manager::agents_dir() . '/' . $slug;
 		wp_mkdir_p( $agent_dir );
 
 		$manifest = array(
@@ -237,7 +237,7 @@ class Test_Agent_Profile extends TestCase {
 	 * @param string $slug Agent slug.
 	 */
 	private function delete_agent( string $slug ): void {
-		$agent_dir = AGENT_BUILDER_AGENTS_DIR . '/' . $slug;
+		$agent_dir = \Agentic\File_Manager::agents_dir() . '/' . $slug;
 		if ( is_dir( $agent_dir ) ) {
 			$this->delete_directory( $agent_dir );
 		}
