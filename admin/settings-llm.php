@@ -269,7 +269,7 @@ $agentic_hosted_credits        = ( 'agentic' === get_option( 'agent_builder_llm_
 
 </div>
 
-<p class="agentic-llm-disclaimer"><?php /* translators: %s: link to Terms of Service */ printf( esc_html__( 'Agent Builder is not responsible for charges on your AI provider accounts. By using this plugin you agree to the %s.', 'siteloom' ), '<a href="https://agentic-plugin.com/terms-of-service/" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Terms of Service', 'siteloom' ) . '</a>' ); ?></p>
+<p class="agentic-llm-disclaimer"><?php /* translators: %s: link to Terms of Service */ printf( esc_html__( 'Siteloom is not responsible for charges on your AI provider accounts. By using this plugin you agree to the %s.', 'siteloom' ), '<a href="https://agentic-plugin.com/terms-of-service/" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Terms of Service', 'siteloom' ) . '</a>' ); ?></p>
 
 <?php
 \Agentic\Inline_Assets::script(

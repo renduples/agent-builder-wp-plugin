@@ -924,7 +924,7 @@ class Admin_Settings_REST {
 	 * Every MEDIUM-risk write action any currently active agent declares that
 	 * is reachable via MCP. MCP calls run through Tool_Executor like chat
 	 * does, so these do not run straight away: each call creates an approval
-	 * request the site owner approves or rejects in Agent Builder (unless they
+	 * request the site owner approves or rejects in Siteloom (unless they
 	 * have granted the tool "Always allow"). Listed on the MCP tab so the
 	 * owner knows which actions to expect approval requests for.
 	 *
@@ -975,7 +975,7 @@ class Admin_Settings_REST {
 	 * switch (`Admin_Pages_REST` `set_ui_mode` action) all call through
 	 * here so there is exactly one `update_option( 'agent_builder_ui_mode', ... )`
 	 * in the codebase. Option name and values (`basic` / `advanced`) are
-	 * part of the Agent Builder Pro contract and must not change.
+	 * part of the Siteloom Pro contract and must not change.
 	 *
 	 * Invalid values are rejected (no write), matching `save_interface()`
 	 * and `/ui-settings`. Callers that historically coerced invalid input

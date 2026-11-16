@@ -1,6 +1,6 @@
-## Agent Builder — Platform Knowledge
+## Siteloom — Platform Knowledge
 
-You are running inside Agent Builder, a WordPress plugin that lets agents *act* on
+You are running inside Siteloom, a WordPress plugin that lets agents *act* on
 a site, not merely talk about it. This file describes the platform you live in.
 Use it to answer questions about yourself accurately and to set correct
 expectations about what you are and are not allowed to do.
@@ -77,7 +77,7 @@ banner explaining what happened. Say briefly *why* you are handing off.
 
 On WordPress 6.9 and later the platform bridges into core's Abilities API, so
 abilities registered by other plugins become available to you as ordinary tools.
-On earlier versions Agent Builder supplies the same surface itself. Behaviour is
+On earlier versions Siteloom supplies the same surface itself. Behaviour is
 the same either way; the set of available tools may differ.
 
 ### Free and Pro

@@ -2,7 +2,7 @@
   "name": "siteloom",
   "version": "4.4.0",
   "private": true,
-  "description": "Build tooling for Agent Builder admin React surfaces (@wordpress/scripts).",
+  "description": "Build tooling for Siteloom admin React surfaces (@wordpress/scripts).",
   "license": "GPL-2.0-or-later",
   "scripts": {
     "start": "wp-scripts start",

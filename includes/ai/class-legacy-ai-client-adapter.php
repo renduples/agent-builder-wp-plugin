@@ -36,7 +36,7 @@ class Legacy_AI_Client_Adapter implements AI_Client_Adapter {
 	}
 
 	public function get_name(): string {
-		return 'Agent Builder Legacy (full bridge on WP 6.4+)';
+		return 'Siteloom Legacy (full bridge on WP 6.4+)';
 	}
 
 	public function is_available(): bool {

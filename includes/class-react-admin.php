@@ -2,7 +2,7 @@
 /**
  * React admin surfaces — enqueue and mount helpers.
  *
- * Central place for shipping @wordpress/scripts builds on Agent Builder
+ * Central place for shipping @wordpress/scripts builds on Siteloom
  * admin screens so pages share one pattern (asset.php + localize + root).
  *
  * @package    Agent_Builder

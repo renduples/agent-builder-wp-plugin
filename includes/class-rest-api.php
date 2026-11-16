@@ -4,7 +4,7 @@
  *
  * @package    Agent_Builder
  * @subpackage Includes
- * @author     Agent Builder Team <support@agentic-plugin.com>
+ * @author     Siteloom Team <support@agentic-plugin.com>
  * @license    GPL-2.0-or-later https://www.gnu.org/licenses/gpl-2.0.html
  * @link       https://agentic-plugin.com
  * @since      0.1.0
@@ -1969,7 +1969,7 @@ class REST_API {
 			: 'An anonymous visitor';
 		$settings_url = admin_url( 'admin.php?page=agentic-settings' );
 
-		$subject = sprintf( '[%s] Agent Builder — AI Rate Limit Reached', $site );
+		$subject = sprintf( '[%s] Siteloom — AI Rate Limit Reached', $site );
 
 		$body  = '<p style="margin:0 0 16px;">A user on <strong>' . esc_html( $site ) . '</strong> has hit a rate limit with your configured AI provider.</p>';
 		$body .= '<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 16px;">';
@@ -1977,7 +1977,7 @@ class REST_API {
 		$body .= '<tr><td style="padding:4px 12px 4px 0;font-weight:600;color:#1d2327;">Date</td><td style="padding:4px 0;">' . esc_html( wp_date( 'F j, Y' ) ) . '</td></tr>';
 		$body .= '</table>';
 		$body .= '<p style="margin:0 0 8px;">To keep the experience seamless, consider switching AI providers or reviewing your current provider\'s plan in Settings.</p>';
-		$body .= '<p style="margin:0;font-size:12px;color:#787c82;">This notification is sent at most once per day. Manage your AI provider in <a href="' . esc_url( $settings_url ) . '" style="color:#787c82;">Agent Builder → Settings</a>.</p>';
+		$body .= '<p style="margin:0;font-size:12px;color:#787c82;">This notification is sent at most once per day. Manage your AI provider in <a href="' . esc_url( $settings_url ) . '" style="color:#787c82;">Siteloom → Settings</a>.</p>';
 
 		Email_Helper::send(
 			$admin_email,
@@ -2626,7 +2626,7 @@ class REST_API {
 
 		if ( empty( $api_key ) ) {
 			wp_send_json_error(
-				array( 'error' => 'TTS requires connecting an Agentic AI account — go to Agent Builder → Settings → Providers and connect Agentic AI.' ),
+				array( 'error' => 'TTS requires connecting an Agentic AI account — go to Siteloom → Settings → Providers and connect Agentic AI.' ),
 				503
 			);
 			return;

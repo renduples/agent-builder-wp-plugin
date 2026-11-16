@@ -796,7 +796,7 @@ class Admin_Surfaces {
 	/* --------------------------------------------------------------------- */
 
 	/**
-	 * Register the dashboard "Ask Agent Builder" widget.
+	 * Register the dashboard "Ask Siteloom" widget.
 	 *
 	 * @return void
 	 */
@@ -809,7 +809,7 @@ class Admin_Surfaces {
 		}
 		wp_add_dashboard_widget(
 			'agentic_dashboard_launcher',
-			__( 'Ask Agent Builder', 'siteloom' ),
+			__( 'Ask Siteloom', 'siteloom' ),
 			array( $this, 'render_dashboard_widget' )
 		);
 	}

@@ -515,7 +515,7 @@ $agentic_sk_instances = $agentic_sk_registry->get_all_instances();
 		<!-- Recommended Skills from agentic-plugin.com -->
 		<div id="agentic-recommended-skills" class="agentic-recommended-grid">
 			<h3 class="agentic-h3-mb-8"><?php esc_html_e( 'Recommended Skills', 'siteloom' ); ?></h3>
-			<p class="agentic-mb-12-text-dim"><?php esc_html_e( 'Curated skills verified to work with Agent Builder. The list is fetched from agentic-plugin.com only when you click the button below.', 'siteloom' ); ?></p>
+			<p class="agentic-mb-12-text-dim"><?php esc_html_e( 'Curated skills verified to work with Siteloom. The list is fetched from agentic-plugin.com only when you click the button below.', 'siteloom' ); ?></p>
 			<div id="agentic-recommended-grid" class="agentic-min-h-60">
 				<button type="button" class="button" id="agentic-load-recommended"><?php esc_html_e( 'Show recommended skills', 'siteloom' ); ?></button>
 			</div>

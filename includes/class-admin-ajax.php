@@ -1230,7 +1230,7 @@ class Admin_Ajax {
 		if ( ! Provider_Registry::save_api_key( 'agentic', $api_key ) ) {
 			return new \WP_Error(
 				'agentic_api_key_not_saved',
-				__( 'Your API key was issued but could not be saved on this site. Please deactivate and reactivate Agent Builder to repair its database tables, then try again.', 'siteloom' )
+				__( 'Your API key was issued but could not be saved on this site. Please deactivate and reactivate Siteloom to repair its database tables, then try again.', 'siteloom' )
 			);
 		}
 

@@ -1,5 +1,5 @@
 /**
- * Shared WordPress-components building blocks for Agent Builder admin.
+ * Shared WordPress-components building blocks for Siteloom admin.
  */
 import { useState } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';

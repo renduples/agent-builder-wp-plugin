@@ -59,7 +59,7 @@ class Browse_Community_Skills extends \Agentic\Tool_Base {
 	 * @return string
 	 */
 	public function get_description(): string {
-		return "Browse or import skills other people have published. Two sources: \"wordpress\" (WordPress.org's official, human-reviewed skill repository) and \"agentic\" (Agent Builder's own curated recommended feed).";
+		return "Browse or import skills other people have published. Two sources: \"wordpress\" (WordPress.org's official, human-reviewed skill repository) and \"agentic\" (Siteloom's own curated recommended feed).";
 	}
 
 	/**

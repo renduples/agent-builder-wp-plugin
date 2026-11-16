@@ -6,7 +6,7 @@
  *
  * @package    Agent_Builder
  * @subpackage Templates
- * @author     Agent Builder Team <support@agentic-plugin.com>
+ * @author     Siteloom Team <support@agentic-plugin.com>
  * @license    GPL-2.0-or-later https://www.gnu.org/licenses/gpl-2.0.html
  * @link       https://agentic-plugin.com
  * @since      0.1.0
@@ -284,7 +284,7 @@ if ( $agentic_default_agent_id && isset( $agentic_agents[ $agentic_default_agent
 	<div class="agentic-chat-footer">
 		<?php if ( $agentic_show_branding ) : ?>
 		<span class="agentic-footer-info">
-			<?php esc_html_e( 'Powered by Agent Builder', 'siteloom' ); ?>
+			<?php esc_html_e( 'Powered by Siteloom', 'siteloom' ); ?>
 			<?php
 			if ( $agentic_pm_label ) :
 				?>

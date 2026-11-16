@@ -163,7 +163,7 @@ if ( ! $agentic_pa_selected && ! empty( $agentic_all_agents ) ) {
 					class="large-text code"
 					placeholder="<?php echo esc_attr( "e.g. Our business hours are Mon-Fri 9am-5pm SAST. Returns accepted within 30 days with proof of purchase.\n\nProduct categories: Rings, Necklaces, Bracelets, Earrings, Custom Orders.\n\nFAQ:\nQ: Do you ship internationally?\nA: Yes, we ship to 40+ countries via DHL Express (5-7 business days)." ); ?>"
 				><?php echo esc_textarea( $agentic_pa_knowledge ); ?></textarea>
-				<p class="description">Quick reference for this agent (FAQs, policies, product facts). For a structured, multi-concept wiki, use <a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-train-data&tab=wiki' ) ); ?>"><strong>Knowledge → Knowledge Wiki (OKF)</strong></a>. Hosted Vector Store / RAG is available in Agent Builder Pro.</p>
+				<p class="description">Quick reference for this agent (FAQs, policies, product facts). For a structured, multi-concept wiki, use <a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-train-data&tab=wiki' ) ); ?>"><strong>Knowledge → Knowledge Wiki (OKF)</strong></a>. Hosted Vector Store / RAG is available in Siteloom Pro.</p>
 			</td>
 		</tr>
 	</table>
@@ -176,5 +176,5 @@ if ( ! $agentic_pa_selected && ! empty( $agentic_all_agents ) ) {
 
 <div class="agentic-callout-blue">
 	<strong>Two ways to give agents knowledge</strong>
-	Use the free <a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-train-data&tab=wiki' ) ); ?>"><strong>Knowledge Wiki (OKF)</strong></a> for curated markdown concepts (policies, FAQs, playbooks) that stay on your server. Hosted vector search for large PDFs and whole-site semantic retrieval is available separately in Agent Builder Pro.
+	Use the free <a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-train-data&tab=wiki' ) ); ?>"><strong>Knowledge Wiki (OKF)</strong></a> for curated markdown concepts (policies, FAQs, playbooks) that stay on your server. Hosted vector search for large PDFs and whole-site semantic retrieval is available separately in Siteloom Pro.
 </div>

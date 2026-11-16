@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Registers all Agent Builder wp-admin menu pages and renders their content.
+ * Registers all Siteloom wp-admin menu pages and renders their content.
  */
 class Admin_Menu_Handler {
 
@@ -35,8 +35,8 @@ class Admin_Menu_Handler {
 	 */
 	public function register(): void {
 		add_menu_page(
-			__( 'Agent Builder', 'siteloom' ),
-			__( 'Agent Builder', 'siteloom' ),
+			__( 'Siteloom', 'siteloom' ),
+			__( 'Siteloom', 'siteloom' ),
 			'agent_builder_view_dashboard',
 			'agent-builder',
 			fn() => $this->render_page( 'dashboard' ),
@@ -50,7 +50,7 @@ class Admin_Menu_Handler {
 			remove_submenu_page( 'agent-builder', 'agent-builder' );
 			add_submenu_page(
 				'agent-builder',
-				__( 'Agent Builder — Quick Start', 'siteloom' ),
+				__( 'Siteloom — Quick Start', 'siteloom' ),
 				__( 'Quick Start', 'siteloom' ),
 				'manage_options',
 				'agentic-signup',
@@ -59,7 +59,7 @@ class Admin_Menu_Handler {
 			// Setup wizard — hidden, must be registered so skip link on signup page works.
 			add_submenu_page(
 				'',
-				__( 'Agent Builder — Setup Wizard', 'siteloom' ),
+				__( 'Siteloom — Setup Wizard', 'siteloom' ),
 				__( 'Setup Wizard', 'siteloom' ),
 				'manage_options',
 				'agentic-setup',
@@ -70,7 +70,7 @@ class Admin_Menu_Handler {
 
 		add_submenu_page(
 			'agent-builder',
-			__( 'Agent Builder — Dashboard', 'siteloom' ),
+			__( 'Siteloom — Dashboard', 'siteloom' ),
 			__( 'Dashboard', 'siteloom' ),
 			'agent_builder_view_dashboard',
 			'agent-builder'
@@ -78,7 +78,7 @@ class Admin_Menu_Handler {
 
 		add_submenu_page(
 			'agent-builder',
-			__( 'Agent Builder — Chat', 'siteloom' ),
+			__( 'Siteloom — Chat', 'siteloom' ),
 			__( 'Chat', 'siteloom' ),
 			'agent_builder_chat_admin_bar',
 			'agentic-chat',
@@ -109,7 +109,7 @@ class Admin_Menu_Handler {
 		}
 		add_submenu_page(
 			'agent-builder',
-			__( 'Agent Builder — Tasks', 'siteloom' ),
+			__( 'Siteloom — Tasks', 'siteloom' ),
 			$agentic_tasks_title,
 			'agent_builder_run_tasks_manually',
 			'agentic-tasks',
@@ -121,7 +121,7 @@ class Admin_Menu_Handler {
 		// no true "submenu of a submenu", so this sits as a sibling entry.
 		add_submenu_page(
 			'agent-builder',
-			__( 'Agent Builder — Routines', 'siteloom' ),
+			__( 'Siteloom — Routines', 'siteloom' ),
 			__( 'Routines', 'siteloom' ),
 			'agent_builder_manage_agents',
 			'agentic-routines',
@@ -140,7 +140,7 @@ class Admin_Menu_Handler {
 		}
 		add_submenu_page(
 			'agent-builder',
-			__( 'Agent Builder — Agents', 'siteloom' ),
+			__( 'Siteloom — Agents', 'siteloom' ),
 			$agentic_agents_menu_title,
 			'agent_builder_manage_agents',
 			'agentic-agents',
@@ -153,7 +153,7 @@ class Admin_Menu_Handler {
 		// affects a page's own content, never whether it's in the nav.
 		add_submenu_page(
 			'agent-builder',
-			__( 'Agent Builder — Publish', 'siteloom' ),
+			__( 'Siteloom — Publish', 'siteloom' ),
 			__( 'Publish', 'siteloom' ),
 			'agent_builder_manage_agents',
 			'agentic-deployment',
@@ -163,7 +163,7 @@ class Admin_Menu_Handler {
 		// Hidden page — Run (dedicated execution page).
 		add_submenu_page(
 			'',
-			__( 'Agent Builder — Run', 'siteloom' ),
+			__( 'Siteloom — Run', 'siteloom' ),
 			__( 'Run', 'siteloom' ),
 			'agent_builder_run_tasks_manually',
 			'agentic-run-task',
@@ -173,7 +173,7 @@ class Admin_Menu_Handler {
 		// Hidden page — Agent Creation Wizard ("Train an Agent" guided flow).
 		add_submenu_page(
 			'',
-			__( 'Agent Builder — Train an Agent', 'siteloom' ),
+			__( 'Siteloom — Train an Agent', 'siteloom' ),
 			__( 'Train an Agent', 'siteloom' ),
 			'manage_options',
 			'agentic-agent-wizard',
@@ -183,7 +183,7 @@ class Admin_Menu_Handler {
 		// Hidden page — Knowledge Wizard (guided "Add knowledge" flow).
 		add_submenu_page(
 			'',
-			__( 'Agent Builder — Add Knowledge', 'siteloom' ),
+			__( 'Siteloom — Add Knowledge', 'siteloom' ),
 			__( 'Add Knowledge', 'siteloom' ),
 			'agent_builder_manage_settings',
 			'agentic-knowledge-wizard',
@@ -193,7 +193,7 @@ class Admin_Menu_Handler {
 		// Hidden page — Publish Wizard (guided "get your agent in front of people" flow).
 		add_submenu_page(
 			'',
-			__( 'Agent Builder — Publish Your Agent', 'siteloom' ),
+			__( 'Siteloom — Publish Your Agent', 'siteloom' ),
 			__( 'Publish Your Agent', 'siteloom' ),
 			'manage_options',
 			'agentic-deploy-wizard',
@@ -202,7 +202,7 @@ class Admin_Menu_Handler {
 
 		add_submenu_page(
 			'agent-builder',
-			__( 'Agent Builder — Knowledge', 'siteloom' ),
+			__( 'Siteloom — Knowledge', 'siteloom' ),
 			__( 'Knowledge', 'siteloom' ),
 			'agent_builder_manage_settings',
 			'agentic-train-data',
@@ -211,7 +211,7 @@ class Admin_Menu_Handler {
 
 		add_submenu_page(
 			'agent-builder',
-			__( 'Agent Builder — Tools', 'siteloom' ),
+			__( 'Siteloom — Tools', 'siteloom' ),
 			__( 'Tools', 'siteloom' ),
 			'agent_builder_manage_tools',
 			'agentic-tools',
@@ -223,7 +223,7 @@ class Admin_Menu_Handler {
 		// the menu entry.
 		add_submenu_page(
 			'agent-builder',
-			__( 'Agent Builder — Skills', 'siteloom' ),
+			__( 'Siteloom — Skills', 'siteloom' ),
 			__( 'Skills', 'siteloom' ),
 			'agent_builder_manage_tools',
 			'agentic-skills',
@@ -242,7 +242,7 @@ class Admin_Menu_Handler {
 		}
 		add_submenu_page(
 			'agent-builder',
-			__( 'Agent Builder — Approvals', 'siteloom' ),
+			__( 'Siteloom — Approvals', 'siteloom' ),
 			$agentic_approvals_title,
 			'agent_builder_manage_agents',
 			'agentic-approvals',
@@ -257,7 +257,7 @@ class Admin_Menu_Handler {
 		// target sections).
 		add_submenu_page(
 			'agent-builder',
-			__( 'Agent Builder — Safety Center', 'siteloom' ),
+			__( 'Siteloom — Safety Center', 'siteloom' ),
 			__( 'Safety Center', 'siteloom' ),
 			'agent_builder_manage_settings',
 			'agentic-safety-center',
@@ -276,7 +276,7 @@ class Admin_Menu_Handler {
 		// actual concept: what AI agents can discover and access on this site).
 		add_submenu_page(
 			'agent-builder',
-			__( 'Agent Builder — Site Passport', 'siteloom' ),
+			__( 'Siteloom — Site Passport', 'siteloom' ),
 			__( 'Passport', 'siteloom' ),
 			'agent_builder_manage_settings',
 			'agentic-agent-ready',
@@ -287,7 +287,7 @@ class Admin_Menu_Handler {
 		// happens on the page itself via its own Basic/Advanced switch.
 		add_submenu_page(
 			'agent-builder',
-			__( 'Agent Builder — Activity', 'siteloom' ),
+			__( 'Siteloom — Activity', 'siteloom' ),
 			__( 'Activity', 'siteloom' ),
 			'agent_builder_view_audit_log',
 			'agentic-audit-log',
@@ -296,7 +296,7 @@ class Admin_Menu_Handler {
 
 		add_submenu_page(
 			'agent-builder',
-			__( 'Agent Builder — Settings', 'siteloom' ),
+			__( 'Siteloom — Settings', 'siteloom' ),
 			__( 'Settings', 'siteloom' ),
 			'agent_builder_manage_settings',
 			'agentic-settings',
@@ -306,7 +306,7 @@ class Admin_Menu_Handler {
 		// Setup wizard — hidden from nav, accessible at admin.php?page=agentic-setup.
 		add_submenu_page(
 			'',
-			__( 'Agent Builder — Setup Wizard', 'siteloom' ),
+			__( 'Siteloom — Setup Wizard', 'siteloom' ),
 			__( 'Setup Wizard', 'siteloom' ),
 			'manage_options',
 			'agentic-setup',
@@ -316,7 +316,7 @@ class Admin_Menu_Handler {
 		// Sign-up page — hidden page shown once after plugin activation.
 		add_submenu_page(
 			'',
-			__( 'Agent Builder — Get Started', 'siteloom' ),
+			__( 'Siteloom — Get Started', 'siteloom' ),
 			'',
 			'manage_options',
 			'agentic-signup',
@@ -342,7 +342,7 @@ class Admin_Menu_Handler {
 	 * (stored in SCREEN_MODE_META) takes precedence. With no override, or no
 	 * $screen argument at all, falls back to the site-wide agent_builder_ui_mode
 	 * option — this is also the only behavior a caller with no $screen ever
-	 * sees, so existing callers (including Agent Builder Pro, which reads
+	 * sees, so existing callers (including Siteloom Pro, which reads
 	 * this same option) are unaffected.
 	 *
 	 * @param string $screen Screen key (e.g. 'tools', 'approvals', 'logs',
@@ -880,7 +880,7 @@ class Admin_Menu_Handler {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only page identification.
 		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
 
-		// Only intervene for Agent Builder pages; leave every other denial alone.
+		// Only intervene for Siteloom pages; leave every other denial alone.
 		if ( 'agent-builder' !== $page && ! str_starts_with( $page, 'agentic-' ) ) {
 			return;
 		}
@@ -903,7 +903,7 @@ class Admin_Menu_Handler {
 	}
 
 	/**
-	 * Slugs of every Agent Builder admin page this (free / wp.org) edition can
+	 * Slugs of every Siteloom admin page this (free / wp.org) edition can
 	 * register — both the pages that always exist and those register() adds only
 	 * once a provider is configured.
 	 *
@@ -935,7 +935,7 @@ class Admin_Menu_Handler {
 		);
 
 		/**
-		 * Filter the Agent Builder admin page slugs treated as "known" for the
+		 * Filter the Siteloom admin page slugs treated as "known" for the
 		 * access-denied notice (e.g. so a Pro build can add its own screens).
 		 *
 		 * @param string[] $pages Page slugs.
@@ -944,7 +944,7 @@ class Admin_Menu_Handler {
 	}
 
 	/**
-	 * Whether a slug names an Agent Builder admin page this edition knows about.
+	 * Whether a slug names a Siteloom admin page this edition knows about.
 	 *
 	 * @param string $page Page slug (value of ?page=).
 	 * @return bool
@@ -960,9 +960,9 @@ class Admin_Menu_Handler {
 	 */
 	private function render_unknown_page_notice(): void {
 		$parts   = array();
-		$parts[] = '<h1>' . esc_html__( 'This Agent Builder page doesn\'t exist', 'siteloom' ) . '</h1>';
-		$parts[] = '<p>' . esc_html__( 'That page is not part of Agent Builder. It may have been removed or renamed.', 'siteloom' ) . '</p>';
-		$parts[] = '<p><a href="' . esc_url( admin_url( 'admin.php?page=agent-builder' ) ) . '">' . esc_html__( 'Back to the Agent Builder dashboard', 'siteloom' ) . '</a></p>';
+		$parts[] = '<h1>' . esc_html__( 'This Siteloom page doesn\'t exist', 'siteloom' ) . '</h1>';
+		$parts[] = '<p>' . esc_html__( 'That page is not part of Siteloom. It may have been removed or renamed.', 'siteloom' ) . '</p>';
+		$parts[] = '<p><a href="' . esc_url( admin_url( 'admin.php?page=agent-builder' ) ) . '">' . esc_html__( 'Back to the Siteloom dashboard', 'siteloom' ) . '</a></p>';
 
 		wp_die(
 			wp_kses_post( implode( '', $parts ) ),
@@ -980,9 +980,9 @@ class Admin_Menu_Handler {
 	private function render_connect_provider_notice(): void {
 		$parts   = array();
 		$parts[] = '<h1>' . esc_html__( 'Connect an AI provider to unlock this screen', 'siteloom' ) . '</h1>';
-		$parts[] = '<p>' . esc_html__( 'This Agent Builder screen becomes available once an AI provider is connected. Connecting takes about a minute and unlocks agents, chat, and knowledge.', 'siteloom' ) . '</p>';
+		$parts[] = '<p>' . esc_html__( 'This Siteloom screen becomes available once an AI provider is connected. Connecting takes about a minute and unlocks agents, chat, and knowledge.', 'siteloom' ) . '</p>';
 		$parts[] = '<p><a class="button button-primary" href="' . esc_url( admin_url( 'admin.php?page=agentic-signup' ) ) . '">' . esc_html__( 'Go to Quick Start', 'siteloom' ) . '</a></p>';
-		$parts[] = '<p><a href="' . esc_url( admin_url( 'admin.php?page=agent-builder' ) ) . '">' . esc_html__( 'Back to the Agent Builder dashboard', 'siteloom' ) . '</a></p>';
+		$parts[] = '<p><a href="' . esc_url( admin_url( 'admin.php?page=agent-builder' ) ) . '">' . esc_html__( 'Back to the Siteloom dashboard', 'siteloom' ) . '</a></p>';
 
 		wp_die(
 			wp_kses_post( implode( '', $parts ) ),
@@ -1002,7 +1002,7 @@ class Admin_Menu_Handler {
 
 		$parts   = array();
 		$parts[] = '<h1>' . esc_html__( 'Administrator access required', 'siteloom' ) . '</h1>';
-		$parts[] = '<p>' . esc_html__( 'Agent Builder can only be set up and managed by a site administrator. Your account does not have the required permissions, so we cannot continue here.', 'siteloom' ) . '</p>';
+		$parts[] = '<p>' . esc_html__( 'Siteloom can only be set up and managed by a site administrator. Your account does not have the required permissions, so we cannot continue here.', 'siteloom' ) . '</p>';
 		$parts[] = '<p>' . esc_html__( 'Please sign in with an administrator account, or ask a user with administrator access to complete the setup.', 'siteloom' ) . '</p>';
 		if ( is_email( $admin_email ) ) {
 			$parts[] = '<p>' . sprintf(
@@ -1183,7 +1183,7 @@ class Admin_Menu_Handler {
 			return;
 		}
 		?>
-		<nav id="agentic-secondary-nav" class="agentic-secondary-nav" aria-label="<?php esc_attr_e( 'Agent Builder sections', 'siteloom' ); ?>">
+		<nav id="agentic-secondary-nav" class="agentic-secondary-nav" aria-label="<?php esc_attr_e( 'Siteloom sections', 'siteloom' ); ?>">
 			<ul class="agentic-secondary-nav__list">
 				<?php foreach ( $items as $item ) : ?>
 					<?php
@@ -1334,7 +1334,7 @@ class Admin_Menu_Handler {
 		} elseif ( 'agentic-tools' === $page ) {
 			$policy = __( 'Agents only use the tools you allow. Higher-risk actions still follow Approvals and your safety settings.', 'siteloom' );
 		} elseif ( str_starts_with( $page, 'agentic-train' ) ) {
-			$policy = __( 'Knowledge stays on your site for the free wiki; hosted vector features require Agent Builder Pro.', 'siteloom' );
+			$policy = __( 'Knowledge stays on your site for the free wiki; hosted vector features require Siteloom Pro.', 'siteloom' );
 			if ( 'instructions' === $tab ) {
 				$policy = __( 'Per-agent instructions shape tone and greetings. Site-wide knowledge belongs in the Knowledge Wiki.', 'siteloom' );
 			} elseif ( 'memory' === $tab ) {

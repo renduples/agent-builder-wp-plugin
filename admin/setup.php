@@ -388,7 +388,7 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 <head>
 	<meta charset="<?php bloginfo( 'charset' ); ?>">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title><?php esc_html_e( 'Connect an AI Provider — Agent Builder', 'siteloom' ); ?></title>
+	<title><?php esc_html_e( 'Connect an AI Provider — Siteloom', 'siteloom' ); ?></title>
 	<?php wp_head(); ?>
 </head>
 <body class="wp-admin">
@@ -398,9 +398,9 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 	<!-- Header -->
 	<div class="setup-header">
 		<div class="setup-logo" aria-hidden="true">
-			<img src="<?php echo esc_url( AGENT_BUILDER_URL . 'assets/icon.svg' ); ?>" width="48" height="48" alt="<?php esc_attr_e( 'Agent Builder logo', 'siteloom' ); ?>">
+			<img src="<?php echo esc_url( AGENT_BUILDER_URL . 'assets/icon.svg' ); ?>" width="48" height="48" alt="<?php esc_attr_e( 'Siteloom logo', 'siteloom' ); ?>">
 		</div>
-		<h1><?php esc_html_e( 'Welcome to Agent Builder', 'siteloom' ); ?></h1>
+		<h1><?php esc_html_e( 'Welcome to Siteloom AI Agents', 'siteloom' ); ?></h1>
 		<p><?php esc_html_e( 'Connect to your preferred AI Provider to get started. This takes only a few minutes.', 'siteloom' ); ?></p>
 	</div>
 

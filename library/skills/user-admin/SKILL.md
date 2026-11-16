@@ -37,7 +37,7 @@ description: "Use when user wants to see when a user last logged in, find users 
 
 ## Rules
 
-- Last login data depends on either the `agentic_last_login` usermeta (set by Agent Builder on login) or `session_tokens` (set by WordPress core). Users who have never had a session will show no last login.
+- Last login data depends on either the `agentic_last_login` usermeta (set by Siteloom on login) or `session_tokens` (set by WordPress core). Users who have never had a session will show no last login.
 - `lock_user_account` cannot be used to lock an administrator unless the calling user is also an administrator — and it will never allow a user to lock their own account.
 - Always confirm before calling `lock_user_account` — it is immediate and will log the user out.
 - `find_inactive_users` with a very low `days` value may return a large number of users — encourage the user to set a reasonable threshold (90+ days).

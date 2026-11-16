@@ -6,7 +6,7 @@
     "category": "starter",
     "icon": "🧭",
     "version": "1.3.1",
-    "author": "Agent Builder",
+    "author": "Siteloom",
     "author_uri": "https://agentic-plugin.com",
     "capabilities": [
         "read"
@@ -48,11 +48,11 @@
         "search_okf"
     ],
     "suggested_prompts": [
-        "What can Agent Builder do?",
+        "What can Siteloom do?",
         "Which agent should I use for [task]?",
         "Can AI search engines find my website?",
         "How do I schedule an agent to run automatically?",
         "How do Ask AI launchers on Users/Plugins work?"
     ],
-    "welcome_message": "Hello! Ask me anything about WordPress or Agent Builder.\n\n**Your AI team:**\n{{active_agents}}\n\n[Download more Agents](https://agentic-plugin.com/community-agents/)"
+    "welcome_message": "Hello! Ask me anything about WordPress or Siteloom.\n\n**Your AI team:**\n{{active_agents}}\n\n[Download more Agents](https://agentic-plugin.com/community-agents/)"
 }

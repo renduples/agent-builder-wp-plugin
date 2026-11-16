@@ -8,7 +8,7 @@
  *
  * @package    Agent_Builder
  * @subpackage Admin
- * @author     Agent Builder Team <support@agentic-plugin.com>
+ * @author     Siteloom Team <support@agentic-plugin.com>
  * @license    GPL-2.0-or-later https://www.gnu.org/licenses/gpl-2.0.html
  * @link       https://agentic-plugin.com
  * @since      1.4.0
@@ -297,7 +297,7 @@ elseif ( $agentic_inbound_cat === $agentic_active_cat ) :
 	<?php
 	printf(
 	/* translators: %s: WordPress version number */
-		esc_html__( 'Your site is running WordPress %s. Agent Builder turns abilities registered by other plugins into tools your agents can use, and publishes its own tools as abilities for WordPress core AI, MCP clients, and the Command Palette.', 'siteloom' ),
+		esc_html__( 'Your site is running WordPress %s. Siteloom turns abilities registered by other plugins into tools your agents can use, and publishes its own tools as abilities for WordPress core AI, MCP clients, and the Command Palette.', 'siteloom' ),
 		esc_html( $agentic_wp_version )
 	);
 	?>
@@ -378,7 +378,7 @@ data-ability="<?php echo esc_attr( $agentic_ab_orig ); ?>"
 <li><?php esc_html_e( 'Inbound abilities from other plugins are automatically converted to the OpenAI function-calling format and made available to all agents.', 'siteloom' ); ?></li>
 <li><?php esc_html_e( 'Use the Enabled toggle to switch an individual third-party ability on or off. A disabled ability is hidden from every agent and cannot be called through the abilities bridge. (Built-in tools that use an ability internally are controlled by their own toggle in the tools list.)', 'siteloom' ); ?></li>
 <li><?php esc_html_e( 'The "Ability Name" column shows the original WordPress ability identifier (e.g., woocommerce/get-orders); the "Tool Name" column shows the function name your agents use to call it.', 'siteloom' ); ?></li>
-<li><?php esc_html_e( 'Outbound abilities are your own Agent Builder tools, published for MCP, the REST API, and core AI. Each tool in the list shows its ability name underneath — toggle the tool off to unpublish it.', 'siteloom' ); ?></li>
+<li><?php esc_html_e( 'Outbound abilities are your own Siteloom tools, published for MCP, the REST API, and core AI. Each tool in the list shows its ability name underneath — toggle the tool off to unpublish it.', 'siteloom' ); ?></li>
 </ul>
 </div>
 

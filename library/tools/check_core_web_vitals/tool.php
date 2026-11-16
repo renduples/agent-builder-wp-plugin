@@ -58,7 +58,7 @@ class Check_Core_Web_Vitals extends Tool_Base {
 		$strategy = in_array( $args['strategy'] ?? 'mobile', array( 'mobile', 'desktop' ), true ) ? ( $args['strategy'] ?? 'mobile' ) : 'mobile';
 
 		// Free plugin: PageSpeed Insights requires the site's own Google API
-		// key — no bundled/shared key ships here. (Agent Builder Pro has its
+		// key — no bundled/shared key ships here. (Siteloom Pro has its
 		// own separate, managed PageSpeed channel; this tool doesn't call it.)
 		$api_key = (string) get_option( 'agent_builder_psi_api_key', '' );
 		if ( empty( $api_key ) ) {

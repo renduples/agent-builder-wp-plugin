@@ -5,7 +5,7 @@
  * Covers the four feedback-loop / hang fixes for high-frequency hooks:
  *   - a gated listener on `updated_option` mints exactly one proposal no matter
  *     how many times it fires;
- *   - Agent Builder's own option/transient writes never reach a listener;
+ *   - Siteloom's own option/transient writes never reach a listener;
  *   - the per-listener rate limit holds under rapid (concurrent) fires;
  *   - Audit_Log::bust_query_cache() issues no DELETE statement.
  *
@@ -80,7 +80,7 @@ class Test_Event_Listener_Guards extends TestCase {
 	}
 
 	/**
-	 * Agent Builder's own option/transient writes carry an internal prefix and
+	 * Siteloom's own option/transient writes carry an internal prefix and
 	 * must never reach a listener — even when the listener is bound to the very
 	 * hooks those writes fire.
 	 */

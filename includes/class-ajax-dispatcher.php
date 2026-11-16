@@ -88,7 +88,7 @@ class Ajax_Dispatcher {
 			'agentic_agent_breakdown'                    => array( Admin_Ajax::class, 'agent_breakdown' ),
 			'agentic_update_model_pricing'               => array( Admin_Ajax::class, 'update_model_pricing' ),
 
-			// Vector Store AJAX lives in Agent Builder Pro (RAG_Manager +
+			// Vector Store AJAX lives in Siteloom Pro (RAG_Manager +
 			// Vector_Store::register_ajax_handlers). Free does not register them.
 
 			// Free Knowledge Wiki (OKF).

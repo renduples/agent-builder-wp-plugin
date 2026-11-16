@@ -24,7 +24,7 @@ $agentic_ul_limits       = \Agentic\Usage_Limits::get_limits();
 <p class="agentic-settings-lead"><?php esc_html_e( 'Control which WordPress user roles can administer the plugin and interact with AI agents. Administrators always retain full access.', 'siteloom' ); ?></p>
 
 <div class="agentic-callout-warning">
-	<p class="agentic-mt-0"><strong>Note:</strong> These rules apply site-wide. A user needs at least one ticked box to access the corresponding feature. Removing a role from <em>all</em> plugin privileges will hide the Agent Builder menu from that role entirely.</p>
+	<p class="agentic-mt-0"><strong>Note:</strong> These rules apply site-wide. A user needs at least one ticked box to access the corresponding feature. Removing a role from <em>all</em> plugin privileges will hide the Siteloom menu from that role entirely.</p>
 </div>
 
 	<?php
@@ -83,7 +83,7 @@ $agentic_ul_limits       = \Agentic\Usage_Limits::get_limits();
 	$agentic_render_privilege_table(
 		'plugin',
 		'Plugin Administration',
-		'Who can access and configure the Agent Builder admin pages.',
+		'Who can access and configure the Siteloom admin pages.',
 		$agentic_ur_plugin_privs,
 		$agentic_ur_settings,
 		$agentic_ur_wp_roles

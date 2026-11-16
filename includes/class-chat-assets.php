@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Handles all asset enqueuing for the Agent Builder plugin:
+ * Handles all asset enqueuing for the Siteloom plugin:
  * admin page styles, admin-bar overlay, frontend chat, modal widget,
  * Gutenberg editor sidebar, and chat theme CSS variable overrides.
  */

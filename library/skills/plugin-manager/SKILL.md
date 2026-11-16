@@ -31,7 +31,7 @@ description: "Use when user wants to check if a plugin is abandoned or outdated,
 
 ### Install a plugin
 
-Agent Builder does not install plugins on the user's behalf — WordPress.org
+Siteloom does not install plugins on the user's behalf — WordPress.org
 guidelines treat that as remote code installation, even with human approval
 in the loop. If asked, point the user to Plugins → Add New in wp-admin, or
 to the plugin's WordPress.org page if you found it via `get_plugin_changelog`

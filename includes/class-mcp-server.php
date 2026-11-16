@@ -1,6 +1,6 @@
 <?php
 /**
- * Agent Builder — MCP endpoint
+ * Siteloom — MCP endpoint
  *
  * Exposes each agent's own Model Context Protocol JSON-RPC endpoint on this
  * site (GET/POST /wp-json/agentic/{slug}/mcp) so that an AI app the site
@@ -161,7 +161,7 @@ class Agentic_MCP_Server {
 							'protocolVersion' => '2024-11-05',
 							'capabilities'    => array( 'tools' => new \stdClass() ),
 							'serverInfo'      => array(
-								'name'    => 'Agent Builder MCP — ' . $slug,
+								'name'    => 'Siteloom MCP — ' . $slug,
 								'version' => defined( 'AGENT_BUILDER_VERSION' ) ? AGENT_BUILDER_VERSION : '1.0.0',
 							),
 						)
@@ -196,7 +196,7 @@ class Agentic_MCP_Server {
 	 * Build the MCP tools list for one agent's endpoint.
 	 *
 	 * Prefers WordPress core's native Abilities API (6.9+). On older sites
-	 * where that doesn't exist yet, falls back to Agent Builder's own tool
+	 * where that doesn't exist yet, falls back to Siteloom's own tool
 	 * registry directly — same tools, same MCP transport, no dependency on
 	 * a WordPress version this plugin's own "Requires at least: 6.4" predates.
 	 *
@@ -234,7 +234,7 @@ class Agentic_MCP_Server {
 				continue;
 			}
 
-			// Agent Builder's own abilities (agent-builder/*) go through the
+			// Siteloom's own abilities (agent-builder/*) go through the
 			// same MCP-safety posture as the registry fallback below, so a
 			// high-risk tool isn't advertised via MCP just because the site
 			// happens to be on 6.9+ — abilities from OTHER plugins are left
@@ -279,7 +279,7 @@ class Agentic_MCP_Server {
 	}
 
 	/**
-	 * Build the MCP tools list directly from Agent Builder's own tool
+	 * Build the MCP tools list directly from Siteloom's own tool
 	 * registry — the pre-6.9 fallback, since core has no Abilities API to
 	 * read from yet. Same enabled/safety posture Abilities_Bridge applies
 	 * when it registers these same tools as native abilities on newer sites.
@@ -504,7 +504,7 @@ class Agentic_MCP_Server {
 	}
 
 	/**
-	 * Whether an Agent Builder tool should ever be listed or callable via
+	 * Whether a Siteloom tool should ever be listed or callable via
 	 * MCP — shell/code-execution/remote-install tools and anything at
 	 * HIGH/EXTREME risk stay off the MCP surface entirely, matching the
 	 * posture Abilities_Bridge already applies for the native-adapter path.
@@ -555,7 +555,7 @@ class Agentic_MCP_Server {
 	}
 
 	/**
-	 * Capability required to call a given Agent Builder tool via MCP —
+	 * Capability required to call a given Siteloom tool via MCP —
 	 * read-only tools only need edit_posts, everything else needs
 	 * manage_options. Mirrors Abilities_Bridge's own read/write split.
 	 *
@@ -572,7 +572,7 @@ class Agentic_MCP_Server {
 	}
 
 	/**
-	 * If $ability_name is one of Agent Builder's own (agent-builder/*),
+	 * If $ability_name is one of Siteloom's own (agent-builder/*),
 	 * return the underlying tool name; otherwise null (a third-party
 	 * ability this plugin has no risk model for).
 	 *
@@ -793,7 +793,7 @@ class Agentic_MCP_Server {
 	}
 
 	/**
-	 * Execute a tool directly via Agent Builder's own registry — the
+	 * Execute a tool directly via Siteloom's own registry — the
 	 * pre-6.9 fallback. Enforces the same enabled/safety checks as the
 	 * listing, plus the read/write capability check the native path gets
 	 * for free from the ability's own permission_callback.

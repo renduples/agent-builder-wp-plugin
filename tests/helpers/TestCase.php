@@ -14,7 +14,7 @@ namespace Agentic\Tests;
 use WP_UnitTestCase;
 
 /**
- * Base test case for Agent Builder tests.
+ * Base test case for Siteloom tests.
  */
 class TestCase extends WP_UnitTestCase {
 

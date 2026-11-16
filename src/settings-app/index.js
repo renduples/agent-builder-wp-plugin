@@ -1,5 +1,5 @@
 /**
- * Agent Builder Settings — full React app (WordPress components).
+ * Siteloom Settings — full React app (WordPress components).
  */
 import { createRoot, useEffect, useMemo, useState } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
@@ -1106,7 +1106,7 @@ function UsersTab( {
 			</p>
 			<p className="agentic-react-muted">
 				{ __(
-					'These rules apply site-wide. A user needs at least one ticked box to access the corresponding feature. Removing a role from all plugin privileges will hide the Agent Builder menu from that role entirely.',
+					'These rules apply site-wide. A user needs at least one ticked box to access the corresponding feature. Removing a role from all plugin privileges will hide the Siteloom menu from that role entirely.',
 					'siteloom'
 				) }
 			</p>
@@ -1115,7 +1115,7 @@ function UsersTab( {
 			<Section title={ __( 'Plugin Administration', 'siteloom' ) }>
 				<p className="agentic-react-muted" style={ { marginTop: 0 } }>
 					{ __(
-						'Who can access and configure the Agent Builder admin pages.',
+						'Who can access and configure the Siteloom admin pages.',
 						'siteloom'
 					) }
 				</p>
@@ -1673,7 +1673,7 @@ function AgentsTab( { data, setData, onSave, saving, error, saved, clearSaved } 
 				/>
 				<div style={ { height: 8 } } />
 				<ToggleControl
-					label={ __( 'Hide “Powered by Agent Builder” branding', 'siteloom' ) }
+					label={ __( 'Hide “Powered by Siteloom” branding', 'siteloom' ) }
 					help={ __(
 						'On by default. Uncheck only if you want a small credit line in the chat footer.',
 						'siteloom'
@@ -2459,7 +2459,7 @@ function MCPTab( { data } ) {
 					</li>
 					<li>
 						{ __(
-							'Create an Application Password in your own WordPress profile (Users > Profile > Application Passwords). Agent Builder never creates or stores one for you.',
+							'Create an Application Password in your own WordPress profile (Users > Profile > Application Passwords). Siteloom never creates or stores one for you.',
 							'siteloom'
 						) }{ ' ' }
 						{ data.profile_url && (

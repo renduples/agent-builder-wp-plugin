@@ -1,12 +1,12 @@
 # Agentic Library – 12 Pre-Built Agents
 
-> Ready-to-use AI agents that ship with the free Agent Builder plugin, and a guide for building your own.
+> Ready-to-use AI agents that ship with the free Siteloom plugin, and a guide for building your own.
 
 ---
 
 ## What's Inside
 
-**12 production-ready agents** ship with Agent Builder (WordPress.org free edition). Each is fully functional out of the box and can be customised.
+**12 production-ready agents** ship with Siteloom (WordPress.org free edition). Each is fully functional out of the box and can be customised.
 
 | Slug | Name |
 |------|------|
@@ -140,7 +140,7 @@ Helps manage site people and accounts.
 ---
 
 ### WordPress Assistant (`wordpress-assistant/`)
-Your guide to WordPress and Agent Builder for new users.
+Your guide to WordPress and Siteloom for new users.
 - Answers questions about the plugin
 - Helps with settings and getting started
 - Recommends the right specialist agent
@@ -152,7 +152,7 @@ Your guide to WordPress and Agent Builder for new users.
 ## Quick Start
 
 1. **Activate in WordPress:**
-   - Go to **Agent Builder → Agents**
+   - Go to **Siteloom → Agents**
    - All 12 bundled agents appear automatically
    - Click **Activate** on any agent
 
@@ -175,7 +175,7 @@ Your guide to WordPress and Agent Builder for new users.
 
 ## Customising Agents
 
-Each agent here is plain data (JSON + a text prompt, no PHP) — edit any bundled agent's files directly and Agent Builder picks up the change (a bundled agent's `abilities.json` needs re-signing after an edit; see below). See the [Developer Documentation](https://agentic-plugin.com/documentation/#doc-developers) for the full reference.
+Each agent here is plain data (JSON + a text prompt, no PHP) — edit any bundled agent's files directly and Siteloom picks up the change (a bundled agent's `abilities.json` needs re-signing after an edit; see below). See the [Developer Documentation](https://agentic-plugin.com/documentation/#doc-developers) for the full reference.
 
 ---
 
@@ -255,7 +255,7 @@ library/agents/my-agent/
 | `min_interval` | no | Rate limit in seconds — at most one execution per listener per window (default `60`; `0` disables; negative coerces to `60`; capped at `86400`). Fires skipped by the rate limit are counted, not audit-logged. |
 | `arg_filter` | no | `{ "arg": n, "pattern": "…" }` or `{ "arg": n, "in": [ "…", … ] }` — run the listener only when hook argument `n` matches the PCRE `pattern`, or equals one of the `in` allowlist values (strict string comparison; an empty `in` matches nothing). A high-frequency hook like `updated_option` **must** declare one, or it would otherwise hit the approval gate for every unrelated option write. A filter with neither or both forms, a non-string `in` item, or an invalid pattern is dropped, so a typo falls back to running on every event rather than silently never running. |
 
-Event listeners are guarded against the feedback loop that once let a listener on `updated_option` hang a site: they never fire for options/transients Agent Builder writes itself (the `agentic_*` and `agent_builder_*` prefixes), and a gated listener that keeps firing the same tool reuses its one pending proposal instead of minting a new one per event.
+Event listeners are guarded against the feedback loop that once let a listener on `updated_option` hang a site: they never fire for options/transients Siteloom writes itself (the `agentic_*` and `agent_builder_*` prefixes), and a gated listener that keeps firing the same tool reuses its one pending proposal instead of minting a new one per event.
 
 ### `abilities.json` — the security boundary
 
@@ -294,11 +294,11 @@ Rather than hand-writing these files, you can describe the agent you want in cha
 
 ## Listing on the Marketplace
 
-The [Community Agents marketplace](https://agentic-plugin.com/community-agents/) is where developers publish agents beyond the 12 bundled here. In the free/WordPress.org plugin, Community Agents is **browse-only** — visitors can preview and download an agent's files, but not one-click remote-install (that requires Agent Builder Pro or a connector).
+The [Community Agents marketplace](https://agentic-plugin.com/community-agents/) is where developers publish agents beyond the 12 bundled here. In the free/WordPress.org plugin, Community Agents is **browse-only** — visitors can preview and download an agent's files, but not one-click remote-install (that requires Siteloom Pro or a connector).
 
 To list an agent:
 1. Package the four files above exactly as they appear in this directory (a real `agent.json` + `abilities.json` + `templates/system-prompt.txt` + `README.md`, no PHP).
-2. Make sure `abilities.json` only requests tools that already ship with Agent Builder (free or Pro) — a listed agent can't bundle its own custom tool code.
+2. Make sure `abilities.json` only requests tools that already ship with Siteloom (free or Pro) — a listed agent can't bundle its own custom tool code.
 3. Submit via the marketplace's own submission flow at [agentic-plugin.com/community-agents/](https://agentic-plugin.com/community-agents/).
 
 ---

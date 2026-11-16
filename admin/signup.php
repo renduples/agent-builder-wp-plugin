@@ -53,13 +53,13 @@ $agentic_signup_tts_voices     = array(
 <div class="agentic-signup-wrap">
 	<div class="agentic-signup-card">
 		<div class="agentic-logo">
-			<img src="<?php echo esc_url( AGENT_BUILDER_URL . 'assets/icon.svg' ); ?>" alt="<?php esc_attr_e( 'Agent Builder', 'siteloom' ); ?>">
-			<span>Agent Builder</span>
+			<img src="<?php echo esc_url( AGENT_BUILDER_URL . 'assets/icon.svg' ); ?>" alt="<?php esc_attr_e( 'Siteloom', 'siteloom' ); ?>">
+			<span>Siteloom AI Agents</span>
 		</div>
 
 		<h1><?php esc_html_e( 'Connect to Agentic AI', 'siteloom' ); ?></h1>
 		<p class="subtitle">
-			<?php esc_html_e( 'Connect Agent Builder to an AI service with just one click.', 'siteloom' ); ?>
+			<?php esc_html_e( 'Connect Siteloom to an AI service with just one click.', 'siteloom' ); ?>
 			<br><?php esc_html_e( 'Free daily credits, no payment info required.', 'siteloom' ); ?>
 		</p>
 
@@ -120,7 +120,7 @@ $agentic_signup_tts_voices     = array(
 
 				<!-- Interface Mode -->
 				<div class="agentic-config-cell agentic-config-setting">
-					<label for="agentic-signup-ui-mode"><?php esc_html_e( 'How would you like Agent Builder to work?', 'siteloom' ); ?></label>
+					<label for="agentic-signup-ui-mode"><?php esc_html_e( 'How would you like Siteloom to work?', 'siteloom' ); ?></label>
 					<select id="agentic-signup-ui-mode" name="ui_mode">
 						<option value="basic" selected><?php esc_html_e( 'Basic', 'siteloom' ); ?></option>
 						<option value="advanced"><?php esc_html_e( 'Advanced', 'siteloom' ); ?></option>
@@ -233,7 +233,7 @@ $agentic_signup_tts_voices     = array(
 	</div>
 
 	<div class="agentic-signup-footer">
-		<?php esc_html_e( 'Agent Builder supports multiple AI providers. You can add as many as you like later.', 'siteloom' ); ?>
+		<?php esc_html_e( 'Siteloom supports multiple AI providers. You can add as many as you like later.', 'siteloom' ); ?>
 	</div>
 </div>
 

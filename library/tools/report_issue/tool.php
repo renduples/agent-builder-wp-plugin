@@ -44,7 +44,7 @@ class Report_Issue extends \Agentic\Tool_Base {
 	 * @return string
 	 */
 	public function get_description(): string {
-		return 'Use this whenever the user says the AI, an agent, a tool, or Agent Builder itself is broken, erroring, or misbehaving and wants it reported to Agent Builder support at agentic-plugin.com. It diagnoses recent errors (AI connectivity, credit balance, tool failures, runtime errors) and files a support report. Prefer this over request_human_help for any AI/plugin/technical problem — request_human_help is only for pulling in a human on THIS site to help with a content or support task, not for reporting bugs. Admins only: call send=false first to show the diagnosis, then send=true to file it and return a ticket reference. For a non-admin / public visitor it returns only a friendly notice with no internal details.';
+		return 'Use this whenever the user says the AI, an agent, a tool, or Siteloom itself is broken, erroring, or misbehaving and wants it reported to Siteloom support at agentic-plugin.com. It diagnoses recent errors (AI connectivity, credit balance, tool failures, runtime errors) and files a support report. Prefer this over request_human_help for any AI/plugin/technical problem — request_human_help is only for pulling in a human on THIS site to help with a content or support task, not for reporting bugs. Admins only: call send=false first to show the diagnosis, then send=true to file it and return a ticket reference. For a non-admin / public visitor it returns only a friendly notice with no internal details.';
 	}
 
 	/**

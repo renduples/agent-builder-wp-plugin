@@ -26,7 +26,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Admin_Notice_Manager {
 
 	/**
-	 * Whether the current request is an Agent Builder wp-admin screen.
+	 * Whether the current request is a Siteloom wp-admin screen.
 	 *
 	 * Used to keep setup / product notices off core Dashboard, Posts, Plugins,
 	 * etc. (WP.org Guideline-style non-intrusive admin UX; UI/UX plan suite 2.1).
@@ -69,7 +69,7 @@ class Admin_Notice_Manager {
 	/**
 	 * Show a one-time banner to finish plugin setup.
 	 *
-	 * Shown only on Agent Builder admin screens until onboarding is complete
+	 * Shown only on Siteloom admin screens until onboarding is complete
 	 * or the user dismisses it - never on core WP admin pages.
 	 *
 	 * @return void
@@ -87,7 +87,7 @@ class Admin_Notice_Manager {
 			return;
 		}
 
-		// Show on Agent Builder screens and on the Plugins list — where the admin
+		// Show on Siteloom screens and on the Plugins list — where the admin
 		// lands right after activation — so the one-time, dismissible "finish setup"
 		// reminder is actually seen. Still kept off Dashboard / Posts / etc.
 		if ( ! self::is_plugin_admin_screen() && ! self::is_plugins_list_screen() ) {
@@ -106,7 +106,7 @@ class Admin_Notice_Manager {
 		?>
 		<div class="notice notice-info is-dismissible" id="agentic-setup-notice" data-nonce="<?php echo esc_attr( $nonce ); ?>">
 			<p>
-				<strong><?php esc_html_e( 'Agent Builder is almost ready!', 'siteloom' ); ?></strong>
+				<strong><?php esc_html_e( 'Siteloom is almost ready!', 'siteloom' ); ?></strong>
 				<?php esc_html_e( 'Finish setup to start using your AI agents.', 'siteloom' ); ?>
 				&nbsp;
 				<a href="<?php echo esc_url( $setup_url ); ?>" class="button button-primary">
@@ -132,7 +132,7 @@ class Admin_Notice_Manager {
 			return;
 		}
 
-		// Informational (a provider rate limit was hit) — Agent Builder
+		// Informational (a provider rate limit was hit) — Siteloom
 		// screens only, never across the rest of wp-admin.
 		if ( ! self::is_plugin_admin_screen() ) {
 			return;
@@ -182,7 +182,7 @@ class Admin_Notice_Manager {
 			return;
 		}
 
-		// The plugin is safe to use as-is, so this stays on Agent Builder
+		// The plugin is safe to use as-is, so this stays on Siteloom
 		// screens and the Plugins list rather than every wp-admin page.
 		if ( ! self::is_plugin_admin_screen() && ! self::is_plugins_list_screen() ) {
 			return;
@@ -197,7 +197,7 @@ class Admin_Notice_Manager {
 		?>
 		<div class="notice notice-warning is-dismissible" id="agentic-activation-degraded-notice" data-nonce="<?php echo esc_attr( $nonce ); ?>">
 			<p>
-				<strong><?php esc_html_e( 'Agent Builder finished setup in a reduced state.', 'siteloom' ); ?></strong>
+				<strong><?php esc_html_e( 'Siteloom finished setup in a reduced state.', 'siteloom' ); ?></strong>
 				<?php esc_html_e( 'A setup step did not complete — often a temporary hosting or database limit. The plugin is safe to use as-is.', 'siteloom' ); ?>
 				&nbsp;
 				<a href="<?php echo esc_url( $retry_url ); ?>"><?php esc_html_e( 'Click to retry', 'siteloom' ); ?></a>
@@ -248,7 +248,7 @@ class Admin_Notice_Manager {
 		?>
 		<div class="notice notice-error" id="agentic-legacy-exports-stuck-notice">
 			<p>
-				<strong><?php esc_html_e( 'Agent Builder could not remove an old agent export file.', 'siteloom' ); ?></strong>
+				<strong><?php esc_html_e( 'Siteloom could not remove an old agent export file.', 'siteloom' ); ?></strong>
 				<?php esc_html_e( 'A file left behind by an earlier version is still in wp-content/uploads/agentic-exports/ (or wp-content/agentic-exports/) and could not be deleted automatically — usually a permissions or file-ownership problem. Please remove it yourself, then retry.', 'siteloom' ); ?>
 				&nbsp;
 				<a href="<?php echo esc_url( $retry_url ); ?>" class="button"><?php esc_html_e( 'Retry now', 'siteloom' ); ?></a>
@@ -310,7 +310,7 @@ class Admin_Notice_Manager {
 				echo wp_kses(
 					sprintf(
 						/* translators: %s: comma-separated list of agent slugs. */
-						esc_html__( 'A copy of each of these agents exists in your Agent Builder agents folder (in uploads) and is loaded instead of the version bundled with the plugin: %s', 'siteloom' ),
+						esc_html__( 'A copy of each of these agents exists in your Siteloom agents folder (in uploads) and is loaded instead of the version bundled with the plugin: %s', 'siteloom' ),
 						$slug_list
 					),
 					array( 'code' => array() )

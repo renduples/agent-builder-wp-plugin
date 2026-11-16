@@ -6,7 +6,7 @@
  *
  * @package    Agent_Builder
  * @subpackage Admin
- * @author     Agent Builder Team <support@agentic-plugin.com>
+ * @author     Siteloom Team <support@agentic-plugin.com>
  * @license    GPL-2.0-or-later https://www.gnu.org/licenses/gpl-2.0.html
  * @link       https://agentic-plugin.com
  * @since      0.2.0
@@ -34,7 +34,7 @@ if ( class_exists( 'Agentic\Agent_Updates' ) && \Agentic\Agent_Updates::needs_co
 			<div style="text-align:center;margin-bottom:32px;">
 				<span style="font-size:48px;line-height:1;" aria-hidden="true">🔄</span>
 				<h2 style="font-size:22px;font-weight:600;margin:16px 0 8px;"><?php esc_html_e( 'Enable Automatic Agent Updates?', 'siteloom' ); ?></h2>
-				<p style="color:#646970;font-size:14px;margin:0;"><?php esc_html_e( 'Agent Builder can check agentic-plugin.com for newer versions of your installed AI agents.', 'siteloom' ); ?></p>
+				<p style="color:#646970;font-size:14px;margin:0;"><?php esc_html_e( 'Siteloom can check agentic-plugin.com for newer versions of your installed AI agents.', 'siteloom' ); ?></p>
 			</div>
 
 			<ul style="margin:0 0 28px 0;padding:0;list-style:none;">

@@ -6,7 +6,7 @@
   "category": "ecommerce",
   "icon": "🛍️",
   "version": "1.0.1",
-  "author": "Agent Builder",
+  "author": "Siteloom",
   "author_uri": "https://agentic-plugin.com",
   "capabilities": [ "read" ],
   "tools": [

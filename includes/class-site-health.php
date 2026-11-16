@@ -1,6 +1,6 @@
 <?php
 /**
- * Site Health test for Agent Builder background tasks.
+ * Site Health test for Siteloom background tasks.
  *
  * Registers three direct tests on the WordPress Site Health screen:
  * `agent_builder_background_runs`, `agent_builder_private_storage`
@@ -82,24 +82,24 @@ class Site_Health {
 	}
 
 	/**
-	 * Register the Agent Builder tests with WordPress Site Health.
+	 * Register the Siteloom tests with WordPress Site Health.
 	 *
 	 * @param array $tests Existing direct/async test definitions.
-	 * @return array Tests with the Agent Builder direct tests appended.
+	 * @return array Tests with the Siteloom direct tests appended.
 	 */
 	public static function add_tests( array $tests ): array {
 		$tests['direct'][ self::TEST_SLUG ] = array(
-			'label' => __( 'Agent Builder: background tasks', 'siteloom' ),
+			'label' => __( 'Siteloom: background tasks', 'siteloom' ),
 			'test'  => array( __CLASS__, 'test_background_runs' ),
 		);
 
 		$tests['direct'][ self::STORAGE_TEST_SLUG ] = array(
-			'label' => __( 'Agent Builder: private files are not public', 'siteloom' ),
+			'label' => __( 'Siteloom: private files are not public', 'siteloom' ),
 			'test'  => array( __CLASS__, 'test_private_storage' ),
 		);
 
 		$tests['direct'][ self::LOCATION_TEST_SLUG ] = array(
-			'label' => __( 'Agent Builder: data is stored in the uploads folder', 'siteloom' ),
+			'label' => __( 'Siteloom: data is stored in the uploads folder', 'siteloom' ),
 			'test'  => array( __CLASS__, 'test_storage_location' ),
 		);
 
@@ -118,20 +118,20 @@ class Site_Health {
 
 		if ( ! $cron_stale && 0 === $stuck_runs && 0 === $stale_approvals ) {
 			return array(
-				'label'       => __( 'Agent Builder: background tasks', 'siteloom' ),
+				'label'       => __( 'Siteloom: background tasks', 'siteloom' ),
 				'status'      => 'good',
 				'badge'       => array(
 					'label' => __( 'Background tasks', 'siteloom' ),
 					'color' => 'green',
 				),
-				'description' => '<p>' . __( 'Agent Builder background tasks are running on schedule.', 'siteloom' ) . '</p>',
+				'description' => '<p>' . __( 'Siteloom background tasks are running on schedule.', 'siteloom' ) . '</p>',
 				'actions'     => '',
 				'test'        => self::TEST_SLUG,
 			);
 		}
 
 		return array(
-			'label'       => __( 'Agent Builder: background tasks', 'siteloom' ),
+			'label'       => __( 'Siteloom: background tasks', 'siteloom' ),
 			'status'      => 'recommended',
 			'badge'       => array(
 				'label' => __( 'Background tasks', 'siteloom' ),
@@ -190,7 +190,7 @@ class Site_Health {
 			$critical = true;
 		}
 
-		$label = __( 'Agent Builder: private files are not public', 'siteloom' );
+		$label = __( 'Siteloom: private files are not public', 'siteloom' );
 		$badge = array(
 			'label' => __( 'Security', 'siteloom' ),
 			'color' => 'blue',
@@ -201,7 +201,7 @@ class Site_Health {
 				'label'       => $label,
 				'status'      => 'good',
 				'badge'       => $badge,
-				'description' => '<p>' . __( 'Agent Builder could not request its own folders over the web (the loopback request failed, or nothing is stored yet), so this check was skipped. Automatic backups are stored in a format the web server will not hand out either way.', 'siteloom' ) . '</p>',
+				'description' => '<p>' . __( 'Siteloom could not request its own folders over the web (the loopback request failed, or nothing is stored yet), so this check was skipped. Automatic backups are stored in a format the web server will not hand out either way.', 'siteloom' ) . '</p>',
 				'actions'     => '',
 				'test'        => self::STORAGE_TEST_SLUG,
 			);
@@ -212,7 +212,7 @@ class Site_Health {
 				'label'       => $label,
 				'status'      => 'good',
 				'badge'       => $badge,
-				'description' => '<p>' . __( 'Automatic backups, knowledge files and agent files in the Agent Builder uploads folder cannot be downloaded from the web.', 'siteloom' ) . '</p>',
+				'description' => '<p>' . __( 'Automatic backups, knowledge files and agent files in the Siteloom uploads folder cannot be downloaded from the web.', 'siteloom' ) . '</p>',
 				'actions'     => '',
 				'test'        => self::STORAGE_TEST_SLUG,
 			);
@@ -224,10 +224,10 @@ class Site_Health {
 		}
 
 		if ( $critical ) {
-			$label       = __( 'Agent Builder backups can be downloaded from the web', 'siteloom' );
-			$description = '<p>' . __( 'Copies of site data that Agent Builder saves before an agent changes something can be read by anyone who requests them. Block web access to the folders below, then delete backups you no longer need on the Approvals → Backups screen.', 'siteloom' ) . '</p>';
+			$label       = __( 'Siteloom backups can be downloaded from the web', 'siteloom' );
+			$description = '<p>' . __( 'Copies of site data that Siteloom saves before an agent changes something can be read by anyone who requests them. Block web access to the folders below, then delete backups you no longer need on the Approvals → Backups screen.', 'siteloom' ) . '</p>';
 		} else {
-			$label       = __( 'Agent Builder folders are readable from the web', 'siteloom' );
+			$label       = __( 'Siteloom folders are readable from the web', 'siteloom' );
 			$description = '<p>' . sprintf(
 				/* translators: %s: comma-separated folder names. */
 				__( 'Your web server hands out files from %s. Automatic backups stay protected because they are stored in a format the server will not serve, but knowledge files (your agents\' reference notes) and agent files can be read by anyone who knows their address.', 'siteloom' ),
@@ -236,7 +236,7 @@ class Site_Health {
 		}
 
 		$snippet = self::nginx_snippet();
-		$actions = '<p>' . __( 'Apache and IIS follow the .htaccess and web.config files Agent Builder places in these folders. On nginx, add this rule to the site\'s server block and reload nginx:', 'siteloom' ) . '</p><pre><code>' . esc_html( $snippet ) . '</code></pre>';
+		$actions = '<p>' . __( 'Apache and IIS follow the .htaccess and web.config files Siteloom places in these folders. On nginx, add this rule to the site\'s server block and reload nginx:', 'siteloom' ) . '</p><pre><code>' . esc_html( $snippet ) . '</code></pre>';
 
 		return array(
 			'label'       => $label,
@@ -291,7 +291,7 @@ class Site_Health {
 	 */
 	public static function test_storage_location(): array {
 		$badge = array(
-			'label' => __( 'Agent Builder', 'siteloom' ),
+			'label' => __( 'Siteloom', 'siteloom' ),
 			'color' => 'blue',
 		);
 		$left  = Storage_Migration::remaining_legacy_dirs();
@@ -300,7 +300,7 @@ class Site_Health {
 		if ( empty( $left ) ) {
 			$description = '<p>' . sprintf(
 				/* translators: %s: folder path. */
-				__( 'Agent Builder keeps its files (your agents, knowledge files and automatic backups) in %s.', 'siteloom' ),
+				__( 'Siteloom keeps its files (your agents, knowledge files and automatic backups) in %s.', 'siteloom' ),
 				'<code>' . esc_html( self::display_path( File_Manager::data_dir() ) ) . '/</code>'
 			) . '</p>';
 
@@ -312,13 +312,13 @@ class Site_Health {
 				}
 				$description .= '<p>' . sprintf(
 					/* translators: %s: old folder paths. */
-					__( 'This site has copied its data out of the older folders shared by every site of the network: %s. Agent Builder no longer uses them on this site and never deletes them, because other sites copy from them the first time they load. Once every site of the network has been visited, you can delete these folders yourself.', 'siteloom' ),
+					__( 'This site has copied its data out of the older folders shared by every site of the network: %s. Siteloom no longer uses them on this site and never deletes them, because other sites copy from them the first time they load. Once every site of the network has been visited, you can delete these folders yourself.', 'siteloom' ),
 					implode( ', ', $folders )
 				) . '</p>';
 			}
 
 			return array(
-				'label'       => __( 'Agent Builder data is stored in the uploads folder', 'siteloom' ),
+				'label'       => __( 'Siteloom data is stored in the uploads folder', 'siteloom' ),
 				'status'      => 'good',
 				'badge'       => $badge,
 				'description' => $description,
@@ -333,21 +333,21 @@ class Site_Health {
 		}
 
 		return array(
-			'label'       => __( 'Some Agent Builder files could not be moved to the uploads folder', 'siteloom' ),
+			'label'       => __( 'Some Siteloom files could not be moved to the uploads folder', 'siteloom' ),
 			'status'      => 'recommended',
 			'badge'       => array(
-				'label' => __( 'Agent Builder', 'siteloom' ),
+				'label' => __( 'Siteloom', 'siteloom' ),
 				'color' => 'orange',
 			),
 			'description' => '<p>' . sprintf(
 				/* translators: 1: old folder paths, 2: new folder path. */
-				__( 'Agent Builder now stores its files in %2$s. These older folders still hold files that could not be moved automatically, usually because of file permissions: %1$s. Agent Builder still reads them, so nothing is lost, but it no longer writes there.', 'siteloom' ),
+				__( 'Siteloom now stores its files in %2$s. These older folders still hold files that could not be moved automatically, usually because of file permissions: %1$s. Siteloom still reads them, so nothing is lost, but it no longer writes there.', 'siteloom' ),
 				implode( ', ', $folders ),
 				'<code>' . esc_html( self::display_path( File_Manager::data_dir() ) ) . '/</code>'
 			) . '</p>',
 			'actions'     => '<p>' . ( $copy
-				? __( 'Make the uploads folder writable by the web server (or copy the old folders\' contents into the matching agents/, knowledge/ or backups/ subfolder of this site yourself, keeping any file that already exists there). Agent Builder retries the copy every hour. The old folders are shared by every site of the network and are never deleted automatically.', 'siteloom' )
-				: __( 'Make the old folders writable by the web server (or move their contents into the matching agents/, knowledge/ or backups/ subfolder yourself, keeping any file that already exists there). Agent Builder retries the move every hour and removes each old folder once it is empty.', 'siteloom' )
+				? __( 'Make the uploads folder writable by the web server (or copy the old folders\' contents into the matching agents/, knowledge/ or backups/ subfolder of this site yourself, keeping any file that already exists there). Siteloom retries the copy every hour. The old folders are shared by every site of the network and are never deleted automatically.', 'siteloom' )
+				: __( 'Make the old folders writable by the web server (or move their contents into the matching agents/, knowledge/ or backups/ subfolder yourself, keeping any file that already exists there). Siteloom retries the move every hour and removes each old folder once it is empty.', 'siteloom' )
 			) . '</p>',
 			'test'        => self::LOCATION_TEST_SLUG,
 		);
@@ -527,7 +527,7 @@ class Site_Health {
 			);
 		}
 
-		return '<p>' . __( 'Some Agent Builder background tasks need attention:', 'siteloom' ) . '</p><ul><li>' . implode( '</li><li>', $problems ) . '</li></ul>';
+		return '<p>' . __( 'Some Siteloom background tasks need attention:', 'siteloom' ) . '</p><ul><li>' . implode( '</li><li>', $problems ) . '</li></ul>';
 	}
 
 	/**

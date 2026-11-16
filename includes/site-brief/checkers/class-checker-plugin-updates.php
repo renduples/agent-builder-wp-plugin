@@ -109,7 +109,7 @@ class Checker_Plugin_Updates extends Site_Brief_Checker {
 					'title'            => $title,
 					'evidence'         => implode( ', ', $lines ),
 					'evidence_payload' => $plugins,
-					'proposed_action'  => __( 'Open the Plugins screen to review updates. Agent Builder will not auto-update.', 'siteloom' ),
+					'proposed_action'  => __( 'Open the Plugins screen to review updates. Siteloom will not auto-update.', 'siteloom' ),
 					'action_risk'      => 'medium',
 					'raw'              => $plugins,
 				)

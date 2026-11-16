@@ -3,7 +3,7 @@
  * WP-CLI commands for the general abilities namespace (`wp agent abilities`).
  *
  * Primarily a convenience / inspector for the WP Abilities API (and our bridge).
- * For the fullest WP7 + Agent Builder experience use the `wp agent wp-ai` family.
+ * For the fullest WP7 + Siteloom experience use the `wp agent wp-ai` family.
  *
  * @package    Agent_Builder
  * @subpackage CLI
@@ -30,7 +30,7 @@ if ( ! defined( 'WP_CLI' ) || ! WP_CLI ) {
 class Abilities_Command extends \WP_CLI_Command {
 
 	/**
-	 * List abilities visible to WordPress (core + registered by plugins including Agent Builder).
+	 * List abilities visible to WordPress (core + registered by plugins including Siteloom).
 	 *
 	 * ## OPTIONS
 	 *

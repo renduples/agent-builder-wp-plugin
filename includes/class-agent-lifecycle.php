@@ -43,7 +43,7 @@ class Agent_Lifecycle {
 	const ALLOWED_USER_SCHEDULES = array( 'hourly', 'twicedaily', 'daily', 'weekly' );
 
 	/**
-	 * Option-name prefixes owned by Agent Builder. A write to any option or
+	 * Option-name prefixes owned by Siteloom. A write to any option or
 	 * transient whose name starts with one of these must never fire an event
 	 * listener — this is what breaks the updated_option → approval proposal →
 	 * updated_option feedback loop.
@@ -919,7 +919,7 @@ class Agent_Lifecycle {
 			return;
 		}
 
-		// Writes made by Agent Builder itself (its own options and transients)
+		// Writes made by Siteloom itself (its own options and transients)
 		// never reach a listener.
 		if ( self::is_internal_option_event( (string) ( $listener['hook'] ?? '' ), $args[0] ?? null ) ) {
 			return;
@@ -1038,7 +1038,7 @@ class Agent_Lifecycle {
 
 	/**
 	 * Whether a hook firing with this first argument is a write to an option or
-	 * transient owned by Agent Builder itself, and must therefore be ignored by
+	 * transient owned by Siteloom itself, and must therefore be ignored by
 	 * every listener.
 	 *
 	 * @param string $hook Listener hook name.

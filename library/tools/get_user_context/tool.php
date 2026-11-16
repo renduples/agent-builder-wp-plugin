@@ -25,7 +25,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Reports the current chat user's identity and Agent Builder privileges.
+ * Reports the current chat user's identity and Siteloom privileges.
  */
 class Get_User_Context extends \Agentic\Tool_Base {
 
@@ -40,7 +40,7 @@ class Get_User_Context extends \Agentic\Tool_Base {
 	 * Get the tool description.
 	 */
 	public function get_description(): string {
-		return 'Get information about the person you are currently chatting with: their display name, WordPress role(s), and whether they can manage Agent Builder or approve high-risk actions. Use this before promising something only an administrator can do (e.g. approving a queued high-risk action) — never assume the user\'s access level.';
+		return 'Get information about the person you are currently chatting with: their display name, WordPress role(s), and whether they can manage Siteloom or approve high-risk actions. Use this before promising something only an administrator can do (e.g. approving a queued high-risk action) — never assume the user\'s access level.';
 	}
 
 	/**
@@ -74,7 +74,7 @@ class Get_User_Context extends \Agentic\Tool_Base {
 			return $this->success(
 				array(
 					'is_logged_in' => false,
-					'summary'      => 'This person is not logged in to WordPress, so they have no Agent Builder privileges here.',
+					'summary'      => 'This person is not logged in to WordPress, so they have no Siteloom privileges here.',
 				)
 			);
 		}
@@ -105,7 +105,7 @@ class Get_User_Context extends \Agentic\Tool_Base {
 			);
 		} else {
 			$summary = sprintf(
-				'%s (role: %s) cannot manage Agent Builder or approve high-risk actions. If something needs admin approval, a site administrator will need to do it.',
+				'%s (role: %s) cannot manage Siteloom or approve high-risk actions. If something needs admin approval, a site administrator will need to do it.',
 				$user->display_name,
 				$roles ? implode( ', ', $roles ) : 'none'
 			);

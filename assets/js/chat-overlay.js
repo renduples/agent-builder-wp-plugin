@@ -36,7 +36,7 @@
             openOverlay(slug, link.textContent.trim());
         });
 
-        // Intercept clicks on contextual launchers rendered by Agent Builder on
+        // Intercept clicks on contextual launchers rendered by Siteloom on
         // core admin screens. Scoped to our own markup (.agentic-context-launcher)
         // so arbitrary third-party DOM cannot trigger a seeded agent launch.
         document.addEventListener('click', function (e) {
@@ -250,7 +250,7 @@
         // Footer branding.
         if (typeof agenticChat !== 'undefined' && agenticChat.showBranding === '1') {
             const footer = el('div', { className: 'agentic-overlay-footer' });
-            var parts = [ ( window.wp && wp.i18n && typeof wp.i18n.__ === 'function' ) ? wp.i18n.__( 'Powered by Agent Builder', 'siteloom' ) : 'Powered by Agent Builder' ];
+            var parts = [ ( window.wp && wp.i18n && typeof wp.i18n.__ === 'function' ) ? wp.i18n.__( 'Powered by Siteloom', 'siteloom' ) : 'Powered by Siteloom' ];
             if (agenticChat.provider) parts.push(agenticChat.provider);
             if (agenticChat.model) parts.push(agenticChat.model);
             footer.textContent = parts.join(' - ');
@@ -737,7 +737,7 @@
             if (!msgs) return;
             var btnsWrap = el('div', { className: 'agentic-overlay-quick-actions' });
             var actions = [
-                { label: 'Agent Builder', slug: 'wordpress-assistant' },
+                { label: 'Siteloom', slug: 'wordpress-assistant' },
                 { label: 'Content Agent', slug: 'content-writer' },
                 { label: 'Plugin Agent', slug: 'plugin-assistant' },
                 { label: 'Theme Agent', slug: 'theme-assistant' }

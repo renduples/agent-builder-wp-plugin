@@ -126,7 +126,7 @@ class Agentic_Native_Forms {
 				),
 				'public'          => false,
 				'show_ui'         => true,
-				'show_in_menu'    => false,   // added under Agent Builder menu separately.
+				'show_in_menu'    => false,   // added under Siteloom menu separately.
 				'show_in_rest'    => false,   // managed via custom REST routes below.
 				'capability_type' => 'post',
 				'capabilities'    => array(

@@ -1,6 +1,6 @@
 <?php
 /**
- * Global helper functions for the Agent Builder plugin.
+ * Global helper functions for the Siteloom plugin.
  *
  * This file intentionally declares NO namespace so all functions are available
  * in the global scope and callable from included admin files.

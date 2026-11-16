@@ -121,7 +121,7 @@ $agentic_ui_whatsapp   = get_option( 'agent_builder_show_whatsapp_cta', '0' );
 		<td>
 			<label>
 				<input type="checkbox" name="agent_builder_chat_whitelabel" id="agent_builder_chat_whitelabel" value="1" <?php checked( $agentic_ui_whitelabel, '1' ); ?> />
-				<?php esc_html_e( 'Hide “Powered by Agent Builder” branding (default on — credits stay off the site unless you uncheck this)', 'siteloom' ); ?>
+				<?php esc_html_e( 'Hide “Powered by Siteloom” branding (default on — credits stay off the site unless you uncheck this)', 'siteloom' ); ?>
 			</label>
 			<p class="description"><?php esc_html_e( 'When unchecked, a small credit line appears in the chat footer. WordPress.org requires this to stay hidden unless you opt in.', 'siteloom' ); ?></p>
 			<label class="agentic-mt-8" style="display:block;">

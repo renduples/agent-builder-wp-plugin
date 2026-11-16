@@ -394,7 +394,7 @@ class Virtual_Site_Files {
 	 * One-time check (from Activator::maybe_upgrade()): earlier versions
 	 * wrote robots.txt and llms.txt at the site root. They are never deleted
 	 * (they may have been edited by hand); the administrator gets a
-	 * dismissible note on Agent Builder screens, and an existing llms.txt
+	 * dismissible note on Siteloom screens, and an existing llms.txt
 	 * seeds the stored content so nothing changes if they remove the file.
 	 *
 	 * @return void
@@ -441,7 +441,7 @@ class Virtual_Site_Files {
 	}
 
 	/**
-	 * Dismissible note on Agent Builder screens only.
+	 * Dismissible note on Siteloom screens only.
 	 *
 	 * @return void
 	 */
@@ -474,7 +474,7 @@ class Virtual_Site_Files {
 				printf(
 					wp_kses(
 						/* translators: %s: file names, e.g. robots.txt, llms.txt. */
-						__( 'Earlier versions of Agent Builder wrote %s at the root of your site. Agent Builder no longer writes files there: it now adds its robots.txt rules to the robots.txt WordPress generates and serves llms.txt itself. Your existing files were left untouched because you may have edited them, and while they exist your web server serves them instead. To let Agent Builder manage them, copy any changes you want to keep, then delete the files.', 'siteloom' ),
+						__( 'Earlier versions of Siteloom wrote %s at the root of your site. Siteloom no longer writes files there: it now adds its robots.txt rules to the robots.txt WordPress generates and serves llms.txt itself. Your existing files were left untouched because you may have edited them, and while they exist your web server serves them instead. To let Siteloom manage them, copy any changes you want to keep, then delete the files.', 'siteloom' ),
 						array( 'code' => array() )
 					),
 					wp_kses( $names, array( 'code' => array() ) )

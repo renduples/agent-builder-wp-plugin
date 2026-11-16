@@ -56,7 +56,7 @@ class Test_Site_Health_Test extends TestCase {
 		$this->assertArrayHasKey( 'label', $result['badge'] );
 		$this->assertArrayHasKey( 'color', $result['badge'] );
 		$this->assertSame( 'agent_builder_background_runs', $result['test'] );
-		$this->assertSame( 'Agent Builder: background tasks', $result['label'] );
+		$this->assertSame( 'Siteloom: background tasks', $result['label'] );
 	}
 
 	/**

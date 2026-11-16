@@ -1,6 +1,6 @@
 <?php
 /**
- * Agent Builder — Knowledge hub
+ * Siteloom — Knowledge hub
  *
  * Free: Open Knowledge Format (OKF) wiki — local markdown concepts, no cloud.
  * Pro: Vector Store / RAG training (hosted embeddings) on the Vector tab.
@@ -30,7 +30,7 @@ if ( ! current_user_can( 'agent_builder_manage_settings' ) && ! current_user_can
 // because that screen requires agent_builder_manage_agents.
 $agentic_knowledge_advanced = \Agentic\Admin_Menu_Handler::is_advanced_mode( 'knowledge' );
 
-// Agent Builder Pro (which owns the Vector Store admin UI) can never be
+// Siteloom Pro (which owns the Vector Store admin UI) can never be
 // installed alongside this standalone free build.
 $agentic_is_pro = false;
 
@@ -381,7 +381,7 @@ if ( $agentic_knowledge_advanced ) {
 
 		<?php if ( $agentic_is_pro ) : ?>
 			<?php
-			// Vector Store admin UI lives only in Agent Builder Pro (filter).
+			// Vector Store admin UI lives only in Siteloom Pro (filter).
 			// Free never ships Pro markup — see bin/strip-free-pro-paths.sh.
 			$agentic_vector_partial = apply_filters( 'agentic_vector_store_admin_partial', '' );
 			if ( is_string( $agentic_vector_partial ) && '' !== $agentic_vector_partial && file_exists( $agentic_vector_partial ) ) {
@@ -390,7 +390,7 @@ if ( $agentic_knowledge_advanced ) {
 				?>
 				<div class="notice notice-warning inline" style="margin:12px 0;">
 					<p>
-						<?php esc_html_e( 'Pro is active but the Vector Store admin UI was not found. Reinstall or update Agent Builder Pro.', 'siteloom' ); ?>
+						<?php esc_html_e( 'Pro is active but the Vector Store admin UI was not found. Reinstall or update Siteloom Pro.', 'siteloom' ); ?>
 					</p>
 				</div>
 				<?php
@@ -399,7 +399,7 @@ if ( $agentic_knowledge_advanced ) {
 		<?php else : ?>
 			<p class="agentic-kn-pro-note">
 				<?php
-				esc_html_e( 'The free Knowledge Wiki stays fully available without Pro. Need large-scale semantic search across big document sets instead? Hosted vector RAG is available separately in Agent Builder Pro.', 'siteloom' );
+				esc_html_e( 'The free Knowledge Wiki stays fully available without Pro. Need large-scale semantic search across big document sets instead? Hosted vector RAG is available separately in Siteloom Pro.', 'siteloom' );
 				?>
 			</p>
 		<?php endif; ?>

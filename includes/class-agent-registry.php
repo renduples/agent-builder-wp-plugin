@@ -10,7 +10,7 @@
  *
  * @package    Agent_Builder
  * @subpackage Includes
- * @author     Agent Builder Team <support@agentic-plugin.com>
+ * @author     Siteloom Team <support@agentic-plugin.com>
  * @license    GPL-2.0-or-later https://www.gnu.org/licenses/gpl-2.0.html
  * @link       https://agentic-plugin.com
  * @since      0.2.0
@@ -522,7 +522,7 @@ class Agentic_Agent_Registry {
 			);
 			return new WP_Error(
 				'license_required',
-				__( 'This agent is a purchased add-on that needs a license, and this build cannot verify licenses. Activate it on the Agent Builder installation it was purchased for.', 'siteloom' )
+				__( 'This agent is a purchased add-on that needs a license, and this build cannot verify licenses. Activate it on the Siteloom installation it was purchased for.', 'siteloom' )
 			);
 		}
 

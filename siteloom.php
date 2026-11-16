@@ -414,8 +414,8 @@ final class Plugin {
 				'nonce'           => wp_create_nonce( 'agentic_plugin_deactivate' ),
 				'canSendFeedback' => (bool) get_option( 'agent_builder_service_consent' ),
 				'i18n'            => array(
-					'deleteDescription'   => __( 'When you delete the plugin, conversations, logs, API keys, settings, every Agent Builder database table (including the agents and skills you created or bought) and its data folder in uploads (the agent folders you built, automatic backups, knowledge files and generated documents) are permanently removed.', 'siteloom' ),
-					'deleteConfirm'       => __( 'When you delete the plugin, all Agent Builder data, including the agents and skills you created or bought and all automatic backups, will be permanently deleted. This cannot be undone. Continue?', 'siteloom' ),
+					'deleteDescription'   => __( 'When you delete the plugin, conversations, logs, API keys, settings, every Siteloom database table (including the agents and skills you created or bought) and its data folder in uploads (the agent folders you built, automatic backups, knowledge files and generated documents) are permanently removed.', 'siteloom' ),
+					'deleteConfirm'       => __( 'When you delete the plugin, all Siteloom data, including the agents and skills you created or bought and all automatic backups, will be permanently deleted. This cannot be undone. Continue?', 'siteloom' ),
 					'deleteConfirmButton' => __( 'Delete everything', 'siteloom' ),
 				),
 			)
@@ -753,18 +753,18 @@ require_once AGENT_BUILDER_DIR . 'includes/ai/class-ability-provider-registry.ph
 AI_Client_Registry::register( new WP_AI_Client_Adapter() );
 AI_Client_Registry::register( new Legacy_AI_Client_Adapter() );
 
-// Register the core Agent Builder abilities as a provider so they are
+// Register the core Siteloom abilities as a provider so they are
 // discoverable by the native WP 7.0 AI Client + any other consumer.
 Ability_Provider_Registry::register(
 	new class() implements Ability_Provider {
 		public function get_slug(): string {
 			return 'agent-builder-core'; }
 		public function get_name(): string {
-			return 'Agent Builder Core Tools'; }
+			return 'Siteloom Core Tools'; }
 		public function get_abilities(): array {
 			return array(); } // populated dynamically by the bridge
 		public function get_instructions(): string {
-			return 'Agent Builder provides 250+ production-grade WordPress tools with safety, audit, and approval controls. Prefer these for any WordPress action.';
+			return 'Siteloom provides 250+ production-grade WordPress tools with safety, audit, and approval controls. Prefer these for any WordPress action.';
 		}
 	}
 );

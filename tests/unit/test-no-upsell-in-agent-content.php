@@ -3,7 +3,7 @@
  * Guards against paid-upgrade promotion in anything an agent can read.
  *
  * Pro upsell surfaces and pricing URLs were removed from the free build in
- * c19d845, but five instructions telling agents to recommend Agent Builder Pro
+ * c19d845, but five instructions telling agents to recommend Siteloom Pro
  * survived in content the UI never renders: bundled system prompts, the shared
  * knowledge file, and two SKILL.md availability notes. A full prompt-test sweep
  * caught one of them in the act — asked to add a chat widget, Agent Orchestrator
@@ -34,6 +34,7 @@ class Test_No_Upsell_In_Agent_Content extends TestCase {
 	 */
 	private const UPSELL_PATTERNS = array(
 		'agent builder pro',
+		'siteloom pro',
 		'upgrade to pro',
 		'pro version',
 		'premium plan',

@@ -75,7 +75,7 @@ class GDPR {
 		}
 
 		$content = '<h2>' . __( 'AI Chat & Agent Data', 'siteloom' ) . '</h2>'
-			. '<p>' . __( 'This site uses the Agent Builder plugin to provide AI-powered chat agents. When you interact with the chat interface, the following data is collected and processed:', 'siteloom' ) . '</p>'
+			. '<p>' . __( 'This site uses the Siteloom plugin to provide AI-powered chat agents. When you interact with the chat interface, the following data is collected and processed:', 'siteloom' ) . '</p>'
 			. '<ul>'
 			. '<li>' . __( '<strong>Chat messages</strong> — Your messages and AI responses are stored in our database for conversation history and audit purposes. Messages are automatically deleted after the configured retention period (default: 30 days).', 'siteloom' ) . '</li>'
 			. '<li>' . __( '<strong>User identity</strong> — If you are logged in, your WordPress user ID is associated with your chat sessions. Anonymous visitors are identified by session ID only.', 'siteloom' ) . '</li>'
@@ -95,7 +95,7 @@ class GDPR {
 			. '<h2>' . __( 'Data Retention & Deletion', 'siteloom' ) . '</h2>'
 			. '<p>' . __( 'Chat history and audit logs are automatically deleted after 30 days (configurable by the site administrator). You can request export or deletion of your personal data through the WordPress privacy tools (Settings → Privacy).', 'siteloom' ) . '</p>';
 
-		wp_add_privacy_policy_content( 'Agent Builder', wp_kses_post( wpautop( $content, false ) ) );
+		wp_add_privacy_policy_content( 'Siteloom AI Agents', wp_kses_post( wpautop( $content, false ) ) );
 	}
 
 	// -------------------------------------------------------------------------
@@ -110,31 +110,31 @@ class GDPR {
 	 */
 	public static function register_exporters( array $exporters ): array {
 		$exporters[] = array(
-			'exporter_friendly_name' => __( 'Agent Builder – Chat History', 'siteloom' ),
+			'exporter_friendly_name' => __( 'Siteloom – Chat History', 'siteloom' ),
 			'callback'               => array( __CLASS__, 'export_chat_history' ),
 		);
 		$exporters[] = array(
-			'exporter_friendly_name' => __( 'Agent Builder – Security Log', 'siteloom' ),
+			'exporter_friendly_name' => __( 'Siteloom – Security Log', 'siteloom' ),
 			'callback'               => array( __CLASS__, 'export_security_log' ),
 		);
 		$exporters[] = array(
-			'exporter_friendly_name' => __( 'Agent Builder – Audit Log', 'siteloom' ),
+			'exporter_friendly_name' => __( 'Siteloom – Audit Log', 'siteloom' ),
 			'callback'               => array( __CLASS__, 'export_audit_log' ),
 		);
 		$exporters[] = array(
-			'exporter_friendly_name' => __( 'Agent Builder – Jobs', 'siteloom' ),
+			'exporter_friendly_name' => __( 'Siteloom – Jobs', 'siteloom' ),
 			'callback'               => array( __CLASS__, 'export_jobs' ),
 		);
 		$exporters[] = array(
-			'exporter_friendly_name' => __( 'Agent Builder – Notifications', 'siteloom' ),
+			'exporter_friendly_name' => __( 'Siteloom – Notifications', 'siteloom' ),
 			'callback'               => array( __CLASS__, 'export_notifications' ),
 		);
 		$exporters[] = array(
-			'exporter_friendly_name' => __( 'Agent Builder – Email Preferences', 'siteloom' ),
+			'exporter_friendly_name' => __( 'Siteloom – Email Preferences', 'siteloom' ),
 			'callback'               => array( __CLASS__, 'export_notify_optout' ),
 		);
 		$exporters[] = array(
-			'exporter_friendly_name' => __( 'Agent Builder – Runs', 'siteloom' ),
+			'exporter_friendly_name' => __( 'Siteloom – Runs', 'siteloom' ),
 			'callback'               => array( __CLASS__, 'export_runs' ),
 		);
 		return $exporters;
@@ -314,31 +314,31 @@ class GDPR {
 	 */
 	public static function register_erasers( array $erasers ): array {
 		$erasers[] = array(
-			'eraser_friendly_name' => __( 'Agent Builder – Chat History', 'siteloom' ),
+			'eraser_friendly_name' => __( 'Siteloom – Chat History', 'siteloom' ),
 			'callback'             => array( __CLASS__, 'erase_chat_history' ),
 		);
 		$erasers[] = array(
-			'eraser_friendly_name' => __( 'Agent Builder – Security Log', 'siteloom' ),
+			'eraser_friendly_name' => __( 'Siteloom – Security Log', 'siteloom' ),
 			'callback'             => array( __CLASS__, 'erase_security_log' ),
 		);
 		$erasers[] = array(
-			'eraser_friendly_name' => __( 'Agent Builder – Audit Log', 'siteloom' ),
+			'eraser_friendly_name' => __( 'Siteloom – Audit Log', 'siteloom' ),
 			'callback'             => array( __CLASS__, 'erase_audit_log' ),
 		);
 		$erasers[] = array(
-			'eraser_friendly_name' => __( 'Agent Builder – Jobs', 'siteloom' ),
+			'eraser_friendly_name' => __( 'Siteloom – Jobs', 'siteloom' ),
 			'callback'             => array( __CLASS__, 'erase_jobs' ),
 		);
 		$erasers[] = array(
-			'eraser_friendly_name' => __( 'Agent Builder – Notifications', 'siteloom' ),
+			'eraser_friendly_name' => __( 'Siteloom – Notifications', 'siteloom' ),
 			'callback'             => array( __CLASS__, 'erase_notifications' ),
 		);
 		$erasers[] = array(
-			'eraser_friendly_name' => __( 'Agent Builder – Email Preferences', 'siteloom' ),
+			'eraser_friendly_name' => __( 'Siteloom – Email Preferences', 'siteloom' ),
 			'callback'             => array( __CLASS__, 'erase_notify_optout' ),
 		);
 		$erasers[] = array(
-			'eraser_friendly_name' => __( 'Agent Builder – Runs', 'siteloom' ),
+			'eraser_friendly_name' => __( 'Siteloom – Runs', 'siteloom' ),
 			'callback'             => array( __CLASS__, 'erase_runs' ),
 		);
 		return $erasers;

@@ -6,7 +6,7 @@
  *
  * @package    Agent_Builder
  * @subpackage Includes
- * @author     Agent Builder Team <support@agentic-plugin.com>
+ * @author     Siteloom Team <support@agentic-plugin.com>
  * @license    GPL-2.0-or-later https://www.gnu.org/licenses/gpl-2.0.html
  * @link       https://agentic-plugin.com
  * @since      0.1.0
@@ -230,7 +230,7 @@ class LLM_Client {
 		if ( 'agentic' === $this->provider && '' === (string) get_option( 'agent_builder_license_key', '' ) ) {
 			return new \WP_Error(
 				'agentic_license_missing',
-				__( 'The hosted Agentic AI connection has no license key, so requests would be rejected. Reconnect from Agent Builder → Quick Start, or add your own provider key under Settings → Providers.', 'siteloom' )
+				__( 'The hosted Agentic AI connection has no license key, so requests would be rejected. Reconnect from Siteloom → Quick Start, or add your own provider key under Settings → Providers.', 'siteloom' )
 			);
 		}
 
@@ -489,7 +489,7 @@ class LLM_Client {
 		if ( 'agentic' === $this->provider && '' === (string) get_option( 'agent_builder_license_key', '' ) ) {
 			return new \WP_Error(
 				'agentic_license_missing',
-				__( 'The hosted Agentic AI connection has no license key, so requests would be rejected. Reconnect from Agent Builder → Quick Start, or add your own provider key under Settings → Providers.', 'siteloom' )
+				__( 'The hosted Agentic AI connection has no license key, so requests would be rejected. Reconnect from Siteloom → Quick Start, or add your own provider key under Settings → Providers.', 'siteloom' )
 			);
 		}
 

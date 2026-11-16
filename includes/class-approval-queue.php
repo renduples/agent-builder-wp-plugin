@@ -8,7 +8,7 @@
  *
  * @package    Agent_Builder
  * @subpackage Includes
- * @author     Agent Builder Team <support@agentic-plugin.com>
+ * @author     Siteloom Team <support@agentic-plugin.com>
  * @license    GPL-2.0-or-later https://www.gnu.org/licenses/gpl-2.0.html
  * @link       https://agentic-plugin.com
  * @since      0.1.0
@@ -53,7 +53,7 @@ class Approval_Queue {
 			return;
 		}
 
-		// Agent Builder screens only — the approvals queue has its own menu
+		// Siteloom screens only — the approvals queue has its own menu
 		// badge and notifications, so this never follows the admin around
 		// the rest of wp-admin.
 		if ( ! Admin_Notice_Manager::is_plugin_admin_screen() ) {
@@ -330,7 +330,7 @@ class Approval_Queue {
 				array(
 					'heading' => __( 'Approval needed', 'siteloom' ),
 					'body'    => $body,
-					'from'    => 'Agent Builder <support@agentic-plugin.com>',
+					'from'    => 'Siteloom AI Agents <support@agentic-plugin.com>',
 				)
 			);
 		}

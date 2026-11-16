@@ -106,7 +106,7 @@ class Upscale_Image extends \Agentic\Tool_Base {
 		$user_id = $api_key;
 
 		if ( empty( $api_key ) ) {
-			return array( 'error' => 'Agentic Image Generation requires connecting an Agentic AI account — go to Agent Builder → Settings → Providers and connect Agentic AI.' );
+			return array( 'error' => 'Agentic Image Generation requires connecting an Agentic AI account — go to Siteloom → Settings → Providers and connect Agentic AI.' );
 		}
 
 		$source_id = (int) $arguments['attachment_id'];

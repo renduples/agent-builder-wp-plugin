@@ -143,7 +143,7 @@ class Get_Failed_Logins extends \Agentic\Tool_Base {
 
 		return array(
 			'source'   => 'transient_fallback',
-			'note'     => 'Security log table not found. Activate Agent Builder security logging in Settings for full data.',
+			'note'     => 'Security log table not found. Activate Siteloom security logging in Settings for full data.',
 			'total'    => is_array( $lockouts ) ? count( $lockouts ) : 0,
 			'lockouts' => is_array( $lockouts ) ? $lockouts : array(),
 		);

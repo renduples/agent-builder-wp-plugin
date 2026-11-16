@@ -23,7 +23,7 @@ class List_Code_Snippets extends Tool_Base {
 	}
 
 	public function get_description(): string {
-		return 'List all custom CSS and JavaScript snippets managed by Agent Builder, sorted by creation date.';
+		return 'List all custom CSS and JavaScript snippets managed by Siteloom, sorted by creation date.';
 	}
 
 	public function get_category(): string {

@@ -3,7 +3,7 @@
  *
  * Adds a permanent "Content Writer" button to the main Gutenberg block
  * toolbar (the bar that appears above every focused block). Clicking it
- * opens the Agent Builder sidebar panel where selection-aware quick-action
+ * opens the Siteloom sidebar panel where selection-aware quick-action
  * pills let the user run AI actions on selected text.
  *
  * Relies on window.agenticEditorSidebar config (shared with editor-sidebar.js)

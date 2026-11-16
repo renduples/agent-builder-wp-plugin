@@ -6,7 +6,7 @@
  *
  * @package    Agent_Builder
  * @subpackage Includes
- * @author     Agent Builder Team <support@agentic-plugin.com>
+ * @author     Siteloom Team <support@agentic-plugin.com>
  * @license    GPL-2.0-or-later https://www.gnu.org/licenses/gpl-2.0.html
  * @link       https://agentic-plugin.com
  * @since      0.1.0
@@ -545,7 +545,7 @@ class Agent_Controller {
 
 		// Merge third-party abilities as tools (WP 6.9+).
 		// These are opt-in via the Abilities bridge; they do not need an abilities.json
-		// entry (that file only gates Agent Builder's own tools). Schemas are sanitized
+		// entry (that file only gates Siteloom's own tools). Schemas are sanitized
 		// in LLM_Client before the provider API call (OpenAI rejects top-level oneOf/etc).
 		//
 		// A generic bridged tool (e.g. a third-party "get all users" ability) is withheld
@@ -586,7 +586,7 @@ class Agent_Controller {
 	}
 
 	/**
-	 * Bridged generic tool slugs mapped to the bundled Agent Builder tool
+	 * Bridged generic tool slugs mapped to the bundled Siteloom tool
 	 * slugs that make them redundant for an agent that already holds one.
 	 *
 	 * Covers the generic third-party/core CRUD abilities the WP 6.9+ Abilities
@@ -794,7 +794,7 @@ class Agent_Controller {
 
 		if ( ! $this->llm->is_configured() ) {
 			return array(
-				'response' => __( 'The AI service is not configured. Please ask an administrator to set up the API key in Settings > Agentic.', 'siteloom' ),
+				'response' => __( 'The AI service is not configured. Please ask an administrator to set up the API key in Siteloom → Settings.', 'siteloom' ),
 				'error'    => true,
 				'agent_id' => $this->current_agent->get_id(),
 			);
@@ -835,7 +835,7 @@ class Agent_Controller {
 				'abilities.json signature mismatch — agent blocked'
 			);
 			return array(
-				'response' => __( 'This agent has been temporarily disabled due to a security check. Please deactivate and reactivate the Agent Builder plugin to restore it.', 'siteloom' ),
+				'response' => __( 'This agent has been temporarily disabled due to a security check. Please deactivate and reactivate the Siteloom plugin to restore it.', 'siteloom' ),
 				'error'    => true,
 				'agent_id' => $current_agent_id,
 			);
@@ -884,7 +884,7 @@ class Agent_Controller {
 		/**
 		 * Optional retrieval context (e.g. Pro Vector Store / RAG passages).
 		 *
-		 * Free plugin leaves this empty. Agent Builder Pro hooks here to inject
+		 * Free plugin leaves this empty. Siteloom Pro hooks here to inject
 		 * semantic search hits before generation.
 		 *
 		 * @param string $block    Context block (empty by default).

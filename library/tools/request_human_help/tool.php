@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * The free plugin owns the event; delivery is somebody else's job. This tool
  * builds the payload, records it in the audit log, and passes it through the
- * `agentic_human_escalation` filter. Agent Builder Pro subscribes to that
+ * `agentic_human_escalation` filter. Siteloom Pro subscribes to that
  * filter and fans the escalation out to Slack and to a configured recipient.
  * With no subscriber, we fall back to emailing the site administrator so the
  * free plugin still does something useful on its own.
@@ -170,7 +170,7 @@ class Request_Human_Help extends \Agentic\Tool_Base {
 		 *   [ 'channel' => 'slack', 'success' => true ]
 		 *   [ 'channel' => 'email', 'success' => false, 'error' => 'no_recipient_configured' ]
 		 *
-		 * Agent Builder Pro attaches its Slack and email channels here.
+		 * Siteloom Pro attaches its Slack and email channels here.
 		 *
 		 * @param array $results Delivery results, one per channel.
 		 * @param array $payload Escalation details.

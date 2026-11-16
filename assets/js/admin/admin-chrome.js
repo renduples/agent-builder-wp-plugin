@@ -1,5 +1,5 @@
 /**
- * Shared Agent Builder admin chrome, printed from admin_footer on every
+ * Shared Siteloom admin chrome, printed from admin_footer on every
  * Agentic admin page: places the Advanced-mode secondary nav rail and the
  * site-wide Basic/Advanced switch at the top of .wrap, wires the switch, and
  * appends the page footer links on classic (non-React) pages.

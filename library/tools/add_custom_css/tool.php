@@ -23,7 +23,7 @@ class Add_Custom_Css extends Tool_Base {
 	}
 
 	public function get_description(): string {
-		return 'Store a custom CSS snippet for later reference (e.g. for a developer to paste into Appearance → Customize). Snippets are saved to the database only — Agent Builder does not output them on the frontend.';
+		return 'Store a custom CSS snippet for later reference (e.g. for a developer to paste into Appearance → Customize). Snippets are saved to the database only — Siteloom does not output them on the frontend.';
 	}
 
 	public function get_category(): string {
@@ -87,7 +87,7 @@ class Add_Custom_Css extends Tool_Base {
 			'label'       => $label,
 			'location'    => $location,
 			'css_preview' => substr( $css, 0, 100 ) . ( strlen( $css ) > 100 ? '...' : '' ),
-			'message'     => 'Stored only. Agent Builder does not output this CSS — paste it into Appearance → Customize if you want it on the site.',
+			'message'     => 'Stored only. Siteloom does not output this CSS — paste it into Appearance → Customize if you want it on the site.',
 		);
 	}
 }

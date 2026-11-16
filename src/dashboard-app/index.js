@@ -1,5 +1,5 @@
 /**
- * Full Agent Builder dashboard — all cards as React + @wordpress/components.
+ * Full Siteloom dashboard — all cards as React + @wordpress/components.
  */
 import {
 	createRoot,
@@ -793,7 +793,7 @@ function StatusCard( { data, dnd } ) {
 				<StatusTile
 					label={ __( 'Schema', 'siteloom' ) }
 					tip={ __(
-						'The version of Agent Builder’s database structure. Updates automatically when needed — you don’t need to do anything here.',
+						'The version of Siteloom’s database structure. Updates automatically when needed — you don’t need to do anything here.',
 						'siteloom'
 					) }
 				>
@@ -2023,7 +2023,7 @@ function DashboardApp() {
 						className="agentic-icon-sm"
 						alt=""
 					/>{ ' ' }
-					Agent Builder
+					Siteloom
 				</h1>
 				<div className="agentic-dashboard-layout-actions">
 					{ layoutSaving && (
