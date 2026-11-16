@@ -1,4 +1,4 @@
-=== Agent Builder ===
+=== Siteloom AI Agents ===
 Contributors: agenticplugin
 Tags: ai, ai agents, automation, ai assistant, mcp
 Requires at least: 6.4
@@ -15,7 +15,7 @@ Give AI agents real WordPress work. They run in the background and only come bac
 
 **Hand a job to an agent, walk away, and get pinged only when it needs you.**
 
-Agent Builder gives your WordPress site a team of AI agents that do real work: drafting posts, fixing SEO, triaging comments, checking site health and helping run your store. Low-risk steps happen on their own. Anything that needs your judgement waits for one-click approval.
+Siteloom AI Agents gives your WordPress site a team of AI agents that do real work: drafting posts, fixing SEO, triaging comments, checking site health and helping run your store. Low-risk steps happen on their own. Anything that needs your judgement waits for one-click approval.
 
 Bring your own AI provider (OpenAI, Anthropic, Google Gemini, xAI, DeepSeek, Mistral and more, or a local model through Ollama). Free, with no account required.
 
@@ -79,7 +79,7 @@ Save a conversation as a skill, teach a task by demonstrating it once, or write 
 
 1. Log in to your WordPress admin dashboard.
 2. Navigate to **Plugins → Add Plugin** (**Add New Plugin** in older WordPress versions).
-3. Search for **Agent Builder**.
+3. Search for **Siteloom AI Agents**.
 4. Click **Install Now**, then click **Activate**.
 5. The Quick Start wizard will guide you through connecting your preferred AI provider in under two minutes.
 
@@ -89,7 +89,7 @@ Save a conversation as a skill, teach a task by demonstrating it once, or write 
 2. Go to **Plugins → Add Plugin → Upload Plugin**.
 3. Select the `.zip` file and click **Install Now**.
 4. Activate the plugin through the WordPress Plugins menu.
-5. Navigate to **Agent Builder → Settings** to connect your LLM provider.
+5. Navigate to **Siteloom → Settings** to connect your LLM provider.
 
 = Supported LLM Providers =
 
@@ -101,16 +101,16 @@ Save a conversation as a skill, teach a task by demonstrating it once, or write 
 
 = Where do I report security bugs found in this plugin? =
 
-Please report security bugs found in the source code of the Agent Builder plugin through the [Patchstack Vulnerability Disclosure  Program](https://patchstack.com/database/vdp/4f108df7-e398-4bbb-bdc8-b4d93aa3cbc3). The Patchstack team will assist you with verification, CVE assignment, and notify the developers of this plugin.
+Please report security bugs found in the source code of the Siteloom AI Agents plugin through the [Patchstack Vulnerability Disclosure  Program](https://patchstack.com/database/vdp/4f108df7-e398-4bbb-bdc8-b4d93aa3cbc3). The Patchstack team will assist you with verification, CVE assignment, and notify the developers of this plugin.
 
-= What is Agent Builder? =
-Agent Builder allows you to create, train, and orchestrate autonomous AI agents inside WordPress using simple job descriptions. Agents use modular, risk-rated tools and skills to perform real administrative and editorial tasks — all under your control, with full visibility into what they do.
+= What is Siteloom? =
+Siteloom allows you to create, train, and orchestrate autonomous AI agents inside WordPress using simple job descriptions. Agents use modular, risk-rated tools and skills to perform real administrative and editorial tasks — all under your control, with full visibility into what they do.
 
 = How is this different from generic WordPress chatbot plugins? =
-Standard chatbot plugins stream text from an API. Agent Builder gives agents permission-controlled tools to interact directly with your site—drafting posts, auditing SEO, checking health—backed by risk classification, approval gates, and a tamper-evident audit log. You stay in control.
+Standard chatbot plugins stream text from an API. Siteloom gives agents permission-controlled tools to interact directly with your site—drafting posts, auditing SEO, checking health—backed by risk classification, approval gates, and a tamper-evident audit log. You stay in control.
 
-= Is Agent Builder safe to use? =
-Agent Builder is built with safety controls: (1) every tool is classified by risk level, (2) medium-risk actions need confirmation and high-risk actions queue for your review, (3) a one-click Emergency Stop disables all agents, (4) a tamper-evident audit log records what agents do, (5) per-agent tool scopes show exactly what each agent can do. See “You stay in control” above. These controls reduce risk, but no software can guarantee safety: AI models can make mistakes or be misled by content they read. You remain responsible for reviewing what agents do and for keeping your own backups of your site.
+= Is Siteloom safe to use? =
+Siteloom is built with safety controls: (1) every tool is classified by risk level, (2) medium-risk actions need confirmation and high-risk actions queue for your review, (3) a one-click Emergency Stop disables all agents, (4) a tamper-evident audit log records what agents do, (5) per-agent tool scopes show exactly what each agent can do. See “You stay in control” above. These controls reduce risk, but no software can guarantee safety: AI models can make mistakes or be misled by content they read. You remain responsible for reviewing what agents do and for keeping your own backups of your site.
 
 = Does Site Brief change my site by itself? =
 No. The scan is read-only. Writes use the same approval queue as chat.
@@ -119,12 +119,12 @@ No. The scan is read-only. Writes use the same approval queue as chat.
 It depends on the risk level. Low-risk actions happen immediately. Medium-risk actions pause and ask for confirmation. High-risk actions (like publishing a post, deleting data, or updating settings) queue in the Approvals screen where you review them one by one before they execute. Extreme-risk tools (like arbitrary shell execution) are blocked by default.
 
 = How do I know the agents actually work on real problems? =
-Because they are tested the way you would use them. Agent Builder ships a ranked catalog of 54 real requests from WordPress owners, each assigned to a bundled agent, and a WP-CLI command (`wp agent prompt-test`) that replays them through the real chat path and writes a report of what every agent did: tools called, approval stops, cost. Run it on your own site, add your own requests, and read the report in plain markdown. From chat, ask the Assistant Trainer "which of my agents are missing tools?" and it will analyse the results and propose what to grant — you approve. It runs only when you start it and costs only what your AI provider charges for those calls.
+Because they are tested the way you would use them. Siteloom ships a ranked catalog of 54 real requests from WordPress owners, each assigned to a bundled agent, and a WP-CLI command (`wp agent prompt-test`) that replays them through the real chat path and writes a report of what every agent did: tools called, approval stops, cost. Run it on your own site, add your own requests, and read the report in plain markdown. From chat, ask the Assistant Trainer "which of my agents are missing tools?" and it will analyse the results and propose what to grant — you approve. It runs only when you start it and costs only what your AI provider charges for those calls.
 
 = Can I undo a change an agent made? =
-Often, yes. Before an agent changes a tracked file or database table, Agent Builder automatically takes a timestamped backup (on by default, no setup needed), and you can restore it with one click from the Approvals screen. Database backups keep the last 3 snapshots per table, and for large tables only the affected rows are saved. These backups cover only the files and tables that agent tools track. They do not replace a full site backup or a staging site.
+Often, yes. Before an agent changes a tracked file or database table, Siteloom automatically takes a timestamped backup (on by default, no setup needed), and you can restore it with one click from the Approvals screen. Database backups keep the last 3 snapshots per table, and for large tables only the affected rows are saved. These backups cover only the files and tables that agent tools track. They do not replace a full site backup or a staging site.
 
-= Do I need coding skills to use Agent Builder? =
+= Do I need coding skills to use Siteloom? =
 No. The plugin includes a **Basic interface mode** designed for non-technical site owners, with guided workflows, plain-language approvals, and one-click controls. Experienced users can switch to **Advanced mode** for developer tools and raw configuration.
 
 = What is WebMCP? =
@@ -133,7 +133,7 @@ WebMCP (Web-based Model Context Protocol) lets your visitors' own AI browser age
 = What is MCP? =
 MCP (Model Context Protocol) is an open standard that lets AI clients such as Claude Desktop, Cursor and VS Code use your WordPress site as a tool provider. Your site's MCP endpoint is off by default. An administrator turns it on per agent in Settings → MCP, then connects the AI app with a WordPress Application Password they create in their own user profile (the plugin never creates one). The client connects straight to your site, acts with that user's permissions, can use only the tools you allow, never gets high-risk tools, and actions that need approval still wait for you, with full audit logging. There is no relay or intermediary server.
 
-= Is Agent Builder free? =
+= Is Siteloom free? =
 Yes. The free core plugin includes all 12 bundled agents, the complete tools/skills hub, the Approvals queue, the local OKF Knowledge wiki, multi-provider BYOK support, and cloud AI image/video generation (via the optional Agentic AI connection, which includes daily free credits — no purchase required).
 
 PDF and Word document generation are not bundled in this WordPress.org package (license and file-size reasons); spreadsheet creation, editing, and analysis are. The PDF/Word tools still appear in the Tools list so agents can use them if you're on a build that includes those libraries — Tools Hub marks them "Unavailable on this install" otherwise.
@@ -142,7 +142,7 @@ PDF and Word document generation are not bundled in this WordPress.org package (
 **Basic Mode:** Simplified interface with guided workflows, fewer options, and one-click safety controls. Best for site owners who want to use agents without configuration. **Advanced Mode:** Full developer console showing tool manifests, REST API docs, risk audits, MCP settings, and technical audit logs. Switch anytime from Settings → Interface.
 
 = Can I run agents on a schedule? =
-Yes. Use the Routines screen (Agent Builder → Routines, next to Tasks) to run any agent automatically. A routine can run on a repeating schedule — hourly, twice daily, daily, or weekly — or trigger from a WordPress event such as a post being published, a comment submitted, a new user registered, a file uploaded, a new WooCommerce order, or a plugin or theme change. Each routine can be paused and resumed, test-run before it goes live, and keeps a history of its last 20 runs, each linked back to the Tasks screen.
+Yes. Use the Routines screen (Siteloom → Routines, next to Tasks) to run any agent automatically. A routine can run on a repeating schedule — hourly, twice daily, daily, or weekly — or trigger from a WordPress event such as a post being published, a comment submitted, a new user registered, a file uploaded, a new WooCommerce order, or a plugin or theme change. Each routine can be paused and resumed, test-run before it goes live, and keeps a history of its last 20 runs, each linked back to the Tasks screen.
 
 Routines run on WordPress's WP-Cron, which only fires when your site receives a visit. On a low-traffic site, set `DISABLE_WP_CRON` and add a real system cron entry that hits `wp-cron.php` so scheduled routines run reliably.
 
@@ -151,14 +151,14 @@ If you prefer to script things, you can still orchestrate agents programmaticall
 = What is a task? =
 A task is a job you hand to an agent to run in the background. From the Tasks screen you pick an agent, describe what you want, and start it. The agent works on its own — low-risk steps run automatically, while anything that needs your judgement waits for you in Tasks under "Waiting on you". You get a notification when a task is waiting on your OK or has finished, so you only check back when there is something to act on.
 
-= Does Agent Builder send me email? =
+= Does Siteloom send me email? =
 Yes — a daily activity digest that summarizes what your agents did. It is sent only to site administrators, uses WordPress's own mail function (`wp_mail`, no external email service), and is on by default. You can switch it to instant run notifications or turn email off entirely from Settings → Security, and each administrator can opt out of the digest individually.
 
 = Where is my data sent? =
 When using cloud LLM providers, conversation context and tool parameters are sent directly to your chosen provider via their official API (see External services below). If you use Ollama or another local endpoint, AI requests go only to that endpoint (by default on your own server), not to a cloud provider. The plugin has no telemetry or usage tracking. Optional services listed under External services are used only if you turn them on or click to use them.
 
 = What is the WordPress Abilities API integration? =
-On WordPress 6.9+, Agent Builder provides bidirectional integration: (1) **Outbound:** Registers agent tools as abilities under `agent-builder/` and `wp-extended/` namespaces for external MCP discovery. (2) **Inbound:** Automatically imports abilities exposed by other WordPress plugins so your agents can use them as tools, all protected by the same risk gate.
+On WordPress 6.9+, Siteloom provides bidirectional integration: (1) **Outbound:** Registers agent tools as abilities under `agent-builder/` and `wp-extended/` namespaces for external MCP discovery. (2) **Inbound:** Automatically imports abilities exposed by other WordPress plugins so your agents can use them as tools, all protected by the same risk gate.
 
 = What is the difference between Tools and Skills? =
 **Tools:** Single, permission-controlled actions an agent can execute (e.g., `create_draft_post`, `get_site_health`). **Skills:** Pre-packaged instruction sets and tool workflows following the open `agentskills.io` standard that teach agents multi-step capabilities without writing code.
@@ -192,11 +192,11 @@ The files in `build/` are compiled with @wordpress/scripts from the unminified s
 
 == External services ==
 
-Agent Builder works with no external service until you set one up. It contains no telemetry, usage tracking or analytics of any kind, and it never contacts a server just because it was activated or because a page was viewed. Every service below is used only after an administrator chooses it (picks that AI provider, enters that key, turns that option on) or as the direct result of an administrator's click or an agent tool the administrator runs. Each entry says what is sent and when.
+Siteloom works with no external service until you set one up. It contains no telemetry, usage tracking or analytics of any kind, and it never contacts a server just because it was activated or because a page was viewed. Every service below is used only after an administrator chooses it (picks that AI provider, enters that key, turns that option on) or as the direct result of an administrator's click or an agent tool the administrator runs. Each entry says what is sent and when.
 
 = AI model providers (the one you choose) =
 
-Agent Builder sends AI requests only to the provider(s) an administrator configures under Agent Builder → Providers. No provider is contacted until you enter its API key (or, for Ollama, its URL).
+Siteloom sends AI requests only to the provider(s) an administrator configures under Siteloom → Providers. No provider is contacted until you enter its API key (or, for Ollama, its URL).
 
 * **When used:** when someone chats with an agent, an agent runs a task or a routine you scheduled, an approval rule you wrote is checked against a proposed action, or you click "Test connection" / "Refresh models" for that provider. Once a provider has a key, a daily WP-Cron job also asks that same provider for its current model list (Ollama and Agentic AI only, unless you enable the curated catalog under "Agentic AI" below).
 * **Data sent:** the conversation (messages typed by the user and the agent's replies), the agent's system instructions, the definitions of the tools the agent may use, the results of tools the agent ran (which can include content from your site that the agent read, such as post text), and any image the user attached. For approval rules: the proposed tool name, its arguments with passwords, keys and tokens removed, and your rule text. Your API key is sent to that provider only, to authenticate. Model-list requests send only your API key.
@@ -226,7 +226,7 @@ Agentic AI is the optional hosted AI service run by the developers of this plugi
 * **Model catalog and prices** (`/wp-json/agentic/v1/model-pricing`): when an administrator clicks "Get Latest Pricing" (Costs) or "Refresh models", and daily only if an administrator turns on "Refresh model catalog from Agentic" in Settings → Security (off by default). A plain GET; no site data is sent.
 * **Agent catalog for Site Brief** (`/wp-json/agentic-marketplace/v1/agents`): only when that same setting is on. A plain GET; matching happens on your site and nothing about your site is sent.
 * **Skill and agent search** (`/wp-json/agentic/v1/skills`, `/agents`, `/search-capabilities`): when an administrator clicks "Show recommended skills" on the Skills screen, or an agent runs the `browse_community_skills`, `agents_available` or `search_capabilities` tool. Sends only the search words or skill name.
-* **Problem reports** (`/wp-json/agentic/v1/report-issue`): only when an administrator approves the `report_issue` tool in chat with "send" (each call needs the administrator's click). Sends site URL, recent Agent Builder error messages, the active provider name, plugin/WordPress/PHP versions, your description of the problem, and the Agentic license key if one exists. Never your provider API keys.
+* **Problem reports** (`/wp-json/agentic/v1/report-issue`): only when an administrator approves the `report_issue` tool in chat with "send" (each call needs the administrator's click). Sends site URL, recent Siteloom error messages, the active provider name, plugin/WordPress/PHP versions, your description of the problem, and the Agentic license key if one exists. Never your provider API keys.
 * **Deactivation feedback** (`/wp-json/agentic-license/v1/cancellation-feedback`): the survey step appears only on sites that accepted the Agentic AI terms at sign-up, and it is optional. Nothing is sent unless the administrator picks a reason and clicks "Submit & deactivate" ("Skip & deactivate" sends nothing). Sends the site URL, the chosen reason, any comment typed (up to 500 characters) and the plugin version.
 * **Deregister on uninstall** (`/wp-json/agentic/v1/deregister`): only if an Agentic API key is stored and the `agent_builder_allow_deregister_on_uninstall` option has been set to `1` (off by default; there is no screen that sets it). Sends the API key and site URL when the plugin is deleted.
 
@@ -275,6 +275,7 @@ The Privacy-compliance tool looks for strings such as `connect.facebook.net` in 
 == Changelog ==
 
 = 4.4.0 - 2026-10-01 =
+* Agent Builder is now Siteloom AI Agents (plugin slug and text domain: siteloom). Your agents, settings and data carry over unchanged.
 * Safer backups: automatic pre-change backups are now private on every web server (guarded files with random names), existing backups are converted on upgrade, and Site Health warns if backup or knowledge files can be read from the web.
 * Uninstall with "Delete all plugin data" now also removes the backup and knowledge folders.
 * Activation opens Quick Start; the plugins list gains Settings and Finish setup links.
@@ -377,4 +378,4 @@ WordPress.org Plugin Check compliance, guarded Abilities API adapter, multi-agen
 
 == Privacy ==
 
-Agent Builder has no telemetry, analytics or usage tracking. See **External services** for exactly what is sent, and when, to the AI provider you choose and to any optional service you turn on. For the optional Agentic AI service, see the [Agentic AI privacy policy](https://agentic-plugin.com/privacy-policy/) and [terms of service](https://agentic-plugin.com/terms/).
+Siteloom has no telemetry, analytics or usage tracking. See **External services** for exactly what is sent, and when, to the AI provider you choose and to any optional service you turn on. For the optional Agentic AI service, see the [Agentic AI privacy policy](https://agentic-plugin.com/privacy-policy/) and [terms of service](https://agentic-plugin.com/terms/).
