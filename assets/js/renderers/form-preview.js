@@ -214,7 +214,10 @@
 		 */
 		function insertShortcode() {
 			var cfg = window.agenticEditorSidebar || {};
-			var restBase = ( cfg.restUrl || '/wp-json/agentic/v1/' ).replace( /\/$/, '' );
+			if ( ! cfg.restUrl ) {
+				return; // restUrl (rest_url()) is passed by PHP; nothing to call without it.
+			}
+			var restBase = cfg.restUrl.replace( /\/$/, '' );
 			var nonce    = cfg.nonce || '';
 
 			setInsert( 'saving' );

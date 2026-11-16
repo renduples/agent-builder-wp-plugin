@@ -147,7 +147,7 @@ class Recheck_AI_Crawler_Access extends \Agentic\Tool_Base {
 				array(
 					'type'    => 'warning',
 					'message' => '⚡ AI Radar: A recent settings change may have blocked AI crawlers (' . implode( ', ', $newly_blocked ) . ') from reading your site. ' .
-						'<a href="/wp-admin/admin.php?page=agentic-chat">Open AI Radar to check →</a>',
+						'<a href="' . esc_url( admin_url( 'admin.php?page=agentic-chat' ) ) . '">Open AI Radar to check →</a>',
 					'time'    => time(),
 				)
 			);

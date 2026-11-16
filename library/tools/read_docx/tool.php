@@ -169,8 +169,10 @@ class Read_Docx extends \Agentic\Tool_Base {
 	 * @return string
 	 */
 	private function extract_text_from_element( mixed $element ): string {
+		// PHPWord's reader hands text back still XML-escaped ("A &amp; B"),
+		// so decode it to the plain text the document actually contains.
 		if ( $element instanceof \PhpOffice\PhpWord\Element\Text ) {
-			return $element->getText();
+			return html_entity_decode( (string) $element->getText(), ENT_QUOTES | ENT_XML1, 'UTF-8' );
 		}
 		if ( $element instanceof \PhpOffice\PhpWord\Element\TextRun
 			|| $element instanceof \PhpOffice\PhpWord\Element\Paragraph ) {
@@ -181,7 +183,7 @@ class Read_Docx extends \Agentic\Tool_Base {
 			return $text;
 		}
 		if ( $element instanceof \PhpOffice\PhpWord\Element\Link ) {
-			return $element->getText();
+			return html_entity_decode( (string) $element->getText(), ENT_QUOTES | ENT_XML1, 'UTF-8' );
 		}
 		return '';
 	}

@@ -72,30 +72,9 @@ class Preview_Robots_Txt_Update extends \Agentic\Tool_Base {
 	 * @return array Preview showing current and proposed robots.txt content.
 	 */
 	public function execute( array $arguments ): array {
-		$allow_bots = $arguments['allow_bots'] ?? array( 'GPTBot', 'ChatGPT-User', 'ClaudeBot', 'Google-Extended', 'PerplexityBot', 'anthropic-ai' );
+		$plan = \Agentic\Tool_Helpers::plan_robots_ai_rules( $arguments['allow_bots'] ?? null );
 
-		$robots = \Agentic\Tool_Helpers::read_robots_txt();
-		if ( ! $robots['writable'] ) {
-			return array(
-				'success' => false,
-				'error'   => 'robots.txt location is not writable. Path: ' . $robots['path'],
-			);
-		}
-
-		$current   = $robots['content'];
-		$parsed    = \Agentic\Tool_Helpers::parse_robots_bots( $current );
-		$additions = array();
-
-		foreach ( $allow_bots as $bot ) {
-			$access = $parsed['bot_access'][ $bot ] ?? 'allowed';
-			if ( 'allowed' !== $access ) {
-				$additions[] = "User-agent: {$bot}";
-				$additions[] = 'Allow: /';
-				$additions[] = '';
-			}
-		}
-
-		if ( empty( $additions ) ) {
+		if ( empty( $plan['added_bots'] ) ) {
 			return array(
 				'success' => true,
 				'message' => 'All specified AI bots are already allowed.',
@@ -103,18 +82,25 @@ class Preview_Robots_Txt_Update extends \Agentic\Tool_Base {
 			);
 		}
 
-		$header      = "# AI Search Engine Access\n# Added by AI Radar (Agent Builder — agentic-plugin.com)\n";
-		$addition    = $header . implode( "\n", $additions );
-		$new_content = ! empty( $current ) ? $addition . "\n" . ltrim( $current ) : $addition . "\nUser-agent: *\nDisallow:\n";
+		if ( 'physical_file' === $plan['source'] ) {
+			return array(
+				'success'       => true,
+				'current'       => $plan['current'],
+				'lines_to_add'  => $plan['block'],
+				'added_bots'    => $plan['added_bots'],
+				'source'        => 'physical_file',
+				'physical_file' => $plan['path'],
+				'note'          => 'This site has a physical robots.txt file. The plugin never writes files at the site root, so update_robots_txt cannot apply this: the administrator has to add these lines to the file themselves (or delete the file so WordPress generates robots.txt and the plugin adds the rules).',
+			);
+		}
 
 		return array(
 			'success'    => true,
-			'current'    => $current ? $current : '(no robots.txt — will be created)',
-			'proposed'   => $new_content,
-			'added_bots' => array_values( array_filter( $additions, fn( $l ) => str_starts_with( $l, 'User-agent' ) ) ),
-			'source'     => $robots['source'],
-			'write_path' => $robots['path'],
-			'note'       => 'Review the proposed content, then call update_robots_txt to apply.',
+			'current'    => $plan['current'],
+			'proposed'   => $plan['proposed'],
+			'added_bots' => $plan['added_bots'],
+			'source'     => 'virtual',
+			'note'       => 'Review the proposed content, then call update_robots_txt to apply. The rules are added to the robots.txt WordPress generates; no file is written.',
 		);
 	}
 

@@ -81,18 +81,18 @@ class Directory_Submission {
 			$result['error'] = $response->get_error_message();
 		} else {
 			$code = wp_remote_retrieve_response_code( $response );
-			$data = json_decode( wp_remote_retrieve_body( $response ), true );
+			$data = json_decode( (string) wp_remote_retrieve_body( $response ), true );
 			if ( $code >= 200 && $code < 300 && is_array( $data ) ) {
 				$result['status']        = 'submitted';
-				$result['slug']          = is_string( $data['slug'] ?? null ) ? $data['slug'] : null;
+				$result['slug']          = is_string( $data['slug'] ?? null ) ? sanitize_title( $data['slug'] ) : null;
 				$result['score']         = is_int( $data['score'] ?? null ) ? $data['score'] : null;
-				$result['grade']         = is_string( $data['grade'] ?? null ) ? $data['grade'] : null;
-				$result['badge_url']     = is_string( $data['badge_url'] ?? null ) ? $data['badge_url'] : null;
-				$result['directory_url'] = is_string( $data['directory_url'] ?? null ) ? $data['directory_url'] : null;
+				$result['grade']         = is_string( $data['grade'] ?? null ) ? sanitize_text_field( $data['grade'] ) : null;
+				$result['badge_url']     = is_string( $data['badge_url'] ?? null ) ? esc_url_raw( $data['badge_url'] ) : null;
+				$result['directory_url'] = is_string( $data['directory_url'] ?? null ) ? esc_url_raw( $data['directory_url'] ) : null;
 			} else {
 				// The API returns {"error": "..."} on 4xx (bad URL, unreachable, rate-limited) — surface that over a bare status code where available.
 				$result['error'] = is_array( $data ) && is_string( $data['error'] ?? null )
-					? $data['error']
+					? sanitize_text_field( $data['error'] )
 					: sprintf( 'Directory responded with HTTP %d.', $code );
 			}
 		}

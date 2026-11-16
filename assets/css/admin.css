@@ -5142,3 +5142,12 @@ body.agent-builder_page_agentic-train-data #agentic-global-mode-switch {
 	background: #f6f7f7;
 	color: #646970;
 }
+
+/* Admin chat (templates/chat-interface.php): hidden until chat.js has
+   initialised and sets an inline opacity:1, to avoid a flash of unstyled
+   chat. Lives here because admin.css loads in <head> on every Agentic page,
+   while chat.css is enqueued from the page body and prints in the footer. */
+#agentic-chat.agentic-chat-container[data-agentic-chat-root] {
+	opacity: 0;
+	transition: opacity .15s ease-in;
+}

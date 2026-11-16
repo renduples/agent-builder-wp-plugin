@@ -26,7 +26,7 @@ if (
 	&& wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), 'agentic_modal_settings' )
 ) {
 	$agentic_modal_raw = isset( $_POST['agentic_modal'] ) && is_array( $_POST['agentic_modal'] )
-		? wp_unslash( $_POST['agentic_modal'] ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized per-field below.
+		? map_deep( wp_unslash( $_POST['agentic_modal'] ), 'sanitize_text_field' )
 		: array();
 
 	$agent_builder_modal_config  = array();

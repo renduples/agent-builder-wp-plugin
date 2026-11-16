@@ -224,9 +224,9 @@ class LLM_Client {
 			return new \WP_Error( 'not_configured', 'LLM API key not configured.' );
 		}
 
-		// The hosted relay meters by license key and rejects requests without one
+		// The hosted AI service meters by license key and rejects requests without one
 		// ("missing license key"). Say so here, with the fix, instead of letting
-		// the relay's error surface in chat (#135).
+		// the service's error surface in chat (#135).
 		if ( 'agentic' === $this->provider && '' === (string) get_option( 'agent_builder_license_key', '' ) ) {
 			return new \WP_Error(
 				'agentic_license_missing',
@@ -483,9 +483,9 @@ class LLM_Client {
 			return new \WP_Error( 'not_configured', 'LLM API key not configured.' );
 		}
 
-		// The hosted relay meters by license key and rejects requests without one
+		// The hosted AI service meters by license key and rejects requests without one
 		// ("missing license key"). Say so here, with the fix, instead of letting
-		// the relay's error surface in chat (#135).
+		// the service's error surface in chat (#135).
 		if ( 'agentic' === $this->provider && '' === (string) get_option( 'agent_builder_license_key', '' ) ) {
 			return new \WP_Error(
 				'agentic_license_missing',

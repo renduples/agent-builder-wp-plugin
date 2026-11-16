@@ -9,7 +9,8 @@
  * row in the middle of the file.
  *
  * Writes are copy-on-write: the first edit copies the shipped catalog into
- * wp-content/agentic-knowledge/ and every edit after that lands there. The
+ * the knowledge folder of the uploads data root (File_Manager::knowledge_dir())
+ * and every edit after that lands there. The
  * shipped copy inside the plugin is never modified, so a plugin update cannot
  * clobber an owner's additions — and nothing here needs permission to write
  * inside the plugin directory.
@@ -188,7 +189,7 @@ final class Prompt_Catalog_Writer {
 			return $local;
 		}
 
-		\Agentic\File_Manager::ensure_protected_dir( dirname( $local ), true );
+		\Agentic\File_Manager::ensure_data_dir( 'knowledge/prompt-tests' );
 
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Local catalog file read as data.
 		$contents = (string) file_get_contents( $path );

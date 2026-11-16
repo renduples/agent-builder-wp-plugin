@@ -6,10 +6,9 @@
  * "Browse Community Skills" hub and "Recommended Skills" grid in
  * admin/skills.php, restricted to the same two sources Basic mode's UI
  * exposes there — WordPress.org's official, human-reviewed repository and
- * Agentic's own curated feed. Anthropic's repo and ClawHub's open-publish
- * registry are Advanced-only in the UI and are not reachable through this
- * tool at all, not just hidden, so behaviour stays identical regardless of
- * site-wide mode.
+ * Agentic's own curated feed. Anthropic's repo is Advanced-only in the UI
+ * and is not reachable through this tool at all, not just hidden, so
+ * behaviour stays identical regardless of site-wide mode.
  *
  * @package    Agent_Builder
  * @subpackage Tools
@@ -164,10 +163,10 @@ class Browse_Community_Skills extends \Agentic\Tool_Base {
 
 		$tree = json_decode( wp_remote_retrieve_body( $tree_response ), true );
 		$slugs = array();
-		foreach ( ( $tree['tree'] ?? array() ) as $entry ) {
-			$path = (string) ( $entry['path'] ?? '' );
+		foreach ( ( is_array( $tree ) && is_array( $tree['tree'] ?? null ) ? $tree['tree'] : array() ) as $entry ) {
+			$path = is_array( $entry ) && is_string( $entry['path'] ?? null ) ? $entry['path'] : '';
 			if ( preg_match( '#^skills/([^/]+)/SKILL\.md$#', $path, $m ) ) {
-				$slugs[] = $m[1];
+				$slugs[] = sanitize_text_field( $m[1] );
 			}
 		}
 
@@ -233,11 +232,15 @@ class Browse_Community_Skills extends \Agentic\Tool_Base {
 
 		$out = array();
 		foreach ( $skills as $skill ) {
+			if ( ! is_array( $skill ) ) {
+				continue;
+			}
+			$str   = static fn( $v ): string => is_scalar( $v ) ? (string) $v : '';
 			$out[] = array(
-				'slug'        => (string) ( $skill['slug'] ?? '' ),
-				'name'        => (string) ( $skill['name'] ?? '' ),
-				'description' => (string) ( $skill['description'] ?? '' ),
-				'version'     => (string) ( $skill['version'] ?? '1.0.0' ),
+				'slug'        => sanitize_text_field( $str( $skill['slug'] ?? '' ) ),
+				'name'        => sanitize_text_field( $str( $skill['name'] ?? '' ) ),
+				'description' => sanitize_textarea_field( $str( $skill['description'] ?? '' ) ),
+				'version'     => sanitize_text_field( $str( $skill['version'] ?? '1.0.0' ) ),
 			);
 		}
 
@@ -311,18 +314,20 @@ class Browse_Community_Skills extends \Agentic\Tool_Base {
 			return array( 'error' => sprintf( 'Could not find a recommended skill with slug "%s".', $slug ) );
 		}
 
-		$detail = json_decode( wp_remote_retrieve_body( $response ), true );
+		$detail = json_decode( (string) wp_remote_retrieve_body( $response ), true );
 		if ( ! is_array( $detail ) ) {
 			return array( 'error' => 'Could not read that skill\'s details.' );
 		}
+		// Sanitize the remote payload field by field before it is stored.
+		$detail = Skills_Registry::sanitize_hub_data( $detail );
 
 		$id = Skills_Registry::import_from_hub(
 			array(
-				'name'        => $detail['name'] ?? $slug,
-				'description' => $detail['description'] ?? '',
-				'content'     => $detail['content'] ?? '',
+				'name'        => '' !== $detail['name'] ? $detail['name'] : sanitize_text_field( $slug ),
+				'description' => $detail['description'],
+				'content'     => $detail['content'],
 				'source'      => 'agentic',
-				'source_id'   => $slug,
+				'source_id'   => sanitize_text_field( $slug ),
 				'version'     => $detail['version'] ?? '1.0.0',
 				'author'      => $detail['author'] ?? '',
 			)
@@ -331,16 +336,6 @@ class Browse_Community_Skills extends \Agentic\Tool_Base {
 		if ( ! $id ) {
 			return array( 'error' => 'Could not import this skill.' );
 		}
-
-		// Best-effort import-count tracking, matching the classic UI — never
-		// let a failure here affect the (already-successful) import result.
-		wp_remote_post(
-			self::AGENTIC_API . '/' . rawurlencode( $slug ) . '/import',
-			array(
-				'timeout'  => 5,
-				'blocking' => false,
-			)
-		);
 
 		$skill = Skills_Registry::get( $id );
 		return array(

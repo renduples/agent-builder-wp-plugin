@@ -39,7 +39,7 @@ class Generate_Llms_Txt extends \Agentic\Tool_Base {
 	 * @return string
 	 */
 	public function get_description(): string {
-		return 'Write the llms.txt file to the WordPress root. ALWAYS use preview_llms_txt first to show the user the content before calling this.';
+		return 'Publish an llms.txt for this site (llmstxt.org format: site name, summary, key pages, recent content). The plugin stores it and serves it at /llms.txt; no file is written. Use preview_llms_txt first.';
 	}
 
 	/**
@@ -76,38 +76,26 @@ class Generate_Llms_Txt extends \Agentic\Tool_Base {
 	 */
 	public function execute( array $arguments ): array {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			return array( 'error' => 'You do not have permission to create files in the WordPress root.' );
+			return array( 'error' => 'You do not have permission to publish llms.txt.' );
 		}
 
 		$include_posts = min( max( (int) ( $arguments['include_posts'] ?? 10 ), 1 ), 20 );
-		$llms_path     = rtrim( ABSPATH, '/' ) . '/llms.txt';
+		$content       = self::build_content( $include_posts );
 
-		$dir = dirname( $llms_path );
-		if ( ! wp_is_writable( $dir ) ) {
-			return array( 'error' => 'WordPress root directory is not writable.' );
-		}
-
-		$content = self::build_content( $include_posts );
-
-		// Back up the existing file before overwriting.
-		$backup_path = \Agentic\Tool_Helpers::backup_file( $llms_path );
-
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents, PluginCheck.CodeAnalysis.WriteFile.ABSPATHDetected -- llms.txt must live at the site web root to be discoverable by AI crawlers (like robots.txt); it is not written to the plugin folder, and this tool is capability-gated.
-		$written = file_put_contents( $llms_path, $content );
-		if ( false === $written ) {
-			return array( 'error' => 'Failed to write llms.txt.' );
-		}
+		// Stored and served at /llms.txt by the plugin; never written to disk.
+		\Agentic\Virtual_Site_Files::set_llms_txt( $content );
 
 		$result = array(
 			'saved'   => true,
-			'bytes'   => $written,
-			'path'    => $llms_path,
+			'bytes'   => strlen( $content ),
 			'url'     => home_url( '/llms.txt' ),
-			'message' => 'llms.txt created at ' . $llms_path,
+			'message' => 'llms.txt saved. The plugin serves it at ' . home_url( '/llms.txt' ) . ' (no file was written).',
 		);
 
-		if ( $backup_path ) {
-			$result['backup'] = $backup_path;
+		if ( \Agentic\Virtual_Site_Files::physical_exists( 'llms.txt' ) ) {
+			$result['physical_file'] = \Agentic\Virtual_Site_Files::root_path( 'llms.txt' );
+			$result['content']       = $content;
+			$result['message']       = 'llms.txt content saved, but this site already has a physical llms.txt file at ' . $result['physical_file'] . ', which the web server serves instead. The plugin never writes files at the site root: ask the administrator to replace that file\'s content with the content above, or to delete the file so the plugin serves the new version.';
 		}
 
 		return $result;

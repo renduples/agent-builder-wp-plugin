@@ -213,11 +213,11 @@ class Agent_Ready_Score {
 	/**
 	 * mcp_server_reachable — Capability exposure, high weight, free-fixable.
 	 *
-	 * Reuses Agentic_Relay_Connect::mcp_readiness(), already built for the
+	 * Reuses Agentic_MCP_Server::mcp_readiness(), already built for the
 	 * Settings > MCP tab's own "ready/not ready" status per agent.
 	 *
 	 * MCP is opt-in per agent (off by default — see
-	 * Agentic_Relay_Connect::ENABLED_AGENTS_OPTION); an agent nobody has
+	 * Agentic_MCP_Server::ENABLED_AGENTS_OPTION); an agent nobody has
 	 * turned it on for isn't broken, it's the deliberate secure default, so
 	 * it's excluded from this score entirely rather than counted as a
 	 * failure — otherwise a fresh, correctly-locked-down site would always
@@ -250,11 +250,11 @@ class Agent_Ready_Score {
 			return self::result( 0, 'Capability exposure', 'high', false, 'No agents are active yet.' );
 		}
 
-		if ( ! class_exists( '\\Agentic_Relay_Connect' ) ) {
-			return self::result( 0, 'Capability exposure', 'high', false, 'MCP relay unavailable.' );
+		if ( ! class_exists( '\\Agentic_MCP_Server' ) ) {
+			return self::result( 0, 'Capability exposure', 'high', false, 'MCP endpoint unavailable.' );
 		}
 
-		$slugs = array_values( array_filter( $all_slugs, array( '\\Agentic_Relay_Connect', 'is_mcp_enabled' ) ) );
+		$slugs = array_values( array_filter( $all_slugs, array( '\\Agentic_MCP_Server', 'is_mcp_enabled' ) ) );
 
 		if ( empty( $slugs ) ) {
 			return self::result( 100, 'Capability exposure', 'high', true, 'MCP is off for every active agent — nothing to fix. Enable it for an agent in Settings > MCP if you want external AI apps like Claude Desktop or Cursor to reach it.' );
@@ -264,7 +264,7 @@ class Agent_Ready_Score {
 		$worst_reason = '';
 		$resignable   = false;
 		foreach ( $slugs as $slug ) {
-			$readiness = \Agentic_Relay_Connect::mcp_readiness( $slug );
+			$readiness = \Agentic_MCP_Server::mcp_readiness( $slug );
 			if ( ! empty( $readiness['ready'] ) ) {
 				++$ready_count;
 				continue;
@@ -352,12 +352,14 @@ class Agent_Ready_Score {
 	 * @return array Check result.
 	 */
 	private static function check_llms_txt_present(): array {
-		$path = rtrim( ABSPATH, '/' ) . '/llms.txt';
-		if ( ! file_exists( $path ) ) {
+		// The physical file if one exists, otherwise the llms.txt the plugin
+		// serves virtually at /llms.txt (Virtual_Site_Files).
+		$llms = Virtual_Site_Files::llms_txt();
+		if ( '' === $llms['content'] ) {
 			return self::result( 0, 'Discoverability', 'medium', false, 'No llms.txt file found.' );
 		}
 
-		$contents    = (string) file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Local filesystem read, not an HTTP request.
+		$contents    = $llms['content'];
 		$well_formed = strlen( $contents ) > 20 && str_starts_with( ltrim( $contents ), '#' );
 
 		return $well_formed
@@ -422,20 +424,7 @@ class Agent_Ready_Score {
 	 * @return string Robots.txt content.
 	 */
 	private static function local_robots_txt_content(): string {
-		$physical_path = rtrim( ABSPATH, '/' ) . '/robots.txt';
-		if ( file_exists( $physical_path ) ) {
-			return (string) file_get_contents( $physical_path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Local filesystem read.
-		}
-
-		$public   = (bool) get_option( 'blog_public' );
-		$site_url = wp_parse_url( site_url() );
-		$path     = ! empty( $site_url['path'] ) ? $site_url['path'] : '';
-		$output   = "User-agent: *\n";
-		$output  .= "Disallow: {$path}/wp-admin/\n";
-		$output  .= "Allow: {$path}/wp-admin/admin-ajax.php\n";
-
-		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- 'robots_txt' is a WordPress core filter this method hooks into, not a custom hook this plugin declares.
-		return (string) apply_filters( 'robots_txt', $output, $public );
+		return Virtual_Site_Files::robots_txt()['content'];
 	}
 
 	/**

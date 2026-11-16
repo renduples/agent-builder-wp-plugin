@@ -80,10 +80,10 @@ class Get_File_Structure_Summary extends \Agentic\Tool_Base {
 		}
 
 		$dirs = array(
-			'themes'  => WP_CONTENT_DIR . '/themes',
-			'plugins' => WP_CONTENT_DIR . '/plugins',
-			'uploads' => WP_CONTENT_DIR . '/uploads',
-			'agents'  => AGENT_BUILDER_AGENTS_DIR,
+			'themes'  => get_theme_root(),
+			'plugins' => WP_PLUGIN_DIR,
+			'uploads' => (string) wp_upload_dir( null, false )['basedir'],
+			'agents'  => \Agentic\File_Manager::agents_dir(),
 		);
 
 		$summary = array();

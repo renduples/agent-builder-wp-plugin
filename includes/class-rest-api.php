@@ -618,7 +618,6 @@ class REST_API {
 							'data' => $data,
 						);
 					}
-					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 					echo 'data: ' . wp_json_encode( $payload ) . "\n\n";
 					if ( ob_get_level() > 0 ) {
 						ob_end_flush();
@@ -643,7 +642,6 @@ class REST_API {
 				)
 			);
 			if ( $is_stream ) {
-				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 				echo 'data: ' . wp_json_encode(
 					array(
 						'type'    => 'error',
@@ -717,7 +715,6 @@ class REST_API {
 				'pending_proposal' => ! empty( $response['pending_proposal'] ),
 				'proposal'         => $response['proposal'] ?? null,
 			);
-			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			echo 'data: ' . wp_json_encode( $end_payload ) . "\n\n";
 			flush();
 			exit;
@@ -1569,12 +1566,13 @@ class REST_API {
 			return $this->refuse_code_change( $approval, $raw_path, 'extension_not_allowed', $bad_type );
 		}
 
-		$repo_path    = realpath( Tool_Helpers::get_allowed_repo_base() );
-		$uploads_root = $repo_path ? trailingslashit( $repo_path ) . 'uploads/' : '';
-		$real_uploads = $uploads_root ? realpath( $uploads_root ) : false;
-		$full_path    = realpath( trailingslashit( (string) $repo_path ) . $target_subpath );
+		// "uploads/<rest>" is resolved against the real uploads directory
+		// (wp_upload_dir(), never a hard-coded wp-content/uploads).
+		$real_uploads = realpath( Tool_Helpers::get_allowed_repo_base() );
+		$rest         = ltrim( (string) substr( ltrim( $target_subpath, '/\\' ), strlen( 'uploads' ) ), '/\\' );
+		$full_path    = $real_uploads ? realpath( trailingslashit( $real_uploads ) . $rest ) : false;
 
-		if ( ! $repo_path || ! $real_uploads || ! $full_path ) {
+		if ( ! $real_uploads || ! $full_path ) {
 			return $this->refuse_code_change( $approval, $raw_path, 'unresolvable_path', __( 'Could not write file — invalid path.', 'agent-builder' ) );
 		}
 
@@ -1819,7 +1817,7 @@ class REST_API {
 			}
 
 			$status = wp_remote_retrieve_response_code( $response );
-			$body   = json_decode( wp_remote_retrieve_body( $response ), true );
+			$body   = self::decode_remote_json( $response );
 
 			if ( 200 === $status || 201 === $status ) {
 				return new \WP_REST_Response(
@@ -1834,6 +1832,7 @@ class REST_API {
 				if ( is_array( $error_msg ) ) {
 					$error_msg = wp_json_encode( $error_msg );
 				}
+				$error_msg = sanitize_text_field( (string) $error_msg );
 				return new \WP_REST_Response(
 					array(
 						'success' => false,
@@ -2025,7 +2024,8 @@ class REST_API {
 	/**
 	 * Save a base64-encoded image as a temporary file in uploads and return its public URL.
 	 *
-	 * The file is placed in /uploads/agentic-tmp/ and prefixed with a unique ID.
+	 * The file is placed in the tmp folder of the uploads data root
+	 * (File_Manager::data_path( 'tmp' )) and prefixed with a unique ID.
 	 * Temporary files older than 1 hour are cleaned up on each call.
 	 *
 	 * @param string $base64    Base64-encoded image data (no header/prefix).
@@ -2041,17 +2041,13 @@ class REST_API {
 		);
 		$ext     = $ext_map[ $mime_type ] ?? 'png';
 
-		$upload_dir = wp_upload_dir();
-		$tmp_dir    = $upload_dir['basedir'] . '/agentic-tmp';
-		$tmp_url    = $upload_dir['baseurl'] . '/agentic-tmp';
+		$tmp_dir = File_Manager::data_path( 'tmp' );
+		$tmp_url = File_Manager::data_url() . '/tmp';
 
-		// Ensure directory exists.
-		if ( ! is_dir( $tmp_dir ) ) {
-			wp_mkdir_p( $tmp_dir );
-			// Add an index.php to prevent directory listing.
-			file_put_contents( $tmp_dir . '/index.php', "<?php\n/**\n * Silence is golden.\n *\n * @package Agent_Builder\n */\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
-			// Deny direct HTTP access to protect against image hotlinking / directory browsing.
-			file_put_contents( $tmp_dir . '/.htaccess', "Options -Indexes\ndeny from all\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+		// Ensure the directory exists, with index.php and deny-all
+		// .htaccess/web.config (no listing, no hotlinking).
+		if ( ! File_Manager::ensure_data_dir( 'tmp' ) ) {
+			return false;
 		}
 
 		// Cleanup files older than 1 hour.
@@ -2155,17 +2151,18 @@ class REST_API {
 			);
 		}
 
-		$data   = json_decode( wp_remote_retrieve_body( $response ), true );
+		$data   = self::decode_remote_json( $response );
 		$models = array();
 
-		foreach ( $data['data'] ?? array() as $model ) {
-			$id = $model['id'] ?? '';
+		foreach ( self::remote_list( $data, 'data' ) as $model ) {
+			$id = self::remote_string( $model['id'] ?? '' );
 			if ( empty( $id ) ) {
 				continue;
 			}
+			$label    = self::remote_string( $model['display_name'] ?? '' );
 			$models[] = array(
 				'id'     => $id,
-				'label'  => $model['display_name'] ?? $id,
+				'label'  => '' !== $label ? $label : $id,
 				'vision' => str_contains( $id, 'claude-3' ) || str_contains( $id, 'claude-opus' ) || str_contains( $id, 'claude-sonnet' ) || str_contains( $id, 'claude-haiku' ),
 			);
 		}
@@ -2208,12 +2205,12 @@ class REST_API {
 			);
 		}
 
-		$data   = json_decode( wp_remote_retrieve_body( $response ), true );
+		$data   = self::decode_remote_json( $response );
 		$models = array();
 		$skip   = array( 'dall-e', 'whisper', 'tts', 'text-embedding', 'text-moderation', 'audio', 'realtime', 'transcribe', 'babbage', 'davinci', 'curie', 'ada-', 'computer-use', 'omni-mini', 'search' );
 
-		foreach ( $data['data'] ?? array() as $model ) {
-			$id = $model['id'] ?? '';
+		foreach ( self::remote_list( $data, 'data' ) as $model ) {
+			$id = self::remote_string( $model['id'] ?? '' );
 			if ( empty( $id ) || str_starts_with( $id, 'ft:' ) ) {
 				continue;
 			}
@@ -2285,11 +2282,11 @@ class REST_API {
 			);
 		}
 
-		$data   = json_decode( wp_remote_retrieve_body( $response ), true );
+		$data   = self::decode_remote_json( $response );
 		$models = array();
 
-		foreach ( $data['data'] ?? array() as $model ) {
-			$id = $model['id'] ?? '';
+		foreach ( self::remote_list( $data, 'data' ) as $model ) {
+			$id = self::remote_string( $model['id'] ?? '' );
 			if ( empty( $id ) ) {
 				continue;
 			}
@@ -2340,11 +2337,11 @@ class REST_API {
 			);
 		}
 
-		$data   = json_decode( wp_remote_retrieve_body( $response ), true );
+		$data   = self::decode_remote_json( $response );
 		$models = array();
 
-		foreach ( $data['data'] ?? array() as $model ) {
-			$id = $model['id'] ?? '';
+		foreach ( self::remote_list( $data, 'data' ) as $model ) {
+			$id = self::remote_string( $model['id'] ?? '' );
 			if ( empty( $id ) || str_contains( $id, 'embed' ) ) {
 				continue;
 			}
@@ -2389,12 +2386,12 @@ class REST_API {
 			);
 		}
 
-		$data   = json_decode( wp_remote_retrieve_body( $response ), true );
+		$data   = self::decode_remote_json( $response );
 		$models = array();
 
-		foreach ( $data['models'] ?? array() as $model ) {
-			$name    = $model['name'] ?? '';
-			$methods = $model['supportedGenerationMethods'] ?? array();
+		foreach ( self::remote_list( $data, 'models' ) as $model ) {
+			$name    = self::remote_string( $model['name'] ?? '' );
+			$methods = is_array( $model['supportedGenerationMethods'] ?? null ) ? $model['supportedGenerationMethods'] : array();
 			if ( ! in_array( 'generateContent', $methods, true ) ) {
 				continue;
 			}
@@ -2439,11 +2436,11 @@ class REST_API {
 			);
 		}
 
-		$data   = json_decode( wp_remote_retrieve_body( $response ), true );
+		$data   = self::decode_remote_json( $response );
 		$models = array();
 
-		foreach ( $data['models'] ?? array() as $model ) {
-			$id = $model['name'] ?? '';
+		foreach ( self::remote_list( $data, 'models' ) as $model ) {
+			$id = self::remote_string( $model['name'] ?? '' );
 			if ( empty( $id ) ) {
 				continue;
 			}
@@ -2496,11 +2493,11 @@ class REST_API {
 			);
 		}
 
-		$data   = json_decode( wp_remote_retrieve_body( $response ), true );
+		$data   = self::decode_remote_json( $response );
 		$models = array();
 
-		foreach ( $data['data'] ?? array() as $model ) {
-			$id = $model['id'] ?? '';
+		foreach ( self::remote_list( $data, 'data' ) as $model ) {
+			$id = self::remote_string( $model['id'] ?? '' );
 			if ( empty( $id ) ) {
 				continue;
 			}
@@ -2551,12 +2548,12 @@ class REST_API {
 			);
 		}
 
-		$data   = json_decode( wp_remote_retrieve_body( $response ), true );
+		$data   = self::decode_remote_json( $response );
 		$models = array();
 
-		foreach ( $data['models'] ?? array() as $model ) {
-			$id        = $model['name'] ?? '';
-			$endpoints = $model['endpoints'] ?? array();
+		foreach ( self::remote_list( $data, 'models' ) as $model ) {
+			$id        = self::remote_string( $model['name'] ?? '' );
+			$endpoints = is_array( $model['endpoints'] ?? null ) ? $model['endpoints'] : array();
 			// Only include models that support the chat endpoint.
 			if ( empty( $id ) || ! in_array( 'chat', $endpoints, true ) ) {
 				continue;
@@ -2665,8 +2662,8 @@ class REST_API {
 
 		$code = wp_remote_retrieve_response_code( $response );
 		if ( 200 !== $code ) {
-			$data = json_decode( wp_remote_retrieve_body( $response ), true );
-			$raw  = isset( $data['detail'] ) ? (string) $data['detail'] : 'TTS service error (HTTP ' . $code . ')';
+			$data = self::decode_remote_json( $response );
+			$raw  = isset( $data['detail'] ) && is_scalar( $data['detail'] ) ? sanitize_text_field( (string) $data['detail'] ) : 'TTS service error (HTTP ' . $code . ')';
 			if ( 429 === (int) $code || 402 === (int) $code ) {
 				// Pass through the server's error message; fall back to a generic one.
 				$msg = ! empty( $raw ) ? $raw : __( 'Text-to-speech rate limit reached. Please try again later.', 'agent-builder' );
@@ -2700,6 +2697,42 @@ class REST_API {
 	}
 
 	/**
+	 * Decode a remote JSON response body; always returns an array.
+	 *
+	 * @param array|\WP_Error $response wp_remote_*() response.
+	 * @return array
+	 */
+	private static function decode_remote_json( $response ): array {
+		if ( is_wp_error( $response ) ) {
+			return array();
+		}
+		$data = json_decode( (string) wp_remote_retrieve_body( $response ), true );
+		return is_array( $data ) ? $data : array();
+	}
+
+	/**
+	 * Return the array entries of a list in decoded remote data.
+	 *
+	 * @param array  $data Decoded response.
+	 * @param string $key  List key (e.g. "data", "models").
+	 * @return array<int, array>
+	 */
+	private static function remote_list( array $data, string $key ): array {
+		$list = $data[ $key ] ?? array();
+		return is_array( $list ) ? array_values( array_filter( $list, 'is_array' ) ) : array();
+	}
+
+	/**
+	 * Sanitize a scalar string field from remote data ('' for non-scalars).
+	 *
+	 * @param mixed $value Raw value.
+	 * @return string
+	 */
+	private static function remote_string( $value ): string {
+		return is_scalar( $value ) ? sanitize_text_field( (string) $value ) : '';
+	}
+
+	/**
 	 * Determine if a model supports vision/image input based on its ID.
 	 *
 	 * @param string $id Model identifier.
@@ -2718,7 +2751,7 @@ class REST_API {
 	/**
 	 * Remove temp images older than 1 hour.
 	 *
-	 * @param string $dir Path to agentic-tmp directory.
+	 * @param string $dir Path to the temporary image directory.
 	 * @return void
 	 */
 	private function cleanup_temp_images( string $dir ): void {
@@ -2758,11 +2791,10 @@ class REST_API {
 	 * @return \WP_REST_Response
 	 */
 	public function handle_backup_delete( \WP_REST_Request $request ): \WP_REST_Response {
-		$file       = sanitize_file_name( $request->get_param( 'file' ) );
-		$backup_dir = AGENT_BUILDER_BACKUPS_DIR;
-		$path       = $backup_dir . '/' . $file;
+		$file = sanitize_file_name( $request->get_param( 'file' ) );
+		$path = Tool_Helpers::find_backup_file( '', $file );
 
-		if ( basename( $file ) !== $file || ! file_exists( $path ) ) {
+		if ( null === $path ) {
 			return new \WP_REST_Response(
 				array(
 					'success' => false,
@@ -2816,11 +2848,10 @@ class REST_API {
 	 * @return \WP_REST_Response
 	 */
 	public function handle_table_backup_delete( \WP_REST_Request $request ): \WP_REST_Response {
-		$file       = sanitize_file_name( $request->get_param( 'file' ) );
-		$backup_dir = AGENT_BUILDER_BACKUPS_DIR . '/' . Tool_Helpers::DB_BACKUP_SUBDIR;
-		$path       = $backup_dir . '/' . $file;
+		$file = sanitize_file_name( $request->get_param( 'file' ) );
+		$path = Tool_Helpers::find_backup_file( Tool_Helpers::DB_BACKUP_SUBDIR, $file );
 
-		if ( basename( $file ) !== $file || ! file_exists( $path ) ) {
+		if ( null === $path ) {
 			return new \WP_REST_Response(
 				array(
 					'success' => false,

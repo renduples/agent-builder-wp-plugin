@@ -2,21 +2,22 @@
 /**
  * Agent Builder — MCP endpoint
  *
- * Exposes each active agent's own on-site Model Context Protocol JSON-RPC
- * endpoint (GET/POST /wp-json/agentic/{slug}/mcp), authenticated the same way
- * as any other WordPress REST route: a WordPress Application Password the
- * site itself issued to the connecting admin (Settings → MCP →
- * "Create Application Password"). The credential never leaves the site —
- * this class has no outbound connection to any Agentic-owned server at all.
+ * Exposes each agent's own Model Context Protocol JSON-RPC endpoint on this
+ * site (GET/POST /wp-json/agentic/{slug}/mcp) so that an AI app the site
+ * owner connects themselves (Claude Desktop, Cursor, Grok, ...) can call
+ * that agent's tools directly over HTTP.
  *
- * (An earlier version of this class also ran an auto-connect flow that
- * minted an Application Password and POSTed it to an Agentic-owned relay on
- * an admin's approval. That code path has been removed outright — see
- * docs/SUBMISSION-NOTES.md — not reworded or gated, because relaying a real
- * WordPress credential off-site is unacceptable regardless of the approval
- * screen in front of it. The manual, on-site "mint a credential yourself"
- * flow this docblock describes is the only way to connect an external MCP
- * client now.)
+ * - Off by default: an agent's endpoint refuses every request until an
+ *   administrator turns MCP on for that agent in Settings > MCP.
+ * - Standard WordPress authentication only: an Application Password the
+ *   user creates in their own profile, or a logged-in session with a REST
+ *   nonce. This plugin never creates, stores or transmits credentials.
+ * - Every tool call is checked against the authenticated user's
+ *   capabilities and then runs through Tool_Executor, so the normal
+ *   risk/approval gate applies exactly as it does in chat. HIGH/EXTREME
+ *   risk tools are never exposed.
+ * - No outbound connection: this class talks to no third-party or
+ *   Agentic-operated server.
  *
  * @package Agentic
  */
@@ -39,9 +40,7 @@ use Agentic\Agent_Settings;
  *
  * Lives in the global namespace so it can be loaded before the autoloader.
  */
-class Agentic_Relay_Connect {
-
-	const APP_PASS_NAME = 'Agent Builder Relay';
+class Agentic_MCP_Server {
 
 	/**
 	 * Per-agent map of { slug => unix timestamp } for the last time an
@@ -85,23 +84,45 @@ class Agentic_Relay_Connect {
 	}
 
 	/**
-	 * MCP route permission: any authenticated WordPress user who is at least
-	 * a real staff member (edit_posts) — the same floor Webmcp_Bridge uses
-	 * for its lowest-privilege (readonly) tools. Per-agent scoping
-	 * (agent_is_declared()) and per-tool risk filtering (is_tool_mcp_safe(),
-	 * required_capability_for_tool()) are what actually bound what a given
-	 * credential can list or call; this floor only keeps any-account-at-all
-	 * (e.g. a subscriber with no site role) from enumerating an agent's tool
-	 * catalog and schemas via initialize/tools/list.
+	 * MCP route permission.
 	 *
+	 * 1. The request must be authenticated by WordPress itself (an
+	 *    Application Password the user created in their own profile, or a
+	 *    logged-in cookie session with a valid REST nonce) and the user must
+	 *    be at least a staff member (edit_posts). Otherwise a 401 / 403.
+	 * 2. MCP must have been turned on for this agent by an administrator
+	 *    (off by default). Otherwise a 403, and nothing about the agent's
+	 *    tools is revealed.
+	 *
+	 * Per-tool capability checks (required_capability_for_tool()), per-agent
+	 * scoping (agent_is_declared()) and risk filtering (is_tool_mcp_safe())
+	 * then bound what an authenticated caller can list or call.
+	 *
+	 * @param \WP_REST_Request|null $request The REST request.
 	 * @return bool|\WP_Error
 	 */
-	public static function check_mcp_permission(): bool|\WP_Error {
-		if ( ! is_user_logged_in() || ! current_user_can( 'edit_posts' ) ) {
+	public static function check_mcp_permission( ?\WP_REST_Request $request = null ): bool|\WP_Error {
+		if ( ! is_user_logged_in() ) {
 			return new \WP_Error(
 				'rest_forbidden',
 				__( 'Authentication required.', 'agent-builder' ),
 				array( 'status' => 401 )
+			);
+		}
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			return new \WP_Error(
+				'rest_forbidden',
+				__( 'You are not allowed to use this MCP endpoint.', 'agent-builder' ),
+				array( 'status' => 403 )
+			);
+		}
+
+		$slug = $request ? sanitize_key( (string) $request->get_param( 'slug' ) ) : '';
+		if ( '' === $slug || ! self::is_mcp_enabled( $slug ) ) {
+			return new \WP_Error(
+				'agentic_mcp_disabled',
+				__( 'MCP is not enabled for this agent. An administrator can turn it on in Settings > MCP.', 'agent-builder' ),
+				array( 'status' => 403 )
 			);
 		}
 
@@ -208,7 +229,7 @@ class Agentic_Relay_Connect {
 		foreach ( WP_Optional_API::get_abilities() as $ability ) {
 			$name = $ability->get_name();
 
-			// Skip mcp-adapter meta-tools — they are not useful direct tools for the relay.
+			// Skip mcp-adapter meta-tools — they are not useful as direct tools here.
 			if ( str_starts_with( $name, 'mcp-adapter/' ) ) {
 				continue;
 			}
@@ -359,7 +380,7 @@ class Agentic_Relay_Connect {
 		if ( ! self::is_mcp_enabled( $slug ) ) {
 			return array(
 				'ready'  => false,
-				'reason' => __( 'MCP is off by default for this agent — enable it in Settings > MCP.', 'agent-builder' ),
+				'reason' => __( 'MCP is off for this agent.', 'agent-builder' ),
 			);
 		}
 		return array(
@@ -689,8 +710,15 @@ class Agentic_Relay_Connect {
 
 		// An ability that maps back to one of this plugin's own registered
 		// tools gets full risk-gating + audit logging via Tool_Executor,
-		// same as every other invocation path.
+		// same as every other invocation path. Calling Tool_Executor
+		// directly skips the ability's own permission_callback, so the same
+		// per-tool capability check the registry path applies is enforced
+		// here explicitly.
 		if ( null !== $own_tool_name ) {
+			if ( ! current_user_can( self::required_capability_for_tool( $own_tool_name ) ) ) {
+				return self::mcp_error( $id, -32603, 'Insufficient permissions for this tool.' );
+			}
+
 			$result = self::execute_via_tool_executor( $own_tool_name, $arguments, $slug );
 
 			return self::mcp_result(

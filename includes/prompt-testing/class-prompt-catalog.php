@@ -67,11 +67,7 @@ final class Prompt_Catalog {
 	 * @return string
 	 */
 	public static function site_local_path(): string {
-		$base = defined( 'AGENT_BUILDER_KNOWLEDGE_DIR' )
-			? AGENT_BUILDER_KNOWLEDGE_DIR
-			: WP_CONTENT_DIR . '/agentic-knowledge';
-
-		return trailingslashit( $base ) . 'prompt-tests/most_popular_prompts.md';
+		return trailingslashit( \Agentic\File_Manager::knowledge_dir() ) . 'prompt-tests/most_popular_prompts.md';
 	}
 
 	/**

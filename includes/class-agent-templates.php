@@ -473,11 +473,11 @@ class Agent_Templates {
 	 * @return true|\WP_Error
 	 */
 	private static function write_agent( string $slug, array $manifest, string $system_prompt, ?array $abilities ) {
-		if ( ! wp_mkdir_p( AGENT_BUILDER_AGENTS_DIR ) ) {
+		if ( ! File_Manager::ensure_data_dir( 'agents' ) ) {
 			return new \WP_Error( 'mkdir_failed', __( 'Could not create the agents directory.', 'agent-builder' ) );
 		}
 
-		$agent_dir = AGENT_BUILDER_AGENTS_DIR . '/' . $slug;
+		$agent_dir = File_Manager::agents_dir() . '/' . $slug;
 
 		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_system_operations_mkdir -- Deliberate: a plain mkdir() is an atomic create-or-fail, unlike wp_mkdir_p()'s "succeed either way"; its EEXIST warning is the race signal handled below.
 		$created = @mkdir( $agent_dir, self::agent_dir_mode() );
@@ -595,7 +595,7 @@ class Agent_Templates {
 		Agent_Settings::delete_agent( $slug );
 		Agent_Profile::bust( $slug );
 
-		$dir = AGENT_BUILDER_AGENTS_DIR . '/' . $slug;
+		$dir = File_Manager::agents_dir() . '/' . $slug;
 		if ( is_dir( $dir ) ) {
 			File_Manager::rmdir( $dir, true );
 		}
@@ -787,6 +787,7 @@ class Agent_Templates {
 		if ( ! is_array( $raw ) ) {
 			return new \WP_Error( 'invalid_abilities', __( 'abilities.json is not valid JSON.', 'agent-builder' ) );
 		}
+		$raw = self::sanitize_abilities( $raw );
 
 		$downgrades = self::risk_downgrade_errors( $raw, (array) ( $manifest['tools'] ?? array() ) );
 		if ( ! empty( $downgrades ) ) {
@@ -796,6 +797,34 @@ class Agent_Templates {
 			);
 		}
 
+		return $raw;
+	}
+
+	/**
+	 * Sanitize an imported abilities.json: every string value through
+	 * sanitize_text_field(), ability (tool) names through sanitize_key().
+	 * Numbers, booleans and null pass through unchanged.
+	 *
+	 * @param array<string, mixed> $raw Decoded abilities.json.
+	 * @return array<string, mixed>
+	 */
+	private static function sanitize_abilities( array $raw ): array {
+		$raw = map_deep(
+			$raw,
+			static function ( $value ) {
+				return is_string( $value ) ? sanitize_text_field( $value ) : $value;
+			}
+		);
+		if ( isset( $raw['abilities'] ) && is_array( $raw['abilities'] ) ) {
+			$clean = array();
+			foreach ( $raw['abilities'] as $tool => $ability ) {
+				$tool = sanitize_key( (string) $tool );
+				if ( '' !== $tool ) {
+					$clean[ $tool ] = $ability;
+				}
+			}
+			$raw['abilities'] = $clean;
+		}
 		return $raw;
 	}
 
@@ -980,8 +1009,10 @@ class Agent_Templates {
 		if ( $registry->is_agent_installed( $slug ) ) {
 			return true;
 		}
-		if ( is_dir( AGENT_BUILDER_AGENTS_DIR . '/' . $slug ) ) {
-			return true;
+		foreach ( File_Manager::read_dirs( 'agents' ) as $agents_dir ) {
+			if ( is_dir( $agents_dir . '/' . $slug ) ) {
+				return true;
+			}
 		}
 		return isset( $registry->get_installed_agents( true )[ $slug ] );
 	}

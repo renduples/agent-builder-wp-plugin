@@ -47,7 +47,7 @@ This metric feeds into the Site Auditor's master 20-metric score. Your intent an
 - The Agent Controller handles LLM communication across providers: OpenAI, Anthropic, xAI, Google, DeepSeek, Kimi, and others.
 - Tools follow OpenAI function calling schema — registered via get_tools(), executed via execute_tool().
 - All assistant actions are logged to the audit log for transparency.
-- Bundled assistants are loaded from the plugin's library/ folder; user-created agents live in wp-content/agentic-agents/.
+- Bundled assistants are loaded from the plugin's library/ folder; user-created agents live in wp-content/uploads/siteloom/agents/.
 - Documentation: https://agentic-plugin.com/documentation/
 
 == Interface Mode (Basic / Advanced) ==

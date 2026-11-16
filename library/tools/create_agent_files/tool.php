@@ -26,7 +26,7 @@ class Create_Agent_Files extends Tool_Base {
 	}
 
 	public function get_description(): string {
-		return 'Create agent files in the user agents directory (wp-content/agentic-agents/).';
+		return 'Create agent files in the user agents directory (the agents folder of the plugin\'s uploads data directory).';
 	}
 
 	public function get_category(): string {
@@ -132,7 +132,7 @@ class Create_Agent_Files extends Tool_Base {
 			),
 			'knowledge_files'   => array(
 				'type'        => 'array',
-				'description' => 'Knowledge files to inject into the system prompt. Filenames from wp-content/agentic-knowledge/ (e.g. "platform-knowledge.txt").',
+				'description' => 'Knowledge files to inject into the system prompt. Filenames from the plugin knowledge folder (e.g. "platform-knowledge.txt").',
 				'required'    => false,
 				'items'       => array( 'type' => 'string' ),
 			),
@@ -212,7 +212,7 @@ class Create_Agent_Files extends Tool_Base {
 		}
 
 		// Writing here would shadow the bundled agent of the same name: the
-		// registry loads agentic-agents/ before any plugin library, so the new
+		// registry loads user agents before any plugin library, so the new
 		// agent would permanently displace it and plugin updates would stop
 		// reaching it. Overwrite does not authorise this — the files being
 		// displaced are not in this directory.
@@ -222,7 +222,7 @@ class Create_Agent_Files extends Tool_Base {
 			);
 		}
 
-		$agent_dir = AGENT_BUILDER_AGENTS_DIR . '/' . $slug;
+		$agent_dir = \Agentic\File_Manager::agents_dir() . '/' . $slug;
 
 		if ( is_dir( $agent_dir ) && ! $overwrite ) {
 			return array( 'error' => "Agent directory '{$slug}' already exists. Set overwrite=true to replace." );
@@ -240,7 +240,7 @@ class Create_Agent_Files extends Tool_Base {
 			}
 		}
 
-		if ( ! wp_mkdir_p( $agent_dir ) ) {
+		if ( ! \Agentic\File_Manager::ensure_data_dir( 'agents' ) || ! wp_mkdir_p( $agent_dir ) ) {
 			return array( 'error' => 'Failed to create agent directory' );
 		}
 
@@ -250,9 +250,9 @@ class Create_Agent_Files extends Tool_Base {
 		}
 
 		$manifest_json = wp_json_encode( $manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
-		$result        = file_put_contents( $agent_dir . '/agent.json', $manifest_json );
+		$result        = false !== $manifest_json && \Agentic\File_Manager::put_contents( $agent_dir . '/agent.json', $manifest_json );
 
-		if ( false === $result ) {
+		if ( ! $result ) {
 			return array( 'error' => 'Failed to write agent.json — check directory permissions for ' . $agent_dir );
 		}
 
@@ -261,7 +261,7 @@ class Create_Agent_Files extends Tool_Base {
 		);
 
 		if ( ! empty( $readme_content ) ) {
-			file_put_contents( $agent_dir . '/README.md', $readme_content );
+			\Agentic\File_Manager::put_contents( $agent_dir . '/README.md', $readme_content );
 			$files_created['README.md'] = strlen( $readme_content ) . ' bytes';
 		}
 
@@ -272,7 +272,7 @@ class Create_Agent_Files extends Tool_Base {
 		}
 		if ( ! empty( $system_prompt ) ) {
 			wp_mkdir_p( $agent_dir . '/templates' );
-			file_put_contents( $agent_dir . '/templates/system-prompt.txt', $system_prompt );
+			\Agentic\File_Manager::put_contents( $agent_dir . '/templates/system-prompt.txt', $system_prompt );
 			$files_created['templates/system-prompt.txt'] = strlen( $system_prompt ) . ' bytes';
 		}
 

@@ -174,8 +174,8 @@ final class Activator {
 	private static function preflight_check(): bool {
 		global $wpdb;
 
-		if ( version_compare( PHP_VERSION, '8.1', '<' ) ) {
-			self::record( 'preflight_check', 'error', 'PHP ' . PHP_VERSION . ' is below the required 8.1' );
+		if ( version_compare( PHP_VERSION, '8.2', '<' ) ) {
+			self::record( 'preflight_check', 'error', 'PHP ' . PHP_VERSION . ' is below the required 8.2' );
 			return false;
 		}
 
@@ -279,6 +279,15 @@ final class Activator {
 		self::maybe_add_awaiting_tool_call_id_column();
 		self::maybe_add_proposals_listener_id_column();
 		self::migrate_default_agent_mode_option();
+		// One-time (option-gated): moves data from the pre-4.5
+		// wp-content/agentic-{agents,knowledge,backups} folders into the
+		// plugin's uploads data root — see Storage_Migration. Runs before the
+		// backup-format conversion below so that sees the moved backups.
+		Storage_Migration::maybe_run();
+		// One-time (option-gated): earlier versions wrote robots.txt/llms.txt
+		// at the site root. They are left in place; see Virtual_Site_Files.
+		Virtual_Site_Files::maybe_check_legacy_root_files();
+		self::remove_file_edit_option();
 		// One-time (option-gated): converts plain-text backups written by
 		// older versions to the exit-guarded format — see
 		// Tool_Helpers::migrate_legacy_backups().
@@ -326,6 +335,24 @@ final class Activator {
 		}
 
 		self::release_upgrade_lock( $lock_value );
+	}
+
+	/**
+	 * Delete the option behind the removed "disable the file editor" toggle.
+	 *
+	 * Earlier versions defined DISALLOW_FILE_EDIT from this option. A plugin
+	 * must not change WordPress-wide behaviour by defining core constants, so
+	 * the toggle became a recommendation to add the constant to
+	 * wp-config.php (see the toggle_file_editing tool). The leftover option
+	 * no longer does anything; remove it. Cheap when already gone (a missing
+	 * option is answered from the notoptions cache).
+	 *
+	 * @return void
+	 */
+	private static function remove_file_edit_option(): void {
+		if ( false !== get_option( 'agent_builder_disallow_file_edit', false ) ) {
+			delete_option( 'agent_builder_disallow_file_edit' );
+		}
 	}
 
 	/**
@@ -1079,6 +1106,9 @@ final class Activator {
 		self::guarded_step(
 			'finalize',
 			static function () use ( $schema_version ): void {
+				// init has already run in the activation request, so add the
+				// /llms.txt rule before the flush stores the rules.
+				Virtual_Site_Files::register_rewrite();
 				flush_rewrite_rules();
 				self::set_db_schema_version( $schema_version );
 			}
@@ -1528,7 +1558,8 @@ final class Activator {
 	 * even when the directory is not writable during CLI activation, and so an
 	 * agent the user later deletes from the library is not re-imported.
 	 *
-	 * @param string|null $dir Directory to import from. Defaults to AGENT_BUILDER_AGENTS_DIR.
+	 * @param string|null $dir Directory to import from. Defaults to every
+	 *                         user agents folder (File_Manager::read_dirs( 'agents' )).
 	 * @return void
 	 */
 	private static function import_agents_dir( ?string $dir = null ): void {
@@ -1537,7 +1568,10 @@ final class Activator {
 		}
 
 		if ( null === $dir ) {
-			$dir = defined( 'AGENT_BUILDER_AGENTS_DIR' ) ? AGENT_BUILDER_AGENTS_DIR : WP_CONTENT_DIR . '/agentic-agents';
+			foreach ( File_Manager::read_dirs( 'agents' ) as $agents_dir ) {
+				self::import_agents_dir( $agents_dir );
+			}
+			return;
 		}
 
 		if ( ! is_dir( $dir ) ) {

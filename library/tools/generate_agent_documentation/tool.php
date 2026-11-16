@@ -188,10 +188,19 @@ class Generate_Agent_Documentation extends Tool_Base {
 		$written   = false;
 		$file_path = '';
 
-		if ( ! empty( $agent_dir ) && is_dir( $agent_dir ) ) {
+		// A user agent's README goes next to its files in the uploads data
+		// root. Bundled agents (inside the plugin) and any agent not stored
+		// there are read-only: their README is written to the data root's
+		// docs folder instead — never into the plugin directory.
+		if ( ! empty( $agent_dir ) && is_dir( $agent_dir ) && \Agentic\File_Manager::is_in_data_dir( $agent_dir ) ) {
 			$file_path = $agent_dir . '/README.md';
 			\Agentic\Tool_Helpers::backup_file( $file_path );
-			$written = file_put_contents( $file_path, $md ) !== false;
+		} elseif ( \Agentic\File_Manager::ensure_data_dir( 'docs/' . sanitize_key( $slug ) ) ) {
+			$file_path = \Agentic\File_Manager::data_path( 'docs/' . sanitize_key( $slug ) ) . '/README.md';
+		}
+
+		if ( '' !== $file_path ) {
+			$written = \Agentic\File_Manager::put_contents( $file_path, $md );
 		}
 
 		return array(

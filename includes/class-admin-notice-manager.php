@@ -31,9 +31,12 @@ class Admin_Notice_Manager {
 	 * Used to keep setup / product notices off core Dashboard, Posts, Plugins,
 	 * etc. (WP.org Guideline-style non-intrusive admin UX; UI/UX plan suite 2.1).
 	 *
+	 * Public so other classes' notices (e.g. Approval_Queue) can apply the
+	 * same scoping.
+	 *
 	 * @return bool
 	 */
-	private function is_plugin_admin_screen(): bool {
+	public static function is_plugin_admin_screen(): bool {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only page identification.
 		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
 		if ( 'agent-builder' === $page || str_starts_with( $page, 'agentic-' ) ) {
@@ -51,6 +54,16 @@ class Admin_Notice_Manager {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Whether the current request is the core Plugins list screen.
+	 *
+	 * @return bool
+	 */
+	private static function is_plugins_list_screen(): bool {
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		return $screen && is_string( $screen->id ) && 'plugins' === $screen->id;
 	}
 
 	/**
@@ -77,9 +90,7 @@ class Admin_Notice_Manager {
 		// Show on Agent Builder screens and on the Plugins list — where the admin
 		// lands right after activation — so the one-time, dismissible "finish setup"
 		// reminder is actually seen. Still kept off Dashboard / Posts / etc.
-		$agentic_screen  = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
-		$on_plugins_page = $agentic_screen && is_string( $agentic_screen->id ) && 'plugins' === $agentic_screen->id;
-		if ( ! $this->is_plugin_admin_screen() && ! $on_plugins_page ) {
+		if ( ! self::is_plugin_admin_screen() && ! self::is_plugins_list_screen() ) {
 			return;
 		}
 
@@ -93,7 +104,7 @@ class Admin_Notice_Manager {
 		$setup_url = admin_url( 'admin.php?page=agentic-signup' );
 		$nonce     = wp_create_nonce( 'agentic_dismiss_setup_notice' );
 		?>
-		<div class="notice notice-info is-dismissible" id="agentic-setup-notice">
+		<div class="notice notice-info is-dismissible" id="agentic-setup-notice" data-nonce="<?php echo esc_attr( $nonce ); ?>">
 			<p>
 				<strong><?php esc_html_e( 'Agent Builder is almost ready!', 'agent-builder' ); ?></strong>
 				<?php esc_html_e( 'Finish setup to start using your AI agents.', 'agent-builder' ); ?>
@@ -103,17 +114,8 @@ class Admin_Notice_Manager {
 				</a>
 			</p>
 		</div>
-		<script>
-		( function () {
-			var notice = document.getElementById( 'agentic-setup-notice' );
-			if ( ! notice ) { return; }
-			notice.addEventListener( 'click', function ( e ) {
-				if ( ! e.target.classList.contains( 'notice-dismiss' ) ) { return; }
-				wp.ajax.post( 'agentic_dismiss_setup_notice', { nonce: <?php echo wp_json_encode( $nonce ); ?> } );
-			} );
-		} () );
-		</script>
 		<?php
+		Inline_Assets::script( 'notices', array(), '', array( 'wp-util' ) );
 	}
 
 	/**
@@ -127,6 +129,12 @@ class Admin_Notice_Manager {
 		}
 
 		if ( ! get_transient( 'agentic_quota_reached_notice' ) ) {
+			return;
+		}
+
+		// Informational (a provider rate limit was hit) — Agent Builder
+		// screens only, never across the rest of wp-admin.
+		if ( ! self::is_plugin_admin_screen() ) {
 			return;
 		}
 
@@ -147,18 +155,8 @@ class Admin_Notice_Manager {
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-settings' ) ); ?>" class="button"><?php esc_html_e( 'Settings', 'agent-builder' ); ?></a>
 			</p>
 		</div>
-		<script>
-		(function(){
-			var n = document.querySelector('[data-dismiss-url]');
-			if (!n) return;
-			n.querySelector('.notice-dismiss').addEventListener('click', function(){
-				var xhr = new XMLHttpRequest();
-				xhr.open('GET', n.dataset.dismissUrl);
-				xhr.send();
-			});
-		})();
-		</script>
 		<?php
+		Inline_Assets::script( 'notices', array(), '', array( 'wp-util' ) );
 	}
 
 	/**
@@ -184,6 +182,12 @@ class Admin_Notice_Manager {
 			return;
 		}
 
+		// The plugin is safe to use as-is, so this stays on Agent Builder
+		// screens and the Plugins list rather than every wp-admin page.
+		if ( ! self::is_plugin_admin_screen() && ! self::is_plugins_list_screen() ) {
+			return;
+		}
+
 		$retry_url = wp_nonce_url(
 			add_query_arg( 'agentic_retry_activation', '1' ),
 			'agentic_retry_activation',
@@ -191,7 +195,7 @@ class Admin_Notice_Manager {
 		);
 		$nonce     = wp_create_nonce( 'agentic_dismiss_activation_degraded_notice' );
 		?>
-		<div class="notice notice-warning is-dismissible" id="agentic-activation-degraded-notice">
+		<div class="notice notice-warning is-dismissible" id="agentic-activation-degraded-notice" data-nonce="<?php echo esc_attr( $nonce ); ?>">
 			<p>
 				<strong><?php esc_html_e( 'Agent Builder finished setup in a reduced state.', 'agent-builder' ); ?></strong>
 				<?php esc_html_e( 'A setup step did not complete — often a temporary hosting or database limit. The plugin is safe to use as-is.', 'agent-builder' ); ?>
@@ -199,25 +203,17 @@ class Admin_Notice_Manager {
 				<a href="<?php echo esc_url( $retry_url ); ?>"><?php esc_html_e( 'Click to retry', 'agent-builder' ); ?></a>
 			</p>
 		</div>
-		<script>
-		( function () {
-			var notice = document.getElementById( 'agentic-activation-degraded-notice' );
-			if ( ! notice ) { return; }
-			notice.addEventListener( 'click', function ( e ) {
-				if ( ! e.target.classList.contains( 'notice-dismiss' ) ) { return; }
-				wp.ajax.post( 'agentic_dismiss_activation_degraded_notice', { nonce: <?php echo wp_json_encode( $nonce ); ?> } );
-			} );
-		} () );
-		</script>
 		<?php
+		Inline_Assets::script( 'notices', array(), '', array( 'wp-util' ) );
 	}
 
 	/**
 	 * Warn when the one-time legacy agent-export cleanup gave up after repeated
 	 * failed delete attempts — a still-exposed legacy export zip that cannot be
 	 * deleted automatically (bad permissions/ownership) and needs a human to
-	 * remove it. Persistent (not dismissible): it clears only once the sweep
-	 * succeeds again after "Retry now".
+	 * remove it. It clears on its own once the sweep succeeds again after
+	 * "Retry now"; each admin can also dismiss it permanently ("Dismiss"
+	 * link — a plain nonced GET, no script needed).
 	 *
 	 * @return void
 	 */
@@ -229,6 +225,20 @@ class Admin_Notice_Manager {
 		if ( ! get_option( 'agent_builder_legacy_exports_gave_up' ) ) {
 			return;
 		}
+
+		$user_id = get_current_user_id();
+		if ( isset( $_GET['agentic_dismiss_legacy_exports_notice'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['agentic_dismiss_legacy_exports_notice'] ) ), 'agentic_dismiss_legacy_exports_notice' ) ) {
+			update_user_meta( $user_id, 'agentic_legacy_exports_notice_dismissed', 1 );
+			return;
+		}
+		if ( get_user_meta( $user_id, 'agentic_legacy_exports_notice_dismissed', true ) ) {
+			return;
+		}
+		$dismiss_url = wp_nonce_url(
+			remove_query_arg( array( 'agentic_retry_legacy_exports', 'agentic_retry_legacy_exports_nonce' ) ),
+			'agentic_dismiss_legacy_exports_notice',
+			'agentic_dismiss_legacy_exports_notice'
+		);
 
 		$retry_url = wp_nonce_url(
 			add_query_arg( 'agentic_retry_legacy_exports', '1' ),
@@ -242,20 +252,22 @@ class Admin_Notice_Manager {
 				<?php esc_html_e( 'A file left behind by an earlier version is still in wp-content/uploads/agentic-exports/ (or wp-content/agentic-exports/) and could not be deleted automatically — usually a permissions or file-ownership problem. Please remove it yourself, then retry.', 'agent-builder' ); ?>
 				&nbsp;
 				<a href="<?php echo esc_url( $retry_url ); ?>" class="button"><?php esc_html_e( 'Retry now', 'agent-builder' ); ?></a>
+				<a href="<?php echo esc_url( $dismiss_url ); ?>"><?php esc_html_e( 'Dismiss', 'agent-builder' ); ?></a>
 			</p>
 		</div>
 		<?php
 	}
 
 	/**
-	 * Warn when a directory in agentic-agents/ is shadowing a bundled agent.
+	 * Warn when a user agent folder (File_Manager::agents_dir()) is shadowing
+	 * a bundled agent.
 	 *
-	 * The registry loads agentic-agents/ before any plugin library, so a copy
+	 * The registry loads user agents before any plugin library, so a copy
 	 * there pins that agent to whatever is on disk: prompt, tool and risk-level
 	 * changes from plugin updates never reach it. This is reported however the
 	 * copy got there — a .uploaded marker records the route in, not consent.
 	 *
-	 * We never touch the files. agentic-agents/ belongs to the site owner.
+	 * We never touch the files. The user agents folder belongs to the site owner.
 	 */
 	public function show_shadowed_agent_notice(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -263,7 +275,7 @@ class Admin_Notice_Manager {
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only page identification.
-		$current_page = isset( $_GET['page'] ) ? sanitize_key( $_GET['page'] ) : '';
+		$current_page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
 		if ( 'agentic-agents' !== $current_page ) {
 			return;
 		}
@@ -298,7 +310,7 @@ class Admin_Notice_Manager {
 				echo wp_kses(
 					sprintf(
 						/* translators: %s: comma-separated list of agent slugs. */
-						esc_html__( 'A copy of each of these agents exists in wp-content/agentic-agents/ and is loaded instead of the version bundled with the plugin: %s', 'agent-builder' ),
+						esc_html__( 'A copy of each of these agents exists in your Agent Builder agents folder (in uploads) and is loaded instead of the version bundled with the plugin: %s', 'agent-builder' ),
 						$slug_list
 					),
 					array( 'code' => array() )
@@ -314,19 +326,7 @@ class Admin_Notice_Manager {
 				</p>
 			<?php endif; ?>
 		</div>
-		<script>
-		( function () {
-			var notice = document.getElementById( 'agentic-shadowed-agent-notice' );
-			if ( ! notice ) { return; }
-			notice.addEventListener( 'click', function ( e ) {
-				if ( ! e.target.classList.contains( 'notice-dismiss' ) ) { return; }
-				wp.ajax.post( 'agentic_dismiss_shadowed_agent_notice', {
-					nonce: notice.dataset.nonce,
-					slugs: notice.dataset.slugs,
-				} );
-			} );
-		} () );
-		</script>
 		<?php
+		Inline_Assets::script( 'notices', array(), '', array( 'wp-util' ) );
 	}
 }

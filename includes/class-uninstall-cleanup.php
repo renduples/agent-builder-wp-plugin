@@ -21,50 +21,56 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Removes the plugin's own data folders under wp-content.
+ * Removes the plugin's own data folders: the uploads data root and any
+ * pre-4.5 wp-content/agentic-* folder still left over.
  */
 class Uninstall_Cleanup {
 
 	/**
 	 * Folders that hold only plugin data and are removed in full when the
-	 * administrator chose "Delete all plugin data": automatic pre-change
-	 * backups (copies of site content) and agent knowledge files.
-	 *
-	 * wp-content/agentic-agents is deliberately not listed: uninstall.php
-	 * only removes it when it holds nothing but the plugin's guard files.
+	 * administrator chose "Delete all plugin data": the plugin's data root in
+	 * uploads (user agents, knowledge files, automatic backups, generated
+	 * documents) and the pre-4.5 wp-content/agentic-* folders if a storage
+	 * migration left any behind.
 	 *
 	 * @return string[] Absolute directory paths.
 	 */
 	public static function data_directories(): array {
-		return array(
-			WP_CONTENT_DIR . '/agentic-backups',
-			WP_CONTENT_DIR . '/agentic-knowledge',
-		);
+		$dirs = array( File_Manager::data_dir() );
+		foreach ( array_keys( File_Manager::LEGACY_DIRS ) as $kind ) {
+			$dirs[] = File_Manager::legacy_dir( $kind );
+		}
+		return $dirs;
 	}
 
 	/**
 	 * Recursively delete the given data directories with WP_Filesystem.
 	 *
-	 * Only paths directly inside WP_CONTENT_DIR whose name starts with
-	 * "agentic-" are touched, so a filtered or mistaken list can never reach
-	 * anything else.
+	 * Only the uploads data root itself, or a path directly inside
+	 * WP_CONTENT_DIR whose name is one of the legacy agentic-* folders, is
+	 * touched, so a filtered or mistaken list can never reach anything else.
 	 *
 	 * @param string[]|null $dirs Directories to remove (default: data_directories()).
 	 * @return string[] Directories that were removed.
 	 */
 	public static function remove_data_directories( ?array $dirs = null ): array {
-		$dirs    = $dirs ?? self::data_directories();
-		$removed = array();
-		$content = trailingslashit( wp_normalize_path( WP_CONTENT_DIR ) );
+		$dirs      = $dirs ?? self::data_directories();
+		$removed   = array();
+		$content   = trailingslashit( wp_normalize_path( WP_CONTENT_DIR ) );
+		$data_root = untrailingslashit( wp_normalize_path( File_Manager::data_dir() ) );
 
 		$dirs = array_filter(
 			$dirs,
-			static function ( $dir ) use ( $content ): bool {
+			static function ( $dir ) use ( $content, $data_root ): bool {
 				$dir = untrailingslashit( wp_normalize_path( (string) $dir ) );
-				return is_dir( $dir )
-					&& ! is_link( $dir )
-					&& dirname( $dir ) . '/' === $content
-					&& str_starts_with( basename( $dir ), 'agentic-' );
+				if ( ! is_dir( $dir ) || is_link( $dir ) ) {
+					return false;
+				}
+				if ( $dir === $data_root ) {
+					return true;
+				}
+				return dirname( $dir ) . '/' === $content
+					&& in_array( basename( $dir ), File_Manager::LEGACY_DIRS, true );
 			}
 		);
 

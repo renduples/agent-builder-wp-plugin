@@ -104,7 +104,7 @@ actually did, including anything that failed or was queued.
 
 Site owners maintain curated knowledge in the free **Knowledge Wiki** using the
 Open Knowledge Format (OKF): markdown concept files with YAML frontmatter under
-`wp-content/agentic-knowledge/okf/`. Discover concepts with `list_okf_concepts`,
+`wp-content/uploads/siteloom/knowledge/okf/`. Discover concepts with `list_okf_concepts`,
 load full text with `read_okf_concept`, and keyword-search with `search_okf`.
 
 There is no vector search here, so large unstructured corpora (PDFs, whole-site

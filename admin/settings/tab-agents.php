@@ -226,39 +226,17 @@ if ( ! empty( $agent_builder_active_agents ) ) :
 	These settings improve reliability when the chosen model struggles with tool calling.
 </p>
 
-<script>
-(function () {
-	var agenticProviderModels = <?php echo wp_json_encode( $agentic_provider_models ); ?>;
-	var agenticDefaultProvider = <?php echo wp_json_encode( $agentic_llm_provider_val ); ?>;
-	var agenticDefaultModel    = <?php echo wp_json_encode( $agentic_model_val ); ?>;
-
-	function agenticPopulateModels( providerSel ) {
-		var row    = providerSel.closest( 'tr' );
-		var slug   = providerSel.value || agenticDefaultProvider;
-		var models = agenticProviderModels[ slug ] || [];
-
-		[
-			{ sel: row.querySelector( '.agentic-agent-model-select' ),        firstLabel: agenticDefaultModel + ' (default)' },
-			{ sel: row.querySelector( '.agentic-agent-vision-model-select' ), firstLabel: 'Same as chat' },
-		].forEach( function( cfg ) {
-			if ( ! cfg.sel ) return;
-			var saved = cfg.sel.getAttribute( 'data-saved-model' ) || '';
-			var list  = models.slice();
-			if ( saved && list.indexOf( saved ) === -1 ) list.unshift( saved );
-			var options = '<option value="">' + cfg.firstLabel + '</option>';
-			list.forEach( function( m ) {
-				options += '<option value="' + m + '"' + ( m === saved ? ' selected' : '' ) + '>' + m + '</option>';
-			} );
-			cfg.sel.innerHTML = options;
-			cfg.sel.setAttribute( 'data-saved-model', '' );
-		} );
-	}
-
-	document.querySelectorAll( '.agentic-agent-provider-select' ).forEach( function( sel ) {
-		sel.addEventListener( 'change', function () { agenticPopulateModels( this ); } );
-	} );
-}());
-</script>
+	<?php
+	\Agentic\Inline_Assets::script(
+		'settings-tab-agents',
+		array(
+			'providerModels'  => $agentic_provider_models,
+			'defaultProvider' => $agentic_llm_provider_val,
+			'defaultModel'    => $agentic_model_val,
+		),
+		'agenticSettingsTabAgents'
+	);
+	?>
 
 <p class="agentic-mt-8"><a href="#" class="agentic-reset-defaults" data-section="agents_llm">Reset LLM overrides to defaults</a></p>
 

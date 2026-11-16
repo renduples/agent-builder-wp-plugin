@@ -425,12 +425,63 @@ class Agent_Matcher {
 			return array();
 		}
 
-		$body = json_decode( wp_remote_retrieve_body( $resp ), true );
+		$body = json_decode( (string) wp_remote_retrieve_body( $resp ), true );
 		if ( ! is_array( $body ) ) {
 			return array();
 		}
 
-		return array_values( (array) ( $body['agents'] ?? $body ) );
+		$entries = is_array( $body['agents'] ?? null ) ? $body['agents'] : $body;
+		$agents  = array();
+		foreach ( $entries as $entry ) {
+			if ( is_array( $entry ) ) {
+				$clean = self::sanitize_catalog_entry( $entry );
+				if ( '' !== $clean['slug'] ) {
+					$agents[] = $clean;
+				}
+			}
+		}
+		return $agents;
+	}
+
+	/**
+	 * Sanitize one remote marketplace catalog entry, keeping only the fields
+	 * this class reads.
+	 *
+	 * @param array $entry Decoded entry.
+	 * @return array{slug: string, name: string, categories: array, tools: string[], rating: float, downloads: int, url: string}
+	 */
+	private static function sanitize_catalog_entry( array $entry ): array {
+		$str        = static fn( $v ): string => is_scalar( $v ) ? sanitize_text_field( (string) $v ) : '';
+		$categories = array();
+		foreach ( is_array( $entry['categories'] ?? null ) ? $entry['categories'] : array() as $cat ) {
+			if ( is_array( $cat ) ) {
+				$categories[] = array(
+					'slug' => sanitize_key( $str( $cat['slug'] ?? '' ) ),
+					'name' => $str( $cat['name'] ?? '' ),
+				);
+			} elseif ( is_scalar( $cat ) ) {
+				$categories[] = $str( $cat );
+			}
+		}
+		$tools = array();
+		foreach ( is_array( $entry['tools'] ?? null ) ? $entry['tools'] : array() as $tool ) {
+			$tool = sanitize_key( $str( $tool ) );
+			if ( '' !== $tool ) {
+				$tools[] = $tool;
+			}
+		}
+		$clean = array(
+			'slug'       => sanitize_key( $str( $entry['slug'] ?? '' ) ),
+			'categories' => $categories,
+			'tools'      => $tools,
+			'rating'     => is_numeric( $entry['rating'] ?? null ) ? (float) $entry['rating'] : 0.0,
+			'downloads'  => absint( $entry['downloads'] ?? 0 ),
+			'url'        => esc_url_raw( $str( $entry['url'] ?? '' ) ),
+		);
+		if ( isset( $entry['name'] ) ) {
+			$clean['name'] = $str( $entry['name'] );
+		}
+		return $clean;
 	}
 
 	/**

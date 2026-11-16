@@ -6,8 +6,10 @@
  * falls back to the deprecated navigator.modelContext alias only on Chrome
  * builds that predate WebMCP's May 2026 spec revision).
  *
- * This is a different trust boundary than the MCP relay (class-relay-connect.php):
- * the relay authenticates a *remote* agent via an Application Password acting
+ * This is a different trust boundary than the per-agent MCP endpoint
+ * (class-mcp-server.php):
+ * that endpoint authenticates an AI app the owner connected, via an
+ * Application Password the user created in their own profile, acting
  * on the site owner's behalf continuously, while this bridge serves the
  * *current browser session* — often an anonymous visitor. See
  * SUBMISSION-NOTES.md's "WebMCP Bridge" section for the full compliance
@@ -124,7 +126,7 @@ class Webmcp_Bridge {
 	/**
 	 * Whether a tool should ever be reachable from WebMCP.
 	 *
-	 * Shares Agentic_Relay_Connect's exact HIGH/EXTREME-and-always-blocked
+	 * Shares Agentic_MCP_Server's exact HIGH/EXTREME-and-always-blocked
 	 * exclusion list rather than re-implementing it — a HIGH-risk tool's
 	 * natural outcome ("queue for an admin to review later") is the wrong UX
 	 * for a live visitor waiting on an in-page confirm, so it is excluded
@@ -140,7 +142,7 @@ class Webmcp_Bridge {
 	 * @return bool
 	 */
 	public static function is_tool_webmcp_safe( string $tool_name, string $agent_slug ): bool {
-		return class_exists( '\\Agentic_Relay_Connect' ) && \Agentic_Relay_Connect::is_tool_mcp_safe( $tool_name, $agent_slug );
+		return class_exists( '\\Agentic_MCP_Server' ) && \Agentic_MCP_Server::is_tool_mcp_safe( $tool_name, $agent_slug );
 	}
 
 	/**
@@ -215,7 +217,7 @@ class Webmcp_Bridge {
 		// Logged in: always the tool's own required capability — readonly
 		// no longer bypasses this. A tool's own risk/capability floor is what
 		// governs any authenticated caller, the same as it would via chat.
-		if ( ! current_user_can( \Agentic_Relay_Connect::required_capability_for_tool( $tool_name ) ) ) {
+		if ( ! current_user_can( \Agentic_MCP_Server::required_capability_for_tool( $tool_name ) ) ) {
 			return new \WP_Error( 'webmcp_forbidden', __( 'You do not have permission to use this action.', 'agent-builder' ), array( 'status' => 403 ) );
 		}
 
@@ -318,7 +320,7 @@ class Webmcp_Bridge {
 		// an admin has unusually declared at MEDIUM risk would also require
 		// login here, which a truly anonymous-reads-only setup should avoid
 		// by keeping readonly tools at NONE/LOW.
-		if ( ! is_user_logged_in() || ! current_user_can( \Agentic_Relay_Connect::required_capability_for_tool( $tool_name ) ) ) {
+		if ( ! is_user_logged_in() || ! current_user_can( \Agentic_MCP_Server::required_capability_for_tool( $tool_name ) ) ) {
 			return new \WP_Error( 'webmcp_forbidden', __( 'You do not have permission to confirm this action.', 'agent-builder' ), array( 'status' => 403 ) );
 		}
 
@@ -399,8 +401,8 @@ class Webmcp_Bridge {
 	/**
 	 * Serve /.well-known/webmcp.json in-process, before WP's own 404 handling
 	 * would otherwise take over — same pragmatic raw-REQUEST_URI style
-	 * Agentic_Relay_Connect::maybe_handle_connect() already uses for its own
-	 * frontend intercept. No rewrite rule or flush needed.
+	 * the plugin uses for its other early frontend intercepts.
+	 * No rewrite rule or flush needed.
 	 *
 	 * @return void
 	 */
@@ -409,7 +411,7 @@ class Webmcp_Bridge {
 			return;
 		}
 
-		$path = wp_parse_url( (string) ( $_SERVER['REQUEST_URI'] ?? '' ), PHP_URL_PATH ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Read-only path comparison, not used as output or a file path.
+		$path = wp_parse_url( esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ?? '' ) ), PHP_URL_PATH );
 		if ( ! is_string( $path ) || ! str_ends_with( $path, '/.well-known/webmcp.json' ) ) {
 			return;
 		}

@@ -373,7 +373,7 @@ final class Skills_Registry {
 	 * overwriting a customization. Rows from before source_hash existed have
 	 * no baseline to compare against, so their current content is adopted as
 	 * the baseline on first sight rather than guessed at. User-created and
-	 * ClawHub-imported skills (source !== 'core') are never touched here.
+	 * Imported skills (source !== 'core') are never touched here.
 	 *
 	 * @return array{seeded: int, refreshed: int}
 	 */
@@ -442,7 +442,7 @@ final class Skills_Registry {
 				}
 
 				// Only core-sourced rows are eligible for auto-refresh — a user
-				// skill or ClawHub import that happens to reuse a slug is untouched.
+				// skill or hub import that happens to reuse a slug is untouched.
 				if ( 'core' !== ( $existing['source'] ?? '' ) ) {
 					continue;
 				}
@@ -692,32 +692,75 @@ final class Skills_Registry {
 	}
 
 	/**
-	 * Import a skill from ClawHub data.
+	 * Sanitize a decoded hub/import skill payload field by field.
 	 *
-	 * @param array<string, mixed> $hub_data Data from ClawHub API.
+	 * Accepts the shapes the browser sends (the curated Agentic list and
+	 * GitHub skills repositories) and returns only known keys, each with the most restrictive sanitizer that keeps it
+	 * usable. "content" is SKILL.md Markdown, which legitimately contains
+	 * "<...>" code examples, so it is kept as text (valid UTF-8, no NUL bytes)
+	 * and always escaped when displayed.
+	 *
+	 * @param array<string, mixed> $raw Decoded JSON.
+	 * @return array<string, string> Sanitized payload.
+	 */
+	public static function sanitize_hub_data( array $raw ): array {
+		$str = static function ( $value ): string {
+			return is_scalar( $value ) ? (string) $value : '';
+		};
+
+		$name        = $str( $raw['name'] ?? '' );
+		$description = $str( $raw['description'] ?? '' );
+		$content     = $str( $raw['content'] ?? '' );
+		$content     = '' !== $content ? $content : $str( $raw['skill_md'] ?? '' );
+		$content     = str_replace( "\0", '', wp_check_invalid_utf8( $content, true ) );
+
+		$source = sanitize_key( $str( $raw['source'] ?? 'local' ) );
+		if ( ! in_array( $source, array( 'agentic', 'wordpress', 'anthropic' ), true ) ) {
+			$source = 'local';
+		}
+
+		$clean = array(
+			'name'        => sanitize_text_field( $name ),
+			'description' => sanitize_textarea_field( $description ),
+			'content'     => $content,
+			'source'      => $source,
+			'version'     => sanitize_text_field( $str( $raw['version'] ?? '' ) ),
+			'author'      => sanitize_text_field( $str( $raw['author'] ?? '' ) ),
+		);
+		foreach ( array( 'slug', '_id', 'id' ) as $key ) {
+			if ( isset( $raw[ $key ] ) && is_scalar( $raw[ $key ] ) && '' !== (string) $raw[ $key ] ) {
+				$clean[ $key ] = sanitize_text_field( (string) $raw[ $key ] );
+			}
+		}
+		if ( '' === $clean['version'] ) {
+			unset( $clean['version'] );
+		}
+		if ( '' === $clean['author'] ) {
+			unset( $clean['author'] );
+		}
+
+		return $clean;
+	}
+
+	/**
+	 * Import a skill from a hub source (the curated Agentic list or a GitHub skills repository).
+	 *
+	 * @param array<string, mixed> $hub_data Skill data (name, description, content, slug, source, ...).
 	 * @return int|false Inserted ID or false.
 	 */
 	public static function import_from_hub( array $hub_data ) {
-		// ClawHub uses slug as stable identifier; also accept _id or id.
+		// Slug is the stable identifier; also accept _id or id.
 		$source_id = $hub_data['slug'] ?? ( $hub_data['_id'] ?? ( $hub_data['id'] ?? '' ) );
 
-		// Normalise ClawHub field names.
-		if ( empty( $hub_data['name'] ) && ! empty( $hub_data['displayName'] ) ) {
-			$hub_data['name'] = $hub_data['displayName'];
-		}
-		if ( empty( $hub_data['description'] ) && ! empty( $hub_data['summary'] ) ) {
-			$hub_data['description'] = $hub_data['summary'];
-		}
-
-		$source = sanitize_key( $hub_data['source'] ?? 'clawhub' );
-		if ( ! in_array( $source, array( 'agentic', 'clawhub', 'wordpress', 'anthropic' ), true ) ) {
-			$source = 'clawhub';
+		$source = sanitize_key( $hub_data['source'] ?? 'local' );
+		if ( ! in_array( $source, array( 'agentic', 'wordpress', 'anthropic' ), true ) ) {
+			$source = 'local';
 		}
 
 		// Check if already imported from this exact source. Matching on
 		// source_id alone (regardless of source) would let two different
 		// registries' skills that happen to share a slug — e.g. "pdf" exists
-		// in both Anthropic's and ClawHub's catalogs — clobber each other.
+		// in both the Anthropic and WordPress skill repositories — clobber each other.
 		if ( $source_id ) {
 			foreach ( self::get_all() as $existing ) {
 				if ( $source === $existing['source'] && $source_id === $existing['source_id'] ) {

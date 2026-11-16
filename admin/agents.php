@@ -393,7 +393,7 @@ wp_enqueue_style( 'agentic-react-admin', AGENT_BUILDER_URL . 'assets/css/react-a
 					$agentic_row_class = $agentic_agent['active'] ? 'active' : 'inactive';
 					$agentic_nonce     = wp_create_nonce( 'agentic_agent_action' );
 
-					$agentic_mcp         = class_exists( '\Agentic_Relay_Connect' ) ? \Agentic_Relay_Connect::mcp_readiness( $agentic_slug ) : array(
+					$agentic_mcp         = class_exists( '\Agentic_MCP_Server' ) ? \Agentic_MCP_Server::mcp_readiness( $agentic_slug ) : array(
 						'ready'  => false,
 						'reason' => null,
 					);
@@ -635,144 +635,42 @@ wp_enqueue_style( 'agentic-react-admin', AGENT_BUILDER_URL . 'assets/css/react-a
 <?php endif; ?>
 </div>
 
-<script>
-( function () {
-	'use strict';
-	var toggle = document.getElementById( 'agentic-agents-mode-toggle' );
-	if ( ! toggle ) {
-		return;
-	}
-	Array.prototype.forEach.call( toggle.querySelectorAll( 'button' ), function ( btn ) {
-		btn.addEventListener( 'click', function () {
-			if ( btn.disabled ) {
-				return;
-			}
-			Array.prototype.forEach.call( toggle.querySelectorAll( 'button' ), function ( b ) {
-				b.disabled = true;
-			} );
-			fetch( <?php echo wp_json_encode( esc_url_raw( rest_url( 'agentic/v1/admin-page' ) ) ); ?>, {
-				method: 'POST',
-				credentials: 'same-origin',
-				headers: {
-					'Content-Type': 'application/json',
-					'X-WP-Nonce': <?php echo wp_json_encode( wp_create_nonce( 'wp_rest' ) ); ?>
-				},
-				body: JSON.stringify( {
-					action_name: 'set_screen_mode',
-					screen: 'agents',
-					mode: btn.getAttribute( 'data-mode' )
-				} )
-			} ).then( function () {
-				window.location.reload();
-			} );
-		} );
-	} );
-} )();
-</script>
+<?php
+\Agentic\Inline_Assets::script(
+	'screen-mode-toggle',
+	array(
+		'restUrl' => esc_url_raw( rest_url( 'agentic/v1/admin-page' ) ),
+		'nonce'   => wp_create_nonce( 'wp_rest' ),
+		'toggles' => array(
+			array(
+				'id'     => 'agentic-agents-mode-toggle',
+				'screen' => 'agents',
+			),
+		),
+	),
+	'agenticScreenMode'
+);
 
-<?php if ( $agentic_agents_advanced ) : ?>
-<script>
-(function () {
-	// Keep top/bottom bulk selects in sync.
-	var selTop    = document.getElementById( 'bulk-action-selector-top' );
-	var selBottom = document.getElementById( 'bulk-action-selector-bottom' );
-	if ( selTop && selBottom ) {
-		selTop.addEventListener( 'change', function () { selBottom.value = selTop.value; } );
-		selBottom.addEventListener( 'change', function () { selTop.value = selBottom.value; } );
-	}
-
-	// Keep top/bottom checkboxes in sync.
-	var cbAll1 = document.getElementById( 'cb-select-all-1' );
-	var cbAll2 = document.getElementById( 'cb-select-all-2' );
-	function syncCheckAll( from, to ) {
-		if ( from && to ) {
-			from.addEventListener( 'change', function () {
-				to.checked = from.checked;
-				document.querySelectorAll( '#the-list input[type="checkbox"]' ).forEach( function ( cb ) {
-					cb.checked = from.checked;
-				} );
-			} );
-		}
-	}
-	syncCheckAll( cbAll1, cbAll2 );
-	syncCheckAll( cbAll2, cbAll1 );
-})();
-
-function agentic_confirm_bulk( btn ) {
-	var sel = document.getElementById( 'bulk-action-selector-top' );
-	if ( ! sel || sel.value === '-1' ) {
-		agenticUI.toast( '<?php echo esc_js( __( 'Please select a bulk action.', 'agent-builder' ) ); ?>', 'warning' );
-		return false;
-	}
-	var checked = document.querySelectorAll( '#the-list input[type="checkbox"]:checked' );
-	if ( ! checked.length ) {
-		agenticUI.toast( '<?php echo esc_js( __( 'Please select at least one agent.', 'agent-builder' ) ); ?>', 'warning' );
-		return false;
-	}
-	if ( sel.value === 'delete' ) {
-		// Block the synchronous submit; re-submit programmatically once confirmed.
-		agenticUI.confirm( '<?php echo esc_js( __( 'Are you sure you want to delete the selected agents?', 'agent-builder' ) ); ?>', { danger: true, confirmText: '<?php echo esc_js( __( 'Delete', 'agent-builder' ) ); ?>' } ).then( function ( ok ) {
-			if ( ok ) {
-				btn.closest( 'form' ).submit();
-			}
-		} );
-		return false;
-	}
-	return true;
+if ( $agentic_agents_advanced ) {
+	\Agentic\Inline_Assets::script(
+		'agents-list',
+		array(
+			'ajaxUrl'    => admin_url( 'admin-ajax.php' ),
+			'hasUpdates' => class_exists( '\Agentic\Agent_Updates' ),
+			'i18n'       => array(
+				'selectAction'  => __( 'Please select a bulk action.', 'agent-builder' ),
+				'selectAgent'   => __( 'Please select at least one agent.', 'agent-builder' ),
+				'confirmDelete' => __( 'Are you sure you want to delete the selected agents?', 'agent-builder' ),
+				'delete'        => __( 'Delete', 'agent-builder' ),
+				'updating'      => __( 'Updating…', 'agent-builder' ),
+				'updateFailed'  => __( 'Update failed: ', 'agent-builder' ),
+				'unknownError'  => __( 'Unknown error.', 'agent-builder' ),
+				'updateNow'     => __( 'update now', 'agent-builder' ),
+				'networkError'  => __( 'Update failed due to a network error.', 'agent-builder' ),
+			),
+		),
+		'agenticAgentsList',
+		array( 'agentic-ui' )
+	);
 }
-
-	<?php if ( class_exists( '\Agentic\Agent_Updates' ) ) : ?>
-(function () {
-	// One-click agent update handler.
-	document.querySelectorAll( '.agentic-update-now' ).forEach( function ( link ) {
-		link.addEventListener( 'click', function ( e ) {
-			e.preventDefault();
-
-			var slug   = this.dataset.slug;
-			var nonce  = this.dataset.nonce;
-			var zipUrl = this.dataset.url;
-			var row    = document.getElementById( slug + '-update' );
-			var self   = this;
-
-			self.textContent = '<?php echo esc_js( __( 'Updating\u2026', 'agent-builder' ) ); ?>';
-			self.style.pointerEvents = 'none';
-
-			var body = new URLSearchParams( {
-				action:    'agentic_agent_update',
-				slug:      slug,
-				zip_url:   zipUrl,
-				_wpnonce:  nonce,
-			} );
-
-			fetch( ajaxurl, {
-				method:  'POST',
-				headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-				body:    body.toString(),
-			} )
-			.then( function ( r ) { return r.json(); } )
-			.then( function ( data ) {
-				if ( data.success ) {
-					if ( row ) {
-						row.innerHTML =
-							'<td colspan="6"><div class="update-message notice inline notice-success notice-alt">' +
-							'<p>' + data.data.message + '</p></div></td>';
-					}
-					// Reload after a short delay so the updated version number shows.
-					setTimeout( function () { location.reload(); }, 1500 );
-				} else {
-					agenticUI.toast( '<?php echo esc_js( __( 'Update failed: ', 'agent-builder' ) ); ?>' + ( data.data || '<?php echo esc_js( __( 'Unknown error.', 'agent-builder' ) ); ?>' ), 'error' );
-					self.textContent = '<?php echo esc_js( __( 'update now', 'agent-builder' ) ); ?>';
-					self.style.pointerEvents = '';
-				}
-			} )
-			.catch( function () {
-				agenticUI.toast( '<?php echo esc_js( __( 'Update failed due to a network error.', 'agent-builder' ) ); ?>', 'error' );
-				self.textContent = '<?php echo esc_js( __( 'update now', 'agent-builder' ) ); ?>';
-				self.style.pointerEvents = '';
-			} );
-		} );
-	} );
-}());
-	<?php endif; ?>
-</script>
-<?php endif; ?>
+?>

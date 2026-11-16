@@ -2,9 +2,11 @@
 /**
  * Site Health test for Agent Builder background tasks.
  *
- * Registers two direct tests on the WordPress Site Health screen:
- * `agent_builder_background_runs` and `agent_builder_private_storage`
- * (automatic backups and knowledge files must not be downloadable). The test's database queries only run when
+ * Registers three direct tests on the WordPress Site Health screen:
+ * `agent_builder_background_runs`, `agent_builder_private_storage`
+ * (automatic backups, knowledge files and user agents must not be
+ * downloadable) and `agent_builder_storage_location` (data still waiting in
+ * the pre-4.5 wp-content folders). The test's database queries only run when
  * WordPress actually builds the Site Health screen (or the WP-CLI / REST Site
  * Health endpoints), never on an ordinary page load — the `site_status_tests`
  * filter is only applied from `WP_Site_Health::get_tests()`.
@@ -38,6 +40,11 @@ class Site_Health {
 	 * Site Health slug of the private-storage exposure test.
 	 */
 	private const STORAGE_TEST_SLUG = 'agent_builder_private_storage';
+
+	/**
+	 * Site Health slug of the storage-location (migration) test.
+	 */
+	private const LOCATION_TEST_SLUG = 'agent_builder_storage_location';
 
 	/**
 	 * Option holding the timestamp of the last completed hourly health-check tick.
@@ -91,6 +98,11 @@ class Site_Health {
 			'test'  => array( __CLASS__, 'test_private_storage' ),
 		);
 
+		$tests['direct'][ self::LOCATION_TEST_SLUG ] = array(
+			'label' => __( 'Agent Builder: data is stored in the uploads folder', 'agent-builder' ),
+			'test'  => array( __CLASS__, 'test_storage_location' ),
+		);
+
 		return $tests;
 	}
 
@@ -134,8 +146,8 @@ class Site_Health {
 	/**
 	 * Run the private-storage Site Health test.
 	 *
-	 * Writes a throwaway probe file into wp-content/agentic-backups and
-	 * wp-content/agentic-knowledge, requests it over HTTP from the site
+	 * Writes a throwaway probe file into the backups, knowledge and agents
+	 * folders of the plugin's uploads data root, requests it over HTTP from the site
 	 * itself (a loopback request — nothing leaves the server) and deletes it
 	 * again. Backups get two probes: a plain .txt (is the folder readable at
 	 * all?) and an exit-guarded .php in the real backup format (could a
@@ -150,8 +162,9 @@ class Site_Health {
 		$critical = false;
 
 		$dirs = array(
-			'backups'   => defined( 'AGENT_BUILDER_BACKUPS_DIR' ) ? AGENT_BUILDER_BACKUPS_DIR : '',
-			'knowledge' => defined( 'AGENT_BUILDER_KNOWLEDGE_DIR' ) ? AGENT_BUILDER_KNOWLEDGE_DIR : '',
+			'backups'   => File_Manager::backups_dir(),
+			'knowledge' => File_Manager::knowledge_dir(),
+			'agents'    => File_Manager::agents_dir(),
 		);
 
 		foreach ( $dirs as $key => $dir ) {
@@ -199,7 +212,7 @@ class Site_Health {
 				'label'       => $label,
 				'status'      => 'good',
 				'badge'       => $badge,
-				'description' => '<p>' . __( 'Automatic backups and knowledge files in wp-content cannot be downloaded from the web.', 'agent-builder' ) . '</p>',
+				'description' => '<p>' . __( 'Automatic backups, knowledge files and agent files in the Agent Builder uploads folder cannot be downloaded from the web.', 'agent-builder' ) . '</p>',
 				'actions'     => '',
 				'test'        => self::STORAGE_TEST_SLUG,
 			);
@@ -207,7 +220,7 @@ class Site_Health {
 
 		$folders = array();
 		foreach ( $readable as $key ) {
-			$folders[] = '<code>wp-content/agentic-' . esc_html( $key ) . '/</code>';
+			$folders[] = '<code>' . esc_html( self::display_path( $dirs[ $key ] ) ) . '/</code>';
 		}
 
 		if ( $critical ) {
@@ -217,12 +230,12 @@ class Site_Health {
 			$label       = __( 'Agent Builder folders are readable from the web', 'agent-builder' );
 			$description = '<p>' . sprintf(
 				/* translators: %s: comma-separated folder names. */
-				__( 'Your web server hands out files from %s. Automatic backups stay protected because they are stored in a format the server will not serve, but knowledge files (your agents\' reference notes) can be read by anyone who knows their address.', 'agent-builder' ),
+				__( 'Your web server hands out files from %s. Automatic backups stay protected because they are stored in a format the server will not serve, but knowledge files (your agents\' reference notes) and agent files can be read by anyone who knows their address.', 'agent-builder' ),
 				implode( ', ', $folders )
 			) . '</p>';
 		}
 
-		$snippet = "location ~* ^/wp-content/agentic-(backups|knowledge)/ {\n\tdeny all;\n}";
+		$snippet = self::nginx_snippet();
 		$actions = '<p>' . __( 'Apache and IIS follow the .htaccess and web.config files Agent Builder places in these folders. On nginx, add this rule to the site\'s server block and reload nginx:', 'agent-builder' ) . '</p><pre><code>' . esc_html( $snippet ) . '</code></pre>';
 
 		return array(
@@ -239,16 +252,118 @@ class Site_Health {
 	}
 
 	/**
+	 * The nginx rule that denies web access to the plugin's private folders.
+	 *
+	 * Built from the real uploads URL path, so it is correct for a custom
+	 * uploads location too.
+	 *
+	 * @return string
+	 */
+	public static function nginx_snippet(): string {
+		$path = (string) wp_parse_url( File_Manager::data_url(), PHP_URL_PATH );
+		$path = '/' . trim( $path, '/' );
+
+		return 'location ~* ^' . preg_quote( $path, '#' ) . '/(' . implode( '|', File_Manager::PRIVATE_SUBDIRS ) . ")/ {\n\tdeny all;\n}";
+	}
+
+	/**
+	 * A data path shown to the administrator, relative to ABSPATH when possible.
+	 *
+	 * @param string $path Absolute path.
+	 * @return string
+	 */
+	private static function display_path( string $path ): string {
+		$path = wp_normalize_path( $path );
+		$root = wp_normalize_path( trailingslashit( ABSPATH ) );
+		return str_starts_with( $path, $root ) ? substr( $path, strlen( $root ) ) : $path;
+	}
+
+	/**
+	 * Run the storage-location Site Health test.
+	 *
+	 * Reports any pre-4.5 wp-content/agentic-* folder that still exists
+	 * because the one-time move into the uploads data root
+	 * (Storage_Migration) could not complete — usually file permissions. The
+	 * plugin keeps reading those folders until they are gone, so nothing is
+	 * lost, but it never writes to them.
+	 *
+	 * @return array{label:string,status:string,badge:array{label:string,color:string},description:string,actions:string,test:string}
+	 */
+	public static function test_storage_location(): array {
+		$badge = array(
+			'label' => __( 'Agent Builder', 'agent-builder' ),
+			'color' => 'blue',
+		);
+		$left  = Storage_Migration::remaining_legacy_dirs();
+		$copy  = Storage_Migration::uses_copy();
+
+		if ( empty( $left ) ) {
+			$description = '<p>' . sprintf(
+				/* translators: %s: folder path. */
+				__( 'Agent Builder keeps its files (your agents, knowledge files and automatic backups) in %s.', 'agent-builder' ),
+				'<code>' . esc_html( self::display_path( File_Manager::data_dir() ) ) . '/</code>'
+			) . '</p>';
+
+			$shared = Storage_Migration::shared_legacy_dirs();
+			if ( ! empty( $shared ) ) {
+				$folders = array();
+				foreach ( $shared as $dir ) {
+					$folders[] = '<code>' . esc_html( self::display_path( $dir ) ) . '/</code>';
+				}
+				$description .= '<p>' . sprintf(
+					/* translators: %s: old folder paths. */
+					__( 'This site has copied its data out of the older folders shared by every site of the network: %s. Agent Builder no longer uses them on this site and never deletes them, because other sites copy from them the first time they load. Once every site of the network has been visited, you can delete these folders yourself.', 'agent-builder' ),
+					implode( ', ', $folders )
+				) . '</p>';
+			}
+
+			return array(
+				'label'       => __( 'Agent Builder data is stored in the uploads folder', 'agent-builder' ),
+				'status'      => 'good',
+				'badge'       => $badge,
+				'description' => $description,
+				'actions'     => '',
+				'test'        => self::LOCATION_TEST_SLUG,
+			);
+		}
+
+		$folders = array();
+		foreach ( $left as $dir ) {
+			$folders[] = '<code>' . esc_html( self::display_path( $dir ) ) . '/</code>';
+		}
+
+		return array(
+			'label'       => __( 'Some Agent Builder files could not be moved to the uploads folder', 'agent-builder' ),
+			'status'      => 'recommended',
+			'badge'       => array(
+				'label' => __( 'Agent Builder', 'agent-builder' ),
+				'color' => 'orange',
+			),
+			'description' => '<p>' . sprintf(
+				/* translators: 1: old folder paths, 2: new folder path. */
+				__( 'Agent Builder now stores its files in %2$s. These older folders still hold files that could not be moved automatically, usually because of file permissions: %1$s. Agent Builder still reads them, so nothing is lost, but it no longer writes there.', 'agent-builder' ),
+				implode( ', ', $folders ),
+				'<code>' . esc_html( self::display_path( File_Manager::data_dir() ) ) . '/</code>'
+			) . '</p>',
+			'actions'     => '<p>' . ( $copy
+				? __( 'Make the uploads folder writable by the web server (or copy the old folders\' contents into the matching agents/, knowledge/ or backups/ subfolder of this site yourself, keeping any file that already exists there). Agent Builder retries the copy every hour. The old folders are shared by every site of the network and are never deleted automatically.', 'agent-builder' )
+				: __( 'Make the old folders writable by the web server (or move their contents into the matching agents/, knowledge/ or backups/ subfolder yourself, keeping any file that already exists there). Agent Builder retries the move every hour and removes each old folder once it is empty.', 'agent-builder' )
+			) . '</p>',
+			'test'        => self::LOCATION_TEST_SLUG,
+		);
+	}
+
+	/**
 	 * Write a probe into $dir, fetch it with a loopback request, delete it.
 	 *
-	 * @param string $dir     Absolute directory under WP_CONTENT_DIR.
+	 * @param string $dir     Absolute directory inside the uploads data root.
 	 * @param bool   $guarded Probe the exit-guarded .php backup format instead of a plain .txt file.
 	 * @return bool|null True if the probe content came back over HTTP, false if not, null if the check could not run.
 	 */
 	public static function probe_storage_dir( string $dir, bool $guarded ): ?bool {
-		$content_dir = wp_normalize_path( untrailingslashit( WP_CONTENT_DIR ) );
-		$dir         = wp_normalize_path( untrailingslashit( $dir ) );
-		if ( ! str_starts_with( $dir, $content_dir . '/' ) ) {
+		$data_dir = wp_normalize_path( untrailingslashit( File_Manager::data_dir() ) );
+		$dir      = wp_normalize_path( untrailingslashit( $dir ) );
+		if ( ! str_starts_with( $dir, $data_dir . '/' ) ) {
 			return null;
 		}
 
@@ -265,7 +380,7 @@ class Site_Health {
 		}
 
 		$response = wp_remote_get(
-			content_url( substr( $dir, strlen( $content_dir ) + 1 ) . '/' . $name ),
+			File_Manager::data_url() . '/' . substr( $dir, strlen( $data_dir ) + 1 ) . '/' . $name,
 			array(
 				'timeout'     => 5,
 				'redirection' => 3,

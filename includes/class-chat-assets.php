@@ -529,7 +529,8 @@ class Chat_Assets {
 
 		$agentic_ov = self::global_appearance_overrides( 'frontend' );
 		if ( '' !== $agentic_ov ) {
-			wp_add_inline_style( 'agentic-chat-frontend', $agentic_ov );
+			// Built only from sanitize_hex_color() + the font allow-list; clean_css() strips any '<' as a last guard.
+			wp_add_inline_style( 'agentic-chat-frontend', Inline_Assets::clean_css( $agentic_ov ) );
 		}
 	}
 
@@ -541,11 +542,18 @@ class Chat_Assets {
 	 * a different CSS-variable namespace. Returns '' when neither global option
 	 * is set, costing nothing by default.
 	 *
+	 * Only two inputs reach the CSS, both validated here at output time:
+	 * the accent colour (sanitize_hex_color(), #rgb/#rrggbb only) and the font
+	 * stack (exact match against global_font_allowlist()). No stored string is
+	 * ever copied into the CSS otherwise; selectors and property names are
+	 * fixed literals below.
+	 *
 	 * @param string $surface One of 'admin', 'frontend', 'overlay'.
 	 * @return string CSS rule, or '' when no global appearance is configured.
 	 */
 	public static function global_appearance_overrides( string $surface ): string {
-		$accent = (string) get_option( 'agent_builder_global_accent', '' );
+		$accent = sanitize_hex_color( (string) get_option( 'agent_builder_global_accent', '' ) );
+		$accent = is_string( $accent ) ? $accent : '';
 		$font   = (string) get_option( 'agent_builder_global_font', '' );
 		if ( '' === $accent && '' === $font ) {
 			return '';
@@ -602,7 +610,7 @@ class Chat_Assets {
 			$css .= $map['font_selector'] . '{font-family:' . $font . ';}';
 		}
 
-		return $css;
+		return Inline_Assets::clean_css( $css );
 	}
 
 	/**
@@ -671,7 +679,8 @@ class Chat_Assets {
 		// Global appearance applies on every theme, including the default.
 		$agentic_ov = self::global_appearance_overrides( 'admin' );
 		if ( '' !== $agentic_ov ) {
-			wp_add_inline_style( 'agentic-chat', $agentic_ov );
+			// Built only from sanitize_hex_color() + the font allow-list; clean_css() strips any '<' as a last guard.
+			wp_add_inline_style( 'agentic-chat', Inline_Assets::clean_css( $agentic_ov ) );
 		}
 	}
 
@@ -696,7 +705,8 @@ class Chat_Assets {
 
 		$agentic_ov = self::global_appearance_overrides( 'overlay' );
 		if ( '' !== $agentic_ov ) {
-			wp_add_inline_style( 'agentic-chat-overlay', $agentic_ov );
+			// Built only from sanitize_hex_color() + the font allow-list; clean_css() strips any '<' as a last guard.
+			wp_add_inline_style( 'agentic-chat-overlay', Inline_Assets::clean_css( $agentic_ov ) );
 		}
 	}
 

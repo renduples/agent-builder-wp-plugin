@@ -18,7 +18,7 @@ if ( ! current_user_can( 'manage_options' ) ) {
 use Agentic\Audit_Log;
 
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only tab selection.
-$agentic_logs_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'audit';
+$agentic_logs_tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'audit';
 if ( ! in_array( $agentic_logs_tab, array( 'audit', 'conversations', 'security' ), true ) ) {
 	$agentic_logs_tab = 'audit';
 }

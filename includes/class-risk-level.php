@@ -442,9 +442,6 @@ class Risk_Level {
 		// blocked, but everything else (permalinks, discussion, third-party
 		// plugin options, remaining agentic_* keys) is still writable.
 		'db_update_option'                     => self::HIGH,
-		// Rewrites a security control (DISALLOW_FILE_EDIT via an agentic_*
-		// option Agent Builder defines at plugins_loaded).
-		'toggle_file_editing'                  => self::HIGH,
 		// Rewrites a security control (xmlrpc_enabled filter).
 		'toggle_xml_rpc'                       => self::HIGH,
 
@@ -548,8 +545,9 @@ class Risk_Level {
 		'html_to_docx'                         => self::MEDIUM,
 		'merge_pdfs'                           => self::MEDIUM,
 
-		// Writes under ABSPATH. update_robots_txt only prepends Allow rules
-		// for named AI bots (never Disallow) and takes a backup first.
+		// Change what the site serves at /robots.txt and /llms.txt (stored in
+		// options and served virtually; no file is written). update_robots_txt
+		// only adds Allow rules for named AI bots (never Disallow).
 		'generate_llms_txt'                    => self::MEDIUM,
 		'update_robots_txt'                    => self::MEDIUM,
 
@@ -561,10 +559,11 @@ class Risk_Level {
 		// Contained option writes (one dashboard notice; last-12 audit history).
 		'post_admin_notice'                    => self::LOW,
 		'save_audit_result'                    => self::LOW,
-		// Globally injected into every agent. send=false is diagnose-only;
-		// send=true POSTs diagnostics + license key to agentic-plugin.com.
-		// Same band as request_human_help (outbound, not arbitrary addressee).
-		'report_issue'                         => self::LOW,
+		// Globally injected into every agent. send=true POSTs diagnostics +
+		// license key to agentic-plugin.com, so every call pauses for the
+		// admin's in-chat confirmation: nothing leaves the site unless a
+		// person clicks to allow it (WordPress.org Guidelines 7/9).
+		'report_issue'                         => self::MEDIUM,
 		// Form reads that can expose personal data (payloads, upload URLs,
 		// or aggregates built by scanning payloads).
 		'get_native_form_submissions'          => self::LOW,

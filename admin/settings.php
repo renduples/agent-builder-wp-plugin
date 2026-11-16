@@ -173,9 +173,8 @@ if ( isset( $_POST['agentic_save_settings'] ) && check_admin_referer( 'agentic_s
 	// Only save settings for the active tab to avoid overwriting other tabs with defaults.
 	if ( '' === $agentic_reset_section && 'agents' === $agentic_save_tab ) {
 		// Save per-agent overrides (provider, model, mode per agent slug).
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Each field is sanitized individually in the foreach loop below.
 		$agentic_raw_overrides   = isset( $_POST['agent_builder_agent_overrides'] ) && is_array( $_POST['agent_builder_agent_overrides'] )
-			? wp_unslash( $_POST['agent_builder_agent_overrides'] ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			? map_deep( wp_unslash( $_POST['agent_builder_agent_overrides'] ), 'sanitize_text_field' )
 			: array();
 		$agentic_valid_modes     = array( '', 'disabled', 'supervised', 'autonomous' );
 		$agentic_valid_providers = array_merge( array( '' ), \Agentic\Provider_Registry::get_slugs() );
@@ -326,15 +325,14 @@ if ( isset( $_POST['agentic_save_settings'] ) && check_admin_referer( 'agentic_s
 	}
 
 	if ( '' === $agentic_reset_section && 'users' === $agentic_save_tab ) {
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitised per-field inside save_settings()
 		$agentic_roles_raw = isset( $_POST['agentic_user_roles'] ) && is_array( $_POST['agentic_user_roles'] )
-			? wp_unslash( $_POST['agentic_user_roles'] ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			? map_deep( wp_unslash( $_POST['agentic_user_roles'] ), 'sanitize_text_field' )
 			: array();
 		\Agentic\User_Roles::save_settings( $agentic_roles_raw );
 
 		// Per-role usage limits.
 		$agentic_limits_raw = isset( $_POST['agentic_usage_limits'] ) && is_array( $_POST['agentic_usage_limits'] )
-			? wp_unslash( $_POST['agentic_usage_limits'] ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			? map_deep( wp_unslash( $_POST['agentic_usage_limits'] ), 'sanitize_text_field' )
 			: array();
 		\Agentic\Usage_Limits::save_limits( $agentic_limits_raw );
 
@@ -377,9 +375,8 @@ if ( isset( $_POST['agentic_save_settings'] ) && check_admin_referer( 'agentic_s
 	}
 
 	if ( '' === $agentic_reset_section && in_array( $agentic_save_tab, array( 'personas', 'instructions' ), true ) ) {
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitised per-field below
 		$agentic_personas_raw     = isset( $_POST['agent_builder_agent_personas'] ) && is_array( $_POST['agent_builder_agent_personas'] )
-			? wp_unslash( $_POST['agent_builder_agent_personas'] ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			? map_deep( wp_unslash( $_POST['agent_builder_agent_personas'] ), 'sanitize_textarea_field' )
 			: array();
 		$agentic_personas_changed = false;
 		foreach ( $agentic_personas_raw as $agentic_p_slug => $agentic_p_data ) {
@@ -412,61 +409,51 @@ if ( isset( $_POST['agentic_save_settings'] ) && check_admin_referer( 'agentic_s
 				$agentic_personas_changed = true;
 			}
 
-			// Save knowledge file and update abilities.json.
+			// Save knowledge file and update the agent's knowledge_files list.
+			// Abilities_Manifest::persist() rewrites a user agent's
+			// abilities.json, and stores the change as a database override for
+			// a bundled agent (whose files are never modified).
 			$agentic_p_knowledge = sanitize_textarea_field( $agentic_p_data['knowledge'] ?? '' );
-			$agentic_p_kn_dir    = AGENT_BUILDER_KNOWLEDGE_DIR . '/';
+			$agentic_p_kn_dir    = \Agentic\File_Manager::knowledge_dir() . '/';
 			$agentic_p_kn_file   = $agentic_p_kn_dir . $agentic_p_slug . '-knowledge.txt';
 			$agentic_p_kn_rel    = $agentic_p_slug . '-knowledge.txt';
 
-			\Agentic\File_Manager::ensure_protected_dir( $agentic_p_kn_dir, true );
-
-			// Load the agent's abilities.json manifest.
-			$agentic_p_manifest_path = \Agentic\Abilities_Manifest::resolve_path( $agentic_p_slug );
+			// Load the agent's effective abilities manifest.
+			$agentic_p_manifest = \Agentic\Abilities_Manifest::load( $agentic_p_slug );
 
 			if ( ! empty( trim( $agentic_p_knowledge ) ) ) {
 				// Write the knowledge file.
+				\Agentic\File_Manager::ensure_data_dir( 'knowledge' );
 				\Agentic\File_Manager::put_contents( $agentic_p_kn_file, $agentic_p_knowledge );
 
-				// Add to abilities.json if not already present.
-				if ( $agentic_p_manifest_path ) {
-					// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
-					$agentic_p_manifest = json_decode( file_get_contents( $agentic_p_manifest_path ), true );
-					if ( is_array( $agentic_p_manifest ) ) {
-						$agentic_p_kn_files = $agentic_p_manifest['knowledge_files'] ?? array();
-						if ( ! in_array( $agentic_p_kn_rel, $agentic_p_kn_files, true ) ) {
-							$agentic_p_kn_files[]                  = $agentic_p_kn_rel;
-							$agentic_p_manifest['knowledge_files'] = array_values( $agentic_p_kn_files );
-							\Agentic\File_Manager::put_contents( $agentic_p_manifest_path, wp_json_encode( $agentic_p_manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) );
-							\Agentic\Abilities_Manifest::clear_cache( $agentic_p_slug );
-							\Agentic\Abilities_Manifest::save_integrity_hash( $agentic_p_slug );
-						}
+				// Add to the manifest if not already present.
+				if ( is_array( $agentic_p_manifest ) ) {
+					$agentic_p_kn_files = $agentic_p_manifest['knowledge_files'] ?? array();
+					if ( ! in_array( $agentic_p_kn_rel, $agentic_p_kn_files, true ) ) {
+						$agentic_p_kn_files[]                  = $agentic_p_kn_rel;
+						$agentic_p_manifest['knowledge_files'] = array_values( $agentic_p_kn_files );
+						\Agentic\Abilities_Manifest::persist( $agentic_p_slug, $agentic_p_manifest );
 					}
 				}
 			} else {
-				// Knowledge cleared — remove file and abilities.json entry.
+				// Knowledge cleared — remove file and manifest entry.
 				if ( \Agentic\File_Manager::exists( $agentic_p_kn_file ) ) {
 					\Agentic\File_Manager::delete( $agentic_p_kn_file );
 				}
-				if ( $agentic_p_manifest_path ) {
-					// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
-					$agentic_p_manifest = json_decode( file_get_contents( $agentic_p_manifest_path ), true );
-					if ( is_array( $agentic_p_manifest ) && ! empty( $agentic_p_manifest['knowledge_files'] ) ) {
-						$agentic_p_kn_files = array_filter(
-							$agentic_p_manifest['knowledge_files'],
-							function ( $f ) use ( $agentic_p_kn_rel ) {
-								return $f !== $agentic_p_kn_rel;
-							}
-						);
-						if ( count( $agentic_p_kn_files ) !== count( $agentic_p_manifest['knowledge_files'] ) ) {
-							if ( empty( $agentic_p_kn_files ) ) {
-								unset( $agentic_p_manifest['knowledge_files'] );
-							} else {
-								$agentic_p_manifest['knowledge_files'] = array_values( $agentic_p_kn_files );
-							}
-							\Agentic\File_Manager::put_contents( $agentic_p_manifest_path, wp_json_encode( $agentic_p_manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) );
-							\Agentic\Abilities_Manifest::clear_cache( $agentic_p_slug );
-							\Agentic\Abilities_Manifest::save_integrity_hash( $agentic_p_slug );
+				if ( is_array( $agentic_p_manifest ) && ! empty( $agentic_p_manifest['knowledge_files'] ) ) {
+					$agentic_p_kn_files = array_filter(
+						$agentic_p_manifest['knowledge_files'],
+						function ( $f ) use ( $agentic_p_kn_rel ) {
+							return $f !== $agentic_p_kn_rel;
 						}
+					);
+					if ( count( $agentic_p_kn_files ) !== count( $agentic_p_manifest['knowledge_files'] ) ) {
+						if ( empty( $agentic_p_kn_files ) ) {
+							unset( $agentic_p_manifest['knowledge_files'] );
+						} else {
+							$agentic_p_manifest['knowledge_files'] = array_values( $agentic_p_kn_files );
+						}
+						\Agentic\Abilities_Manifest::persist( $agentic_p_slug, $agentic_p_manifest );
 					}
 				}
 			}
@@ -756,13 +743,4 @@ $agentic_rate_limit_anon = get_option( 'agent_builder_rate_limit_anonymous', 10 
 
 </div>
 
-<script>
-document.querySelectorAll('.agentic-reset-defaults').forEach(function(link) {
-	link.addEventListener('click', async function(e) {
-		e.preventDefault();
-		if (!await agenticUI.confirm('Reset these settings to their fresh-install defaults? This cannot be undone.', { danger: true, confirmText: 'Reset' })) return;
-		document.getElementById('agentic-reset-section').value = this.getAttribute('data-section');
-		this.closest('form').querySelector('[name="agentic_save_settings"]').click();
-	});
-});
-</script>
+<?php \Agentic\Inline_Assets::script( 'settings-reset-defaults', array(), '', array( 'agentic-ui' ) ); ?>

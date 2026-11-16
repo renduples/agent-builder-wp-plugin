@@ -3,7 +3,7 @@ Contributors: agenticplugin
 Tags: ai, ai agents, automation, ai assistant, mcp
 Requires at least: 6.4
 Tested up to: 7.1
-Requires PHP: 8.1
+Requires PHP: 8.2
 Stable tag: 4.4.0
 Donate link: https://agentic-plugin.com/donate/
 License: GPL-2.0-or-later
@@ -57,8 +57,8 @@ Save a conversation as a skill, teach a task by demonstrating it once, or write 
 
 ### 🔌 Works with the AI tools you already use
 
-* **MCP server:** connect Grok Bot, Claude Desktop, Cursor or VS Code to your site, behind the same approval gates.
-* **WebMCP:** visitors' AI browser agents can use the low-risk tools you choose.
+* **MCP server (off by default):** turn on your site's own MCP endpoint, then connect Claude Desktop, Cursor, VS Code or another MCP client directly to your site with an Application Password you create in your own WordPress profile, behind the same approval gates. Nothing is routed through a third-party server.
+* **WebMCP (off by default):** visitors' AI browser agents can use the low-risk tools you choose.
 * **WordPress Abilities API (WP 6.9+)** support, and voice dictation in chat on HTTPS sites.
 
 ### 🧪 Tested on real problems, built for developers
@@ -72,7 +72,7 @@ Save a conversation as a skill, teach a task by demonstrating it once, or write 
 = Minimum Requirements =
 
 * WordPress 6.4 or higher (6.9+ recommended for native AI Abilities API support)
-* PHP 8.1 or higher
+* PHP 8.2 or higher
 * MySQL 8.0 or MariaDB 10.6+
 
 = Automatic Installation =
@@ -93,9 +93,9 @@ Save a conversation as a skill, teach a task by demonstrating it once, or write 
 
 = Supported LLM Providers =
 
-* **Cloud Providers:** OpenAI (GPT-4o, o3-mini), Anthropic (Claude Sonnet 5.5, Opus 5.5, Haiku 4.5), Google Gemini, xAI (Grok), DeepSeek, Kimi (Moonshot), Mistral, Cohere, and OpenRouter.
+* **Cloud Providers:** OpenAI, Anthropic (Claude), Google Gemini, xAI (Grok), DeepSeek, Kimi (Moonshot), Mistral, Cohere and Meta Llama API.
 * **Local & Private:** Ollama (default: `http://localhost:11434`) or any custom OpenAI-compatible endpoint.
-* **Managed Credits:** Optional Agentic AI service with daily free credits.
+* **Hosted option:** the optional Agentic AI service with daily free credits (see External services).
 
 == Frequently Asked Questions ==
 
@@ -131,15 +131,15 @@ No. The plugin includes a **Basic interface mode** designed for non-technical si
 WebMCP (Web-based Model Context Protocol) lets your visitors' own AI browser agents interact with your site safely. For example, if a visitor has Claude in their browser, their Claude can search your content, browse your WooCommerce store, and add items to their cart—all protected by the same risk gates and per-visitor scoping that guard your backend. It's agent-to-agent communication, not user-to-user.
 
 = What is MCP? =
-MCP (Model Context Protocol) is an open standard that lets external AI clients like Grok Bot, Claude Desktop, Cursor, and VS Code connect directly to your WordPress site as a tool provider. You create a secure MCP credential in Settings → MCP, and external clients can then access safe tools on your site under your approval gate, with full audit logging.
+MCP (Model Context Protocol) is an open standard that lets AI clients such as Claude Desktop, Cursor and VS Code use your WordPress site as a tool provider. Your site's MCP endpoint is off by default. An administrator turns it on per agent in Settings → MCP, then connects the AI app with a WordPress Application Password they create in their own user profile (the plugin never creates one). The client connects straight to your site, acts with that user's permissions, can use only the tools you allow, never gets high-risk tools, and actions that need approval still wait for you, with full audit logging. There is no relay or intermediary server.
 
 = Is Agent Builder free? =
-Yes. The free core plugin includes all 12 bundled agents, the complete tools/skills hub, the Approvals queue, the local OKF Knowledge wiki, multi-provider BYOK support, and cloud AI image/video generation (via the optional Agentic AI connection, which includes daily free credits — no purchase required). Advanced hosted vector embeddings and semantic search across large document sets are available via optional Agent Builder Pro add-ons.
+Yes. The free core plugin includes all 12 bundled agents, the complete tools/skills hub, the Approvals queue, the local OKF Knowledge wiki, multi-provider BYOK support, and cloud AI image/video generation (via the optional Agentic AI connection, which includes daily free credits — no purchase required).
 
 PDF and Word document generation are not bundled in this WordPress.org package (license and file-size reasons); spreadsheet creation, editing, and analysis are. The PDF/Word tools still appear in the Tools list so agents can use them if you're on a build that includes those libraries — Tools Hub marks them "Unavailable on this install" otherwise.
 
 = What modes are there? =
-**Basic Mode:** Simplified interface with guided workflows, fewer options, and one-click safety controls. Best for site owners who want to use agents without configuration. **Advanced Mode:** Full developer console showing tool manifests, REST API docs, risk audits, MCP credentials, and technical audit logs. Switch anytime from Settings → Interface.
+**Basic Mode:** Simplified interface with guided workflows, fewer options, and one-click safety controls. Best for site owners who want to use agents without configuration. **Advanced Mode:** Full developer console showing tool manifests, REST API docs, risk audits, MCP settings, and technical audit logs. Switch anytime from Settings → Interface.
 
 = Can I run agents on a schedule? =
 Yes. Use the Routines screen (Agent Builder → Routines, next to Tasks) to run any agent automatically. A routine can run on a repeating schedule — hourly, twice daily, daily, or weekly — or trigger from a WordPress event such as a post being published, a comment submitted, a new user registered, a file uploaded, a new WooCommerce order, or a plugin or theme change. Each routine can be paused and resumed, test-run before it goes live, and keeps a history of its last 20 runs, each linked back to the Tasks screen.
@@ -155,7 +155,7 @@ A task is a job you hand to an agent to run in the background. From the Tasks sc
 Yes — a daily activity digest that summarizes what your agents did. It is sent only to site administrators, uses WordPress's own mail function (`wp_mail`, no external email service), and is on by default. You can switch it to instant run notifications or turn email off entirely from Settings → Security, and each administrator can opt out of the digest individually.
 
 = Where is my data sent? =
-When using cloud LLM providers, conversation context and tool parameters are sent directly to your chosen provider via their official API (see External Services below). If you use Ollama or another local endpoint, AI requests go only to that endpoint (by default on your own server), not to a cloud provider. Optional services listed under External Services are used only if you turn them on.
+When using cloud LLM providers, conversation context and tool parameters are sent directly to your chosen provider via their official API (see External services below). If you use Ollama or another local endpoint, AI requests go only to that endpoint (by default on your own server), not to a cloud provider. The plugin has no telemetry or usage tracking. Optional services listed under External services are used only if you turn them on or click to use them.
 
 = What is the WordPress Abilities API integration? =
 On WordPress 6.9+, Agent Builder provides bidirectional integration: (1) **Outbound:** Registers agent tools as abilities under `agent-builder/` and `wp-extended/` namespaces for external MCP discovery. (2) **Inbound:** Automatically imports abilities exposed by other WordPress plugins so your agents can use them as tools, all protected by the same risk gate.
@@ -164,10 +164,13 @@ On WordPress 6.9+, Agent Builder provides bidirectional integration: (1) **Outbo
 **Tools:** Single, permission-controlled actions an agent can execute (e.g., `create_draft_post`, `get_site_health`). **Skills:** Pre-packaged instruction sets and tool workflows following the open `agentskills.io` standard that teach agents multi-step capabilities without writing code.
 
 = What happens to my data if I delete the plugin? =
-Uninstall keeps your data unless you check “Delete all plugin data” on the deactivation dialog. If you do choose to delete, conversation history, options, custom tables, the agents and skills you created or imported, automatic backups (wp-content/agentic-backups) and knowledge files (wp-content/agentic-knowledge) are all removed. Agent folders you built yourself in wp-content/agentic-agents are kept.
+Uninstall keeps your data unless you check “Delete all plugin data” on the deactivation dialog. If you do choose to delete, conversation history, options, custom tables, the agents and skills you created or imported, and the plugin's data folder in uploads (wp-content/uploads/siteloom: the agent folders you built, automatic backups, knowledge files and generated documents) are all removed.
+
+= Does the plugin write files outside the uploads folder? =
+No. Everything it stores on disk lives in wp-content/uploads/siteloom. The AI Radar agent can add AI-crawler rules to robots.txt and publish an llms.txt, but neither is written as a file: the rules are added to the robots.txt WordPress generates, and llms.txt is served by the plugin at /llms.txt. If your site already has a physical robots.txt or llms.txt, the plugin leaves it alone and shows you the exact text to add yourself.
 
 = Is this plugin translated into other languages? =
-The interface text is written in English, and the `.pot` translation template is included so you (or [translate.wordpress.org](https://translate.wordpress.org/)) can generate your own `.mo`/`.json` translation files for your site's locale. Pre-built translations for 11 languages ship with Agent Builder Pro.
+The interface text is written in English, and the `.pot` translation template is included so you (or [translate.wordpress.org](https://translate.wordpress.org/)) can generate your own `.mo`/`.json` translation files for your site's locale.
 
 = Where is the source code for the bundled JavaScript? =
 The files in `build/` are compiled with @wordpress/scripts from the unminified sources in this plugin's `src/` directory. The full development repository, including the build tooling and test suite, is at https://github.com/renduples/agent-builder-wp-plugin.
@@ -187,161 +190,87 @@ The files in `build/` are compiled with @wordpress/scripts from the unminified s
 11. Tools — Every tool an agent can use, with its risk level and an on/off switch.
 12. Providers — Bring your own AI provider, such as OpenAI, Anthropic, Google Gemini, xAI, DeepSeek or Mistral, or run a local model with Ollama.
 
-== External Services ==
+== External services ==
 
-This plugin connects to external AI APIs to process prompts and tool executions — no request to any AI provider is made until you configure or explicitly activate it. Optional catalog refresh from Agentic is off by default and only runs after you enable it in Settings → Security. See "Agentic Account & Platform Services" below for every Agentic endpoint, when it is used, and what is sent.
+Agent Builder works with no external service until you set one up. It contains no telemetry, usage tracking or analytics of any kind, and it never contacts a server just because it was activated or because a page was viewed. Every service below is used only after an administrator chooses it (picks that AI provider, enters that key, turns that option on) or as the direct result of an administrator's click or an agent tool the administrator runs. Each entry says what is sent and when.
 
-If you create approval rules, each tool call an agent proposes is also checked against them with your configured AI provider: a short description of the proposed action (the tool name, its arguments with passwords, keys and tokens removed, and your rule text) is sent to that provider to decide whether a rule applies. Nothing is sent for this when you have no approval rules.
+= AI model providers (the one you choose) =
 
-= OpenAI =
-* **Endpoint:** `https://api.openai.com/v1/chat/completions`
-* **When used:** When OpenAI is selected as your AI provider.
-* **Data sent:** Chat prompts, system instructions, tool definitions, and execution payloads.
-* **Terms of Service:** [https://openai.com/terms](https://openai.com/terms)
-* **Privacy Policy:** [https://openai.com/privacy](https://openai.com/privacy)
+Agent Builder sends AI requests only to the provider(s) an administrator configures under Agent Builder → Providers. No provider is contacted until you enter its API key (or, for Ollama, its URL).
 
-= Anthropic =
-* **Endpoint:** `https://api.anthropic.com/v1/messages`
-* **When used:** When Anthropic Claude is selected as your AI provider.
-* **Data sent:** Chat prompts, system instructions, tool definitions, and execution payloads.
-* **Terms of Service:** [https://www.anthropic.com/terms](https://www.anthropic.com/terms)
-* **Privacy Policy:** [https://www.anthropic.com/privacy](https://www.anthropic.com/privacy)
+* **When used:** when someone chats with an agent, an agent runs a task or a routine you scheduled, an approval rule you wrote is checked against a proposed action, or you click "Test connection" / "Refresh models" for that provider. Once a provider has a key, a daily WP-Cron job also asks that same provider for its current model list (Ollama and Agentic AI only, unless you enable the curated catalog under "Agentic AI" below).
+* **Data sent:** the conversation (messages typed by the user and the agent's replies), the agent's system instructions, the definitions of the tools the agent may use, the results of tools the agent ran (which can include content from your site that the agent read, such as post text), and any image the user attached. For approval rules: the proposed tool name, its arguments with passwords, keys and tokens removed, and your rule text. Your API key is sent to that provider only, to authenticate. Model-list requests send only your API key.
 
-= xAI =
-* **Endpoint:** `https://api.x.ai/v1/chat/completions`
-* **When used:** When xAI (Grok) is selected as your AI provider.
-* **Data sent:** Chat prompts, system instructions, tool definitions, and execution payloads.
-* **Terms of Service:** [https://x.ai/legal/terms-of-service](https://x.ai/legal/terms-of-service)
-* **Privacy Policy:** [https://x.ai/legal/privacy-policy](https://x.ai/legal/privacy-policy)
+Providers and their terms:
 
-= Google Gemini =
-* **Endpoint:** `https://generativelanguage.googleapis.com/v1beta/models/`
-* **When used:** When Google Gemini is selected as your AI provider.
-* **Data sent:** Chat prompts, system instructions, tool definitions, and execution payloads.
-* **Terms of Service:** [https://ai.google.dev/terms](https://ai.google.dev/terms)
-* **Privacy Policy:** [https://policies.google.com/privacy](https://policies.google.com/privacy)
+* **OpenAI** — `api.openai.com`. [Terms of use](https://openai.com/policies/terms-of-use/), [Privacy policy](https://openai.com/policies/privacy-policy/)
+* **Anthropic (Claude)** — `api.anthropic.com`. [Commercial terms](https://www.anthropic.com/legal/commercial-terms), [Privacy policy](https://www.anthropic.com/legal/privacy)
+* **Google Gemini** — `generativelanguage.googleapis.com`. [Gemini API terms](https://ai.google.dev/gemini-api/terms), [Privacy policy](https://policies.google.com/privacy)
+* **xAI (Grok)** — `api.x.ai`. [Terms of service](https://x.ai/legal/terms-of-service), [Privacy policy](https://x.ai/legal/privacy-policy)
+* **Mistral AI** — `api.mistral.ai`. [Terms](https://legal.mistral.ai/terms), [Privacy policy](https://legal.mistral.ai/terms/privacy-policy)
+* **Meta Llama API** — `api.llama.com` (chat and model list). [Llama API terms of service](https://llama.developer.meta.com/legal/terms-of-service), [Meta privacy policy](https://www.facebook.com/privacy/policy/)
+* **Cohere** — `api.cohere.com`. [Terms of use](https://cohere.com/terms-of-use), [Privacy policy](https://cohere.com/privacy)
+* **DeepSeek** — `api.deepseek.com`. [Terms of use](https://cdn.deepseek.com/policies/en-US/deepseek-terms-of-use.html), [Privacy policy](https://cdn.deepseek.com/policies/en-US/deepseek-privacy-policy.html)
+* **Kimi (Moonshot AI)** — `api.moonshot.ai`. [Terms of service](https://platform.moonshot.ai/docs/agreement/modeluse), [Privacy policy](https://platform.moonshot.ai/docs/agreement/userprivacy)
+* **Agentic AI** (our own hosted option) — see "Agentic AI" below.
+* **Ollama** — the URL you enter (default `http://localhost:11434`, your own server). Requests go only there.
+* **Custom provider** — any OpenAI-compatible endpoint URL an administrator adds under Providers. Requests go only to that URL, under that service's own terms.
 
-= Mistral AI =
-* **Endpoint:** `https://api.mistral.ai/v1/chat/completions`
-* **When used:** When Mistral is selected as your AI provider.
-* **Data sent:** Chat prompts, system instructions, tool definitions, and execution payloads.
-* **Terms of Service:** [https://mistral.ai/terms/](https://mistral.ai/terms/)
-* **Privacy Policy:** [https://mistral.ai/terms/#privacy-policy](https://mistral.ai/terms/#privacy-policy)
+= Agentic AI (agentic-plugin.com) =
 
-= Meta Llama =
-* **Endpoint:** `https://api.llama.com/v1/chat/completions`
-* **When used:** When Meta Llama API endpoints are configured.
-* **Data sent:** Chat prompts, system instructions, tool definitions, and execution payloads.
-* **Terms of Service:** [https://llama.meta.com/llama3/license/](https://llama.meta.com/llama3/license/)
-* **Privacy Policy:** [https://www.meta.com/privacy/](https://www.meta.com/privacy/)
+Agentic AI is the optional hosted AI service run by the developers of this plugin. You do not need it: the plugin works fully with any provider above. [Terms of service](https://agentic-plugin.com/terms/), [Privacy policy](https://agentic-plugin.com/privacy-policy/).
 
-= Cohere =
-* **Endpoint:** `https://api.cohere.com/v2/chat`
-* **When used:** When Cohere is selected as your AI provider.
-* **Data sent:** Chat prompts, system instructions, tool definitions, and execution payloads.
-* **Terms of Service:** [https://cohere.com/terms-of-use](https://cohere.com/terms-of-use)
-* **Privacy Policy:** [https://cohere.com/privacy](https://cohere.com/privacy)
+* **Sign-up** (`agentic-plugin.com/wp-json/agentic/v1/register`): only when an administrator fills in the "Connect to Agentic AI" form, ticks the Terms and Privacy boxes and submits it. Sends the email address entered, site URL, site name, plugin version, the chosen agent mode and model settings, and the consent confirmation. Opening that page also loads the public model price list (`/wp-json/agentic/v1/model-pricing`) into your browser; nothing about your site is sent with that request.
+* **Hosted AI** (`chat.agentic-plugin.com`): only when Agentic AI is the selected provider. Sends the same chat data described under "AI model providers", plus your Agentic API key. Also a model-list request and a `/health` check when you test the connection.
+* **Image, speech and video** (`imagegen.agentic-plugin.com`, `tts.agentic-plugin.com`, `videogen.agentic-plugin.com`, downloads from `videos.agentic-plugin.com`): only with a connected Agentic AI account, when an agent runs an image, text-to-speech or video tool, or a user clicks the speaker button in chat. Sends your Agentic API key, the prompt or text, and any image or video the tool works on. Royalty-free music search (`search_free_music` tool) sends the search words to `videogen.agentic-plugin.com`, which looks them up in the [Jamendo](https://www.jamendo.com/) catalog ([Jamendo terms](https://www.jamendo.com/legal/terms-of-use), [Jamendo privacy](https://www.jamendo.com/legal/privacy)).
+* **Model catalog and prices** (`/wp-json/agentic/v1/model-pricing`): when an administrator clicks "Get Latest Pricing" (Costs) or "Refresh models", and daily only if an administrator turns on "Refresh model catalog from Agentic" in Settings → Security (off by default). A plain GET; no site data is sent.
+* **Agent catalog for Site Brief** (`/wp-json/agentic-marketplace/v1/agents`): only when that same setting is on. A plain GET; matching happens on your site and nothing about your site is sent.
+* **Skill and agent search** (`/wp-json/agentic/v1/skills`, `/agents`, `/search-capabilities`): when an administrator clicks "Show recommended skills" on the Skills screen, or an agent runs the `browse_community_skills`, `agents_available` or `search_capabilities` tool. Sends only the search words or skill name.
+* **Problem reports** (`/wp-json/agentic/v1/report-issue`): only when an administrator approves the `report_issue` tool in chat with "send" (each call needs the administrator's click). Sends site URL, recent Agent Builder error messages, the active provider name, plugin/WordPress/PHP versions, your description of the problem, and the Agentic license key if one exists. Never your provider API keys.
+* **Deactivation feedback** (`/wp-json/agentic-license/v1/cancellation-feedback`): the survey step appears only on sites that accepted the Agentic AI terms at sign-up, and it is optional. Nothing is sent unless the administrator picks a reason and clicks "Submit & deactivate" ("Skip & deactivate" sends nothing). Sends the site URL, the chosen reason, any comment typed (up to 500 characters) and the plugin version.
+* **Deregister on uninstall** (`/wp-json/agentic/v1/deregister`): only if an Agentic API key is stored and the `agent_builder_allow_deregister_on_uninstall` option has been set to `1` (off by default; there is no screen that sets it). Sends the API key and site URL when the plugin is deleted.
 
-= Kimi (Moonshot AI) =
-* **Endpoint:** `https://api.moonshot.ai/v1/chat/completions`
-* **When used:** When Kimi is selected as your AI provider.
-* **Data sent:** Chat prompts, system instructions, tool definitions, and execution payloads.
-* **Terms of Service:** [https://platform.moonshot.ai/docs/agreement/modeluse](https://platform.moonshot.ai/docs/agreement/modeluse)
-* **Privacy Policy:** [https://platform.moonshot.ai/docs/agreement/privacy](https://platform.moonshot.ai/docs/agreement/privacy)
+= WordPress.org APIs =
 
-= DeepSeek =
-* **Endpoint:** `https://api.deepseek.com/chat/completions`
-* **When used:** When DeepSeek is selected as your AI provider.
-* **Data sent:** Chat prompts, system instructions, tool definitions, and execution payloads.
-* **Terms of Service:** [https://cdn.deepseek.com/policies/en-US/deepseek-terms-of-use.html](https://cdn.deepseek.com/policies/en-US/deepseek-terms-of-use.html)
-* **Privacy Policy:** [https://cdn.deepseek.com/policies/en-US/deepseek-privacy-policy.html](https://cdn.deepseek.com/policies/en-US/deepseek-privacy-policy.html)
+`api.wordpress.org`, the same API WordPress core uses for updates. [WordPress.org privacy policy](https://wordpress.org/about/privacy/).
 
-= OpenRouter =
-* **Endpoint:** `https://openrouter.ai/api/v1/chat/completions`
-* **When used:** When OpenRouter is selected as your AI provider.
-* **Data sent:** Chat prompts, system instructions, tool definitions, and execution payloads.
-* **Terms of Service:** [https://openrouter.ai/terms](https://openrouter.ai/terms)
-* **Privacy Policy:** [https://openrouter.ai/privacy](https://openrouter.ai/privacy)
+* **When used:** only when an agent runs one of these tools: `verify_core_integrity` (core file checksums), `get_abandoned_plugins`, `get_plugin_maintenance_status` and `get_plugin_changelog` (the `plugin_information` endpoint), or `search_wp_themes` (the theme directory, via WordPress's own `themes_api()`).
+* **Data sent:** your WordPress version and locale (checksums), the plugin slugs being checked, or the theme search words.
 
-= Ollama (Local) =
-* **Endpoint:** User-configured local URL (default: `http://localhost:11434`)
-* **When used:** When Ollama is selected as your AI provider.
-* **Data sent:** Prompts, conversation context and tool data go only to the Ollama URL you configure (by default on the same server), not to a cloud AI provider.
+= GitHub (skills repositories and the github_api tool) =
 
-= WordPress.org Plugin & Core Directory (Opt in) =
-* **Endpoint:** `https://api.wordpress.org/`
-* **When used:** Only when specific site-health tools are used — checking core file integrity against official checksums, or checking a plugin's abandonment/maintenance status or changelog. The same official API WordPress core itself uses for plugin/theme update checks.
-* **Data sent:** WordPress version and locale, and the relevant plugin slug(s). No personal data.
+[GitHub terms of service](https://docs.github.com/site-policy/github-terms/github-terms-of-service), [GitHub privacy statement](https://docs.github.com/site-policy/privacy-policies/github-privacy-statement).
 
-= Agentic AI Services (Opt in) =
-* **Endpoints:**
-  * Chat Service: `https://chat.agentic-plugin.com`
-  * Image Generation: `https://imagegen.agentic-plugin.com`
-  * Text-to-Speech: `https://tts.agentic-plugin.com`
-  * Video Generation: `https://videogen.agentic-plugin.com`
-  * Video Delivery (retrieving generated video files): `https://videos.agentic-plugin.com`
-  * Music Search (Jamendo): the Video Generation endpoint above proxies royalty-free background-music searches to [Jamendo](https://www.jamendo.com/) — your search terms are relayed to Jamendo's catalog, not sent to Jamendo directly from your site.
-* **When used:** Only when using Agentic managed AI credits or Pro cloud features.
-* **Data sent:** Site URL, license key, prompt text, and task-specific media/document payloads.
-* **Terms of Service:** [https://agentic-plugin.com/terms-of-service/](https://agentic-plugin.com/terms-of-service/) | [Jamendo Terms](https://www.jamendo.com/legal/terms-of-use) | [Jamendo Privacy](https://www.jamendo.com/legal/privacy)
-* **Privacy Policy:** [https://agentic-plugin.com/privacy-policy/](https://agentic-plugin.com/privacy-policy/)
+* **Skill repositories:** when an administrator opens Skills → Browse Community, the browser reads the public file list of the [WordPress agent-skills repository](https://github.com/WordPress/agent-skills) (and, in Advanced mode, the [Anthropic skills repository](https://github.com/anthropics/skills) when you pick that tab) from `api.github.com` (`/repos/<owner>/<repo>/git/trees/<branch>`), then downloads each skill's `SKILL.md` from `raw.githubusercontent.com`. The `browse_community_skills` agent tool does the same for the WordPress repository. These are anonymous GET requests; nothing about your site is sent. An imported skill is plain text stored in the database, never code.
+* **github_api tool:** only for an agent you give this tool to, after you store your own personal access token (`wp option update agent_builder_github_token "<token>"`). Sends your token and whatever request the agent makes to `api.github.com`; every call needs your approval (High risk).
 
-= Agentic Platform Services (Opt in) =
-* **Endpoints:**
-  * `https://agentic-plugin.com/wp-json/agentic/v1/model-pricing` — refreshes the LLM model/pricing catalog. Runs only after an administrator enables “Refresh model catalog from Agentic” in Settings → Security (off by default). Can also be triggered manually from the Costs page's "Get Latest Pricing" button. A plain GET request; no personal data is sent, and the response is cached locally.
-  * `https://agentic-plugin.com/wp-json/agentic-marketplace/v1/agents` — fetches the marketplace agent catalog Site Brief uses to recommend the best-fit agent for a finding. Runs only during a Site Brief scan, and only after an administrator enables the same “Refresh model catalog from Agentic” setting in Settings → Security (off by default); when disabled, Site Brief only recommends already-installed/bundled agents. A plain GET request; nothing about your site or its findings is sent, matching happens entirely locally, and the response is cached locally.
-  * `https://agentic-plugin.com/wp-json/agentic/v1/register` — only when an administrator submits the plugin's sign-up form to obtain a free Agentic API key. Sends the administrator's email address, site URL, site name, plugin version, plan tier, and confirmation that the administrator accepted the Terms of Service and Privacy Policy (with the Terms version date).
-  * `https://agentic-plugin.com/wp-json/agentic-license/v1/cancellation-feedback` — only when a licensed, previously-consenting administrator submits a reason on the plugin-deactivation survey. Sends the license key, site URL, the selected reason, an optional free-text comment, and plugin version.
-  * `https://agentic-plugin.com/wp-json/agentic/v1/agents/activate-token` — only when installing an uploaded community or purchased agent package that includes a license file. Sends the license token, agent slug, and site URL.
-  * `https://agentic-plugin.com/wp-json/agentic/v1/report-issue` — only when an administrator explicitly confirms sending a diagnostic report via the in-chat "report an issue" tool (a preview is always shown first, and a second explicit confirmation is required before anything is sent). While composing the preview, the tool also makes a lightweight `GET /health` connectivity check against the Chat Service endpoint above to include in the report; this check itself sends no personal data. Sends site URL, recent error-log excerpts, the active AI provider, connectivity status, plugin/WordPress/PHP version information, and the administrator's own description of the problem.
-  * `https://agentic-plugin.com/wp-json/agentic/v1/deregister` — only when the plugin is uninstalled, and only if an Agentic API key is configured and an administrator has explicitly enabled "Deregister on uninstall". Sends the API key and site URL.
-* **Terms of Service:** [https://agentic-plugin.com/terms-of-service/](https://agentic-plugin.com/terms-of-service/)
-* **Privacy Policy:** [https://agentic-plugin.com/privacy-policy/](https://agentic-plugin.com/privacy-policy/)
+= Google PageSpeed Insights =
 
-= Cloudflare Turnstile (Opt in) =
-* **Endpoint:** `https://challenges.cloudflare.com/turnstile/v0/siteverify`
-* **When used:** Only when an administrator has configured a Cloudflare Turnstile site key and secret key in Settings → Security — for anonymous chat-widget bot protection, and optionally for spam protection on native forms.
-* **Data sent:** Your configured Turnstile secret key, the visitor's challenge-response token, and the visitor's IP address.
-* **Terms of Service:** [https://www.cloudflare.com/website-terms/](https://www.cloudflare.com/website-terms/)
-* **Privacy Policy:** [https://www.cloudflare.com/privacypolicy/](https://www.cloudflare.com/privacypolicy/)
+`www.googleapis.com/pagespeedonline/v5/runPagespeed`. [Google APIs terms](https://developers.google.com/terms), [Privacy policy](https://policies.google.com/privacy).
 
-= Community Agent Skills Repositories (Opt in) =
-* **Endpoints:**
-  * WordPress.org Skills: `https://api.github.com/repos/WordPress/agent-skills/` and `https://raw.githubusercontent.com/WordPress/agent-skills/`
-  * Anthropic Skills: `https://api.github.com/repos/anthropics/skills/` and `https://raw.githubusercontent.com/anthropics/skills/`
-  * Recommended Skills: `https://agentic-plugin.com/wp-json/agentic/v1/skills`
-  * ClawHub: `https://wry-manatee-359.convex.site/api/v1/`
-* **When used:** When browsing or importing community skills from the Skills screen.
-* **Data sent:** Unauthenticated GET requests for public skills; search queries when using ClawHub.
-* **Imported content:** A skill is plain text (YAML frontmatter + Markdown) stored in this plugin's own database — never a program file, and never written to disk, executed, or included as code. Manually uploading a skill file only accepts `.md`, `.markdown`, or `.txt`; anything else, including `.php`, is rejected before the file is even read.
-* **Terms of Service:** [GitHub Terms](https://docs.github.com/site-policy/github-terms/github-terms-of-service) | [GitHub Privacy](https://docs.github.com/site-policy/privacy-policies/github-privacy-statement) | [Convex Terms](https://www.convex.dev/legal/tos) | [Convex Privacy](https://www.convex.dev/legal/privacy) | [OpenClaw Docs](https://docs.openclaw.ai/)
+* **When used:** only when an agent runs the Core Web Vitals check and you have entered your own PageSpeed Insights API key in Settings → APIs.
+* **Data sent:** the page URL being tested (your home page by default), mobile/desktop, and your API key.
 
-= GitHub API (Opt in) =
-* **Endpoint:** `https://api.github.com` — any endpoint under it (repos, issues, pull requests, commits, releases, actions, and more), any of GET/POST/PATCH/PUT/DELETE.
-* **When used:** Only if an agent is given the `github_api` tool and you've set your own GitHub personal access token via WP-CLI (`wp option update agentic_github_token "<token>"`) — there is no settings-screen field for this yet. No bundled agent has this tool by default; it's available for a custom agent you build yourself. Always requires your approval before running (High risk).
-* **Data sent:** Whatever the request needs — your personal access token for authentication, plus any endpoint path, query parameters, or request body the agent sends. Scope of access is whatever your token allows.
-* **Terms of Service:** [GitHub Terms](https://docs.github.com/site-policy/github-terms/github-terms-of-service)
-* **Privacy Policy:** [GitHub Privacy](https://docs.github.com/site-policy/privacy-policies/github-privacy-statement)
+= Cloudflare Turnstile =
 
-= Google PageSpeed Insights (Opt in) =
-* **Endpoint:** `https://www.googleapis.com/pagespeedonline/v5/runPagespeed`
-* **When used:** Only when the Core Web Vitals check tool is used, and only if you've added your own free Google PageSpeed Insights API key in Settings → APIs. This plugin does not ship or use a shared API key — without your own key, this tool returns setup instructions instead of making a request.
-* **Data sent:** The URL being tested (defaults to your homepage), device strategy (mobile/desktop), and your Google API key.
-* **Terms of Service:** [https://developers.google.com/terms](https://developers.google.com/terms)
-* **Privacy Policy:** [https://policies.google.com/privacy](https://policies.google.com/privacy)
+`challenges.cloudflare.com`. [Cloudflare website terms](https://www.cloudflare.com/website-terms/), [Turnstile privacy addendum](https://www.cloudflare.com/turnstile-privacy-policy/), [Cloudflare privacy policy](https://www.cloudflare.com/privacypolicy/).
 
-= Site Passport Directory (Opt in) =
-* **Endpoint:** `https://sitepassport.org/api/submit.php`
-* **When used:** Only when an administrator explicitly clicks "Submit to Directory" on the Agent-Ready page. Never automatic, never triggered by a cron job, and never sent as part of computing your score.
-* **Data sent:** Your site's URL, the URL of this plugin's own `/.well-known/webmcp.json` manifest, and a minimal score summary (overall score, letter grade, and the date it was last checked — not the full per-check breakdown).
-* **Terms of Service:** [https://sitepassport.org/terms](https://sitepassport.org/terms)
-* **Privacy Policy:** [https://sitepassport.org/privacy](https://sitepassport.org/privacy)
+* **When used:** only after an administrator enters a Turnstile site key and secret key in Settings → Security. The visitor's browser then loads Cloudflare's challenge script on the chat widget (and on native forms that use it), and your server verifies the result.
+* **Data sent:** the challenge token, your secret key and the visitor's IP address (server-side check); Cloudflare's script collects the browser signals described in its privacy addendum.
 
-= Your Own Configured Form Webhook (Opt in) =
-* **Endpoint:** A URL you configure yourself, per form — not a fixed third-party service. Behaves like the "Ollama (Local)" entry above: this plugin does not send data anywhere except where you've explicitly pointed it.
-* **When used:** Only for a native form that has a webhook URL set in its own form settings, and only when a visitor submits that specific form.
-* **Data sent:** The submitted form's field values, plus the form ID, title, and submission timestamp — sent only to the URL you configured, with an optional HMAC-SHA256 signature header if you also set a shared secret.
+= Site Passport directory =
 
+`sitepassport.org/api/submit.php`. [Terms](https://sitepassport.org/terms), [Privacy policy](https://sitepassport.org/privacy).
+
+* **When used:** only when an administrator clicks "Submit to Directory" on the Agent-Ready page. Never automatic; Agent-Ready scans themselves run entirely on your site.
+* **Data sent:** your site's home URL. Site Passport then checks your public pages itself.
+
+= Addresses you supply =
+
+* **Form webhooks:** a native form with a webhook URL set sends each submission's field values, form ID, title and time to that URL (with an HMAC signature if you set a secret).
+* **URLs you ask an agent to read:** tools such as `fetch_url`, `fetch_rendered_page`, `simulate_ai_crawler`, `replace_media_file` and `save_video_to_media`, and images attached to a chat by URL, request only the address given. Site-audit tools (SEO, crawl, robots.txt, llms.txt and similar) request pages on your own site.
+
+The Privacy-compliance tool looks for strings such as `connect.facebook.net` in your own pages' HTML to tell you whether a tracking pixel is installed; it does not contact Facebook.
 
 == Changelog ==
 
@@ -375,7 +304,7 @@ If you create approval rules, each tool call an agent proposes is also checked a
 * Accuracy: the readme now explains what backups cover (the last 3 snapshots per database table, only the affected rows for large tables) and that they do not replace a full site backup or a staging site. The Ollama answer now says AI requests stay on your endpoint instead of "100% of your data".
 
 = 4.0.2 - 2026-09-27 =
-* Maintenance: version alignment across the WordPress.org, self-hosted, and Pro editions. Ensures clean compatibility with Agent Builder Pro 4.0.2. No functional changes to this edition.
+* Maintenance: version alignment. No functional changes to this edition.
 
 = 4.0.1 - 2026-09-26 =
 Hardened activation: heavy setup now runs deferred and in the background, and a database/hosting hiccup during setup can no longer take a site offline. New SAFE MODE constant.
@@ -448,4 +377,4 @@ WordPress.org Plugin Check compliance, guarded Abilities API adapter, multi-agen
 
 == Privacy ==
 
-See **External Services** for what is sent when you enable a cloud LLM or optional Agentic API. For Agentic product services, also see the [Agentic Privacy Policy](https://agentic-plugin.com/privacy-policy/) and [Terms of Service](https://agentic-plugin.com/terms-of-service/).
+Agent Builder has no telemetry, analytics or usage tracking. See **External services** for exactly what is sent, and when, to the AI provider you choose and to any optional service you turn on. For the optional Agentic AI service, see the [Agentic AI privacy policy](https://agentic-plugin.com/privacy-policy/) and [terms of service](https://agentic-plugin.com/terms/).

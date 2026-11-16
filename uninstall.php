@@ -155,6 +155,34 @@ $wpdb->query(
 
 /*
  * -------------------------------------------------------------------------
+ * 4b. Revoke legacy "Agent Builder Relay" Application Passwords.
+ *
+ * Older versions created Application Passwords with this name (for the
+ * since-removed Agentic Relay and the old Settings > MCP "Create" button).
+ * The legacy relay options themselves (agentic_active_connectors,
+ * agentic_mcp_*, agent_builder_mcp_*) are covered by the option wildcards
+ * above. Passwords the user created themselves under any other name are
+ * left alone.
+ * -------------------------------------------------------------------------
+ */
+if ( class_exists( 'WP_Application_Passwords' ) ) {
+	$agentic_app_pass_users = get_users(
+		array(
+			'meta_key' => WP_Application_Passwords::USERMETA_KEY_APPLICATION_PASSWORDS, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- One-off uninstall cleanup.
+			'fields'   => 'ID',
+		)
+	);
+	foreach ( $agentic_app_pass_users as $agentic_app_pass_user_id ) {
+		foreach ( WP_Application_Passwords::get_user_application_passwords( (int) $agentic_app_pass_user_id ) as $agentic_app_pass ) {
+			if ( 'Agent Builder Relay' === ( $agentic_app_pass['name'] ?? '' ) ) {
+				WP_Application_Passwords::delete_application_password( (int) $agentic_app_pass_user_id, $agentic_app_pass['uuid'] );
+			}
+		}
+	}
+}
+
+/*
+ * -------------------------------------------------------------------------
  * 5. Clear scheduled cron events.
  * -------------------------------------------------------------------------
  */
@@ -171,28 +199,12 @@ if ( is_array( $agentic_cron_events ) ) {
 
 /*
  * -------------------------------------------------------------------------
- * 6. Remove the user-agents directory when it holds only the guard files
- *    the plugin created itself. Agents a user built or imported are never
- *    deleted here.
+ * 6. Remove the plugin's data folders: its data root in uploads (user
+ *    agents, knowledge files, automatic pre-change backups — copies of site
+ *    content and database rows — and generated documents), plus any
+ *    pre-4.5 wp-content/agentic-* folder a storage migration left behind.
  * -------------------------------------------------------------------------
  */
-$agentic_agents_dir = WP_CONTENT_DIR . '/agentic-agents';
-if ( is_dir( $agentic_agents_dir ) ) {
-	$agentic_entries = array_diff( (array) scandir( $agentic_agents_dir ), array( '.', '..', 'index.php', '.htaccess', 'web.config' ) );
-	if ( empty( $agentic_entries ) ) {
-		require_once ABSPATH . 'wp-admin/includes/file.php';
-		if ( WP_Filesystem() ) {
-			global $wp_filesystem;
-			$wp_filesystem->rmdir( $agentic_agents_dir, true );
-		}
-	}
-}
-
-/*
- * -------------------------------------------------------------------------
- * 7. Remove the plugin's data folders: automatic pre-change backups
- *    (copies of site content and database rows) and knowledge files.
- * -------------------------------------------------------------------------
- */
+require_once __DIR__ . '/includes/class-file-manager.php';
 require_once __DIR__ . '/includes/class-uninstall-cleanup.php';
 \Agentic\Uninstall_Cleanup::remove_data_directories();

@@ -224,8 +224,10 @@ class Agent_Prompt_Builder {
 	/**
 	 * Find a knowledge file by name across the registered knowledge directories.
 	 *
-	 * The wp-content/agentic-knowledge/ directory is searched first so a site
-	 * owner can override any bundled file simply by dropping their own copy in.
+	 * The site's knowledge folder in the uploads data root
+	 * (File_Manager::knowledge_dir(), plus the pre-4.5 wp-content folder while
+	 * it has not been migrated) is searched first so a site owner can
+	 * override any bundled file simply by dropping their own copy in.
 	 * Bundled files ship inside the plugin, which means they survive updates
 	 * and need no writable directory — that directory is never created
 	 * automatically, so a lookup that only consulted it found nothing at all.
@@ -247,9 +249,9 @@ class Agent_Prompt_Builder {
 		 */
 		$dirs = apply_filters(
 			'agentic_knowledge_dirs',
-			array(
-				AGENT_BUILDER_KNOWLEDGE_DIR,
-				AGENT_BUILDER_DIR . 'library/knowledge',
+			array_merge(
+				File_Manager::read_dirs( 'knowledge' ),
+				array( AGENT_BUILDER_DIR . 'library/knowledge' )
 			)
 		);
 

@@ -299,7 +299,7 @@ class Analyze_Requirements extends Tool_Base {
 	/**
 	 * Suggest knowledge files based on the agent description.
 	 *
-	 * Scans agentic-knowledge/ for available files and recommends any
+	 * Scans the knowledge folder for available files and recommends any
 	 * that are relevant to the agent being built.
 	 *
 	 * @param string $description Agent description.
@@ -307,12 +307,11 @@ class Analyze_Requirements extends Tool_Base {
 	 * @return array List of relative paths to knowledge files.
 	 */
 	private function suggest_knowledge_files( string $description, string $category ): array {
-		$knowledge_dir = AGENT_BUILDER_KNOWLEDGE_DIR . '/';
-		if ( ! is_dir( $knowledge_dir ) ) {
-			return array();
+		$files = array();
+		foreach ( \Agentic\File_Manager::read_dirs( 'knowledge' ) as $knowledge_dir ) {
+			$found = is_dir( $knowledge_dir ) ? glob( $knowledge_dir . '/*.txt' ) : array();
+			$files = array_merge( $files, is_array( $found ) ? $found : array() );
 		}
-
-		$files     = glob( $knowledge_dir . '*.txt' );
 		$suggested = array();
 
 		if ( empty( $files ) ) {

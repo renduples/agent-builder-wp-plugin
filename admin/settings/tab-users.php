@@ -53,23 +53,22 @@ $agentic_ul_limits       = \Agentic\Usage_Limits::get_limits();
 		$odd = true;
 		foreach ( $privileges as $priv_key => $priv_info ) {
 			$allowed_roles = $settings[ $section_key ][ $priv_key ] ?? array();
-			$bg            = $odd ? '' : ' class="agentic-row-alt"';
-			echo '<tr' . $bg . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Hardcoded style string, no user input.
+			echo $odd ? '<tr>' : '<tr class="agentic-row-alt">';
 			echo '<td><strong>' . esc_html( $priv_info['label'] ) . '</strong><br>';
 			echo '<span class="description agentic-text-xs">' . esc_html( $priv_info['description'] ) . '</span></td>';
 			foreach ( array_keys( $wp_roles ) as $role_slug ) {
 				$is_admin   = 'administrator' === $role_slug;
 				$is_checked = $is_admin || in_array( $role_slug, $allowed_roles, true );
-				$field_name = 'agentic_user_roles[' . esc_attr( $section_key ) . '][' . esc_attr( $priv_key ) . '][]';
-				$field_id   = 'agentic_ur_' . esc_attr( $section_key ) . '_' . esc_attr( $priv_key ) . '_' . esc_attr( $role_slug );
+				$field_name = 'agentic_user_roles[' . $section_key . '][' . $priv_key . '][]';
+				$field_id   = 'agentic_ur_' . $section_key . '_' . $priv_key . '_' . $role_slug;
 				echo '<td class="agentic-td-center">';
 				if ( $is_admin ) {
 					// Administrators are always checked and cannot be unchecked.
 					echo '<input type="checkbox" checked disabled title="Administrators always have full access" />';
 					// Hidden field so the value is still submitted.
-					echo '<input type="hidden" name="' . $field_name . '" value="administrator" />'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $field_name built with esc_attr().
+					echo '<input type="hidden" name="' . esc_attr( $field_name ) . '" value="administrator" />';
 				} else {
-					echo '<input type="checkbox" name="' . $field_name . '" id="' . $field_id . '" value="' . esc_attr( $role_slug ) . '"' . ( $is_checked ? ' checked' : '' ) . ' />'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $field_name/$field_id built with esc_attr().
+					echo '<input type="checkbox" name="' . esc_attr( $field_name ) . '" id="' . esc_attr( $field_id ) . '" value="' . esc_attr( $role_slug ) . '"' . checked( $is_checked, true, false ) . ' />';
 				}
 				echo '</td>';
 			}
@@ -109,10 +108,9 @@ $agentic_ul_limits       = \Agentic\Usage_Limits::get_limits();
 			$agentic_ag_odd = true;
 			foreach ( $agentic_ur_agent_privs as $agentic_ag_priv_key => $agentic_ag_priv_info ) :
 				$agentic_ag_allowed = $agentic_ur_settings['agents'][ $agentic_ag_priv_key ] ?? array();
-				$agentic_ag_bg      = $agentic_ag_odd ? '' : ' class="agentic-row-alt"';
 				$agentic_ag_is_chat = 'chat_frontend' === $agentic_ag_priv_key;
 				?>
-			<tr<?php echo $agentic_ag_bg; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- hardcoded style string ?>>
+			<tr<?php echo $agentic_ag_odd ? '' : ' class="agentic-row-alt"'; ?>>
 				<td><strong><?php echo esc_html( $agentic_ag_priv_info['label'] ); ?></strong><br>
 					<span class="description agentic-text-xs"><?php echo esc_html( $agentic_ag_priv_info['description'] ); ?></span></td>
 				<td class="agentic-td-center">
@@ -126,15 +124,15 @@ $agentic_ul_limits       = \Agentic\Usage_Limits::get_limits();
 				foreach ( array_keys( $agentic_ur_wp_roles ) as $agentic_ag_role_slug ) :
 					$agentic_ag_is_admin   = 'administrator' === $agentic_ag_role_slug;
 					$agentic_ag_is_checked = $agentic_ag_is_admin || in_array( $agentic_ag_role_slug, $agentic_ag_allowed, true );
-					$agentic_ag_fname      = 'agentic_user_roles[agents][' . esc_attr( $agentic_ag_priv_key ) . '][]';
-					$agentic_ag_fid        = 'agentic_ur_agents_' . esc_attr( $agentic_ag_priv_key ) . '_' . esc_attr( $agentic_ag_role_slug );
+					$agentic_ag_fname      = 'agentic_user_roles[agents][' . $agentic_ag_priv_key . '][]';
+					$agentic_ag_fid        = 'agentic_ur_agents_' . $agentic_ag_priv_key . '_' . $agentic_ag_role_slug;
 					?>
 				<td class="agentic-td-center">
 					<?php if ( $agentic_ag_is_admin ) : ?>
 						<input type="checkbox" checked disabled title="Administrators always have full access" />
-						<input type="hidden" name="<?php echo $agentic_ag_fname; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built with esc_attr() ?>" value="administrator" />
+						<input type="hidden" name="<?php echo esc_attr( $agentic_ag_fname ); ?>" value="administrator" />
 					<?php else : ?>
-						<input type="checkbox" name="<?php echo $agentic_ag_fname; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built with esc_attr() ?>" id="<?php echo $agentic_ag_fid; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built with esc_attr() ?>" value="<?php echo esc_attr( $agentic_ag_role_slug ); ?>"<?php echo $agentic_ag_is_checked ? ' checked' : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- hardcoded attribute string ?> />
+						<input type="checkbox" name="<?php echo esc_attr( $agentic_ag_fname ); ?>" id="<?php echo esc_attr( $agentic_ag_fid ); ?>" value="<?php echo esc_attr( $agentic_ag_role_slug ); ?>"<?php checked( $agentic_ag_is_checked ); ?> />
 					<?php endif; ?>
 				</td>
 				<?php endforeach; ?>

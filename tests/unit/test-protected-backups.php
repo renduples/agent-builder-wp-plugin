@@ -26,8 +26,8 @@ class Test_Protected_Backups extends TestCase {
 	 */
 	public function setUp(): void {
 		parent::setUp();
-		$this->wipe_dir( AGENT_BUILDER_BACKUPS_DIR );
-		$this->wipe_dir( AGENT_BUILDER_KNOWLEDGE_DIR );
+		$this->wipe_dir( \Agentic\File_Manager::backups_dir() );
+		$this->wipe_dir( \Agentic\File_Manager::knowledge_dir() );
 		Tool_Helpers::migrate_legacy_backups( true );
 	}
 
@@ -36,8 +36,8 @@ class Test_Protected_Backups extends TestCase {
 	 */
 	public function tearDown(): void {
 		remove_all_filters( 'pre_http_request' );
-		$this->wipe_dir( AGENT_BUILDER_BACKUPS_DIR );
-		$this->wipe_dir( AGENT_BUILDER_KNOWLEDGE_DIR );
+		$this->wipe_dir( \Agentic\File_Manager::backups_dir() );
+		$this->wipe_dir( \Agentic\File_Manager::knowledge_dir() );
 		parent::tearDown();
 	}
 
@@ -71,16 +71,16 @@ class Test_Protected_Backups extends TestCase {
 		$this->assertNotNull( $file );
 		$this->assertMatchesRegularExpression( '/^\d{8}-\d{6}_[a-f0-9]{24}_agent_builder_agent_settings\.php$/', $file );
 
-		$path = AGENT_BUILDER_BACKUPS_DIR . '/db/' . $file;
+		$path = \Agentic\File_Manager::backups_dir() . '/db/' . $file;
 		$raw  = file_get_contents( $path );
 		$this->assertStringStartsWith( "<?php exit; ?>\n", $raw );
 		$this->assertIsArray( json_decode( (string) File_Manager::get_guarded_contents( $path ), true ) );
 
-		$this->assertFileExists( AGENT_BUILDER_BACKUPS_DIR . '/db/index.php' );
-		$this->assertStringContainsString( 'Require all denied', (string) file_get_contents( AGENT_BUILDER_BACKUPS_DIR . '/.htaccess' ) );
+		$this->assertFileExists( \Agentic\File_Manager::backups_dir() . '/db/index.php' );
+		$this->assertStringContainsString( 'Require all denied', (string) file_get_contents( \Agentic\File_Manager::backups_dir() . '/.htaccess' ) );
 
 		$this->assertNotSame( Tool_Helpers::new_backup_name( 'posts' ), Tool_Helpers::new_backup_name( 'posts' ) );
-		$this->assertEmpty( glob( AGENT_BUILDER_BACKUPS_DIR . '/db/*.json' ) );
+		$this->assertEmpty( glob( \Agentic\File_Manager::backups_dir() . '/db/*.json' ) );
 	}
 
 	/**
@@ -114,7 +114,7 @@ class Test_Protected_Backups extends TestCase {
 	 * and a table whose name ends the same way is not counted with it.
 	 */
 	public function test_table_backup_retention_matches_exact_table(): void {
-		$dir = AGENT_BUILDER_BACKUPS_DIR . '/db';
+		$dir = \Agentic\File_Manager::backups_dir() . '/db';
 		File_Manager::ensure_protected_dir( $dir, true );
 
 		File_Manager::put_guarded_contents( $dir . '/' . Tool_Helpers::new_backup_name( 'agent_builder_agent_settings', '20200101-000000' ), '{}' );
@@ -171,14 +171,14 @@ class Test_Protected_Backups extends TestCase {
 	 * and for anything but a plain *.php name.
 	 */
 	public function test_guarded_write_is_confined_to_private_storage(): void {
-		wp_mkdir_p( AGENT_BUILDER_BACKUPS_DIR );
+		wp_mkdir_p( \Agentic\File_Manager::backups_dir() );
 		$uploads = wp_upload_dir( null, false )['basedir'];
 
 		$this->assertFalse( File_Manager::put_guarded_contents( $uploads . '/agentic-test.php', 'x' ) );
-		$this->assertFalse( File_Manager::put_guarded_contents( AGENT_BUILDER_BACKUPS_DIR . '/index.php', 'x' ) );
-		$this->assertFalse( File_Manager::put_guarded_contents( AGENT_BUILDER_BACKUPS_DIR . '/a.json', 'x' ) );
-		$this->assertTrue( File_Manager::put_guarded_contents( AGENT_BUILDER_BACKUPS_DIR . '/agentic-test.php', 'x' ) );
-		$this->assertSame( 'x', File_Manager::get_guarded_contents( AGENT_BUILDER_BACKUPS_DIR . '/agentic-test.php' ) );
+		$this->assertFalse( File_Manager::put_guarded_contents( \Agentic\File_Manager::backups_dir() . '/index.php', 'x' ) );
+		$this->assertFalse( File_Manager::put_guarded_contents( \Agentic\File_Manager::backups_dir() . '/a.json', 'x' ) );
+		$this->assertTrue( File_Manager::put_guarded_contents( \Agentic\File_Manager::backups_dir() . '/agentic-test.php', 'x' ) );
+		$this->assertSame( 'x', File_Manager::get_guarded_contents( \Agentic\File_Manager::backups_dir() . '/agentic-test.php' ) );
 	}
 
 	// ─── Legacy migration ───────────────────────────────────────────────────
@@ -188,19 +188,19 @@ class Test_Protected_Backups extends TestCase {
 	 * plain files deleted; the converted copies still restore.
 	 */
 	public function test_legacy_backups_are_converted(): void {
-		$db = AGENT_BUILDER_BACKUPS_DIR . '/db';
+		$db = \Agentic\File_Manager::backups_dir() . '/db';
 		wp_mkdir_p( $db );
-		file_put_contents( AGENT_BUILDER_BACKUPS_DIR . '/.htaccess', "# old\n" );
+		file_put_contents( \Agentic\File_Manager::backups_dir() . '/.htaccess', "# old\n" );
 		file_put_contents( $db . '/20250101-101010_posts.json', '{"table":"wp_posts","type":"full","row_count":0,"rows":[]}' );
-		file_put_contents( AGENT_BUILDER_BACKUPS_DIR . '/20250101-101010_uploads__agentic-legacy.txt', 'legacy' );
+		file_put_contents( \Agentic\File_Manager::backups_dir() . '/20250101-101010_uploads__agentic-legacy.txt', 'legacy' );
 
 		$this->assertSame( 2, Tool_Helpers::count_unprotected_backups() );
 		$this->assertSame( 2, Tool_Helpers::migrate_legacy_backups( true ) );
 		$this->assertSame( 0, Tool_Helpers::count_unprotected_backups() );
 
 		$this->assertEmpty( glob( $db . '/*.json' ) );
-		$this->assertFileDoesNotExist( AGENT_BUILDER_BACKUPS_DIR . '/20250101-101010_uploads__agentic-legacy.txt' );
-		$this->assertSame( "# old\n", file_get_contents( AGENT_BUILDER_BACKUPS_DIR . '/.htaccess' ), 'a customised .htaccess is never overwritten' );
+		$this->assertFileDoesNotExist( \Agentic\File_Manager::backups_dir() . '/20250101-101010_uploads__agentic-legacy.txt' );
+		$this->assertSame( "# old\n", file_get_contents( \Agentic\File_Manager::backups_dir() . '/.htaccess' ), 'a customised .htaccess is never overwritten' );
 
 		$tables = Tool_Helpers::get_table_backups();
 		$this->assertCount( 1, $tables );
@@ -218,7 +218,7 @@ class Test_Protected_Backups extends TestCase {
 	 * The plugin's own older execution-only .htaccess is upgraded to deny-all.
 	 */
 	public function test_old_plugin_htaccess_is_upgraded_to_deny_all(): void {
-		$dir = AGENT_BUILDER_KNOWLEDGE_DIR;
+		$dir = \Agentic\File_Manager::knowledge_dir();
 		File_Manager::ensure_protected_dir( $dir );
 		$this->assertStringNotContainsString( 'Agent Builder private storage', (string) file_get_contents( $dir . '/.htaccess' ) );
 
@@ -271,22 +271,22 @@ class Test_Protected_Backups extends TestCase {
 	 * Nginx that serves static files: knowledge readable → recommended, not critical.
 	 */
 	public function test_site_health_recommended_when_static_files_are_served(): void {
-		wp_mkdir_p( AGENT_BUILDER_BACKUPS_DIR );
-		wp_mkdir_p( AGENT_BUILDER_KNOWLEDGE_DIR );
+		wp_mkdir_p( \Agentic\File_Manager::backups_dir() );
+		wp_mkdir_p( \Agentic\File_Manager::knowledge_dir() );
 		$this->fake_server( 'nginx' );
 
 		$result = Site_Health::test_private_storage();
 		$this->assertSame( 'recommended', $result['status'] );
 		$this->assertSame( 'agent_builder_private_storage', $result['test'] );
 		$this->assertStringContainsString( 'deny all', $result['actions'] );
-		$this->assertEmpty( glob( AGENT_BUILDER_BACKUPS_DIR . '/agentic-probe-*' ), 'probe files are cleaned up' );
+		$this->assertEmpty( glob( \Agentic\File_Manager::backups_dir() . '/agentic-probe-*' ), 'probe files are cleaned up' );
 	}
 
 	/**
 	 * A server that hands out .php source would leak backups → critical.
 	 */
 	public function test_site_health_critical_when_guarded_payload_is_readable(): void {
-		wp_mkdir_p( AGENT_BUILDER_BACKUPS_DIR );
+		wp_mkdir_p( \Agentic\File_Manager::backups_dir() );
 		$this->fake_server( 'php-as-text' );
 
 		$this->assertSame( 'critical', Site_Health::test_private_storage()['status'] );
@@ -296,8 +296,8 @@ class Test_Protected_Backups extends TestCase {
 	 * Denied requests → good; a failing loopback → skipped (good), never an error.
 	 */
 	public function test_site_health_good_when_denied_or_skipped(): void {
-		wp_mkdir_p( AGENT_BUILDER_BACKUPS_DIR );
-		wp_mkdir_p( AGENT_BUILDER_KNOWLEDGE_DIR );
+		wp_mkdir_p( \Agentic\File_Manager::backups_dir() );
+		wp_mkdir_p( \Agentic\File_Manager::knowledge_dir() );
 
 		$this->fake_server( 'denied' );
 		$this->assertSame( 'good', Site_Health::test_private_storage()['status'] );
@@ -320,23 +320,23 @@ class Test_Protected_Backups extends TestCase {
 	// ─── Uninstall ──────────────────────────────────────────────────────────
 
 	/**
-	 * Delete-all uninstall removes both data folders recursively, and nothing
-	 * outside wp-content/agentic-*.
+	 * Delete-all uninstall removes the uploads data root (and any legacy
+	 * wp-content/agentic-* folder) recursively, and nothing else.
 	 */
 	public function test_uninstall_cleanup_removes_data_folders(): void {
 		Tool_Helpers::backup_table( 'agent_builder_agent_settings' );
-		wp_mkdir_p( AGENT_BUILDER_KNOWLEDGE_DIR . '/okf/site' );
-		file_put_contents( AGENT_BUILDER_KNOWLEDGE_DIR . '/okf/site/index.md', '# x' );
+		wp_mkdir_p( \Agentic\File_Manager::knowledge_dir() . '/okf/site' );
+		file_put_contents( \Agentic\File_Manager::knowledge_dir() . '/okf/site/index.md', '# x' );
 
 		$outside = WP_CONTENT_DIR . '/uploads/agentic-keep-me';
 		wp_mkdir_p( $outside );
 
 		$removed = Uninstall_Cleanup::remove_data_directories( array_merge( Uninstall_Cleanup::data_directories(), array( $outside ) ) );
 
-		$this->assertCount( 2, $removed );
-		$this->assertDirectoryDoesNotExist( AGENT_BUILDER_BACKUPS_DIR );
-		$this->assertDirectoryDoesNotExist( AGENT_BUILDER_KNOWLEDGE_DIR );
-		$this->assertDirectoryExists( $outside, 'only wp-content/agentic-* folders are ever removed' );
+		$this->assertContains( \Agentic\File_Manager::data_dir(), $removed );
+		$this->assertNotContains( $outside, $removed );
+		$this->assertDirectoryDoesNotExist( \Agentic\File_Manager::data_dir() );
+		$this->assertDirectoryExists( $outside, 'only the data root and legacy agentic-* folders are ever removed' );
 
 		rmdir( $outside );
 	}

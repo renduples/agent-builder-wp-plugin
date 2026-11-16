@@ -122,11 +122,14 @@ class Admin_Ajax {
 		// Store data-retention preference so uninstall.php can respect it.
 		update_option( 'agent_builder_deactivate_delete_data', $delete_data ? '1' : '0' );
 
-		// Forward cancellation feedback when the user has opted in (disclosed in
-		// readme.txt's External Services section — a consent-gated survey, not a
-		// license-holder perk).
-		$has_consent = get_option( 'agent_builder_service_consent' );
-		if ( $has_consent ) {
+		// Forward cancellation feedback only when the admin clicked "Submit &
+		// deactivate" (send_feedback=1) on the survey, which is itself shown
+		// only to sites that accepted the Agentic AI terms at sign-up. "Skip &
+		// deactivate" and plain deactivation send nothing. Disclosed in
+		// readme.txt's External services section.
+		$has_consent   = get_option( 'agent_builder_service_consent' );
+		$send_feedback = isset( $_POST['send_feedback'] ) && '1' === $_POST['send_feedback'];
+		if ( $has_consent && $send_feedback ) {
 			$reason = sanitize_key( wp_unslash( $_POST['reason'] ?? '' ) );
 			$detail = sanitize_textarea_field( wp_unslash( $_POST['detail'] ?? '' ) );
 			if ( ! empty( $reason ) ) {
@@ -181,7 +184,7 @@ class Admin_Ajax {
 			wp_send_json_error( 'Permission denied.' );
 		}
 
-		$level = sanitize_key( $_POST['level'] ?? 'daily' ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above.
+		$level = sanitize_key( wp_unslash( $_POST['level'] ?? 'daily' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above.
 		update_option( 'agent_builder_psi_notice_dismissed', $level );
 		wp_send_json_success();
 	}
@@ -238,8 +241,7 @@ class Admin_Ajax {
 			wp_send_json_error( 'Permission denied.' );
 		}
 
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitize_key() applied per-item below; this is just the raw list to split.
-		$slugs = isset( $_POST['slugs'] ) ? wp_unslash( $_POST['slugs'] ) : '';
+		$slugs = isset( $_POST['slugs'] ) ? sanitize_text_field( wp_unslash( $_POST['slugs'] ) ) : '';
 		$slugs = array_map( 'sanitize_key', explode( ',', (string) $slugs ) );
 		sort( $slugs );
 
@@ -376,18 +378,16 @@ class Admin_Ajax {
 			wp_send_json_error( __( 'Permission denied.', 'agent-builder' ) );
 		}
 
-		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- every field is sanitized (sanitize_text_field/sanitize_textarea_field/absint) inside Agent_Lifecycle::save_user_trigger().
 		$result = Agent_Lifecycle::save_user_trigger(
 			array(
-				'id'         => wp_unslash( $_POST['trigger_id'] ?? '' ),
-				'agent_slug' => wp_unslash( $_POST['agent_slug'] ?? '' ),
-				'hook'       => wp_unslash( $_POST['hook'] ?? '' ),
-				'name'       => wp_unslash( $_POST['name'] ?? '' ),
-				'prompt'     => wp_unslash( $_POST['prompt'] ?? '' ),
-				'priority'   => wp_unslash( $_POST['priority'] ?? 10 ),
+				'id'         => sanitize_text_field( wp_unslash( $_POST['trigger_id'] ?? '' ) ),
+				'agent_slug' => sanitize_text_field( wp_unslash( $_POST['agent_slug'] ?? '' ) ),
+				'hook'       => sanitize_text_field( wp_unslash( $_POST['hook'] ?? '' ) ),
+				'name'       => sanitize_text_field( wp_unslash( $_POST['name'] ?? '' ) ),
+				'prompt'     => sanitize_textarea_field( wp_unslash( $_POST['prompt'] ?? '' ) ),
+				'priority'   => absint( wp_unslash( $_POST['priority'] ?? 10 ) ),
 			)
 		);
-		// phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		if ( empty( $result['ok'] ) ) {
 			wp_send_json_error( $result['error'] ?? __( 'Could not save the event trigger.', 'agent-builder' ) );
@@ -435,18 +435,16 @@ class Admin_Ajax {
 			wp_send_json_error( __( 'Permission denied.', 'agent-builder' ) );
 		}
 
-		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- every field is sanitized (sanitize_key/sanitize_text_field/sanitize_textarea_field) inside Agent_Lifecycle::save_user_scheduled_task().
 		$result = Agent_Lifecycle::save_user_scheduled_task(
 			array(
-				'id'          => wp_unslash( $_POST['task_id'] ?? '' ),
-				'agent_slug'  => wp_unslash( $_POST['agent_slug'] ?? '' ),
-				'name'        => wp_unslash( $_POST['name'] ?? '' ),
-				'prompt'      => wp_unslash( $_POST['prompt'] ?? '' ),
-				'description' => wp_unslash( $_POST['description'] ?? '' ),
-				'schedule'    => wp_unslash( $_POST['schedule'] ?? 'daily' ),
+				'id'          => sanitize_text_field( wp_unslash( $_POST['task_id'] ?? '' ) ),
+				'agent_slug'  => sanitize_key( wp_unslash( $_POST['agent_slug'] ?? '' ) ),
+				'name'        => sanitize_text_field( wp_unslash( $_POST['name'] ?? '' ) ),
+				'prompt'      => sanitize_textarea_field( wp_unslash( $_POST['prompt'] ?? '' ) ),
+				'description' => sanitize_textarea_field( wp_unslash( $_POST['description'] ?? '' ) ),
+				'schedule'    => sanitize_key( wp_unslash( $_POST['schedule'] ?? 'daily' ) ),
 			)
 		);
-		// phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		if ( empty( $result['ok'] ) ) {
 			wp_send_json_error( $result['error'] ?? __( 'Could not save the scheduled task.', 'agent-builder' ) );
@@ -979,9 +977,11 @@ class Admin_Ajax {
 		} else {
 			$body = wp_remote_retrieve_body( $response );
 			$data = json_decode( $body, true );
+			$data = is_array( $data ) ? $data : array();
 			/* translators: %d: HTTP status code */
 			$msg = $data['error']['message'] ?? $data['error'] ?? sprintf( __( 'Connection failed (HTTP %d). Check your API key.', 'agent-builder' ), $code );
-			wp_send_json_error( array( 'message' => $msg ) );
+			$msg = is_scalar( $msg ) ? (string) $msg : (string) wp_json_encode( $msg );
+			wp_send_json_error( array( 'message' => sanitize_text_field( $msg ) ) );
 		}
 	}
 
@@ -1191,7 +1191,7 @@ class Admin_Ajax {
 	 * The register endpoint answers with `api_key` and, on every current
 	 * server, `license_key`. They are different things: the API key
 	 * authenticates requests to the hosted provider, the license key is the
-	 * billing identity the hosted relay meters by (LLM_Client sends it as
+	 * billing identity the hosted AI service meters by (LLM_Client sends it as
 	 * `user_id`) and the value Provider_Registry::has_usable_provider() checks.
 	 * Until 3.4.1 this handler collapsed both into the API key and never stored
 	 * the license key, so a fresh install could sign up "successfully" and still
@@ -1218,7 +1218,7 @@ class Admin_Ajax {
 		if ( '' === $api_key ) {
 			return new \WP_Error(
 				'agentic_no_api_key',
-				(string) ( $body['message'] ?? __( 'No API key returned. Please try again.', 'agent-builder' ) )
+				sanitize_text_field( is_scalar( $body['message'] ?? null ) ? (string) $body['message'] : __( 'No API key returned. Please try again.', 'agent-builder' ) )
 			);
 		}
 

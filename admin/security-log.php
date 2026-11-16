@@ -25,7 +25,7 @@ if ( isset( $_POST['agentic_cleanup_security_log'] ) && check_admin_referer( 'ag
 // Filter / pagination params.
 // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only filters.
 $agentic_event_type    = isset( $_GET['event_type'] ) ? sanitize_text_field( wp_unslash( $_GET['event_type'] ) ) : '';
-$agentic_period_filter = sanitize_key( $_GET['period'] ?? 'week' );
+$agentic_period_filter = sanitize_key( wp_unslash( $_GET['period'] ?? 'week' ) );
 $agentic_paged         = isset( $_GET['paged'] ) ? absint( $_GET['paged'] ) : 1;
 // phpcs:enable
 
@@ -376,10 +376,4 @@ $agentic_top_patterns = \Agentic\Security_Log::get_top_patterns( 5, $agentic_per
 	</div>
 </div>
 
-<script>
-document.getElementById('agentic-cleanup-dialog').addEventListener('click', function(e) {
-	if ( e.target === this ) {
-		this.classList.remove('active');
-	}
-});
-</script>
+<?php \Agentic\Inline_Assets::script( 'security-log' ); ?>

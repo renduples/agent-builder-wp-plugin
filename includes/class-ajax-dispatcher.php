@@ -41,8 +41,8 @@ class Ajax_Dispatcher {
 			return;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- action used only for routing, not data access.
-		$ajax_action = isset( $_REQUEST['action'] ) ? sanitize_key( $_REQUEST['action'] ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Routing only: picks which wp_ajax_ hook to register; each handler verifies its own nonce + capability.
+		$ajax_action = isset( $_REQUEST['action'] ) ? sanitize_key( wp_unslash( $_REQUEST['action'] ) ) : '';
 
 		$handlers = array(
 			// Dashboard notices.

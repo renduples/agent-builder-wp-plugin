@@ -69,7 +69,7 @@ if ( isset( $_POST['agentic_mem_ttl_nonce'] ) && wp_verify_nonce( sanitize_text_
 
 // ── Filters ──────────────────────────────────────────────────────────────────
 // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only filter params.
-$agentic_mem_filter_type   = isset( $_GET['mem_type'] ) ? sanitize_key( $_GET['mem_type'] ) : '';
+$agentic_mem_filter_type   = isset( $_GET['mem_type'] ) ? sanitize_key( wp_unslash( $_GET['mem_type'] ) ) : '';
 $agentic_mem_filter_entity = isset( $_GET['mem_entity'] ) ? sanitize_text_field( wp_unslash( $_GET['mem_entity'] ) ) : '';
 $agentic_mem_page_num      = max( 1, absint( $_GET['mem_paged'] ?? 1 ) );
 // phpcs:enable

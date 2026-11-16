@@ -553,172 +553,42 @@ data-ability="<?php echo esc_attr( $agentic_ab_orig ); ?>"
 </div>
 
 
-<!-- Toggle AJAX handler -->
-<script>
-(function() {
-	'use strict';
-	var COPY = {
-		highTitle: <?php echo wp_json_encode( __( 'Enable high-risk tool?', 'agent-builder' ) ); ?>,
-		extremeTitle: <?php echo wp_json_encode( __( 'This tool cannot be enabled', 'agent-builder' ) ); ?>,
-		cancel: <?php echo wp_json_encode( __( 'Cancel', 'agent-builder' ) ); ?>,
-		enable: <?php echo wp_json_encode( __( 'Enable tool', 'agent-builder' ) ); ?>,
-		close: <?php echo wp_json_encode( __( 'Close', 'agent-builder' ) ); ?>,
-		highLead: <?php echo wp_json_encode( __( 'can make a significant change to your site.', 'agent-builder' ) ); ?>,
-		<?php /* translators: %s: plain-language reason this tool is high-risk, filled in client-side. */ ?>
-		highWhy: <?php echo wp_json_encode( __( 'Why this is high-risk: %s', 'agent-builder' ) ); ?>,
-		highGuard: <?php echo wp_json_encode( __( 'If an agent uses this tool later, the action will still wait for human review in the Approvals queue before it runs.', 'agent-builder' ) ); ?>,
-		highNote: <?php echo wp_json_encode( __( 'Enabling this tool makes it available to eligible agents. It does not run the tool immediately.', 'agent-builder' ) ); ?>,
-		extremeLead: <?php echo wp_json_encode( __( 'is marked Extreme Risk.', 'agent-builder' ) ); ?>,
-		extremeBody: <?php echo wp_json_encode( __( 'Extreme-risk tools are hidden from agents entirely and blocked from running, because they are too risky for normal use.', 'agent-builder' ) ); ?>,
-		highReasonDefault: <?php echo wp_json_encode( __( 'A significant or bulk change — waits in the Approvals queue for you to allow it.', 'agent-builder' ) ); ?>,
-		clickDisable: <?php echo wp_json_encode( __( 'Click to disable this tool', 'agent-builder' ) ); ?>,
-		clickEnable: <?php echo wp_json_encode( __( 'Click to enable this tool', 'agent-builder' ) ); ?>
-	};
-	var HIGH_REASONS = <?php
-	echo wp_json_encode(
-		array(
-			'force_password_reset'    => __( 'can affect account access', 'agent-builder' ),
-			'wc_create_refund'        => __( 'moves money', 'agent-builder' ),
-			'delete_form'             => __( 'can permanently remove data', 'agent-builder' ),
-			'git_push'                => __( 'changes the deployed codebase', 'agent-builder' ),
-			'git_pull'                => __( 'changes the deployed codebase', 'agent-builder' ),
-			'git_commit'              => __( 'changes the deployed codebase', 'agent-builder' ),
-		)
-	);
-	?>;
-
-	function highReason( name ) {
-		return HIGH_REASONS[ name ] || COPY.highReasonDefault;
-	}
-
-	function highBody( title, name ) {
-		return title + ' ' + COPY.highLead + '\n\n'
-			+ COPY.highWhy.replace( '%s', highReason( name ) ) + '\n\n'
-			+ COPY.highGuard + '\n\n'
-			+ COPY.highNote;
-	}
-
-	function extremeBody( title ) {
-		return title + ' ' + COPY.extremeLead + '\n\n' + COPY.extremeBody;
-	}
-
-	document.querySelectorAll('.agentic-tool-toggle').forEach(function(toggle) {
-		toggle.addEventListener('change', function() {
-			var toolName = this.dataset.tool;
-			var enabled  = this.checked;
-			var risk     = ( this.dataset.risk || 'none' ).toLowerCase();
-			var title    = this.dataset.title || toolName;
-			var row      = this.closest('tr');
-			var label    = this.closest('.agentic-toggle');
-			var el       = this;
-
-			function postToggle( nextEnabled ) {
-				label.classList.add('is-saving');
-
-				var data = new FormData();
-				data.append('action', 'agentic_toggle_tool');
-				data.append('tool', toolName);
-				data.append('enabled', nextEnabled ? '1' : '0');
-				data.append('_wpnonce', '<?php echo esc_js( wp_create_nonce( 'agentic_toggle_tool' ) ); ?>');
-
-				fetch(ajaxurl, {
-					method: 'POST',
-					credentials: 'same-origin',
-					body: data,
-				})
-				.then(function(response) { return response.json(); })
-				.then(function(result) {
-					label.classList.remove('is-saving');
-					if (result.success) {
-						row.style.opacity = nextEnabled ? '1' : '0.6';
-						label.title = nextEnabled ? COPY.clickDisable : COPY.clickEnable;
-					} else {
-						el.checked = !nextEnabled;
-						if ( window.agenticUI && typeof agenticUI.toast === 'function' ) {
-							agenticUI.toast(result.data || 'Failed to update tool status.', 'error');
-						}
-					}
-				})
-				.catch(function() {
-					label.classList.remove('is-saving');
-					el.checked = !nextEnabled;
-				});
-			}
-
-			// Gate HIGH/EXTREME off→on before any POST so the checkbox never
-			// flashes on. Disable (on→off) and low/medium never prompt.
-			if ( enabled && ( 'high' === risk || 'extreme' === risk ) ) {
-				el.checked = false;
-				if ( 'extreme' === risk ) {
-					if ( window.agenticUI && typeof agenticUI.alert === 'function' ) {
-						agenticUI.alert( extremeBody( title ), {
-							title: COPY.extremeTitle,
-							confirmText: COPY.close
-						} );
-					}
-					return;
-				}
-				var ask = ( window.agenticUI && typeof agenticUI.confirm === 'function' )
-					? agenticUI.confirm( highBody( title, toolName ), {
-						title: COPY.highTitle,
-						confirmText: COPY.enable,
-						cancelText: COPY.cancel
-					} )
-					: Promise.resolve( false );
-				ask.then( function( ok ) {
-					if ( ! ok ) {
-						return;
-					}
-					el.checked = true;
-					postToggle( true );
-				} );
-				return;
-			}
-
-			postToggle( enabled );
-		});
-	});
-
-	// Inbound third-party ability toggles (block-list backed).
-	var inboundNonce = '<?php echo esc_js( wp_create_nonce( 'agentic_toggle_inbound_ability' ) ); ?>';
-	document.querySelectorAll('.agentic-inbound-toggle').forEach(function(toggle) {
-			toggle.addEventListener('change', function() {
-				var ability = this.dataset.ability;
-				var enabled = this.checked;
-				var row     = this.closest('tr');
-				var label   = this.closest('.agentic-toggle');
-
-				label.classList.add('is-saving');
-
-				var data = new FormData();
-				data.append('action', 'agentic_toggle_inbound_ability');
-				data.append('ability', ability);
-				data.append('enabled', enabled ? '1' : '0');
-				data.append('_wpnonce', inboundNonce);
-
-				fetch(ajaxurl, {
-					method: 'POST',
-					credentials: 'same-origin',
-					body: data,
-				})
-				.then(function(response) { return response.json(); })
-				.then(function(result) {
-					label.classList.remove('is-saving');
-					if (result.success) {
-						row.style.opacity = enabled ? '1' : '0.6';
-						label.title = enabled
-							? '<?php echo esc_js( __( 'Click to disable this ability', 'agent-builder' ) ); ?>'
-							: '<?php echo esc_js( __( 'Click to enable this ability', 'agent-builder' ) ); ?>';
-					} else {
-						toggle.checked = !enabled;
-						agenticUI.toast(result.data || 'Failed to update ability status.', 'error');
-					}
-				})
-				.catch(function() {
-					label.classList.remove('is-saving');
-					toggle.checked = !enabled;
-				});
-			});
-	});
-})();
-</script>
+<?php
+// Tool / inbound-ability toggle handlers (assets/js/admin/tools.js).
+\Agentic\Inline_Assets::script(
+	'tools',
+	array(
+		'toggleNonce'  => wp_create_nonce( 'agentic_toggle_tool' ),
+		'inboundNonce' => wp_create_nonce( 'agentic_toggle_inbound_ability' ),
+		'copy'         => array(
+			'highTitle'           => __( 'Enable high-risk tool?', 'agent-builder' ),
+			'extremeTitle'        => __( 'This tool cannot be enabled', 'agent-builder' ),
+			'cancel'              => __( 'Cancel', 'agent-builder' ),
+			'enable'              => __( 'Enable tool', 'agent-builder' ),
+			'close'               => __( 'Close', 'agent-builder' ),
+			'highLead'            => __( 'can make a significant change to your site.', 'agent-builder' ),
+			/* translators: %s: plain-language reason this tool is high-risk, filled in client-side. */
+			'highWhy'             => __( 'Why this is high-risk: %s', 'agent-builder' ),
+			'highGuard'           => __( 'If an agent uses this tool later, the action will still wait for human review in the Approvals queue before it runs.', 'agent-builder' ),
+			'highNote'            => __( 'Enabling this tool makes it available to eligible agents. It does not run the tool immediately.', 'agent-builder' ),
+			'extremeLead'         => __( 'is marked Extreme Risk.', 'agent-builder' ),
+			'extremeBody'         => __( 'Extreme-risk tools are hidden from agents entirely and blocked from running, because they are too risky for normal use.', 'agent-builder' ),
+			'highReasonDefault'   => __( 'A significant or bulk change — waits in the Approvals queue for you to allow it.', 'agent-builder' ),
+			'clickDisable'        => __( 'Click to disable this tool', 'agent-builder' ),
+			'clickEnable'         => __( 'Click to enable this tool', 'agent-builder' ),
+			'abilityClickDisable' => __( 'Click to disable this ability', 'agent-builder' ),
+			'abilityClickEnable'  => __( 'Click to enable this ability', 'agent-builder' ),
+		),
+		'highReasons'  => array(
+			'force_password_reset' => __( 'can affect account access', 'agent-builder' ),
+			'wc_create_refund'     => __( 'moves money', 'agent-builder' ),
+			'delete_form'          => __( 'can permanently remove data', 'agent-builder' ),
+			'git_push'             => __( 'changes the deployed codebase', 'agent-builder' ),
+			'git_pull'             => __( 'changes the deployed codebase', 'agent-builder' ),
+			'git_commit'           => __( 'changes the deployed codebase', 'agent-builder' ),
+		),
+	),
+	'agenticTools',
+	array( 'agentic-ui' )
+);
+?>
