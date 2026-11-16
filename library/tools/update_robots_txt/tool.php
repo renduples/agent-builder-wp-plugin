@@ -103,7 +103,7 @@ class Update_Robots_Txt extends \Agentic\Tool_Base {
 			);
 		}
 
-		$header      = "# AI Search Engine Access\n# Added by AI Radar (Agent Builder — agentic-plugin.com)\n";
+		$header      = "# AI Search Engine Access\n";
 		$addition    = $header . implode( "\n", $additions );
 		$new_content = ! empty( $current ) ? $addition . "\n" . ltrim( $current ) : $addition . "\nUser-agent: *\nDisallow:\n";
 

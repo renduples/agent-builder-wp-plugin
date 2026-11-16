@@ -31,9 +31,12 @@ class Admin_Notice_Manager {
 	 * Used to keep setup / product notices off core Dashboard, Posts, Plugins,
 	 * etc. (WP.org Guideline-style non-intrusive admin UX; UI/UX plan suite 2.1).
 	 *
+	 * Public so other classes' notices (e.g. Approval_Queue) can apply the
+	 * same scoping.
+	 *
 	 * @return bool
 	 */
-	private function is_plugin_admin_screen(): bool {
+	public static function is_plugin_admin_screen(): bool {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only page identification.
 		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
 		if ( 'agent-builder' === $page || str_starts_with( $page, 'agentic-' ) ) {
@@ -51,6 +54,16 @@ class Admin_Notice_Manager {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Whether the current request is the core Plugins list screen.
+	 *
+	 * @return bool
+	 */
+	private static function is_plugins_list_screen(): bool {
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		return $screen && is_string( $screen->id ) && 'plugins' === $screen->id;
 	}
 
 	/**
@@ -77,9 +90,7 @@ class Admin_Notice_Manager {
 		// Show on Agent Builder screens and on the Plugins list — where the admin
 		// lands right after activation — so the one-time, dismissible "finish setup"
 		// reminder is actually seen. Still kept off Dashboard / Posts / etc.
-		$agentic_screen  = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
-		$on_plugins_page = $agentic_screen && is_string( $agentic_screen->id ) && 'plugins' === $agentic_screen->id;
-		if ( ! $this->is_plugin_admin_screen() && ! $on_plugins_page ) {
+		if ( ! self::is_plugin_admin_screen() && ! self::is_plugins_list_screen() ) {
 			return;
 		}
 
@@ -127,6 +138,12 @@ class Admin_Notice_Manager {
 		}
 
 		if ( ! get_transient( 'agentic_quota_reached_notice' ) ) {
+			return;
+		}
+
+		// Informational (a provider rate limit was hit) — Agent Builder
+		// screens only, never across the rest of wp-admin.
+		if ( ! self::is_plugin_admin_screen() ) {
 			return;
 		}
 
@@ -184,6 +201,12 @@ class Admin_Notice_Manager {
 			return;
 		}
 
+		// The plugin is safe to use as-is, so this stays on Agent Builder
+		// screens and the Plugins list rather than every wp-admin page.
+		if ( ! self::is_plugin_admin_screen() && ! self::is_plugins_list_screen() ) {
+			return;
+		}
+
 		$retry_url = wp_nonce_url(
 			add_query_arg( 'agentic_retry_activation', '1' ),
 			'agentic_retry_activation',
@@ -216,8 +239,9 @@ class Admin_Notice_Manager {
 	 * Warn when the one-time legacy agent-export cleanup gave up after repeated
 	 * failed delete attempts — a still-exposed legacy export zip that cannot be
 	 * deleted automatically (bad permissions/ownership) and needs a human to
-	 * remove it. Persistent (not dismissible): it clears only once the sweep
-	 * succeeds again after "Retry now".
+	 * remove it. It clears on its own once the sweep succeeds again after
+	 * "Retry now"; each admin can also dismiss it permanently ("Dismiss"
+	 * link — a plain nonced GET, no script needed).
 	 *
 	 * @return void
 	 */
@@ -229,6 +253,20 @@ class Admin_Notice_Manager {
 		if ( ! get_option( 'agent_builder_legacy_exports_gave_up' ) ) {
 			return;
 		}
+
+		$user_id = get_current_user_id();
+		if ( isset( $_GET['agentic_dismiss_legacy_exports_notice'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['agentic_dismiss_legacy_exports_notice'] ) ), 'agentic_dismiss_legacy_exports_notice' ) ) {
+			update_user_meta( $user_id, 'agentic_legacy_exports_notice_dismissed', 1 );
+			return;
+		}
+		if ( get_user_meta( $user_id, 'agentic_legacy_exports_notice_dismissed', true ) ) {
+			return;
+		}
+		$dismiss_url = wp_nonce_url(
+			remove_query_arg( array( 'agentic_retry_legacy_exports', 'agentic_retry_legacy_exports_nonce' ) ),
+			'agentic_dismiss_legacy_exports_notice',
+			'agentic_dismiss_legacy_exports_notice'
+		);
 
 		$retry_url = wp_nonce_url(
 			add_query_arg( 'agentic_retry_legacy_exports', '1' ),
@@ -242,6 +280,7 @@ class Admin_Notice_Manager {
 				<?php esc_html_e( 'A file left behind by an earlier version is still in wp-content/uploads/agentic-exports/ (or wp-content/agentic-exports/) and could not be deleted automatically — usually a permissions or file-ownership problem. Please remove it yourself, then retry.', 'agent-builder' ); ?>
 				&nbsp;
 				<a href="<?php echo esc_url( $retry_url ); ?>" class="button"><?php esc_html_e( 'Retry now', 'agent-builder' ); ?></a>
+				<a href="<?php echo esc_url( $dismiss_url ); ?>"><?php esc_html_e( 'Dismiss', 'agent-builder' ); ?></a>
 			</p>
 		</div>
 		<?php
