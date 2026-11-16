@@ -155,6 +155,34 @@ $wpdb->query(
 
 /*
  * -------------------------------------------------------------------------
+ * 4b. Revoke legacy "Agent Builder Relay" Application Passwords.
+ *
+ * Older versions created Application Passwords with this name (for the
+ * since-removed Agentic Relay and the old Settings > MCP "Create" button).
+ * The legacy relay options themselves (agentic_active_connectors,
+ * agentic_mcp_*, agent_builder_mcp_*) are covered by the option wildcards
+ * above. Passwords the user created themselves under any other name are
+ * left alone.
+ * -------------------------------------------------------------------------
+ */
+if ( class_exists( 'WP_Application_Passwords' ) ) {
+	$agentic_app_pass_users = get_users(
+		array(
+			'meta_key' => WP_Application_Passwords::USERMETA_KEY_APPLICATION_PASSWORDS, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- One-off uninstall cleanup.
+			'fields'   => 'ID',
+		)
+	);
+	foreach ( $agentic_app_pass_users as $agentic_app_pass_user_id ) {
+		foreach ( WP_Application_Passwords::get_user_application_passwords( (int) $agentic_app_pass_user_id ) as $agentic_app_pass ) {
+			if ( 'Agent Builder Relay' === ( $agentic_app_pass['name'] ?? '' ) ) {
+				WP_Application_Passwords::delete_application_password( (int) $agentic_app_pass_user_id, $agentic_app_pass['uuid'] );
+			}
+		}
+	}
+}
+
+/*
+ * -------------------------------------------------------------------------
  * 5. Clear scheduled cron events.
  * -------------------------------------------------------------------------
  */

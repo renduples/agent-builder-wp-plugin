@@ -3,7 +3,7 @@
  * Inventory REST — a single, machine-readable document listing every active
  * agent, its declared tools and their effective risk tier, and who built it.
  *
- * Closes the gap the per-agent MCP tools/list endpoints (class-relay-connect.php)
+ * Closes the gap the per-agent MCP tools/list endpoints (class-mcp-server.php)
  * leave open: each of those is real and machine-readable, but scoped to one
  * agent and gated behind that agent's own Application Password, so there is
  * no single place a site owner, an auditor, or an automated compliance
@@ -18,7 +18,8 @@
  * call): a full risk-tiered map of every tool every agent can use is real
  * reconnaissance value to an attacker, so it stays behind the same
  * capability check as the rest of Settings, reachable by an external
- * auditor the same way the MCP relay already is — an Application Password.
+ * auditor the same way as the MCP endpoint — an Application Password the
+ * user created in their own profile.
  *
  * @package    Agent_Builder
  * @subpackage Includes
@@ -133,7 +134,7 @@ class Inventory_REST {
 			'version'     => (string) ( $agent['version'] ?? '' ),
 			'author'      => (string) ( $agent['author'] ?? '' ),
 			'author_uri'  => (string) ( $agent['author_uri'] ?? '' ),
-			'mcp_enabled' => class_exists( '\\Agentic_Relay_Connect' ) && \Agentic_Relay_Connect::is_mcp_enabled( $slug ),
+			'mcp_enabled' => class_exists( '\\Agentic_MCP_Server' ) && \Agentic_MCP_Server::is_mcp_enabled( $slug ),
 			'tools'       => self::describe_tools( $slug ),
 		);
 	}

@@ -1191,7 +1191,7 @@ class Admin_Ajax {
 	 * The register endpoint answers with `api_key` and, on every current
 	 * server, `license_key`. They are different things: the API key
 	 * authenticates requests to the hosted provider, the license key is the
-	 * billing identity the hosted relay meters by (LLM_Client sends it as
+	 * billing identity the hosted AI service meters by (LLM_Client sends it as
 	 * `user_id`) and the value Provider_Registry::has_usable_provider() checks.
 	 * Until 3.4.1 this handler collapsed both into the API key and never stored
 	 * the license key, so a fresh install could sign up "successfully" and still
