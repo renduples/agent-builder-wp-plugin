@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! current_user_can( 'manage_options' ) ) {
-	wp_die( esc_html__( 'You do not have permission to access this page.', 'agent-builder' ) );
+	wp_die( esc_html__( 'You do not have permission to access this page.', 'siteloom' ) );
 }
 
 use Agentic\Audit_Log;
@@ -24,13 +24,13 @@ if ( ! in_array( $agentic_logs_tab, array( 'audit', 'conversations', 'security' 
 }
 
 $agentic_logs_tabs = array(
-	'audit'         => __( 'Audit', 'agent-builder' ),
-	'conversations' => __( 'Conversations', 'agent-builder' ),
-	'security'      => __( 'Security', 'agent-builder' ),
+	'audit'         => __( 'Audit', 'siteloom' ),
+	'conversations' => __( 'Conversations', 'siteloom' ),
+	'security'      => __( 'Security', 'siteloom' ),
 );
 ?>
 <div class="wrap">
-	<h1><?php esc_html_e( 'Activity', 'agent-builder' ); ?></h1>
+	<h1><?php esc_html_e( 'Activity', 'siteloom' ); ?></h1>
 
 	<?php
 	$agentic_logs_items = array();
@@ -45,7 +45,7 @@ $agentic_logs_tabs = array(
 		array(
 			'active'     => $agentic_logs_tab,
 			'items'      => $agentic_logs_items,
-			'aria_label' => __( 'Activity sections', 'agent-builder' ),
+			'aria_label' => __( 'Activity sections', 'siteloom' ),
 			'id'         => 'agentic-logs-nav',
 		)
 	);

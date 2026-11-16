@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'agent_builder_manage_agents' ) ) {
-	wp_die( esc_html__( 'You do not have permission to access this page.', 'agent-builder' ) );
+	wp_die( esc_html__( 'You do not have permission to access this page.', 'siteloom' ) );
 }
 
 $agentic_deploy_is_advanced = \Agentic\Admin_Menu_Handler::is_advanced_mode( 'deployment' );
@@ -41,15 +41,15 @@ if ( ! in_array( $agentic_active_tab, $agentic_deploy_allowed, true ) ) {
 <div class="wrap">
 	<div class="agentic-react-admin__page-head">
 		<div>
-			<h1><?php esc_html_e( 'Publish', 'agent-builder' ); ?></h1>
-			<p><?php esc_html_e( 'Manage how agents are invoked: embed them on your site with shortcodes, schedule recurring tasks, or react to WordPress events.', 'agent-builder' ); ?></p>
+			<h1><?php esc_html_e( 'Publish', 'siteloom' ); ?></h1>
+			<p><?php esc_html_e( 'Manage how agents are invoked: embed them on your site with shortcodes, schedule recurring tasks, or react to WordPress events.', 'siteloom' ); ?></p>
 		</div>
 		<span class="agentic-screen-mode-toggle" id="agentic-deployment-mode-toggle">
 			<button type="button" class="button button-small<?php echo ! $agentic_deploy_is_advanced ? ' button-primary' : ''; ?>" data-mode="basic">
-				<?php esc_html_e( 'Basic', 'agent-builder' ); ?>
+				<?php esc_html_e( 'Basic', 'siteloom' ); ?>
 			</button>
 			<button type="button" class="button button-small<?php echo $agentic_deploy_is_advanced ? ' button-primary' : ''; ?>" data-mode="advanced">
-				<?php esc_html_e( 'Advanced', 'agent-builder' ); ?>
+				<?php esc_html_e( 'Advanced', 'siteloom' ); ?>
 			</button>
 		</span>
 	</div>
@@ -63,13 +63,13 @@ if ( ! in_array( $agentic_active_tab, $agentic_deploy_allowed, true ) ) {
 	<?php
 	// Labels A–Z for nav order.
 	$agentic_deploy_tabs  = array(
-		'admin-bar'        => __( 'Admin', 'agent-builder' ),
-		'admin-ui'         => __( 'Editor', 'agent-builder' ),
-		'event-listeners'  => __( 'Event Listeners', 'agent-builder' ),
-		'website'          => __( 'Frontend Modal', 'agent-builder' ),
-		'gutenberg-blocks' => __( 'Gutenberg Blocks', 'agent-builder' ),
-		'scheduled-tasks'  => __( 'Scheduled Tasks', 'agent-builder' ),
-		'shortcodes'       => __( 'Shortcodes', 'agent-builder' ),
+		'admin-bar'        => __( 'Admin', 'siteloom' ),
+		'admin-ui'         => __( 'Editor', 'siteloom' ),
+		'event-listeners'  => __( 'Event Listeners', 'siteloom' ),
+		'website'          => __( 'Frontend Modal', 'siteloom' ),
+		'gutenberg-blocks' => __( 'Gutenberg Blocks', 'siteloom' ),
+		'scheduled-tasks'  => __( 'Scheduled Tasks', 'siteloom' ),
+		'shortcodes'       => __( 'Shortcodes', 'siteloom' ),
 	);
 	$agentic_deploy_items = array();
 	foreach ( $agentic_deploy_tabs as $agentic_tab_slug => $agentic_tab_label ) {
@@ -79,13 +79,13 @@ if ( ! in_array( $agentic_active_tab, $agentic_deploy_allowed, true ) ) {
 			'url'   => admin_url( 'admin.php?page=agentic-deployment&tab=' . $agentic_tab_slug ),
 		);
 	}
-	$agentic_panel_title = $agentic_deploy_tabs[ $agentic_active_tab ] ?? __( 'Deployment', 'agent-builder' );
+	$agentic_panel_title = $agentic_deploy_tabs[ $agentic_active_tab ] ?? __( 'Deployment', 'siteloom' );
 
 	\Agentic\Admin_Vnav::open(
 		array(
 			'active'     => $agentic_active_tab,
 			'items'      => $agentic_deploy_items,
-			'aria_label' => __( 'Deployment methods', 'agent-builder' ),
+			'aria_label' => __( 'Deployment methods', 'siteloom' ),
 			'id'         => 'agentic-deployment-nav',
 		)
 	);

@@ -139,7 +139,7 @@ class Checker_Oversized_Media extends Site_Brief_Checker {
 				array(
 					'title'            => sprintf(
 						/* translators: %d: number of images. */
-						_n( '%d image is over 1 MB', '%d images are over 1 MB', $count, 'agent-builder' ),
+						_n( '%d image is over 1 MB', '%d images are over 1 MB', $count, 'siteloom' ),
 						$count
 					),
 					'evidence'         => implode( ', ', $names ),
@@ -152,7 +152,7 @@ class Checker_Oversized_Media extends Site_Brief_Checker {
 						},
 						$shown
 					),
-					'proposed_action'  => __( 'Queue image compression for your approval, largest files first (up to 10 at a time). The scan does not rewrite files.', 'agent-builder' ),
+					'proposed_action'  => __( 'Queue image compression for your approval, largest files first (up to 10 at a time). The scan does not rewrite files.', 'siteloom' ),
 					'action_risk'      => 'medium',
 					'raw'              => $shown,
 				)

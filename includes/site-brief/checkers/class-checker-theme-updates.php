@@ -97,7 +97,7 @@ class Checker_Theme_Updates extends Site_Brief_Checker {
 				array(
 					'title'            => sprintf(
 						/* translators: %s: theme name. */
-						__( 'Active theme %s has an update', 'agent-builder' ),
+						__( 'Active theme %s has an update', 'siteloom' ),
 						$name
 					),
 					'evidence'         => $evidence,
@@ -106,7 +106,7 @@ class Checker_Theme_Updates extends Site_Brief_Checker {
 						'version' => $current,
 						'new'     => $new,
 					),
-					'proposed_action'  => __( 'Open the Themes screen to review the update. Agent Builder will not auto-update.', 'agent-builder' ),
+					'proposed_action'  => __( 'Open the Themes screen to review the update. Agent Builder will not auto-update.', 'siteloom' ),
 					'action_risk'      => 'medium',
 					'raw'              => array(
 						'slug'    => (string) ( $active['slug'] ?? '' ),

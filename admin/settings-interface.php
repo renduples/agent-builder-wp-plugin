@@ -18,14 +18,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! current_user_can( 'agent_builder_manage_settings' ) && ! current_user_can( 'manage_options' ) ) {
-	wp_die( esc_html__( 'You do not have permission to access this page.', 'agent-builder' ) );
+	wp_die( esc_html__( 'You do not have permission to access this page.', 'siteloom' ) );
 }
 
 $agentic_if_asset_file = AGENT_BUILDER_DIR . 'build/interface-settings.asset.php';
 
 if ( ! file_exists( $agentic_if_asset_file ) ) {
 	echo '<div class="notice notice-error inline"><p>'
-		. esc_html__( 'The Interface panel assets are missing. Run "npm install && npm run build" to generate them.', 'agent-builder' )
+		. esc_html__( 'The Interface panel assets are missing. Run "npm install && npm run build" to generate them.', 'siteloom' )
 		. '</p></div>';
 	return;
 }
@@ -44,7 +44,7 @@ wp_enqueue_style( 'wp-components' );
 
 wp_set_script_translations(
 	'agentic-interface-settings',
-	'agent-builder',
+	'siteloom',
 	AGENT_BUILDER_DIR . 'languages'
 );
 ?>

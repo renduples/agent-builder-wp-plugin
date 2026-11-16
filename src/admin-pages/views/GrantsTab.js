@@ -19,7 +19,7 @@ function GrantsTab() {
 			.catch( ( e ) => {
 				setGrants( [] );
 				setErr(
-					e.message || __( 'Could not load grants.', 'agent-builder' )
+					e.message || __( 'Could not load grants.', 'siteloom' )
 				);
 			} );
 	};
@@ -44,7 +44,7 @@ function GrantsTab() {
 			! window.confirm(
 				__(
 					'Stop always allowing this tool? Agents will ask again before running it.',
-					'agent-builder'
+					'siteloom'
 				)
 			)
 		) {
@@ -58,13 +58,13 @@ function GrantsTab() {
 			method: 'DELETE',
 		} )
 			.then( () => {
-				setOk( __( 'Grant revoked.', 'agent-builder' ) );
+				setOk( __( 'Grant revoked.', 'siteloom' ) );
 				loadGrants();
 			} )
 			.catch( ( e ) =>
 				setErr(
 					e.message ||
-						__( 'Could not revoke the grant.', 'agent-builder' )
+						__( 'Could not revoke the grant.', 'siteloom' )
 				)
 			)
 			.finally( () => setBusyTool( '' ) );
@@ -86,23 +86,23 @@ function GrantsTab() {
 			<p className="agentic-react-muted">
 				{ __(
 					'Always-allow grants let an agent run a tool without asking first. Revoke one to make that agent pause for approval again.',
-					'agent-builder'
+					'siteloom'
 				) }
 			</p>
 
 			{ grants === null ? (
 				<p>
-					<Spinner /> { __( 'Loading grants…', 'agent-builder' ) }
+					<Spinner /> { __( 'Loading grants…', 'siteloom' ) }
 				</p>
 			) : ! grants.length ? (
 				<div className="agentic-react-approvals-empty">
 					<p>
-						<strong>{ __( 'No grants yet', 'agent-builder' ) }</strong>
+						<strong>{ __( 'No grants yet', 'siteloom' ) }</strong>
 					</p>
 					<p className="agentic-react-muted">
 						{ __(
 							'When you choose “Allow always” on an approval, it will show up here.',
-							'agent-builder'
+							'siteloom'
 						) }
 					</p>
 				</div>
@@ -111,7 +111,7 @@ function GrantsTab() {
 					<table className="agentic-react-table agentic-grants-table">
 						<thead>
 							<tr>
-								<th>{ __( 'Grant', 'agent-builder' ) }</th>
+								<th>{ __( 'Grant', 'siteloom' ) }</th>
 								<th />
 							</tr>
 						</thead>
@@ -125,14 +125,14 @@ function GrantsTab() {
 									at === -1
 										? sprintf(
 												/* translators: %s: tool slug */
-												__( '%s — all agents', 'agent-builder' ),
+												__( '%s — all agents', 'siteloom' ),
 												slug
 										  )
 										: sprintf(
 												/* translators: 1: tool slug, 2: agent slug */
 												__(
 													'%1$s — only for %2$s',
-													'agent-builder'
+													'siteloom'
 												),
 												slug,
 												agent
@@ -149,7 +149,7 @@ function GrantsTab() {
 													disabled={ busy }
 													onClick={ () => revoke( tool ) }
 												>
-													{ __( 'Revoke', 'agent-builder' ) }
+													{ __( 'Revoke', 'siteloom' ) }
 												</Button>
 											</div>
 										</td>

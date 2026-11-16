@@ -57,12 +57,12 @@ $agentic_logs = $agentic_audit->get_recent(
 );
 ?>
 <p class="agentic-page-desc">
-	<?php esc_html_e( 'Records every action your AI agents took — tool calls, code proposals, approvals, settings changes, and errors.', 'agent-builder' ); ?>
-	<?php esc_html_e( 'Use this log to understand what your agents did, how many tokens they consumed, and what it cost.', 'agent-builder' ); ?>
-	<?php esc_html_e( 'Chat message content lives in the', 'agent-builder' ); ?>
-	<a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-audit-log&tab=conversations' ) ); ?>"><?php esc_html_e( 'Conversations', 'agent-builder' ); ?></a>
-	<?php esc_html_e( 'tab.', 'agent-builder' ); ?>
-	&middot; <a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-settings&tab=security' ) ); ?>"><?php esc_html_e( 'Manage retention', 'agent-builder' ); ?></a>
+	<?php esc_html_e( 'Records every action your AI agents took — tool calls, code proposals, approvals, settings changes, and errors.', 'siteloom' ); ?>
+	<?php esc_html_e( 'Use this log to understand what your agents did, how many tokens they consumed, and what it cost.', 'siteloom' ); ?>
+	<?php esc_html_e( 'Chat message content lives in the', 'siteloom' ); ?>
+	<a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-audit-log&tab=conversations' ) ); ?>"><?php esc_html_e( 'Conversations', 'siteloom' ); ?></a>
+	<?php esc_html_e( 'tab.', 'siteloom' ); ?>
+	&middot; <a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-settings&tab=security' ) ); ?>"><?php esc_html_e( 'Manage retention', 'siteloom' ); ?></a>
 </p>
 
 <!-- Period picker -->
@@ -100,9 +100,9 @@ $agentic_logs = $agentic_audit->get_recent(
 
 	<div class="tablenav top">
 		<div class="alignleft actions">
-			<label for="agentic-agent-filter" class="screen-reader-text"><?php esc_html_e( 'Filter by agent', 'agent-builder' ); ?></label>
+			<label for="agentic-agent-filter" class="screen-reader-text"><?php esc_html_e( 'Filter by agent', 'siteloom' ); ?></label>
 			<select name="agent" id="agentic-agent-filter">
-				<option value=""><?php esc_html_e( 'All Agents', 'agent-builder' ); ?></option>
+				<option value=""><?php esc_html_e( 'All Agents', 'siteloom' ); ?></option>
 				<?php foreach ( $agentic_audit->get_agent_ids() as $agentic_aid ) : ?>
 					<option value="<?php echo esc_attr( $agentic_aid ); ?>" <?php selected( $agentic_agent_filter, $agentic_aid ); ?>>
 						<?php echo esc_html( Audit_Log::human_agent( $agentic_aid ) ); ?>
@@ -110,9 +110,9 @@ $agentic_logs = $agentic_audit->get_recent(
 				<?php endforeach; ?>
 			</select>
 
-			<label for="agentic-action-filter" class="screen-reader-text"><?php esc_html_e( 'Filter by action', 'agent-builder' ); ?></label>
+			<label for="agentic-action-filter" class="screen-reader-text"><?php esc_html_e( 'Filter by action', 'siteloom' ); ?></label>
 			<select name="action" id="agentic-action-filter">
-				<option value=""><?php esc_html_e( 'All Actions', 'agent-builder' ); ?></option>
+				<option value=""><?php esc_html_e( 'All Actions', 'siteloom' ); ?></option>
 				<?php foreach ( $agentic_audit->get_action_types() as $agentic_act ) : ?>
 					<option value="<?php echo esc_attr( $agentic_act ); ?>" <?php selected( $agentic_action_filter, $agentic_act ); ?>>
 						<?php echo esc_html( Audit_Log::human_action( $agentic_act ) ); ?>
@@ -120,7 +120,7 @@ $agentic_logs = $agentic_audit->get_recent(
 				<?php endforeach; ?>
 			</select>
 
-			<input type="submit" class="button" value="<?php esc_attr_e( 'Filter', 'agent-builder' ); ?>">
+			<input type="submit" class="button" value="<?php esc_attr_e( 'Filter', 'siteloom' ); ?>">
 			<?php if ( $agentic_agent_filter || $agentic_action_filter ) : ?>
 				<a href="
 				<?php
@@ -135,7 +135,7 @@ $agentic_logs = $agentic_audit->get_recent(
 					)
 				);
 				?>
-							" class="button"><?php esc_html_e( 'Clear', 'agent-builder' ); ?></a>
+							" class="button"><?php esc_html_e( 'Clear', 'siteloom' ); ?></a>
 			<?php endif; ?>
 		</div>
 		<div class="alignright">
@@ -154,7 +154,7 @@ $agentic_logs = $agentic_audit->get_recent(
 					)
 				);
 				?>
-							" class="button"><?php esc_html_e( 'Hide chat events', 'agent-builder' ); ?></a>
+							" class="button"><?php esc_html_e( 'Hide chat events', 'siteloom' ); ?></a>
 			<?php else : ?>
 				<a href="
 				<?php
@@ -170,7 +170,7 @@ $agentic_logs = $agentic_audit->get_recent(
 					)
 				);
 				?>
-							" class="button"><?php esc_html_e( 'Show chat events', 'agent-builder' ); ?></a>
+							" class="button"><?php esc_html_e( 'Show chat events', 'siteloom' ); ?></a>
 			<?php endif; ?>
 		</div>
 		<br class="clear">

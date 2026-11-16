@@ -200,13 +200,13 @@ final class Skills_Registry {
 			$lines[] = sprintf(
 				'- %s — %s [slug: %s]',
 				(string) ( $skill['name'] ?? $skill['slug'] ),
-				'' !== $desc ? $desc : __( 'No description', 'agent-builder' ),
+				'' !== $desc ? $desc : __( 'No description', 'siteloom' ),
 				(string) ( $skill['slug'] ?? '' )
 			);
 		}
 
 		$block = "\n\n[SKILLS]\n"
-			. __( 'The entries below are titles only. When a request matches one, call load_skill with its [slug] to load the full instructions before acting — do not guess at a workflow from the description alone. Skip skills that clearly do not apply.', 'agent-builder' )
+			. __( 'The entries below are titles only. When a request matches one, call load_skill with its [slug] to load the full instructions before acting — do not guess at a workflow from the description alone. Skip skills that clearly do not apply.', 'siteloom' )
 			. "\n"
 			. implode( "\n", $lines )
 			. "\n";
@@ -647,17 +647,17 @@ final class Skills_Registry {
 		$errors = array();
 
 		if ( '' === $name ) {
-			$errors[] = __( 'Name is required.', 'agent-builder' );
+			$errors[] = __( 'Name is required.', 'siteloom' );
 		} elseif ( strlen( $name ) > 64 ) {
-			$errors[] = __( 'Name must be 64 characters or fewer.', 'agent-builder' );
+			$errors[] = __( 'Name must be 64 characters or fewer.', 'siteloom' );
 		} elseif ( ! preg_match( '/^[a-z0-9]+(-[a-z0-9]+)*$/', $name ) ) {
-			$errors[] = __( 'Name may only contain lowercase letters, numbers, and single hyphens (no leading/trailing/double hyphens).', 'agent-builder' );
+			$errors[] = __( 'Name may only contain lowercase letters, numbers, and single hyphens (no leading/trailing/double hyphens).', 'siteloom' );
 		}
 
 		if ( '' === $description ) {
-			$errors[] = __( 'Description is required — it is what the agent matches against to decide when to use this skill.', 'agent-builder' );
+			$errors[] = __( 'Description is required — it is what the agent matches against to decide when to use this skill.', 'siteloom' );
 		} elseif ( strlen( $description ) > 1024 ) {
-			$errors[] = __( 'Description must be 1024 characters or fewer.', 'agent-builder' );
+			$errors[] = __( 'Description must be 1024 characters or fewer.', 'siteloom' );
 		}
 
 		return $errors;
@@ -849,33 +849,33 @@ final class Skills_Registry {
 
 		return array(
 			'blank'          => array(
-				'label'       => __( 'Blank skill', 'agent-builder' ),
-				'category'    => __( 'General', 'agent-builder' ),
-				'description' => __( 'Start from an empty SKILL.md skeleton.', 'agent-builder' ),
+				'label'       => __( 'Blank skill', 'siteloom' ),
+				'category'    => __( 'General', 'siteloom' ),
+				'description' => __( 'Start from an empty SKILL.md skeleton.', 'siteloom' ),
 				'content'     => $blank,
 			),
 			'wp-content'     => array(
-				'label'       => __( 'WordPress content workflow', 'agent-builder' ),
-				'category'    => __( 'WordPress', 'agent-builder' ),
-				'description' => __( 'For a skill that creates, edits, or reviews posts and pages.', 'agent-builder' ),
+				'label'       => __( 'WordPress content workflow', 'siteloom' ),
+				'category'    => __( 'WordPress', 'siteloom' ),
+				'description' => __( 'For a skill that creates, edits, or reviews posts and pages.', 'siteloom' ),
 				'content'     => $with_tools( 'my-content-skill', 'My Content Skill', 'the user wants to [create/edit/review] WordPress content' ),
 			),
 			'woocommerce'    => array(
-				'label'       => __( 'WooCommerce workflow', 'agent-builder' ),
-				'category'    => __( 'WooCommerce', 'agent-builder' ),
-				'description' => __( 'For a skill touching products, orders, or store data.', 'agent-builder' ),
+				'label'       => __( 'WooCommerce workflow', 'siteloom' ),
+				'category'    => __( 'WooCommerce', 'siteloom' ),
+				'description' => __( 'For a skill touching products, orders, or store data.', 'siteloom' ),
 				'content'     => $with_tools( 'my-woocommerce-skill', 'My WooCommerce Skill', 'the user wants to work with WooCommerce products/orders' ),
 			),
 			'dev-tool'       => array(
-				'label'       => __( 'Developer / technical workflow', 'agent-builder' ),
-				'category'    => __( 'Developer', 'agent-builder' ),
-				'description' => __( 'For a skill wrapping technical or maintenance tools.', 'agent-builder' ),
+				'label'       => __( 'Developer / technical workflow', 'siteloom' ),
+				'category'    => __( 'Developer', 'siteloom' ),
+				'description' => __( 'For a skill wrapping technical or maintenance tools.', 'siteloom' ),
 				'content'     => $with_tools( 'my-dev-skill', 'My Developer Skill', 'the user has a [specific technical] request' ),
 			),
 			'communication'  => array(
-				'label'       => __( 'Communication / support workflow', 'agent-builder' ),
-				'category'    => __( 'Communication', 'agent-builder' ),
-				'description' => __( 'For a skill handling messaging, notifications, or support handoffs.', 'agent-builder' ),
+				'label'       => __( 'Communication / support workflow', 'siteloom' ),
+				'category'    => __( 'Communication', 'siteloom' ),
+				'description' => __( 'For a skill handling messaging, notifications, or support handoffs.', 'siteloom' ),
 				'content'     => $with_tools( 'my-comms-skill', 'My Communication Skill', 'the user wants to [notify/message/escalate]' ),
 			),
 		);

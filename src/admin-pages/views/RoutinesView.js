@@ -24,219 +24,219 @@ import {
 // Recurrence presets the classic Deployment → Scheduled Tasks page offers
 // (Agent_Lifecycle::ALLOWED_USER_SCHEDULES), with the standard WP display names.
 const SCHEDULE_PRESETS = [
-	{ value: 'hourly', label: __( 'Once Hourly', 'agent-builder' ) },
-	{ value: 'twicedaily', label: __( 'Twice Daily', 'agent-builder' ) },
-	{ value: 'daily', label: __( 'Once Daily', 'agent-builder' ) },
-	{ value: 'weekly', label: __( 'Once Weekly', 'agent-builder' ) },
+	{ value: 'hourly', label: __( 'Once Hourly', 'siteloom' ) },
+	{ value: 'twicedaily', label: __( 'Twice Daily', 'siteloom' ) },
+	{ value: 'daily', label: __( 'Once Daily', 'siteloom' ) },
+	{ value: 'weekly', label: __( 'Once Weekly', 'siteloom' ) },
 ];
 
 // The event-hook list the classic Deployment → Event Listeners page offers,
 // grouped the same way. `_custom` opens a free-text hook input.
 const EVENT_HOOK_GROUPS = [
 	{
-		label: __( 'Content', 'agent-builder' ),
+		label: __( 'Content', 'siteloom' ),
 		hooks: [
 			{
 				value: 'save_post',
 				label:
 					'save_post — ' +
-					__( 'post saved or updated', 'agent-builder' ),
+					__( 'post saved or updated', 'siteloom' ),
 			},
 			{
 				value: 'publish_post',
 				label:
-					'publish_post — ' + __( 'post published', 'agent-builder' ),
+					'publish_post — ' + __( 'post published', 'siteloom' ),
 			},
 			{
 				value: 'draft_to_publish',
 				label:
 					'draft_to_publish — ' +
-					__( 'draft published', 'agent-builder' ),
+					__( 'draft published', 'siteloom' ),
 			},
 			{
 				value: 'future_to_publish',
 				label:
 					'future_to_publish — ' +
-					__( 'scheduled post goes live', 'agent-builder' ),
+					__( 'scheduled post goes live', 'siteloom' ),
 			},
 			{
 				value: 'post_updated',
 				label:
-					'post_updated — ' + __( 'post updated', 'agent-builder' ),
+					'post_updated — ' + __( 'post updated', 'siteloom' ),
 			},
 			{
 				value: 'before_delete_post',
 				label:
 					'before_delete_post — ' +
-					__( 'post permanently deleted', 'agent-builder' ),
+					__( 'post permanently deleted', 'siteloom' ),
 			},
 			{
 				value: 'wp_trash_post',
 				label:
 					'wp_trash_post — ' +
-					__( 'post moved to trash', 'agent-builder' ),
+					__( 'post moved to trash', 'siteloom' ),
 			},
 			{
 				value: 'untrash_post',
 				label:
 					'untrash_post — ' +
-					__( 'post restored from trash', 'agent-builder' ),
+					__( 'post restored from trash', 'siteloom' ),
 			},
 		],
 	},
 	{
-		label: __( 'Comments', 'agent-builder' ),
+		label: __( 'Comments', 'siteloom' ),
 		hooks: [
 			{
 				value: 'wp_insert_comment',
 				label:
 					'wp_insert_comment — ' +
-					__( 'new comment inserted', 'agent-builder' ),
+					__( 'new comment inserted', 'siteloom' ),
 			},
 			{
 				value: 'comment_post',
 				label:
 					'comment_post — ' +
-					__( 'comment submitted', 'agent-builder' ),
+					__( 'comment submitted', 'siteloom' ),
 			},
 			{
 				value: 'edit_comment',
 				label:
-					'edit_comment — ' + __( 'comment edited', 'agent-builder' ),
+					'edit_comment — ' + __( 'comment edited', 'siteloom' ),
 			},
 			{
 				value: 'delete_comment',
 				label:
 					'delete_comment — ' +
-					__( 'comment deleted', 'agent-builder' ),
+					__( 'comment deleted', 'siteloom' ),
 			},
 			{
 				value: 'spam_comment',
 				label:
 					'spam_comment — ' +
-					__( 'comment marked spam', 'agent-builder' ),
+					__( 'comment marked spam', 'siteloom' ),
 			},
 		],
 	},
 	{
-		label: __( 'Users', 'agent-builder' ),
+		label: __( 'Users', 'siteloom' ),
 		hooks: [
 			{
 				value: 'user_register',
 				label:
 					'user_register — ' +
-					__( 'new user registered', 'agent-builder' ),
+					__( 'new user registered', 'siteloom' ),
 			},
 			{
 				value: 'profile_update',
 				label:
 					'profile_update — ' +
-					__( 'user profile updated', 'agent-builder' ),
+					__( 'user profile updated', 'siteloom' ),
 			},
 			{
 				value: 'wp_login',
-				label: 'wp_login — ' + __( 'user logged in', 'agent-builder' ),
+				label: 'wp_login — ' + __( 'user logged in', 'siteloom' ),
 			},
 			{
 				value: 'wp_logout',
 				label:
-					'wp_logout — ' + __( 'user logged out', 'agent-builder' ),
+					'wp_logout — ' + __( 'user logged out', 'siteloom' ),
 			},
 			{
 				value: 'delete_user',
-				label: 'delete_user — ' + __( 'user deleted', 'agent-builder' ),
+				label: 'delete_user — ' + __( 'user deleted', 'siteloom' ),
 			},
 			{
 				value: 'password_reset',
 				label:
 					'password_reset — ' +
-					__( 'password reset', 'agent-builder' ),
+					__( 'password reset', 'siteloom' ),
 			},
 		],
 	},
 	{
-		label: __( 'Media', 'agent-builder' ),
+		label: __( 'Media', 'siteloom' ),
 		hooks: [
 			{
 				value: 'add_attachment',
 				label:
 					'add_attachment — ' +
-					__( 'file uploaded', 'agent-builder' ),
+					__( 'file uploaded', 'siteloom' ),
 			},
 			{
 				value: 'edit_attachment',
 				label:
 					'edit_attachment — ' +
-					__( 'attachment updated', 'agent-builder' ),
+					__( 'attachment updated', 'siteloom' ),
 			},
 			{
 				value: 'delete_attachment',
 				label:
 					'delete_attachment — ' +
-					__( 'attachment deleted', 'agent-builder' ),
+					__( 'attachment deleted', 'siteloom' ),
 			},
 		],
 	},
 	{
-		label: __( 'WooCommerce', 'agent-builder' ),
+		label: __( 'WooCommerce', 'siteloom' ),
 		hooks: [
 			{
 				value: 'woocommerce_new_order',
 				label:
 					'woocommerce_new_order — ' +
-					__( 'new order created', 'agent-builder' ),
+					__( 'new order created', 'siteloom' ),
 			},
 			{
 				value: 'woocommerce_order_status_changed',
 				label:
 					'woocommerce_order_status_changed — ' +
-					__( 'order status changed', 'agent-builder' ),
+					__( 'order status changed', 'siteloom' ),
 			},
 			{
 				value: 'woocommerce_payment_complete',
 				label:
 					'woocommerce_payment_complete — ' +
-					__( 'payment completed', 'agent-builder' ),
+					__( 'payment completed', 'siteloom' ),
 			},
 			{
 				value: 'woocommerce_low_stock',
 				label:
 					'woocommerce_low_stock — ' +
-					__( 'product low stock', 'agent-builder' ),
+					__( 'product low stock', 'siteloom' ),
 			},
 			{
 				value: 'woocommerce_no_stock',
 				label:
 					'woocommerce_no_stock — ' +
-					__( 'product out of stock', 'agent-builder' ),
+					__( 'product out of stock', 'siteloom' ),
 			},
 		],
 	},
 	{
-		label: __( 'Plugins & Themes', 'agent-builder' ),
+		label: __( 'Plugins & Themes', 'siteloom' ),
 		hooks: [
 			{
 				value: 'activated_plugin',
 				label:
 					'activated_plugin — ' +
-					__( 'plugin activated', 'agent-builder' ),
+					__( 'plugin activated', 'siteloom' ),
 			},
 			{
 				value: 'deactivated_plugin',
 				label:
 					'deactivated_plugin — ' +
-					__( 'plugin deactivated', 'agent-builder' ),
+					__( 'plugin deactivated', 'siteloom' ),
 			},
 			{
 				value: 'upgrader_process_complete',
 				label:
 					'upgrader_process_complete — ' +
-					__( 'plugin/theme updated', 'agent-builder' ),
+					__( 'plugin/theme updated', 'siteloom' ),
 			},
 			{
 				value: 'switch_theme',
 				label:
-					'switch_theme — ' + __( 'theme switched', 'agent-builder' ),
+					'switch_theme — ' + __( 'theme switched', 'siteloom' ),
 			},
 		],
 	},
@@ -332,15 +332,15 @@ function RoutineEditorDrawer( { routine, agents, onClose, onSaved } ) {
 			return;
 		}
 		if ( ! agentSlug ) {
-			setErr( __( 'Choose an agent.', 'agent-builder' ) );
+			setErr( __( 'Choose an agent.', 'siteloom' ) );
 			return;
 		}
 		if ( ! prompt.trim() ) {
-			setErr( __( 'Prompt is required.', 'agent-builder' ) );
+			setErr( __( 'Prompt is required.', 'siteloom' ) );
 			return;
 		}
 		if ( 'event_listener' === kind && ! effectiveHook ) {
-			setErr( __( 'Choose or enter a hook name.', 'agent-builder' ) );
+			setErr( __( 'Choose or enter a hook name.', 'siteloom' ) );
 			return;
 		}
 
@@ -377,7 +377,7 @@ function RoutineEditorDrawer( { routine, agents, onClose, onSaved } ) {
 				setSaving( false );
 				setErr(
 					e.message ||
-						__( 'Could not save the routine.', 'agent-builder' )
+						__( 'Could not save the routine.', 'siteloom' )
 				);
 			} );
 	};
@@ -385,10 +385,10 @@ function RoutineEditorDrawer( { routine, agents, onClose, onSaved } ) {
 	const title = isEdit
 		? sprintf(
 				/* translators: %s: routine label */
-				__( 'Edit routine: %s', 'agent-builder' ),
-				routine.label || __( 'Routine', 'agent-builder' )
+				__( 'Edit routine: %s', 'siteloom' ),
+				routine.label || __( 'Routine', 'siteloom' )
 		  )
-		: __( 'Add routine', 'agent-builder' );
+		: __( 'Add routine', 'siteloom' );
 
 	return (
 		<Modal
@@ -406,7 +406,7 @@ function RoutineEditorDrawer( { routine, agents, onClose, onSaved } ) {
 				<Notice status="info" isDismissible={ false }>
 					{ __(
 						'No agents are available to run a routine.',
-						'agent-builder'
+						'siteloom'
 					) }
 				</Notice>
 			) }
@@ -419,7 +419,7 @@ function RoutineEditorDrawer( { routine, agents, onClose, onSaved } ) {
 					disabled={ isEdit }
 					onClick={ () => setKind( 'scheduled_task' ) }
 				>
-					{ __( 'Scheduled task', 'agent-builder' ) }
+					{ __( 'Scheduled task', 'siteloom' ) }
 				</Button>
 				<Button
 					variant={
@@ -428,20 +428,20 @@ function RoutineEditorDrawer( { routine, agents, onClose, onSaved } ) {
 					disabled={ isEdit }
 					onClick={ () => setKind( 'event_listener' ) }
 				>
-					{ __( 'Event listener', 'agent-builder' ) }
+					{ __( 'Event listener', 'siteloom' ) }
 				</Button>
 			</div>
 			{ isEdit && (
 				<p className="agentic-react-muted">
 					{ __(
 						'The routine type cannot be changed after creation.',
-						'agent-builder'
+						'siteloom'
 					) }
 				</p>
 			) }
 
 			<SelectControl
-				label={ __( 'Agent', 'agent-builder' ) }
+				label={ __( 'Agent', 'siteloom' ) }
 				value={ agentSlug }
 				options={ agentOptions }
 				onChange={ setAgentSlug }
@@ -449,28 +449,28 @@ function RoutineEditorDrawer( { routine, agents, onClose, onSaved } ) {
 			/>
 
 			<TextControl
-				label={ __( 'Name', 'agent-builder' ) }
+				label={ __( 'Name', 'siteloom' ) }
 				value={ name }
 				onChange={ setName }
 				help={ __(
 					'Optional — auto-generated if blank.',
-					'agent-builder'
+					'siteloom'
 				) }
 			/>
 
 			<TextareaControl
-				label={ __( 'Prompt', 'agent-builder' ) }
+				label={ __( 'Prompt', 'siteloom' ) }
 				value={ prompt }
 				onChange={ setPrompt }
 				placeholder={
 					'scheduled_task' === kind
 						? __(
 								'Describe what the agent should do on each run…',
-								'agent-builder'
+								'siteloom'
 						  )
 						: __(
 								'Describe what the agent should do when this event fires…',
-								'agent-builder'
+								'siteloom'
 						  )
 				}
 			/>
@@ -478,16 +478,16 @@ function RoutineEditorDrawer( { routine, agents, onClose, onSaved } ) {
 			{ 'scheduled_task' === kind ? (
 				<>
 					<SelectControl
-						label={ __( 'Schedule', 'agent-builder' ) }
+						label={ __( 'Schedule', 'siteloom' ) }
 						value={ schedule }
 						options={ SCHEDULE_PRESETS }
 						onChange={ setSchedule }
 					/>
 					<TextControl
-						label={ __( 'Description', 'agent-builder' ) }
+						label={ __( 'Description', 'siteloom' ) }
 						value={ description }
 						onChange={ setDescription }
-						help={ __( 'Optional short note.', 'agent-builder' ) }
+						help={ __( 'Optional short note.', 'siteloom' ) }
 					/>
 				</>
 			) : (
@@ -496,7 +496,7 @@ function RoutineEditorDrawer( { routine, agents, onClose, onSaved } ) {
 						className="agentic-routines-label"
 						htmlFor="agentic-routines-hook"
 					>
-						{ __( 'WordPress event', 'agent-builder' ) }
+						{ __( 'WordPress event', 'siteloom' ) }
 					</label>
 					<select
 						id="agentic-routines-hook"
@@ -505,7 +505,7 @@ function RoutineEditorDrawer( { routine, agents, onClose, onSaved } ) {
 						onChange={ ( e ) => setHook( e.target.value ) }
 					>
 						<option value="">
-							{ __( '— choose an event —', 'agent-builder' ) }
+							{ __( '— choose an event —', 'siteloom' ) }
 						</option>
 						{ EVENT_HOOK_GROUPS.map( ( group ) => (
 							<optgroup key={ group.label } label={ group.label }>
@@ -516,56 +516,56 @@ function RoutineEditorDrawer( { routine, agents, onClose, onSaved } ) {
 								) ) }
 							</optgroup>
 						) ) }
-						<optgroup label={ __( 'Custom', 'agent-builder' ) }>
+						<optgroup label={ __( 'Custom', 'siteloom' ) }>
 							<option value="_custom">
-								{ __( 'Custom hook name…', 'agent-builder' ) }
+								{ __( 'Custom hook name…', 'siteloom' ) }
 							</option>
 						</optgroup>
 					</select>
 					{ '_custom' === hook && (
 						<TextControl
-							label={ __( 'Custom hook name', 'agent-builder' ) }
+							label={ __( 'Custom hook name', 'siteloom' ) }
 							value={ customHook }
 							onChange={ setCustomHook }
 							placeholder="my_plugin_action"
 							help={ __(
 								'Enter any WordPress action hook name.',
-								'agent-builder'
+								'siteloom'
 							) }
 						/>
 					) }
 					<TextControl
-						label={ __( 'Priority', 'agent-builder' ) }
+						label={ __( 'Priority', 'siteloom' ) }
 						type="number"
 						value={ priority }
 						onChange={ setPriority }
 						help={ __(
 							'Lower numbers run first. Default is 10.',
-							'agent-builder'
+							'siteloom'
 						) }
 					/>
 				</>
 			) }
 
 			<TextControl
-				label={ __( 'Skill slug', 'agent-builder' ) }
+				label={ __( 'Skill slug', 'siteloom' ) }
 				value={ skillSlug }
 				onChange={ setSkillSlug }
 				help={ __(
 					'Optional. The slug of a skill to attach to this routine.',
-					'agent-builder'
+					'siteloom'
 				) }
 			/>
 
 			<ToggleControl
-				label={ __( 'Enabled', 'agent-builder' ) }
+				label={ __( 'Enabled', 'siteloom' ) }
 				checked={ enabled }
 				onChange={ setEnabled }
 			/>
 
 			<div className="agentic-routines-drawer__actions">
 				<Button variant="secondary" onClick={ onClose }>
-					{ __( 'Cancel', 'agent-builder' ) }
+					{ __( 'Cancel', 'siteloom' ) }
 				</Button>
 				<Button
 					variant="primary"
@@ -574,8 +574,8 @@ function RoutineEditorDrawer( { routine, agents, onClose, onSaved } ) {
 					onClick={ save }
 				>
 					{ isEdit
-						? __( 'Save routine', 'agent-builder' )
-						: __( 'Add routine', 'agent-builder' ) }
+						? __( 'Save routine', 'siteloom' )
+						: __( 'Add routine', 'siteloom' ) }
 				</Button>
 			</div>
 		</Modal>
@@ -602,7 +602,7 @@ function RoutineHistoryDrawer( { routine, onClose } ) {
 				if ( ! cancelled ) {
 					setError(
 						e.message ||
-							__( 'Could not load history.', 'agent-builder' )
+							__( 'Could not load history.', 'siteloom' )
 					);
 					setLoading( false );
 				}
@@ -616,7 +616,7 @@ function RoutineHistoryDrawer( { routine, onClose } ) {
 	if ( loading ) {
 		body = (
 			<p>
-				<Spinner /> { __( 'Loading…', 'agent-builder' ) }
+				<Spinner /> { __( 'Loading…', 'siteloom' ) }
 			</p>
 		);
 	} else if ( error ) {
@@ -630,7 +630,7 @@ function RoutineHistoryDrawer( { routine, onClose } ) {
 			<p className="agentic-react-muted">
 				{ __(
 					'No runs yet. Use “Test run” to run this routine once now.',
-					'agent-builder'
+					'siteloom'
 				) }
 			</p>
 		);
@@ -656,7 +656,7 @@ function RoutineHistoryDrawer( { routine, onClose } ) {
 							<span>
 								{ sprintf(
 									/* translators: %d: token count */
-									__( '%d tokens', 'agent-builder' ),
+									__( '%d tokens', 'siteloom' ),
 									run.tokens_used || 0
 								) }
 							</span>
@@ -664,13 +664,13 @@ function RoutineHistoryDrawer( { routine, onClose } ) {
 								<span>
 									{ sprintf(
 										/* translators: %d: iteration count */
-										__( '%d steps', 'agent-builder' ),
+										__( '%d steps', 'siteloom' ),
 										run.iterations
 									) }
 								</span>
 							) : null }
 							<a href={ tasksRunUrl( run.run_id ) }>
-								{ __( 'View in Tasks', 'agent-builder' ) }
+								{ __( 'View in Tasks', 'siteloom' ) }
 							</a>
 						</div>
 					</li>
@@ -683,8 +683,8 @@ function RoutineHistoryDrawer( { routine, onClose } ) {
 		<Modal
 			title={ sprintf(
 				/* translators: %s: routine label */
-				__( 'History: %s', 'agent-builder' ),
-				routine.label || __( 'Routine', 'agent-builder' )
+				__( 'History: %s', 'siteloom' ),
+				routine.label || __( 'Routine', 'siteloom' )
 			) }
 			onRequestClose={ onClose }
 			className="agentic-routines-drawer"
@@ -725,7 +725,7 @@ function RoutinesView( { data } ) {
 			.catch( ( e ) => {
 				setError(
 					e.message ||
-						__( 'Could not load routines.', 'agent-builder' )
+						__( 'Could not load routines.', 'siteloom' )
 				);
 				setLoading( false );
 			} );
@@ -754,7 +754,7 @@ function RoutinesView( { data } ) {
 					status: 'error',
 					message:
 						e.message ||
-						__( 'Something went wrong.', 'agent-builder' ),
+						__( 'Something went wrong.', 'siteloom' ),
 				} );
 			} )
 			.finally( () => setBusy( '' ) );
@@ -767,8 +767,8 @@ function RoutinesView( { data } ) {
 				setNotice( {
 					status: 'success',
 					message: routine.enabled
-						? __( 'Routine paused.', 'agent-builder' )
-						: __( 'Routine resumed.', 'agent-builder' ),
+						? __( 'Routine paused.', 'siteloom' )
+						: __( 'Routine resumed.', 'siteloom' ),
 				} ),
 		} );
 	};
@@ -784,11 +784,11 @@ function RoutinesView( { data } ) {
 									/* translators: %s: run id */
 									__(
 										'Test run started (run %s).',
-										'agent-builder'
+										'siteloom'
 									),
 									res.run_id
 							  )
-							: __( 'Test run started.', 'agent-builder' ),
+							: __( 'Test run started.', 'siteloom' ),
 				} ),
 		} );
 	};
@@ -801,7 +801,7 @@ function RoutinesView( { data } ) {
 					/* translators: %s: routine label */
 					__(
 						'Delete “%s”? This cannot be undone.',
-						'agent-builder'
+						'siteloom'
 					),
 					name
 				)
@@ -820,7 +820,7 @@ function RoutinesView( { data } ) {
 					status: 'success',
 					message: sprintf(
 						/* translators: %s: routine label */
-						__( 'Deleted “%s”.', 'agent-builder' ),
+						__( 'Deleted “%s”.', 'siteloom' ),
 						name
 					),
 				} );
@@ -830,7 +830,7 @@ function RoutinesView( { data } ) {
 				setNotice( {
 					status: 'error',
 					message:
-						e.message || __( 'Delete failed.', 'agent-builder' ),
+						e.message || __( 'Delete failed.', 'siteloom' ),
 				} );
 			} )
 			.finally( () => setBusy( '' ) );
@@ -880,7 +880,7 @@ function RoutinesView( { data } ) {
 	if ( loading ) {
 		body = (
 			<p>
-				<Spinner /> { __( 'Loading…', 'agent-builder' ) }
+				<Spinner /> { __( 'Loading…', 'siteloom' ) }
 			</p>
 		);
 	} else if ( error ) {
@@ -894,7 +894,7 @@ function RoutinesView( { data } ) {
 			<p className="agentic-react-muted">
 				{ __(
 					'No routines yet. Routines run your agents on a schedule or in response to site events.',
-					'agent-builder'
+					'siteloom'
 				) }
 			</p>
 		);
@@ -904,14 +904,14 @@ function RoutinesView( { data } ) {
 				<table className="agentic-react-table agentic-routines-table">
 					<thead>
 						<tr>
-							<th>{ __( 'Agent', 'agent-builder' ) }</th>
-							<th>{ __( 'Routine', 'agent-builder' ) }</th>
-							<th>{ __( 'Trigger', 'agent-builder' ) }</th>
-							<th>{ __( 'Skill', 'agent-builder' ) }</th>
-							<th>{ __( 'Next run', 'agent-builder' ) }</th>
-							<th>{ __( 'Last status', 'agent-builder' ) }</th>
-							<th>{ __( 'On / Off', 'agent-builder' ) }</th>
-							<th>{ __( 'Actions', 'agent-builder' ) }</th>
+							<th>{ __( 'Agent', 'siteloom' ) }</th>
+							<th>{ __( 'Routine', 'siteloom' ) }</th>
+							<th>{ __( 'Trigger', 'siteloom' ) }</th>
+							<th>{ __( 'Skill', 'siteloom' ) }</th>
+							<th>{ __( 'Next run', 'siteloom' ) }</th>
+							<th>{ __( 'Last status', 'siteloom' ) }</th>
+							<th>{ __( 'On / Off', 'siteloom' ) }</th>
+							<th>{ __( 'Actions', 'siteloom' ) }</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -928,7 +928,7 @@ function RoutinesView( { data } ) {
 											{ routine.label ||
 												__(
 													'Routine',
-													'agent-builder'
+													'siteloom'
 												) }
 										</strong>
 									</td>
@@ -958,17 +958,17 @@ function RoutinesView( { data } ) {
 												routine.enabled
 													? __(
 															'On',
-															'agent-builder'
+															'siteloom'
 													  )
 													: __(
 															'Off',
-															'agent-builder'
+															'siteloom'
 													  )
 											}
 										/>{ ' ' }
 										{ routine.enabled
-											? __( 'On', 'agent-builder' )
-											: __( 'Off', 'agent-builder' ) }
+											? __( 'On', 'siteloom' )
+											: __( 'Off', 'siteloom' ) }
 									</td>
 									<td>
 										<Button
@@ -979,7 +979,7 @@ function RoutinesView( { data } ) {
 												setEditing( routine )
 											}
 										>
-											{ __( 'Edit', 'agent-builder' ) }
+											{ __( 'Edit', 'siteloom' ) }
 										</Button>
 										<Button
 											variant="link"
@@ -990,10 +990,10 @@ function RoutinesView( { data } ) {
 											}
 										>
 											{ routine.enabled
-												? __( 'Pause', 'agent-builder' )
+												? __( 'Pause', 'siteloom' )
 												: __(
 														'Resume',
-														'agent-builder'
+														'siteloom'
 												  ) }
 										</Button>
 										<Button
@@ -1004,7 +1004,7 @@ function RoutinesView( { data } ) {
 										>
 											{ __(
 												'Test run',
-												'agent-builder'
+												'siteloom'
 											) }
 										</Button>
 										<Button
@@ -1015,7 +1015,7 @@ function RoutinesView( { data } ) {
 												setHistoryFor( routine )
 											}
 										>
-											{ __( 'History', 'agent-builder' ) }
+											{ __( 'History', 'siteloom' ) }
 										</Button>
 										<Button
 											variant="link"
@@ -1026,7 +1026,7 @@ function RoutinesView( { data } ) {
 												doDelete( routine )
 											}
 										>
-											{ __( 'Delete', 'agent-builder' ) }
+											{ __( 'Delete', 'siteloom' ) }
 										</Button>
 									</td>
 								</tr>
@@ -1044,10 +1044,10 @@ function RoutinesView( { data } ) {
 				<Notice status="warning" isDismissible={ false }>
 					{ __(
 						'Scheduled background tasks are overdue (no recent cron tick). Routines on a schedule will not run until WP-Cron ticks again.',
-						'agent-builder'
+						'siteloom'
 					) }{ ' ' }
 					<a href="tools.php?page=health-check">
-						{ __( 'Check Site Health', 'agent-builder' ) }
+						{ __( 'Check Site Health', 'siteloom' ) }
 					</a>
 				</Notice>
 			) }
@@ -1064,7 +1064,7 @@ function RoutinesView( { data } ) {
 
 			<div className="agentic-routines-toolbar">
 				<Button variant="primary" onClick={ () => setCreating( true ) }>
-					{ __( 'Add routine', 'agent-builder' ) }
+					{ __( 'Add routine', 'siteloom' ) }
 				</Button>
 			</div>
 
@@ -1076,7 +1076,7 @@ function RoutinesView( { data } ) {
 					agents={ agents }
 					onClose={ () => setCreating( false ) }
 					onSaved={ () =>
-						onSaved( __( 'Routine created.', 'agent-builder' ) )
+						onSaved( __( 'Routine created.', 'siteloom' ) )
 					}
 				/>
 			) }
@@ -1087,7 +1087,7 @@ function RoutinesView( { data } ) {
 					agents={ agents }
 					onClose={ () => setEditing( null ) }
 					onSaved={ () =>
-						onSaved( __( 'Routine saved.', 'agent-builder' ) )
+						onSaved( __( 'Routine saved.', 'siteloom' ) )
 					}
 				/>
 			) }

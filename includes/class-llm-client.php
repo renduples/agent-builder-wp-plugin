@@ -230,7 +230,7 @@ class LLM_Client {
 		if ( 'agentic' === $this->provider && '' === (string) get_option( 'agent_builder_license_key', '' ) ) {
 			return new \WP_Error(
 				'agentic_license_missing',
-				__( 'The hosted Agentic AI connection has no license key, so requests would be rejected. Reconnect from Agent Builder → Quick Start, or add your own provider key under Settings → Providers.', 'agent-builder' )
+				__( 'The hosted Agentic AI connection has no license key, so requests would be rejected. Reconnect from Agent Builder → Quick Start, or add your own provider key under Settings → Providers.', 'siteloom' )
 			);
 		}
 
@@ -331,8 +331,8 @@ class LLM_Client {
 				// Pass through the server's own error message; use a generic fallback only if absent.
 				$user_msg = ! empty( $error_message ) ? $error_message : (
 					402 === $status
-						? __( 'The AI service requires payment or additional credits to continue.', 'agent-builder' )
-						: __( 'Rate limit reached. Please wait a moment and try again.', 'agent-builder' )
+						? __( 'The AI service requires payment or additional credits to continue.', 'siteloom' )
+						: __( 'Rate limit reached. Please wait a moment and try again.', 'siteloom' )
 				);
 				return new \WP_Error(
 					402 === $status ? 'insufficient_credits' : 'quota_exceeded',
@@ -344,7 +344,7 @@ class LLM_Client {
 				);
 			} elseif ( 503 === $status ) {
 				$retry_after   = (int) ( $data['retry_after'] ?? 10 );
-				$error_message = ! empty( $error_message ) ? $error_message : __( 'The AI model is currently busy. Please try again shortly.', 'agent-builder' );
+				$error_message = ! empty( $error_message ) ? $error_message : __( 'The AI model is currently busy. Please try again shortly.', 'siteloom' );
 				return new \WP_Error(
 					'model_busy',
 					$error_message,
@@ -489,7 +489,7 @@ class LLM_Client {
 		if ( 'agentic' === $this->provider && '' === (string) get_option( 'agent_builder_license_key', '' ) ) {
 			return new \WP_Error(
 				'agentic_license_missing',
-				__( 'The hosted Agentic AI connection has no license key, so requests would be rejected. Reconnect from Agent Builder → Quick Start, or add your own provider key under Settings → Providers.', 'agent-builder' )
+				__( 'The hosted Agentic AI connection has no license key, so requests would be rejected. Reconnect from Agent Builder → Quick Start, or add your own provider key under Settings → Providers.', 'siteloom' )
 			);
 		}
 

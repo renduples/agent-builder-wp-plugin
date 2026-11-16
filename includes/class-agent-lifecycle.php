@@ -244,14 +244,14 @@ class Agent_Lifecycle {
 		if ( empty( $agent_slug ) ) {
 			return array(
 				'ok'    => false,
-				'error' => __( 'Agent is required.', 'agent-builder' ),
+				'error' => __( 'Agent is required.', 'siteloom' ),
 			);
 		}
 
 		if ( '' === trim( $prompt ) ) {
 			return array(
 				'ok'    => false,
-				'error' => __( 'Prompt is required.', 'agent-builder' ),
+				'error' => __( 'Prompt is required.', 'siteloom' ),
 			);
 		}
 
@@ -260,7 +260,7 @@ class Agent_Lifecycle {
 		if ( ! $agent ) {
 			return array(
 				'ok'    => false,
-				'error' => __( 'Agent not found or not active.', 'agent-builder' ),
+				'error' => __( 'Agent not found or not active.', 'siteloom' ),
 			);
 		}
 
@@ -271,7 +271,7 @@ class Agent_Lifecycle {
 		if ( empty( $name ) ) {
 			$name = sprintf(
 				/* translators: 1: schedule label, 2: agent name */
-				__( '%1$s — %2$s', 'agent-builder' ),
+				__( '%1$s — %2$s', 'siteloom' ),
 				ucfirst( $schedule ),
 				$agent->get_name()
 			);
@@ -372,7 +372,7 @@ class Agent_Lifecycle {
 		if ( empty( $id ) ) {
 			return array(
 				'ok'    => false,
-				'error' => __( 'Missing task ID.', 'agent-builder' ),
+				'error' => __( 'Missing task ID.', 'siteloom' ),
 			);
 		}
 
@@ -652,12 +652,12 @@ class Agent_Lifecycle {
 		$body = get_userdata( $owner_id )
 			? sprintf(
 				/* translators: %s: routine label */
-				__( 'Routine "%s" was skipped: its owner no longer has the required capability.', 'agent-builder' ),
+				__( 'Routine "%s" was skipped: its owner no longer has the required capability.', 'siteloom' ),
 				$label
 			)
 			: sprintf(
 				/* translators: 1: routine label, 2: owner user id */
-				__( 'Routine "%1$s" was skipped: its owner (user %2$d) no longer exists.', 'agent-builder' ),
+				__( 'Routine "%1$s" was skipped: its owner (user %2$d) no longer exists.', 'siteloom' ),
 				$label,
 				$owner_id
 			);
@@ -665,7 +665,7 @@ class Agent_Lifecycle {
 		Notifications::notify(
 			$owner_id,
 			'routine_failed',
-			__( 'Routine skipped', 'agent-builder' ),
+			__( 'Routine skipped', 'siteloom' ),
 			$body,
 			array(
 				'agent_id' => $agent_id,
@@ -771,7 +771,7 @@ class Agent_Lifecycle {
 		if ( empty( $agent_slug ) || empty( $hook ) ) {
 			return array(
 				'ok'    => false,
-				'error' => __( 'Agent and hook are required.', 'agent-builder' ),
+				'error' => __( 'Agent and hook are required.', 'siteloom' ),
 			);
 		}
 
@@ -780,7 +780,7 @@ class Agent_Lifecycle {
 		if ( ! $agent ) {
 			return array(
 				'ok'    => false,
-				'error' => __( 'Agent not found or not active.', 'agent-builder' ),
+				'error' => __( 'Agent not found or not active.', 'siteloom' ),
 			);
 		}
 
@@ -866,7 +866,7 @@ class Agent_Lifecycle {
 		if ( empty( $id ) ) {
 			return array(
 				'ok'    => false,
-				'error' => __( 'Missing trigger ID.', 'agent-builder' ),
+				'error' => __( 'Missing trigger ID.', 'siteloom' ),
 			);
 		}
 

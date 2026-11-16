@@ -102,17 +102,17 @@ final class Agent_Manifest_Validator {
 			$slug = sanitize_title( (string) ( $raw['name'] ?? '' ) );
 		}
 		if ( '' === $slug ) {
-			return new \WP_Error( 'invalid_slug', __( 'A valid agent slug or name is required.', 'agent-builder' ) );
+			return new \WP_Error( 'invalid_slug', __( 'A valid agent slug or name is required.', 'siteloom' ) );
 		}
 
 		$name = self::clean_text( (string) ( $raw['name'] ?? '' ), self::MAX_NAME );
 		if ( '' === $name ) {
-			return new \WP_Error( 'invalid_name', __( 'Agent name is required.', 'agent-builder' ) );
+			return new \WP_Error( 'invalid_name', __( 'Agent name is required.', 'siteloom' ) );
 		}
 
 		$description = self::clean_text( (string) ( $raw['description'] ?? '' ), self::MAX_DESCRIPTION );
 		if ( '' === $description ) {
-			return new \WP_Error( 'invalid_description', __( 'Agent description is required.', 'agent-builder' ) );
+			return new \WP_Error( 'invalid_description', __( 'Agent description is required.', 'siteloom' ) );
 		}
 
 		$category = strtolower( sanitize_key( (string) ( $raw['category'] ?? 'admin' ) ) );

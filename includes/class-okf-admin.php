@@ -49,7 +49,7 @@ class Okf_Admin {
 	 */
 	private static function require_capability(): void {
 		if ( ! current_user_can( self::CAP ) && ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( __( 'Permission denied.', 'agent-builder' ), 403 );
+			wp_send_json_error( __( 'Permission denied.', 'siteloom' ), 403 );
 		}
 	}
 
@@ -206,23 +206,23 @@ class Okf_Admin {
 		self::require_capability();
 		$agent = isset( $_POST['agent'] ) ? sanitize_key( wp_unslash( $_POST['agent'] ) ) : '';
 		if ( '' === $agent ) {
-			wp_send_json_error( __( 'Choose an agent to import from.', 'agent-builder' ) );
+			wp_send_json_error( __( 'Choose an agent to import from.', 'siteloom' ) );
 		}
 
 		$file = File_Manager::find_data_file( 'knowledge', $agent . '-knowledge.txt' );
 		if ( null === $file ) {
-			wp_send_json_error( __( 'No persona knowledge file found for that agent.', 'agent-builder' ) );
+			wp_send_json_error( __( 'No persona knowledge file found for that agent.', 'siteloom' ) );
 		}
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 		$text = trim( (string) file_get_contents( $file ) );
 		if ( '' === $text ) {
-			wp_send_json_error( __( 'The knowledge file is empty.', 'agent-builder' ) );
+			wp_send_json_error( __( 'The knowledge file is empty.', 'siteloom' ) );
 		}
 
 		$result = Okf_Store::import_plain_text(
 			sprintf(
 				/* translators: %s: agent slug */
-				__( 'Imported knowledge (%s)', 'agent-builder' ),
+				__( 'Imported knowledge (%s)', 'siteloom' ),
 				$agent
 			),
 			$text,
@@ -234,7 +234,7 @@ class Okf_Admin {
 
 		wp_send_json_success(
 			array(
-				'message'  => __( 'Imported into the agent knowledge wiki.', 'agent-builder' ),
+				'message'  => __( 'Imported into the agent knowledge wiki.', 'siteloom' ),
 				'concepts' => Okf_Store::list_concepts( $agent, true ),
 			)
 		);

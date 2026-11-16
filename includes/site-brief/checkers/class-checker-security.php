@@ -82,7 +82,7 @@ class Checker_Security extends Site_Brief_Checker {
 		if ( empty( $flags ) ) {
 			$flags[] = sprintf(
 				/* translators: %d: failed login count. */
-				__( '%d failed logins in the last 24 hours.', 'agent-builder' ),
+				__( '%d failed logins in the last 24 hours.', 'siteloom' ),
 				$failed
 			);
 		}
@@ -92,14 +92,14 @@ class Checker_Security extends Site_Brief_Checker {
 		return array(
 			$this->card(
 				array(
-					'title'            => __( 'Security flags on this site', 'agent-builder' ),
+					'title'            => __( 'Security flags on this site', 'siteloom' ),
 					'evidence'         => implode( ' ', array_slice( $flags, 0, 3 ) ),
 					'evidence_payload' => array(
 						'flags'  => $flags,
 						'failed' => $failed,
 						'level'  => $level,
 					),
-					'proposed_action'  => __( 'Review failed logins and administrator accounts. No lock or reset is queued in this version.', 'agent-builder' ),
+					'proposed_action'  => __( 'Review failed logins and administrator accounts. No lock or reset is queued in this version.', 'siteloom' ),
 					'action_risk'      => 'none',
 					'severity'         => 'high' === $level ? 95 : 90,
 					'approve'          => array( 'type' => 'none' ),

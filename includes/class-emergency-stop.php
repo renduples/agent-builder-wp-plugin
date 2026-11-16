@@ -54,7 +54,7 @@ class Emergency_Stop {
 	public static function blocked_message(): string {
 		return __(
 			'Emergency stop is active: all agents and LLM providers are disabled. An administrator can turn this off under Interface Settings.',
-			'agent-builder'
+			'siteloom'
 		);
 	}
 
@@ -205,7 +205,7 @@ class Emergency_Stop {
 				if ( is_wp_error( $result ) ) {
 					$warnings[] = sprintf(
 						/* translators: 1: agent slug, 2: error message */
-						__( 'Could not reactivate agent "%1$s": %2$s', 'agent-builder' ),
+						__( 'Could not reactivate agent "%1$s": %2$s', 'siteloom' ),
 						$slug,
 						$result->get_error_message()
 					);
@@ -358,7 +358,7 @@ class Emergency_Stop {
 			if ( ! $restored ) {
 				$warnings[] = sprintf(
 					/* translators: %s: provider name */
-					__( 'Could not restore the API key for "%s" — the provider no longer exists.', 'agent-builder' ),
+					__( 'Could not restore the API key for "%s" — the provider no longer exists.', 'siteloom' ),
 					(string) ( $info['name'] ?? $slug )
 				);
 				continue;

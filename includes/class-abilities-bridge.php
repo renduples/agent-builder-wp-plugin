@@ -85,16 +85,16 @@ class Abilities_Bridge {
 		WP_Optional_API::register_ability_category(
 			self::CATEGORY_READ,
 			array(
-				'label'       => __( 'Agent Builder — Read', 'agent-builder' ),
-				'description' => __( 'Read-only WordPress data access tools from the Agent Builder plugin.', 'agent-builder' ),
+				'label'       => __( 'Agent Builder — Read', 'siteloom' ),
+				'description' => __( 'Read-only WordPress data access tools from the Agent Builder plugin.', 'siteloom' ),
 			)
 		);
 
 		WP_Optional_API::register_ability_category(
 			self::CATEGORY_WRITE,
 			array(
-				'label'       => __( 'Agent Builder — Write', 'agent-builder' ),
-				'description' => __( 'WordPress data modification tools from the Agent Builder plugin.', 'agent-builder' ),
+				'label'       => __( 'Agent Builder — Write', 'siteloom' ),
+				'description' => __( 'WordPress data modification tools from the Agent Builder plugin.', 'siteloom' ),
 			)
 		);
 	}

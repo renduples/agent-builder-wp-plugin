@@ -276,14 +276,14 @@ class Admin_Ajax {
 		check_ajax_referer( 'agentic_toggle_tool' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( __( 'Permission denied.', 'agent-builder' ) );
+			wp_send_json_error( __( 'Permission denied.', 'siteloom' ) );
 		}
 
 		$tool_name = sanitize_text_field( wp_unslash( $_POST['tool'] ?? '' ) );
 		$enabled   = (bool) ( isset( $_POST['enabled'] ) ? rest_sanitize_boolean( wp_unslash( $_POST['enabled'] ) ) : true );
 
 		if ( empty( $tool_name ) ) {
-			wp_send_json_error( __( 'Missing tool name.', 'agent-builder' ) );
+			wp_send_json_error( __( 'Missing tool name.', 'siteloom' ) );
 		}
 
 		if ( $enabled && class_exists( Risk_Level::class ) ) {
@@ -292,7 +292,7 @@ class Admin_Ajax {
 				Risk_Level::get_tool_default( $tool_name )
 			);
 			if ( Risk_Level::EXTREME === $risk ) {
-				wp_send_json_error( __( 'This tool cannot be enabled', 'agent-builder' ) );
+				wp_send_json_error( __( 'This tool cannot be enabled', 'siteloom' ) );
 			}
 		}
 
@@ -322,25 +322,25 @@ class Admin_Ajax {
 		check_ajax_referer( 'agentic_toggle_inbound_ability' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( __( 'Permission denied.', 'agent-builder' ) );
+			wp_send_json_error( __( 'Permission denied.', 'siteloom' ) );
 		}
 
 		$ability_name = sanitize_text_field( wp_unslash( $_POST['ability'] ?? '' ) );
 		$enabled      = (bool) ( isset( $_POST['enabled'] ) ? rest_sanitize_boolean( wp_unslash( $_POST['enabled'] ) ) : true );
 
 		if ( empty( $ability_name ) ) {
-			wp_send_json_error( __( 'Missing ability name.', 'agent-builder' ) );
+			wp_send_json_error( __( 'Missing ability name.', 'siteloom' ) );
 		}
 
 		// Never allow our own outbound abilities into the inbound block-list —
 		// those are governed by the per-tool toggle on the Tools tab.
 		if ( str_starts_with( $ability_name, 'agent-builder/' ) ) {
-			wp_send_json_error( __( 'This ability is managed on the Tools tab.', 'agent-builder' ) );
+			wp_send_json_error( __( 'This ability is managed on the Tools tab.', 'siteloom' ) );
 		}
 
 		// Only accept names that correspond to a currently registered ability.
 		if ( ! WP_Optional_API::has( 'wp_get_ability' ) || ! Abilities_API::get( $ability_name ) ) {
-			wp_send_json_error( __( 'Unknown ability.', 'agent-builder' ) );
+			wp_send_json_error( __( 'Unknown ability.', 'siteloom' ) );
 		}
 
 		$disabled = get_option( 'agent_builder_disabled_inbound_abilities', array() );
@@ -375,7 +375,7 @@ class Admin_Ajax {
 		check_ajax_referer( 'agentic_user_triggers' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( __( 'Permission denied.', 'agent-builder' ) );
+			wp_send_json_error( __( 'Permission denied.', 'siteloom' ) );
 		}
 
 		$result = Agent_Lifecycle::save_user_trigger(
@@ -390,7 +390,7 @@ class Admin_Ajax {
 		);
 
 		if ( empty( $result['ok'] ) ) {
-			wp_send_json_error( $result['error'] ?? __( 'Could not save the event trigger.', 'agent-builder' ) );
+			wp_send_json_error( $result['error'] ?? __( 'Could not save the event trigger.', 'siteloom' ) );
 		}
 
 		wp_send_json_success(
@@ -410,14 +410,14 @@ class Admin_Ajax {
 		check_ajax_referer( 'agentic_user_triggers' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( __( 'Permission denied.', 'agent-builder' ) );
+			wp_send_json_error( __( 'Permission denied.', 'siteloom' ) );
 		}
 
 		$id     = sanitize_text_field( wp_unslash( $_POST['trigger_id'] ?? '' ) );
 		$result = Agent_Lifecycle::delete_user_trigger( $id );
 
 		if ( empty( $result['ok'] ) ) {
-			wp_send_json_error( $result['error'] ?? __( 'Could not delete the event trigger.', 'agent-builder' ) );
+			wp_send_json_error( $result['error'] ?? __( 'Could not delete the event trigger.', 'siteloom' ) );
 		}
 
 		wp_send_json_success();
@@ -432,7 +432,7 @@ class Admin_Ajax {
 		check_ajax_referer( 'agentic_user_scheduled_tasks' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( __( 'Permission denied.', 'agent-builder' ) );
+			wp_send_json_error( __( 'Permission denied.', 'siteloom' ) );
 		}
 
 		$result = Agent_Lifecycle::save_user_scheduled_task(
@@ -447,7 +447,7 @@ class Admin_Ajax {
 		);
 
 		if ( empty( $result['ok'] ) ) {
-			wp_send_json_error( $result['error'] ?? __( 'Could not save the scheduled task.', 'agent-builder' ) );
+			wp_send_json_error( $result['error'] ?? __( 'Could not save the scheduled task.', 'siteloom' ) );
 		}
 
 		wp_send_json_success(
@@ -467,14 +467,14 @@ class Admin_Ajax {
 		check_ajax_referer( 'agentic_user_scheduled_tasks' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( __( 'Permission denied.', 'agent-builder' ) );
+			wp_send_json_error( __( 'Permission denied.', 'siteloom' ) );
 		}
 
 		$id     = sanitize_key( wp_unslash( $_POST['task_id'] ?? '' ) );
 		$result = Agent_Lifecycle::delete_user_scheduled_task( $id );
 
 		if ( empty( $result['ok'] ) ) {
-			wp_send_json_error( $result['error'] ?? __( 'Could not delete the scheduled task.', 'agent-builder' ) );
+			wp_send_json_error( $result['error'] ?? __( 'Could not delete the scheduled task.', 'siteloom' ) );
 		}
 
 		wp_send_json_success();
@@ -489,17 +489,17 @@ class Admin_Ajax {
 		check_ajax_referer( 'agentic_cli_whitelist' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( __( 'Permission denied.', 'agent-builder' ) );
+			wp_send_json_error( __( 'Permission denied.', 'siteloom' ) );
 		}
 
 		$raw = sanitize_text_field( wp_unslash( $_POST['commands'] ?? '' ) );
 		if ( empty( $raw ) ) {
-			wp_send_json_error( __( 'No commands provided.', 'agent-builder' ) );
+			wp_send_json_error( __( 'No commands provided.', 'siteloom' ) );
 		}
 
 		$commands = json_decode( $raw, true );
 		if ( ! is_array( $commands ) ) {
-			wp_send_json_error( __( 'Invalid commands format.', 'agent-builder' ) );
+			wp_send_json_error( __( 'Invalid commands format.', 'siteloom' ) );
 		}
 
 		// Sanitize each command entry.
@@ -528,7 +528,7 @@ class Admin_Ajax {
 		// Load the existing tool row to preserve all other fields.
 		$row = Tools_Registry::get( 'run_wp_cli' );
 		if ( ! $row ) {
-			wp_send_json_error( __( 'run_wp_cli tool not found. Visit the Tools page first.', 'agent-builder' ) );
+			wp_send_json_error( __( 'run_wp_cli tool not found. Visit the Tools page first.', 'siteloom' ) );
 		}
 
 		$params                      = is_array( $row['parameters'] ) ? $row['parameters'] : array();
@@ -590,7 +590,7 @@ class Admin_Ajax {
 		check_ajax_referer( 'agentic_cli_privileges' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( __( 'Permission denied.', 'agent-builder' ) );
+			wp_send_json_error( __( 'Permission denied.', 'siteloom' ) );
 		}
 
 		$slug  = sanitize_text_field( wp_unslash( $_POST['agent_slug'] ?? '' ) );
@@ -598,12 +598,12 @@ class Admin_Ajax {
 		$value = sanitize_text_field( wp_unslash( $_POST['meta_value'] ?? 'no' ) );
 
 		if ( empty( $slug ) ) {
-			wp_send_json_error( __( 'Missing agent slug.', 'agent-builder' ) );
+			wp_send_json_error( __( 'Missing agent slug.', 'siteloom' ) );
 		}
 
 		$allowed_keys = array( 'cli_enabled', 'cli_invocation' );
 		if ( ! in_array( $key, $allowed_keys, true ) ) {
-			wp_send_json_error( __( 'Invalid privilege key.', 'agent-builder' ) );
+			wp_send_json_error( __( 'Invalid privilege key.', 'siteloom' ) );
 		}
 
 		$value = ( 'yes' === $value ) ? 'yes' : 'no';
@@ -631,10 +631,10 @@ class Admin_Ajax {
 		check_ajax_referer( 'agentic_agent_update_' . $slug, '_wpnonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( __( 'Insufficient permissions.', 'agent-builder' ) );
+			wp_send_json_error( __( 'Insufficient permissions.', 'siteloom' ) );
 		}
 
-		wp_send_json_error( __( 'Agent package updates are not available in this build.', 'agent-builder' ) );
+		wp_send_json_error( __( 'Agent package updates are not available in this build.', 'siteloom' ) );
 	}
 
 	/**
@@ -763,7 +763,7 @@ class Admin_Ajax {
 		check_ajax_referer( 'agentic_test_connection', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'agent-builder' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'siteloom' ) ) );
 		}
 
 		$provider = sanitize_text_field( wp_unslash( $_POST['provider'] ?? '' ) );
@@ -771,7 +771,7 @@ class Admin_Ajax {
 
 		$allowed = array( 'xai', 'openai', 'google', 'anthropic', 'mistral', 'ollama', 'llama', 'cohere', 'kimi', 'deepseek', 'agentic' );
 		if ( ! in_array( $provider, $allowed, true ) ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid provider.', 'agent-builder' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid provider.', 'siteloom' ) ) );
 		}
 
 		// Build a minimal test request for each provider.
@@ -973,13 +973,13 @@ class Admin_Ajax {
 
 		$code = wp_remote_retrieve_response_code( $response );
 		if ( $code >= 200 && $code < 300 ) {
-			wp_send_json_success( array( 'message' => __( 'Connected successfully!', 'agent-builder' ) ) );
+			wp_send_json_success( array( 'message' => __( 'Connected successfully!', 'siteloom' ) ) );
 		} else {
 			$body = wp_remote_retrieve_body( $response );
 			$data = json_decode( $body, true );
 			$data = is_array( $data ) ? $data : array();
 			/* translators: %d: HTTP status code */
-			$msg = $data['error']['message'] ?? $data['error'] ?? sprintf( __( 'Connection failed (HTTP %d). Check your API key.', 'agent-builder' ), $code );
+			$msg = $data['error']['message'] ?? $data['error'] ?? sprintf( __( 'Connection failed (HTTP %d). Check your API key.', 'siteloom' ), $code );
 			$msg = is_scalar( $msg ) ? (string) $msg : (string) wp_json_encode( $msg );
 			wp_send_json_error( array( 'message' => sanitize_text_field( $msg ) ) );
 		}
@@ -994,19 +994,19 @@ class Admin_Ajax {
 		check_ajax_referer( 'agentic_test_connection', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'agent-builder' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'siteloom' ) ) );
 		}
 
 		$provider = sanitize_text_field( wp_unslash( $_POST['provider'] ?? '' ) );
 		$api_key  = sanitize_text_field( wp_unslash( $_POST['api_key'] ?? '' ) );
 
 		if ( ! in_array( $provider, Provider_Registry::get_slugs(), true ) ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid provider.', 'agent-builder' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid provider.', 'siteloom' ) ) );
 		}
 
 		$provider_record = Provider_Registry::get( $provider );
 		if ( empty( $api_key ) && ( $provider_record['requires_key'] ?? true ) ) {
-			wp_send_json_error( array( 'message' => __( 'API key is required.', 'agent-builder' ) ) );
+			wp_send_json_error( array( 'message' => __( 'API key is required.', 'siteloom' ) ) );
 		}
 
 		$default_model = $provider_record['default_model'] ?? '';
@@ -1023,7 +1023,7 @@ class Admin_Ajax {
 			update_option( 'agent_builder_active_agents', array_unique( $active_agents ) );
 		}
 
-		wp_send_json_success( array( 'message' => __( 'Settings saved.', 'agent-builder' ) ) );
+		wp_send_json_success( array( 'message' => __( 'Settings saved.', 'siteloom' ) ) );
 	}
 
 	/**
@@ -1035,7 +1035,7 @@ class Admin_Ajax {
 		check_ajax_referer( 'agentic_test_connection', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'agent-builder' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'siteloom' ) ) );
 		}
 
 		$model         = sanitize_text_field( wp_unslash( $_POST['model'] ?? '' ) );
@@ -1062,13 +1062,13 @@ class Admin_Ajax {
 		check_ajax_referer( 'agentic_settings_nonce', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'agent-builder' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'siteloom' ) ) );
 		}
 
 		$provider = sanitize_text_field( wp_unslash( $_POST['provider'] ?? '' ) );
 		$allowed  = array( 'xai', 'openai', 'google', 'anthropic', 'mistral', 'ollama', 'llama', 'cohere', 'kimi', 'deepseek', 'agentic' );
 		if ( ! in_array( $provider, $allowed, true ) ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid provider.', 'agent-builder' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid provider.', 'siteloom' ) ) );
 		}
 
 		// Remove the API key.
@@ -1106,7 +1106,7 @@ class Admin_Ajax {
 			update_option( 'agent_builder_model', $all_models[ $next_provider ] ?? $next_record['default_model'] ?? '' );
 		}
 
-		wp_send_json_success( array( 'message' => __( 'Provider removed.', 'agent-builder' ) ) );
+		wp_send_json_success( array( 'message' => __( 'Provider removed.', 'siteloom' ) ) );
 	}
 
 	/**
@@ -1118,14 +1118,14 @@ class Admin_Ajax {
 		check_ajax_referer( 'agentic_fetch_provider_models', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'agent-builder' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'siteloom' ) ) );
 		}
 
 		$slug  = sanitize_key( wp_unslash( $_POST['provider'] ?? '' ) );
 		$force = ! empty( $_POST['force'] );
 
 		if ( ! Provider_Registry::is_valid( $slug ) ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid provider.', 'agent-builder' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid provider.', 'siteloom' ) ) );
 		}
 
 		$cache_key = 'agentic_models_' . $slug;
@@ -1163,7 +1163,7 @@ class Admin_Ajax {
 		$models = Provider_Registry::fetch_live_models_from_api( $slug, true );
 
 		if ( empty( $models ) ) {
-			wp_send_json_error( array( 'message' => __( 'No models returned. Ensure your API key is saved and valid.', 'agent-builder' ) ) );
+			wp_send_json_error( array( 'message' => __( 'No models returned. Ensure your API key is saved and valid.', 'siteloom' ) ) );
 		}
 
 		// Persist to provider table (single source of truth) and transient cache.
@@ -1218,7 +1218,7 @@ class Admin_Ajax {
 		if ( '' === $api_key ) {
 			return new \WP_Error(
 				'agentic_no_api_key',
-				sanitize_text_field( is_scalar( $body['message'] ?? null ) ? (string) $body['message'] : __( 'No API key returned. Please try again.', 'agent-builder' ) )
+				sanitize_text_field( is_scalar( $body['message'] ?? null ) ? (string) $body['message'] : __( 'No API key returned. Please try again.', 'siteloom' ) )
 			);
 		}
 
@@ -1230,7 +1230,7 @@ class Admin_Ajax {
 		if ( ! Provider_Registry::save_api_key( 'agentic', $api_key ) ) {
 			return new \WP_Error(
 				'agentic_api_key_not_saved',
-				__( 'Your API key was issued but could not be saved on this site. Please deactivate and reactivate Agent Builder to repair its database tables, then try again.', 'agent-builder' )
+				__( 'Your API key was issued but could not be saved on this site. Please deactivate and reactivate Agent Builder to repair its database tables, then try again.', 'siteloom' )
 			);
 		}
 
@@ -1248,7 +1248,7 @@ class Admin_Ajax {
 			// same email), but the hosted provider is not usable until it does.
 			return new \WP_Error(
 				'agentic_license_key_missing',
-				__( 'Your API key was saved, but the service did not issue a license key, which the hosted Agentic AI provider needs. Please try connecting again in a few minutes, or add your own provider key under Settings → Providers.', 'agent-builder' )
+				__( 'Your API key was saved, but the service did not issue a license key, which the hosted Agentic AI provider needs. Please try connecting again in a few minutes, or add your own provider key under Settings → Providers.', 'siteloom' )
 			);
 		}
 
@@ -1302,7 +1302,7 @@ class Admin_Ajax {
 		check_ajax_referer( 'agentic_signup' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'agent-builder' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'siteloom' ) ) );
 		}
 
 		$email          = sanitize_email( wp_unslash( $_POST['email'] ?? '' ) );
@@ -1327,13 +1327,13 @@ class Admin_Ajax {
 		}
 
 		if ( empty( $email ) ) {
-			wp_send_json_error( array( 'message' => __( 'Email address is required.', 'agent-builder' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Email address is required.', 'siteloom' ) ) );
 		}
 
 		// The forms check these boxes in the browser too; the request itself
 		// must carry the acceptance before anything is sent to the service.
 		if ( ! self::has_signup_consent( wp_unslash( $_POST ) ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- only compared against '1'.
-			wp_send_json_error( array( 'message' => __( 'Please agree to the Terms of Service and Privacy Policy.', 'agent-builder' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Please agree to the Terms of Service and Privacy Policy.', 'siteloom' ) ) );
 		}
 
 		if ( empty( $site_url ) ) {
@@ -1382,7 +1382,7 @@ class Admin_Ajax {
 
 		wp_send_json_success(
 			array(
-				'message' => __( 'API key saved.', 'agent-builder' ),
+				'message' => __( 'API key saved.', 'siteloom' ),
 				'api_key' => $api_key,
 			)
 		);
@@ -1397,19 +1397,19 @@ class Admin_Ajax {
 		check_ajax_referer( 'agentic_run_task' );
 
 		if ( ! User_Roles::current_user_can( 'run_tasks_manually' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'agent-builder' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'siteloom' ) ) );
 		}
 
 		$agent_id = sanitize_text_field( wp_unslash( $_POST['agent'] ?? '' ) );
 		$task_id  = sanitize_text_field( wp_unslash( $_POST['task'] ?? '' ) );
 
 		if ( empty( $agent_id ) || empty( $task_id ) ) {
-			wp_send_json_error( array( 'message' => __( 'Missing agent or task parameter.', 'agent-builder' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Missing agent or task parameter.', 'siteloom' ) ) );
 		}
 
 		$resolved = Agent_Lifecycle::resolve_task( $agent_id, $task_id );
 		if ( ! $resolved ) {
-			wp_send_json_error( array( 'message' => __( 'Task not found on this agent.', 'agent-builder' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Task not found on this agent.', 'siteloom' ) ) );
 		}
 
 		$instance = $resolved['agent'];

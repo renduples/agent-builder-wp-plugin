@@ -253,14 +253,14 @@ global $wpdb;
 	</tr>
 
 	<tr>
-		<th scope="row"><label for="agent_builder_allow_platform_sync"><?php esc_html_e( 'Model catalog sync', 'agent-builder' ); ?></label></th>
+		<th scope="row"><label for="agent_builder_allow_platform_sync"><?php esc_html_e( 'Model catalog sync', 'siteloom' ); ?></label></th>
 		<td>
 			<label>
 				<input type="checkbox" name="agent_builder_allow_platform_sync" id="agent_builder_allow_platform_sync" value="1" <?php checked( $agent_builder_allow_platform_sync ); ?> />
-				<?php esc_html_e( 'Refresh the LLM model catalog from agentic-plugin.com once a day', 'agent-builder' ); ?>
+				<?php esc_html_e( 'Refresh the LLM model catalog from agentic-plugin.com once a day', 'siteloom' ); ?>
 			</label>
 			<p class="description">
-				<?php esc_html_e( 'Off by default. Bring-your-own-key providers work without this. Enable only if you want curated model names and list prices fetched from Agentic.', 'agent-builder' ); ?>
+				<?php esc_html_e( 'Off by default. Bring-your-own-key providers work without this. Enable only if you want curated model names and list prices fetched from Agentic.', 'siteloom' ); ?>
 			</p>
 		</td>
 	</tr>
@@ -296,8 +296,8 @@ $agentic_grants_revoke_base = rest_url( 'agentic/v1/tool-grants/' );
 	<table class="widefat striped" id="agentic-tool-grants-table">
 		<thead>
 			<tr>
-				<th><?php esc_html_e( 'Tool', 'agent-builder' ); ?></th>
-				<th><?php esc_html_e( 'Actions', 'agent-builder' ); ?></th>
+				<th><?php esc_html_e( 'Tool', 'siteloom' ); ?></th>
+				<th><?php esc_html_e( 'Actions', 'siteloom' ); ?></th>
 			</tr>
 		</thead>
 		<tbody>
@@ -312,7 +312,7 @@ $agentic_grants_revoke_base = rest_url( 'agentic/v1/tool-grants/' );
 						data-nonce="<?php echo esc_attr( $agentic_grants_nonce ); ?>"
 						data-url="<?php echo esc_url( $agentic_grants_revoke_base . rawurlencode( $agentic_grant_tool ) ); ?>"
 					>
-						<?php esc_html_e( 'Revoke', 'agent-builder' ); ?>
+						<?php esc_html_e( 'Revoke', 'siteloom' ); ?>
 					</button>
 				</td>
 			</tr>

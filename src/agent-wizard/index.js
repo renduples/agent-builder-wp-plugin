@@ -28,11 +28,11 @@ import {
 import { __ } from '@wordpress/i18n';
 
 const STEPS = [
-	{ key: 'basics', label: __( 'Basics', 'agent-builder' ) },
-	{ key: 'persona', label: __( 'Persona', 'agent-builder' ) },
-	{ key: 'brain', label: __( 'Capabilities', 'agent-builder' ) },
-	{ key: 'knowledge', label: __( 'Knowledge', 'agent-builder' ) },
-	{ key: 'review', label: __( 'Review', 'agent-builder' ) },
+	{ key: 'basics', label: __( 'Basics', 'siteloom' ) },
+	{ key: 'persona', label: __( 'Persona', 'siteloom' ) },
+	{ key: 'brain', label: __( 'Capabilities', 'siteloom' ) },
+	{ key: 'knowledge', label: __( 'Knowledge', 'siteloom' ) },
+	{ key: 'review', label: __( 'Review', 'siteloom' ) },
 ];
 
 // Localized RAG/knowledge bridge (admin-ajax + nonce) from agent-wizard.php.
@@ -59,7 +59,7 @@ function Stepper( { current } ) {
 	return (
 		<ol
 			className="agentic-wizard-steps"
-			aria-label={ __( 'Wizard steps', 'agent-builder' ) }
+			aria-label={ __( 'Wizard steps', 'siteloom' ) }
 		>
 			{ STEPS.map( ( stepItem, index ) => (
 				<li
@@ -141,7 +141,7 @@ function App() {
 			.catch( ( err ) =>
 				setLoadError(
 					err.message ||
-						__( 'Could not load the wizard.', 'agent-builder' )
+						__( 'Could not load the wizard.', 'siteloom' )
 				)
 			);
 	}, [] );
@@ -182,12 +182,12 @@ function App() {
 					setKbItems( ( res.data && res.data.items ) || [] );
 				} else {
 					setKbItems( [] );
-					setKbError( ( res && res.data ) || __( 'Could not load your content.', 'agent-builder' ) );
+					setKbError( ( res && res.data ) || __( 'Could not load your content.', 'siteloom' ) );
 				}
 			} )
 			.catch( () => {
 				setKbItems( [] );
-				setKbError( __( 'Could not load your content.', 'agent-builder' ) );
+				setKbError( __( 'Could not load your content.', 'siteloom' ) );
 			} );
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ step ] );
@@ -200,12 +200,12 @@ function App() {
 	const knowledgeSummary = () => {
 		const parts = [];
 		if ( selectedPosts.length ) {
-			parts.push( format( __( '%s pages/posts', 'agent-builder' ), String( selectedPosts.length ) ) );
+			parts.push( format( __( '%s pages/posts', 'siteloom' ), String( selectedPosts.length ) ) );
 		}
 		if ( files.length ) {
-			parts.push( format( __( '%s files', 'agent-builder' ), String( files.length ) ) );
+			parts.push( format( __( '%s files', 'siteloom' ), String( files.length ) ) );
 		}
-		return parts.length ? parts.join( ', ' ) : __( '(none)', 'agent-builder' );
+		return parts.length ? parts.join( ', ' ) : __( '(none)', 'siteloom' );
 	};
 
 	const startTraining = () => {
@@ -291,7 +291,7 @@ function App() {
 					err.message ||
 						__(
 							'Something went wrong creating the agent.',
-							'agent-builder'
+							'siteloom'
 						)
 				)
 			)
@@ -309,7 +309,7 @@ function App() {
 	if ( ! options ) {
 		return (
 			<div className="agentic-wizard-loading">
-				<Spinner /> { __( 'Loading…', 'agent-builder' ) }
+				<Spinner /> { __( 'Loading…', 'siteloom' ) }
 			</div>
 		);
 	}
@@ -322,7 +322,7 @@ function App() {
 						{ form.icon }{ ' ' }
 						{ format(
 							// translators: %s: the new agent's name.
-							__( '%s is ready!', 'agent-builder' ),
+							__( '%s is ready!', 'siteloom' ),
 							done.name || form.name
 						) }
 					</h2>
@@ -330,11 +330,11 @@ function App() {
 						{ done.activated
 							? __(
 									'Your agent has been created and activated. Add knowledge to make it smarter, or start chatting right away.',
-									'agent-builder'
+									'siteloom'
 							  )
 							: __(
 									'Your agent was created. Activate it from the Agents page, then add knowledge or start chatting.',
-									'agent-builder'
+									'siteloom'
 							  ) }
 					</p>
 					{ training && (
@@ -343,8 +343,8 @@ function App() {
 							isDismissible={ false }
 						>
 							{ training.running
-								? format( __( 'Training your agent on your knowledge… %s', 'agent-builder' ), `${ training.done }/${ training.total }` )
-								: format( __( 'Knowledge training finished — %s sources trained.', 'agent-builder' ), `${ training.ok }/${ training.total }` ) }
+								? format( __( 'Training your agent on your knowledge… %s', 'siteloom' ), `${ training.done }/${ training.total }` )
+								: format( __( 'Knowledge training finished — %s sources trained.', 'siteloom' ), `${ training.ok }/${ training.total }` ) }
 						</Notice>
 					) }
 					{ done.warning && (
@@ -356,7 +356,7 @@ function App() {
 						<Notice status="info" isDismissible={ false }>
 							{ __(
 								'A safe set of read-only tools was added so your agent works right away. You can change its tools later from the Agents page.',
-								'agent-builder'
+								'siteloom'
 							) }
 						</Notice>
 					) }
@@ -366,17 +366,17 @@ function App() {
 								variant="primary"
 								href={ done.knowledge_url }
 							>
-								{ __( 'Add Knowledge', 'agent-builder' ) }
+								{ __( 'Add Knowledge', 'siteloom' ) }
 							</Button>
 						</FlexItem>
 						<FlexItem>
 							<Button variant="secondary" href={ done.chat_url }>
-								{ __( 'Open Chat', 'agent-builder' ) }
+								{ __( 'Open Chat', 'siteloom' ) }
 							</Button>
 						</FlexItem>
 						<FlexItem>
 							<Button variant="secondary" href={ done.deploy_url }>
-								{ __( 'Publish This Agent', 'agent-builder' ) }
+								{ __( 'Publish This Agent', 'siteloom' ) }
 							</Button>
 						</FlexItem>
 						<FlexItem>
@@ -384,12 +384,12 @@ function App() {
 								variant="tertiary"
 								href={ done.configure_url }
 							>
-								{ __( 'Fine-tune Persona', 'agent-builder' ) }
+								{ __( 'Fine-tune Persona', 'siteloom' ) }
 							</Button>
 						</FlexItem>
 						<FlexItem>
 							<Button variant="tertiary" href={ done.agents_url }>
-								{ __( 'View all Agents', 'agent-builder' ) }
+								{ __( 'View all Agents', 'siteloom' ) }
 							</Button>
 						</FlexItem>
 					</Flex>
@@ -413,20 +413,20 @@ function App() {
 				{ step === 0 && (
 					<Fragment>
 						<TextControl
-							label={ __( 'Agent name', 'agent-builder' ) }
+							label={ __( 'Agent name', 'siteloom' ) }
 							help={ __(
 								'A friendly name, e.g. "Support Helper".',
-								'agent-builder'
+								'siteloom'
 							) }
 							value={ form.name }
 							onChange={ ( v ) => set( 'name', v ) }
 							__next40pxDefaultSize
 						/>
 						<TextControl
-							label={ __( 'Identifier (slug)', 'agent-builder' ) }
+							label={ __( 'Identifier (slug)', 'siteloom' ) }
 							help={ __(
 								'Used in URLs and files. Auto-filled from the name.',
-								'agent-builder'
+								'siteloom'
 							) }
 							value={ form.slug }
 							onChange={ ( v ) => set( 'slug', v ) }
@@ -435,11 +435,11 @@ function App() {
 						<TextareaControl
 							label={ __(
 								'What does this agent do?',
-								'agent-builder'
+								'siteloom'
 							) }
 							help={ __(
 								'A short description shown in the agents list.',
-								'agent-builder'
+								'siteloom'
 							) }
 							value={ form.description }
 							onChange={ ( v ) => set( 'description', v ) }
@@ -447,7 +447,7 @@ function App() {
 						<div className="agentic-wizard-inline-fields">
 							<div className="agentic-wizard-inline-fields__grow">
 								<SelectControl
-									label={ __( 'Category', 'agent-builder' ) }
+									label={ __( 'Category', 'siteloom' ) }
 									value={ form.category }
 									options={ options.categories.map(
 										( c ) => ( {
@@ -463,7 +463,7 @@ function App() {
 							</div>
 							<div className="agentic-wizard-inline-fields__icon">
 								<TextControl
-									label={ __( 'Icon', 'agent-builder' ) }
+									label={ __( 'Icon', 'siteloom' ) }
 									value={ form.icon }
 									onChange={ ( v ) => set( 'icon', v ) }
 									__next40pxDefaultSize
@@ -478,11 +478,11 @@ function App() {
 						<TextareaControl
 							label={ __(
 								'Instructions (system prompt)',
-								'agent-builder'
+								'siteloom'
 							) }
 							help={ __(
 								'Describe how the agent should behave, its tone, and what it should focus on.',
-								'agent-builder'
+								'siteloom'
 							) }
 							value={ form.system_prompt }
 							onChange={ ( v ) => set( 'system_prompt', v ) }
@@ -491,11 +491,11 @@ function App() {
 						<TextControl
 							label={ __(
 								'Welcome message (optional)',
-								'agent-builder'
+								'siteloom'
 							) }
 							help={ __(
 								'The greeting shown when a chat starts.',
-								'agent-builder'
+								'siteloom'
 							) }
 							value={ form.welcome_message }
 							onChange={ ( v ) => set( 'welcome_message', v ) }
@@ -504,21 +504,21 @@ function App() {
 						<p className="agentic-wizard-sublabel">
 							{ __(
 								'Suggested prompts (optional)',
-								'agent-builder'
+								'siteloom'
 							) }
 						</p>
 						{ form.prompts.map( ( prompt, index ) => (
 							<TextControl
 								key={ index }
 								label={ format(
-									__( 'Suggested prompt %s', 'agent-builder' ),
+									__( 'Suggested prompt %s', 'siteloom' ),
 									String( index + 1 )
 								) }
 								hideLabelFromVision
 								value={ prompt }
 								placeholder={ __(
 									'e.g. Summarize my latest posts',
-									'agent-builder'
+									'siteloom'
 								) }
 								onChange={ ( v ) => {
 									const prompts = form.prompts.slice();
@@ -537,7 +537,7 @@ function App() {
 							>
 								{ __(
 									'+ Add another prompt',
-									'agent-builder'
+									'siteloom'
 								) }
 							</Button>
 						) }
@@ -547,7 +547,7 @@ function App() {
 				{ step === 2 && (
 					<Fragment>
 						<SelectControl
-							label={ __( 'AI provider', 'agent-builder' ) }
+							label={ __( 'AI provider', 'siteloom' ) }
 							value={ form.provider }
 							options={ options.providers.map( ( p ) => ( {
 								label:
@@ -557,7 +557,7 @@ function App() {
 										: ' ' +
 										  __(
 												'(needs API key)',
-												'agent-builder'
+												'siteloom'
 										  ) ),
 								value: p.slug,
 							} ) ) }
@@ -573,7 +573,7 @@ function App() {
 							} }
 							help={ __(
 								'Leave as-is to use your site default.',
-								'agent-builder'
+								'siteloom'
 							) }
 							__next40pxDefaultSize
 						/>
@@ -581,7 +581,7 @@ function App() {
 							selectedProvider.models &&
 							selectedProvider.models.length > 0 && (
 								<SelectControl
-									label={ __( 'Model', 'agent-builder' ) }
+									label={ __( 'Model', 'siteloom' ) }
 									value={ form.model }
 									options={ selectedProvider.models.map(
 										( m ) => ( {
@@ -594,27 +594,27 @@ function App() {
 								/>
 							) }
 						<RadioControl
-							label={ __( 'Autonomy', 'agent-builder' ) }
+							label={ __( 'Autonomy', 'siteloom' ) }
 							selected={ form.mode }
 							options={ [
 								{
 									label: __(
 										'Supervised — asks before taking actions (recommended)',
-										'agent-builder'
+										'siteloom'
 									),
 									value: 'supervised',
 								},
 								{
 									label: __(
 										'Autonomous — acts on its own',
-										'agent-builder'
+										'siteloom'
 									),
 									value: 'autonomous',
 								},
 								{
 									label: __(
 										'Disabled — replies only, never acts',
-										'agent-builder'
+										'siteloom'
 									),
 									value: 'disabled',
 								},
@@ -624,7 +624,7 @@ function App() {
 						<p className="agentic-wizard-hint">
 							{ __(
 								'This only controls how often the agent pauses to ask you. Higher-risk actions still queue for your approval, and the riskiest actions are always blocked, no matter which autonomy level you pick.',
-								'agent-builder'
+								'siteloom'
 							) }
 						</p>
 						{ options.tools && options.tools.length > 0 && (
@@ -632,13 +632,13 @@ function App() {
 								<p className="agentic-wizard-sublabel">
 									{ __(
 										'Tools this agent can use (optional)',
-										'agent-builder'
+										'siteloom'
 									) }
 								</p>
 								<p className="agentic-wizard-hint">
 									{ __(
 										'If you don’t pick any, a safe set of read-only tools is added so your agent works right away.',
-										'agent-builder'
+										'siteloom'
 									) }
 								</p>
 								<div className="agentic-wizard-tools">
@@ -674,19 +674,19 @@ function App() {
 					<Fragment>
 						{ ! RAG.hasLicense ? (
 							<Notice status="info" isDismissible={ false }>
-								{ __( 'Knowledge uses the Agentic AI service. Connect your license to train agents on your content.', 'agent-builder' ) }
+								{ __( 'Knowledge uses the Agentic AI service. Connect your license to train agents on your content.', 'siteloom' ) }
 								{ ' ' }
 								<a href={ RAG.knowledgeUrl }>
-									{ __( 'Add knowledge later from the Knowledge page.', 'agent-builder' ) }
+									{ __( 'Add knowledge later from the Knowledge page.', 'siteloom' ) }
 								</a>
 							</Notice>
 						) : (
 							<Fragment>
 								<p className="agentic-wizard-hint">
-									{ __( 'Optionally give your agents knowledge to draw on. Selected pages, posts and files are embedded into your shared Vector Store after the agent is created — training runs in the background.', 'agent-builder' ) }
+									{ __( 'Optionally give your agents knowledge to draw on. Selected pages, posts and files are embedded into your shared Vector Store after the agent is created — training runs in the background.', 'siteloom' ) }
 								</p>
 								<label className="agentic-wizard-sublabel" htmlFor="agentic-wizard-kb-files">
-									{ __( 'Upload files (PDF or text)', 'agent-builder' ) }
+									{ __( 'Upload files (PDF or text)', 'siteloom' ) }
 								</label>
 								<input
 									id="agentic-wizard-kb-files"
@@ -696,24 +696,24 @@ function App() {
 									onChange={ ( e ) => setFiles( Array.from( e.target.files || [] ) ) }
 								/>
 								{ files.length > 0 && (
-									<p className="agentic-wizard-hint">{ format( __( '%s file(s) selected.', 'agent-builder' ), String( files.length ) ) }</p>
+									<p className="agentic-wizard-hint">{ format( __( '%s file(s) selected.', 'siteloom' ), String( files.length ) ) }</p>
 								) }
-								<p className="agentic-wizard-sublabel">{ __( 'Train on your site content', 'agent-builder' ) }</p>
+								<p className="agentic-wizard-sublabel">{ __( 'Train on your site content', 'siteloom' ) }</p>
 								{ kbError && (
 									<Notice status="warning" isDismissible={ false }>{ kbError }</Notice>
 								) }
 								{ kbItems === null && (
-									<div className="agentic-wizard-loading"><Spinner />{ ' ' }{ __( 'Loading your content…', 'agent-builder' ) }</div>
+									<div className="agentic-wizard-loading"><Spinner />{ ' ' }{ __( 'Loading your content…', 'siteloom' ) }</div>
 								) }
 								{ kbItems && kbItems.length === 0 && ! kbError && (
-									<p className="agentic-wizard-hint">{ __( 'No published pages or posts found.', 'agent-builder' ) }</p>
+									<p className="agentic-wizard-hint">{ __( 'No published pages or posts found.', 'siteloom' ) }</p>
 								) }
 								{ kbItems && kbItems.length > 0 && (
 									<div className="agentic-wizard-tools">
 										{ kbItems.map( ( item ) => (
 											<CheckboxControl
 												key={ item.id }
-												label={ item.title + ' (' + item.type + ( item.trained ? ', ' + __( 'trained', 'agent-builder' ) : '' ) + ')' }
+												label={ item.title + ' (' + item.type + ( item.trained ? ', ' + __( 'trained', 'siteloom' ) : '' ) + ')' }
 												checked={ selectedPosts.includes( item.id ) }
 												onChange={ () => togglePost( item.id ) }
 											/>
@@ -728,30 +728,30 @@ function App() {
 				{ step === 4 && (
 					<div className="agentic-wizard-review">
 						<ReviewRow
-							label={ __( 'Name', 'agent-builder' ) }
+							label={ __( 'Name', 'siteloom' ) }
 							value={ `${ form.icon } ${ form.name }` }
 						/>
 						<ReviewRow
-							label={ __( 'Identifier', 'agent-builder' ) }
+							label={ __( 'Identifier', 'siteloom' ) }
 							value={ form.slug }
 						/>
 						<ReviewRow
-							label={ __( 'Description', 'agent-builder' ) }
+							label={ __( 'Description', 'siteloom' ) }
 							value={ form.description }
 						/>
 						<ReviewRow
-							label={ __( 'Category', 'agent-builder' ) }
+							label={ __( 'Category', 'siteloom' ) }
 							value={ capitalize( form.category ) }
 						/>
 						<ReviewRow
-							label={ __( 'Instructions', 'agent-builder' ) }
+							label={ __( 'Instructions', 'siteloom' ) }
 							value={
 								form.system_prompt ||
-								__( '(none)', 'agent-builder' )
+								__( '(none)', 'siteloom' )
 							}
 						/>
 						<ReviewRow
-							label={ __( 'Provider / Model', 'agent-builder' ) }
+							label={ __( 'Provider / Model', 'siteloom' ) }
 							value={ `${
 								( selectedProvider && selectedProvider.name ) ||
 								form.provider ||
@@ -759,19 +759,19 @@ function App() {
 							} / ${ form.model || '—' }` }
 						/>
 						<ReviewRow
-							label={ __( 'Autonomy', 'agent-builder' ) }
+							label={ __( 'Autonomy', 'siteloom' ) }
 							value={ capitalize( form.mode ) }
 						/>
 						<ReviewRow
-							label={ __( 'Tools', 'agent-builder' ) }
+							label={ __( 'Tools', 'siteloom' ) }
 							value={
 								form.tools.length
 									? form.tools.join( ', ' )
-									: __( '(none)', 'agent-builder' )
+									: __( '(none)', 'siteloom' )
 							}
 						/>
 						<ReviewRow
-							label={ __( 'Knowledge', 'agent-builder' ) }
+							label={ __( 'Knowledge', 'siteloom' ) }
 							value={ knowledgeSummary() }
 						/>
 					</div>
@@ -786,7 +786,7 @@ function App() {
 								onClick={ () => setStep( step - 1 ) }
 								disabled={ submitting }
 							>
-								{ __( 'Back', 'agent-builder' ) }
+								{ __( 'Back', 'siteloom' ) }
 							</Button>
 						) }
 					</FlexItem>
@@ -797,7 +797,7 @@ function App() {
 								onClick={ () => setStep( step + 1 ) }
 								disabled={ ! canNext() }
 							>
-								{ __( 'Continue', 'agent-builder' ) }
+								{ __( 'Continue', 'siteloom' ) }
 							</Button>
 						) : (
 							<Button
@@ -806,7 +806,7 @@ function App() {
 								isBusy={ submitting }
 								disabled={ submitting }
 							>
-								{ __( 'Create agent', 'agent-builder' ) }
+								{ __( 'Create agent', 'siteloom' ) }
 							</Button>
 						) }
 					</FlexItem>

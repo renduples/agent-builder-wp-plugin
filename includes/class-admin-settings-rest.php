@@ -152,14 +152,14 @@ class Admin_Settings_REST {
 	 */
 	public static function get_bootstrap(): \WP_REST_Response {
 		$tabs = array(
-			'interface' => __( 'Interface', 'agent-builder' ),
-			'agents'    => __( 'Agents', 'agent-builder' ),
-			'providers' => __( 'Providers', 'agent-builder' ),
-			'users'     => __( 'Users', 'agent-builder' ),
-			'security'  => __( 'Security', 'agent-builder' ),
-			'apis'      => __( 'APIs', 'agent-builder' ),
-			'endpoints' => __( 'Endpoints', 'agent-builder' ),
-			'mcp'       => __( 'MCP', 'agent-builder' ),
+			'interface' => __( 'Interface', 'siteloom' ),
+			'agents'    => __( 'Agents', 'siteloom' ),
+			'providers' => __( 'Providers', 'siteloom' ),
+			'users'     => __( 'Users', 'siteloom' ),
+			'security'  => __( 'Security', 'siteloom' ),
+			'apis'      => __( 'APIs', 'siteloom' ),
+			'endpoints' => __( 'Endpoints', 'siteloom' ),
+			'mcp'       => __( 'MCP', 'siteloom' ),
 		);
 		$tabs = apply_filters( 'agentic_settings_tabs', $tabs );
 
@@ -177,12 +177,12 @@ class Admin_Settings_REST {
 		$groups = array(
 			array(
 				'id'    => 'basic',
-				'label' => __( 'Basic', 'agent-builder' ),
+				'label' => __( 'Basic', 'siteloom' ),
 				'slugs' => array( 'interface', 'agents', 'providers', 'users', 'security' ),
 			),
 			array(
 				'id'    => 'advanced',
-				'label' => __( 'Advanced', 'agent-builder' ),
+				'label' => __( 'Advanced', 'siteloom' ),
 				'slugs' => $advanced_only_tabs,
 			),
 		);
@@ -241,7 +241,7 @@ class Admin_Settings_REST {
 	public static function get_classic_tab_html( \WP_REST_Request $request ) {
 		$tab = sanitize_key( (string) $request->get_param( 'tab' ) );
 		if ( '' === $tab ) {
-			return new \WP_Error( 'agentic_invalid_tab', __( 'Invalid settings tab.', 'agent-builder' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'agentic_invalid_tab', __( 'Invalid settings tab.', 'siteloom' ), array( 'status' => 400 ) );
 		}
 
 		$classic_tabs = apply_filters( 'agentic_settings_classic_html_tabs', array() );
@@ -250,7 +250,7 @@ class Admin_Settings_REST {
 		if ( ! in_array( $tab, $classic_tabs, true ) ) {
 			return new \WP_Error(
 				'agentic_not_classic_tab',
-				__( 'This tab is not available as classic HTML.', 'agent-builder' ),
+				__( 'This tab is not available as classic HTML.', 'siteloom' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -291,7 +291,7 @@ class Admin_Settings_REST {
 	public static function test_service( \WP_REST_Request $request ) {
 		$slug = sanitize_key( (string) $request->get_param( 'slug' ) );
 		if ( ! in_array( $slug, Service_Registry::get_slugs(), true ) ) {
-			return new \WP_Error( 'agentic_invalid_service', __( 'Unknown service.', 'agent-builder' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'agentic_invalid_service', __( 'Unknown service.', 'siteloom' ), array( 'status' => 400 ) );
 		}
 
 		// Every service except agentic-api (the marketplace's own WordPress
@@ -304,7 +304,7 @@ class Admin_Settings_REST {
 			return new \WP_REST_Response(
 				array(
 					'ok'      => false,
-					'message' => __( 'No URL configured for this service.', 'agent-builder' ),
+					'message' => __( 'No URL configured for this service.', 'siteloom' ),
 				),
 				200
 			);
@@ -337,13 +337,13 @@ class Admin_Settings_REST {
 				'message'     => $ok
 					? sprintf(
 						/* translators: 1: HTTP status code, 2: response time in milliseconds */
-						__( 'Reachable (HTTP %1$d, %2$dms)', 'agent-builder' ),
+						__( 'Reachable (HTTP %1$d, %2$dms)', 'siteloom' ),
 						$code,
 						$ms
 					)
 					: sprintf(
 						/* translators: %d: HTTP status code */
-						__( 'Unexpected response (HTTP %d)', 'agent-builder' ),
+						__( 'Unexpected response (HTTP %d)', 'siteloom' ),
 						$code
 					),
 			),
@@ -362,7 +362,7 @@ class Admin_Settings_REST {
 	public static function mcp_test( \WP_REST_Request $request ) {
 		$slug = sanitize_key( (string) $request->get_param( 'slug' ) );
 		if ( ! class_exists( '\\Agentic_MCP_Server' ) ) {
-			return new \WP_Error( 'agentic_mcp_unavailable', __( 'MCP is not available on this site.', 'agent-builder' ), array( 'status' => 500 ) );
+			return new \WP_Error( 'agentic_mcp_unavailable', __( 'MCP is not available on this site.', 'siteloom' ), array( 'status' => 500 ) );
 		}
 
 		$readiness = \Agentic_MCP_Server::mcp_readiness( $slug );
@@ -370,7 +370,7 @@ class Admin_Settings_REST {
 			return new \WP_REST_Response(
 				array(
 					'ok'      => false,
-					'message' => $readiness['reason'] ?? __( 'This agent has no MCP tools available.', 'agent-builder' ),
+					'message' => $readiness['reason'] ?? __( 'This agent has no MCP tools available.', 'siteloom' ),
 				),
 				200
 			);
@@ -384,7 +384,7 @@ class Admin_Settings_REST {
 				'tool_count' => $count,
 				'message'    => sprintf(
 					/* translators: %d: number of MCP tools */
-					_n( '%d tool available.', '%d tools available.', $count, 'agent-builder' ),
+					_n( '%d tool available.', '%d tools available.', $count, 'siteloom' ),
 					$count
 				),
 			),
@@ -405,7 +405,7 @@ class Admin_Settings_REST {
 		$enabled = (bool) $request->get_param( 'enabled' );
 
 		if ( ! class_exists( '\\Agentic_MCP_Server' ) ) {
-			return new \WP_Error( 'agentic_mcp_unavailable', __( 'MCP is not available on this site.', 'agent-builder' ), array( 'status' => 500 ) );
+			return new \WP_Error( 'agentic_mcp_unavailable', __( 'MCP is not available on this site.', 'siteloom' ), array( 'status' => 500 ) );
 		}
 
 		\Agentic_MCP_Server::set_mcp_enabled( $slug, $enabled );
@@ -472,7 +472,7 @@ class Admin_Settings_REST {
 				self::save_endpoints( $data );
 				break;
 			default:
-				return new \WP_Error( 'invalid_tab', __( 'Unknown settings tab.', 'agent-builder' ), array( 'status' => 400 ) );
+				return new \WP_Error( 'invalid_tab', __( 'Unknown settings tab.', 'siteloom' ), array( 'status' => 400 ) );
 		}
 
 		Security_Log::log_system(
@@ -534,11 +534,11 @@ class Admin_Settings_REST {
 			'is_advanced'      => $is_advanced,
 			'font_options'     => array(
 				array(
-					'label' => __( 'Theme default', 'agent-builder' ),
+					'label' => __( 'Theme default', 'siteloom' ),
 					'value' => '',
 				),
 				array(
-					'label' => __( 'System UI', 'agent-builder' ),
+					'label' => __( 'System UI', 'siteloom' ),
 					'value' => 'system-ui, sans-serif',
 				),
 				array(
@@ -574,8 +574,8 @@ class Admin_Settings_REST {
 		return array(
 			array(
 				'value'  => 'light',
-				'label'  => __( 'Light', 'agent-builder' ),
-				'desc'   => __( 'Clean white with WordPress blue accents — the default.', 'agent-builder' ),
+				'label'  => __( 'Light', 'siteloom' ),
+				'desc'   => __( 'Clean white with WordPress blue accents — the default.', 'siteloom' ),
 				'bg'     => '#ffffff',
 				'accent' => '#2271b1',
 				'text'   => '#1d2327',
@@ -583,8 +583,8 @@ class Admin_Settings_REST {
 			),
 			array(
 				'value'  => 'dark',
-				'label'  => __( 'Dark', 'agent-builder' ),
-				'desc'   => __( 'Deep purple dark theme.', 'agent-builder' ),
+				'label'  => __( 'Dark', 'siteloom' ),
+				'desc'   => __( 'Deep purple dark theme.', 'siteloom' ),
 				'bg'     => '#1a1a2e',
 				'accent' => '#8b5cf6',
 				'text'   => '#f0f0f0',
@@ -592,8 +592,8 @@ class Admin_Settings_REST {
 			),
 			array(
 				'value'  => 'midnight',
-				'label'  => __( 'Midnight', 'agent-builder' ),
-				'desc'   => __( 'Pure dark with emerald green accents.', 'agent-builder' ),
+				'label'  => __( 'Midnight', 'siteloom' ),
+				'desc'   => __( 'Pure dark with emerald green accents.', 'siteloom' ),
 				'bg'     => '#0f172a',
 				'accent' => '#10b981',
 				'text'   => '#e2e8f0',
@@ -601,8 +601,8 @@ class Admin_Settings_REST {
 			),
 			array(
 				'value'  => 'ocean',
-				'label'  => __( 'Ocean', 'agent-builder' ),
-				'desc'   => __( 'Deep blue with teal highlights.', 'agent-builder' ),
+				'label'  => __( 'Ocean', 'siteloom' ),
+				'desc'   => __( 'Deep blue with teal highlights.', 'siteloom' ),
 				'bg'     => '#0c1222',
 				'accent' => '#06b6d4',
 				'text'   => '#e0f2fe',
@@ -851,7 +851,7 @@ class Admin_Settings_REST {
 		return array(
 			'rest_namespace' => 'agentic/v1',
 			'rest_url'       => rest_url( 'agentic/v1/' ),
-			'note'           => __( 'REST and webhook endpoints for integrations. Full editor remains available via Advanced tools.', 'agent-builder' ),
+			'note'           => __( 'REST and webhook endpoints for integrations. Full editor remains available via Advanced tools.', 'siteloom' ),
 			'services'       => self::data_services_list(),
 		);
 	}

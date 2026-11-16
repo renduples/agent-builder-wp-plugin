@@ -112,7 +112,7 @@ class Knowledge_Wizard_REST {
 		foreach ( get_posts( $args ) as $post ) {
 			$results[] = array(
 				'id'      => $post->ID,
-				'title'   => $post->post_title ?: __( '(no title)', 'agent-builder' ),
+				'title'   => $post->post_title ?: __( '(no title)', 'siteloom' ),
 				'type'    => $post->post_type,
 				'excerpt' => wp_trim_words( wp_strip_all_tags( html_entity_decode( $post->post_content, ENT_QUOTES, 'UTF-8' ) ), 20, '…' ),
 			);
@@ -131,12 +131,12 @@ class Knowledge_Wizard_REST {
 	public static function save( \WP_REST_Request $request ) {
 		$source = sanitize_key( (string) $request->get_param( 'source' ) );
 		if ( ! in_array( $source, array( 'paste', 'upload', 'pages' ), true ) ) {
-			return new \WP_Error( 'invalid_source', __( 'Choose where the knowledge comes from.', 'agent-builder' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'invalid_source', __( 'Choose where the knowledge comes from.', 'siteloom' ), array( 'status' => 400 ) );
 		}
 
 		$title = sanitize_text_field( (string) $request->get_param( 'title' ) );
 		if ( '' === trim( $title ) ) {
-			return new \WP_Error( 'missing_title', __( 'Give this knowledge a short title.', 'agent-builder' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'missing_title', __( 'Give this knowledge a short title.', 'siteloom' ), array( 'status' => 400 ) );
 		}
 
 		$tags = array();
@@ -151,7 +151,7 @@ class Knowledge_Wizard_REST {
 			$page_ids = array_map( 'absint', (array) $request->get_param( 'page_ids' ) );
 			$page_ids = array_values( array_filter( $page_ids ) );
 			if ( empty( $page_ids ) ) {
-				return new \WP_Error( 'missing_pages', __( 'Pick at least one page or post.', 'agent-builder' ), array( 'status' => 400 ) );
+				return new \WP_Error( 'missing_pages', __( 'Pick at least one page or post.', 'siteloom' ), array( 'status' => 400 ) );
 			}
 
 			$parts = array();
@@ -168,11 +168,11 @@ class Knowledge_Wizard_REST {
 				$parts[] = '## ' . $post->post_title . "\n\n" . $text;
 			}
 			if ( empty( $parts ) ) {
-				return new \WP_Error( 'empty_pages', __( 'The pages you picked have no readable text content.', 'agent-builder' ), array( 'status' => 400 ) );
+				return new \WP_Error( 'empty_pages', __( 'The pages you picked have no readable text content.', 'siteloom' ), array( 'status' => 400 ) );
 			}
 			$body        = implode( "\n\n---\n\n", $parts );
-			$type        = __( 'Page reference', 'agent-builder' );
-			$description = __( 'Imported from existing site pages.', 'agent-builder' );
+			$type        = __( 'Page reference', 'siteloom' );
+			$description = __( 'Imported from existing site pages.', 'siteloom' );
 		} else {
 			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Markdown/plain body; stored as a local file, never SQL-interpolated. Only null bytes stripped, same as the classic Wiki editor's ajax_save().
 			$body = (string) $request->get_param( 'text' );
@@ -182,15 +182,15 @@ class Knowledge_Wizard_REST {
 				return new \WP_Error(
 					'missing_text',
 					'upload' === $source
-						? __( 'The file you uploaded appears to be empty.', 'agent-builder' )
-						: __( 'Paste some text first.', 'agent-builder' ),
+						? __( 'The file you uploaded appears to be empty.', 'siteloom' )
+						: __( 'Paste some text first.', 'siteloom' ),
 					array( 'status' => 400 )
 				);
 			}
-			$type        = 'upload' === $source ? __( 'Document', 'agent-builder' ) : __( 'Note', 'agent-builder' );
+			$type        = 'upload' === $source ? __( 'Document', 'siteloom' ) : __( 'Note', 'siteloom' );
 			$description = 'upload' === $source
-				? __( 'Imported from an uploaded file.', 'agent-builder' )
-				: __( 'Added from pasted text.', 'agent-builder' );
+				? __( 'Imported from an uploaded file.', 'siteloom' )
+				: __( 'Added from pasted text.', 'siteloom' );
 		}
 
 		if ( function_exists( 'mb_substr' ) ) {

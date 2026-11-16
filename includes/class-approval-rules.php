@@ -206,7 +206,7 @@ class Approval_Rules {
 		if ( array_key_exists( 'rule_text', $data ) && '' === trim( (string) $data['rule_text'] ) ) {
 			return new \WP_Error(
 				'missing_rule_text',
-				__( 'A rule description is required.', 'agent-builder' ),
+				__( 'A rule description is required.', 'siteloom' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -217,7 +217,7 @@ class Approval_Rules {
 				return new \WP_Error(
 					'invalid_effect',
 					/* translators: %s: the invalid effect value. */
-					sprintf( __( 'Effect must be one of ask, allow, or deny; got "%s".', 'agent-builder' ), $effect ),
+					sprintf( __( 'Effect must be one of ask, allow, or deny; got "%s".', 'siteloom' ), $effect ),
 					array( 'status' => 400 )
 				);
 			}
@@ -229,7 +229,7 @@ class Approval_Rules {
 				return new \WP_Error(
 					'invalid_agent',
 					/* translators: %s: the agent slug. */
-					sprintf( __( 'Unknown agent "%s".', 'agent-builder' ), $slug ),
+					sprintf( __( 'Unknown agent "%s".', 'siteloom' ), $slug ),
 					array( 'status' => 400 )
 				);
 			}

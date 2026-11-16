@@ -21,7 +21,7 @@ $agentic_ur_agent_privs  = \Agentic\User_Roles::get_agent_privileges();
 $agentic_ur_wp_roles     = \Agentic\User_Roles::get_all_wp_roles();
 $agentic_ul_limits       = \Agentic\Usage_Limits::get_limits();
 ?>
-<p class="agentic-settings-lead"><?php esc_html_e( 'Control which WordPress user roles can administer the plugin and interact with AI agents. Administrators always retain full access.', 'agent-builder' ); ?></p>
+<p class="agentic-settings-lead"><?php esc_html_e( 'Control which WordPress user roles can administer the plugin and interact with AI agents. Administrators always retain full access.', 'siteloom' ); ?></p>
 
 <div class="agentic-callout-warning">
 	<p class="agentic-mt-0"><strong>Note:</strong> These rules apply site-wide. A user needs at least one ticked box to access the corresponding feature. Removing a role from <em>all</em> plugin privileges will hide the Agent Builder menu from that role entirely.</p>

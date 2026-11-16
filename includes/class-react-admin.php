@@ -70,7 +70,7 @@ class React_Admin {
 
 		wp_set_script_translations(
 			'agentic-' . $handle,
-			'agent-builder',
+			'siteloom',
 			AGENT_BUILDER_DIR . 'languages'
 		);
 
@@ -105,7 +105,7 @@ class React_Admin {
 		echo esc_html(
 			sprintf(
 				/* translators: %s: webpack entry name */
-				__( 'React admin assets for “%s” are missing. Run npm install && npm run build in the plugin directory.', 'agent-builder' ),
+				__( 'React admin assets for “%s” are missing. Run npm install && npm run build in the plugin directory.', 'siteloom' ),
 				$handle
 			)
 		);

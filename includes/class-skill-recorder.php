@@ -66,14 +66,14 @@ class Skill_Recorder {
 		if ( '' === $session_id ) {
 			return array(
 				'ok'    => false,
-				'error' => __( 'A session id is required to start recording.', 'agent-builder' ),
+				'error' => __( 'A session id is required to start recording.', 'siteloom' ),
 			);
 		}
 
 		if ( false !== get_transient( self::transient_key( $user_id ) ) ) {
 			return array(
 				'ok'    => false,
-				'error' => __( 'A skill recording is already active for this user.', 'agent-builder' ),
+				'error' => __( 'A skill recording is already active for this user.', 'siteloom' ),
 			);
 		}
 
@@ -108,7 +108,7 @@ class Skill_Recorder {
 		if ( false === $recording || ! is_array( $recording ) ) {
 			return array(
 				'ok'    => false,
-				'error' => __( 'No skill recording is active.', 'agent-builder' ),
+				'error' => __( 'No skill recording is active.', 'siteloom' ),
 			);
 		}
 
@@ -136,7 +136,7 @@ class Skill_Recorder {
 		if ( false === $recording || ! is_array( $recording ) ) {
 			return array(
 				'ok'    => false,
-				'error' => __( 'No skill recording is active.', 'agent-builder' ),
+				'error' => __( 'No skill recording is active.', 'siteloom' ),
 			);
 		}
 

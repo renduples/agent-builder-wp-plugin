@@ -109,14 +109,14 @@ if ( $agentic_default_agent_id && isset( $agentic_agents[ $agentic_default_agent
 			</div>
 		</div>
 		<div class="agentic-chat-actions">
-			<div class="agentic-status-leds" id="agentic-status-leds" role="group" aria-label="<?php esc_attr_e( 'System status', 'agent-builder' ); ?>">
-				<span class="agentic-led agentic-led-unknown" data-led="ai" tabindex="0" title="<?php esc_attr_e( 'AI service: checking…', 'agent-builder' ); ?>">
-					<span class="agentic-led-dot" aria-hidden="true"></span><span class="agentic-led-label" aria-hidden="true"><?php esc_html_e( 'AI', 'agent-builder' ); ?></span>
-					<span class="screen-reader-text agentic-led-sr"><?php esc_html_e( 'AI service: checking…', 'agent-builder' ); ?></span>
+			<div class="agentic-status-leds" id="agentic-status-leds" role="group" aria-label="<?php esc_attr_e( 'System status', 'siteloom' ); ?>">
+				<span class="agentic-led agentic-led-unknown" data-led="ai" tabindex="0" title="<?php esc_attr_e( 'AI service: checking…', 'siteloom' ); ?>">
+					<span class="agentic-led-dot" aria-hidden="true"></span><span class="agentic-led-label" aria-hidden="true"><?php esc_html_e( 'AI', 'siteloom' ); ?></span>
+					<span class="screen-reader-text agentic-led-sr"><?php esc_html_e( 'AI service: checking…', 'siteloom' ); ?></span>
 				</span>
-				<span class="agentic-led agentic-led-unknown" data-led="credits" tabindex="0" title="<?php esc_attr_e( 'Credits: checking…', 'agent-builder' ); ?>">
-					<span class="agentic-led-dot" aria-hidden="true"></span><span class="agentic-led-label" aria-hidden="true"><?php esc_html_e( 'Credits', 'agent-builder' ); ?></span>
-					<span class="screen-reader-text agentic-led-sr"><?php esc_html_e( 'Credits: checking…', 'agent-builder' ); ?></span>
+				<span class="agentic-led agentic-led-unknown" data-led="credits" tabindex="0" title="<?php esc_attr_e( 'Credits: checking…', 'siteloom' ); ?>">
+					<span class="agentic-led-dot" aria-hidden="true"></span><span class="agentic-led-label" aria-hidden="true"><?php esc_html_e( 'Credits', 'siteloom' ); ?></span>
+					<span class="screen-reader-text agentic-led-sr"><?php esc_html_e( 'Credits: checking…', 'siteloom' ); ?></span>
 				</span>
 			</div>
 			<button id="agentic-history-btn" class="agentic-btn-secondary" title="Chat History">
@@ -180,7 +180,7 @@ if ( $agentic_default_agent_id && isset( $agentic_agents[ $agentic_default_agent
 				$agentic_prompts = $agentic_current_agent->get_suggested_prompts();
 			if ( ! empty( $agentic_prompts ) ) :
 				?>
-					<p class="agentic-starter-label"><?php esc_html_e( 'Try asking', 'agent-builder' ); ?></p>
+					<p class="agentic-starter-label"><?php esc_html_e( 'Try asking', 'siteloom' ); ?></p>
 					<div class="agentic-suggested-prompts">
 					<?php foreach ( $agentic_prompts as $agentic_prompt ) : ?>
 						<button class="agentic-prompt-btn" data-prompt="<?php echo esc_attr( $agentic_prompt ); ?>">
@@ -213,7 +213,7 @@ if ( $agentic_default_agent_id && isset( $agentic_agents[ $agentic_default_agent
 	<?php if ( $agentic_current_agent ) : ?>
 	<div id="agentic-consent-banner" class="agentic-consent-banner" style="display:none;">
 		<p id="agentic-consent-text"></p>
-		<button type="button" id="agentic-consent-accept" class="agentic-consent-accept"><?php esc_html_e( 'I Understand', 'agent-builder' ); ?></button>
+		<button type="button" id="agentic-consent-accept" class="agentic-consent-accept"><?php esc_html_e( 'I Understand', 'siteloom' ); ?></button>
 	</div>
 	<div class="agentic-typing-indicator" id="agentic-typing" style="display: none;">
 		<span></span>
@@ -224,11 +224,11 @@ if ( $agentic_default_agent_id && isset( $agentic_agents[ $agentic_default_agent
 	<div class="agentic-chat-input-container">
 		<div id="agentic-image-preview" class="agentic-image-preview" style="display:none;">
 			<img id="agentic-preview-img" src="" alt="Preview" />
-			<button type="button" id="agentic-remove-image" class="agentic-remove-image" title="<?php esc_attr_e( 'Remove image', 'agent-builder' ); ?>">&times;</button>
+			<button type="button" id="agentic-remove-image" class="agentic-remove-image" title="<?php esc_attr_e( 'Remove image', 'siteloom' ); ?>">&times;</button>
 		</div>
 		<form id="agentic-chat-form" class="agentic-chat-form">
 			<input type="file" id="agentic-file-input" accept="image/jpeg,image/png,image/gif,image/webp" style="display:none;" />
-			<button type="button" id="agentic-attach-btn" class="agentic-attach-btn" title="<?php esc_attr_e( 'Attach image', 'agent-builder' ); ?>">
+			<button type="button" id="agentic-attach-btn" class="agentic-attach-btn" title="<?php esc_attr_e( 'Attach image', 'siteloom' ); ?>">
 				<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
 			</button>
 			<textarea 
@@ -237,18 +237,18 @@ if ( $agentic_default_agent_id && isset( $agentic_agents[ $agentic_default_agent
 				placeholder="Ask <?php echo esc_attr( $agentic_current_agent->get_name() ); ?> a question..."
 				rows="1"
 			></textarea>
-			<button type="button" id="agentic-voice-btn" class="agentic-voice-btn" title="<?php esc_attr_e( 'Voice input', 'agent-builder' ); ?>" style="display:none;">
+			<button type="button" id="agentic-voice-btn" class="agentic-voice-btn" title="<?php esc_attr_e( 'Voice input', 'siteloom' ); ?>" style="display:none;">
 				<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
 			</button>
-			<button type="button" id="agentic-tts-btn" class="agentic-tts-btn" title="<?php esc_attr_e( 'Read aloud', 'agent-builder' ); ?>" style="display:none;">
+			<button type="button" id="agentic-tts-btn" class="agentic-tts-btn" title="<?php esc_attr_e( 'Read aloud', 'siteloom' ); ?>" style="display:none;">
 				<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
 			</button>
-			<button type="submit" class="agentic-send-btn" id="agentic-send" title="<?php esc_attr_e( 'Send message', 'agent-builder' ); ?>">
+			<button type="submit" class="agentic-send-btn" id="agentic-send" title="<?php esc_attr_e( 'Send message', 'siteloom' ); ?>">
 				<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 					<line x1="22" x2="11" y1="2" y2="13"/>
 					<polygon points="22 2 15 22 11 13 2 9 22 2"/>
 				</svg>
-				<span class="screen-reader-text"><?php esc_html_e( 'Send message', 'agent-builder' ); ?></span>
+				<span class="screen-reader-text"><?php esc_html_e( 'Send message', 'siteloom' ); ?></span>
 			</button>
 		</form>
 	</div>
@@ -284,7 +284,7 @@ if ( $agentic_default_agent_id && isset( $agentic_agents[ $agentic_default_agent
 	<div class="agentic-chat-footer">
 		<?php if ( $agentic_show_branding ) : ?>
 		<span class="agentic-footer-info">
-			<?php esc_html_e( 'Powered by Agent Builder', 'agent-builder' ); ?>
+			<?php esc_html_e( 'Powered by Agent Builder', 'siteloom' ); ?>
 			<?php
 			if ( $agentic_pm_label ) :
 				?>

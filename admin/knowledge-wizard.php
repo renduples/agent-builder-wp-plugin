@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! current_user_can( 'agent_builder_manage_settings' ) && ! current_user_can( 'manage_options' ) ) {
-	wp_die( esc_html__( 'You do not have permission to access this page.', 'agent-builder' ) );
+	wp_die( esc_html__( 'You do not have permission to access this page.', 'siteloom' ) );
 }
 
 $agentic_kw_asset_file = AGENT_BUILDER_DIR . 'build/knowledge-wizard.asset.php';
@@ -34,7 +34,7 @@ if ( file_exists( $agentic_kw_asset_file ) ) {
 		true
 	);
 	wp_enqueue_style( 'wp-components' );
-	wp_set_script_translations( 'agentic-knowledge-wizard', 'agent-builder', AGENT_BUILDER_DIR . 'languages' );
+	wp_set_script_translations( 'agentic-knowledge-wizard', 'siteloom', AGENT_BUILDER_DIR . 'languages' );
 
 	wp_localize_script(
 		'agentic-knowledge-wizard',
@@ -49,18 +49,18 @@ if ( file_exists( $agentic_kw_asset_file ) ) {
 }
 ?>
 <div class="wrap agentic-knowledge-wizard-wrap">
-	<h1><?php esc_html_e( 'Add Knowledge', 'agent-builder' ); ?></h1>
+	<h1><?php esc_html_e( 'Add Knowledge', 'siteloom' ); ?></h1>
 	<p class="agentic-wizard-intro">
-		<?php esc_html_e( 'Teach your agents a fact, policy, or FAQ in a few quick steps. You can add more or fine-tune it later from the Knowledge page.', 'agent-builder' ); ?>
+		<?php esc_html_e( 'Teach your agents a fact, policy, or FAQ in a few quick steps. You can add more or fine-tune it later from the Knowledge page.', 'siteloom' ); ?>
 	</p>
 
 	<div id="agentic-knowledge-wizard-root">
-		<p><?php esc_html_e( 'Loading the knowledge wizard…', 'agent-builder' ); ?></p>
+		<p><?php esc_html_e( 'Loading the knowledge wizard…', 'siteloom' ); ?></p>
 	</div>
 
 	<noscript>
 		<div class="notice notice-warning">
-			<p><?php esc_html_e( 'The knowledge wizard needs JavaScript enabled. You can also add knowledge from the Knowledge page.', 'agent-builder' ); ?></p>
+			<p><?php esc_html_e( 'The knowledge wizard needs JavaScript enabled. You can also add knowledge from the Knowledge page.', 'siteloom' ); ?></p>
 		</div>
 	</noscript>
 </div>

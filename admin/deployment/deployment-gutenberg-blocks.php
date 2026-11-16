@@ -80,7 +80,7 @@ if (
 		)
 	);
 
-	$agentic_notice = __( 'Gutenberg block settings saved.', 'agent-builder' );
+	$agentic_notice = __( 'Gutenberg block settings saved.', 'siteloom' );
 }
 
 // Load data from Deployments with fallback to WP options.
@@ -106,11 +106,11 @@ if ( empty( $agentic_gb_rows ) ) {
 
 // Load available themes.
 $agentic_gb_themes = array(
-	''         => __( 'Default (from Settings)', 'agent-builder' ),
-	'dark'     => __( 'Dark', 'agent-builder' ),
-	'light'    => __( 'Light', 'agent-builder' ),
-	'midnight' => __( 'Midnight', 'agent-builder' ),
-	'ocean'    => __( 'Ocean', 'agent-builder' ),
+	''         => __( 'Default (from Settings)', 'siteloom' ),
+	'dark'     => __( 'Dark', 'siteloom' ),
+	'light'    => __( 'Light', 'siteloom' ),
+	'midnight' => __( 'Midnight', 'siteloom' ),
+	'ocean'    => __( 'Ocean', 'siteloom' ),
 );
 
 // Load available providers.
@@ -126,12 +126,12 @@ $agentic_gb_providers = \Agentic\Provider_Registry::get_slug_name_map();
 <div class="agentic-tab-section">
 
 	<p>
-		<?php esc_html_e( 'Select which agents should appear as blocks in the Gutenberg Block Inserter. Enabled agents can be placed into any post, page, or template — including the Site Editor.', 'agent-builder' ); ?>
+		<?php esc_html_e( 'Select which agents should appear as blocks in the Gutenberg Block Inserter. Enabled agents can be placed into any post, page, or template — including the Site Editor.', 'siteloom' ); ?>
 	</p>
 
 	<?php if ( empty( $agentic_all_agents ) ) : ?>
 		<div class="notice notice-warning">
-			<p><?php esc_html_e( 'No active agents found. Activate at least one agent first.', 'agent-builder' ); ?></p>
+			<p><?php esc_html_e( 'No active agents found. Activate at least one agent first.', 'siteloom' ); ?></p>
 		</div>
 	<?php else : ?>
 		<form method="post" action="">
@@ -141,9 +141,9 @@ $agentic_gb_providers = \Agentic\Provider_Registry::get_slug_name_map();
 			<table class="widefat striped agentic-table-700 agentic-table-min-560">
 				<thead>
 					<tr>
-						<th class="agentic-col-40"><?php esc_html_e( 'Enable', 'agent-builder' ); ?></th>
-						<th><?php esc_html_e( 'Agent', 'agent-builder' ); ?></th>
-						<th><?php esc_html_e( 'Block Name', 'agent-builder' ); ?></th>
+						<th class="agentic-col-40"><?php esc_html_e( 'Enable', 'siteloom' ); ?></th>
+						<th><?php esc_html_e( 'Agent', 'siteloom' ); ?></th>
+						<th><?php esc_html_e( 'Block Name', 'siteloom' ); ?></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -156,7 +156,7 @@ $agentic_gb_providers = \Agentic\Provider_Registry::get_slug_name_map();
 								<input type="checkbox"
 									name="agentic_gb_agents[]"
 									value="<?php echo esc_attr( $agentic_slug ); ?>"
-									aria-label="<?php echo esc_attr( sprintf( /* translators: %s: agent name */ __( 'Enable Gutenberg block for %s', 'agent-builder' ), $agentic_agent->get_name() ) ); ?>"
+									aria-label="<?php echo esc_attr( sprintf( /* translators: %s: agent name */ __( 'Enable Gutenberg block for %s', 'siteloom' ), $agentic_agent->get_name() ) ); ?>"
 									<?php checked( $agentic_gb_is_enabled ); ?>>
 							</td>
 							<td>
@@ -172,18 +172,18 @@ $agentic_gb_providers = \Agentic\Provider_Registry::get_slug_name_map();
 			</table>
 			</div>
 
-			<?php submit_button( __( 'Save Settings', 'agent-builder' ), 'primary', 'agentic_save_gutenberg_blocks' ); ?>
+			<?php submit_button( __( 'Save Settings', 'siteloom' ), 'primary', 'agentic_save_gutenberg_blocks' ); ?>
 		</form>
 	<?php endif; ?>
 
 	<div class="agentic-embed-note">
-		<h3><?php esc_html_e( 'How Gutenberg Blocks Work', 'agent-builder' ); ?></h3>
+		<h3><?php esc_html_e( 'How Gutenberg Blocks Work', 'siteloom' ); ?></h3>
 		<ul>
-			<li><?php esc_html_e( 'Enabled agents appear under the "Agentic AI" category in the Block Inserter (+).', 'agent-builder' ); ?></li>
-			<li><?php esc_html_e( 'Each block can be customized via the block settings sidebar: height, theme, display style, LLM provider, and more.', 'agent-builder' ); ?></li>
-			<li><?php esc_html_e( 'Blocks work in the Post Editor, Page Editor, Site Editor, and Template Editor.', 'agent-builder' ); ?></li>
-			<li><?php esc_html_e( 'The block renders the same chat interface as shortcodes — all features (audio, vision, TTS) are supported.', 'agent-builder' ); ?></li>
-			<li><?php esc_html_e( 'Users must be logged in to chat unless anonymous access is enabled in Settings.', 'agent-builder' ); ?></li>
+			<li><?php esc_html_e( 'Enabled agents appear under the "Agentic AI" category in the Block Inserter (+).', 'siteloom' ); ?></li>
+			<li><?php esc_html_e( 'Each block can be customized via the block settings sidebar: height, theme, display style, LLM provider, and more.', 'siteloom' ); ?></li>
+			<li><?php esc_html_e( 'Blocks work in the Post Editor, Page Editor, Site Editor, and Template Editor.', 'siteloom' ); ?></li>
+			<li><?php esc_html_e( 'The block renders the same chat interface as shortcodes — all features (audio, vision, TTS) are supported.', 'siteloom' ); ?></li>
+			<li><?php esc_html_e( 'Users must be logged in to chat unless anonymous access is enabled in Settings.', 'siteloom' ); ?></li>
 		</ul>
 	</div>
 

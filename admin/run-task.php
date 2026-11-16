@@ -21,12 +21,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'agent_builder_run_tasks_manually' ) ) {
-	wp_die( esc_html__( 'You do not have permission to access this page.', 'agent-builder' ) );
+	wp_die( esc_html__( 'You do not have permission to access this page.', 'siteloom' ) );
 }
 
 // Validate nonce.
 if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'agentic_run_task' ) ) {
-	wp_die( esc_html__( 'Invalid security token. Please go back and try again.', 'agent-builder' ) );
+	wp_die( esc_html__( 'Invalid security token. Please go back and try again.', 'siteloom' ) );
 }
 
 // Get parameters.
@@ -34,7 +34,7 @@ $agentic_run_agent_id = sanitize_text_field( wp_unslash( $_GET['agent'] ?? '' ) 
 $agentic_run_task_id  = sanitize_text_field( wp_unslash( $_GET['task'] ?? '' ) );
 
 if ( empty( $agentic_run_agent_id ) || empty( $agentic_run_task_id ) ) {
-	wp_die( esc_html__( 'Missing agent or task parameter.', 'agent-builder' ) );
+	wp_die( esc_html__( 'Missing agent or task parameter.', 'siteloom' ) );
 }
 
 // Resolve agent and task.
@@ -45,7 +45,7 @@ if ( ! $agentic_agent_obj ) {
 	wp_die(
 		sprintf(
 			/* translators: %s: agent ID */
-			esc_html__( 'Agent "%s" not found or not active.', 'agent-builder' ),
+			esc_html__( 'Agent "%s" not found or not active.', 'siteloom' ),
 			esc_html( $agentic_run_agent_id )
 		)
 	);
@@ -58,7 +58,7 @@ if ( ! $agentic_task_def ) {
 	wp_die(
 		sprintf(
 			/* translators: %s: task ID */
-			esc_html__( 'Task "%s" not found on this agent.', 'agent-builder' ),
+			esc_html__( 'Task "%s" not found on this agent.', 'siteloom' ),
 			esc_html( $agentic_run_task_id )
 		)
 	);
@@ -74,7 +74,7 @@ $agentic_schedule_label = $agentic_schedules[ $agentic_task_def['schedule'] ]['d
 		<?php
 		printf(
 			/* translators: %s: task name */
-			esc_html__( 'Run Task: %s', 'agent-builder' ),
+			esc_html__( 'Run Task: %s', 'siteloom' ),
 			esc_html( $agentic_task_def['name'] )
 		);
 		?>
@@ -84,33 +84,33 @@ $agentic_schedule_label = $agentic_schedules[ $agentic_task_def['schedule'] ]['d
 	<table class="widefat agentic-table-mt agentic-table-600">
 		<tbody>
 			<tr>
-				<th class="agentic-col-120"><?php esc_html_e( 'Agent', 'agent-builder' ); ?></th>
+				<th class="agentic-col-120"><?php esc_html_e( 'Agent', 'siteloom' ); ?></th>
 				<td>
 					<span class="agentic-agent-icon"><?php echo esc_html( $agentic_agent_obj->get_icon() ); ?></span>
 					<?php echo esc_html( $agentic_agent_obj->get_name() ); ?>
 				</td>
 			</tr>
 			<tr>
-				<th><?php esc_html_e( 'Task', 'agent-builder' ); ?></th>
+				<th><?php esc_html_e( 'Task', 'siteloom' ); ?></th>
 				<td><?php echo esc_html( $agentic_task_def['name'] ); ?></td>
 			</tr>
 			<?php if ( ! empty( $agentic_task_def['description'] ) ) : ?>
 			<tr>
-				<th><?php esc_html_e( 'Description', 'agent-builder' ); ?></th>
+				<th><?php esc_html_e( 'Description', 'siteloom' ); ?></th>
 				<td><?php echo esc_html( $agentic_task_def['description'] ); ?></td>
 			</tr>
 			<?php endif; ?>
 			<tr>
-				<th><?php esc_html_e( 'Schedule', 'agent-builder' ); ?></th>
+				<th><?php esc_html_e( 'Schedule', 'siteloom' ); ?></th>
 				<td><?php echo esc_html( $agentic_schedule_label ); ?></td>
 			</tr>
 			<tr>
-				<th><?php esc_html_e( 'Mode', 'agent-builder' ); ?></th>
+				<th><?php esc_html_e( 'Mode', 'siteloom' ); ?></th>
 				<td>
 					<?php if ( 'autonomous' === $agentic_mode ) : ?>
-						&#129302; <?php esc_html_e( 'AI (Autonomous) — sends a prompt to the LLM', 'agent-builder' ); ?>
+						&#129302; <?php esc_html_e( 'AI (Autonomous) — sends a prompt to the LLM', 'siteloom' ); ?>
 					<?php else : ?>
-						&#9881;&#65039; <?php esc_html_e( 'Direct (PHP) — calls the callback method', 'agent-builder' ); ?>
+						&#9881;&#65039; <?php esc_html_e( 'Direct (PHP) — calls the callback method', 'siteloom' ); ?>
 					<?php endif; ?>
 				</td>
 			</tr>
@@ -121,16 +121,16 @@ $agentic_schedule_label = $agentic_schedules[ $agentic_task_def['schedule'] ]['d
 	<div id="agentic-pre-run">
 		<?php if ( 'autonomous' === $agentic_mode ) : ?>
 			<div class="notice notice-info agentic-mt-16 agentic-notice-600">
-				<p><?php esc_html_e( 'This is an AI task. It will send a prompt to the configured LLM and typically takes 10–30 seconds.', 'agent-builder' ); ?></p>
+				<p><?php esc_html_e( 'This is an AI task. It will send a prompt to the configured LLM and typically takes 10–30 seconds.', 'siteloom' ); ?></p>
 			</div>
 		<?php endif; ?>
 
 		<p class="agentic-mt-20">
 			<button type="button" id="agentic-execute-btn" class="button button-primary button-hero">
-				&#9654; <?php esc_html_e( 'Execute Task', 'agent-builder' ); ?>
+				&#9654; <?php esc_html_e( 'Execute Task', 'siteloom' ); ?>
 			</button>
 			<a href="<?php echo esc_url( $agentic_back_url ); ?>" class="button button-hero agentic-ml-8">
-				<?php esc_html_e( 'Cancel', 'agent-builder' ); ?>
+				<?php esc_html_e( 'Cancel', 'siteloom' ); ?>
 			</a>
 		</p>
 	</div>
@@ -143,21 +143,21 @@ $agentic_schedule_label = $agentic_schedules[ $agentic_task_def['schedule'] ]['d
 				<div class="agentic-task-title">
 					<?php
 					if ( 'autonomous' === $agentic_mode ) {
-						esc_html_e( 'Sending to LLM…', 'agent-builder' );
+						esc_html_e( 'Sending to LLM…', 'siteloom' );
 					} else {
-						esc_html_e( 'Executing…', 'agent-builder' );
+						esc_html_e( 'Executing…', 'siteloom' );
 					}
 					?>
 				</div>
 				<div class="agentic-task-meta">
-					<?php esc_html_e( 'Elapsed:', 'agent-builder' ); ?>
+					<?php esc_html_e( 'Elapsed:', 'siteloom' ); ?>
 					<span id="agentic-timer" class="agentic-timer">0s</span>
 					<span class="agentic-ml-8">
 						<?php
 						if ( 'autonomous' === $agentic_mode ) {
-							esc_html_e( '(AI tasks typically take 10–30 seconds)', 'agent-builder' );
+							esc_html_e( '(AI tasks typically take 10–30 seconds)', 'siteloom' );
 						} else {
-							esc_html_e( '(usually a few seconds)', 'agent-builder' );
+							esc_html_e( '(usually a few seconds)', 'siteloom' );
 						}
 						?>
 					</span>
@@ -173,23 +173,23 @@ $agentic_schedule_label = $agentic_schedules[ $agentic_task_def['schedule'] ]['d
 		<table class="widefat agentic-mt-16 agentic-table-600">
 			<tbody>
 				<tr>
-					<th class="agentic-col-120"><?php esc_html_e( 'Duration', 'agent-builder' ); ?></th>
+					<th class="agentic-col-120"><?php esc_html_e( 'Duration', 'siteloom' ); ?></th>
 					<td id="agentic-result-duration"></td>
 				</tr>
 			</tbody>
 		</table>
 
 		<div id="agentic-result-output-wrap" style="display: none; margin-top: 24px;">
-			<h2 class="agentic-mt-0"><?php esc_html_e( 'Task Output', 'agent-builder' ); ?></h2>
+			<h2 class="agentic-mt-0"><?php esc_html_e( 'Task Output', 'siteloom' ); ?></h2>
 			<div id="agentic-result-output" class="agentic-task-output"></div>
 		</div>
 
 		<p class="agentic-mt-24">
 			<a href="<?php echo esc_url( $agentic_back_url ); ?>" class="button button-primary">
-				&#8592; <?php esc_html_e( 'Back to Scheduled Tasks', 'agent-builder' ); ?>
+				&#8592; <?php esc_html_e( 'Back to Scheduled Tasks', 'siteloom' ); ?>
 			</a>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-audit-log' ) ); ?>" class="button agentic-ml-8">
-				<?php esc_html_e( 'View Audit Log', 'agent-builder' ); ?>
+				<?php esc_html_e( 'View Audit Log', 'siteloom' ); ?>
 			</a>
 		</p>
 	</div>
@@ -203,11 +203,11 @@ $agentic_schedule_label = $agentic_schedules[ $agentic_task_def['schedule'] ]['d
 		'agent' => $agentic_run_agent_id,
 		'task'  => $agentic_run_task_id,
 		'i18n'  => array(
-			'completed'     => __( 'Task Completed Successfully', 'agent-builder' ),
-			'failed'        => __( 'Task Failed', 'agent-builder' ),
-			'requestFailed' => __( 'Request Failed', 'agent-builder' ),
-			'seconds'       => __( 'seconds', 'agent-builder' ),
-			'unknownError'  => __( 'Unknown error', 'agent-builder' ),
+			'completed'     => __( 'Task Completed Successfully', 'siteloom' ),
+			'failed'        => __( 'Task Failed', 'siteloom' ),
+			'requestFailed' => __( 'Request Failed', 'siteloom' ),
+			'seconds'       => __( 'seconds', 'siteloom' ),
+			'unknownError'  => __( 'Unknown error', 'siteloom' ),
 		),
 	),
 	'agenticRunTask'

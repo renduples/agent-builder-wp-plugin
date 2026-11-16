@@ -79,12 +79,12 @@ class Checker_Unused_Media extends Site_Brief_Checker {
 				array(
 					'title'            => sprintf(
 						/* translators: %d: unused attachments. */
-						_n( '%d unused media item', '%d unused media items', $count, 'agent-builder' ),
+						_n( '%d unused media item', '%d unused media items', $count, 'siteloom' ),
 						$count
 					),
-					'evidence'         => __( 'Counted from post content and featured images only. Nothing is deleted in this version.', 'agent-builder' ),
+					'evidence'         => __( 'Counted from post content and featured images only. Nothing is deleted in this version.', 'siteloom' ),
 					'evidence_payload' => array( 'total' => $count ),
-					'proposed_action'  => __( 'Dismiss if this is expected. Site Brief will not delete media.', 'agent-builder' ),
+					'proposed_action'  => __( 'Dismiss if this is expected. Site Brief will not delete media.', 'siteloom' ),
 					'action_risk'      => 'none',
 					'approve'          => array( 'type' => 'none' ),
 					'raw'              => array( 'total' => $count ),

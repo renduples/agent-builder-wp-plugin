@@ -207,7 +207,7 @@ abstract class Agent_Base {
 	 * @return string Author name
 	 */
 	public function get_author(): string {
-		return $this->parse_header()['author'] ?? __( 'Unknown', 'agent-builder' );
+		return $this->parse_header()['author'] ?? __( 'Unknown', 'siteloom' );
 	}
 
 	/**
@@ -372,7 +372,7 @@ abstract class Agent_Base {
 	protected function get_default_welcome_message(): string {
 		return sprintf(
 			/* translators: 1: agent name, 2: agent description */
-			__( "Hello! I'm %1\$s. %2\$s\n\nHow can I help you today?", 'agent-builder' ),
+			__( "Hello! I'm %1\$s. %2\$s\n\nHow can I help you today?", 'siteloom' ),
 			$this->get_name(),
 			$this->get_description()
 		);

@@ -265,7 +265,7 @@ class Admin_Pages_REST {
 			return new \WP_REST_Response( $class::build( ...$page_builders[ $page ]['args'] ), 200 );
 		}
 
-		return new \WP_Error( 'unknown_page', __( 'Unknown admin page.', 'agent-builder' ), array( 'status' => 404 ) );
+		return new \WP_Error( 'unknown_page', __( 'Unknown admin page.', 'siteloom' ), array( 'status' => 404 ) );
 	}
 
 	/**
@@ -281,7 +281,7 @@ class Admin_Pages_REST {
 			$name    = sanitize_text_field( (string) $request->get_param( 'name' ) );
 			$enabled = rest_sanitize_boolean( $request->get_param( 'enabled' ) );
 			if ( '' === $name || ! class_exists( Tools_Registry::class ) ) {
-				return new \WP_Error( 'invalid', __( 'Invalid tool.', 'agent-builder' ), array( 'status' => 400 ) );
+				return new \WP_Error( 'invalid', __( 'Invalid tool.', 'siteloom' ), array( 'status' => 400 ) );
 			}
 			if ( $enabled && class_exists( Risk_Level::class ) ) {
 				$risk = Risk_Level::max(
@@ -291,7 +291,7 @@ class Admin_Pages_REST {
 				if ( Risk_Level::EXTREME === $risk ) {
 					return new \WP_Error(
 						'extreme_blocked',
-						__( 'This tool cannot be enabled', 'agent-builder' ),
+						__( 'This tool cannot be enabled', 'siteloom' ),
 						array( 'status' => 403 )
 					);
 				}
@@ -327,10 +327,10 @@ class Admin_Pages_REST {
 			$profile_id = sanitize_key( (string) $request->get_param( 'profile' ) );
 			$profiles   = Admin_Profiles::tools_ability_profiles();
 			if ( ! isset( $profiles[ $profile_id ] ) || 'custom' === $profile_id ) {
-				return new \WP_Error( 'invalid_profile', __( 'Unknown ability profile.', 'agent-builder' ), array( 'status' => 400 ) );
+				return new \WP_Error( 'invalid_profile', __( 'Unknown ability profile.', 'siteloom' ), array( 'status' => 400 ) );
 			}
 			if ( ! class_exists( Tools_Registry::class ) ) {
-				return new \WP_Error( 'unavailable', __( 'Tools registry unavailable.', 'agent-builder' ), array( 'status' => 500 ) );
+				return new \WP_Error( 'unavailable', __( 'Tools registry unavailable.', 'siteloom' ), array( 'status' => 500 ) );
 			}
 			$max    = (string) $profiles[ $profile_id ]['max_risk'];
 			$result = Tools_Registry::apply_max_risk_level( $max );
@@ -384,7 +384,7 @@ class Admin_Pages_REST {
 		if ( 'delete_skill' === $action ) {
 			$id = absint( $request->get_param( 'id' ) );
 			if ( $id < 1 || ! class_exists( Skills_Registry::class ) ) {
-				return new \WP_Error( 'invalid', __( 'Invalid skill.', 'agent-builder' ), array( 'status' => 400 ) );
+				return new \WP_Error( 'invalid', __( 'Invalid skill.', 'siteloom' ), array( 'status' => 400 ) );
 			}
 			Skills_Registry::delete( $id );
 			return new \WP_REST_Response(
@@ -399,7 +399,7 @@ class Admin_Pages_REST {
 		if ( 'set_ui_mode' === $action ) {
 			$mode = sanitize_key( (string) $request->get_param( 'mode' ) );
 			if ( ! in_array( $mode, array( 'basic', 'advanced' ), true ) ) {
-				return new \WP_Error( 'invalid', __( 'Invalid mode.', 'agent-builder' ), array( 'status' => 400 ) );
+				return new \WP_Error( 'invalid', __( 'Invalid mode.', 'siteloom' ), array( 'status' => 400 ) );
 			}
 			Admin_Settings_REST::set_ui_mode( $mode, 'global_header' );
 			return new \WP_REST_Response(
@@ -415,7 +415,7 @@ class Admin_Pages_REST {
 			$screen = sanitize_key( (string) $request->get_param( 'screen' ) );
 			$mode   = sanitize_key( (string) $request->get_param( 'mode' ) );
 			if ( '' === $screen || ! in_array( $mode, array( 'basic', 'advanced' ), true ) ) {
-				return new \WP_Error( 'invalid', __( 'Invalid screen or mode.', 'agent-builder' ), array( 'status' => 400 ) );
+				return new \WP_Error( 'invalid', __( 'Invalid screen or mode.', 'siteloom' ), array( 'status' => 400 ) );
 			}
 			Admin_Menu_Handler::set_screen_mode( $screen, $mode );
 			return new \WP_REST_Response(
@@ -444,7 +444,7 @@ class Admin_Pages_REST {
 		if ( 'confirm_agent_ready_proposal' === $action ) {
 			$proposal_id = sanitize_text_field( (string) $request->get_param( 'proposal_id' ) );
 			if ( '' === $proposal_id || ! class_exists( Agent_Proposals::class ) ) {
-				return new \WP_Error( 'invalid', __( 'Invalid proposal.', 'agent-builder' ), array( 'status' => 400 ) );
+				return new \WP_Error( 'invalid', __( 'Invalid proposal.', 'siteloom' ), array( 'status' => 400 ) );
 			}
 			return new \WP_REST_Response( Agent_Proposals::approve( $proposal_id ), 200 );
 		}
@@ -455,7 +455,7 @@ class Admin_Pages_REST {
 
 		if ( 'submit_to_directory' === $action ) {
 			if ( ! class_exists( Directory_Submission::class ) ) {
-				return new \WP_Error( 'unavailable', __( 'Directory submission is unavailable.', 'agent-builder' ), array( 'status' => 500 ) );
+				return new \WP_Error( 'unavailable', __( 'Directory submission is unavailable.', 'siteloom' ), array( 'status' => 500 ) );
 			}
 			return new \WP_REST_Response( Directory_Submission::submit(), 200 );
 		}
@@ -488,7 +488,7 @@ class Admin_Pages_REST {
 			return self::agent_delete( $request );
 		}
 
-		return new \WP_Error( 'unknown_action', __( 'Unknown action.', 'agent-builder' ), array( 'status' => 400 ) );
+		return new \WP_Error( 'unknown_action', __( 'Unknown action.', 'siteloom' ), array( 'status' => 400 ) );
 	}
 
 	/**
@@ -505,7 +505,7 @@ class Admin_Pages_REST {
 		$tool_name = sanitize_key( (string) $request->get_param( 'tool_name' ) );
 		$allowed   = array( 'resign_agent_manifest', 'enable_webmcp_defaults', 'configure_approval_gate', 'enable_agent_readiness' );
 		if ( ! in_array( $tool_name, $allowed, true ) ) {
-			return new \WP_Error( 'invalid', __( 'Unknown fix.', 'agent-builder' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'invalid', __( 'Unknown fix.', 'siteloom' ), array( 'status' => 400 ) );
 		}
 
 		$arguments = (array) $request->get_param( 'arguments' );
@@ -520,8 +520,8 @@ class Admin_Pages_REST {
 				'fix_not_applied',
 				'' !== $message
 					/* translators: %s: reason the fix did not run. */
-					? sprintf( __( 'The fix was not applied: %s', 'agent-builder' ), $message )
-					: __( 'The fix was not applied.', 'agent-builder' ),
+					? sprintf( __( 'The fix was not applied: %s', 'siteloom' ), $message )
+					: __( 'The fix was not applied.', 'siteloom' ),
 				array( 'status' => 422 )
 			);
 		}
@@ -549,7 +549,7 @@ class Admin_Pages_REST {
 		$manifest = Abilities_Manifest::load( $agent_slug );
 		$path     = Abilities_Manifest::resolve_path( $agent_slug );
 		if ( ! $manifest || ! $path || ! isset( $manifest['abilities'][ $tool_name ] ) ) {
-			return new \WP_Error( 'invalid', __( 'Unknown agent or tool.', 'agent-builder' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'invalid', __( 'Unknown agent or tool.', 'siteloom' ), array( 'status' => 400 ) );
 		}
 
 		if ( $expose ) {
@@ -564,7 +564,7 @@ class Admin_Pages_REST {
 			if ( Risk_Level::weight( $risk ) > Risk_Level::weight( Risk_Level::MEDIUM )
 				|| ! Webmcp_Bridge::is_tool_webmcp_safe( $tool_name, $agent_slug )
 			) {
-				return new \WP_Error( 'unsafe_risk', __( 'This tool\'s risk is too high to expose to WebMCP.', 'agent-builder' ), array( 'status' => 400 ) );
+				return new \WP_Error( 'unsafe_risk', __( 'This tool\'s risk is too high to expose to WebMCP.', 'siteloom' ), array( 'status' => 400 ) );
 			}
 		}
 
@@ -577,7 +577,7 @@ class Admin_Pages_REST {
 		// database override for them, and only rewrites (and re-signs) the
 		// abilities.json of a user agent in the uploads data root.
 		if ( ! Abilities_Manifest::persist( $agent_slug, $manifest ) ) {
-			return new \WP_Error( 'not_writable', __( 'This agent\'s manifest could not be saved.', 'agent-builder' ), array( 'status' => 500 ) );
+			return new \WP_Error( 'not_writable', __( 'This agent\'s manifest could not be saved.', 'siteloom' ), array( 'status' => 500 ) );
 		}
 
 		return new \WP_REST_Response(
@@ -612,7 +612,7 @@ class Admin_Pages_REST {
 			return new \WP_REST_Response(
 				array(
 					'ok'      => false,
-					'message' => __( 'Unknown provider.', 'agent-builder' ),
+					'message' => __( 'Unknown provider.', 'siteloom' ),
 				),
 				404
 			);
@@ -624,7 +624,7 @@ class Admin_Pages_REST {
 			return new \WP_REST_Response(
 				array(
 					'ok'      => false,
-					'message' => __( 'No API key configured for this provider.', 'agent-builder' ),
+					'message' => __( 'No API key configured for this provider.', 'siteloom' ),
 				),
 				200
 			);
@@ -682,7 +682,7 @@ class Admin_Pages_REST {
 			return new \WP_REST_Response(
 				array(
 					'ok'      => true,
-					'message' => __( 'Connected successfully.', 'agent-builder' ),
+					'message' => __( 'Connected successfully.', 'siteloom' ),
 				),
 				200
 			);
@@ -691,7 +691,7 @@ class Admin_Pages_REST {
 		$body      = json_decode( wp_remote_retrieve_body( $response ), true );
 		$error_msg = $body['error']['message'] ?? $body['error'] ?? sprintf(
 			/* translators: %d: HTTP status code. */
-			__( 'Connection failed (HTTP %d).', 'agent-builder' ),
+			__( 'Connection failed (HTTP %d).', 'siteloom' ),
 			$status
 		);
 		if ( is_array( $error_msg ) ) {
@@ -715,7 +715,7 @@ class Admin_Pages_REST {
 	 */
 	private static function save_approval_prefs( \WP_REST_Request $request ) {
 		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'agent_builder_manage_agents' ) ) {
-			return new \WP_Error( 'forbidden', __( 'Permission denied.', 'agent-builder' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'forbidden', __( 'Permission denied.', 'siteloom' ), array( 'status' => 403 ) );
 		}
 
 		$email_notify = rest_sanitize_boolean( $request->get_param( 'email_notify' ) );
@@ -734,13 +734,13 @@ class Admin_Pages_REST {
 		if ( ! empty( $profiles[ $comfort ]['needs_ack'] ) && ! $risk_ack ) {
 			return new \WP_Error(
 				'ack_required',
-				__( 'Please confirm you accept the increased risk for “Trust more”.', 'agent-builder' ),
+				__( 'Please confirm you accept the increased risk for “Trust more”.', 'siteloom' ),
 				array( 'status' => 400 )
 			);
 		}
 
 		if ( $email_notify && $email_to && ! is_email( $email_to ) ) {
-			return new \WP_Error( 'invalid_email', __( 'Enter a valid email address.', 'agent-builder' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'invalid_email', __( 'Enter a valid email address.', 'siteloom' ), array( 'status' => 400 ) );
 		}
 
 		$prev = Admin_Profiles::get_approval_prefs();
@@ -804,12 +804,12 @@ class Admin_Pages_REST {
 	 */
 	private static function approval_decide( \WP_REST_Request $request ) {
 		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'agent_builder_manage_agents' ) ) {
-			return new \WP_Error( 'forbidden', __( 'Permission denied.', 'agent-builder' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'forbidden', __( 'Permission denied.', 'siteloom' ), array( 'status' => 403 ) );
 		}
 		$id     = absint( $request->get_param( 'id' ) );
 		$decide = sanitize_key( (string) $request->get_param( 'decide' ) );
 		if ( $id < 1 || ! in_array( $decide, array( 'approve', 'reject' ), true ) ) {
-			return new \WP_Error( 'invalid', __( 'Invalid approval request.', 'agent-builder' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'invalid', __( 'Invalid approval request.', 'siteloom' ), array( 'status' => 400 ) );
 		}
 
 		// Dispatch through the main REST approval handler so approve also runs the tool.
@@ -859,7 +859,7 @@ class Admin_Pages_REST {
 	 */
 	private static function approval_decide_bulk( \WP_REST_Request $request ) {
 		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'agent_builder_manage_agents' ) ) {
-			return new \WP_Error( 'forbidden', __( 'Permission denied.', 'agent-builder' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'forbidden', __( 'Permission denied.', 'siteloom' ), array( 'status' => 403 ) );
 		}
 
 		$ids = array_map( 'absint', (array) $request->get_param( 'ids' ) );
@@ -867,7 +867,7 @@ class Admin_Pages_REST {
 		$decide = sanitize_key( (string) $request->get_param( 'decide' ) );
 
 		if ( empty( $ids ) || ! in_array( $decide, array( 'approve', 'reject' ), true ) ) {
-			return new \WP_Error( 'invalid', __( 'Invalid approval request.', 'agent-builder' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'invalid', __( 'Invalid approval request.', 'siteloom' ), array( 'status' => 400 ) );
 		}
 
 		// Re-derive a safe order server-side rather than trusting whatever
@@ -980,10 +980,10 @@ class Admin_Pages_REST {
 	 */
 	public static function export_logs(): void {
 		if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( wp_unslash( $_GET['_wpnonce'] ) ), 'agentic_export_logs' ) ) {
-			wp_die( esc_html__( 'Security check failed. Please reload the Activity page and try exporting again.', 'agent-builder' ), 403 );
+			wp_die( esc_html__( 'Security check failed. Please reload the Activity page and try exporting again.', 'siteloom' ), 403 );
 		}
 		if ( ! current_user_can( 'agent_builder_view_audit_log' ) && ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You do not have permission to export logs.', 'agent-builder' ), 403 );
+			wp_die( esc_html__( 'You do not have permission to export logs.', 'siteloom' ), 403 );
 		}
 
 		$tab    = sanitize_key( (string) ( $_GET['tab'] ?? 'audit' ) );
@@ -1060,17 +1060,17 @@ class Admin_Pages_REST {
 	 */
 	public static function export_skill(): void {
 		if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( wp_unslash( $_GET['_wpnonce'] ) ), 'agentic_export_skill' ) ) {
-			wp_die( esc_html__( 'Security check failed. Please reload the Skills page and try exporting again.', 'agent-builder' ), 403 );
+			wp_die( esc_html__( 'Security check failed. Please reload the Skills page and try exporting again.', 'siteloom' ), 403 );
 		}
 		if ( ! current_user_can( 'agent_builder_manage_tools' ) ) {
-			wp_die( esc_html__( 'You do not have permission to export skills.', 'agent-builder' ), 403 );
+			wp_die( esc_html__( 'You do not have permission to export skills.', 'siteloom' ), 403 );
 		}
 
 		$id    = isset( $_GET['skill_id'] ) ? absint( $_GET['skill_id'] ) : 0;
 		$skill = $id > 0 && class_exists( Skills_Registry::class ) ? Skills_Registry::get( $id ) : null;
 
 		if ( ! $skill ) {
-			wp_die( esc_html__( 'Skill not found.', 'agent-builder' ), 404 );
+			wp_die( esc_html__( 'Skill not found.', 'siteloom' ), 404 );
 		}
 
 		$slug     = (string) ( $skill['slug'] ?? 'skill' );
@@ -1098,15 +1098,15 @@ class Admin_Pages_REST {
 	 */
 	public static function export_agent_download(): void {
 		if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( wp_unslash( $_GET['_wpnonce'] ) ), 'agentic_export_agent' ) ) {
-			wp_die( esc_html__( 'Security check failed. Please reload the Agents page and try exporting again.', 'agent-builder' ), '', array( 'response' => 403 ) );
+			wp_die( esc_html__( 'Security check failed. Please reload the Agents page and try exporting again.', 'siteloom' ), '', array( 'response' => 403 ) );
 		}
 		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'agent_builder_manage_agents' ) ) {
-			wp_die( esc_html__( 'You do not have permission to export agents.', 'agent-builder' ), '', array( 'response' => 403 ) );
+			wp_die( esc_html__( 'You do not have permission to export agents.', 'siteloom' ), '', array( 'response' => 403 ) );
 		}
 
 		$slug = isset( $_GET['slug'] ) ? sanitize_key( wp_unslash( $_GET['slug'] ) ) : '';
 		if ( '' === $slug ) {
-			wp_die( esc_html__( 'Missing agent slug.', 'agent-builder' ), '', array( 'response' => 400 ) );
+			wp_die( esc_html__( 'Missing agent slug.', 'siteloom' ), '', array( 'response' => 400 ) );
 		}
 
 		$zip_path = Agent_Templates::export( $slug );
@@ -1156,10 +1156,10 @@ class Admin_Pages_REST {
 	 */
 	public static function import_skill(): void {
 		if ( ! isset( $_POST['agentic_skill_import_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['agentic_skill_import_nonce'] ) ), 'agentic_import_skill' ) ) {
-			wp_die( esc_html__( 'Security check failed. Please reload the Skills page and try importing again.', 'agent-builder' ), 403 );
+			wp_die( esc_html__( 'Security check failed. Please reload the Skills page and try importing again.', 'siteloom' ), 403 );
 		}
 		if ( ! current_user_can( 'agent_builder_manage_tools' ) ) {
-			wp_die( esc_html__( 'You do not have permission to import skills.', 'agent-builder' ), 403 );
+			wp_die( esc_html__( 'You do not have permission to import skills.', 'siteloom' ), 403 );
 		}
 
 		$redirect_base = admin_url( 'admin.php?page=agentic-skills' );
@@ -1253,7 +1253,7 @@ class Admin_Pages_REST {
 	 */
 	private static function set_emergency_stop( \WP_REST_Request $request ) {
 		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'agent_builder_manage_settings' ) ) {
-			return new \WP_Error( 'forbidden', __( 'Permission denied.', 'agent-builder' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'forbidden', __( 'Permission denied.', 'siteloom' ), array( 'status' => 403 ) );
 		}
 
 		$enable   = rest_sanitize_boolean( $request->get_param( 'enable' ) );
@@ -1282,11 +1282,11 @@ class Admin_Pages_REST {
 	 */
 	private static function resolve_agent( string $slug ) {
 		if ( '' === $slug || ! class_exists( '\Agentic_Agent_Registry' ) ) {
-			return new \WP_Error( 'invalid', __( 'Unknown agent.', 'agent-builder' ), array( 'status' => 404 ) );
+			return new \WP_Error( 'invalid', __( 'Unknown agent.', 'siteloom' ), array( 'status' => 404 ) );
 		}
 		$installed = \Agentic_Agent_Registry::get_instance()->get_installed_agents( true );
 		if ( ! isset( $installed[ $slug ] ) ) {
-			return new \WP_Error( 'invalid', __( 'Unknown agent.', 'agent-builder' ), array( 'status' => 404 ) );
+			return new \WP_Error( 'invalid', __( 'Unknown agent.', 'siteloom' ), array( 'status' => 404 ) );
 		}
 		return $installed[ $slug ];
 	}
@@ -1426,7 +1426,7 @@ class Admin_Pages_REST {
 	private static function agent_reorder( \WP_REST_Request $request ) {
 		$slugs = array_map( 'sanitize_key', (array) $request->get_param( 'slugs' ) );
 		if ( empty( $slugs ) ) {
-			return new \WP_Error( 'invalid', __( 'No agents to reorder.', 'agent-builder' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'invalid', __( 'No agents to reorder.', 'siteloom' ), array( 'status' => 400 ) );
 		}
 
 		Agent_Profile::order( $slugs );
@@ -1482,7 +1482,7 @@ class Admin_Pages_REST {
 	 */
 	private static function agent_delete( \WP_REST_Request $request ) {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			return new \WP_Error( 'forbidden', __( 'Permission denied.', 'agent-builder' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'forbidden', __( 'Permission denied.', 'siteloom' ), array( 'status' => 403 ) );
 		}
 
 		$slug = sanitize_key( (string) $request->get_param( 'slug' ) );
@@ -1514,11 +1514,11 @@ class Admin_Pages_REST {
 	 */
 	public static function import_agent(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You do not have permission to import agents.', 'agent-builder' ), '', array( 'response' => 403 ) );
+			wp_die( esc_html__( 'You do not have permission to import agents.', 'siteloom' ), '', array( 'response' => 403 ) );
 		}
 
 		if ( ! isset( $_POST['agentic_agent_import_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['agentic_agent_import_nonce'] ) ), 'agentic_import_agent' ) ) {
-			wp_die( esc_html__( 'Security check failed. Please reload the Agents page and try importing again.', 'agent-builder' ), '', array( 'response' => 403 ) );
+			wp_die( esc_html__( 'Security check failed. Please reload the Agents page and try importing again.', 'siteloom' ), '', array( 'response' => 403 ) );
 		}
 
 		$redirect_base = admin_url( 'admin.php?page=agentic-agents' );

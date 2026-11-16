@@ -414,9 +414,9 @@ final class Plugin {
 				'nonce'           => wp_create_nonce( 'agentic_plugin_deactivate' ),
 				'canSendFeedback' => (bool) get_option( 'agent_builder_service_consent' ),
 				'i18n'            => array(
-					'deleteDescription'   => __( 'When you delete the plugin, conversations, logs, API keys, settings, every Agent Builder database table (including the agents and skills you created or bought) and its data folder in uploads (the agent folders you built, automatic backups, knowledge files and generated documents) are permanently removed.', 'agent-builder' ),
-					'deleteConfirm'       => __( 'When you delete the plugin, all Agent Builder data, including the agents and skills you created or bought and all automatic backups, will be permanently deleted. This cannot be undone. Continue?', 'agent-builder' ),
-					'deleteConfirmButton' => __( 'Delete everything', 'agent-builder' ),
+					'deleteDescription'   => __( 'When you delete the plugin, conversations, logs, API keys, settings, every Agent Builder database table (including the agents and skills you created or bought) and its data folder in uploads (the agent folders you built, automatic backups, knowledge files and generated documents) are permanently removed.', 'siteloom' ),
+					'deleteConfirm'       => __( 'When you delete the plugin, all Agent Builder data, including the agents and skills you created or bought and all automatic backups, will be permanently deleted. This cannot be undone. Continue?', 'siteloom' ),
+					'deleteConfirmButton' => __( 'Delete everything', 'siteloom' ),
 				),
 			)
 		);
@@ -437,10 +437,10 @@ final class Plugin {
 		$wp_admin_bar->add_node(
 			array(
 				'id'    => 'agentic-chat-bar',
-				'title' => '<span class="ab-icon dashicons dashicons-format-chat" style="font-size: 18px; line-height: 1.3;"></span>' . __( 'AI Agents', 'agent-builder' ),
+				'title' => '<span class="ab-icon dashicons dashicons-format-chat" style="font-size: 18px; line-height: 1.3;"></span>' . __( 'AI Agents', 'siteloom' ),
 				'href'  => '#',
 				'meta'  => array(
-					'title' => __( 'Chat with an AI Agent', 'agent-builder' ),
+					'title' => __( 'Chat with an AI Agent', 'siteloom' ),
 				),
 			)
 		);
@@ -493,7 +493,7 @@ final class Plugin {
 
 			// Show wordpress-assistant as "Helper" for a friendlier label.
 			if ( 'wordpress-assistant' === $slug ) {
-				$name = __( 'Helper', 'agent-builder' );
+				$name = __( 'Helper', 'siteloom' );
 			} else {
 				$name = $agent_info['name'] ?? ucwords( str_replace( '-', ' ', $slug ) );
 			}
@@ -517,7 +517,7 @@ final class Plugin {
 			array(
 				'id'     => 'agentic-chat-settings',
 				'parent' => 'agentic-chat-bar',
-				'title'  => '⚙️ ' . esc_html__( 'Settings', 'agent-builder' ),
+				'title'  => '⚙️ ' . esc_html__( 'Settings', 'siteloom' ),
 				'href'   => admin_url( 'admin.php?page=agentic-deployment&tab=admin-bar' ),
 			)
 		);

@@ -138,7 +138,7 @@ final class Manifest_Agent extends Agent_Base {
 	 */
 	public function get_author(): string {
 		$author = (string) ( $this->manifest['author'] ?? '' );
-		return '' !== $author ? $author : __( 'Assistant Trainer', 'agent-builder' );
+		return '' !== $author ? $author : __( 'Assistant Trainer', 'siteloom' );
 	}
 
 	/**

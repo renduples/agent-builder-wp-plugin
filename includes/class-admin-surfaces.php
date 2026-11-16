@@ -126,28 +126,28 @@ class Admin_Surfaces {
 	public static function available_screens(): array {
 		return array(
 			'dashboard' => array(
-				'label'       => __( 'Dashboard', 'agent-builder' ),
-				'description' => __( 'Home screen widget', 'agent-builder' ),
+				'label'       => __( 'Dashboard', 'siteloom' ),
+				'description' => __( 'Home screen widget', 'siteloom' ),
 				'hooks'       => array( 'index.php' ),
 			),
 			'plugins'   => array(
-				'label'       => __( 'Plugins', 'agent-builder' ),
-				'description' => __( 'Installed plugins list', 'agent-builder' ),
+				'label'       => __( 'Plugins', 'siteloom' ),
+				'description' => __( 'Installed plugins list', 'siteloom' ),
 				'hooks'       => array( 'plugins.php' ),
 			),
 			'media'     => array(
-				'label'       => __( 'Media Library', 'agent-builder' ),
-				'description' => __( 'Media grid and list', 'agent-builder' ),
+				'label'       => __( 'Media Library', 'siteloom' ),
+				'description' => __( 'Media grid and list', 'siteloom' ),
 				'hooks'       => array( 'upload.php' ),
 			),
 			'users'     => array(
-				'label'       => __( 'Users', 'agent-builder' ),
-				'description' => __( 'Users list and row actions', 'agent-builder' ),
+				'label'       => __( 'Users', 'siteloom' ),
+				'description' => __( 'Users list and row actions', 'siteloom' ),
 				'hooks'       => array( 'users.php' ),
 			),
 			'comments'  => array(
-				'label'       => __( 'Comments', 'agent-builder' ),
-				'description' => __( 'Comments list row actions', 'agent-builder' ),
+				'label'       => __( 'Comments', 'siteloom' ),
+				'description' => __( 'Comments list row actions', 'siteloom' ),
 				'hooks'       => array( 'edit-comments.php' ),
 			),
 		);
@@ -392,8 +392,8 @@ class Admin_Surfaces {
 		if ( '' === $slug ) {
 			return '';
 		}
-		$label = isset( $args['label'] ) ? (string) $args['label'] : __( 'Ask AI', 'agent-builder' );
-		$title = isset( $args['title'] ) ? (string) $args['title'] : __( 'Open the AI agent. Data is sent only when you press Send.', 'agent-builder' );
+		$label = isset( $args['label'] ) ? (string) $args['label'] : __( 'Ask AI', 'siteloom' );
+		$title = isset( $args['title'] ) ? (string) $args['title'] : __( 'Open the AI agent. Data is sent only when you press Send.', 'siteloom' );
 
 		// Compact sparkle mark (SVG) — scales cleanly; no emoji font fallback issues.
 		$icon = '<span class="agentic-context-launcher__icon" aria-hidden="true">'
@@ -442,7 +442,7 @@ class Admin_Surfaces {
 
 				$prompt = sprintf(
 					/* translators: 1: total plugin count, 2: number of plugins with updates. */
-					__( "I'm on the Plugins screen (%1\$d installed, %2\$d with updates available). Give me a quick health check: flag anything abandoned, insecure, or redundant, and tell me what's safe to update first.", 'agent-builder' ),
+					__( "I'm on the Plugins screen (%1\$d installed, %2\$d with updates available). Give me a quick health check: flag anything abandoned, insecure, or redundant, and tell me what's safe to update first.", 'siteloom' ),
 					$total,
 					$updates
 				);
@@ -451,8 +451,8 @@ class Admin_Surfaces {
 					array(
 						'slug'   => $slug,
 						'prompt' => $prompt,
-						'label'  => __( 'Ask AI about plugins', 'agent-builder' ),
-						'title'  => __( 'Review installed plugins with the AI agent. Data is sent only when you press Send.', 'agent-builder' ),
+						'label'  => __( 'Ask AI about plugins', 'siteloom' ),
+						'title'  => __( 'Review installed plugins with the AI agent. Data is sent only when you press Send.', 'siteloom' ),
 					)
 				);
 				if ( '' !== $link ) {
@@ -468,9 +468,9 @@ class Admin_Surfaces {
 			$create = $this->launcher_link(
 				array(
 					'slug'   => 'plugin-assistant',
-					'prompt' => __( 'I want to build a custom plugin. Help me scaffold it: ask me what it should do, then generate the plugin structure and code for me to review.', 'agent-builder' ),
-					'label'  => __( 'Create a plugin with AI', 'agent-builder' ),
-					'title'  => __( 'Scaffold a custom plugin with the AI agent. Data is sent only when you press Send.', 'agent-builder' ),
+					'prompt' => __( 'I want to build a custom plugin. Help me scaffold it: ask me what it should do, then generate the plugin structure and code for me to review.', 'siteloom' ),
+					'label'  => __( 'Create a plugin with AI', 'siteloom' ),
+					'title'  => __( 'Scaffold a custom plugin with the AI agent. Data is sent only when you press Send.', 'siteloom' ),
 				)
 			);
 			if ( '' !== $create ) {
@@ -531,13 +531,13 @@ class Admin_Surfaces {
 			return '';
 		}
 
-		$prompt = __( 'Give me an overview of my media library: any images missing alt text, unused files I could clean up, and anything else worth a look.', 'agent-builder' );
+		$prompt = __( 'Give me an overview of my media library: any images missing alt text, unused files I could clean up, and anything else worth a look.', 'siteloom' );
 
 		$link = $this->launcher_link(
 			array(
 				'slug'   => $slug,
 				'prompt' => $prompt,
-				'label'  => __( 'Ask AI about media', 'agent-builder' ),
+				'label'  => __( 'Ask AI about media', 'siteloom' ),
 			)
 		);
 		if ( '' === $link ) {
@@ -602,7 +602,7 @@ class Admin_Surfaces {
 		$filename = wp_basename( (string) get_post_meta( $attachment->ID, '_wp_attached_file', true ) );
 		$prompt   = sprintf(
 			/* translators: 1: attachment ID, 2: filename. */
-			__( 'Write concise, descriptive alt text for image #%1$d (%2$s), then update it for me after I approve.', 'agent-builder' ),
+			__( 'Write concise, descriptive alt text for image #%1$d (%2$s), then update it for me after I approve.', 'siteloom' ),
 			$attachment->ID,
 			$filename
 		);
@@ -611,13 +611,13 @@ class Admin_Surfaces {
 			array(
 				'slug'   => $slug,
 				'prompt' => $prompt,
-				'label'  => __( 'Generate alt text with AI', 'agent-builder' ),
-				'title'  => __( 'Draft alt text with the AI agent. Data is sent only when you press Send.', 'agent-builder' ),
+				'label'  => __( 'Generate alt text with AI', 'siteloom' ),
+				'title'  => __( 'Draft alt text with the AI agent. Data is sent only when you press Send.', 'siteloom' ),
 			)
 		);
 		if ( '' !== $link ) {
 			$fields['agentic_alt_ai'] = array(
-				'label' => __( 'AI agent', 'agent-builder' ),
+				'label' => __( 'AI agent', 'siteloom' ),
 				'input' => 'html',
 				'html'  => $link,
 			);
@@ -645,12 +645,12 @@ class Admin_Surfaces {
 		$prompt   = $is_image
 			? sprintf(
 				/* translators: %d: attachment ID. */
-				__( 'Help me with image #%d: review its alt text, suggest a better version, and recommend how I could improve this image.', 'agent-builder' ),
+				__( 'Help me with image #%d: review its alt text, suggest a better version, and recommend how I could improve this image.', 'siteloom' ),
 				$post->ID
 			)
 			: sprintf(
 				/* translators: %d: attachment ID. */
-				__( 'Help me manage media item #%d.', 'agent-builder' ),
+				__( 'Help me manage media item #%d.', 'siteloom' ),
 				$post->ID
 			);
 
@@ -658,7 +658,7 @@ class Admin_Surfaces {
 			array(
 				'slug'   => $slug,
 				'prompt' => $prompt,
-				'label'  => __( 'Ask AI', 'agent-builder' ),
+				'label'  => __( 'Ask AI', 'siteloom' ),
 			)
 		);
 		if ( '' !== $link ) {
@@ -688,13 +688,13 @@ class Admin_Surfaces {
 			return;
 		}
 
-		$prompt = __( 'Give me an overview of my user base: recent registrations, inactive accounts, and anyone with elevated privileges I should review.', 'agent-builder' );
+		$prompt = __( 'Give me an overview of my user base: recent registrations, inactive accounts, and anyone with elevated privileges I should review.', 'siteloom' );
 
 		$link = $this->launcher_link(
 			array(
 				'slug'   => $slug,
 				'prompt' => $prompt,
-				'label'  => __( 'Ask AI about users', 'agent-builder' ),
+				'label'  => __( 'Ask AI about users', 'siteloom' ),
 			)
 		);
 		if ( '' === $link ) {
@@ -730,7 +730,7 @@ class Admin_Surfaces {
 		// Only non-sensitive identifiers (ID + display name) are passed.
 		$prompt = sprintf(
 			/* translators: 1: user ID, 2: display name. */
-			__( 'Draft a friendly, professional email to user #%1$d (%2$s). Ask me the purpose first, then write it for my review.', 'agent-builder' ),
+			__( 'Draft a friendly, professional email to user #%1$d (%2$s). Ask me the purpose first, then write it for my review.', 'siteloom' ),
 			$user->ID,
 			$user->display_name
 		);
@@ -739,7 +739,7 @@ class Admin_Surfaces {
 			array(
 				'slug'   => $slug,
 				'prompt' => $prompt,
-				'label'  => __( 'Draft email with AI', 'agent-builder' ),
+				'label'  => __( 'Draft email with AI', 'siteloom' ),
 			)
 		);
 		if ( '' !== $link ) {
@@ -772,7 +772,7 @@ class Admin_Surfaces {
 
 		$prompt = sprintf(
 			/* translators: %d: comment ID. */
-			__( 'Triage comment #%d: summarize it, suggest a priority and category, and draft a helpful reply for my review.', 'agent-builder' ),
+			__( 'Triage comment #%d: summarize it, suggest a priority and category, and draft a helpful reply for my review.', 'siteloom' ),
 			$comment->comment_ID
 		);
 
@@ -780,7 +780,7 @@ class Admin_Surfaces {
 			array(
 				'slug'   => $slug,
 				'prompt' => $prompt,
-				'label'  => __( 'Triage with AI', 'agent-builder' ),
+				'label'  => __( 'Triage with AI', 'siteloom' ),
 			)
 		);
 		if ( '' !== $link ) {
@@ -809,7 +809,7 @@ class Admin_Surfaces {
 		}
 		wp_add_dashboard_widget(
 			'agentic_dashboard_launcher',
-			__( 'Ask Agent Builder', 'agent-builder' ),
+			__( 'Ask Agent Builder', 'siteloom' ),
 			array( $this, 'render_dashboard_widget' )
 		);
 	}
@@ -827,20 +827,20 @@ class Admin_Surfaces {
 
 		$buttons = array(
 			array(
-				'prompt' => __( 'Give me a quick health check of my site and the top 3 things I should do today.', 'agent-builder' ),
-				'label'  => __( 'What should I focus on today?', 'agent-builder' ),
+				'prompt' => __( 'Give me a quick health check of my site and the top 3 things I should do today.', 'siteloom' ),
+				'label'  => __( 'What should I focus on today?', 'siteloom' ),
 			),
 			array(
-				'prompt' => __( 'Suggest a few blog post ideas based on my existing content and what might be missing.', 'agent-builder' ),
-				'label'  => __( 'Suggest content ideas', 'agent-builder' ),
+				'prompt' => __( 'Suggest a few blog post ideas based on my existing content and what might be missing.', 'siteloom' ),
+				'label'  => __( 'Suggest content ideas', 'siteloom' ),
 			),
 			array(
-				'prompt' => __( 'Review my site for SEO, performance, and security issues and prioritize the fixes.', 'agent-builder' ),
-				'label'  => __( 'Audit my site', 'agent-builder' ),
+				'prompt' => __( 'Review my site for SEO, performance, and security issues and prioritize the fixes.', 'siteloom' ),
+				'label'  => __( 'Audit my site', 'siteloom' ),
 			),
 		);
 
-		echo '<p>' . esc_html__( 'Pick a starting point — you can edit the prompt before sending.', 'agent-builder' ) . '</p>';
+		echo '<p>' . esc_html__( 'Pick a starting point — you can edit the prompt before sending.', 'siteloom' ) . '</p>';
 		echo '<p>';
 		foreach ( $buttons as $b ) {
 			$link = $this->launcher_link(
@@ -858,7 +858,7 @@ class Admin_Surfaces {
 			}
 		}
 		echo '</p>';
-		echo '<p class="description">' . esc_html__( 'Data is sent to your configured AI provider only when you press Send.', 'agent-builder' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Data is sent to your configured AI provider only when you press Send.', 'siteloom' ) . '</p>';
 	}
 
 	/*
@@ -877,7 +877,7 @@ class Admin_Surfaces {
 		return sprintf(
 			'<button type="button" class="agentic-launcher-dismiss" data-launcher-key="%1$s" title="%2$s" aria-label="%2$s"><span aria-hidden="true">&times;</span></button>',
 			esc_attr( $key ),
-			esc_attr__( 'Dismiss this launcher', 'agent-builder' )
+			esc_attr__( 'Dismiss this launcher', 'siteloom' )
 		);
 	}
 

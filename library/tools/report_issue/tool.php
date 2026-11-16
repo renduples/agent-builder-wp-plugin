@@ -100,7 +100,7 @@ class Report_Issue extends \Agentic\Tool_Base {
 		if ( ! function_exists( 'current_user_can' ) || ! current_user_can( 'manage_options' ) ) {
 			return array(
 				'public'  => true,
-				'message' => __( "Sorry — something went wrong on this site. I've flagged it so the site's team can look into it. Please try again shortly, or contact the site owner if it keeps happening.", 'agent-builder' ),
+				'message' => __( "Sorry — something went wrong on this site. I've flagged it so the site's team can look into it. Please try again shortly, or contact the site owner if it keeps happening.", 'siteloom' ),
 			);
 		}
 

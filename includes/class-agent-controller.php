@@ -146,7 +146,7 @@ class Agent_Controller {
 	 * @return string
 	 */
 	private static function truncation_notice(): string {
-		return "\n\n" . __( '⚠️ This response was cut short — the model hit its token limit before finishing. Try asking me to continue, or break the request into smaller steps.', 'agent-builder' );
+		return "\n\n" . __( '⚠️ This response was cut short — the model hit its token limit before finishing. Try asking me to continue, or break the request into smaller steps.', 'siteloom' );
 	}
 
 	/**
@@ -759,7 +759,7 @@ class Agent_Controller {
 				return array(
 					'response' => sprintf(
 						/* translators: %s: agent identifier */
-						__( "Agent '%s' is not available or you don't have access to it.", 'agent-builder' ),
+						__( "Agent '%s' is not available or you don't have access to it.", 'siteloom' ),
 						$agent_id
 					),
 					'error'    => true,
@@ -770,7 +770,7 @@ class Agent_Controller {
 
 		if ( ! $this->current_agent ) {
 			return array(
-				'response' => __( 'No agent selected. Please select an agent to chat with.', 'agent-builder' ),
+				'response' => __( 'No agent selected. Please select an agent to chat with.', 'siteloom' ),
 				'error'    => true,
 				'agent_id' => '',
 			);
@@ -786,7 +786,7 @@ class Agent_Controller {
 
 		if ( 'disabled' === $effective_mode ) {
 			return array(
-				'response' => __( 'This agent is currently disabled.', 'agent-builder' ),
+				'response' => __( 'This agent is currently disabled.', 'siteloom' ),
 				'error'    => true,
 				'agent_id' => $this->current_agent->get_id(),
 			);
@@ -794,7 +794,7 @@ class Agent_Controller {
 
 		if ( ! $this->llm->is_configured() ) {
 			return array(
-				'response' => __( 'The AI service is not configured. Please ask an administrator to set up the API key in Settings > Agentic.', 'agent-builder' ),
+				'response' => __( 'The AI service is not configured. Please ask an administrator to set up the API key in Settings > Agentic.', 'siteloom' ),
 				'error'    => true,
 				'agent_id' => $this->current_agent->get_id(),
 			);
@@ -835,7 +835,7 @@ class Agent_Controller {
 				'abilities.json signature mismatch — agent blocked'
 			);
 			return array(
-				'response' => __( 'This agent has been temporarily disabled due to a security check. Please deactivate and reactivate the Agent Builder plugin to restore it.', 'agent-builder' ),
+				'response' => __( 'This agent has been temporarily disabled due to a security check. Please deactivate and reactivate the Agent Builder plugin to restore it.', 'siteloom' ),
 				'error'    => true,
 				'agent_id' => $current_agent_id,
 			);
@@ -1050,7 +1050,7 @@ class Agent_Controller {
 						? $result->get_error_message()
 						: sprintf(
 							/* translators: %s: error message from AI provider */
-							__( 'Error communicating with AI: %s', 'agent-builder' ),
+							__( 'Error communicating with AI: %s', 'siteloom' ),
 							$result->get_error_message()
 						),
 					'error'       => true,
@@ -1069,7 +1069,7 @@ class Agent_Controller {
 			$choice = $result['choices'][0] ?? null;
 			if ( ! $choice ) {
 				return array(
-					'response' => __( 'Invalid response from AI.', 'agent-builder' ),
+					'response' => __( 'Invalid response from AI.', 'siteloom' ),
 					'error'    => true,
 					'agent_id' => $current_agent_id,
 				);
@@ -1239,7 +1239,7 @@ class Agent_Controller {
 				if ( $has_pending_proposal ) {
 					$response = '' !== $pending_message
 						? $pending_message
-						: __( 'Please review and approve the action below to proceed.', 'agent-builder' );
+						: __( 'Please review and approve the action below to proceed.', 'siteloom' );
 					break;
 				}
 
@@ -1414,7 +1414,7 @@ class Agent_Controller {
 		if ( 'disabled' === Agent_Settings::get( $agent_id, 'override_mode' ) ) {
 			return array(
 				'error'    => true,
-				'response' => __( 'This agent is disabled and cannot run autonomous tasks.', 'agent-builder' ),
+				'response' => __( 'This agent is disabled and cannot run autonomous tasks.', 'siteloom' ),
 				'agent_id' => $agent_id,
 				'task_id'  => $task_id,
 				'run_id'   => '',
@@ -1449,7 +1449,7 @@ class Agent_Controller {
 				return array(
 					'error'          => true,
 					'guard_rejected' => true,
-					'response'       => __( 'Cannot resume: run not found.', 'agent-builder' ),
+					'response'       => __( 'Cannot resume: run not found.', 'siteloom' ),
 					'agent_id'       => $agent_id,
 					'task_id'        => $task_id,
 					'run_id'         => $resume_run_id,
@@ -1490,7 +1490,7 @@ class Agent_Controller {
 					// this guard tripping (stale job data, a race, a mismatched
 					// caller) is not this call's run to finalize.
 					'guard_rejected' => true,
-					'response'       => __( 'Cannot resume: this run is not in a resumable state.', 'agent-builder' ),
+					'response'       => __( 'Cannot resume: this run is not in a resumable state.', 'siteloom' ),
 					'agent_id'       => $agent_id,
 					'task_id'        => $task_id,
 					'run_id'         => $resume_run_id,
@@ -1512,7 +1512,7 @@ class Agent_Controller {
 				return array(
 					'error'          => true,
 					'guard_rejected' => true,
-					'response'       => __( 'Cannot resume: this run was already claimed by another request.', 'agent-builder' ),
+					'response'       => __( 'Cannot resume: this run was already claimed by another request.', 'siteloom' ),
 					'agent_id'       => $agent_id,
 					'task_id'        => $task_id,
 					'run_id'         => $resume_run_id,
@@ -1578,7 +1578,7 @@ class Agent_Controller {
 					return array(
 						'error'          => true,
 						'guard_rejected' => true,
-						'response'       => __( 'Cannot start: this run was already claimed by another request.', 'agent-builder' ),
+						'response'       => __( 'Cannot start: this run was already claimed by another request.', 'siteloom' ),
 						'agent_id'       => $agent_id,
 						'task_id'        => $task_id,
 						'run_id'         => $resume_run_id,
@@ -1675,7 +1675,7 @@ class Agent_Controller {
 
 			if ( $run->cancel_requested() ) {
 				$final_status = 'cancelled';
-				$response     = __( 'This task was cancelled.', 'agent-builder' );
+				$response     = __( 'This task was cancelled.', 'siteloom' );
 				break;
 			}
 
@@ -1688,7 +1688,7 @@ class Agent_Controller {
 					: 0.0;
 
 				return array(
-					'response'    => __( 'This task is taking a while and will continue in the background.', 'agent-builder' ),
+					'response'    => __( 'This task is taking a while and will continue in the background.', 'siteloom' ),
 					'agent_id'    => $agent_id,
 					'task_id'     => $task_id,
 					'mode'        => 'autonomous',
@@ -1809,7 +1809,7 @@ class Agent_Controller {
 			} else {
 				$response = $assistant_message['content'];
 				if ( 'length' === ( $choice['finish_reason'] ?? '' ) ) {
-					$response .= "\n\n" . __( '[Note: this result was cut short — the model hit its token limit before finishing.]', 'agent-builder' );
+					$response .= "\n\n" . __( '[Note: this result was cut short — the model hit its token limit before finishing.]', 'siteloom' );
 				}
 			}
 
@@ -1833,7 +1833,7 @@ class Agent_Controller {
 				return array(
 					'response'    => '' !== $pending_msg
 						? $pending_msg
-						: __( 'A tool action is waiting for approval before this task can continue.', 'agent-builder' ),
+						: __( 'A tool action is waiting for approval before this task can continue.', 'siteloom' ),
 					'agent_id'    => $agent_id,
 					'task_id'     => $task_id,
 					'mode'        => 'autonomous',

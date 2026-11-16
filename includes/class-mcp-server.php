@@ -105,14 +105,14 @@ class Agentic_MCP_Server {
 		if ( ! is_user_logged_in() ) {
 			return new \WP_Error(
 				'rest_forbidden',
-				__( 'Authentication required.', 'agent-builder' ),
+				__( 'Authentication required.', 'siteloom' ),
 				array( 'status' => 401 )
 			);
 		}
 		if ( ! current_user_can( 'edit_posts' ) ) {
 			return new \WP_Error(
 				'rest_forbidden',
-				__( 'You are not allowed to use this MCP endpoint.', 'agent-builder' ),
+				__( 'You are not allowed to use this MCP endpoint.', 'siteloom' ),
 				array( 'status' => 403 )
 			);
 		}
@@ -121,7 +121,7 @@ class Agentic_MCP_Server {
 		if ( '' === $slug || ! self::is_mcp_enabled( $slug ) ) {
 			return new \WP_Error(
 				'agentic_mcp_disabled',
-				__( 'MCP is not enabled for this agent. An administrator can turn it on in Settings > MCP.', 'agent-builder' ),
+				__( 'MCP is not enabled for this agent. An administrator can turn it on in Settings > MCP.', 'siteloom' ),
 				array( 'status' => 403 )
 			);
 		}
@@ -345,25 +345,25 @@ class Agentic_MCP_Server {
 		if ( '' === $slug || ! class_exists( '\\Agentic_Agent_Registry' ) ) {
 			return array(
 				'ready'  => false,
-				'reason' => __( 'Unknown agent.', 'agent-builder' ),
+				'reason' => __( 'Unknown agent.', 'siteloom' ),
 			);
 		}
 		if ( ! \Agentic_Agent_Registry::get_instance()->get_agent_instance( $slug ) ) {
 			return array(
 				'ready'  => false,
-				'reason' => __( 'Agent is not active.', 'agent-builder' ),
+				'reason' => __( 'Agent is not active.', 'siteloom' ),
 			);
 		}
 		if ( ! class_exists( '\\Agentic\\Abilities_Manifest' ) ) {
 			return array(
 				'ready'  => false,
-				'reason' => __( 'Abilities manifest system unavailable.', 'agent-builder' ),
+				'reason' => __( 'Abilities manifest system unavailable.', 'siteloom' ),
 			);
 		}
 		if ( ! \Agentic\Abilities_Manifest::load( $slug ) ) {
 			return array(
 				'ready'  => false,
-				'reason' => __( 'No abilities.json manifest for this agent.', 'agent-builder' ),
+				'reason' => __( 'No abilities.json manifest for this agent.', 'siteloom' ),
 			);
 		}
 		if ( ! \Agentic\Abilities_Manifest::verify_integrity( $slug ) ) {
@@ -374,13 +374,13 @@ class Agentic_MCP_Server {
 			);
 			return array(
 				'ready'  => false,
-				'reason' => __( 'Manifest signature mismatch — this agent\'s tools are blocked until it is re-signed.', 'agent-builder' ),
+				'reason' => __( 'Manifest signature mismatch — this agent\'s tools are blocked until it is re-signed.', 'siteloom' ),
 			);
 		}
 		if ( ! self::is_mcp_enabled( $slug ) ) {
 			return array(
 				'ready'  => false,
-				'reason' => __( 'MCP is off for this agent.', 'agent-builder' ),
+				'reason' => __( 'MCP is off for this agent.', 'siteloom' ),
 			);
 		}
 		return array(

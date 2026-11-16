@@ -125,7 +125,7 @@ class Skill_Drafter_REST {
 		if ( empty( $result['ok'] ) ) {
 			return new \WP_Error(
 				'rest_skill_draft_failed',
-				(string) ( $result['error'] ?? __( 'Could not draft the skill.', 'agent-builder' ) ),
+				(string) ( $result['error'] ?? __( 'Could not draft the skill.', 'siteloom' ) ),
 				array( 'status' => (int) ( $result['status'] ?? 400 ) )
 			);
 		}
@@ -151,7 +151,7 @@ class Skill_Drafter_REST {
 		if ( empty( $peeked['ok'] ) ) {
 			return new \WP_Error(
 				'rest_skill_draft_recording_failed',
-				(string) ( $peeked['error'] ?? __( 'No recording to draft from.', 'agent-builder' ) ),
+				(string) ( $peeked['error'] ?? __( 'No recording to draft from.', 'siteloom' ) ),
 				array( 'status' => 400 )
 			);
 		}
@@ -162,7 +162,7 @@ class Skill_Drafter_REST {
 		if ( empty( $result['ok'] ) ) {
 			return new \WP_Error(
 				'rest_skill_draft_failed',
-				(string) ( $result['error'] ?? __( 'Could not draft the skill.', 'agent-builder' ) ),
+				(string) ( $result['error'] ?? __( 'Could not draft the skill.', 'siteloom' ) ),
 				array( 'status' => 400 )
 			);
 		}
@@ -188,7 +188,7 @@ class Skill_Drafter_REST {
 		if ( empty( $result['ok'] ) ) {
 			return new \WP_Error(
 				'rest_skill_draft_failed',
-				(string) ( $result['error'] ?? __( 'Could not draft the skill.', 'agent-builder' ) ),
+				(string) ( $result['error'] ?? __( 'Could not draft the skill.', 'siteloom' ) ),
 				array( 'status' => 400 )
 			);
 		}

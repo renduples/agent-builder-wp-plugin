@@ -203,18 +203,18 @@ final class WP_AI_Detection {
 	 */
 	public static function get_mode_label(): string {
 		if ( self::is_wp7_or_later() && self::has_ai_client() && self::has_connectors() ) {
-			return __( 'Native WP 7.0+ AI Client + Connectors (with Agent Builder orchestration)', 'agent-builder' );
+			return __( 'Native WP 7.0+ AI Client + Connectors (with Agent Builder orchestration)', 'siteloom' );
 		}
 
 		if ( self::is_wp7_or_later() && self::has_abilities_api() ) {
-			return __( 'WP 7.0+ Abilities + partial AI Client (Agent Builder bridge active)', 'agent-builder' );
+			return __( 'WP 7.0+ Abilities + partial AI Client (Agent Builder bridge active)', 'siteloom' );
 		}
 
 		if ( self::has_abilities_api() ) {
-			return __( 'WP 6.9+ Abilities API (Agent Builder full bridge for AI Client & orchestration)', 'agent-builder' );
+			return __( 'WP 6.9+ Abilities API (Agent Builder full bridge for AI Client & orchestration)', 'siteloom' );
 		}
 
-		return __( 'Agent Builder bridge — full modern AI agent experience on this version of WordPress', 'agent-builder' );
+		return __( 'Agent Builder bridge — full modern AI agent experience on this version of WordPress', 'siteloom' );
 	}
 
 	/**

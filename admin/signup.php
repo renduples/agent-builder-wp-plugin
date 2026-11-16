@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! current_user_can( 'manage_options' ) ) {
-	wp_die( esc_html__( 'You do not have permission to access this page.', 'agent-builder' ) );
+	wp_die( esc_html__( 'You do not have permission to access this page.', 'siteloom' ) );
 }
 
 $agentic_signup_site_url = home_url();
@@ -53,21 +53,21 @@ $agentic_signup_tts_voices     = array(
 <div class="agentic-signup-wrap">
 	<div class="agentic-signup-card">
 		<div class="agentic-logo">
-			<img src="<?php echo esc_url( AGENT_BUILDER_URL . 'assets/icon.svg' ); ?>" alt="<?php esc_attr_e( 'Agent Builder', 'agent-builder' ); ?>">
+			<img src="<?php echo esc_url( AGENT_BUILDER_URL . 'assets/icon.svg' ); ?>" alt="<?php esc_attr_e( 'Agent Builder', 'siteloom' ); ?>">
 			<span>Agent Builder</span>
 		</div>
 
-		<h1><?php esc_html_e( 'Connect to Agentic AI', 'agent-builder' ); ?></h1>
+		<h1><?php esc_html_e( 'Connect to Agentic AI', 'siteloom' ); ?></h1>
 		<p class="subtitle">
-			<?php esc_html_e( 'Connect Agent Builder to an AI service with just one click.', 'agent-builder' ); ?>
-			<br><?php esc_html_e( 'Free daily credits, no payment info required.', 'agent-builder' ); ?>
+			<?php esc_html_e( 'Connect Agent Builder to an AI service with just one click.', 'siteloom' ); ?>
+			<br><?php esc_html_e( 'Free daily credits, no payment info required.', 'siteloom' ); ?>
 		</p>
 
 		<?php if ( $agentic_license_missing ) : ?>
 			<div class="notice notice-warning inline" id="agentic-license-missing-notice">
 				<p>
-					<strong><?php esc_html_e( 'Your Agentic AI connection is missing its license key.', 'agent-builder' ); ?></strong>
-					<?php esc_html_e( 'This site has an API key but no license key, so the hosted provider cannot be used yet. Connect again with the same email address and the existing key will be re-issued together with its license.', 'agent-builder' ); ?>
+					<strong><?php esc_html_e( 'Your Agentic AI connection is missing its license key.', 'siteloom' ); ?></strong>
+					<?php esc_html_e( 'This site has an API key but no license key, so the hosted provider cannot be used yet. Connect again with the same email address and the existing key will be re-issued together with its license.', 'siteloom' ); ?>
 				</p>
 			</div>
 		<?php endif; ?>
@@ -77,53 +77,53 @@ $agentic_signup_tts_voices     = array(
 			<input type="hidden" name="plugin_version" value="<?php echo esc_attr( $agentic_signup_version ); ?>">
 
 			<!-- ── Registration ─────────────────────────────── -->
-			<h3 class="agentic-signup-section-heading"><?php esc_html_e( 'Registration', 'agent-builder' ); ?></h3>
+			<h3 class="agentic-signup-section-heading"><?php esc_html_e( 'Registration', 'siteloom' ); ?></h3>
 
 			<div class="agentic-signup-field" id="agentic-signup-email-field">
-				<label for="agentic-signup-email"><?php esc_html_e( 'Email Address', 'agent-builder' ); ?></label>
+				<label for="agentic-signup-email"><?php esc_html_e( 'Email Address', 'siteloom' ); ?></label>
 				<input type="email" id="agentic-signup-email" name="email" value="<?php echo esc_attr( $agentic_signup_email ); ?>">
-				<p class="agentic-field-note"><?php esc_html_e( 'Free daily credits and API key will be sent to this email address.', 'agent-builder' ); ?></p>
+				<p class="agentic-field-note"><?php esc_html_e( 'Free daily credits and API key will be sent to this email address.', 'siteloom' ); ?></p>
 				<p class="agentic-inline-error" id="agentic-email-error" role="alert" hidden></p>
 			</div>
 
 			<div class="agentic-signup-field">
-				<label for="agentic-signup-sitename"><?php esc_html_e( 'Site Name', 'agent-builder' ); ?></label>
+				<label for="agentic-signup-sitename"><?php esc_html_e( 'Site Name', 'siteloom' ); ?></label>
 				<input type="text" id="agentic-signup-sitename" name="site_name" value="<?php echo esc_attr( $agentic_signup_name ); ?>">
 			</div>
 
 			<div class="agentic-signup-field">
-				<label for="agentic-signup-siteurl"><?php esc_html_e( 'Site URL', 'agent-builder' ); ?></label>
+				<label for="agentic-signup-siteurl"><?php esc_html_e( 'Site URL', 'siteloom' ); ?></label>
 				<input type="url" id="agentic-signup-siteurl" name="site_url" value="<?php echo esc_attr( $agentic_signup_site_url ); ?>">
-				<p class="agentic-field-note"><?php esc_html_e( 'Set this to the production domain you are registering for.', 'agent-builder' ); ?></p>
+				<p class="agentic-field-note"><?php esc_html_e( 'Set this to the production domain you are registering for.', 'siteloom' ); ?></p>
 			</div>
 
 			<!-- ── Configuration ────────────────────────────── -->
 			<h3 class="agentic-signup-section-heading">
-				<?php esc_html_e( 'Configuration', 'agent-builder' ); ?>
-				<button type="button" id="agentic-reset-defaults" class="agentic-reset-btn"><?php esc_html_e( 'Reset', 'agent-builder' ); ?></button>
+				<?php esc_html_e( 'Configuration', 'siteloom' ); ?>
+				<button type="button" id="agentic-reset-defaults" class="agentic-reset-btn"><?php esc_html_e( 'Reset', 'siteloom' ); ?></button>
 			</h3>
 
 			<div class="agentic-config-grid">
-				<div class="agentic-config-col-head"><?php esc_html_e( 'Setting', 'agent-builder' ); ?></div>
-				<div class="agentic-config-col-head"><?php esc_html_e( 'Explanation', 'agent-builder' ); ?></div>
+				<div class="agentic-config-col-head"><?php esc_html_e( 'Setting', 'siteloom' ); ?></div>
+				<div class="agentic-config-col-head"><?php esc_html_e( 'Explanation', 'siteloom' ); ?></div>
 
 				<!-- Security Mode -->
 				<div class="agentic-config-cell agentic-config-setting">
-					<label for="agentic-signup-agent-mode"><?php esc_html_e( 'Security Mode', 'agent-builder' ); ?></label>
+					<label for="agentic-signup-agent-mode"><?php esc_html_e( 'Security Mode', 'siteloom' ); ?></label>
 					<select id="agentic-signup-agent-mode" name="agent_mode">
-						<option value="supervised" selected><?php esc_html_e( 'Supervised', 'agent-builder' ); ?></option>
-						<option value="autonomous"><?php esc_html_e( 'Autonomous', 'agent-builder' ); ?></option>
-						<option value="disabled"><?php esc_html_e( 'Disabled', 'agent-builder' ); ?></option>
+						<option value="supervised" selected><?php esc_html_e( 'Supervised', 'siteloom' ); ?></option>
+						<option value="autonomous"><?php esc_html_e( 'Autonomous', 'siteloom' ); ?></option>
+						<option value="disabled"><?php esc_html_e( 'Disabled', 'siteloom' ); ?></option>
 					</select>
 				</div>
 				<div class="agentic-config-cell agentic-config-explanation" id="agentic-explain-mode"></div>
 
 				<!-- Interface Mode -->
 				<div class="agentic-config-cell agentic-config-setting">
-					<label for="agentic-signup-ui-mode"><?php esc_html_e( 'How would you like Agent Builder to work?', 'agent-builder' ); ?></label>
+					<label for="agentic-signup-ui-mode"><?php esc_html_e( 'How would you like Agent Builder to work?', 'siteloom' ); ?></label>
 					<select id="agentic-signup-ui-mode" name="ui_mode">
-						<option value="basic" selected><?php esc_html_e( 'Basic', 'agent-builder' ); ?></option>
-						<option value="advanced"><?php esc_html_e( 'Advanced', 'agent-builder' ); ?></option>
+						<option value="basic" selected><?php esc_html_e( 'Basic', 'siteloom' ); ?></option>
+						<option value="advanced"><?php esc_html_e( 'Advanced', 'siteloom' ); ?></option>
 					</select>
 				</div>
 				<div class="agentic-config-cell agentic-config-explanation" id="agentic-explain-ui-mode"></div>
@@ -131,8 +131,8 @@ $agentic_signup_tts_voices     = array(
 				<!-- Chat Model -->
 				<div class="agentic-config-cell agentic-config-setting">
 					<label for="agentic-signup-model">
-						<?php esc_html_e( 'Chat Model', 'agent-builder' ); ?>
-						<span id="agentic-models-loading" class="agentic-model-loading-badge"><?php esc_html_e( 'Loading…', 'agent-builder' ); ?></span>
+						<?php esc_html_e( 'Chat Model', 'siteloom' ); ?>
+						<span id="agentic-models-loading" class="agentic-model-loading-badge"><?php esc_html_e( 'Loading…', 'siteloom' ); ?></span>
 					</label>
 					<select id="agentic-signup-model" name="chat_model">
 						<?php foreach ( $agentic_fallback_llm_models as $agentic_m_id => $agentic_m_label ) : ?>
@@ -144,7 +144,7 @@ $agentic_signup_tts_voices     = array(
 
 				<!-- Vision Model -->
 				<div class="agentic-config-cell agentic-config-setting">
-					<label for="agentic-signup-vision-model"><?php esc_html_e( 'Vision Model', 'agent-builder' ); ?></label>
+					<label for="agentic-signup-vision-model"><?php esc_html_e( 'Vision Model', 'siteloom' ); ?></label>
 					<select id="agentic-signup-vision-model" name="vision_model">
 						<?php foreach ( $agentic_fallback_llm_models as $agentic_m_id => $agentic_m_label ) : ?>
 						<option value="<?php echo esc_attr( $agentic_m_id ); ?>"><?php echo esc_html( $agentic_m_label ); ?></option>
@@ -155,7 +155,7 @@ $agentic_signup_tts_voices     = array(
 
 				<!-- TTS Voice -->
 				<div class="agentic-config-cell agentic-config-setting">
-					<label for="agentic-signup-tts-voice"><?php esc_html_e( 'Voice', 'agent-builder' ); ?></label>
+					<label for="agentic-signup-tts-voice"><?php esc_html_e( 'Voice', 'siteloom' ); ?></label>
 					<select id="agentic-signup-tts-voice" name="tts_voice">
 						<?php foreach ( $agentic_signup_tts_voices as $agentic_voice_id => $agentic_voice_label ) : ?>
 						<option value="<?php echo esc_attr( $agentic_voice_id ); ?>"><?php echo esc_html( $agentic_voice_label ); ?></option>
@@ -166,7 +166,7 @@ $agentic_signup_tts_voices     = array(
 
 				<!-- Video Model -->
 				<div class="agentic-config-cell agentic-config-setting">
-					<label for="agentic-signup-video-model"><?php esc_html_e( 'Video Model', 'agent-builder' ); ?></label>
+					<label for="agentic-signup-video-model"><?php esc_html_e( 'Video Model', 'siteloom' ); ?></label>
 					<select id="agentic-signup-video-model" name="video_model">
 						<?php foreach ( $agentic_fallback_video_models as $agentic_v_id => $agentic_v_label ) : ?>
 						<option value="<?php echo esc_attr( $agentic_v_id ); ?>"><?php echo esc_html( $agentic_v_label ); ?></option>
@@ -177,8 +177,8 @@ $agentic_signup_tts_voices     = array(
 			</div>
 
 			<p class="agentic-field-note agentic-credits-note" id="agentic-credits-note">
-				<strong><?php esc_html_e( 'What are credits?', 'agent-builder' ); ?></strong>
-				<?php esc_html_e( 'Agentic AI measures usage in credits ("cr"); 1 credit is US$0.01. Your free daily quota is used first. After that, each request uses credits at the top-up rate shown for the model or voice you pick. The Credits light in the Chat header tells you when credits are running low or have run out.', 'agent-builder' ); ?>
+				<strong><?php esc_html_e( 'What are credits?', 'siteloom' ); ?></strong>
+				<?php esc_html_e( 'Agentic AI measures usage in credits ("cr"); 1 credit is US$0.01. Your free daily quota is used first. After that, each request uses credits at the top-up rate shown for the model or voice you pick. The Credits light in the Chat header tells you when credits are running low or have run out.', 'siteloom' ); ?>
 			</p>
 
 			<!-- ── Consent ──────────────────────────────────── -->
@@ -188,7 +188,7 @@ $agentic_signup_tts_voices     = array(
 					<?php
 					printf(
 						/* translators: 1: opening link tag, 2: closing link tag */
-						esc_html__( 'I agree to the %1$sTerms of Service%2$s', 'agent-builder' ),
+						esc_html__( 'I agree to the %1$sTerms of Service%2$s', 'siteloom' ),
 						'<a href="https://agentic-plugin.com/terms-of-service/" target="_blank" rel="noopener">',
 						'</a>'
 					);
@@ -199,7 +199,7 @@ $agentic_signup_tts_voices     = array(
 					<?php
 					printf(
 						/* translators: 1: opening link tag, 2: closing link tag */
-						esc_html__( 'I agree to the %1$sPrivacy Policy%2$s', 'agent-builder' ),
+						esc_html__( 'I agree to the %1$sPrivacy Policy%2$s', 'siteloom' ),
 						'<a href="https://agentic-plugin.com/privacy-policy/" target="_blank" rel="noopener">',
 						'</a>'
 					);
@@ -212,7 +212,7 @@ $agentic_signup_tts_voices     = array(
 
 			<div class="agentic-signup-actions">
 				<button type="submit" id="agentic-signup-btn" class="button button-primary">
-					<?php esc_html_e( 'Get Free API Key', 'agent-builder' ); ?>
+					<?php esc_html_e( 'Get Free API Key', 'siteloom' ); ?>
 				</button>
 			</div>
 
@@ -223,17 +223,17 @@ $agentic_signup_tts_voices     = array(
 			<?php
 			printf(
 				/* translators: 1: opening link tag, 2: closing link tag */
-				esc_html__( '%1$sSkip — I will pay for tokens with my own AI provider.%2$s', 'agent-builder' ),
+				esc_html__( '%1$sSkip — I will pay for tokens with my own AI provider.%2$s', 'siteloom' ),
 				'<a href="' . esc_url( admin_url( 'admin.php?page=agentic-setup' ) ) . '">',
 				'</a>'
 			);
 			?>
-			<br><small><?php esc_html_e( '(xAI, OpenAI, Anthropic etc.)', 'agent-builder' ); ?></small>
+			<br><small><?php esc_html_e( '(xAI, OpenAI, Anthropic etc.)', 'siteloom' ); ?></small>
 		</div>
 	</div>
 
 	<div class="agentic-signup-footer">
-		<?php esc_html_e( 'Agent Builder supports multiple AI providers. You can add as many as you like later.', 'agent-builder' ); ?>
+		<?php esc_html_e( 'Agent Builder supports multiple AI providers. You can add as many as you like later.', 'siteloom' ); ?>
 	</div>
 </div>
 
@@ -244,35 +244,35 @@ $agentic_signup_tts_voices     = array(
 		'pricingUrl'   => $agentic_pricing_url,
 		'dashboardUrl' => admin_url( 'admin.php?page=agent-builder' ),
 		'i18n'         => array(
-			'modeSupervised'     => __( 'Supervised', 'agent-builder' ),
-			'modeSupervisedBody' => __( 'Agents propose actions which are queued for your review before they run. Recommended for most sites.', 'agent-builder' ),
-			'modeAutonomous'     => __( 'Autonomous', 'agent-builder' ),
-			'modeAutonomousBody' => __( 'Agents act immediately without waiting for approval. Use only on sites where you fully trust the agents.', 'agent-builder' ),
-			'modeDisabled'       => __( 'Disabled', 'agent-builder' ),
-			'modeDisabledBody'   => __( 'Chat only — all tools and site actions are disabled. Agents cannot modify content or call external services.', 'agent-builder' ),
-			'uiBasic'            => __( 'Basic', 'agent-builder' ),
-			'uiBasicBody'        => __( 'Guided, plain language, best for getting started', 'agent-builder' ),
-			'uiAdvanced'         => __( 'Advanced', 'agent-builder' ),
-			'uiAdvancedBody'     => __( 'Full console, best if you\'ve used developer tools like this before', 'agent-builder' ),
-			'otherModels'        => __( 'Other models', 'agent-builder' ),
-			'llmFlash'           => __( 'Fast and capable. Best balance of speed and quality for most tasks.', 'agent-builder' ),
-			'llmFlashLite'       => __( 'Fastest and most efficient. Ideal for simple, high-volume queries.', 'agent-builder' ),
-			'llmPro'             => __( 'Most powerful. Best for complex reasoning and demanding tasks.', 'agent-builder' ),
-			'llmGemma'           => __( 'Lightweight open model. Very efficient and low credit cost.', 'agent-builder' ),
-			'voiceNeural'        => __( 'Neural voice. Natural, expressive, and highly lifelike.', 'agent-builder' ),
-			'voiceNeutral'       => __( 'Neural voice. Gender-neutral, natural-sounding speech.', 'agent-builder' ),
-			'voiceNeural2'       => __( 'High-quality neural voice. Clear and professional.', 'agent-builder' ),
-			'voiceStandard'      => __( 'Standard synthesised voice. Lightweight and low credit usage.', 'agent-builder' ),
-			'videoVeo2'          => __( 'AI video generation, visual only. Reliable and efficient.', 'agent-builder' ),
-			'videoVeo3'          => __( 'AI video with native audio. Higher quality, higher credit cost.', 'agent-builder' ),
-			'quotaNone'          => __( 'Free daily quota: not included in the free plan', 'agent-builder' ),
-			'consentRequired'    => __( 'Please agree to the Terms of Service and Privacy Policy.', 'agent-builder' ),
-			'emailRequired'      => __( 'Please enter your email address.', 'agent-builder' ),
-			'registering'        => __( 'Registering…', 'agent-builder' ),
-			'keySaved'           => __( 'API key saved — redirecting…', 'agent-builder' ),
-			'getFreeKey'         => __( 'Get Free API Key', 'agent-builder' ),
-			'registrationFailed' => __( 'Registration failed. Please try again.', 'agent-builder' ),
-			'connectionError'    => __( 'Connection error. Please try again.', 'agent-builder' ),
+			'modeSupervised'     => __( 'Supervised', 'siteloom' ),
+			'modeSupervisedBody' => __( 'Agents propose actions which are queued for your review before they run. Recommended for most sites.', 'siteloom' ),
+			'modeAutonomous'     => __( 'Autonomous', 'siteloom' ),
+			'modeAutonomousBody' => __( 'Agents act immediately without waiting for approval. Use only on sites where you fully trust the agents.', 'siteloom' ),
+			'modeDisabled'       => __( 'Disabled', 'siteloom' ),
+			'modeDisabledBody'   => __( 'Chat only — all tools and site actions are disabled. Agents cannot modify content or call external services.', 'siteloom' ),
+			'uiBasic'            => __( 'Basic', 'siteloom' ),
+			'uiBasicBody'        => __( 'Guided, plain language, best for getting started', 'siteloom' ),
+			'uiAdvanced'         => __( 'Advanced', 'siteloom' ),
+			'uiAdvancedBody'     => __( 'Full console, best if you\'ve used developer tools like this before', 'siteloom' ),
+			'otherModels'        => __( 'Other models', 'siteloom' ),
+			'llmFlash'           => __( 'Fast and capable. Best balance of speed and quality for most tasks.', 'siteloom' ),
+			'llmFlashLite'       => __( 'Fastest and most efficient. Ideal for simple, high-volume queries.', 'siteloom' ),
+			'llmPro'             => __( 'Most powerful. Best for complex reasoning and demanding tasks.', 'siteloom' ),
+			'llmGemma'           => __( 'Lightweight open model. Very efficient and low credit cost.', 'siteloom' ),
+			'voiceNeural'        => __( 'Neural voice. Natural, expressive, and highly lifelike.', 'siteloom' ),
+			'voiceNeutral'       => __( 'Neural voice. Gender-neutral, natural-sounding speech.', 'siteloom' ),
+			'voiceNeural2'       => __( 'High-quality neural voice. Clear and professional.', 'siteloom' ),
+			'voiceStandard'      => __( 'Standard synthesised voice. Lightweight and low credit usage.', 'siteloom' ),
+			'videoVeo2'          => __( 'AI video generation, visual only. Reliable and efficient.', 'siteloom' ),
+			'videoVeo3'          => __( 'AI video with native audio. Higher quality, higher credit cost.', 'siteloom' ),
+			'quotaNone'          => __( 'Free daily quota: not included in the free plan', 'siteloom' ),
+			'consentRequired'    => __( 'Please agree to the Terms of Service and Privacy Policy.', 'siteloom' ),
+			'emailRequired'      => __( 'Please enter your email address.', 'siteloom' ),
+			'registering'        => __( 'Registering…', 'siteloom' ),
+			'keySaved'           => __( 'API key saved — redirecting…', 'siteloom' ),
+			'getFreeKey'         => __( 'Get Free API Key', 'siteloom' ),
+			'registrationFailed' => __( 'Registration failed. Please try again.', 'siteloom' ),
+			'connectionError'    => __( 'Connection error. Please try again.', 'siteloom' ),
 		),
 	),
 	'agenticSignupPage'

@@ -148,18 +148,18 @@ class Deploy_Wizard_REST {
 	public static function save( \WP_REST_Request $request ) {
 		$slug = sanitize_key( (string) $request->get_param( 'agent' ) );
 		if ( '' === $slug ) {
-			return new \WP_Error( 'missing_agent', __( 'Choose an agent to publish.', 'agent-builder' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'missing_agent', __( 'Choose an agent to publish.', 'siteloom' ), array( 'status' => 400 ) );
 		}
 		$accessible = class_exists( '\Agentic_Agent_Registry' )
 			? \Agentic_Agent_Registry::get_instance()->get_accessible_instances()
 			: array();
 		if ( ! isset( $accessible[ $slug ] ) ) {
-			return new \WP_Error( 'invalid_agent', __( 'That agent is not active.', 'agent-builder' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'invalid_agent', __( 'That agent is not active.', 'siteloom' ), array( 'status' => 400 ) );
 		}
 
 		$surface = sanitize_key( (string) $request->get_param( 'surface' ) );
 		if ( ! isset( self::SURFACE_TABS[ $surface ] ) ) {
-			return new \WP_Error( 'invalid_surface', __( 'Choose where to publish this agent.', 'agent-builder' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'invalid_surface', __( 'Choose where to publish this agent.', 'siteloom' ), array( 'status' => 400 ) );
 		}
 
 		$config = (array) $request->get_param( 'config' );

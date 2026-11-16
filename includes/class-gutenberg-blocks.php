@@ -54,7 +54,7 @@ class Gutenberg_Blocks {
 			$categories,
 			array(
 				'slug'  => 'agentic-ai',
-				'title' => __( 'Agentic AI', 'agent-builder' ),
+				'title' => __( 'Agentic AI', 'siteloom' ),
 				'icon'  => 'format-chat',
 			)
 		);
@@ -88,7 +88,7 @@ class Gutenberg_Blocks {
 					'title'           => $agent->get_name(),
 					'description'     => sprintf(
 						/* translators: %s: agent name */
-						__( 'Embed the %s AI agent as an interactive chat.', 'agent-builder' ),
+						__( 'Embed the %s AI agent as an interactive chat.', 'siteloom' ),
 						$agent->get_name()
 					),
 					'category'        => 'agentic-ai',
@@ -242,7 +242,7 @@ class Gutenberg_Blocks {
 				'icon'        => $agent->get_icon(),
 				'description' => sprintf(
 					/* translators: %s: agent name */
-					__( 'Embed the %s AI agent as an interactive chat.', 'agent-builder' ),
+					__( 'Embed the %s AI agent as an interactive chat.', 'siteloom' ),
 					$agent->get_name()
 				),
 			);
@@ -261,11 +261,11 @@ class Gutenberg_Blocks {
 		}
 
 		$themes = array(
-			''         => __( 'Default (from Settings)', 'agent-builder' ),
-			'dark'     => __( 'Dark', 'agent-builder' ),
-			'light'    => __( 'Light', 'agent-builder' ),
-			'midnight' => __( 'Midnight', 'agent-builder' ),
-			'ocean'    => __( 'Ocean', 'agent-builder' ),
+			''         => __( 'Default (from Settings)', 'siteloom' ),
+			'dark'     => __( 'Dark', 'siteloom' ),
+			'light'    => __( 'Light', 'siteloom' ),
+			'midnight' => __( 'Midnight', 'siteloom' ),
+			'ocean'    => __( 'Ocean', 'siteloom' ),
 		);
 
 		wp_enqueue_script(
@@ -275,7 +275,7 @@ class Gutenberg_Blocks {
 			(string) filemtime( AGENT_BUILDER_DIR . 'assets/js/gutenberg-blocks.js' ),
 			false
 		);
-		wp_set_script_translations( 'agentic-gutenberg-blocks', 'agent-builder', AGENT_BUILDER_DIR . 'languages' );
+		wp_set_script_translations( 'agentic-gutenberg-blocks', 'siteloom', AGENT_BUILDER_DIR . 'languages' );
 
 		wp_localize_script(
 			'agentic-gutenberg-blocks',

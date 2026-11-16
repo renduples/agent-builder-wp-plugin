@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
-<ruleset name="Agent Builder">
-	<description>Coding standards for the Agent Builder WordPress plugin.</description>
+<ruleset name="Siteloom AI Agents">
+	<description>Coding standards for the Siteloom AI Agents WordPress plugin.</description>
 
 	<file>.</file>
 
@@ -24,7 +24,7 @@
 		<properties>
 			<!--
 				This plugin's public prefix is agent_builder_ / AGENT_BUILDER_,
-				matching the agent-builder slug/text domain. The Agentic_ prefix
+				kept from the plugin's original name so existing data keeps working. The Agentic_ prefix
 				is also registered: it's used only by the small set of classes
 				that must live in the global namespace (loaded before the
 				autoloader) rather than under the Agentic\ PHP namespace — those
@@ -58,6 +58,14 @@
 				<element value="agent_builder_chat_admin_bar"/>
 				<element value="agent_builder_view_agent_list"/>
 				<element value="agent_builder_use_uploaded_agents"/>
+			</property>
+		</properties>
+	</rule>
+
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element value="siteloom"/>
 			</property>
 		</properties>
 	</rule>

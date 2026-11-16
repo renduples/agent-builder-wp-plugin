@@ -106,11 +106,11 @@ class Admin_Notice_Manager {
 		?>
 		<div class="notice notice-info is-dismissible" id="agentic-setup-notice" data-nonce="<?php echo esc_attr( $nonce ); ?>">
 			<p>
-				<strong><?php esc_html_e( 'Agent Builder is almost ready!', 'agent-builder' ); ?></strong>
-				<?php esc_html_e( 'Finish setup to start using your AI agents.', 'agent-builder' ); ?>
+				<strong><?php esc_html_e( 'Agent Builder is almost ready!', 'siteloom' ); ?></strong>
+				<?php esc_html_e( 'Finish setup to start using your AI agents.', 'siteloom' ); ?>
 				&nbsp;
 				<a href="<?php echo esc_url( $setup_url ); ?>" class="button button-primary">
-					<?php esc_html_e( 'Finish Setup', 'agent-builder' ); ?>
+					<?php esc_html_e( 'Finish Setup', 'siteloom' ); ?>
 				</a>
 			</p>
 		</div>
@@ -148,11 +148,11 @@ class Admin_Notice_Manager {
 		?>
 		<div class="notice notice-warning is-dismissible" data-dismiss-url="<?php echo esc_url( $dismiss_url ); ?>">
 			<p>
-				<strong><?php esc_html_e( 'AI Rate Limit Reached', 'agent-builder' ); ?></strong><br>
-				<?php esc_html_e( 'A user has hit a rate limit with your configured AI provider. You can switch providers or review your usage in Settings.', 'agent-builder' ); ?>
+				<strong><?php esc_html_e( 'AI Rate Limit Reached', 'siteloom' ); ?></strong><br>
+				<?php esc_html_e( 'A user has hit a rate limit with your configured AI provider. You can switch providers or review your usage in Settings.', 'siteloom' ); ?>
 			</p>
 			<p>
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-settings' ) ); ?>" class="button"><?php esc_html_e( 'Settings', 'agent-builder' ); ?></a>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-settings' ) ); ?>" class="button"><?php esc_html_e( 'Settings', 'siteloom' ); ?></a>
 			</p>
 		</div>
 		<?php
@@ -197,10 +197,10 @@ class Admin_Notice_Manager {
 		?>
 		<div class="notice notice-warning is-dismissible" id="agentic-activation-degraded-notice" data-nonce="<?php echo esc_attr( $nonce ); ?>">
 			<p>
-				<strong><?php esc_html_e( 'Agent Builder finished setup in a reduced state.', 'agent-builder' ); ?></strong>
-				<?php esc_html_e( 'A setup step did not complete — often a temporary hosting or database limit. The plugin is safe to use as-is.', 'agent-builder' ); ?>
+				<strong><?php esc_html_e( 'Agent Builder finished setup in a reduced state.', 'siteloom' ); ?></strong>
+				<?php esc_html_e( 'A setup step did not complete — often a temporary hosting or database limit. The plugin is safe to use as-is.', 'siteloom' ); ?>
 				&nbsp;
-				<a href="<?php echo esc_url( $retry_url ); ?>"><?php esc_html_e( 'Click to retry', 'agent-builder' ); ?></a>
+				<a href="<?php echo esc_url( $retry_url ); ?>"><?php esc_html_e( 'Click to retry', 'siteloom' ); ?></a>
 			</p>
 		</div>
 		<?php
@@ -248,11 +248,11 @@ class Admin_Notice_Manager {
 		?>
 		<div class="notice notice-error" id="agentic-legacy-exports-stuck-notice">
 			<p>
-				<strong><?php esc_html_e( 'Agent Builder could not remove an old agent export file.', 'agent-builder' ); ?></strong>
-				<?php esc_html_e( 'A file left behind by an earlier version is still in wp-content/uploads/agentic-exports/ (or wp-content/agentic-exports/) and could not be deleted automatically — usually a permissions or file-ownership problem. Please remove it yourself, then retry.', 'agent-builder' ); ?>
+				<strong><?php esc_html_e( 'Agent Builder could not remove an old agent export file.', 'siteloom' ); ?></strong>
+				<?php esc_html_e( 'A file left behind by an earlier version is still in wp-content/uploads/agentic-exports/ (or wp-content/agentic-exports/) and could not be deleted automatically — usually a permissions or file-ownership problem. Please remove it yourself, then retry.', 'siteloom' ); ?>
 				&nbsp;
-				<a href="<?php echo esc_url( $retry_url ); ?>" class="button"><?php esc_html_e( 'Retry now', 'agent-builder' ); ?></a>
-				<a href="<?php echo esc_url( $dismiss_url ); ?>"><?php esc_html_e( 'Dismiss', 'agent-builder' ); ?></a>
+				<a href="<?php echo esc_url( $retry_url ); ?>" class="button"><?php esc_html_e( 'Retry now', 'siteloom' ); ?></a>
+				<a href="<?php echo esc_url( $dismiss_url ); ?>"><?php esc_html_e( 'Dismiss', 'siteloom' ); ?></a>
 			</p>
 		</div>
 		<?php
@@ -301,7 +301,7 @@ class Admin_Notice_Manager {
 		?>
 		<div class="notice notice-warning is-dismissible" id="agentic-shadowed-agent-notice" data-slugs="<?php echo esc_attr( $slug_key ); ?>" data-nonce="<?php echo esc_attr( $nonce ); ?>">
 			<p>
-				<strong><?php esc_html_e( 'Some bundled agents are not receiving updates.', 'agent-builder' ); ?></strong>
+				<strong><?php esc_html_e( 'Some bundled agents are not receiving updates.', 'siteloom' ); ?></strong>
 			</p>
 			<p>
 				<?php
@@ -310,7 +310,7 @@ class Admin_Notice_Manager {
 				echo wp_kses(
 					sprintf(
 						/* translators: %s: comma-separated list of agent slugs. */
-						esc_html__( 'A copy of each of these agents exists in your Agent Builder agents folder (in uploads) and is loaded instead of the version bundled with the plugin: %s', 'agent-builder' ),
+						esc_html__( 'A copy of each of these agents exists in your Agent Builder agents folder (in uploads) and is loaded instead of the version bundled with the plugin: %s', 'siteloom' ),
 						$slug_list
 					),
 					array( 'code' => array() )
@@ -318,11 +318,11 @@ class Admin_Notice_Manager {
 				?>
 			</p>
 			<p>
-				<?php esc_html_e( 'Those copies will keep running their current prompts, tools and risk levels — plugin updates will not reach them. If you did not create them on purpose, rename or remove the directories and the bundled versions will load again. Nothing is changed for you: that folder is yours.', 'agent-builder' ); ?>
+				<?php esc_html_e( 'Those copies will keep running their current prompts, tools and risk levels — plugin updates will not reach them. If you did not create them on purpose, rename or remove the directories and the bundled versions will load again. Nothing is changed for you: that folder is yours.', 'siteloom' ); ?>
 			</p>
 			<?php if ( ! empty( array_filter( wp_list_pluck( $shadowed, 'uploaded' ) ) ) ) : ?>
 				<p>
-					<?php esc_html_e( 'At least one of them was installed by an earlier version of the agent updater, which should never have offered it. That is fixed — the updater no longer touches agents that ship with a plugin.', 'agent-builder' ); ?>
+					<?php esc_html_e( 'At least one of them was installed by an earlier version of the agent updater, which should never have offered it. That is fixed — the updater no longer touches agents that ship with a plugin.', 'siteloom' ); ?>
 				</p>
 			<?php endif; ?>
 		</div>

@@ -18,7 +18,7 @@ if ( isset( $_POST['agentic_cleanup_security_log'] ) && check_admin_referer( 'ag
 
 	echo '<div class="notice notice-success is-dismissible"><p>';
 	/* translators: %d: number of deleted log entries */
-	printf( esc_html__( 'Deleted %d old security log entries.', 'agent-builder' ), (int) $agentic_deleted );
+	printf( esc_html__( 'Deleted %d old security log entries.', 'siteloom' ), (int) $agentic_deleted );
 	echo '</p></div>';
 }
 
@@ -65,9 +65,9 @@ $agentic_top_patterns = \Agentic\Security_Log::get_top_patterns( 5, $agentic_per
 ?>
 
 <p class="agentic-page-desc">
-	<?php esc_html_e( 'Captures every request your agents blocked or flagged — malicious input patterns, rate-limit breaches, and PII warnings.', 'agent-builder' ); ?>
-	<?php esc_html_e( 'Use this tab to detect abuse, tune your security rules, and confirm your agents are protecting user data.', 'agent-builder' ); ?>
-	&middot; <a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-settings&tab=security' ) ); ?>"><?php esc_html_e( 'Security settings', 'agent-builder' ); ?></a>
+	<?php esc_html_e( 'Captures every request your agents blocked or flagged — malicious input patterns, rate-limit breaches, and PII warnings.', 'siteloom' ); ?>
+	<?php esc_html_e( 'Use this tab to detect abuse, tune your security rules, and confirm your agents are protecting user data.', 'siteloom' ); ?>
+	&middot; <a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-settings&tab=security' ) ); ?>"><?php esc_html_e( 'Security settings', 'siteloom' ); ?></a>
 </p>
 
 <!-- Period picker -->
@@ -98,22 +98,22 @@ $agentic_top_patterns = \Agentic\Security_Log::get_top_patterns( 5, $agentic_per
 <div class="agentic-stats-grid">
 
 	<div class="agentic-stat-card agentic-stat-card-red">
-		<div class="agentic-stat-card-title"><?php esc_html_e( 'Blocked Messages', 'agent-builder' ); ?></div>
+		<div class="agentic-stat-card-title"><?php esc_html_e( 'Blocked Messages', 'siteloom' ); ?></div>
 		<div class="agentic-stat-card-value"><?php echo esc_html( number_format_i18n( (int) $agentic_stats['blocked_count'] ) ); ?></div>
 	</div>
 
 	<div class="agentic-stat-card agentic-stat-card-amber">
-		<div class="agentic-stat-card-title"><?php esc_html_e( 'Rate Limited', 'agent-builder' ); ?></div>
+		<div class="agentic-stat-card-title"><?php esc_html_e( 'Rate Limited', 'siteloom' ); ?></div>
 		<div class="agentic-stat-card-value"><?php echo esc_html( number_format_i18n( (int) $agentic_stats['rate_limited_count'] ) ); ?></div>
 	</div>
 
 	<div class="agentic-stat-card agentic-stat-card-blue">
-		<div class="agentic-stat-card-title"><?php esc_html_e( 'PII Warnings', 'agent-builder' ); ?></div>
+		<div class="agentic-stat-card-title"><?php esc_html_e( 'PII Warnings', 'siteloom' ); ?></div>
 		<div class="agentic-stat-card-value"><?php echo esc_html( number_format_i18n( (int) $agentic_stats['pii_warning_count'] ) ); ?></div>
 	</div>
 
 	<div class="agentic-stat-card agentic-stat-card-green">
-		<div class="agentic-stat-card-title"><?php esc_html_e( 'Unique IPs', 'agent-builder' ); ?></div>
+		<div class="agentic-stat-card-title"><?php esc_html_e( 'Unique IPs', 'siteloom' ); ?></div>
 		<div class="agentic-stat-card-value"><?php echo esc_html( number_format_i18n( (int) $agentic_stats['unique_ips'] ) ); ?></div>
 	</div>
 
@@ -127,7 +127,7 @@ $agentic_top_patterns = \Agentic\Security_Log::get_top_patterns( 5, $agentic_per
 		<?php
 		printf(
 			/* translators: %s: time period label (e.g. "Last 7 days") */
-			esc_html__( 'Top Blocked Patterns (%s)', 'agent-builder' ),
+			esc_html__( 'Top Blocked Patterns (%s)', 'siteloom' ),
 			esc_html( $agentic_period_labels[ $agentic_period_filter ] )
 		);
 		?>
@@ -135,8 +135,8 @@ $agentic_top_patterns = \Agentic\Security_Log::get_top_patterns( 5, $agentic_per
 		<?php if ( ! empty( $agentic_top_patterns ) ) : ?>
 			<table class="widefat striped">
 				<thead><tr>
-					<th><?php esc_html_e( 'Pattern', 'agent-builder' ); ?></th>
-					<th class="agentic-col-80"><?php esc_html_e( 'Hits', 'agent-builder' ); ?></th>
+					<th><?php esc_html_e( 'Pattern', 'siteloom' ); ?></th>
+					<th class="agentic-col-80"><?php esc_html_e( 'Hits', 'siteloom' ); ?></th>
 				</tr></thead>
 				<tbody>
 					<?php foreach ( $agentic_top_patterns as $agentic_pattern ) : ?>
@@ -148,7 +148,7 @@ $agentic_top_patterns = \Agentic\Security_Log::get_top_patterns( 5, $agentic_per
 				</tbody>
 			</table>
 		<?php else : ?>
-			<p class="agentic-text-muted"><?php esc_html_e( 'No blocked patterns in the last 7 days.', 'agent-builder' ); ?></p>
+			<p class="agentic-text-muted"><?php esc_html_e( 'No blocked patterns in the last 7 days.', 'siteloom' ); ?></p>
 		<?php endif; ?>
 	</div>
 
@@ -157,7 +157,7 @@ $agentic_top_patterns = \Agentic\Security_Log::get_top_patterns( 5, $agentic_per
 		<?php
 		printf(
 			/* translators: %s: time period label (e.g. "Last 7 days") */
-			esc_html__( 'Top Offending IPs (%s)', 'agent-builder' ),
+			esc_html__( 'Top Offending IPs (%s)', 'siteloom' ),
 			esc_html( $agentic_period_labels[ $agentic_period_filter ] )
 		);
 		?>
@@ -165,8 +165,8 @@ $agentic_top_patterns = \Agentic\Security_Log::get_top_patterns( 5, $agentic_per
 		<?php if ( ! empty( $agentic_top_ips ) ) : ?>
 			<table class="widefat striped">
 				<thead><tr>
-					<th><?php esc_html_e( 'IP Address', 'agent-builder' ); ?></th>
-					<th class="agentic-col-80"><?php esc_html_e( 'Events', 'agent-builder' ); ?></th>
+					<th><?php esc_html_e( 'IP Address', 'siteloom' ); ?></th>
+					<th class="agentic-col-80"><?php esc_html_e( 'Events', 'siteloom' ); ?></th>
 				</tr></thead>
 				<tbody>
 					<?php foreach ( $agentic_top_ips as $agentic_ip_data ) : ?>
@@ -178,7 +178,7 @@ $agentic_top_patterns = \Agentic\Security_Log::get_top_patterns( 5, $agentic_per
 				</tbody>
 			</table>
 		<?php else : ?>
-			<p class="agentic-text-muted"><?php esc_html_e( 'No security events in the last 7 days.', 'agent-builder' ); ?></p>
+			<p class="agentic-text-muted"><?php esc_html_e( 'No security events in the last 7 days.', 'siteloom' ); ?></p>
 		<?php endif; ?>
 	</div>
 
@@ -191,52 +191,52 @@ $agentic_top_patterns = \Agentic\Security_Log::get_top_patterns( 5, $agentic_per
 	<input type="hidden" name="period" value="<?php echo esc_attr( $agentic_period_filter ); ?>">
 	<div class="tablenav top">
 		<div class="alignleft actions">
-			<label for="event-type-filter" class="screen-reader-text"><?php esc_html_e( 'Filter by event type', 'agent-builder' ); ?></label>
+			<label for="event-type-filter" class="screen-reader-text"><?php esc_html_e( 'Filter by event type', 'siteloom' ); ?></label>
 			<select name="event_type" id="event-type-filter" onchange="this.form.submit()">
-				<option value=""><?php esc_html_e( 'All Events', 'agent-builder' ); ?></option>
-				<optgroup label="<?php esc_attr_e( 'Security', 'agent-builder' ); ?>">
-					<option value="blocked" <?php selected( $agentic_event_type, 'blocked' ); ?>><?php esc_html_e( 'Blocked', 'agent-builder' ); ?></option>
-					<option value="rate_limited" <?php selected( $agentic_event_type, 'rate_limited' ); ?>><?php esc_html_e( 'Rate Limited', 'agent-builder' ); ?></option>
-					<option value="pii_warning" <?php selected( $agentic_event_type, 'pii_warning' ); ?>><?php esc_html_e( 'PII Warning', 'agent-builder' ); ?></option>
+				<option value=""><?php esc_html_e( 'All Events', 'siteloom' ); ?></option>
+				<optgroup label="<?php esc_attr_e( 'Security', 'siteloom' ); ?>">
+					<option value="blocked" <?php selected( $agentic_event_type, 'blocked' ); ?>><?php esc_html_e( 'Blocked', 'siteloom' ); ?></option>
+					<option value="rate_limited" <?php selected( $agentic_event_type, 'rate_limited' ); ?>><?php esc_html_e( 'Rate Limited', 'siteloom' ); ?></option>
+					<option value="pii_warning" <?php selected( $agentic_event_type, 'pii_warning' ); ?>><?php esc_html_e( 'PII Warning', 'siteloom' ); ?></option>
 				</optgroup>
-				<optgroup label="<?php esc_attr_e( 'Plugin', 'agent-builder' ); ?>">
-					<option value="plugin_activated" <?php selected( $agentic_event_type, 'plugin_activated' ); ?>><?php esc_html_e( 'Plugin Activated', 'agent-builder' ); ?></option>
-					<option value="plugin_upgrade_started" <?php selected( $agentic_event_type, 'plugin_upgrade_started' ); ?>><?php esc_html_e( 'Plugin Upgrade Started', 'agent-builder' ); ?></option>
-					<option value="plugin_upgraded" <?php selected( $agentic_event_type, 'plugin_upgraded' ); ?>><?php esc_html_e( 'Plugin Upgraded', 'agent-builder' ); ?></option>
-					<option value="plugin_deactivated" <?php selected( $agentic_event_type, 'plugin_deactivated' ); ?>><?php esc_html_e( 'Plugin Deactivated', 'agent-builder' ); ?></option>
-					<option value="settings_changed" <?php selected( $agentic_event_type, 'settings_changed' ); ?>><?php esc_html_e( 'Settings Changed', 'agent-builder' ); ?></option>
+				<optgroup label="<?php esc_attr_e( 'Plugin', 'siteloom' ); ?>">
+					<option value="plugin_activated" <?php selected( $agentic_event_type, 'plugin_activated' ); ?>><?php esc_html_e( 'Plugin Activated', 'siteloom' ); ?></option>
+					<option value="plugin_upgrade_started" <?php selected( $agentic_event_type, 'plugin_upgrade_started' ); ?>><?php esc_html_e( 'Plugin Upgrade Started', 'siteloom' ); ?></option>
+					<option value="plugin_upgraded" <?php selected( $agentic_event_type, 'plugin_upgraded' ); ?>><?php esc_html_e( 'Plugin Upgraded', 'siteloom' ); ?></option>
+					<option value="plugin_deactivated" <?php selected( $agentic_event_type, 'plugin_deactivated' ); ?>><?php esc_html_e( 'Plugin Deactivated', 'siteloom' ); ?></option>
+					<option value="settings_changed" <?php selected( $agentic_event_type, 'settings_changed' ); ?>><?php esc_html_e( 'Settings Changed', 'siteloom' ); ?></option>
 				</optgroup>
-				<optgroup label="<?php esc_attr_e( 'Agents', 'agent-builder' ); ?>">
-					<option value="agent_activate_started" <?php selected( $agentic_event_type, 'agent_activate_started' ); ?>><?php esc_html_e( 'Agent Activate Started', 'agent-builder' ); ?></option>
-					<option value="agent_activated" <?php selected( $agentic_event_type, 'agent_activated' ); ?>><?php esc_html_e( 'Agent Activated', 'agent-builder' ); ?></option>
-					<option value="agent_activate_failed" <?php selected( $agentic_event_type, 'agent_activate_failed' ); ?>><?php esc_html_e( 'Agent Activate Failed', 'agent-builder' ); ?></option>
-					<option value="agent_deactivate_started" <?php selected( $agentic_event_type, 'agent_deactivate_started' ); ?>><?php esc_html_e( 'Agent Deactivate Started', 'agent-builder' ); ?></option>
-					<option value="agent_deactivated" <?php selected( $agentic_event_type, 'agent_deactivated' ); ?>><?php esc_html_e( 'Agent Deactivated', 'agent-builder' ); ?></option>
-					<option value="agent_install_started" <?php selected( $agentic_event_type, 'agent_install_started' ); ?>><?php esc_html_e( 'Agent Install Started', 'agent-builder' ); ?></option>
-					<option value="agent_installed" <?php selected( $agentic_event_type, 'agent_installed' ); ?>><?php esc_html_e( 'Agent Installed', 'agent-builder' ); ?></option>
-					<option value="agent_install_failed" <?php selected( $agentic_event_type, 'agent_install_failed' ); ?>><?php esc_html_e( 'Agent Install Failed', 'agent-builder' ); ?></option>
-					<option value="agent_update_started" <?php selected( $agentic_event_type, 'agent_update_started' ); ?>><?php esc_html_e( 'Agent Update Started', 'agent-builder' ); ?></option>
-					<option value="agent_update_succeeded" <?php selected( $agentic_event_type, 'agent_update_succeeded' ); ?>><?php esc_html_e( 'Agent Update Succeeded', 'agent-builder' ); ?></option>
-					<option value="agent_update_failed" <?php selected( $agentic_event_type, 'agent_update_failed' ); ?>><?php esc_html_e( 'Agent Update Failed', 'agent-builder' ); ?></option>
-					<option value="agent_delete_started" <?php selected( $agentic_event_type, 'agent_delete_started' ); ?>><?php esc_html_e( 'Agent Delete Started', 'agent-builder' ); ?></option>
-					<option value="agent_deleted" <?php selected( $agentic_event_type, 'agent_deleted' ); ?>><?php esc_html_e( 'Agent Deleted', 'agent-builder' ); ?></option>
-					<option value="agent_delete_failed" <?php selected( $agentic_event_type, 'agent_delete_failed' ); ?>><?php esc_html_e( 'Agent Delete Failed', 'agent-builder' ); ?></option>
+				<optgroup label="<?php esc_attr_e( 'Agents', 'siteloom' ); ?>">
+					<option value="agent_activate_started" <?php selected( $agentic_event_type, 'agent_activate_started' ); ?>><?php esc_html_e( 'Agent Activate Started', 'siteloom' ); ?></option>
+					<option value="agent_activated" <?php selected( $agentic_event_type, 'agent_activated' ); ?>><?php esc_html_e( 'Agent Activated', 'siteloom' ); ?></option>
+					<option value="agent_activate_failed" <?php selected( $agentic_event_type, 'agent_activate_failed' ); ?>><?php esc_html_e( 'Agent Activate Failed', 'siteloom' ); ?></option>
+					<option value="agent_deactivate_started" <?php selected( $agentic_event_type, 'agent_deactivate_started' ); ?>><?php esc_html_e( 'Agent Deactivate Started', 'siteloom' ); ?></option>
+					<option value="agent_deactivated" <?php selected( $agentic_event_type, 'agent_deactivated' ); ?>><?php esc_html_e( 'Agent Deactivated', 'siteloom' ); ?></option>
+					<option value="agent_install_started" <?php selected( $agentic_event_type, 'agent_install_started' ); ?>><?php esc_html_e( 'Agent Install Started', 'siteloom' ); ?></option>
+					<option value="agent_installed" <?php selected( $agentic_event_type, 'agent_installed' ); ?>><?php esc_html_e( 'Agent Installed', 'siteloom' ); ?></option>
+					<option value="agent_install_failed" <?php selected( $agentic_event_type, 'agent_install_failed' ); ?>><?php esc_html_e( 'Agent Install Failed', 'siteloom' ); ?></option>
+					<option value="agent_update_started" <?php selected( $agentic_event_type, 'agent_update_started' ); ?>><?php esc_html_e( 'Agent Update Started', 'siteloom' ); ?></option>
+					<option value="agent_update_succeeded" <?php selected( $agentic_event_type, 'agent_update_succeeded' ); ?>><?php esc_html_e( 'Agent Update Succeeded', 'siteloom' ); ?></option>
+					<option value="agent_update_failed" <?php selected( $agentic_event_type, 'agent_update_failed' ); ?>><?php esc_html_e( 'Agent Update Failed', 'siteloom' ); ?></option>
+					<option value="agent_delete_started" <?php selected( $agentic_event_type, 'agent_delete_started' ); ?>><?php esc_html_e( 'Agent Delete Started', 'siteloom' ); ?></option>
+					<option value="agent_deleted" <?php selected( $agentic_event_type, 'agent_deleted' ); ?>><?php esc_html_e( 'Agent Deleted', 'siteloom' ); ?></option>
+					<option value="agent_delete_failed" <?php selected( $agentic_event_type, 'agent_delete_failed' ); ?>><?php esc_html_e( 'Agent Delete Failed', 'siteloom' ); ?></option>
 				</optgroup>
-				<optgroup label="<?php esc_attr_e( 'Approvals', 'agent-builder' ); ?>">
-					<option value="action_approved" <?php selected( $agentic_event_type, 'action_approved' ); ?>><?php esc_html_e( 'Action Approved', 'agent-builder' ); ?></option>
-					<option value="action_approve_failed" <?php selected( $agentic_event_type, 'action_approve_failed' ); ?>><?php esc_html_e( 'Action Approve Failed', 'agent-builder' ); ?></option>
-					<option value="action_rejected" <?php selected( $agentic_event_type, 'action_rejected' ); ?>><?php esc_html_e( 'Action Rejected', 'agent-builder' ); ?></option>
-					<option value="action_reject_failed" <?php selected( $agentic_event_type, 'action_reject_failed' ); ?>><?php esc_html_e( 'Action Reject Failed', 'agent-builder' ); ?></option>
+				<optgroup label="<?php esc_attr_e( 'Approvals', 'siteloom' ); ?>">
+					<option value="action_approved" <?php selected( $agentic_event_type, 'action_approved' ); ?>><?php esc_html_e( 'Action Approved', 'siteloom' ); ?></option>
+					<option value="action_approve_failed" <?php selected( $agentic_event_type, 'action_approve_failed' ); ?>><?php esc_html_e( 'Action Approve Failed', 'siteloom' ); ?></option>
+					<option value="action_rejected" <?php selected( $agentic_event_type, 'action_rejected' ); ?>><?php esc_html_e( 'Action Rejected', 'siteloom' ); ?></option>
+					<option value="action_reject_failed" <?php selected( $agentic_event_type, 'action_reject_failed' ); ?>><?php esc_html_e( 'Action Reject Failed', 'siteloom' ); ?></option>
 				</optgroup>
-				<optgroup label="<?php esc_attr_e( 'Tools', 'agent-builder' ); ?>">
-					<option value="tool_enabled" <?php selected( $agentic_event_type, 'tool_enabled' ); ?>><?php esc_html_e( 'Tool Enabled', 'agent-builder' ); ?></option>
-					<option value="tool_disabled" <?php selected( $agentic_event_type, 'tool_disabled' ); ?>><?php esc_html_e( 'Tool Disabled', 'agent-builder' ); ?></option>
+				<optgroup label="<?php esc_attr_e( 'Tools', 'siteloom' ); ?>">
+					<option value="tool_enabled" <?php selected( $agentic_event_type, 'tool_enabled' ); ?>><?php esc_html_e( 'Tool Enabled', 'siteloom' ); ?></option>
+					<option value="tool_disabled" <?php selected( $agentic_event_type, 'tool_disabled' ); ?>><?php esc_html_e( 'Tool Disabled', 'siteloom' ); ?></option>
 				</optgroup>
 			</select>
 		</div>
 		<div class="alignright">
 			<button type="button" class="button" onclick="document.getElementById('agentic-cleanup-dialog').classList.add('active')">
-				<?php esc_html_e( 'Clean Up Old Logs', 'agent-builder' ); ?>
+				<?php esc_html_e( 'Clean Up Old Logs', 'siteloom' ); ?>
 			</button>
 		</div>
 		<br class="clear">
@@ -247,11 +247,11 @@ $agentic_top_patterns = \Agentic\Security_Log::get_top_patterns( 5, $agentic_per
 <table class="wp-list-table widefat fixed striped">
 	<thead>
 		<tr>
-			<th class="agentic-col-160"><?php esc_html_e( 'Date / Time', 'agent-builder' ); ?></th>
-			<th class="agentic-col-120"><?php esc_html_e( 'Event', 'agent-builder' ); ?></th>
-			<th class="agentic-col-130"><?php esc_html_e( 'User', 'agent-builder' ); ?></th>
-			<th class="agentic-col-130"><?php esc_html_e( 'IP Address', 'agent-builder' ); ?></th>
-			<th><?php esc_html_e( 'Details', 'agent-builder' ); ?></th>
+			<th class="agentic-col-160"><?php esc_html_e( 'Date / Time', 'siteloom' ); ?></th>
+			<th class="agentic-col-120"><?php esc_html_e( 'Event', 'siteloom' ); ?></th>
+			<th class="agentic-col-130"><?php esc_html_e( 'User', 'siteloom' ); ?></th>
+			<th class="agentic-col-130"><?php esc_html_e( 'IP Address', 'siteloom' ); ?></th>
+			<th><?php esc_html_e( 'Details', 'siteloom' ); ?></th>
 		</tr>
 	</thead>
 	<tbody>
@@ -283,7 +283,7 @@ $agentic_top_patterns = \Agentic\Security_Log::get_top_patterns( 5, $agentic_per
 							$agentic_user = get_userdata( $agentic_event['user_id'] );
 							echo esc_html( $agentic_user ? $agentic_user->user_login : 'User #' . $agentic_event['user_id'] );
 						} else {
-							esc_html_e( 'Anonymous', 'agent-builder' );
+							esc_html_e( 'Anonymous', 'siteloom' );
 						}
 						?>
 					</td>
@@ -315,7 +315,7 @@ $agentic_top_patterns = \Agentic\Security_Log::get_top_patterns( 5, $agentic_per
 		<?php else : ?>
 			<tr>
 				<td colspan="5" class="agentic-td-empty-center">
-					<?php esc_html_e( 'No security events found.', 'agent-builder' ); ?>
+					<?php esc_html_e( 'No security events found.', 'siteloom' ); ?>
 				</td>
 			</tr>
 		<?php endif; ?>
@@ -341,8 +341,8 @@ $agentic_top_patterns = \Agentic\Security_Log::get_top_patterns( 5, $agentic_per
 						'format'    => '',
 						'current'   => $agentic_paged,
 						'total'     => $agentic_total_pages,
-						'prev_text' => __( '&laquo; Previous', 'agent-builder' ),
-						'next_text' => __( 'Next &raquo;', 'agent-builder' ),
+						'prev_text' => __( '&laquo; Previous', 'siteloom' ),
+						'next_text' => __( 'Next &raquo;', 'siteloom' ),
 					)
 				)
 			);
@@ -354,22 +354,22 @@ $agentic_top_patterns = \Agentic\Security_Log::get_top_patterns( 5, $agentic_per
 <!-- ── Cleanup dialog ─────────────────────────────────────────────── -->
 <div id="agentic-cleanup-dialog" class="agentic-dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="agentic-cleanup-title">
 	<div class="agentic-dialog-box">
-		<h2 id="agentic-cleanup-title"><?php esc_html_e( 'Clean Up Old Logs', 'agent-builder' ); ?></h2>
-		<p><?php esc_html_e( 'Permanently delete security log entries older than the specified number of days.', 'agent-builder' ); ?></p>
+		<h2 id="agentic-cleanup-title"><?php esc_html_e( 'Clean Up Old Logs', 'siteloom' ); ?></h2>
+		<p><?php esc_html_e( 'Permanently delete security log entries older than the specified number of days.', 'siteloom' ); ?></p>
 		<form method="post">
 			<?php wp_nonce_field( 'agentic_cleanup_security_log' ); ?>
 			<p>
 				<label>
-					<?php esc_html_e( 'Delete entries older than:', 'agent-builder' ); ?>
-					<input type="number" name="cleanup_days" value="30" min="1" max="365" class="agentic-input-num-sm"> <?php esc_html_e( 'days', 'agent-builder' ); ?>
+					<?php esc_html_e( 'Delete entries older than:', 'siteloom' ); ?>
+					<input type="number" name="cleanup_days" value="30" min="1" max="365" class="agentic-input-num-sm"> <?php esc_html_e( 'days', 'siteloom' ); ?>
 				</label>
 			</p>
 			<p>
 				<button type="submit" name="agentic_cleanup_security_log" class="button button-primary">
-					<?php esc_html_e( 'Delete Now', 'agent-builder' ); ?>
+					<?php esc_html_e( 'Delete Now', 'siteloom' ); ?>
 				</button>
 				<button type="button" class="button" onclick="document.getElementById('agentic-cleanup-dialog').classList.remove('active')">
-					<?php esc_html_e( 'Cancel', 'agent-builder' ); ?>
+					<?php esc_html_e( 'Cancel', 'siteloom' ); ?>
 				</button>
 			</p>
 		</form>
