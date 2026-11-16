@@ -440,38 +440,71 @@ class Tool_Helpers {
 	}
 
 	/**
-	 * Read robots.txt from disk (physical file) or via HTTP (virtual).
+	 * The robots.txt this site serves: the physical file when one exists,
+	 * otherwise the one WordPress generates (with this plugin's rules),
+	 * built in-process. Read-only: the plugin never writes robots.txt.
 	 *
-	 * @return array{content: string, source: string, path: string, writable: bool}
+	 * @return array{content: string, source: string, path: string, note?: string}
 	 */
 	public static function read_robots_txt(): array {
-		$physical_path = rtrim( ABSPATH, '/' ) . '/robots.txt';
+		$robots = Virtual_Site_Files::robots_txt();
+		if ( 'virtual' === $robots['source'] ) {
+			$robots['note'] = 'WordPress generates this file dynamically; Agent Builder adds its AI crawler rules to it without writing any file.';
+		}
+		return $robots;
+	}
 
-		if ( file_exists( $physical_path ) ) {
-			return array(
-				'source'   => 'physical_file',
-				'path'     => $physical_path,
-				'content'  => (string) file_get_contents( $physical_path ), // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Local filesystem read, wp_remote_get() is for HTTP.
-				'writable' => wp_is_writable( $physical_path ),
-			);
+	/**
+	 * Work out which AI crawlers still need an explicit Allow rule.
+	 *
+	 * @param mixed $allow_bots Requested bot names (null = the default list).
+	 * @return array{source: string, path: string, current: string, added_bots: string[], allowed_bots: string[], block: string, proposed: string}
+	 */
+	public static function plan_robots_ai_rules( $allow_bots ): array {
+		$allow_bots = is_array( $allow_bots ) && ! empty( $allow_bots )
+			? $allow_bots
+			: array( 'GPTBot', 'ChatGPT-User', 'ClaudeBot', 'Google-Extended', 'PerplexityBot', 'anthropic-ai' );
+		$allow_bots = array_values( array_filter( array_map( array( Virtual_Site_Files::class, 'sanitize_bot' ), $allow_bots ) ) );
+
+		$robots = Virtual_Site_Files::robots_txt();
+		$parsed = self::parse_robots_bots( $robots['content'] );
+
+		$added = array();
+		foreach ( $allow_bots as $bot ) {
+			$access = $parsed['bot_access'][ $bot ] ?? 'allowed';
+			$listed = isset( $parsed['explicit_bots'][ strtolower( $bot ) ] );
+			if ( 'allowed' !== $access || ( 'virtual' === $robots['source'] && ! $listed ) ) {
+				$added[] = $bot;
+			}
 		}
 
-		$response = wp_remote_get(
-			home_url( '/robots.txt' ),
-			array(
-				'timeout'   => 10,
-				'sslverify' => false,
-			)
-		);
-		$content  = is_wp_error( $response ) ? '' : (string) wp_remote_retrieve_body( $response );
+		$allowed  = array_values( array_unique( array_merge( Virtual_Site_Files::robots_allowed_bots(), $added ) ) );
+		$block    = Virtual_Site_Files::robots_block( $added );
+		$proposed = 'physical_file' === $robots['source']
+			? $block . "\n" . ltrim( $robots['content'] )
+			// What WordPress will serve with the new list.
+			: rtrim( self::strip_plugin_robots_block( $robots['content'] ) ) . "\n\n" . Virtual_Site_Files::robots_block( $allowed ) . "\n";
 
 		return array(
-			'source'   => 'virtual',
-			'path'     => $physical_path,
-			'content'  => $content,
-			'writable' => wp_is_writable( ABSPATH ),
-			'note'     => 'WordPress generates this file dynamically. Creating a physical robots.txt overrides it.',
+			'source'       => $robots['source'],
+			'path'         => $robots['path'],
+			'current'      => $robots['content'],
+			'added_bots'   => $added,
+			'allowed_bots' => $allowed,
+			'block'        => $block,
+			'proposed'     => $proposed,
 		);
+	}
+
+	/**
+	 * Remove this plugin's block from generated robots.txt content.
+	 *
+	 * @param string $content Robots.txt content.
+	 * @return string
+	 */
+	private static function strip_plugin_robots_block( string $content ): string {
+		$pos = strpos( $content, Virtual_Site_Files::ROBOTS_HEADER );
+		return false === $pos ? $content : rtrim( substr( $content, 0, $pos ) ) . "\n";
 	}
 
 	/**

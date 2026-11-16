@@ -352,12 +352,14 @@ class Agent_Ready_Score {
 	 * @return array Check result.
 	 */
 	private static function check_llms_txt_present(): array {
-		$path = rtrim( ABSPATH, '/' ) . '/llms.txt';
-		if ( ! file_exists( $path ) ) {
+		// The physical file if one exists, otherwise the llms.txt the plugin
+		// serves virtually at /llms.txt (Virtual_Site_Files).
+		$llms = Virtual_Site_Files::llms_txt();
+		if ( '' === $llms['content'] ) {
 			return self::result( 0, 'Discoverability', 'medium', false, 'No llms.txt file found.' );
 		}
 
-		$contents    = (string) file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Local filesystem read, not an HTTP request.
+		$contents    = $llms['content'];
 		$well_formed = strlen( $contents ) > 20 && str_starts_with( ltrim( $contents ), '#' );
 
 		return $well_formed
@@ -422,26 +424,7 @@ class Agent_Ready_Score {
 	 * @return string Robots.txt content.
 	 */
 	private static function local_robots_txt_content(): string {
-		$physical_path = rtrim( ABSPATH, '/' ) . '/robots.txt';
-		if ( file_exists( $physical_path ) ) {
-			return (string) file_get_contents( $physical_path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Local filesystem read.
-		}
-
-		$public   = (bool) get_option( 'blog_public' );
-		// Mirror core's do_robots(): paths derived from admin_url() so they are
-		// right on installs with a non-standard admin location.
-		$admin_path = (string) wp_parse_url( admin_url(), PHP_URL_PATH );
-		$ajax_path  = (string) wp_parse_url( admin_url( 'admin-ajax.php' ), PHP_URL_PATH );
-		$output     = "User-agent: *\n";
-		if ( '' !== $admin_path ) {
-			$output .= 'Disallow: ' . trailingslashit( $admin_path ) . "\n";
-		}
-		if ( '' !== $ajax_path ) {
-			$output .= 'Allow: ' . $ajax_path . "\n";
-		}
-
-		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- 'robots_txt' is a WordPress core filter this method hooks into, not a custom hook this plugin declares.
-		return (string) apply_filters( 'robots_txt', $output, $public );
+		return Virtual_Site_Files::robots_txt()['content'];
 	}
 
 	/**

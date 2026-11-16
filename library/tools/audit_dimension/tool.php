@@ -99,8 +99,8 @@ class Audit_Dimension extends \Agentic\Tool_Base {
 		$home = home_url();
 
 		// robots.txt.
-		$robots_path = ABSPATH . 'robots.txt';
-		$has_robots  = file_exists( $robots_path );
+		// WordPress serves a robots.txt either way (a physical file or its own).
+		$has_robots = '' !== trim( \Agentic\Virtual_Site_Files::robots_txt()['content'] );
 
 		// sitemap.
 		$sitemap_url   = home_url( '/sitemap.xml' );
@@ -166,8 +166,7 @@ class Audit_Dimension extends \Agentic\Tool_Base {
 	}
 
 	private function get_ai_visibility_data(): array {
-		$robots_path = ABSPATH . 'robots.txt';
-		$robots_txt  = file_exists( $robots_path ) ? file_get_contents( $robots_path ) : '';
+		$robots_txt = \Agentic\Virtual_Site_Files::robots_txt()['content'];
 
 		$ai_bots = \Agentic\Tool_Helpers::get_ai_bots();
 		$allowed = array();
@@ -202,8 +201,7 @@ class Audit_Dimension extends \Agentic\Tool_Base {
 		$has_faq = $this->has_faq_content();
 
 		// llms.txt.
-		$llms_path = ABSPATH . 'llms.txt';
-		$has_llms  = file_exists( $llms_path );
+		$has_llms = '' !== \Agentic\Virtual_Site_Files::llms_txt()['content'];
 
 		// Days since last post.
 		$last       = get_posts(

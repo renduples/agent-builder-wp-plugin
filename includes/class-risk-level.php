@@ -545,8 +545,9 @@ class Risk_Level {
 		'html_to_docx'                         => self::MEDIUM,
 		'merge_pdfs'                           => self::MEDIUM,
 
-		// Writes under ABSPATH. update_robots_txt only prepends Allow rules
-		// for named AI bots (never Disallow) and takes a backup first.
+		// Change what the site serves at /robots.txt and /llms.txt (stored in
+		// options and served virtually; no file is written). update_robots_txt
+		// only adds Allow rules for named AI bots (never Disallow).
 		'generate_llms_txt'                    => self::MEDIUM,
 		'update_robots_txt'                    => self::MEDIUM,
 

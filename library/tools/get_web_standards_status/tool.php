@@ -49,8 +49,8 @@ class Get_Web_Standards_Status extends \Agentic\Tool_Base {
 		$home = home_url();
 
 		// robots.txt.
-		$robots_path = ABSPATH . 'robots.txt';
-		$has_robots  = file_exists( $robots_path );
+		// WordPress serves a robots.txt either way (a physical file or its own).
+		$has_robots = '' !== trim( \Agentic\Virtual_Site_Files::robots_txt()['content'] );
 
 		// Sitemap.
 		$has_sitemap  = false;

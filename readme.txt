@@ -166,6 +166,9 @@ On WordPress 6.9+, Agent Builder provides bidirectional integration: (1) **Outbo
 = What happens to my data if I delete the plugin? =
 Uninstall keeps your data unless you check “Delete all plugin data” on the deactivation dialog. If you do choose to delete, conversation history, options, custom tables, the agents and skills you created or imported, and the plugin's data folder in uploads (wp-content/uploads/siteloom: the agent folders you built, automatic backups, knowledge files and generated documents) are all removed.
 
+= Does the plugin write files outside the uploads folder? =
+No. Everything it stores on disk lives in wp-content/uploads/siteloom. The AI Radar agent can add AI-crawler rules to robots.txt and publish an llms.txt, but neither is written as a file: the rules are added to the robots.txt WordPress generates, and llms.txt is served by the plugin at /llms.txt. If your site already has a physical robots.txt or llms.txt, the plugin leaves it alone and shows you the exact text to add yourself.
+
 = Is this plugin translated into other languages? =
 The interface text is written in English, and the `.pot` translation template is included so you (or [translate.wordpress.org](https://translate.wordpress.org/)) can generate your own `.mo`/`.json` translation files for your site's locale.
 

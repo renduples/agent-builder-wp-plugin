@@ -284,6 +284,9 @@ final class Activator {
 		// plugin's uploads data root — see Storage_Migration. Runs before the
 		// backup-format conversion below so that sees the moved backups.
 		Storage_Migration::maybe_run();
+		// One-time (option-gated): earlier versions wrote robots.txt/llms.txt
+		// at the site root. They are left in place; see Virtual_Site_Files.
+		Virtual_Site_Files::maybe_check_legacy_root_files();
 		self::remove_file_edit_option();
 		// One-time (option-gated): converts plain-text backups written by
 		// older versions to the exit-guarded format — see
@@ -1103,6 +1106,9 @@ final class Activator {
 		self::guarded_step(
 			'finalize',
 			static function () use ( $schema_version ): void {
+				// init has already run in the activation request, so add the
+				// /llms.txt rule before the flush stores the rules.
+				Virtual_Site_Files::register_rewrite();
 				flush_rewrite_rules();
 				self::set_db_schema_version( $schema_version );
 			}

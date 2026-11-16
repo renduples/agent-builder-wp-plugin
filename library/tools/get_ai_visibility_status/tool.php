@@ -75,8 +75,7 @@ class Get_Ai_Visibility_Status extends \Agentic\Tool_Base {
 		$faq_content = $this->has_faq_content();
 
 		// llms.txt.
-		$llms_path = ABSPATH . 'llms.txt';
-		$has_llms  = file_exists( $llms_path );
+		$has_llms = '' !== \Agentic\Virtual_Site_Files::llms_txt()['content'];
 
 		// Days since last post.
 		$last       = get_posts(

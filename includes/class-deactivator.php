@@ -42,6 +42,8 @@ final class Deactivator {
 		wp_clear_scheduled_hook( 'agent_builder_notification_digest' );
 		wp_clear_scheduled_hook( 'agent_builder_job_health_check' );
 		wp_clear_scheduled_hook( 'agent_builder_rescan_score' );
+		// Drop the /llms.txt rule (registered on init) before flushing.
+		Virtual_Site_Files::unregister_rewrite();
 		flush_rewrite_rules();
 
 		// Reset the agent-updates opt-in so the consent prompt reappears on next activation.

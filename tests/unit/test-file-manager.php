@@ -213,14 +213,13 @@ class Test_File_Manager extends TestCase {
 	}
 
 	/**
-	 * robots.txt and llms.txt at the site web root are the one named-file
-	 * exception outside every other root — required so
-	 * Tool_Helpers::restore_backup() can restore either one.
+	 * Nothing at the site web root is writable through File_Manager, not even
+	 * robots.txt or llms.txt: those are served virtually (Virtual_Site_Files).
 	 */
-	public function test_site_root_allows_only_robots_and_llms_txt(): void {
-		$this->assertTrue( File_Manager::is_allowed_path( rtrim( ABSPATH, '/' ) . '/robots.txt' ) );
-		$this->assertTrue( File_Manager::is_allowed_path( rtrim( ABSPATH, '/' ) . '/llms.txt' ) );
-		$this->assertFalse( File_Manager::is_allowed_path( rtrim( ABSPATH, '/' ) . '/shell.php' ) );
+	public function test_site_root_is_never_writable(): void {
+		$this->assertFalse( File_Manager::is_allowed_path( rtrim( ABSPATH, '/' ) . '/robots.txt' ) );
+		$this->assertFalse( File_Manager::is_allowed_path( rtrim( ABSPATH, '/' ) . '/llms.txt' ) );
+		$this->assertFalse( File_Manager::is_allowed_path( rtrim( ABSPATH, '/' ) . '/wp-config.php' ) );
 		$this->assertFalse( File_Manager::is_allowed_path( rtrim( ABSPATH, '/' ) . '/wp-content/robots.txt' ) );
 	}
 

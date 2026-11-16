@@ -13,7 +13,8 @@
 		'agentic-setup-notice': [ 'agentic_dismiss_setup_notice', [] ],
 		'agentic-activation-degraded-notice': [ 'agentic_dismiss_activation_degraded_notice', [] ],
 		'agentic-shadowed-agent-notice': [ 'agentic_dismiss_shadowed_agent_notice', [ 'slugs' ] ],
-		'agentic-pending-approval-notice': [ 'agentic_dismiss_pending_approval_notice', [ 'count' ] ]
+		'agentic-pending-approval-notice': [ 'agentic_dismiss_pending_approval_notice', [ 'count' ] ],
+		'agentic-root-files-notice': [ 'agentic_dismiss_root_files_notice', [] ]
 	};
 
 	Object.keys( ajaxNotices ).forEach( function ( id ) {

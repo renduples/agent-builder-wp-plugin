@@ -904,21 +904,6 @@ WEBCONFIG;
 			}
 		}
 
-		// robots.txt/llms.txt live at the site web root, one level above every
-		// other root above — required reading location for search/AI crawlers,
-		// not a plugin choice. Named-file exception only: Tool_Helpers::
-		// restore_backup() can reconstruct a path anywhere under ABSPATH or
-		// WP_CONTENT_DIR from a backup filename, but nothing in this plugin
-		// ever creates a backup of anything else at the site root, or of
-		// anything under wp-content/plugins/ or wp-content/themes/ — so nothing
-		// outside these two exact filenames should ever be reachable here.
-		if ( defined( 'ABSPATH' ) && in_array( basename( $real ), array( 'robots.txt', 'llms.txt' ), true ) ) {
-			$site_root = trailingslashit( realpath( ABSPATH ) ?: ABSPATH );
-			if ( str_starts_with( $real, $site_root ) && substr_count( substr( $real, strlen( $site_root ) ), '/' ) === 0 ) {
-				return true;
-			}
-		}
-
 		return false;
 	}
 

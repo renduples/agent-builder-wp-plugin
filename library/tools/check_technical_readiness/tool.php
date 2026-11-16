@@ -121,8 +121,8 @@ class Check_Technical_Readiness extends \Agentic\Tool_Base {
 			);
 		}
 
-		$llms_path = rtrim( ABSPATH, '/' ) . '/llms.txt';
-		if ( file_exists( $llms_path ) ) {
+		$has_llms = '' !== \Agentic\Virtual_Site_Files::llms_txt()['content'];
+		if ( $has_llms ) {
 			$score    += 3;
 			$passing[] = 'llms.txt found';
 		} else {
@@ -139,7 +139,7 @@ class Check_Technical_Readiness extends \Agentic\Tool_Base {
 				'https'      => $is_https,
 				'sitemap'    => $sitemap_ok,
 				'searchable' => $search_allowed,
-				'llms_txt'   => file_exists( $llms_path ),
+				'llms_txt'   => $has_llms,
 			),
 			'issues'  => $issues,
 			'passing' => $passing,

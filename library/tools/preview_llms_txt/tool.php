@@ -72,16 +72,19 @@ class Preview_Llms_Txt extends \Agentic\Tool_Base {
 	 */
 	public function execute( array $arguments ): array {
 		$include_posts = min( max( (int) ( $arguments['include_posts'] ?? 10 ), 1 ), 20 );
-		$llms_path     = rtrim( ABSPATH, '/' ) . '/llms.txt';
+		$current       = \Agentic\Virtual_Site_Files::llms_txt();
 
 		$content = Generate_Llms_Txt::build_content( $include_posts );
 
 		return array(
 			'llms_txt_content' => $content,
 			'line_count'       => substr_count( $content, "\n" ) + 1,
-			'file_path'        => $llms_path,
-			'already_exists'   => file_exists( $llms_path ),
-			'message'          => 'Preview only — file not written. Call generate_llms_txt to save.',
+			'url'              => home_url( '/llms.txt' ),
+			'already_exists'   => 'none' !== $current['source'],
+			'current_source'   => $current['source'],
+			'message'          => 'physical_file' === $current['source']
+				? 'Preview only. Note: this site has a physical llms.txt file, which the web server serves instead of the plugin\'s version; the administrator would need to replace or delete it.'
+				: 'Preview only — nothing saved. Call generate_llms_txt to publish it at /llms.txt (served by the plugin, no file written).',
 		);
 	}
 
