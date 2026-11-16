@@ -1,5 +1,5 @@
 {
-  "name": "agent-builder",
+  "name": "siteloom",
   "version": "4.4.0",
   "private": true,
   "description": "Build tooling for Agent Builder admin React surfaces (@wordpress/scripts).",

@@ -353,7 +353,7 @@ class Approval_Rules {
 	/**
 	 * Register the evaluation engine on the tool-enforcement filter.
 	 *
-	 * Wired from agent-builder.php's bootstrap alongside the other M12 init
+	 * Wired from siteloom.php's bootstrap alongside the other M12 init
 	 * calls. `evaluate()` runs at the filter's default priority 10 — the same
 	 * seam the `agent_builder_tool_enforcement` docblock reserves for the rules
 	 * layer. It only ever tightens; Risk_Level::clamp_enforcement() remains the

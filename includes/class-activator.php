@@ -841,7 +841,7 @@ final class Activator {
 	 *     files are touched.
 	 *
 	 * This is a security cleanup, not a schema migration, so it runs from an
-	 * early, always-fires hook (init — see agent-builder.php) rather than
+	 * early, always-fires hook (init — see siteloom.php) rather than
 	 * waiting for an admin to visit wp-admin: an unremediated legacy zip is
 	 * exploitable every second it sits there, including on cron/REST/frontend
 	 * requests where admin_init never fires. It is a filesystem delete, not a

@@ -261,7 +261,7 @@
 
 	/* ─── Intercept the Deactivate link ─── */
 	function init() {
-		var rows = document.querySelectorAll( 'tr[data-slug="agent-builder"]' );
+		var rows = document.querySelectorAll( 'tr[data-slug="siteloom"], tr[data-plugin$="/siteloom.php"]' );
 		rows.forEach( function ( row ) {
 			var deactivateLink = row.querySelector( 'a[href*="action=deactivate"]' );
 			if ( ! deactivateLink ) return;

@@ -323,7 +323,7 @@ function _agentic_create_test_tables() {
  * the plugin's init hook (Provider_Registry::maybe_seed, etc.) doesn't fail.
  */
 function _manually_load_plugin() {
-	require dirname( __DIR__ ) . '/agent-builder.php';
+	require dirname( __DIR__ ) . '/siteloom.php';
 	_agentic_create_test_tables();
 }
 

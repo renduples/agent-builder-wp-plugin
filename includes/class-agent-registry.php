@@ -731,7 +731,7 @@ class Agentic_Agent_Registry {
 		$class_name = $this->extract_class_name( $agent['path'] );
 		if ( $class_name && class_exists( $class_name, false ) ) {
 			// This plugin creates several Agent_Registry instances per request
-			// (see load_active_agents() callers in agent-builder.php and
+			// (see load_active_agents() callers in siteloom.php and
 			// class-chat-assets.php) — a PHP agent's own file being re-"loaded"
 			// from a second instance is expected, not a collision: PHP already
 			// tracks included files by resolved path, so re-including the exact

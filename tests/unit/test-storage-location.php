@@ -424,7 +424,7 @@ class Test_Storage_Location extends TestCase {
 	public function test_plugin_never_defines_disallow_file_edit(): void {
 		$root  = rtrim( AGENT_BUILDER_DIR, '/' );
 		$files = array_merge(
-			array( $root . '/agent-builder.php', $root . '/uninstall.php' ),
+			array( $root . '/siteloom.php', $root . '/uninstall.php' ),
 			(array) glob( $root . '/includes/*.php' ),
 			(array) glob( $root . '/includes/*/*.php' ),
 			(array) glob( $root . '/library/tools/*/tool.php' ),

@@ -4,7 +4,7 @@
  *
  * Handles binding, executing, and cleaning up scheduled tasks and
  * event listeners for all active agents. Extracted from the Plugin
- * class to keep agent-builder.php focused on bootstrapping.
+ * class to keep siteloom.php focused on bootstrapping.
  *
  * @package Agent_Builder
  */
