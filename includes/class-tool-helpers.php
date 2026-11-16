@@ -1176,6 +1176,18 @@ class Tool_Helpers {
 
 		$relative = $parsed['meta']['original_rel'];
 
+		// Backups of robots.txt/llms.txt made by earlier versions: the plugin
+		// no longer writes at the site root, so hand the content back
+		// instead of writing the file.
+		if ( in_array( $relative, array( 'robots.txt', 'llms.txt' ), true ) ) {
+			return array(
+				'success' => false,
+				'manual'  => true,
+				'message' => 'This is a backup of ' . $relative . ' at the site root, which Agent Builder no longer writes. To restore it, replace the content of ' . $original . ' with the content below yourself.',
+				'content' => $parsed['content'],
+			);
+		}
+
 		// Back up the current version before restoring (so restore is itself reversible).
 		self::backup_file( $original );
 
