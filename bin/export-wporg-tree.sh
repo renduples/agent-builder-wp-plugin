@@ -80,6 +80,32 @@ if [[ -d "$DEST/vendor/phpoffice/phpword" ]]; then
 	exit 1
 fi
 
+# WordPress.org requires file names that work on every filesystem: no
+# spaces or other characters outside [A-Za-z0-9._-], and no two paths that
+# differ only by case. Vendor packages occasionally ship such files (e.g.
+# phpspreadsheet's "Chart/Renderer/PHP Charting Libraries.txt"). Non-code
+# files are simply dropped; a code file with such a name fails the build so
+# it gets a real fix instead of silently vanishing.
+BAD_NAMES="$(cd "$DEST" && find . -mindepth 1 | LC_ALL=C grep -vE '^[A-Za-z0-9._/-]+$' || true)"
+if [[ -n "$BAD_NAMES" ]]; then
+	while IFS= read -r bad; do
+		case "$bad" in
+			*.php|*.js|*.css|*.json)
+				echo "ERROR: code file with a non-portable name in the WP.org tree: $bad" >&2
+				exit 1
+				;;
+		esac
+		echo "Removing non-portable file name: $bad"
+		rm -rf "${DEST:?}/${bad#./}"
+	done <<< "$BAD_NAMES"
+fi
+CASE_DUPES="$(cd "$DEST" && find . -mindepth 1 | tr '[:upper:]' '[:lower:]' | sort | uniq -d)"
+if [[ -n "$CASE_DUPES" ]]; then
+	echo "ERROR: paths that differ only by case in the WP.org tree:" >&2
+	echo "$CASE_DUPES" >&2
+	exit 1
+fi
+
 # Zip sits beside the tree as a build artifact (gitignored — never commit it).
 PARENT="$(dirname "$DEST")"
 BASE="$(basename "$DEST")"
