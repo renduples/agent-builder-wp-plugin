@@ -251,8 +251,8 @@ $agentic_hosted_credits        = ( 'agentic' === get_option( 'agent_builder_llm_
 						?>
 						<tr class="model-row">
 							<td><?php echo esc_html( $agent_builder_model ); ?></td>
-							<td class="col-right"><?php if ( $agentic_no_pricing ) : ?><span class="agentic-text-dim">—</span><?php else : ?>$<?php echo esc_html( number_format( $agentic_m_in, 4 ) ); ?><?php endif; ?></td>
-							<td class="col-right"><?php if ( $agentic_no_pricing ) : ?><span class="agentic-text-dim">—</span><?php else : ?>$<?php echo esc_html( number_format( $agentic_m_out, 4 ) ); ?><?php endif; ?></td>
+							<td class="col-right"><?php echo $agentic_no_pricing ? '<span class="agentic-text-dim">—</span>' : esc_html( '$' . number_format( $agentic_m_in, 4 ) ); ?></td>
+							<td class="col-right"><?php echo $agentic_no_pricing ? '<span class="agentic-text-dim">—</span>' : esc_html( '$' . number_format( $agentic_m_out, 4 ) ); ?></td>
 							<td class="agentic-td-center">
 								<?php if ( $agentic_prov_active ) : ?>
 									<span class="agentic-status-active agentic-text-xxs">&#9679; <?php esc_html_e( 'Active', 'agent-builder' ); ?></span>
