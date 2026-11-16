@@ -171,28 +171,12 @@ if ( is_array( $agentic_cron_events ) ) {
 
 /*
  * -------------------------------------------------------------------------
- * 6. Remove the user-agents directory when it holds only the guard files
- *    the plugin created itself. Agents a user built or imported are never
- *    deleted here.
+ * 6. Remove the plugin's data folders: its data root in uploads (user
+ *    agents, knowledge files, automatic pre-change backups — copies of site
+ *    content and database rows — and generated documents), plus any
+ *    pre-4.5 wp-content/agentic-* folder a storage migration left behind.
  * -------------------------------------------------------------------------
  */
-$agentic_agents_dir = WP_CONTENT_DIR . '/agentic-agents';
-if ( is_dir( $agentic_agents_dir ) ) {
-	$agentic_entries = array_diff( (array) scandir( $agentic_agents_dir ), array( '.', '..', 'index.php', '.htaccess', 'web.config' ) );
-	if ( empty( $agentic_entries ) ) {
-		require_once ABSPATH . 'wp-admin/includes/file.php';
-		if ( WP_Filesystem() ) {
-			global $wp_filesystem;
-			$wp_filesystem->rmdir( $agentic_agents_dir, true );
-		}
-	}
-}
-
-/*
- * -------------------------------------------------------------------------
- * 7. Remove the plugin's data folders: automatic pre-change backups
- *    (copies of site content and database rows) and knowledge files.
- * -------------------------------------------------------------------------
- */
+require_once __DIR__ . '/includes/class-file-manager.php';
 require_once __DIR__ . '/includes/class-uninstall-cleanup.php';
 \Agentic\Uninstall_Cleanup::remove_data_directories();

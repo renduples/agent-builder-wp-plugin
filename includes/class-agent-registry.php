@@ -108,28 +108,29 @@ class Agentic_Agent_Registry {
 	 * Constructor
 	 */
 	private function __construct() {
-		$this->agents_dir  = AGENT_BUILDER_AGENTS_DIR;
+		// User agents live in the uploads data root; the folder is created
+		// (with its deny-all protection) on demand by whatever writes the
+		// first agent — File_Manager::ensure_data_dir( 'agents' ). The
+		// bundled library inside the plugin is read-only and never created
+		// or modified here.
+		$this->agents_dir  = \Agentic\File_Manager::agents_dir();
 		$this->library_dir = AGENT_BUILDER_DIR . 'library/agents';
-
-		// Ensure directories exist.
-		$this->ensure_directories();
 	}
 
 	/**
-	 * Ensure required directories exist
+	 * Folders holding user-installed agents, highest priority first: the
+	 * uploads data root, then the pre-4.5 wp-content/agentic-agents folder
+	 * while it still exists (an incomplete storage migration).
+	 *
+	 * @return string[]
 	 */
-	private function ensure_directories(): void {
-		// Not guarded by file_exists( $this->agents_dir ): ensure_protected_dir()
-		// already no-ops cheaply once the directory and its protection files
-		// exist, and calling it unconditionally means a site upgrading from
-		// before these protections existed gets them added on its very next
-		// request, not only on a fresh install where the directory doesn't
-		// exist yet at all.
-		\Agentic\File_Manager::ensure_protected_dir( $this->agents_dir );
-
-		if ( ! file_exists( $this->library_dir ) ) {
-			wp_mkdir_p( $this->library_dir );
+	private function user_agent_dirs(): array {
+		$dirs   = array( $this->agents_dir );
+		$legacy = \Agentic\File_Manager::legacy_fallback_dir( 'agents' );
+		if ( null !== $legacy ) {
+			$dirs[] = $legacy;
 		}
+		return $dirs;
 	}
 
 	/**
@@ -149,16 +150,21 @@ class Agentic_Agent_Registry {
 		$agents                 = array();
 		$this->shadowed_bundled = array();
 
-		// First, load agents from wp-content/agents (user-installed).
-		if ( is_dir( $this->agents_dir ) ) {
-			$agent_folders = scandir( $this->agents_dir );
+		// First, load user-installed agents (uploads data root, then any
+		// not-yet-migrated legacy folder).
+		foreach ( $this->user_agent_dirs() as $user_dir ) {
+			if ( ! is_dir( $user_dir ) ) {
+				continue;
+			}
+
+			$agent_folders = scandir( $user_dir );
 
 			foreach ( $agent_folders as $folder ) {
-				if ( '.' === $folder || '..' === $folder || 'index.php' === $folder ) {
+				if ( '.' === $folder || '..' === $folder || 'index.php' === $folder || isset( $agents[ $folder ] ) ) {
 					continue;
 				}
 
-				$agent_path = $this->agents_dir . '/' . $folder;
+				$agent_path = $user_dir . '/' . $folder;
 
 				if ( ! is_dir( $agent_path ) ) {
 					continue;
@@ -199,13 +205,13 @@ class Agentic_Agent_Registry {
 
 				// Skip if already loaded from agents_dir or a previous library dir.
 				if ( isset( $agents[ $folder ] ) ) {
-					$shadow = $this->agents_dir . '/' . $folder;
+					$shadow = (string) ( $agents[ $folder ]['directory'] ?? '' );
 
 					// Either way this bundled agent is pinned to whatever sits on
 					// disk and plugin updates no longer reach it. The marker only
 					// tells us how it got there: .uploaded means the update
 					// checker or a zip upload put it there, which we now refuse.
-					if ( is_dir( $shadow ) ) {
+					if ( '' !== $shadow && is_dir( $shadow ) && empty( $agents[ $folder ]['bundled'] ) ) {
 						$this->shadowed_bundled[ $folder ] = array(
 							'path'     => $shadow,
 							'uploaded' => file_exists( $shadow . '/.uploaded' ),
@@ -963,8 +969,10 @@ class Agentic_Agent_Registry {
 	 * @return bool
 	 */
 	public function is_agent_installed( string $slug ): bool {
-		if ( is_dir( $this->agents_dir . '/' . $slug ) ) {
-			return true;
+		foreach ( $this->user_agent_dirs() as $user_dir ) {
+			if ( '' !== $slug && is_dir( $user_dir . '/' . $slug ) ) {
+				return true;
+			}
 		}
 
 		return '' !== $this->find_in_library_dirs( $slug );

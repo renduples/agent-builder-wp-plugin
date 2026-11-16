@@ -155,8 +155,8 @@ document.getElementById('agentic-persona-agent-select').addEventListener('change
 			</th>
 			<td>
 				<?php
-				$agentic_pa_knowledge_file = AGENT_BUILDER_KNOWLEDGE_DIR . '/' . $agentic_pa_selected . '-knowledge.txt';
-				$agentic_pa_knowledge      = file_exists( $agentic_pa_knowledge_file )
+				$agentic_pa_knowledge_file = \Agentic\File_Manager::find_data_file( 'knowledge', $agentic_pa_selected . '-knowledge.txt' );
+				$agentic_pa_knowledge      = null !== $agentic_pa_knowledge_file
 					// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Local plugin file.
 					? file_get_contents( $agentic_pa_knowledge_file )
 					: '';

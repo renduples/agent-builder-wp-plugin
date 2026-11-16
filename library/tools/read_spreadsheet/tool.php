@@ -62,7 +62,7 @@ class Read_Spreadsheet extends \Agentic\Tool_Base {
 			'properties' => array(
 				'file_path'  => array(
 					'type'        => 'string',
-					'description' => 'Path to the file relative to the WordPress uploads directory, e.g. "2024/01/report.xlsx" or "agentic-exports/data.csv".',
+					'description' => 'Path to the file relative to the WordPress uploads directory, e.g. "2024/01/report.xlsx", or the file_path a document tool returned.',
 				),
 				'sheet_name' => array(
 					'type'        => 'string',

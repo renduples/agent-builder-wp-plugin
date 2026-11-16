@@ -129,11 +129,10 @@ class Create_Spreadsheet extends \Agentic\Tool_Base {
 			$filename .= '.xlsx';
 		}
 
-		$uploads = wp_upload_dir();
-		$dir     = trailingslashit( $uploads['basedir'] ) . 'agentic-exports/';
-		$dir_url = trailingslashit( $uploads['baseurl'] ) . 'agentic-exports/';
+		$dir     = trailingslashit( \Agentic\File_Manager::exports_dir() );
+		$dir_url = trailingslashit( \Agentic\File_Manager::exports_url() );
 
-		if ( ! wp_mkdir_p( $dir ) ) {
+		if ( ! \Agentic\File_Manager::ensure_data_dir( 'exports' ) ) {
 			return array( 'error' => 'Could not create exports directory.' );
 		}
 
@@ -182,7 +181,7 @@ class Create_Spreadsheet extends \Agentic\Tool_Base {
 			( new \PhpOffice\PhpSpreadsheet\Writer\Xlsx( $spreadsheet ) )->save( $file_path );
 
 			return array(
-				'file_path' => 'agentic-exports/' . $filename,
+				'file_path' => \Agentic\File_Manager::export_relative_path( $filename ),
 				'url'       => $dir_url . $filename,
 				'row_count' => count( $rows ),
 				'col_count' => count( $headers ),

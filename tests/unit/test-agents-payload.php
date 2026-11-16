@@ -259,7 +259,7 @@ class Test_Agents_Payload extends TestCase {
 
 		$this->assertSame( 200, $response->get_status() );
 		$this->assertTrue( $response->get_data()['ok'] );
-		$this->assertFalse( is_dir( AGENT_BUILDER_AGENTS_DIR . '/del-agent' ), 'Expected the agent directory to be deleted.' );
+		$this->assertFalse( is_dir( \Agentic\File_Manager::agents_dir() . '/del-agent' ), 'Expected the agent directory to be deleted.' );
 	}
 
 	/**
@@ -279,7 +279,7 @@ class Test_Agents_Payload extends TestCase {
 
 		$this->assertTrue( $response->is_error() );
 		$this->assertSame( 403, $response->get_status() );
-		$this->assertTrue( is_dir( AGENT_BUILDER_AGENTS_DIR . '/del-guard' ), 'Expected the agent to survive the rejected delete.' );
+		$this->assertTrue( is_dir( \Agentic\File_Manager::agents_dir() . '/del-guard' ), 'Expected the agent to survive the rejected delete.' );
 	}
 
 	/**
@@ -310,7 +310,7 @@ class Test_Agents_Payload extends TestCase {
 	 * @return string Agent directory.
 	 */
 	private function create_full_agent( string $slug, string $name, array $tools ): string {
-		$agent_dir = AGENT_BUILDER_AGENTS_DIR . '/' . $slug;
+		$agent_dir = \Agentic\File_Manager::agents_dir() . '/' . $slug;
 		wp_mkdir_p( $agent_dir . '/templates' );
 
 		$manifest = array(
@@ -401,7 +401,7 @@ class Test_Agents_Payload extends TestCase {
 			$registry->deactivate_agent( $slug );
 		}
 
-		$dir = AGENT_BUILDER_AGENTS_DIR . '/' . $slug;
+		$dir = \Agentic\File_Manager::agents_dir() . '/' . $slug;
 		if ( is_dir( $dir ) ) {
 			$this->delete_directory( $dir );
 		}

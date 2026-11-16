@@ -687,12 +687,13 @@ class Abilities_Bridge {
 				'destructive' => false,
 				'idempotent'  => false,
 			),
-			// Toggle tools — calling twice reverts; not idempotent.
+			// Read-only recommendation (wp-config.php line); changes nothing.
 			'toggle_file_editing'  => array(
-				'readonly'    => false,
+				'readonly'    => true,
 				'destructive' => false,
-				'idempotent'  => false,
+				'idempotent'  => true,
 			),
+			// Toggle tools — calling twice reverts; not idempotent.
 			'toggle_xml_rpc'       => array(
 				'readonly'    => false,
 				'destructive' => false,

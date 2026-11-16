@@ -379,7 +379,7 @@ $agent_builder_agent_mode = get_option( 'agent_builder_agent_mode', 'supervised'
 			<?php endif; ?>
 
 			<p class="description agentic-mt-16">
-				<?php esc_html_e( 'Backups stored in', 'agent-builder' ); ?> <code>wp-content/agentic-backups/</code>.
+				<?php esc_html_e( 'Backups stored in', 'agent-builder' ); ?> <code><?php echo esc_html( str_replace( wp_normalize_path( ABSPATH ), '', wp_normalize_path( \Agentic\File_Manager::backups_dir() ) ) ); ?>/</code>.
 				<?php esc_html_e( 'Database tables keep up to 3 snapshots each. File backups are kept until manually deleted.', 'agent-builder' ); ?>
 			</p>
 		<?php endif; ?>

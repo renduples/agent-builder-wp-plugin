@@ -2,6 +2,13 @@
 /**
  * Tool: toggle_file_editing
  *
+ * Reports whether the wp-admin theme/plugin file editor is disabled and,
+ * when it is not, tells the administrator how to disable it in
+ * wp-config.php. It does not change anything itself: disabling the editor
+ * means defining the WordPress constant DISALLOW_FILE_EDIT, and a plugin
+ * must not define WordPress core constants (that changes behaviour for the
+ * whole site, outside the plugin's own scope).
+ *
  * @package    Agent_Builder
  * @subpackage Tools
  * @since      2.0.0
@@ -23,7 +30,7 @@ class Toggle_File_Editing extends Tool_Base {
 	}
 
 	public function get_description(): string {
-		return 'Enable or disable the theme and plugin file editor in wp-admin. Disabling file editing (DISALLOW_FILE_EDIT) is a security best practice.';
+		return 'Check whether the theme and plugin file editor in wp-admin is disabled, and get the exact wp-config.php line the site administrator should add to disable it (a security best practice). This tool never changes any setting: the administrator edits wp-config.php themselves.';
 	}
 
 	public function get_category(): string {
@@ -36,34 +43,41 @@ class Toggle_File_Editing extends Tool_Base {
 			'properties' => array(
 				'allow_editing' => array(
 					'type'        => 'boolean',
-					'description' => 'True to allow file editing in wp-admin, false to disable it.',
+					'description' => 'Optional. The outcome the user wants: false = disable the file editor, true = allow it. Only used to tailor the instructions.',
 				),
 			),
-			'required'   => array( 'allow_editing' ),
 		);
 	}
 
 	public function get_annotations(): array {
 		return array(
-			'read_only'   => false,
+			'readonly'    => true,
 			'destructive' => false,
+			'idempotent'  => true,
 		);
 	}
 
 	public function execute( array $args ): array {
-		if ( ! isset( $args['allow_editing'] ) ) {
-			return array( 'error' => 'allow_editing (boolean) is required.' );
+		$disabled = defined( 'DISALLOW_FILE_EDIT' ) && DISALLOW_FILE_EDIT;
+		$wants    = isset( $args['allow_editing'] ) ? (bool) $args['allow_editing'] : false;
+		$line     = "define( 'DISALLOW_FILE_EDIT', true );";
+
+		if ( $wants ) {
+			$instructions = $disabled
+				? 'The file editor is disabled by DISALLOW_FILE_EDIT in wp-config.php (or another must-use plugin). To allow editing again, the site administrator removes that line from wp-config.php.'
+				: 'The file editor is already allowed. Nothing to change.';
+		} else {
+			$instructions = $disabled
+				? 'The file editor is already disabled. Nothing to change.'
+				: 'Recommended: ask the site administrator to add this line to wp-config.php, above the line "/* That\'s all, stop editing! */": ' . $line . ' Agent Builder does not change this setting itself.';
 		}
 
-		$allow_editing = (bool) $args['allow_editing'];
-
-		// Store: 1 = disallowed, 0 = allowed.
-		update_option( 'agent_builder_disallow_file_edit', $allow_editing ? 0 : 1 );
-
 		return array(
-			'file_editing_allowed' => $allow_editing,
-			'enforced_by'          => 'DISALLOW_FILE_EDIT constant defined at plugins_loaded by Agent Builder',
-			'takes_effect'         => 'next page load',
+			'file_editing_allowed' => ! $disabled,
+			'recommended'          => ! $disabled,
+			'wp_config_line'       => $line,
+			'instructions'         => $instructions,
+			'changed'              => false,
 		);
 	}
 }

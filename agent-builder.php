@@ -60,10 +60,11 @@ spl_autoload_register(
 // no phpcs:disable needed now that the prefix is registered there instead of
 // suppressed inline.
 //
-// The underlying directory paths are unchanged (still literally
-// "agentic-agents" etc. on disk) — only the PHP constant *names* pointing at
-// them were renamed from the old AGENTIC_* names, so no site's existing
-// wp-content/agentic-agents/ (or -knowledge/, -backups/) needs to move.
+// Data the plugin stores on disk (user agents, knowledge files, backups,
+// exports) lives in its own folder inside the uploads directory, resolved at
+// runtime with wp_upload_dir() — see \Agentic\File_Manager::data_dir(). The
+// pre-4.5 wp-content/agentic-* folders are moved there once by
+// \Agentic\Storage_Migration.
 define( 'AGENT_BUILDER_FILE', __FILE__ );
 define( 'AGENT_BUILDER_VERSION', '4.4.0' );
 
@@ -74,9 +75,6 @@ define( 'AGENT_BUILDER_DB_VERSION', '2.15.2' );
 define( 'AGENT_BUILDER_DIR', plugin_dir_path( __FILE__ ) );
 define( 'AGENT_BUILDER_URL', plugin_dir_url( __FILE__ ) );
 define( 'AGENT_BUILDER_BASENAME', plugin_basename( __FILE__ ) );
-define( 'AGENT_BUILDER_AGENTS_DIR', WP_CONTENT_DIR . '/agentic-agents' );
-define( 'AGENT_BUILDER_KNOWLEDGE_DIR', WP_CONTENT_DIR . '/agentic-knowledge' );
-define( 'AGENT_BUILDER_BACKUPS_DIR', WP_CONTENT_DIR . '/agentic-backups' );
 
 // AGENT_BUILDER_SAFE_MODE (not defined by this plugin — a site owner opts in
 // by adding `define( 'AGENT_BUILDER_SAFE_MODE', true );` to wp-config.php).
@@ -217,15 +215,6 @@ final class Plugin {
 				return get_option( 'agent_builder_disable_xmlrpc' ) ? false : $enabled;
 			}
 		);
-
-		// --- Tool: toggle_file_editing ---
-		// Controlled by the `agent_builder_disallow_file_edit` option (set via the toggle_file_editing tool).
-		// Defines DISALLOW_FILE_EDIT at plugins_loaded priority 1 — early enough for WordPress
-		// to pick it up before the theme/plugin editor screens check for the constant.
-		// Note: this only prevents editing via wp-admin. Server-side file access is unaffected.
-		if ( get_option( 'agent_builder_disallow_file_edit' ) && ! defined( 'DISALLOW_FILE_EDIT' ) ) {
-			define( 'DISALLOW_FILE_EDIT', true ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound
-		}
 
 		// --- Tool: create_short_link ---
 		// Handles /go/{slug} redirects for short links created by the create_short_link tool.
@@ -425,7 +414,7 @@ final class Plugin {
 				'nonce'           => wp_create_nonce( 'agentic_plugin_deactivate' ),
 				'canSendFeedback' => (bool) get_option( 'agent_builder_service_consent' ),
 				'i18n'            => array(
-					'deleteDescription'   => __( 'When you delete the plugin, conversations, logs, API keys, settings, every Agent Builder database table (including the agents and skills you created or bought), automatic backups and knowledge files are permanently removed. Agent folders you built in wp-content/agentic-agents are kept.', 'agent-builder' ),
+					'deleteDescription'   => __( 'When you delete the plugin, conversations, logs, API keys, settings, every Agent Builder database table (including the agents and skills you created or bought) and its data folder in uploads (the agent folders you built, automatic backups, knowledge files and generated documents) are permanently removed.', 'agent-builder' ),
 					'deleteConfirm'       => __( 'When you delete the plugin, all Agent Builder data, including the agents and skills you created or bought and all automatic backups, will be permanently deleted. This cannot be undone. Continue?', 'agent-builder' ),
 					'deleteConfirmButton' => __( 'Delete everything', 'agent-builder' ),
 				),

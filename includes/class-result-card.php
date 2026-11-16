@@ -387,16 +387,25 @@ class Result_Card {
 			return null;
 		}
 
-		// The exporter always writes `<name>` directly under uploads/agentic-exports/,
-		// so a valid relative path is exactly `agentic-exports/<basename>`. Anything
-		// else — a subdirectory, an absolute path, or a `..` escape — is rejected.
-		$name = basename( $path );
-		if ( 'agentic-exports/' . $name !== $path ) {
+		// The exporters write `<name>` directly into the exports folder of the
+		// plugin's uploads data root, so a valid relative path is exactly
+		// File_Manager::export_relative_path( <basename> ). Results stored by
+		// versions before 4.5 point at `agentic-exports/<basename>` (directly
+		// in uploads); those files were left where they were and still
+		// resolve. Anything else — a subdirectory, an absolute path, or a
+		// `..` escape — is rejected.
+		$name    = basename( $path );
+		$uploads = wp_upload_dir( null, false );
+		if ( File_Manager::export_relative_path( $name ) === $path ) {
+			$exports = wp_normalize_path( File_Manager::exports_dir() );
+			$url     = trailingslashit( File_Manager::exports_url() ) . $name;
+		} elseif ( 'agentic-exports/' . $name === $path ) {
+			$exports = wp_normalize_path( trailingslashit( $uploads['basedir'] ) . 'agentic-exports' );
+			$url     = trailingslashit( $uploads['baseurl'] ) . 'agentic-exports/' . $name;
+		} else {
 			return null;
 		}
 
-		$uploads  = wp_upload_dir();
-		$exports  = wp_normalize_path( trailingslashit( $uploads['basedir'] ) . 'agentic-exports' );
 		$absolute = wp_normalize_path( $exports . '/' . $name );
 
 		// Resolve symlinks and any residual `..` segments, then insist the real
@@ -415,7 +424,7 @@ class Result_Card {
 			'type'  => 'file',
 			'tool'  => $tool,
 			'title' => $name,
-			'url'   => trailingslashit( $uploads['baseurl'] ) . 'agentic-exports/' . $name,
+			'url'   => $url,
 		);
 	}
 

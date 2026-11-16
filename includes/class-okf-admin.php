@@ -210,8 +210,8 @@ class Okf_Admin {
 			wp_send_json_error( __( 'Choose an agent to import from.', 'agent-builder' ) );
 		}
 
-		$file = trailingslashit( AGENT_BUILDER_KNOWLEDGE_DIR ) . $agent . '-knowledge.txt';
-		if ( ! file_exists( $file ) ) {
+		$file = File_Manager::find_data_file( 'knowledge', $agent . '-knowledge.txt' );
+		if ( null === $file ) {
 			wp_send_json_error( __( 'No persona knowledge file found for that agent.', 'agent-builder' ) );
 		}
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents

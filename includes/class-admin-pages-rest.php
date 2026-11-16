@@ -573,13 +573,12 @@ class Admin_Pages_REST {
 			$manifest['abilities'][ $tool_name ]['webmcp_context'] = 'both';
 		}
 
-		if ( ! wp_is_writable( $path ) ) {
-			return new \WP_Error( 'not_writable', __( 'This agent\'s manifest file is not writable.', 'agent-builder' ), array( 'status' => 500 ) );
+		// Bundled manifests are read-only: persist() stores the change as a
+		// database override for them, and only rewrites (and re-signs) the
+		// abilities.json of a user agent in the uploads data root.
+		if ( ! Abilities_Manifest::persist( $agent_slug, $manifest ) ) {
+			return new \WP_Error( 'not_writable', __( 'This agent\'s manifest could not be saved.', 'agent-builder' ), array( 'status' => 500 ) );
 		}
-
-		file_put_contents( $path, wp_json_encode( $manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Editing an agent's own bundled manifest file from a settings action; WP_Filesystem is not bootstrapped on this REST request path.
-		Abilities_Manifest::clear_cache( $agent_slug );
-		Abilities_Manifest::save_integrity_hash( $agent_slug );
 
 		return new \WP_REST_Response(
 			array(

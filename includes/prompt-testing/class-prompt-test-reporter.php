@@ -69,7 +69,12 @@ final class Prompt_Test_Reporter {
 	public function flush( array $records, array $totals, string $path ): bool {
 		$dir = dirname( $path );
 
-		if ( ! is_dir( $dir ) ) {
+		if ( \Agentic\File_Manager::is_in_data_dir( $dir ) ) {
+			// Default location (knowledge/prompt-tests in the uploads data
+			// root): private, so it gets the deny-all protection.
+			\Agentic\File_Manager::ensure_data_dir( 'knowledge' );
+			\Agentic\File_Manager::ensure_protected_dir( $dir, true );
+		} elseif ( ! is_dir( $dir ) ) {
 			wp_mkdir_p( $dir );
 		}
 
