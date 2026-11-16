@@ -979,8 +979,8 @@ class Admin_Ajax {
 			$data = json_decode( $body, true );
 			$data = is_array( $data ) ? $data : array();
 			/* translators: %d: HTTP status code */
-			$msg  = $data['error']['message'] ?? $data['error'] ?? sprintf( __( 'Connection failed (HTTP %d). Check your API key.', 'agent-builder' ), $code );
-			$msg  = is_scalar( $msg ) ? (string) $msg : (string) wp_json_encode( $msg );
+			$msg = $data['error']['message'] ?? $data['error'] ?? sprintf( __( 'Connection failed (HTTP %d). Check your API key.', 'agent-builder' ), $code );
+			$msg = is_scalar( $msg ) ? (string) $msg : (string) wp_json_encode( $msg );
 			wp_send_json_error( array( 'message' => sanitize_text_field( $msg ) ) );
 		}
 	}

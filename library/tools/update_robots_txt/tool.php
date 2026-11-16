@@ -91,12 +91,12 @@ class Update_Robots_Txt extends \Agentic\Tool_Base {
 				);
 			}
 			return array(
-				'success'         => false,
-				'changed'         => false,
-				'physical_file'   => true,
-				'path'            => $plan['path'],
-				'lines_to_add'    => $plan['block'],
-				'message'         => 'This site has a physical robots.txt file, so WordPress serves that file and the plugin cannot add rules to it (the plugin never writes files at the site root). Ask the administrator to add these lines at the top of ' . $plan['path'] . ' themselves, or to delete that file so WordPress generates robots.txt and the plugin can add the rules automatically.',
+				'success'       => false,
+				'changed'       => false,
+				'physical_file' => true,
+				'path'          => $plan['path'],
+				'lines_to_add'  => $plan['block'],
+				'message'       => 'This site has a physical robots.txt file, so WordPress serves that file and the plugin cannot add rules to it (the plugin never writes files at the site root). Ask the administrator to add these lines at the top of ' . $plan['path'] . ' themselves, or to delete that file so WordPress generates robots.txt and the plugin can add the rules automatically.',
 			);
 		}
 

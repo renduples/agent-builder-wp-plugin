@@ -1099,7 +1099,7 @@ class Provider_Registry {
 				if ( '' === $model_id ) {
 					continue;
 				}
-				$price                        = is_array( $price ) ? $price : array();
+				$price                       = is_array( $price ) ? $price : array();
 				$clean[ $slug ][ $model_id ] = array(
 					'in'  => is_numeric( $price['in'] ?? null ) ? (float) $price['in'] : 0.0,
 					'out' => is_numeric( $price['out'] ?? null ) ? (float) $price['out'] : 0.0,
