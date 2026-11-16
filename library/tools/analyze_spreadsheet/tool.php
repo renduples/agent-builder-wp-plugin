@@ -169,7 +169,7 @@ class Analyze_Spreadsheet extends \Agentic\Tool_Base {
 		$rows = array();
 		foreach ( explode( "\n", rtrim( $content ) ) as $line ) {
 			if ( '' !== trim( $line ) ) {
-				$rows[] = str_getcsv( $line, $delimiter );
+				$rows[] = str_getcsv( $line, $delimiter, '"', '\\' );
 			}
 		}
 		return $rows;

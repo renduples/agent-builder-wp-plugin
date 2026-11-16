@@ -100,9 +100,12 @@ class Html_To_Docx extends \Agentic\Tool_Base {
 			return array( 'error' => 'html is required.' );
 		}
 
-		// PhpWord's HTML parser requires a full <html> wrapper.
-		if ( ! str_contains( strtolower( $html ), '<html' ) ) {
-			$html = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>' . $html . '</body></html>';
+		// PhpWord's HTML parser (Html::addHtml() with $fullHTML = false) wraps
+		// the fragment in <body> itself and parses it as XML, so hand it only
+		// the body content — a doctype/<html>/<head> inside that wrapper is
+		// rejected by the XML parser.
+		if ( preg_match( '#<body[^>]*>(.*)</body>#is', $html, $body_match ) ) {
+			$html = $body_match[1];
 		}
 
 		try {

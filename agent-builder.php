@@ -7,7 +7,7 @@
  * Description:       Give AI agents real WordPress work. They run in the background and only come back when something needs your OK. Built with safety controls.
  * Version:           4.4.0
  * Requires at least: 6.4
- * Requires PHP:      8.1
+ * Requires PHP:      8.2
  * Author:            Agent Builder Team
  * Author URI:        https://profiles.wordpress.org/agenticplugin/
  * License:           GPL-2.0-or-later
