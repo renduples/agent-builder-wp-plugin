@@ -618,7 +618,6 @@ class REST_API {
 							'data' => $data,
 						);
 					}
-					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 					echo 'data: ' . wp_json_encode( $payload ) . "\n\n";
 					if ( ob_get_level() > 0 ) {
 						ob_end_flush();
@@ -643,7 +642,6 @@ class REST_API {
 				)
 			);
 			if ( $is_stream ) {
-				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 				echo 'data: ' . wp_json_encode(
 					array(
 						'type'    => 'error',
@@ -717,7 +715,6 @@ class REST_API {
 				'pending_proposal' => ! empty( $response['pending_proposal'] ),
 				'proposal'         => $response['proposal'] ?? null,
 			);
-			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			echo 'data: ' . wp_json_encode( $end_payload ) . "\n\n";
 			flush();
 			exit;
