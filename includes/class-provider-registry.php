@@ -1001,8 +1001,15 @@ class Provider_Registry {
 			if ( is_wp_error( $resp ) || 200 !== wp_remote_retrieve_response_code( $resp ) ) {
 				return array();
 			}
-			$data = json_decode( wp_remote_retrieve_body( $resp ), true );
-			return array_values( array_filter( wp_list_pluck( $data['models'] ?? array(), 'name' ) ) );
+			$data   = json_decode( (string) wp_remote_retrieve_body( $resp ), true );
+			$models = array();
+			foreach ( ( is_array( $data ) && is_array( $data['models'] ?? null ) ) ? $data['models'] : array() as $m ) {
+				$name = ( is_array( $m ) && is_scalar( $m['name'] ?? null ) ) ? sanitize_text_field( (string) $m['name'] ) : '';
+				if ( '' !== $name ) {
+					$models[] = $name;
+				}
+			}
+			return $models;
 		}
 
 		if ( 'agentic' === $slug ) {
@@ -1019,10 +1026,10 @@ class Provider_Registry {
 			if ( is_wp_error( $resp ) || 200 !== wp_remote_retrieve_response_code( $resp ) ) {
 				return array();
 			}
-			$data   = json_decode( wp_remote_retrieve_body( $resp ), true );
+			$data   = json_decode( (string) wp_remote_retrieve_body( $resp ), true );
 			$models = array();
-			foreach ( $data['models'] ?? array() as $m ) {
-				$name = $m['name'] ?? '';
+			foreach ( ( is_array( $data ) && is_array( $data['models'] ?? null ) ) ? $data['models'] : array() as $m ) {
+				$name = ( is_array( $m ) && is_scalar( $m['name'] ?? null ) ) ? sanitize_text_field( (string) $m['name'] ) : '';
 				if ( ! empty( $name ) ) {
 					$models[] = str_starts_with( $name, 'models/' ) ? substr( $name, 7 ) : $name;
 				}
@@ -1067,10 +1074,39 @@ class Provider_Registry {
 			return array();
 		}
 
-		$body    = json_decode( wp_remote_retrieve_body( $resp ), true );
-		$catalog = (array) ( $body['providers'] ?? array() );
+		$body    = json_decode( (string) wp_remote_retrieve_body( $resp ), true );
+		$catalog = self::sanitize_catalog( is_array( $body ) && is_array( $body['providers'] ?? null ) ? $body['providers'] : array() );
 		set_transient( 'agentic_curated_model_catalog', $catalog, HOUR_IN_SECONDS );
 		return $catalog;
+	}
+
+	/**
+	 * Sanitize the remote curated catalog: provider slug => model id =>
+	 * { in, out } prices. Unknown shapes are dropped.
+	 *
+	 * @param array $providers Decoded "providers" object.
+	 * @return array<string, array<string, array{in: float, out: float}>>
+	 */
+	public static function sanitize_catalog( array $providers ): array {
+		$clean = array();
+		foreach ( $providers as $slug => $models ) {
+			$slug = sanitize_key( (string) $slug );
+			if ( '' === $slug || ! is_array( $models ) ) {
+				continue;
+			}
+			foreach ( $models as $model_id => $price ) {
+				$model_id = sanitize_text_field( (string) $model_id );
+				if ( '' === $model_id ) {
+					continue;
+				}
+				$price                        = is_array( $price ) ? $price : array();
+				$clean[ $slug ][ $model_id ] = array(
+					'in'  => is_numeric( $price['in'] ?? null ) ? (float) $price['in'] : 0.0,
+					'out' => is_numeric( $price['out'] ?? null ) ? (float) $price['out'] : 0.0,
+				);
+			}
+		}
+		return $clean;
 	}
 
 	/**

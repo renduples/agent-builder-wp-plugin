@@ -108,7 +108,8 @@ if ( ! $agentic_pa_selected && ! empty( $agentic_all_agents ) ) {
 			<td>
 				<?php
 				$agentic_pa_prompts_raw   = \Agentic\Agent_Settings::get( $agentic_pa_selected, 'persona_suggested_prompts' );
-				$agentic_pa_prompts_saved = ! empty( $agentic_pa_prompts_raw ) ? ( json_decode( $agentic_pa_prompts_raw, true ) !== null ? json_decode( $agentic_pa_prompts_raw, true ) : array() ) : array();
+				$agentic_pa_prompts_dec   = is_string( $agentic_pa_prompts_raw ) && '' !== $agentic_pa_prompts_raw ? json_decode( $agentic_pa_prompts_raw, true ) : array();
+				$agentic_pa_prompts_saved = is_array( $agentic_pa_prompts_dec ) ? array_values( array_map( 'sanitize_text_field', array_filter( $agentic_pa_prompts_dec, 'is_string' ) ) ) : array();
 				$agentic_pa_has_saved     = ! empty( $agentic_pa_prompts_saved );
 				$agentic_pa_placeholders  = array( 'Prompt 1', 'Prompt 2', 'Prompt 3', 'Prompt 4' );
 				if ( ! $agentic_pa_has_saved ) {

@@ -416,7 +416,7 @@ document.addEventListener('DOMContentLoaded', function() {
 				provider: provider
 			});
 
-			fetch(ajaxurl, { method: 'POST', body })
+			fetch(agenticSettings.ajaxUrl, { method: 'POST', body })
 				.then(r => r.json())
 				.then(data => {
 					if (data.success) {

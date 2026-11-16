@@ -1790,6 +1790,7 @@ class Admin_Menu_Handler {
 					AGENT_BUILDER_VERSION,
 					true
 				);
+				$this->add_legacy_settings_data();
 				include AGENT_BUILDER_DIR . 'admin/settings.php';
 				return;
 			}
@@ -1849,7 +1850,27 @@ class Admin_Menu_Handler {
 			AGENT_BUILDER_VERSION,
 			true
 		);
+		$this->add_legacy_settings_data();
 		include AGENT_BUILDER_DIR . 'admin/settings.php';
+	}
+
+	/**
+	 * Pass URLs and nonces to the legacy assets/js/settings.js (no
+	 * hard-coded /wp-json/ or admin-ajax paths in the script).
+	 *
+	 * @return void
+	 */
+	private function add_legacy_settings_data(): void {
+		Inline_Assets::data(
+			'agentic-settings',
+			'agenticSettings',
+			array(
+				'restUrl'       => esc_url_raw( rest_url( 'agentic/v1/' ) ),
+				'nonce'         => wp_create_nonce( 'wp_rest' ),
+				'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
+				'settingsNonce' => wp_create_nonce( 'agentic_settings_nonce' ),
+			)
+		);
 	}
 
 	/**
