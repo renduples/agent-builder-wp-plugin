@@ -238,8 +238,7 @@ class Admin_Ajax {
 			wp_send_json_error( 'Permission denied.' );
 		}
 
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitize_key() applied per-item below; this is just the raw list to split.
-		$slugs = isset( $_POST['slugs'] ) ? wp_unslash( $_POST['slugs'] ) : '';
+		$slugs = isset( $_POST['slugs'] ) ? sanitize_text_field( wp_unslash( $_POST['slugs'] ) ) : '';
 		$slugs = array_map( 'sanitize_key', explode( ',', (string) $slugs ) );
 		sort( $slugs );
 
@@ -376,18 +375,16 @@ class Admin_Ajax {
 			wp_send_json_error( __( 'Permission denied.', 'agent-builder' ) );
 		}
 
-		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- every field is sanitized (sanitize_text_field/sanitize_textarea_field/absint) inside Agent_Lifecycle::save_user_trigger().
 		$result = Agent_Lifecycle::save_user_trigger(
 			array(
-				'id'         => wp_unslash( $_POST['trigger_id'] ?? '' ),
-				'agent_slug' => wp_unslash( $_POST['agent_slug'] ?? '' ),
-				'hook'       => wp_unslash( $_POST['hook'] ?? '' ),
-				'name'       => wp_unslash( $_POST['name'] ?? '' ),
-				'prompt'     => wp_unslash( $_POST['prompt'] ?? '' ),
-				'priority'   => wp_unslash( $_POST['priority'] ?? 10 ),
+				'id'         => sanitize_text_field( wp_unslash( $_POST['trigger_id'] ?? '' ) ),
+				'agent_slug' => sanitize_text_field( wp_unslash( $_POST['agent_slug'] ?? '' ) ),
+				'hook'       => sanitize_text_field( wp_unslash( $_POST['hook'] ?? '' ) ),
+				'name'       => sanitize_text_field( wp_unslash( $_POST['name'] ?? '' ) ),
+				'prompt'     => sanitize_textarea_field( wp_unslash( $_POST['prompt'] ?? '' ) ),
+				'priority'   => absint( wp_unslash( $_POST['priority'] ?? 10 ) ),
 			)
 		);
-		// phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		if ( empty( $result['ok'] ) ) {
 			wp_send_json_error( $result['error'] ?? __( 'Could not save the event trigger.', 'agent-builder' ) );
@@ -435,18 +432,16 @@ class Admin_Ajax {
 			wp_send_json_error( __( 'Permission denied.', 'agent-builder' ) );
 		}
 
-		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- every field is sanitized (sanitize_key/sanitize_text_field/sanitize_textarea_field) inside Agent_Lifecycle::save_user_scheduled_task().
 		$result = Agent_Lifecycle::save_user_scheduled_task(
 			array(
-				'id'          => wp_unslash( $_POST['task_id'] ?? '' ),
-				'agent_slug'  => wp_unslash( $_POST['agent_slug'] ?? '' ),
-				'name'        => wp_unslash( $_POST['name'] ?? '' ),
-				'prompt'      => wp_unslash( $_POST['prompt'] ?? '' ),
-				'description' => wp_unslash( $_POST['description'] ?? '' ),
-				'schedule'    => wp_unslash( $_POST['schedule'] ?? 'daily' ),
+				'id'          => sanitize_text_field( wp_unslash( $_POST['task_id'] ?? '' ) ),
+				'agent_slug'  => sanitize_key( wp_unslash( $_POST['agent_slug'] ?? '' ) ),
+				'name'        => sanitize_text_field( wp_unslash( $_POST['name'] ?? '' ) ),
+				'prompt'      => sanitize_textarea_field( wp_unslash( $_POST['prompt'] ?? '' ) ),
+				'description' => sanitize_textarea_field( wp_unslash( $_POST['description'] ?? '' ) ),
+				'schedule'    => sanitize_key( wp_unslash( $_POST['schedule'] ?? 'daily' ) ),
 			)
 		);
-		// phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		if ( empty( $result['ok'] ) ) {
 			wp_send_json_error( $result['error'] ?? __( 'Could not save the scheduled task.', 'agent-builder' ) );
