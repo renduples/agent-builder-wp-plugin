@@ -194,9 +194,11 @@
                     handoffContext = handoffContext.trim();
                 }
 
-                var base = (typeof agenticChat !== 'undefined' && agenticChat.adminUrl)
-                    ? agenticChat.adminUrl
-                    : '/wp-admin/';
+                // adminUrl comes from PHP admin_url(); no hard-coded fallback.
+                if (typeof agenticChat === 'undefined' || !agenticChat.adminUrl) {
+                    return;
+                }
+                var base = agenticChat.adminUrl;
 
                 var url = base + 'admin.php?page=agentic-chat'
                     + '&agent=' + encodeURIComponent(agentId);
@@ -817,10 +819,10 @@
         
         // Check if "Load more..." was selected
         if (newAgentId === 'load-more') {
-            const adminUrl = (typeof agenticChat !== 'undefined' && agenticChat.adminAgentsUrl)
-                ? agenticChat.adminAgentsUrl
-                : '/wp-admin/admin.php?page=agentic-agents';
-            window.open(adminUrl, '_blank');
+            // Built from admin_url() passed by PHP; never a hard-coded path.
+            if (typeof agenticChat !== 'undefined' && agenticChat.adminUrl) {
+                window.open(agenticChat.adminUrl + 'admin.php?page=agentic-agents', '_blank');
+            }
             // Reset the select to the previously selected agent so chat doesn't switch
             if (e && e.target) {
                 // Reset to the agent that was active for this chat (don't disrupt the conversation)
