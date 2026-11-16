@@ -4790,9 +4790,9 @@ font-size: 12px; font-weight: 600;
    the site-wide switch onto its own row there. Scoped via WordPress' own
    page-slug body class (see class-admin-notice-manager.php) so it only
    affects the screens where this collision was found. */
-body.agent-builder_page_agentic-audit-log #agentic-global-mode-switch,
-body.agent-builder_page_agentic-tools #agentic-global-mode-switch,
-body.agent-builder_page_agentic-train-data #agentic-global-mode-switch {
+body[class*="_page_agentic-audit-log"] #agentic-global-mode-switch,
+body[class*="_page_agentic-tools"] #agentic-global-mode-switch,
+body[class*="_page_agentic-train-data"] #agentic-global-mode-switch {
 	margin-bottom: 16px;
 }
 .agentic-screen-mode-toggle .button-small {
