@@ -5,19 +5,25 @@
  * duplicated in assets/js/chat.js, assets/js/chat-overlay.js and
  * src/shared/chat-embed.js. Loaded as a plain <script> dependency by the two
  * vanilla surfaces (exposing window.AgenticMarkdown), and bundled by webpack
- * for the React embed (module.exports).
+ * for the React embed and the Tasks run details (module.exports).
  *
- * Two per-surface knobs preserve each caller's output byte-for-byte:
+ * Two per-surface knobs:
  *   - delegateLinks: render [→ Agent](agentic-delegate:id) as a button
  *     (chat.js only — the overlay and embed have no agent handoff).
  *   - codeBlock: 'copy' wraps fenced code in the copy-button + language-class
  *     block used by chat.js/chat-overlay.js; 'plain' emits the bare
  *     <pre><code> the React embed uses (it has no copy-button affordance).
  *
- * Escaping is DOM-based (textContent → innerHTML), which escapes &, <, > but
- * not the quote characters; safeLinkHref() re-escapes quotes on the URL
- * attribute. This matches the two vanilla renderers exactly and is visually
- * identical for the embed's previous string-based escaping.
+ * Block structure is parsed line by line: paragraphs, headings, rules,
+ * blockquotes, tables, fenced and indented code, and bullet ("-", "*", "+")
+ * and numbered lists, nested by indentation. Inline formatting (bold, italic,
+ * code, links) never spans a line break, so a "*" bullet can't pair up with an
+ * italic marker on another line.
+ *
+ * Escaping is DOM-based (textContent → innerHTML) in the browser, which escapes
+ * &, <, > but not the quote characters; safeLinkHref() re-escapes quotes on
+ * the URL attribute. Without a DOM (unit tests under node) the same three
+ * characters are escaped by string replacement.
  */
 (function (root, factory) {
 	if (typeof module === 'object' && module.exports) {
@@ -31,6 +37,9 @@
 	// Escape HTML via the DOM — escapes &, <, > but NOT the quote characters
 	// (safeLinkHref below re-escapes quotes on the href attribute).
 	function escapeHtml(text) {
+		if (typeof document === 'undefined') {
+			return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+		}
 		var div = document.createElement('div');
 		div.textContent = text;
 		return div.innerHTML;
@@ -74,6 +83,26 @@
 		return url.href;
 	}
 
+	// "- item", "* item", "+ item", "1. item", "1) item" (marker, then a space).
+	var LIST_ITEM_RE = /^([ \t]*)([-*+]|\d{1,9}[.)])[ \t]+(.*)$/;
+	// "---", "***", "___", "* * *" (three or more of one character).
+	var HR_RE = /^ {0,3}([-*_])(?:[ \t]*\1){2,}[ \t]*$/;
+	var HEADING_RE = /^ {0,3}(#{1,6})[ \t]+(.*?)(?:[ \t]+#+)?[ \t]*$/;
+	// Blockquote marker; the text is already escaped, so ">" is "&gt;".
+	var QUOTE_RE = /^ {0,3}&gt;[ \t]?(.*)$/;
+	var TABLE_ROW_RE = /^[ \t]*\|.*\|[ \t]*$/;
+	var TABLE_SEP_RE = /^[ \t]*\|[ \t]*:?-{2,}:?[ \t]*(\|[ \t]*:?-{2,}:?[ \t]*)*\|?[ \t]*$/;
+
+	// Width of a line's leading whitespace (a tab counts as four spaces).
+	function indentOf(line) {
+		var m = line.match(/^[ \t]*/)[0];
+		return m.replace(/\t/g, '    ').length;
+	}
+
+	function isBlank(line) {
+		return /^[ \t]*$/.test(line);
+	}
+
 	/**
 	 * Render markdown to safe HTML.
 	 *
@@ -88,140 +117,264 @@
 		if (!text) return '';
 
 		// Escape HTML first.
-		var html = escapeHtml(text);
+		var html = escapeHtml(String(text).replace(/\r\n?/g, '\n'));
 
-		// Extract fenced code blocks into placeholders FIRST — before any other
-		// substitution (headers, lists, bold, links, tables) — so the raw code is
-		// never rewritten into markdown markup, and the single-newline pass below
-		// can't turn the code's own line breaks into <br>. Restored at the very end.
-		var codeNonce = 'agentic_code_' + Math.random().toString(36).slice(2) + Date.now().toString(36) + '_';
-		var codeBlocks = [];
-		html = html.replace(/```(\w*)\n([\s\S]*?)```/g, function (block, lang, code) {
-			codeBlocks.push({ lang: lang, code: code });
-			return codeNonce + (codeBlocks.length - 1);
+		// Placeholders hold rendered fragments (code blocks, inline code, links)
+		// aside so no later substitution rewrites their contents. The nonce makes
+		// a token the text itself could contain vanishingly unlikely.
+		// Letters and digits only, so no emphasis rule can touch a token.
+		var nonce = 'AGMD' + Math.random().toString(36).slice(2) + Date.now().toString(36) + 'Q';
+		var held = [];
+		var blockTokens = {};
+		function hold(fragment, isBlock) {
+			held.push(fragment);
+			var token = nonce + (held.length - 1) + 'Q';
+			if (isBlock) blockTokens[token] = true;
+			return token;
+		}
+		var tokenOnlyRe = new RegExp('^[ \\t]*(' + nonce + '\\d+Q)[ \\t]*$');
+
+		// Fenced code blocks first (a fence may be indented, e.g. under a list
+		// item), so the raw code is never rewritten into markdown markup.
+		html = html.replace(/(^|\n)([ \t]*)```([\w+-]*)[ \t]*\n([\s\S]*?)\n?[ \t]*```[ \t]*(?=\n|$)/g, function (m, lead, indent, lang, code) {
+			var block;
+			if (options.codeBlock === 'plain') {
+				block = '<pre><code>' + code + '</code></pre>';
+			} else {
+				block = '<div class="agentic-code-wrap"><button class="agentic-copy-btn" title="Copy">Copy</button><pre><code class="language-' + lang + '">' + code + '</code></pre></div>';
+			}
+			return lead + indent + hold(block, true);
 		});
 
-		// Inline code.
-		html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-
-		// Tables — process before headers/lists to avoid conflicts.
-		html = html.replace(/(^\|.+\|$\n?)+/gm, function (tableBlock) {
-			var rows = tableBlock.trim().split('\n');
-			if (rows.length < 2) return tableBlock;
-
-			var sepIndex = -1;
-			for (var si = 0; si < rows.length; si++) {
-				if (/^\|[\s:]*-{2,}[\s:]*\|/.test(rows[si])) { sepIndex = si; break; }
-			}
-			if (sepIndex === -1) return tableBlock;
-
-			var tableHtml = '<table>';
-			tableHtml += '<thead>';
-			for (var hdr = 0; hdr < sepIndex; hdr++) {
-				var hcells = rows[hdr].split('|').slice(1, -1);
-				tableHtml += '<tr>' + hcells.map(function (c) { return '<th>' + c.trim() + '</th>'; }).join('') + '</tr>';
-			}
-			tableHtml += '</thead>';
-			if (sepIndex + 1 < rows.length) {
-				tableHtml += '<tbody>';
-				for (var bdy = sepIndex + 1; bdy < rows.length; bdy++) {
-					if (!rows[bdy].trim()) continue;
-					var bcells = rows[bdy].split('|').slice(1, -1);
-					tableHtml += '<tr>' + bcells.map(function (c) { return '<td>' + c.trim() + '</td>'; }).join('') + '</tr>';
-				}
-				tableHtml += '</tbody>';
-			}
-			tableHtml += '</table>';
-			return tableHtml;
+		// Inline code — held aside so "*" or "_" inside it stays literal.
+		html = html.replace(/`([^`\n]+)`/g, function (m, code) {
+			return hold('<code>' + code + '</code>');
 		});
 
-		// Horizontal rules.
-		html = html.replace(/^-{3,}$/gm, '<hr>');
-
-		// Headers (most specific first).
-		html = html.replace(/^#### (.*$)/gm, '<h4>$1</h4>');
-		html = html.replace(/^### (.*$)/gm, '<h3>$1</h3>');
-		html = html.replace(/^## (.*$)/gm, '<h2>$1</h2>');
-		html = html.replace(/^# (.*$)/gm, '<h1>$1</h1>');
-
-		// Bold and italic.
-		html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-		html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-
-		// Agent delegation links — rendered as buttons, not anchors (chat.js only).
-		// Convention: [→ Agent Name](agentic-delegate:agent-id)
-		if (options.delegateLinks) {
-			html = html.replace(/\[([^\]]+)\]\(agentic-delegate:([a-z0-9-]+)\)/g,
-				'<button class="agentic-delegate-btn" data-agent="$2">$1</button>');
+		// Inline formatting for one line of text (never crosses a line break).
+		function inline(s) {
+			// Agent delegation links — rendered as buttons, not anchors (chat.js only).
+			// Convention: [→ Agent Name](agentic-delegate:agent-id)
+			if (options.delegateLinks) {
+				s = s.replace(/\[([^\]\n]+)\]\(agentic-delegate:([a-z0-9-]+)\)/g, function (m, label, agent) {
+					return hold('<button class="agentic-delegate-btn" data-agent="' + agent + '">' + emphasis(label) + '</button>');
+				});
+			}
+			// Standard links — scheme-validated and attribute-escaped.
+			s = s.replace(/\[([^\]\n]+)\]\(([^)\s]+)\)/g, function (m, label, url) {
+				var href = safeLinkHref(url);
+				if (href === null) return label; // unsafe scheme — plain text
+				return hold('<a href="' + href + '" target="_blank" rel="noopener">' + emphasis(label) + '</a>');
+			});
+			return emphasis(s);
 		}
 
-		// Standard links — scheme-validated and attribute-escaped.
-		html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, function (match, label, url) {
-			var href = safeLinkHref(url);
-			if (href === null) return label; // unsafe scheme — plain text
-			return '<a href="' + href + '" target="_blank" rel="noopener">' + label + '</a>';
-		});
+		// Bold and italic, "*" and "_" forms. Markers must hug the text
+		// ("2 * 3 * 4" stays literal), and "_" only counts at a word boundary so
+		// snake_case names such as get_agent_list stay intact.
+		function emphasis(s) {
+			s = s.replace(/\*\*(?=[^\s*])([^*]*?[^\s*])\*\*/g, '<strong>$1</strong>');
+			s = s.replace(/(^|[^\w])__(?=[^\s_])([^_]*?[^\s_])__(?!\w)/g, '$1<strong>$2</strong>');
+			s = s.replace(/\*(?=[^\s*])([^*]*?[^\s*])\*/g, '<em>$1</em>');
+			s = s.replace(/(^|[\s(>"'])_(?=[^\s_])([^_]*?[^\s_])_(?!\w)/g, '$1<em>$2</em>');
+			return s;
+		}
 
-		// Lists.
-		html = html.replace(/^\s*[-*]\s+(.*)$/gm, '<li>$1</li>');
-		html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
-		// Drop the newline the <ul> wrapper leaves between items, so a later
-		// single-newline pass doesn't inject a stray <br> between <li>s — both
-		// between items and between the last item and the closing </ul>.
-		html = html.replace(/<\/li>\n<li>/g, '</li><li>');
-		html = html.replace(/(<\/li>)\n(<\/ul>)/g, '$1$2');
+		var lines = html.split('\n');
+		var out = [];
+		var para = [];
 
-		// Numbered lists — wrap each run of "1. item" lines in an <ol> directly.
-		html = html.replace(/(?:^[ \t]*\d+\.\s+.*(?:\n|$))+/gm, function (block) {
-			var items = block.split('\n').filter(function (line) {
-				return /^[ \t]*\d+\.\s+/.test(line);
-			});
-			return '<ol>' + items.map(function (line) {
-				return '<li>' + line.replace(/^[ \t]*\d+\.\s+/, '') + '</li>';
-			}).join('') + '</ol>';
-		});
-
-		// Blockquotes.
-		html = html.replace(/^>\s+(.*)$/gm, '<blockquote>$1</blockquote>');
-
-		// Paragraphs.
-		html = html.replace(/\n\n/g, '</p><p>');
-		html = '<p>' + html + '</p>';
-		html = html.replace(/<p><\/p>/g, '');
-		html = html.replace(/<p>(<h[1-6]>)/g, '$1');
-		html = html.replace(/(<\/h[1-6]>)<\/p>/g, '$1');
-		html = html.replace(/<p>(<ul>)/g, '$1');
-		html = html.replace(/(<\/ul>)<\/p>/g, '$1');
-		html = html.replace(/<p>(<ol>)/g, '$1');
-		html = html.replace(/(<\/ol>)<\/p>/g, '$1');
-		html = html.replace(/<p>(<blockquote>)/g, '$1');
-		html = html.replace(/(<\/blockquote>)<\/p>/g, '$1');
-		html = html.replace(/<p>(<table>)/g, '$1');
-		html = html.replace(/(<\/table>)<\/p>/g, '$1');
-		html = html.replace(/<p>(<hr>)/g, '$1');
-		html = html.replace(/(<hr>)<\/p>/g, '$1');
-		// Unwrap the code placeholder from its paragraph — the real block is
-		// restored after the newline pass below, so the token, not the block,
-		// must escape <p>.
-		html = html.replace(new RegExp('<p>(' + codeNonce + '\\d+)</p>', 'g'), '$1');
-
-		// Preserve single line breaks inside a paragraph (the model's "line1\n
-		// line2" and "- item" lists after a colon). Code blocks are still held
-		// aside as placeholders, so their inner newlines survive as real newlines.
-		html = html.replace(/\n/g, '<br>');
-
-		// Restore the code blocks now that every substitution and the newline pass
-		// have run, so none of them ever saw the raw code content.
-		html = html.replace(new RegExp(codeNonce + '(\\d+)', 'g'), function (m, i) {
-			var b = codeBlocks[parseInt(i, 10)];
-			// A token this render could only have inserted, so a match is always
-			// one of our own; keep the guard anyway against index drift.
-			if (b === undefined) return m;
-			if (options.codeBlock === 'plain') {
-				return '<pre><code>' + b.code + '</code></pre>';
+		function flushPara() {
+			if (para.length) {
+				out.push('<p>' + para.map(inline).join('<br>') + '</p>');
+				para = [];
 			}
-			return '<div class="agentic-code-wrap"><button class="agentic-copy-btn" title="Copy">Copy</button><pre><code class="language-' + b.lang + '">' + b.code + '</code></pre></div>';
-		});
+		}
+
+		// Parse a (possibly nested) list starting at lines[start]; returns the
+		// index of the first line after it.
+		function parseList(start) {
+			var stack = []; // { indent, tag }
+			var res = '';
+			var i = start;
+
+			function openList(indent, marker) {
+				var ordered = /\d/.test(marker);
+				var tag = ordered ? 'ol' : 'ul';
+				var num = ordered ? parseInt(marker, 10) : 1;
+				stack.push({ indent: indent, tag: tag });
+				res += '<' + tag + (ordered && num !== 1 ? ' start="' + num + '"' : '') + '>';
+			}
+			function closeTop() {
+				res += '</li></' + stack.pop().tag + '>';
+			}
+			function top() {
+				return stack[stack.length - 1];
+			}
+
+			while (i < lines.length) {
+				var line = lines[i];
+				var m = LIST_ITEM_RE.exec(line);
+
+				if (m && !HR_RE.test(line)) {
+					var indent = indentOf(m[1]);
+					var tag = /\d/.test(m[2]) ? 'ol' : 'ul';
+					if (!stack.length) {
+						openList(indent, m[2]);
+					} else {
+						// Back out of deeper levels this item is shallower than.
+						while (stack.length > 1 && indent < top().indent - 1) {
+							closeTop();
+						}
+						if (indent >= top().indent + 2) {
+							openList(indent, m[2]); // nested inside the open item
+						} else if (top().tag !== tag) {
+							// Same level, other kind: end this list, start a sibling.
+							closeTop();
+							if (stack.length) {
+								openList(indent, m[2]);
+							} else {
+								out.push(res);
+								res = '';
+								openList(indent, m[2]);
+							}
+						} else {
+							res += '</li>';
+						}
+					}
+					res += '<li>' + inline(m[3]);
+					i++;
+					continue;
+				}
+
+				if (isBlank(line)) {
+					// A blank line ends the list unless the list carries on below it
+					// (another item, or an indented continuation of this one).
+					var j = i + 1;
+					while (j < lines.length && isBlank(lines[j])) j++;
+					if (j < lines.length && (LIST_ITEM_RE.test(lines[j]) && !HR_RE.test(lines[j]) || indentOf(lines[j]) >= 2)) {
+						i = j;
+						continue;
+					}
+					break;
+				}
+
+				// Indented text under an item continues that item (never code).
+				if (indentOf(line) >= 2) {
+					var token = tokenOnlyRe.exec(line);
+					res += token && blockTokens[token[1]] ? token[1] : '<br>' + inline(line.replace(/^[ \t]+/, ''));
+					i++;
+					continue;
+				}
+
+				break;
+			}
+
+			while (stack.length) closeTop();
+			out.push(res);
+			return i;
+		}
+
+		var i = 0;
+		while (i < lines.length) {
+			var line = lines[i];
+			var m;
+
+			if (isBlank(line)) {
+				flushPara();
+				i++;
+				continue;
+			}
+
+			// A held block (fenced code) on its own line.
+			m = tokenOnlyRe.exec(line);
+			if (m && blockTokens[m[1]]) {
+				flushPara();
+				out.push(m[1]);
+				i++;
+				continue;
+			}
+
+			if (HR_RE.test(line)) {
+				flushPara();
+				out.push('<hr>');
+				i++;
+				continue;
+			}
+
+			m = HEADING_RE.exec(line);
+			if (m) {
+				flushPara();
+				out.push('<h' + m[1].length + '>' + inline(m[2]) + '</h' + m[1].length + '>');
+				i++;
+				continue;
+			}
+
+			if (LIST_ITEM_RE.test(line)) {
+				flushPara();
+				i = parseList(i);
+				continue;
+			}
+
+			if (QUOTE_RE.test(line)) {
+				flushPara();
+				var quoted = [];
+				while (i < lines.length && QUOTE_RE.test(lines[i])) {
+					quoted.push(inline(QUOTE_RE.exec(lines[i])[1]));
+					i++;
+				}
+				out.push('<blockquote>' + quoted.join('<br>') + '</blockquote>');
+				continue;
+			}
+
+			if (TABLE_ROW_RE.test(line) && i + 1 < lines.length && TABLE_SEP_RE.test(lines[i + 1])) {
+				flushPara();
+				var cells = function (row) {
+					return row.trim().replace(/^\||\|$/g, '').split('|').map(function (c) {
+						return inline(c.trim());
+					});
+				};
+				var table = '<table><thead><tr>' + cells(line).map(function (c) { return '<th>' + c + '</th>'; }).join('') + '</tr></thead>';
+				i += 2;
+				var body = '';
+				while (i < lines.length && TABLE_ROW_RE.test(lines[i])) {
+					body += '<tr>' + cells(lines[i]).map(function (c) { return '<td>' + c + '</td>'; }).join('') + '</tr>';
+					i++;
+				}
+				out.push(table + (body ? '<tbody>' + body + '</tbody>' : '') + '</table>');
+				continue;
+			}
+
+			// Indented code: 4+ spaces (or a tab), outside a list, not continuing
+			// a paragraph. Fewer spaces are just text.
+			if (!para.length && /^( {4}|\t)/.test(line)) {
+				var code = [];
+				while (i < lines.length && (/^( {4}|\t)/.test(lines[i]) || (isBlank(lines[i]) && i + 1 < lines.length && /^( {4}|\t)/.test(lines[i + 1])))) {
+					code.push(lines[i].replace(/^( {4}|\t)/, ''));
+					i++;
+				}
+				out.push(options.codeBlock === 'plain'
+					? '<pre><code>' + code.join('\n') + '</code></pre>'
+					: '<div class="agentic-code-wrap"><button class="agentic-copy-btn" title="Copy">Copy</button><pre><code class="language-">' + code.join('\n') + '</code></pre></div>');
+				continue;
+			}
+
+			para.push(line.replace(/^[ \t]+/, ''));
+			i++;
+		}
+		flushPara();
+
+		html = out.join('');
+
+		// Restore held fragments (a link label may itself hold inline code, so
+		// repeat until none are left).
+		var tokenRe = new RegExp(nonce + '(\\d+)Q', 'g');
+		for (var pass = 0; pass < 4 && html.indexOf(nonce) !== -1; pass++) {
+			html = html.replace(tokenRe, function (tok, n) {
+				var f = held[parseInt(n, 10)];
+				return f === undefined ? tok : f;
+			});
+		}
 
 		return html;
 	}
