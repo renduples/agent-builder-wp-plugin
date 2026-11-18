@@ -690,6 +690,81 @@ class Test_Tool_Executor extends TestCase {
 	}
 
 	/**
+	 * End to end: a read-only lookup runs even with deny/ask rules in place
+	 * while the reviewer is unavailable, and spends no reviewer query.
+	 */
+	public function test_read_only_tool_runs_despite_rules_when_reviewer_unavailable(): void {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$fake = new Fake_LLM_Client(); // Empty queue: chat() returns a WP_Error.
+		Approval_Rules::set_reviewer_client( $fake );
+		$ids = array(
+			Approval_Rules::create(
+				array(
+					'agent_slug' => 'test-agent',
+					'rule_text'  => 'Deleting users or changing anyone\'s role.',
+					'effect'     => 'deny',
+				)
+			),
+			Approval_Rules::create(
+				array(
+					'agent_slug' => 'test-agent',
+					'rule_text'  => 'Ask me first before publishing anything or changing a published page.',
+					'effect'     => 'ask',
+				)
+			),
+		);
+
+		try {
+			$result = $this->make_executor()->execute( 'list_posts', array(), 'test-agent', 'supervised', 'chat' );
+		} finally {
+			foreach ( $ids as $id ) {
+				Approval_Rules::delete( $id );
+			}
+			Approval_Rules::set_reviewer_client( null );
+		}
+
+		$this->assertArrayNotHasKey( 'status', $result );
+		$this->assertArrayNotHasKey( 'error', $result, (string) wp_json_encode( $result ) );
+		$this->assertSame( 0, $fake->chat_calls );
+	}
+
+	/**
+	 * End to end: a write with a deny rule while the reviewer is unavailable
+	 * is queued, and the reason says plainly the rules could not be checked.
+	 */
+	public function test_write_tool_queued_with_outage_reason_when_reviewer_unavailable(): void {
+		update_option( 'agent_builder_approval_auto_max_risk', 'medium' );
+		Risk_Level::bust_cache();
+		$fake = new Fake_LLM_Client(); // Empty queue: chat() returns a WP_Error.
+		Approval_Rules::set_reviewer_client( $fake );
+		$rule_id = Approval_Rules::create(
+			array(
+				'agent_slug' => 'test-agent',
+				'rule_text'  => 'Never edit site CSS.',
+				'effect'     => 'deny',
+			)
+		);
+
+		try {
+			$result = $this->make_executor()->execute(
+				'add_custom_css',
+				array( 'css' => 'body{color:red}' ),
+				'test-agent',
+				'supervised',
+				'chat'
+			);
+		} finally {
+			Approval_Rules::delete( $rule_id );
+			Approval_Rules::set_reviewer_client( null );
+		}
+
+		$this->assertSame( 'queued_for_approval', $result['status'] ?? null );
+		$this->assertStringContainsString( 'could not be checked because the AI service is unavailable', $result['reason'] ?? '' );
+		$this->assertStringNotContainsString( 'May fall under', $result['reason'] ?? '' );
+		$this->assertStringContainsString( 'could not be checked', $result['message'] ?? '' );
+	}
+
+	/**
 	 * An ask rule the reviewer says matches routes a normally-allowed call to
 	 * confirmation, with the rule quoted as the reason.
 	 */

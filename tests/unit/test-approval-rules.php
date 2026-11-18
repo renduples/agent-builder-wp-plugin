@@ -358,14 +358,14 @@ class Test_Approval_Rules extends TestCase {
 
 	// -------------------------------------------------------------------------
 	// Evaluation engine — fail-closed when the reviewer is unsure
-	// (the fake's empty queue answers every call with an error → 'unsure')
+	// (the fake's empty queue answers every call with an error → 'unavailable')
 	// -------------------------------------------------------------------------
 
 	/**
-	 * classify() is 'unsure' without calling the model when no provider is
-	 * configured.
+	 * classify() is 'unavailable' without calling the model when no provider
+	 * is configured.
 	 */
-	public function test_classify_unconfigured_provider_is_unsure(): void {
+	public function test_classify_unconfigured_provider_is_unavailable(): void {
 		$client = new class() extends Fake_LLM_Client {
 			/**
 			 * Report as not configured.
@@ -378,7 +378,7 @@ class Test_Approval_Rules extends TestCase {
 		};
 		Approval_Rules::set_reviewer_client( $client );
 
-		$this->assertSame( 'unsure', Approval_Rules::classify( 'Any rule text.', $this->evaluation_ctx() ) );
+		$this->assertSame( 'unavailable', Approval_Rules::classify( 'Any rule text.', $this->evaluation_ctx() ) );
 		$this->assertSame( 0, $client->chat_calls );
 	}
 
@@ -689,12 +689,12 @@ class Test_Approval_Rules extends TestCase {
 	}
 
 	/**
-	 * An LLM error is 'unsure' and is not cached, so the next identical call
-	 * asks the model again.
+	 * An LLM error is 'unavailable' and is not cached, so the next identical
+	 * call asks the model again.
 	 */
-	public function test_llm_error_is_unsure_and_not_cached(): void {
+	public function test_llm_error_is_unavailable_and_not_cached(): void {
 		// Empty queue: the fake returns a WP_Error.
-		$this->assertSame( 'unsure', Approval_Rules::classify( 'Ask first.', $this->evaluation_ctx(), 7 ) );
+		$this->assertSame( 'unavailable', Approval_Rules::classify( 'Ask first.', $this->evaluation_ctx(), 7 ) );
 
 		$this->fake->enqueue( Fake_LLM_Client::text_response( 'match' ) );
 		$this->assertSame( 'match', Approval_Rules::classify( 'Ask first.', $this->evaluation_ctx(), 7 ) );
@@ -702,9 +702,9 @@ class Test_Approval_Rules extends TestCase {
 	}
 
 	/**
-	 * An exception from the client is 'unsure'.
+	 * An exception from the client is 'unavailable'.
 	 */
-	public function test_llm_exception_is_unsure(): void {
+	public function test_llm_exception_is_unavailable(): void {
 		Approval_Rules::set_reviewer_client(
 			new class() extends Fake_LLM_Client {
 				/**
@@ -722,7 +722,7 @@ class Test_Approval_Rules extends TestCase {
 			}
 		);
 
-		$this->assertSame( 'unsure', Approval_Rules::classify( 'Ask first.', $this->evaluation_ctx() ) );
+		$this->assertSame( 'unavailable', Approval_Rules::classify( 'Ask first.', $this->evaluation_ctx() ) );
 	}
 
 	/**
@@ -940,20 +940,124 @@ class Test_Approval_Rules extends TestCase {
 	}
 
 	/**
-	 * A read-only tool with a "Never delete users" rule and a no_match verdict
-	 * is not tightened at all.
+	 * A read-only tool with a "Never delete users" rule is not tightened, and
+	 * the reviewer is never asked — rules only govern actions that change the
+	 * site.
 	 */
 	public function test_read_only_tool_not_tightened_by_unrelated_deny(): void {
 		$this->add_rule( 'deny', 'Never delete users or change their roles.' );
-		$this->fake->enqueue( Fake_LLM_Client::text_response( 'no_match' ) );
+		$this->fake->enqueue( Fake_LLM_Client::text_response( 'match' ) );
 
 		$ctx              = $this->evaluation_ctx( 'none', 'allow' );
 		$ctx['tool']      = 'get_agent_list';
 		$ctx['arguments'] = array();
 
 		$this->assertSame( 'allow', Approval_Rules::evaluate( 'allow', $ctx ) );
-		$this->assertStringContainsString( 'Tool: get_agent_list', $this->fake->messages_seen[0][1]['content'] );
+		$this->assertSame( 0, $this->fake->chat_calls );
 		$this->assertNull( Approval_Rules::consume_match( 'get_agent_list' ) );
+	}
+
+	/**
+	 * The screenshot repro: a read-only, none-risk lookup (list_posts) with a
+	 * deny and an ask rule while the reviewer is out of credits (WP_Error) is
+	 * not gated, and no reviewer query is spent on it.
+	 */
+	public function test_read_only_tool_not_gated_when_reviewer_unavailable(): void {
+		$this->add_rule( 'ask', 'Ask me first before publishing anything or changing a published page.' );
+		$this->add_rule( 'deny', 'Deleting users or changing anyone\'s role.' );
+		// Empty fake queue: every chat() call would return a WP_Error.
+
+		$ctx              = $this->evaluation_ctx( 'none', 'allow' );
+		$ctx['tool']      = 'list_posts';
+		$ctx['arguments'] = array( 'status' => 'publish' );
+
+		// Annotations are loaded from the tool when $ctx carries no flag...
+		$this->assertTrue( Approval_Rules::is_read_only_call( $ctx ) );
+		$this->assertSame( 'allow', Approval_Rules::evaluate( 'allow', $ctx ) );
+
+		// ...and Tool_Executor's explicit flag is honoured too.
+		$ctx['readonly'] = true;
+		$this->assertSame( 'allow', Approval_Rules::evaluate( 'allow', $ctx ) );
+
+		$this->assertSame( 0, $this->fake->chat_calls );
+		$this->assertNull( Approval_Rules::consume_match( 'list_posts' ) );
+	}
+
+	/**
+	 * A readonly tool only escapes the rules at none/low risk: a medium-risk
+	 * readonly call (e.g. exporting personal data) is still governed.
+	 */
+	public function test_read_only_tool_above_low_risk_is_still_governed(): void {
+		$this->add_rule( 'deny', 'Never export customer data.' );
+		$this->fake->enqueue( Fake_LLM_Client::text_response( 'match' ) );
+
+		$ctx             = $this->evaluation_ctx( 'medium', 'allow' );
+		$ctx['tool']     = 'list_posts';
+		$ctx['readonly'] = true;
+
+		$this->assertFalse( Approval_Rules::is_read_only_call( $ctx ) );
+		$this->assertSame( 'block', Approval_Rules::evaluate( 'allow', $ctx ) );
+	}
+
+	/**
+	 * A write tool with a deny rule while the reviewer is unavailable still
+	 * fails closed to the queue, recorded as verdict 'unavailable' with a plain
+	 * reason, and only one reviewer call is spent.
+	 */
+	public function test_write_tool_deny_rule_reviewer_unavailable_queues(): void {
+		global $wpdb;
+
+		$first = $this->add_rule( 'deny', 'Deleting users or changing anyone\'s role.' );
+		$this->add_rule( 'deny', 'Never change the site title.', 20 );
+		$this->add_rule( 'ask', 'Ask me first before changing settings.' );
+
+		$ctx             = $this->evaluation_ctx();
+		$ctx['readonly'] = false;
+
+		$this->assertSame( 'queue', Approval_Rules::evaluate( 'allow', $ctx ) );
+		$this->assertSame( 1, $this->fake->chat_calls );
+
+		$match = Approval_Rules::consume_match( 'db_update_option' );
+		$this->assertSame( 'unavailable', $match['verdict'] ?? null );
+		$this->assertSame( $first, $match['rule_id'] ?? null );
+
+		$rows = $wpdb->get_results(
+			"SELECT * FROM {$wpdb->prefix}agent_builder_audit_log WHERE action = 'rule_matched'",
+			ARRAY_A
+		);
+		$this->assertCount( 1, $rows );
+		$details = json_decode( (string) $rows[0]['details'], true );
+		$this->assertSame( 'unavailable', $details['verdict'] );
+		$this->assertSame( 'queue', $details['enforcement'] );
+		$this->assertStringContainsString( 'AI service is unavailable', $details['reason'] ?? '' );
+	}
+
+	/**
+	 * A write tool with a deny rule the reviewer matches is still blocked.
+	 */
+	public function test_write_tool_deny_rule_match_blocks(): void {
+		$this->add_rule( 'deny', 'Never change the site title.' );
+		$this->fake->enqueue( Fake_LLM_Client::text_response( 'match' ) );
+
+		$ctx             = $this->evaluation_ctx();
+		$ctx['readonly'] = false;
+
+		$this->assertSame( 'block', Approval_Rules::evaluate( 'allow', $ctx ) );
+		$this->assertSame( 'match', Approval_Rules::consume_match( 'db_update_option' )['verdict'] ?? null );
+	}
+
+	/**
+	 * An allow rule still loosens a queued write the reviewer matches.
+	 */
+	public function test_write_tool_allow_rule_still_loosens(): void {
+		$this->add_rule( 'allow', 'Changing the site title.' );
+		$this->fake->enqueue( Fake_LLM_Client::text_response( 'match' ) );
+
+		$ctx             = $this->evaluation_ctx( 'low', 'queue' );
+		$ctx['readonly'] = false;
+
+		$this->assertSame( 'allow', Approval_Rules::evaluate( 'queue', $ctx ) );
+		$this->assertSame( 1, $this->fake->chat_calls );
 	}
 
 	/**

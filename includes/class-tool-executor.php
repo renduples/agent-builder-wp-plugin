@@ -172,6 +172,10 @@ class Tool_Executor {
 	private static function rule_reason( array $rule_match ): string {
 		$quote = self::rule_quote( $rule_match );
 
+		if ( 'unavailable' === ( $rule_match['verdict'] ?? '' ) ) {
+			return 'Your approval rules could not be checked because the AI service is unavailable right now (for example, out of credits). Please approve or deny this action yourself';
+		}
+
 		if ( 'deny' === ( $rule_match['effect'] ?? '' ) && 'block' === ( $rule_match['enforcement'] ?? '' ) ) {
 			return sprintf( 'Blocked by your rule: “%s”', $quote );
 		}
@@ -327,6 +331,10 @@ class Tool_Executor {
 		$risk          = Abilities_Manifest::get_effective_risk( $agent_id, $tool_name, $tool_instance, $call_action );
 		$baseline      = Risk_Level::enforcement( $risk, $mode );
 
+		// Only a real Tool_Base that declares itself readonly counts; approval
+		// rules never govern a readonly call whose risk is none or low.
+		$is_readonly_tool = $tool_instance ? true === ( $tool_instance->get_annotations()['readonly'] ?? false ) : false;
+
 		$ctx = array(
 			'tool'       => $tool_name,
 			'action'     => $call_action,
@@ -340,6 +348,7 @@ class Tool_Executor {
 			'user_id'    => $run instanceof Agent_Run ? $run->get_user_id() : get_current_user_id(),
 			'risk'       => $risk,
 			'baseline'   => $baseline,
+			'readonly'   => $is_readonly_tool,
 		);
 
 		// Never let a filter resurrect a call baseline enforcement already
@@ -491,9 +500,11 @@ class Tool_Executor {
 					'status'      => 'queued_for_approval',
 					'approval_id' => $queue_id,
 					'message'     => sprintf(
-						'' !== $rule_reason
-							? 'This action (%s) falls under one of your approval rules and needs admin approval. Review it below, or in the Approval Queue page later.'
-							: 'This action (%s) is high-risk and needs admin approval. Review it below, or in the Approval Queue page later.',
+						null !== $rule_match && 'unavailable' === ( $rule_match['verdict'] ?? '' )
+							? 'Your approval rules could not be checked because the AI service is unavailable, so this action (%s) needs admin approval. Review it below, or in the Approval Queue page later.'
+							: ( '' !== $rule_reason
+								? 'This action (%s) falls under one of your approval rules and needs admin approval. Review it below, or in the Approval Queue page later.'
+								: 'This action (%s) is high-risk and needs admin approval. Review it below, or in the Approval Queue page later.' ),
 						$tool_name
 					),
 					'reason'      => $reason,

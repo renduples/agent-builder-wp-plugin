@@ -410,18 +410,21 @@ class Approval_Rules {
 	 * empty) whether the plain-English rule covers the proposed call. The rule
 	 * text and the redacted, truncated arguments are passed as delimited,
 	 * untrusted data. The reply must be exactly `match`, `no_match` or
-	 * `unsure`; anything else, an unconfigured provider, an error or an
-	 * exception is 'unsure', which evaluate() treats fail-closed.
+	 * `unsure`; anything else is 'unsure'. When the reviewer itself cannot be
+	 * reached (no provider configured, an exception, or a WP_Error such as an
+	 * account out of credits) the result is 'unavailable', so the gate can say
+	 * plainly that the rules could not be checked. evaluate() treats both
+	 * 'unsure' and 'unavailable' fail-closed.
 	 *
 	 * Definite verdicts are cached for ten minutes per rule, prompt version,
 	 * provider, model and exact prompt, so a run repeating the same call is not
-	 * billed again. An 'unsure' caused by an error is never cached, and neither
+	 * billed again. An 'unavailable' result is never cached, and neither
 	 * is any verdict on a call whose arguments had to be shortened.
 	 *
 	 * @param string $rule_text Natural-language rule text.
 	 * @param array  $ctx       Gate context — see Tool_Executor::execute().
 	 * @param int    $rule_id   Rule id, used in the cache key (0 = uncached id).
-	 * @return string One of 'match', 'no_match', 'unsure'.
+	 * @return string One of 'match', 'no_match', 'unsure', 'unavailable'.
 	 */
 	public static function classify( string $rule_text, array $ctx, int $rule_id = 0 ): string {
 		list( $messages, $truncated ) = self::build_prompt( $rule_text, $ctx );
@@ -442,17 +445,18 @@ class Approval_Rules {
 			}
 
 			if ( ! $llm->is_configured() ) {
-				return 'unsure';
+				return 'unavailable';
 			}
 
 			$response = $llm->chat( $messages );
 		} catch ( \Throwable $e ) {
-			return 'unsure';
+			return 'unavailable';
 		}
 
 		if ( ! is_array( $response ) ) {
-			// WP_Error (or anything unexpected): fail closed, do not cache.
-			return 'unsure';
+			// WP_Error (e.g. out of credits) or anything unexpected: the reviewer
+			// is unavailable. evaluate() fails closed; never cache it.
+			return 'unavailable';
 		}
 
 		self::record_reviewer_usage( $llm, $response );
@@ -770,10 +774,18 @@ class Approval_Rules {
 	 *   - `deny` + match   → 'block' (a "Never …" rule refuses the call).
 	 *   - `deny` + unsure  → 'queue' (fail closed: an admin decides).
 	 *   - `ask`  + match or unsure → 'confirm'.
+	 *   - reviewer 'unavailable' (not configured, error, out of credits) on a
+	 *     deny/ask rule → the same fail-closed outcome, recorded with verdict
+	 *     'unavailable' so the user is told the rules could not be checked. No
+	 *     further rules are classified once the reviewer is unavailable.
 	 *   - `allow` + match  → 'allow', only when no deny/ask rule fired. An
 	 *     'unsure' allow rule is ignored so uncertainty never loosens anything,
 	 *     and Risk_Level::clamp_enforcement() still re-tightens a HIGH-risk call.
 	 *   - `no_match` never changes anything.
+	 *
+	 * Rules govern actions that change the site: a read-only call (the tool's
+	 * annotations say readonly and its effective risk is none or low) is never
+	 * gated by any rule and never costs a reviewer call — see is_read_only_call().
 	 *
 	 * Deny and ask outcomes only ever tighten the decision already in flight.
 	 * No rules means no reviewer call; an already-'block' decision is returned
@@ -793,6 +805,13 @@ class Approval_Rules {
 
 		if ( 'block' === $enforcement || 'block' === ( $ctx['baseline'] ?? '' ) ) {
 			return self::tighter( $enforcement, 'block' );
+		}
+
+		// Rules apply to actions that change the site. A read-only lookup is
+		// never held by a rule (allow rules cannot loosen it further either),
+		// so skip the rules — and the reviewer's cost — entirely.
+		if ( self::is_read_only_call( $ctx ) ) {
+			return $enforcement;
 		}
 
 		$agent_id = sanitize_key( (string) ( $ctx['agent_id'] ?? '' ) );
@@ -832,6 +851,15 @@ class Approval_Rules {
 				$decision = array( $rule, 'match', 'block' );
 				break; // A definite deny beats everything — stop scanning.
 			}
+			if ( 'unavailable' === $verdict ) {
+				// The reviewer cannot be reached: every later rule would fail the
+				// same way, so stop here and fail closed (an earlier 'unsure'
+				// deny already queues; otherwise queue on this rule).
+				if ( null === $decision ) {
+					$decision = array( $rule, 'unavailable', 'queue' );
+				}
+				break;
+			}
 			if ( 'unsure' === $verdict && null === $decision ) {
 				// Keep scanning: a later deny rule may still match outright.
 				$decision = array( $rule, 'unsure', 'queue' );
@@ -851,9 +879,13 @@ class Approval_Rules {
 		if ( null === $decision && 'allow' !== $enforcement ) {
 			foreach ( $groups['allow'] as $rule ) {
 				// Only an explicit match may loosen; 'unsure' is ignored.
-				if ( 'match' === self::classify( (string) ( $rule['rule_text'] ?? '' ), $ctx, (int) ( $rule['id'] ?? 0 ) ) ) {
+				$verdict = self::classify( (string) ( $rule['rule_text'] ?? '' ), $ctx, (int) ( $rule['id'] ?? 0 ) );
+				if ( 'match' === $verdict ) {
 					$decision = array( $rule, 'match', 'allow' );
 					break;
+				}
+				if ( 'unavailable' === $verdict ) {
+					break; // Later allow rules would fail the same way.
 				}
 			}
 		}
@@ -868,19 +900,18 @@ class Approval_Rules {
 		$result = 'allow' === $effect ? 'allow' : self::tighter( $enforcement, $target );
 
 		// Audit on a match, same shape as Tool_Grants::log_grant().
-		$audit = new Audit_Log();
-		$audit->log(
-			$agent_id,
-			'rule_matched',
-			$tool,
-			array(
-				'risk_level'  => (string) ( $ctx['risk'] ?? '' ),
-				'rule_id'     => (int) ( $rule['id'] ?? 0 ),
-				'effect'      => $effect,
-				'verdict'     => $verdict,
-				'enforcement' => $result,
-			)
+		$details = array(
+			'risk_level'  => (string) ( $ctx['risk'] ?? '' ),
+			'rule_id'     => (int) ( $rule['id'] ?? 0 ),
+			'effect'      => $effect,
+			'verdict'     => $verdict,
+			'enforcement' => $result,
 		);
+		if ( 'unavailable' === $verdict ) {
+			$details['reason'] = 'Approval rules could not be checked because the AI service is unavailable (for example, out of credits). Held for the user to approve or deny.';
+		}
+		$audit = new Audit_Log();
+		$audit->log( $agent_id, 'rule_matched', $tool, $details );
 
 		self::$last_match = array(
 			'tool'        => $tool,
@@ -892,6 +923,42 @@ class Approval_Rules {
 		);
 
 		return $result;
+	}
+
+	/**
+	 * Whether a tool call is a read-only lookup that rules never govern.
+	 *
+	 * True only when the tool declares itself readonly in its annotations AND
+	 * its effective risk for this call is none or low. A tool that is not a
+	 * loaded Tool_Base (an ability, an agent-inline tool) is never treated as
+	 * read-only. `$ctx['readonly']`, set by Tool_Executor::execute(), is used
+	 * when present; otherwise the tool's annotations are loaded here.
+	 *
+	 * @param array $ctx Gate context — see Tool_Executor::execute().
+	 * @return bool
+	 */
+	public static function is_read_only_call( array $ctx ): bool {
+		$risk = (string) ( $ctx['risk'] ?? '' );
+		if ( Risk_Level::NONE !== $risk && Risk_Level::LOW !== $risk ) {
+			return false;
+		}
+
+		if ( array_key_exists( 'readonly', $ctx ) ) {
+			return true === $ctx['readonly'];
+		}
+
+		$tool = (string) ( $ctx['tool'] ?? '' );
+		if ( '' === $tool ) {
+			return false;
+		}
+
+		try {
+			$instance = Tool_Loader::get_instance()->get( $tool );
+		} catch ( \Throwable $e ) {
+			return false;
+		}
+
+		return null !== $instance && true === ( $instance->get_annotations()['readonly'] ?? false );
 	}
 
 	/**
