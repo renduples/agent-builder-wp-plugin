@@ -660,11 +660,6 @@ class Abilities_Bridge {
 				'destructive' => false,
 				'idempotent'  => true,
 			),
-			'agents_available'     => array(
-				'readonly'    => true,
-				'destructive' => false,
-				'idempotent'  => true,
-			),
 			'run_health_check'     => array(
 				'readonly'    => true,
 				'destructive' => false,

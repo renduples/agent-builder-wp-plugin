@@ -393,7 +393,6 @@ class Tools_Registry {
 			'db_create_post',
 			'db_update_post',
 			'db_delete_post',
-			'agents_available',
 			'fetch_rendered_page',
 			'manage_cache',
 		);

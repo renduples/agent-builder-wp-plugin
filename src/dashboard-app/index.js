@@ -450,24 +450,6 @@ function SiteBriefPanel() {
 												)
 											) }
 										</span>
-									) : card.agent_available === false ? (
-										<Button
-											variant="primary"
-											href={ card.agent_upsell_url }
-											target="_blank"
-											rel="noopener noreferrer"
-											label={ __(
-												'This finding needs a premium agent. Opens the marketplace in a new tab to get it.',
-												'siteloom'
-											) }
-											showTooltip
-										>
-											{ sprintf(
-												/* translators: %s: recommended agent display name. */
-												__( 'Get %s', 'siteloom' ),
-												card.agent_label
-											) }
-										</Button>
 									) : (
 										<Button
 											variant="primary"
@@ -754,16 +736,6 @@ function StatusCard( { data, dnd } ) {
 			cardId="status"
 			{ ...dnd }
 			title={ __( 'Status', 'siteloom' ) }
-			headerLink={
-				data.is_pro ? (
-					<a
-						className="agentic-card-header-link"
-						href={ data.urls?.license }
-					>
-						{ __( 'Manage License →', 'siteloom' ) }
-					</a>
-				) : null
-			}
 		>
 			<div className="agentic-status-grid">
 				<StatusTile label={ __( 'License', 'siteloom' ) }>
@@ -773,18 +745,6 @@ function StatusCard( { data, dnd } ) {
 						</span>
 					) : (
 						lic.label
-					) }
-					{ lic.class === 'error' && (
-						<>
-							{ ' ' }
-							<a
-								href={ data.urls?.pricing }
-								target="_blank"
-								rel="noopener noreferrer"
-							>
-								{ __( 'Renew', 'siteloom' ) }
-							</a>
-						</>
 					) }
 				</StatusTile>
 				<StatusTile label={ __( 'Version', 'siteloom' ) }>
@@ -1146,13 +1106,6 @@ function ActivityCard( { data, activity, dnd } ) {
 					value={ formatInt( agents.user_created ) }
 					href={ data.urls?.admin + 'admin.php?page=agentic-agents' }
 				/>
-				{ agents.community > 0 && (
-					<Metric
-						label={ __( 'Community Agents', 'siteloom' ) }
-						value={ formatInt( agents.community ) }
-						href={ data.urls?.community }
-					/>
-				) }
 			</div>
 		</Card>
 	);
@@ -1415,9 +1368,6 @@ function QuickActionsCard( { data, onSaveQuickActions, mutate, dnd } ) {
 							if ( item.advanced ) {
 								notes.push( __( 'Advanced', 'siteloom' ) );
 							}
-							if ( item.pro ) {
-								notes.push( __( 'Pro', 'siteloom' ) );
-							}
 							if ( item.locked ) {
 								notes.push( __( 'Required', 'siteloom' ) );
 							}
@@ -1660,32 +1610,7 @@ function InterfaceCard( { data, mutate, dnd } ) {
 						) }
 					</span>
 				</div>
-			) : (
-				<div className="agentic-interface-section agentic-updates-toggle">
-					<div className="agentic-updates-row">
-						<span className="agentic-mode-label">
-							{ __( 'Community Agents', 'siteloom' ) }
-						</span>
-						<a
-							className="button button-secondary"
-							href={
-								data.urls?.community ||
-								'https://agentic-plugin.com/community-agents/'
-							}
-							target="_blank"
-							rel="noopener noreferrer"
-						>
-							{ __( 'Browse →', 'siteloom' ) }
-						</a>
-					</div>
-					<span className="agentic-mode-hint agentic-text-muted">
-						{ __(
-							'Discover and install agents created by the WordPress community.',
-							'siteloom'
-						) }
-					</span>
-				</div>
-			) }
+			) : null }
 		</Card>
 	);
 }

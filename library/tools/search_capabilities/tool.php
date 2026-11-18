@@ -2,9 +2,9 @@
 /**
  * Tool: search_capabilities
  *
- * Search for AI agents by what they can do — tool name, skill, or purpose.
- * Covers bundled agents and all marketplace agents. Use this to answer
- * "which agent can do X?" or "what tools handle Y?".
+ * Search the agents installed on this site, and the tools they can use, by
+ * what they do — tool name, keyword, or purpose. Use this to answer "which
+ * agent can do X?" or "what tools handle Y?". Runs entirely on this site.
  *
  * @package    Agent_Builder
  * @subpackage Tools
@@ -27,6 +27,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Search_Capabilities extends \Agentic\Tool_Base {
 
 	/**
+	 * Maximum results per type.
+	 */
+	private const MAX_RESULTS = 25;
+
+	/**
 	 * Get the tool name.
 	 */
 	public function get_name(): string {
@@ -37,7 +42,7 @@ class Search_Capabilities extends \Agentic\Tool_Base {
 	 * Get the tool description.
 	 */
 	public function get_description(): string {
-		return 'Search for AI agents and tools by capability. Returns bundled agents and marketplace agents that match a query — by tool name, purpose, or keyword. Use this when a user asks "which agent can do X?", "is there an agent for Y?", or when you need to recommend a specialist agent.';
+		return 'Search the AI agents installed on this site and the tools they can use, by tool name, purpose, or keyword. Returns matching agents (with whether each is active and which tools it has) and matching tools (with which installed agents have them). Use this when a user asks "which agent can do X?", "is there an agent for Y?", or before naming a tool.';
 	}
 
 	/**
@@ -54,19 +59,14 @@ class Search_Capabilities extends \Agentic\Tool_Base {
 		return array(
 			'type'       => 'object',
 			'properties' => array(
-				'q'      => array(
+				'q'    => array(
 					'type'        => 'string',
 					'description' => 'Search term — tool name (e.g. "generate_image"), keyword (e.g. "SEO"), or agent purpose (e.g. "WooCommerce orders").',
 				),
-				'type'   => array(
+				'type' => array(
 					'type'        => 'string',
 					'enum'        => array( 'all', 'agent', 'tool' ),
 					'description' => 'Limit results to agents, tools, or all. Default: all.',
-				),
-				'source' => array(
-					'type'        => 'string',
-					'enum'        => array( 'all', 'bundled', 'marketplace' ),
-					'description' => 'Limit to bundled agents, marketplace agents, or all. Default: all.',
 				),
 			),
 			'required'   => array( 'q' ),
@@ -80,147 +80,162 @@ class Search_Capabilities extends \Agentic\Tool_Base {
 	 * @return array Result data.
 	 */
 	public function execute( array $arguments ): array {
-		$query      = sanitize_text_field( $arguments['q'] ?? '' );
-		$type       = sanitize_key( $arguments['type'] ?? 'all' );
-		$source     = sanitize_key( $arguments['source'] ?? 'all' );
-		$api_base   = \Agentic\Service_Registry::url( 'agentic-api' );
-		$query_args = array_filter(
-			array(
-				'q'      => $query,
-				'type'   => $type,
-				'source' => $source,
-			)
-		);
-
-		// This remote index covers bundled *definitions* and marketplace agents,
-		// but does not know this site's actual install/activation state. Match
-		// against the local registry first so a query naming a real, already-
-		// installed agent never comes back as a false "not found" — regardless
-		// of what the remote index returns or whether it's reachable at all.
-		$local_matches = ( 'marketplace' !== $source && in_array( $type, array( 'all', 'agent' ), true ) )
-			? $this->find_local_agent_matches( $query )
-			: array();
-
-		$cache_key = 'agentic_search_caps_' . md5( wp_json_encode( $query_args ) );
-		$cached    = get_transient( $cache_key );
-		if ( false !== $cached ) {
-			return $this->merge_local_matches( $cached, $local_matches );
+		$query = trim( sanitize_text_field( $arguments['q'] ?? '' ) );
+		$type  = sanitize_key( $arguments['type'] ?? 'all' );
+		if ( ! in_array( $type, array( 'all', 'agent', 'tool' ), true ) ) {
+			$type = 'all';
 		}
 
-		$url      = add_query_arg( $query_args, $api_base . '/wp-json/agentic/v1/search-capabilities' );
-		$response = wp_remote_get(
-			$url,
-			array(
-				'timeout'   => 10,
-				'sslverify' => true,
-			)
-		);
-
-		if ( is_wp_error( $response ) ) {
-			if ( ! empty( $local_matches ) ) {
-				return $this->merge_local_matches(
-					array(
-						'results' => array(),
-						'total'   => 0,
-					),
-					$local_matches
-				);
+		$needles     = $this->needles( $query );
+		$agents      = $this->installed_agents();
+		$tool_owners = array();
+		foreach ( $agents as $agent ) {
+			foreach ( $agent['tools'] as $tool ) {
+				$tool_owners[ $tool ][] = $agent['slug'];
 			}
-			return array( 'error' => 'Could not reach the capabilities index: ' . $response->get_error_message() );
 		}
 
-		$body = json_decode( wp_remote_retrieve_body( $response ), true );
+		$results = array();
 
-		if ( empty( $body ) || ! isset( $body['results'] ) ) {
-			return $this->merge_local_matches(
-				array(
-					'results' => array(),
-					'total'   => 0,
-					'note'    => 'No results found.',
-				),
-				$local_matches
-			);
-		}
-
-		set_transient( $cache_key, $body, 10 * MINUTE_IN_SECONDS );
-
-		return $this->merge_local_matches( $body, $local_matches );
-	}
-
-	/**
-	 * Find bundled/installed agents on this site whose slug, name, or
-	 * description match the query. This is the local source of truth for
-	 * install/activation state, unlike the remote capabilities index.
-	 *
-	 * @param string $query Search term.
-	 * @return array<int, array<string, mixed>> Matching agents, local shape.
-	 */
-	private function find_local_agent_matches( string $query ): array {
-		$query = trim( $query );
-		if ( '' === $query || ! class_exists( '\Agentic_Agent_Registry' ) ) {
-			return array();
-		}
-
-		// Common connector words that would otherwise false-match almost any
-		// agent's natural-language description (e.g. "the", "your", "with").
-		static $stopwords = array( 'the', 'and', 'for', 'with', 'that', 'this', 'your', 'from', 'agent', 'agents' );
-
-		// Match on individual words too, so "Support Triage agent" still finds
-		// the "Support Triage" agent despite the trailing, non-matching word.
-		$words   = preg_split( '/\s+/', strtolower( $query ) );
-		$words   = is_array( $words ) ? $words : array();
-		$words   = array_diff( array_unique( array_filter( $words, static fn( $w ) => strlen( $w ) >= 4 ) ), $stopwords );
-		$needles = array_filter( array_merge( array( $query ), $words ) );
-
-		$matches = array();
-		foreach ( \Agentic_Agent_Registry::get_instance()->get_installed_agents() as $slug => $data ) {
-			$haystack = strtolower( ( $data['name'] ?? (string) $slug ) . ' ' . (string) $slug . ' ' . ( $data['description'] ?? '' ) );
-
-			foreach ( $needles as $needle ) {
-				if ( false !== strpos( $haystack, strtolower( $needle ) ) ) {
-					$matches[] = array(
-						'slug'        => $data['slug'] ?? (string) $slug,
-						'name'        => $data['name'] ?? (string) $slug,
-						'description' => $data['description'] ?? '',
-						'active'      => ! empty( $data['active'] ),
+		if ( in_array( $type, array( 'all', 'agent' ), true ) ) {
+			foreach ( $agents as $agent ) {
+				$haystack = $agent['name'] . ' ' . $agent['slug'] . ' ' . $agent['description'] . ' ' . implode( ' ', $agent['tools'] );
+				if ( $this->matches( $haystack, $needles ) ) {
+					$results[] = array(
+						'kind'        => 'agent',
+						'slug'        => $agent['slug'],
+						'name'        => $agent['name'],
+						'description' => $agent['description'],
+						'active'      => $agent['active'],
 						'installed'   => true,
 						'source'      => 'local',
+						'tools'       => $agent['tools'],
 					);
+				}
+				if ( count( $results ) >= self::MAX_RESULTS ) {
 					break;
 				}
 			}
 		}
 
-		return $matches;
+		if ( in_array( $type, array( 'all', 'tool' ), true ) && class_exists( '\Agentic\Tools_Registry' ) ) {
+			$found = 0;
+			foreach ( \Agentic\Tools_Registry::get_all() as $name => $tool ) {
+				$name     = (string) $name;
+				$haystack = $name . ' ' . (string) ( $tool['description'] ?? '' ) . ' ' . (string) ( $tool['category'] ?? '' );
+				if ( ! $this->matches( $haystack, $needles ) ) {
+					continue;
+				}
+				$results[] = array(
+					'kind'        => 'tool',
+					'name'        => $name,
+					'description' => (string) ( $tool['description'] ?? '' ),
+					'category'    => (string) ( $tool['category'] ?? '' ),
+					'enabled'     => ! empty( $tool['enabled'] ),
+					'agents'      => $tool_owners[ $name ] ?? array(),
+				);
+				if ( ++$found >= self::MAX_RESULTS ) {
+					break;
+				}
+			}
+		}
+
+		$out = array(
+			'results' => $results,
+			'total'   => count( $results ),
+		);
+		if ( empty( $results ) ) {
+			$out['note'] = 'Nothing installed on this site matches. Say so plainly; Assistant Trainer can build a custom agent.';
+		}
+		return $out;
 	}
 
 	/**
-	 * Prepend local agent matches to a (possibly remote) result set, deduping
-	 * by slug so a locally-confirmed install/active state always wins over
-	 * whatever the remote index says about the same agent.
+	 * Search needles: the whole query plus each meaningful word in it.
 	 *
-	 * @param array $body          Result body (from cache or the remote API).
-	 * @param array $local_matches Local matches from find_local_agent_matches().
-	 * @return array Merged result body.
+	 * @param string $query Search term.
+	 * @return string[]
 	 */
-	private function merge_local_matches( array $body, array $local_matches ): array {
-		if ( empty( $local_matches ) ) {
-			return $body;
+	private function needles( string $query ): array {
+		if ( '' === $query ) {
+			return array();
 		}
 
-		$results         = is_array( $body['results'] ?? null ) ? $body['results'] : array();
-		$local_slugs     = array_column( $local_matches, 'slug' );
-		$results         = array_values(
-			array_filter(
-				$results,
-				static fn( $r ) => ! in_array( $r['slug'] ?? null, $local_slugs, true )
-			)
-		);
-		$body['results'] = array_merge( $local_matches, $results );
-		$body['total']   = count( $body['results'] );
-		unset( $body['note'] );
+		// Common connector words that would otherwise false-match almost any
+		// agent's natural-language description (e.g. "the", "your", "with").
+		static $stopwords = array( 'the', 'and', 'for', 'with', 'that', 'this', 'your', 'from', 'agent', 'agents', 'tool', 'tools' );
 
-		return $body;
+		// Match on individual words too, so "Support Triage agent" still finds
+		// the "Support Triage" agent despite the trailing, non-matching word.
+		$words = preg_split( '/\s+/', strtolower( $query ) );
+		$words = is_array( $words ) ? $words : array();
+		$words = array_diff( array_unique( array_filter( $words, static fn( $w ) => strlen( $w ) >= 4 ) ), $stopwords );
+
+		return array_values( array_filter( array_merge( array( strtolower( $query ) ), $words ) ) );
+	}
+
+	/**
+	 * Whether any needle occurs in the haystack (case-insensitive).
+	 *
+	 * @param string   $haystack Text to search.
+	 * @param string[] $needles  Lower-case needles.
+	 * @return bool
+	 */
+	private function matches( string $haystack, array $needles ): bool {
+		$haystack = strtolower( $haystack );
+		foreach ( $needles as $needle ) {
+			if ( false !== strpos( $haystack, $needle ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Installed agents (bundled and owner-added) with their declared tools.
+	 *
+	 * @return array<int, array{slug: string, name: string, description: string, active: bool, tools: string[]}>
+	 */
+	private function installed_agents(): array {
+		if ( ! class_exists( '\Agentic_Agent_Registry' ) ) {
+			return array();
+		}
+
+		$out = array();
+		foreach ( \Agentic_Agent_Registry::get_instance()->get_installed_agents() as $slug => $data ) {
+			if ( ! is_array( $data ) ) {
+				continue;
+			}
+			$out[] = array(
+				'slug'        => (string) ( $data['slug'] ?? $slug ),
+				'name'        => (string) ( $data['name'] ?? $slug ),
+				'description' => (string) ( $data['description'] ?? '' ),
+				'active'      => ! empty( $data['active'] ),
+				'tools'       => $this->agent_tools( $data ),
+			);
+		}
+		return $out;
+	}
+
+	/**
+	 * Declared tool list for an installed agent record.
+	 *
+	 * @param array<string, mixed> $data Agent record from the registry.
+	 * @return string[]
+	 */
+	private function agent_tools( array $data ): array {
+		if ( is_array( $data['db_manifest'] ?? null ) ) {
+			return array_values( array_map( 'strval', (array) ( $data['db_manifest']['tools'] ?? array() ) ) );
+		}
+
+		$file = rtrim( (string) ( $data['directory'] ?? '' ), '/' ) . '/agent.json';
+		if ( '/agent.json' === $file || ! file_exists( $file ) ) {
+			return array();
+		}
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Local agent.json, not a remote URL.
+		$decoded = json_decode( (string) file_get_contents( $file ), true );
+		return is_array( $decoded ) ? array_values( array_map( 'strval', (array) ( $decoded['tools'] ?? array() ) ) ) : array();
 	}
 
 	/**

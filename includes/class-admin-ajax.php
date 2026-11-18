@@ -657,13 +657,13 @@ class Admin_Ajax {
 
 		$code = wp_remote_retrieve_response_code( $response );
 		if ( 200 !== $code ) {
-			wp_send_json_error( sprintf( 'Marketplace returned HTTP %d.', $code ) );
+			wp_send_json_error( sprintf( 'Pricing service returned HTTP %d.', $code ) );
 		}
 
 		$body = json_decode( wp_remote_retrieve_body( $response ), true );
 		if ( ( empty( $body['providers'] ) || ! is_array( $body['providers'] ) ) &&
 			( empty( $body['operations'] ) || ! is_array( $body['operations'] ) ) ) {
-			wp_send_json_error( 'Invalid response from marketplace.' );
+			wp_send_json_error( 'Invalid response from the pricing service.' );
 		}
 
 		$updated = 0;

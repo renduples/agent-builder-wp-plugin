@@ -3,9 +3,9 @@
  * Site Brief best-fit agent matcher.
  *
  * Replaces a checker's hardcoded agent slug with automatic discovery: match
- * a finding's required tools against every candidate agent (installed,
- * bundled, and — opt-in — the marketplace catalog) and pick the best fit.
- * An installed capable agent always wins over an upsell.
+ * a finding's required tools against every agent installed on this site
+ * (bundled or added by the owner) and pick the best fit. Only installed
+ * agents are ever recommended.
  *
  * @package    Agent_Builder
  * @subpackage Site_Brief
@@ -17,8 +17,6 @@
 declare(strict_types=1);
 
 namespace Agentic\Site_Brief;
-
-use Agentic\Service_Registry;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -40,17 +38,6 @@ class Agent_Matcher {
 	public const MAP_TTL = DAY_IN_SECONDS;
 
 	/**
-	 * Transient holding the fetched marketplace catalog.
-	 */
-	public const CATALOG_TRANSIENT = 'agent_builder_sb_agent_catalog';
-
-	/**
-	 * Option holding the last successfully fetched catalog, used as a
-	 * graceful-offline fallback when a refresh fails.
-	 */
-	public const CATALOG_LAST_GOOD_OPTION = 'agent_builder_sb_agent_catalog_last_good';
-
-	/**
 	 * Default fallback agent when nothing fully covers a checker's tools.
 	 */
 	private const DEFAULT_FALLBACK_AGENT = 'wordpress-assistant';
@@ -61,13 +48,6 @@ class Agent_Matcher {
 	 * @var array<int, array<string, mixed>>|null
 	 */
 	private static ?array $candidates_cache = null;
-
-	/**
-	 * Per-request memoised marketplace catalog.
-	 *
-	 * @var array<int, array<string, mixed>>|null
-	 */
-	private static ?array $catalog_cache = null;
 
 	/**
 	 * Register cache-invalidation hooks.
@@ -84,7 +64,7 @@ class Agent_Matcher {
 	 * Resolve (and cache) the best-fit agent for one checker.
 	 *
 	 * @param Site_Brief_Checker $checker Checker instance.
-	 * @return array<string, mixed> {slug, label, installed, source, upsell_url, resolved_at}
+	 * @return array<string, mixed> {slug, label, installed, source, resolved_at}
 	 */
 	public static function resolve_for_checker( Site_Brief_Checker $checker ): array {
 		$id  = $checker->get_id();
@@ -106,13 +86,13 @@ class Agent_Matcher {
 	 * Resolve the best-fit agent for an arbitrary set of required tools.
 	 *
 	 * Eligibility requires full coverage of every required tool — a partial
-	 * match cannot fully service the finding. Free/premium is never a ranking
-	 * factor; the most focused agent that can do the whole job wins.
+	 * match cannot fully service the finding. The most focused installed agent
+	 * that can do the whole job wins.
 	 *
 	 * @param string[] $required_tools Tool slugs the finding needs.
 	 * @param string   $category       Optional checker category for tiebreaks.
 	 * @param string   $fallback_agent Hint used when nothing fully covers the tools.
-	 * @return array<string, mixed> {slug, label, installed, source, upsell_url}
+	 * @return array<string, mixed> {slug, label, installed, source}
 	 */
 	public static function resolve( array $required_tools, string $category = '', string $fallback_agent = '' ): array {
 		$required = array_values( array_unique( array_map( 'strval', $required_tools ) ) );
@@ -138,11 +118,10 @@ class Agent_Matcher {
 		$best = $eligible[0];
 
 		return array(
-			'slug'       => $best['slug'],
-			'label'      => $best['label'],
-			'installed'  => $best['installed'],
-			'source'     => $best['source'],
-			'upsell_url' => $best['installed'] ? null : self::upsell_url( $best['slug'] ),
+			'slug'      => $best['slug'],
+			'label'     => $best['label'],
+			'installed' => true,
+			'source'    => $best['source'],
 		);
 	}
 
@@ -165,9 +144,8 @@ class Agent_Matcher {
 	/**
 	 * Ranking comparator among fully-covering candidates.
 	 *
-	 * Order: installed before uninstalled, fewest total tools (most focused),
-	 * category match, higher marketplace rating, higher downloads, then a
-	 * stable slug tiebreak.
+	 * Order: fewest total tools (most focused), category match, then a stable
+	 * slug tiebreak.
 	 *
 	 * @param array<string, mixed> $a        First candidate.
 	 * @param array<string, mixed> $b        Second candidate.
@@ -175,10 +153,6 @@ class Agent_Matcher {
 	 * @return int
 	 */
 	private static function compare( array $a, array $b, string $category ): int {
-		if ( $a['installed'] !== $b['installed'] ) {
-			return $a['installed'] ? -1 : 1;
-		}
-
 		$tool_count_a = count( $a['tools'] );
 		$tool_count_b = count( $b['tools'] );
 		if ( $tool_count_a !== $tool_count_b ) {
@@ -193,39 +167,34 @@ class Agent_Matcher {
 			}
 		}
 
-		if ( $a['rating'] !== $b['rating'] ) {
-			return $b['rating'] <=> $a['rating'];
-		}
-
-		if ( $a['downloads'] !== $b['downloads'] ) {
-			return $b['downloads'] <=> $a['downloads'];
-		}
-
 		return strcmp( $a['slug'], $b['slug'] );
 	}
 
 	/**
 	 * Fallback when no candidate fully covers the required tools.
 	 *
+	 * Uses the checker's hint when that agent is installed, otherwise the
+	 * bundled WordPress Assistant — never an agent the site does not have.
+	 *
 	 * @param string $fallback_agent Checker's get_agent() hint.
 	 * @return array<string, mixed>
 	 */
 	private static function fallback_result( string $fallback_agent ): array {
-		$slug      = '' !== $fallback_agent ? $fallback_agent : self::DEFAULT_FALLBACK_AGENT;
-		$installed = self::is_installed( $slug );
+		$slug = ( '' !== $fallback_agent && self::is_installed( $fallback_agent ) )
+			? $fallback_agent
+			: self::DEFAULT_FALLBACK_AGENT;
 
 		return array(
-			'slug'       => $slug,
-			'label'      => self::label_for_slug( $slug ),
-			'installed'  => $installed,
-			'source'     => $installed ? 'installed' : 'fallback',
-			'upsell_url' => $installed ? null : self::upsell_url( $slug ),
+			'slug'      => $slug,
+			'label'     => self::label_for_slug( $slug ),
+			'installed' => true,
+			'source'    => 'fallback',
 		);
 	}
 
 	/**
-	 * Full candidate pool: installed/bundled agents first, then any
-	 * marketplace-only slug not already installed.
+	 * Candidate pool: the agents installed on this site (bundled or added by
+	 * the owner).
 	 *
 	 * @return array<int, array<string, mixed>>
 	 */
@@ -234,18 +203,7 @@ class Agent_Matcher {
 			return self::$candidates_cache;
 		}
 
-		$pool = array();
-		foreach ( self::installed_candidates() as $slug => $candidate ) {
-			$pool[ $slug ] = $candidate;
-		}
-		foreach ( self::marketplace_candidates() as $slug => $candidate ) {
-			if ( isset( $pool[ $slug ] ) ) {
-				continue;
-			}
-			$pool[ $slug ] = $candidate;
-		}
-
-		self::$candidates_cache = array_values( $pool );
+		self::$candidates_cache = array_values( self::installed_candidates() );
 		return self::$candidates_cache;
 	}
 
@@ -276,8 +234,6 @@ class Agent_Matcher {
 				'source'    => ! empty( $agent['bundled'] ) ? 'bundled' : 'installed',
 				'category'  => (string) ( $agent['category'] ?? '' ),
 				'tools'     => $tools,
-				'rating'    => 0.0,
-				'downloads' => 0,
 			);
 		}
 		return $out;
@@ -316,175 +272,6 @@ class Agent_Matcher {
 	}
 
 	/**
-	 * Marketplace catalog agents, keyed by slug.
-	 *
-	 * @return array<string, array<string, mixed>>
-	 */
-	private static function marketplace_candidates(): array {
-		$out = array();
-		foreach ( self::fetch_catalog() as $entry ) {
-			if ( ! is_array( $entry ) ) {
-				continue;
-			}
-			$slug = (string) ( $entry['slug'] ?? '' );
-			if ( '' === $slug ) {
-				continue;
-			}
-			$out[ $slug ] = array(
-				'slug'      => $slug,
-				'label'     => (string) ( $entry['name'] ?? self::deslug( $slug ) ),
-				'installed' => false,
-				'source'    => 'marketplace',
-				'category'  => self::first_category( $entry['categories'] ?? array() ),
-				'tools'     => array_values( array_map( 'strval', (array) ( $entry['tools'] ?? array() ) ) ),
-				'rating'    => (float) ( $entry['rating'] ?? 0 ),
-				'downloads' => (int) ( $entry['downloads'] ?? 0 ),
-				'url'       => (string) ( $entry['url'] ?? '' ),
-			);
-		}
-		return $out;
-	}
-
-	/**
-	 * First category slug/name from a catalog entry's categories field.
-	 *
-	 * @param mixed $categories Raw categories value from the catalog.
-	 * @return string
-	 */
-	private static function first_category( $categories ): string {
-		if ( ! is_array( $categories ) || empty( $categories ) ) {
-			return '';
-		}
-		$first = reset( $categories );
-		if ( is_array( $first ) ) {
-			return (string) ( $first['slug'] ?? $first['name'] ?? '' );
-		}
-		return (string) $first;
-	}
-
-	/**
-	 * Fetch (and cache) the marketplace agent catalog.
-	 *
-	 * Opt-in gated behind the existing "Refresh model catalog from Agentic"
-	 * platform-sync setting — the same Guideline 7 gate the curated
-	 * model-pricing catalog already uses. Nothing personally identifying is
-	 * sent: it is a plain GET, matching happens entirely locally. A failed or
-	 * disabled fetch degrades gracefully to installed/bundled agents only.
-	 *
-	 * @param bool $explicit True to bypass the opt-in gate (an admin-initiated refresh).
-	 * @return array<int, array<string, mixed>>
-	 */
-	public static function fetch_catalog( bool $explicit = false ): array {
-		if ( null !== self::$catalog_cache ) {
-			return self::$catalog_cache;
-		}
-
-		$cached = get_transient( self::CATALOG_TRANSIENT );
-		if ( is_array( $cached ) ) {
-			self::$catalog_cache = $cached;
-			return $cached;
-		}
-
-		if ( ! $explicit && '1' !== (string) get_option( 'agent_builder_allow_platform_sync', '0' ) ) {
-			self::$catalog_cache = array();
-			return self::$catalog_cache;
-		}
-
-		$agents = self::fetch_catalog_remote();
-		if ( empty( $agents ) ) {
-			$last_good           = get_option( self::CATALOG_LAST_GOOD_OPTION, array() );
-			self::$catalog_cache = is_array( $last_good ) ? $last_good : array();
-			return self::$catalog_cache;
-		}
-
-		set_transient( self::CATALOG_TRANSIENT, $agents, self::MAP_TTL );
-		update_option( self::CATALOG_LAST_GOOD_OPTION, $agents, false );
-		// A freshly fetched catalog can change which agent best-fits a
-		// checker, so any previously cached resolution is now stale.
-		self::invalidate_map();
-
-		self::$catalog_cache = $agents;
-		return $agents;
-	}
-
-	/**
-	 * Perform the actual remote GET against the marketplace catalog endpoint.
-	 *
-	 * @return array<int, array<string, mixed>>
-	 */
-	private static function fetch_catalog_remote(): array {
-		if ( ! class_exists( Service_Registry::class ) ) {
-			return array();
-		}
-
-		$resp = wp_remote_get(
-			Service_Registry::url( 'agentic-api', '/wp-json/agentic-marketplace/v1/agents' ),
-			array( 'timeout' => 10 )
-		);
-		if ( is_wp_error( $resp ) || 200 !== wp_remote_retrieve_response_code( $resp ) ) {
-			return array();
-		}
-
-		$body = json_decode( (string) wp_remote_retrieve_body( $resp ), true );
-		if ( ! is_array( $body ) ) {
-			return array();
-		}
-
-		$entries = is_array( $body['agents'] ?? null ) ? $body['agents'] : $body;
-		$agents  = array();
-		foreach ( $entries as $entry ) {
-			if ( is_array( $entry ) ) {
-				$clean = self::sanitize_catalog_entry( $entry );
-				if ( '' !== $clean['slug'] ) {
-					$agents[] = $clean;
-				}
-			}
-		}
-		return $agents;
-	}
-
-	/**
-	 * Sanitize one remote marketplace catalog entry, keeping only the fields
-	 * this class reads.
-	 *
-	 * @param array $entry Decoded entry.
-	 * @return array{slug: string, name: string, categories: array, tools: string[], rating: float, downloads: int, url: string}
-	 */
-	private static function sanitize_catalog_entry( array $entry ): array {
-		$str        = static fn( $v ): string => is_scalar( $v ) ? sanitize_text_field( (string) $v ) : '';
-		$categories = array();
-		foreach ( is_array( $entry['categories'] ?? null ) ? $entry['categories'] : array() as $cat ) {
-			if ( is_array( $cat ) ) {
-				$categories[] = array(
-					'slug' => sanitize_key( $str( $cat['slug'] ?? '' ) ),
-					'name' => $str( $cat['name'] ?? '' ),
-				);
-			} elseif ( is_scalar( $cat ) ) {
-				$categories[] = $str( $cat );
-			}
-		}
-		$tools = array();
-		foreach ( is_array( $entry['tools'] ?? null ) ? $entry['tools'] : array() as $tool ) {
-			$tool = sanitize_key( $str( $tool ) );
-			if ( '' !== $tool ) {
-				$tools[] = $tool;
-			}
-		}
-		$clean = array(
-			'slug'       => sanitize_key( $str( $entry['slug'] ?? '' ) ),
-			'categories' => $categories,
-			'tools'      => $tools,
-			'rating'     => is_numeric( $entry['rating'] ?? null ) ? (float) $entry['rating'] : 0.0,
-			'downloads'  => absint( $entry['downloads'] ?? 0 ),
-			'url'        => esc_url_raw( $str( $entry['url'] ?? '' ) ),
-		);
-		if ( isset( $entry['name'] ) ) {
-			$clean['name'] = $str( $entry['name'] );
-		}
-		return $clean;
-	}
-
-	/**
 	 * Human label for a slug, from the candidate pool when known, else a
 	 * de-slugified fallback. No hardcoded agent-name map.
 	 *
@@ -508,24 +295,6 @@ class Agent_Matcher {
 	 */
 	public static function deslug( string $slug ): string {
 		return ucwords( str_replace( array( '-', '_' ), ' ', $slug ) );
-	}
-
-	/**
-	 * Marketplace URL for a slug, preferring the catalog's own listing URL.
-	 *
-	 * @param string $slug Agent slug.
-	 * @return string
-	 */
-	public static function upsell_url( string $slug ): string {
-		foreach ( self::fetch_catalog() as $entry ) {
-			if ( is_array( $entry ) && (string) ( $entry['slug'] ?? '' ) === $slug && ! empty( $entry['url'] ) ) {
-				return (string) $entry['url'];
-			}
-		}
-
-		$url = 'https://agentic-plugin.com/marketplace/' . rawurlencode( $slug ) . '/';
-		/** This filter is documented in includes/site-brief/class-site-brief-controller.php */
-		return (string) apply_filters( 'agentic_site_brief_agent_upsell_url', $url, $slug );
 	}
 
 	/**
@@ -578,6 +347,5 @@ class Agent_Matcher {
 	 */
 	public static function reset_request_cache(): void {
 		self::$candidates_cache = null;
-		self::$catalog_cache    = null;
 	}
 }

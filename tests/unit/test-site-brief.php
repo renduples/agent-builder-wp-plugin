@@ -53,9 +53,6 @@ class Test_Site_Brief extends TestCase {
 	 */
 	private function reset_matcher_state(): void {
 		delete_option( Agent_Matcher::MAP_OPTION );
-		delete_option( Agent_Matcher::CATALOG_LAST_GOOD_OPTION );
-		delete_option( 'agent_builder_allow_platform_sync' );
-		delete_transient( Agent_Matcher::CATALOG_TRANSIENT );
 		Agent_Matcher::reset_request_cache();
 	}
 
@@ -375,6 +372,60 @@ class Test_Site_Brief extends TestCase {
 	}
 
 	/**
+	 * A stored card that names an agent this site does not have (a paid
+	 * add-on, or one removed since the scan) is never offered with a link to
+	 * get it: GET hands it to the bundled WordPress Assistant, and Assign
+	 * opens that agent in chat.
+	 */
+	public function test_card_for_missing_agent_falls_back_without_marketplace_link(): void {
+		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $admin );
+
+		$card = array(
+			'id'              => 'wc_unpaid.1',
+			'checker_id'      => 'wc_unpaid',
+			'evidence_hash'   => hash( 'sha256', 'wc_unpaid:1' ),
+			'title'           => 'Unpaid orders',
+			'evidence'        => '3 orders are pending payment.',
+			'proposed_action' => 'Review them.',
+			'agent'           => 'woocommerce-assistant',
+			'agent_label'     => 'WooCommerce Assistant',
+		);
+		Site_Brief_Store::save(
+			array(
+				'status'   => 'complete',
+				'last_run' => gmdate( 'c' ),
+				'cards'    => array( $card ),
+			)
+		);
+
+		$get = rest_get_server()->dispatch( new \WP_REST_Request( 'GET', '/agentic/v1/site-brief' ) );
+		$this->assertSame( 200, $get->get_status() );
+		$presented = $get->get_data()['cards'][0];
+		$this->assertSame( 'wordpress-assistant', $presented['agent'] );
+		$this->assertArrayNotHasKey( 'agent_upsell_url', $presented );
+		$this->assertStringNotContainsString( 'marketplace', (string) wp_json_encode( $get->get_data() ) );
+
+		// Assign activates and loads the agent; keep the shared registry as
+		// other tests expect it.
+		$registry      = \Agentic_Agent_Registry::get_instance();
+		$had_instance  = null !== $registry->get_agent_instance( 'wordpress-assistant' );
+		$request       = new \WP_REST_Request( 'POST', '/agentic/v1/site-brief/cards/wc_unpaid.1/assign' );
+		$request->set_param( 'id', $card['id'] );
+		$response = Site_Brief_Controller::assign_card( $request );
+		$data     = $response->get_data();
+		if ( ! $had_instance ) {
+			$registry->unregister( 'wordpress-assistant' );
+		}
+
+		$this->assertArrayNotHasKey( 'upsell_url', $data );
+		$this->assertArrayNotHasKey( 'upsell', $data );
+		$this->assertStringContainsString( 'agent=wordpress-assistant', $data['redirect_url'] );
+		$this->assertSame( 'wordpress-assistant', $data['cards'][0]['assigned']['agent'] );
+		$this->assertStringNotContainsString( 'marketplace', (string) wp_json_encode( $data ) );
+	}
+
+	/**
 	 * Assigning an unknown card is 404 and does not write assigned state.
 	 */
 	public function test_assign_unknown_card_is_404(): void {
@@ -416,10 +467,10 @@ class Test_Site_Brief extends TestCase {
 	 * Agent_Matcher recommends must actually be able to receive the tools
 	 * the checker relies on. For a bundled agent that means each required
 	 * tool is declared in BOTH agent.json (the chat runtime's candidate
-	 * list) AND abilities.json (the runtime gate). The marketplace path is
-	 * exercised too, with a faked catalog standing in for the real one, so a
-	 * checker whose tools nothing bundled covers (WooCommerce) still
-	 * resolves to a genuinely capable agent rather than a bare hint.
+	 * list) AND abilities.json (the runtime gate). A checker whose tools no
+	 * bundled agent declares (the merchant WooCommerce checkers) falls back
+	 * to an installed agent; that is allowed only for WooCommerce checkers,
+	 * so a regression elsewhere still fails here.
 	 *
 	 * This guards against a checker whose matched agent cannot help, which
 	 * the handler-level tests miss because they never resolve tools to an
@@ -427,33 +478,6 @@ class Test_Site_Brief extends TestCase {
 	 */
 	public function test_every_checker_agent_can_service_its_card(): void {
 		$lib = AGENT_BUILDER_DIR . 'library/agents/';
-
-		update_option( 'agent_builder_allow_platform_sync', '1' );
-		add_filter(
-			'pre_http_request',
-			static function ( $preempt, $args, $url ) {
-				if ( ! str_contains( (string) $url, 'agentic-marketplace/v1/agents' ) ) {
-					return $preempt;
-				}
-				return array(
-					'response' => array( 'code' => 200 ),
-					'body'     => wp_json_encode(
-						array(
-							'agents' => array(
-								array(
-									'slug'  => 'woocommerce-assistant',
-									'name'  => 'WooCommerce Assistant',
-									'url'   => 'https://agentic-plugin.com/marketplace/woocommerce-assistant/',
-									'tools' => array( 'wc_get_orders', 'wc_get_stock_report', 'wc_get_store_stats' ),
-								),
-							),
-						)
-					),
-				);
-			},
-			10,
-			3
-		);
 
 		$checkers = ( new \ReflectionClass( Site_Brief_Runner::class ) )->getConstant( 'CHECKERS' );
 		$this->assertNotEmpty( $checkers, 'Runner exposes no checkers.' );
@@ -466,14 +490,11 @@ class Test_Site_Brief extends TestCase {
 
 			$this->assertNotSame( '', $agent, "Checker {$id} resolved to no agent." );
 
-			if ( 'marketplace' === $resolved['source'] ) {
-				$this->assertDirectoryDoesNotExist(
-					$lib . $agent,
-					"Agent {$agent} is bundled; Agent_Matcher should have matched it as installed, not marketplace."
-				);
-				// The faked catalog feed above IS this test's declaration of
-				// that agent's tools, and eligibility already required full
-				// coverage — nothing further to check here.
+			$this->assertTrue( $resolved['installed'], "Checker {$id} resolved to an agent that is not installed." );
+
+			if ( 'fallback' === $resolved['source'] ) {
+				$this->assertSame( 'woocommerce', $checker->get_category(), "Checker {$id}: no bundled agent covers its tools." );
+				$this->assertDirectoryExists( $lib . $agent, "Checker {$id} fell back to a non-bundled agent." );
 				continue;
 			}
 

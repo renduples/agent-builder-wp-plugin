@@ -56,10 +56,6 @@
         "list": "none"
       },
       "reason": "Creates a trigger that runs an agent unattended when a WordPress event fires."
-    },
-    "agents_available": {
-      "risk": "none",
-      "reason": "Read-only browsing of the community agent catalog."
     }
   }
 }

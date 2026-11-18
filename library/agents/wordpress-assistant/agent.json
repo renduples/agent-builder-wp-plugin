@@ -24,7 +24,6 @@
         "suggest_intent_alignment",
         "list_posts",
         "get_post_content",
-        "agents_available",
         "search_capabilities",
         "check_plugin_status",
         "check_plugin_updates",
@@ -54,5 +53,5 @@
         "How do I schedule an agent to run automatically?",
         "How do Ask AI launchers on Users/Plugins work?"
     ],
-    "welcome_message": "Hello! Ask me anything about WordPress or Siteloom.\n\n**Your AI team:**\n{{active_agents}}\n\n[Download more Agents](https://agentic-plugin.com/community-agents/)"
+    "welcome_message": "Hello! Ask me anything about WordPress or Siteloom.\n\n**Your AI team:**\n{{active_agents}}"
 }

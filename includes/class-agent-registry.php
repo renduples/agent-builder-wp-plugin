@@ -522,7 +522,7 @@ class Agentic_Agent_Registry {
 			);
 			return new WP_Error(
 				'license_required',
-				__( 'This agent is a purchased add-on that needs a license, and this build cannot verify licenses. Activate it on the Siteloom installation it was purchased for.', 'siteloom' )
+				__( 'This agent needs a license key, and this build cannot verify license keys, so it cannot be activated here.', 'siteloom' )
 			);
 		}
 

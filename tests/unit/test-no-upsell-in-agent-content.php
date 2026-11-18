@@ -39,6 +39,12 @@ class Test_No_Upsell_In_Agent_Content extends TestCase {
 		'pro version',
 		'premium plan',
 		'paid plan',
+		'marketplace',
+		'community-agents',
+		'community agents',
+		'agents_available',
+		'available separately',
+		'download more agents',
 	);
 
 	/**

@@ -97,8 +97,8 @@ class User_Roles {
 				'description' => 'Browse the list of installed and active agents in the admin.',
 			),
 			'use_uploaded_agents' => array(
-				'label'       => 'Use Premium / Uploaded Agents',
-				'description' => 'Interact with agents downloaded from the marketplace.',
+				'label'       => 'Use Uploaded Agents',
+				'description' => 'Interact with agents an administrator uploaded to this site.',
 			),
 		);
 	}

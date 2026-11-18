@@ -40,9 +40,6 @@
     "get_post_content": {
       "risk": "none"
     },
-    "agents_available": {
-      "risk": "none"
-    },
     "search_capabilities": {
       "risk": "none"
     },

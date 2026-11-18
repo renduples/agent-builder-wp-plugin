@@ -12,7 +12,7 @@ use Agentic\Site_Brief\Checker_Wc_Unpaid;
 use Agentic\Site_Brief\Site_Brief_Runner;
 
 /**
- * Best-fit agent discovery, catalog caching, and map invalidation.
+ * Best-fit agent discovery among installed agents, and map invalidation.
  */
 class Test_Agent_Matcher extends TestCase {
 
@@ -34,37 +34,12 @@ class Test_Agent_Matcher extends TestCase {
 	}
 
 	/**
-	 * Drop every cache Agent_Matcher keeps, plus the platform-sync opt-in.
+	 * Drop every cache Agent_Matcher keeps.
 	 */
 	private function reset_matcher_state(): void {
 		delete_option( Agent_Matcher::MAP_OPTION );
-		delete_option( Agent_Matcher::CATALOG_LAST_GOOD_OPTION );
 		delete_option( 'agent_builder_allow_platform_sync' );
-		delete_transient( Agent_Matcher::CATALOG_TRANSIENT );
 		Agent_Matcher::reset_request_cache();
-	}
-
-	/**
-	 * Fake the marketplace catalog response for the rest of this test.
-	 *
-	 * @param array<int, array<string, mixed>> $agents Catalog agent entries.
-	 * @return void
-	 */
-	private function fake_catalog( array $agents ): void {
-		add_filter(
-			'pre_http_request',
-			static function ( $preempt, $args, $url ) use ( $agents ) {
-				if ( ! str_contains( (string) $url, 'agentic-marketplace/v1/agents' ) ) {
-					return $preempt;
-				}
-				return array(
-					'response' => array( 'code' => 200 ),
-					'body'     => wp_json_encode( array( 'agents' => $agents ) ),
-				);
-			},
-			10,
-			3
-		);
 	}
 
 	/**
@@ -77,83 +52,72 @@ class Test_Agent_Matcher extends TestCase {
 		$this->assertSame( 'site-health-sentinel', $resolved['slug'] );
 		$this->assertTrue( $resolved['installed'] );
 		$this->assertSame( 'bundled', $resolved['source'] );
-		$this->assertNull( $resolved['upsell_url'] );
+		$this->assertArrayNotHasKey( 'upsell_url', $resolved );
 	}
 
 	/**
-	 * An installed agent always beats an uninstalled marketplace agent, even
-	 * one that would otherwise win the "fewest tools" tiebreak.
+	 * Nothing installed covers an unknown tool: resolution falls back to the
+	 * checker's hint when that agent is installed.
 	 */
-	public function test_resolve_prefers_installed_over_smaller_marketplace_agent(): void {
-		update_option( 'agent_builder_allow_platform_sync', '1' );
-		$this->fake_catalog(
-			array(
-				array(
-					'slug'  => 'tiny-updates-bot',
-					'name'  => 'Tiny Updates Bot',
-					'tools' => array( 'check_plugin_updates' ),
-				),
-			)
-		);
-
-		$resolved = Agent_Matcher::resolve( array( 'check_plugin_updates' ) );
+	public function test_resolve_falls_back_to_installed_checker_hint(): void {
+		$resolved = Agent_Matcher::resolve( array( 'totally_unknown_tool_xyz' ), '', 'site-health-sentinel' );
 
 		$this->assertSame( 'site-health-sentinel', $resolved['slug'] );
 		$this->assertTrue( $resolved['installed'] );
+		$this->assertSame( 'fallback', $resolved['source'] );
 	}
 
 	/**
-	 * When no installed/bundled agent fully covers the required tools, an
-	 * opted-in marketplace agent that does is offered as an upsell.
+	 * A hint naming an agent this site does not have (e.g. a paid add-on)
+	 * falls back to the bundled WordPress Assistant, never to the missing one.
 	 */
-	public function test_resolve_offers_marketplace_agent_when_nothing_installed_covers_it(): void {
+	public function test_resolve_never_recommends_an_agent_that_is_not_installed(): void {
+		$resolved = Agent_Matcher::resolve( array( 'wc_get_orders' ), 'woocommerce', 'woocommerce-assistant' );
+
+		$this->assertSame( 'wordpress-assistant', $resolved['slug'] );
+		$this->assertTrue( $resolved['installed'] );
+		$this->assertSame( 'fallback', $resolved['source'] );
+	}
+
+	/**
+	 * The matcher never contacts a remote agent catalog, even with the model
+	 * catalog sync turned on, and no result carries a link to buy an agent.
+	 */
+	public function test_resolution_is_local_and_has_no_marketplace_url(): void {
 		update_option( 'agent_builder_allow_platform_sync', '1' );
-		$this->fake_catalog(
-			array(
-				array(
-					'slug'     => 'woocommerce-assistant',
-					'name'     => 'WooCommerce Assistant',
-					'url'      => 'https://agentic-plugin.com/marketplace/woocommerce-assistant/',
-					'rating'   => 4.8,
-					'downloads' => 500,
-					'tools'    => array( 'wc_get_orders', 'wc_get_stock_report', 'wc_get_store_stats' ),
-				),
-			)
+		$calls = 0;
+		add_filter(
+			'pre_http_request',
+			static function ( $preempt ) use ( &$calls ) {
+				++$calls;
+				return $preempt;
+			}
 		);
 
-		$resolved = Agent_Matcher::resolve( array( 'wc_get_orders' ), '', 'woocommerce-assistant' );
+		$results = array(
+			Agent_Matcher::resolve( array( 'run_health_check' ) ),
+			Agent_Matcher::resolve( array( 'wc_get_orders' ), 'woocommerce', 'woocommerce-assistant' ),
+			Agent_Matcher::resolve( array( 'totally_unknown_tool_xyz' ) ),
+			Agent_Matcher::resolve_for_checker( new Checker_Wc_Unpaid() ),
+		);
 
-		$this->assertSame( 'woocommerce-assistant', $resolved['slug'] );
-		$this->assertFalse( $resolved['installed'] );
-		$this->assertSame( 'marketplace', $resolved['source'] );
-		$this->assertSame( 'https://agentic-plugin.com/marketplace/woocommerce-assistant/', $resolved['upsell_url'] );
+		$this->assertSame( 0, $calls, 'Agent_Matcher must not make HTTP requests.' );
+		foreach ( $results as $resolved ) {
+			$this->assertTrue( $resolved['installed'] );
+			$this->assertStringNotContainsString( 'marketplace', strtolower( (string) wp_json_encode( $resolved ) ) );
+			$this->assertStringNotContainsString( 'agentic-plugin.com', (string) wp_json_encode( $resolved ) );
+		}
 	}
 
 	/**
-	 * Nothing covers an unknown tool and the marketplace is disabled (the
-	 * default): resolution falls back to the checker's own agent hint
-	 * instead of leaving a card without a recommended agent.
+	 * A WooCommerce checker resolves to an installed agent. No bundled agent
+	 * declares the merchant wc_* tools, so this is the fallback path.
 	 */
-	public function test_resolve_falls_back_to_checker_hint_when_nothing_covers_it(): void {
-		$resolved = Agent_Matcher::resolve( array( 'totally_unknown_tool_xyz' ), '', 'woocommerce-assistant' );
-
-		$this->assertSame( 'woocommerce-assistant', $resolved['slug'] );
-		$this->assertFalse( $resolved['installed'] );
-		$this->assertSame( 'fallback', $resolved['source'] );
-		$this->assertNotEmpty( $resolved['upsell_url'] );
-	}
-
-	/**
-	 * A merchant WooCommerce checker resolves to woocommerce-assistant. No
-	 * bundled agent declares the wc_* tools, and the marketplace is off by
-	 * default, so this exercises the fallback path — but the recommended
-	 * agent is never left empty.
-	 */
-	public function test_woocommerce_checker_resolves_to_woocommerce_assistant(): void {
+	public function test_woocommerce_checker_resolves_to_an_installed_agent(): void {
 		$resolved = Agent_Matcher::resolve_for_checker( new Checker_Wc_Unpaid() );
 
-		$this->assertSame( 'woocommerce-assistant', $resolved['slug'] );
-		$this->assertFalse( $resolved['installed'] );
+		$this->assertSame( 'wordpress-assistant', $resolved['slug'] );
+		$this->assertTrue( $resolved['installed'] );
 	}
 
 	/**
@@ -197,49 +161,5 @@ class Test_Agent_Matcher extends TestCase {
 		do_action( 'agent_builder_agent_deleted', 'some-agent' );
 
 		$this->assertSame( array(), Agent_Matcher::get_map() );
-	}
-
-	/**
-	 * The marketplace catalog is opt-in: with the platform-sync setting off
-	 * (the default) fetch_catalog() never phones home.
-	 */
-	public function test_catalog_is_not_fetched_without_opt_in(): void {
-		$calls = 0;
-		add_filter(
-			'pre_http_request',
-			static function ( $preempt ) use ( &$calls ) {
-				++$calls;
-				return $preempt;
-			}
-		);
-
-		$catalog = Agent_Matcher::fetch_catalog();
-
-		$this->assertSame( array(), $catalog );
-		$this->assertSame( 0, $calls );
-	}
-
-	/**
-	 * A failed/disabled catalog fetch degrades gracefully to the
-	 * previously cached "last good" catalog rather than an error.
-	 */
-	public function test_catalog_falls_back_to_last_good_on_failure(): void {
-		update_option( 'agent_builder_allow_platform_sync', '1' );
-		update_option(
-			Agent_Matcher::CATALOG_LAST_GOOD_OPTION,
-			array( array( 'slug' => 'stale-agent', 'name' => 'Stale Agent', 'tools' => array() ) )
-		);
-
-		add_filter(
-			'pre_http_request',
-			static function () {
-				return new \WP_Error( 'test_offline', 'offline' );
-			}
-		);
-
-		$catalog = Agent_Matcher::fetch_catalog();
-
-		$this->assertCount( 1, $catalog );
-		$this->assertSame( 'stale-agent', $catalog[0]['slug'] );
 	}
 }

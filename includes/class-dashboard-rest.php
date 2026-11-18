@@ -307,7 +307,7 @@ class Dashboard_REST {
 				'emergency_stop'          => Emergency_Stop::is_active(),
 				'show_onboarding'         => '0' !== get_option( 'agent_builder_show_onboarding', '1' ),
 				'agent_updates'           => class_exists( Agent_Updates::class ) && Agent_Updates::is_opted_in(),
-				// Pro-only: free / WPorg never expose the opt-in toggle (marketplace link instead).
+				// Always false in this build: there is no remote agent-update check.
 				'has_agent_updates_class' => class_exists( Agent_Updates::class ) && Agent_Updates::is_remote_check_available(),
 				'urls'                    => array(
 					'admin'         => admin_url(),
@@ -322,9 +322,6 @@ class Dashboard_REST {
 					'safety_center' => admin_url( 'admin.php?page=agentic-safety-center' ),
 					'agent_ready'   => admin_url( 'admin.php?page=agentic-agent-ready' ),
 					'backups'       => admin_url( 'admin.php?page=agentic-approvals&tab=backups' ),
-					'community'     => class_exists( Agent_Updates::class )
-						? Agent_Updates::MARKETPLACE_URL
-						: 'https://agentic-plugin.com/community-agents/',
 					'settings'      => admin_url( 'admin.php?page=agentic-settings' ),
 				),
 				'license'                 => $license,

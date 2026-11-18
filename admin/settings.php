@@ -115,7 +115,6 @@ if ( isset( $_POST['agentic_save_settings'] ) && check_admin_referer( 'agentic_s
 					update_option( 'agent_builder_chat_tts', '1' );
 					update_option( 'agent_builder_chat_vision', '1' );
 					update_option( 'agent_builder_chat_whitelabel', '1' );
-					update_option( 'agent_builder_show_whatsapp_cta', '0' );
 					update_option( 'agent_builder_response_cache_enabled', true );
 					update_option( 'agent_builder_response_cache_ttl', 3600 );
 				},
@@ -489,7 +488,6 @@ if ( isset( $_POST['agentic_save_settings'] ) && check_admin_referer( 'agentic_s
 		update_option( 'agent_builder_chat_tts', isset( $_POST['agent_builder_chat_tts'] ) ? '1' : '0' );
 		update_option( 'agent_builder_chat_vision', isset( $_POST['agent_builder_chat_vision'] ) ? '1' : '0' );
 		update_option( 'agent_builder_chat_whitelabel', isset( $_POST['agent_builder_chat_whitelabel'] ) ? '1' : '0' );
-		update_option( 'agent_builder_show_whatsapp_cta', isset( $_POST['agent_builder_show_whatsapp_cta'] ) ? '1' : '0' );
 
 		// Item 3: Tool reliability for weaker models (global)
 		update_option( 'agent_builder_enable_weak_model_tool_guidance', isset( $_POST['agent_builder_enable_weak_model_tool_guidance'] ) ? '1' : '0' );

@@ -23,8 +23,6 @@
 | `user-assistant` | User Assistant |
 | `wordpress-assistant` | WordPress Assistant |
 
-More agents: [Community Agents](https://agentic-plugin.com/community-agents/).
-
 ---
 
 ## Agents
@@ -189,7 +187,7 @@ library/agents/my-agent/
 ├── abilities.json           # The tool allowlist + risk level per tool (security boundary)
 ├── templates/
 │   └── system-prompt.txt    # The agent's instructions ({wp_version} etc. are expanded at runtime)
-└── README.md                # Same format as this file's agent entries — required for marketplace listing
+└── README.md                # Same format as this file's agent entries
 ```
 
 ### `agent.json`
@@ -199,7 +197,7 @@ library/agents/my-agent/
   "$schema": "https://agentic-plugin.com/schemas/agent/v1.json",
   "slug": "my-agent",
   "name": "My Agent",
-  "description": "One or two sentences — shown in the Agents list and marketplace card.",
+  "description": "One or two sentences — shown in the Agents list.",
   "category": "content",
   "icon": "🤖",
   "version": "1.0.0",
@@ -291,15 +289,6 @@ Plain text instructions for the LLM — see any bundled agent's file for the exp
 ### Fastest path: let Assistant Trainer or Agent Orchestrator do it
 
 Rather than hand-writing these files, you can describe the agent you want in chat to the bundled **Assistant Trainer** agent (or use its `create_agent_files`/`generate_agent` tools directly) — it scaffolds all four files from a natural-language description, then you refine from there.
-
-## Listing on the Marketplace
-
-The [Community Agents marketplace](https://agentic-plugin.com/community-agents/) is where developers publish agents beyond the 12 bundled here. In the free/WordPress.org plugin, Community Agents is **browse-only** — visitors can preview and download an agent's files, but not one-click remote-install (that requires Siteloom Pro or a connector).
-
-To list an agent:
-1. Package the four files above exactly as they appear in this directory (a real `agent.json` + `abilities.json` + `templates/system-prompt.txt` + `README.md`, no PHP).
-2. Make sure `abilities.json` only requests tools that already ship with Siteloom (free or Pro) — a listed agent can't bundle its own custom tool code.
-3. Submit via the marketplace's own submission flow at [agentic-plugin.com/community-agents/](https://agentic-plugin.com/community-agents/).
 
 ---
 

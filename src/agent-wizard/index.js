@@ -674,7 +674,7 @@ function App() {
 					<Fragment>
 						{ ! RAG.hasLicense ? (
 							<Notice status="info" isDismissible={ false }>
-								{ __( 'Knowledge uses the Agentic AI service. Connect your license to train agents on your content.', 'siteloom' ) }
+								{ __( 'Every agent can look up the facts, policies and FAQs in your Knowledge wiki.', 'siteloom' ) }
 								{ ' ' }
 								<a href={ RAG.knowledgeUrl }>
 									{ __( 'Add knowledge later from the Knowledge page.', 'siteloom' ) }

@@ -316,17 +316,13 @@ class Site_Brief_Controller {
 			$agent_label = $agent;
 		}
 
-		// A premium/marketplace agent that is not installed (e.g. the WooCommerce
-		// Assistant) cannot be activated or opened in chat. Rather than record a
-		// broken assignment, hand back the marketplace link so the UI can offer to
-		// get it. The card stays un-assigned until the agent is present.
+		// A card scanned before its recommended agent was removed (or one that
+		// names an agent this site never had) cannot be opened in chat. Hand it
+		// to the bundled WordPress Assistant instead of recording a broken
+		// assignment.
 		if ( ! self::is_agent_available( $agent ) ) {
-			$payload                = self::present( Site_Brief_Store::get() );
-			$payload['upsell']      = true;
-			$payload['agent']       = $agent;
-			$payload['agent_label'] = $agent_label;
-			$payload['upsell_url']  = self::agent_marketplace_url( $agent );
-			return new \WP_REST_Response( $payload, 200 );
+			$agent       = 'wordpress-assistant';
+			$agent_label = __( 'WordPress Assistant', 'siteloom' );
 		}
 
 		self::maybe_activate_agent( $agent );
@@ -520,15 +516,14 @@ class Site_Brief_Controller {
 					$card['assigned']['agent_label'] = $card['assigned']['agent'];
 				}
 			}
-			// Surface whether the recommended agent is installed. When it is a
-			// premium/marketplace agent the site does not have yet (e.g. the
-			// WooCommerce Assistant), the card offers a "get it" link instead of
-			// an Assign button — computed here (not at scan time) so installing
-			// the agent flips the card on the next reload without a re-scan.
-			$agent_slug              = (string) ( $card['agent'] ?? '' );
-			$card['agent_available'] = '' === $agent_slug || self::is_agent_available( $agent_slug );
-			if ( ! $card['agent_available'] ) {
-				$card['agent_upsell_url'] = self::agent_marketplace_url( $agent_slug );
+			// Only recommend agents installed on this site. A card stored with an
+			// agent the site does not have (e.g. from an older scan) is handed to
+			// the bundled WordPress Assistant — computed here, not at scan time,
+			// so the card is right on the next reload without a re-scan.
+			$agent_slug = (string) ( $card['agent'] ?? '' );
+			if ( '' !== $agent_slug && ! self::is_agent_available( $agent_slug ) ) {
+				$card['agent']       = 'wordpress-assistant';
+				$card['agent_label'] = __( 'WordPress Assistant', 'siteloom' );
 			}
 
 			if ( ! $advanced ) {
@@ -653,10 +648,10 @@ class Site_Brief_Controller {
 	/**
 	 * Whether the card's recommended agent is installed on this site.
 	 *
-	 * Bundled library agents always count as installed; a premium/marketplace
-	 * agent counts only once the site owner has installed it. When the registry
-	 * is unavailable we fail open to the Assign flow (which validates the agent
-	 * itself) rather than showing an upsell for a core agent.
+	 * Bundled library agents always count as installed; any other agent counts
+	 * only once the site owner has installed it. When the registry is
+	 * unavailable we fail open to the Assign flow (which validates the agent
+	 * itself).
 	 *
 	 * @param string $slug Agent slug.
 	 * @return bool
@@ -666,23 +661,5 @@ class Site_Brief_Controller {
 			return true;
 		}
 		return \Agentic_Agent_Registry::get_instance()->is_agent_installed( $slug );
-	}
-
-	/**
-	 * Marketplace URL a card links to when its recommended agent is a premium
-	 * add-on that is not installed.
-	 *
-	 * @param string $slug Agent slug.
-	 * @return string
-	 */
-	private static function agent_marketplace_url( string $slug ): string {
-		$url = 'https://agentic-plugin.com/marketplace/' . rawurlencode( $slug ) . '/';
-		/**
-		 * Filter the Site Brief upsell URL for an uninstalled recommended agent.
-		 *
-		 * @param string $url  Marketplace URL for the agent.
-		 * @param string $slug Agent slug.
-		 */
-		return (string) apply_filters( 'agentic_site_brief_agent_upsell_url', $url, $slug );
 	}
 }

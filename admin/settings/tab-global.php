@@ -20,7 +20,6 @@ $agentic_ui_tts        = get_option( 'agent_builder_chat_tts', '1' );
 $agentic_ui_vision     = get_option( 'agent_builder_chat_vision', '1' );
 $agentic_ui_costs      = get_option( 'agent_builder_chat_costs', '1' );
 $agentic_ui_whitelabel = get_option( 'agent_builder_chat_whitelabel', '1' );
-$agentic_ui_whatsapp   = get_option( 'agent_builder_show_whatsapp_cta', '0' );
 ?>
 <p class="description">
 	<?php
@@ -124,10 +123,6 @@ $agentic_ui_whatsapp   = get_option( 'agent_builder_show_whatsapp_cta', '0' );
 				<?php esc_html_e( 'Hide “Powered by Siteloom” branding (default on — credits stay off the site unless you uncheck this)', 'siteloom' ); ?>
 			</label>
 			<p class="description"><?php esc_html_e( 'When unchecked, a small credit line appears in the chat footer. WordPress.org requires this to stay hidden unless you opt in.', 'siteloom' ); ?></p>
-			<label class="agentic-mt-8" style="display:block;">
-				<input type="checkbox" name="agent_builder_show_whatsapp_cta" id="agent_builder_show_whatsapp_cta" value="1" <?php checked( $agentic_ui_whatsapp, '1' ); ?> />
-				<?php esc_html_e( 'Show the WhatsApp Pro promo in admin chat', 'siteloom' ); ?>
-			</label>
 		</td>
 	</tr>
 </table>

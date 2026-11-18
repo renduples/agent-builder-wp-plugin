@@ -19,7 +19,6 @@ Free [Siteloom](https://agentic-plugin.com/) WordPress plugin.
 - **License:** GPL-2.0-or-later
 - **Requires:** WordPress 6.4+, PHP 8.1+
 - **Docs / product site:** https://agentic-plugin.com/documentation/
-- **Community agents:** https://agentic-plugin.com/community-agents/
 
 Give AI agents real WordPress work. Hand a job to an agent, walk away, and get pinged only when it needs you. Low-risk steps run on their own; anything that needs your judgement waits for one-click approval.
 
@@ -51,8 +50,6 @@ Give AI agents real WordPress work. Hand a job to an agent, walk away, and get p
 | **Skills Assistant** | Discovers and imports community skills to teach agents new capabilities |
 | **Storefront Assistant** | Helps visitors browse your WooCommerce catalog and build a cart, including via WebMCP |
 | **AI Radar** | Checks how visible your site is to AI crawlers and assistants (robots.txt, llms.txt, schema.org) and fixes gaps with your approval |
-
-More at [Community Agents](https://agentic-plugin.com/community-agents/).
 
 ## Install from source (developers)
 
