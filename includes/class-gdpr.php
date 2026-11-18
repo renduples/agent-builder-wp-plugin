@@ -643,8 +643,12 @@ class GDPR {
 			);
 		}
 
+		// The user's rows are deleted outright (no personal data is kept), but
+		// through Audit_Log_Integrity::delete_rows() so the rows around each
+		// gap stay verifiable instead of looking like tampering.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$deleted = (int) $wpdb->delete( $table, array( 'user_id' => $user->ID ), array( '%d' ) );
+		$ids     = $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM %i WHERE user_id = %d', $table, $user->ID ) );
+		$deleted = Audit_Log_Integrity::delete_rows( array_map( 'intval', (array) $ids ), 'privacy_erasure' );
 
 		return array(
 			'items_removed'  => $deleted,
@@ -1079,16 +1083,22 @@ class GDPR {
 		}
 
 		if ( $audit_days > 0 ) {
-			foreach ( array( 'agent_builder_audit_log', 'agent_builder_security_log' ) as $suffix ) {
-				$table = $wpdb->prefix . $suffix;
-				if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" ) === $table ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-					$wpdb->query( // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-						$wpdb->prepare(
-							"DELETE FROM {$table} WHERE created_at < DATE_SUB(UTC_TIMESTAMP(), INTERVAL %d DAY)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-							$audit_days
-						)
-					);
-				}
+			// Audit rows go through Audit_Log_Integrity so the integrity chain
+			// is anchored at the first kept row (a plain DELETE caused false
+			// "tampering detected" warnings once old rows aged out).
+			$audit_table = $wpdb->prefix . 'agent_builder_audit_log';
+			if ( $wpdb->get_var( "SHOW TABLES LIKE '{$audit_table}'" ) === $audit_table ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				Audit_Log_Integrity::prune_before( gmdate( 'Y-m-d H:i:s', time() - ( $audit_days * DAY_IN_SECONDS ) ) );
+			}
+
+			$table = $wpdb->prefix . 'agent_builder_security_log';
+			if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" ) === $table ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$wpdb->query( // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+					$wpdb->prepare(
+						"DELETE FROM {$table} WHERE created_at < DATE_SUB(UTC_TIMESTAMP(), INTERVAL %d DAY)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+						$audit_days
+					)
+				);
 			}
 		}
 	}

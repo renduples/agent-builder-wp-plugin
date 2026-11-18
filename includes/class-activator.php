@@ -292,6 +292,11 @@ final class Activator {
 		// older versions to the exit-guarded format — see
 		// Tool_Helpers::migrate_legacy_backups().
 		Tool_Helpers::migrate_legacy_backups();
+		// One-time (option-gated): sites that pruned old audit rows before the
+		// chain anchor existed show a false "tampering detected". Repairs only
+		// when the sole break is at the first row — see
+		// Audit_Log_Integrity::repair_pruned_head().
+		Audit_Log_Integrity::maybe_repair_pruned_head();
 		// One-time (option-gated): revoke Application Passwords older versions
 		// created for the since-removed relay — see Legacy_Relay_Passwords.
 		Legacy_Relay_Passwords::maybe_revoke_on_upgrade();
