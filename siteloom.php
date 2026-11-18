@@ -298,6 +298,7 @@ final class Plugin {
 		add_action( 'admin_notices', array( $notices, 'show_shadowed_agent_notice' ) );
 		add_action( 'admin_notices', array( $notices, 'show_activation_degraded_notice' ) );
 		add_action( 'admin_notices', array( $notices, 'show_legacy_exports_stuck_notice' ) );
+		add_action( 'admin_notices', array( Legacy_Relay_Passwords::class, 'show_notice' ) );
 		add_action( 'admin_init', array( Activator::class, 'maybe_handle_legacy_exports_retry_request' ), 1 );
 
 		// Agent update checks — free / WPorg never phone home, Pro users may opt in.
