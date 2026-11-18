@@ -99,6 +99,11 @@ if [[ -n "$BAD_NAMES" ]]; then
 		rm -rf "${DEST:?}/${bad#./}"
 	done <<< "$BAD_NAMES"
 fi
+# Third-party packages sometimes ship their own test suites and docs.
+# They are never loaded by the plugin, so keep them out of the WP.org zip.
+if [[ -d "$DEST/vendor" ]]; then
+	find "$DEST/vendor" -mindepth 3 -maxdepth 3 -type d \( -iname tests -o -iname test -o -iname docs -o -iname .github \) -prune -exec rm -rf {} +
+fi
 CASE_DUPES="$(cd "$DEST" && find . -mindepth 1 | tr '[:upper:]' '[:lower:]' | sort | uniq -d)"
 if [[ -n "$CASE_DUPES" ]]; then
 	echo "ERROR: paths that differ only by case in the WP.org tree:" >&2
