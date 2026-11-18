@@ -133,7 +133,10 @@ class Wc_Get_Customers extends \Agentic\Tool_Base {
 	}
 
 	public function get_annotations(): array {
-		return array( 'readonly' => true, 'personal_data' => true );
+		return array(
+			'readonly'      => true,
+			'personal_data' => true,
+		);
 	}
 }
 
