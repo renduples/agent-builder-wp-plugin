@@ -958,7 +958,15 @@ class Approval_Rules {
 			return false;
 		}
 
-		return null !== $instance && true === ( $instance->get_annotations()['readonly'] ?? false );
+		if ( null === $instance ) {
+			return false;
+		}
+		$annotations = $instance->get_annotations();
+
+		// Read-only tools that return personal data (customers, users, form
+		// entries, login records) stay under rules such as "never export
+		// customer data".
+		return true === ( $annotations['readonly'] ?? false ) && empty( $annotations['personal_data'] );
 	}
 
 	/**

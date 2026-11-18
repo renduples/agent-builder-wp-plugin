@@ -316,7 +316,7 @@ function RulesTab() {
 
 			<p className="agentic-react-muted">
 				{ __(
-					'Rules tell agents how much to ask before acting. An agent pauses for anything a rule asks about, and runs automatically when a rule allows it. Rules apply to actions that change your site. Read-only lookups are never held by a rule.',
+					'Rules tell agents how much to ask before acting. An agent pauses for anything a rule asks about, and runs automatically when a rule allows it. Rules apply to actions that change your site or read personal data. Other read-only lookups are never held by a rule.',
 					'siteloom'
 				) }
 			</p>

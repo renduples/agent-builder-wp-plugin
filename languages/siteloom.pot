@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-18T13:20:38+00:00\n"
+"POT-Creation-Date: 2026-11-18T13:25:04+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: siteloom\n"
@@ -10243,7 +10243,7 @@ msgid "Rule saved."
 msgstr ""
 
 #: src/admin-pages/views/RulesTab.js:318
-msgid "Rules tell agents how much to ask before acting. An agent pauses for anything a rule asks about, and runs automatically when a rule allows it. Rules apply to actions that change your site. Read-only lookups are never held by a rule."
+msgid "Rules tell agents how much to ask before acting. An agent pauses for anything a rule asks about, and runs automatically when a rule allows it. Rules apply to actions that change your site or read personal data. Other read-only lookups are never held by a rule."
 msgstr ""
 
 #: src/admin-pages/views/RulesTab.js:332

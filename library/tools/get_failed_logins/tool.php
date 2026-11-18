@@ -157,6 +157,7 @@ class Get_Failed_Logins extends \Agentic\Tool_Base {
 	public function get_annotations(): array {
 		return array(
 			'readonly' => true,
+			'personal_data' => true,
 		);
 	}
 }

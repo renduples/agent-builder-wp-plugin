@@ -333,7 +333,8 @@ class Tool_Executor {
 
 		// Only a real Tool_Base that declares itself readonly counts; approval
 		// rules never govern a readonly call whose risk is none or low.
-		$is_readonly_tool = $tool_instance ? true === ( $tool_instance->get_annotations()['readonly'] ?? false ) : false;
+		// A read-only tool that returns personal data stays under approval rules.
+		$is_readonly_tool = $tool_instance ? ( true === ( $tool_instance->get_annotations()['readonly'] ?? false ) && empty( $tool_instance->get_annotations()['personal_data'] ) ) : false;
 
 		$ctx = array(
 			'tool'       => $tool_name,

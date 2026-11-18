@@ -1000,6 +1000,36 @@ class Test_Approval_Rules extends TestCase {
 	}
 
 	/**
+	 * A read-only, none-risk tool that returns personal data (here the
+	 * customer list) stays under rules: "Never export customer data" still
+	 * blocks it.
+	 */
+	public function test_read_only_personal_data_tool_is_still_governed(): void {
+		$this->add_rule( 'deny', 'Never export customer data.' );
+		$this->fake->enqueue( Fake_LLM_Client::text_response( 'match' ) );
+
+		$ctx         = $this->evaluation_ctx( 'none', 'allow' );
+		$ctx['tool'] = 'wc_get_customers';
+
+		$this->assertFalse( Approval_Rules::is_read_only_call( $ctx ) );
+		$this->assertSame( 'block', Approval_Rules::evaluate( 'allow', $ctx ) );
+		$this->assertSame( 1, $this->fake->chat_calls );
+	}
+
+	/**
+	 * Every tool that returns personal data carries the personal_data
+	 * annotation, so it is never treated as an ordinary read-only lookup.
+	 */
+	public function test_personal_data_tools_are_annotated(): void {
+		$loader = \Agentic\Tool_Loader::get_instance();
+		foreach ( array( 'form_export_entries', 'wc_get_customer', 'wc_get_customers', 'list_privileged_users', 'get_failed_logins', 'get_recent_registrations' ) as $name ) {
+			$tool = $loader->get( $name );
+			$this->assertNotNull( $tool, $name );
+			$this->assertTrue( ! empty( $tool->get_annotations()['personal_data'] ), $name );
+		}
+	}
+
+	/**
 	 * A write tool with a deny rule while the reviewer is unavailable still
 	 * fails closed to the queue, recorded as verdict 'unavailable' with a plain
 	 * reason, and only one reviewer call is spent.
