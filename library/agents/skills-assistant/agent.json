@@ -12,7 +12,7 @@
   "tools": [
     "manage_skill",
     "browse_community_skills",
-    "agents_available"
+    "search_capabilities"
   ],
   "suggested_prompts": [
     "Teach an agent how to draft a weekly newsletter from recent posts.",

@@ -23,8 +23,7 @@ if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'agent_builde
 }
 
 // Pro-only: optional consent wall for in-dashboard agent update checks.
-// Free / WordPress.org builds never show this — they use the Community Agents
-// marketplace link instead (no phone-home for update checks).
+// This build never shows it: there is no phone-home for update checks.
 if ( class_exists( 'Agentic\Agent_Updates' ) && \Agentic\Agent_Updates::needs_consent() ) {
 	?>
 	<div class="wrap">
@@ -93,10 +92,6 @@ if ( class_exists( 'Agentic\Agent_Updates' ) && \Agentic\Agent_Updates::needs_co
 	<?php
 	return;
 }
-
-$agentic_marketplace_url = class_exists( '\Agentic\Agent_Updates' )
-	? \Agentic\Agent_Updates::MARKETPLACE_URL
-	: 'https://agentic-plugin.com/community-agents/';
 
 $agentic_agent_action = isset( $_GET['action'] ) ? sanitize_text_field( wp_unslash( $_GET['action'] ) ) : '';
 $agentic_slug         = isset( $_GET['agent'] ) ? sanitize_text_field( wp_unslash( $_GET['agent'] ) ) : '';
@@ -328,12 +323,6 @@ wp_enqueue_style( 'agentic-react-admin', AGENT_BUILDER_URL . 'assets/css/react-a
 				class="<?php echo 'inactive' === $agentic_filter ? 'current' : ''; ?>">
 				<?php esc_html_e( 'Inactive', 'siteloom' ); ?>
 				<span class="count">(<?php echo esc_html( $agentic_inactive_count ); ?>)</span>
-			</a> |
-		</li>
-		<li class="available">
-			<a href="<?php echo esc_url( $agentic_marketplace_url ); ?>" target="_blank" rel="noopener noreferrer">
-				<?php esc_html_e( 'Community Agents', 'siteloom' ); ?>
-				<span class="dashicons dashicons-external" style="font-size:14px;width:14px;height:14px;vertical-align:middle;" aria-hidden="true"></span>
 			</a>
 		</li>
 	</ul>

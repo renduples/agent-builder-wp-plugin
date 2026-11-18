@@ -2,11 +2,7 @@
 /**
  * Siteloom — Knowledge hub
  *
- * Free: Open Knowledge Format (OKF) wiki — local markdown concepts, no cloud.
- * Pro: Vector Store / RAG training (hosted embeddings) on the Vector tab.
- *
- * WordPress.org: free wiki works fully without Pro; Vector tab is an upgrade
- * surface only when Pro is not active (no paywall on free features).
+ * Open Knowledge Format (OKF) wiki — local markdown concepts, no cloud.
  *
  * @package    Agent_Builder
  * @subpackage Admin
@@ -381,27 +377,6 @@ if ( $agentic_knowledge_advanced ) {
 			</section>
 		</div>
 	</div>
-
-	<?php else : /* Vector tab */ ?>
-
-		<?php if ( $agentic_is_pro ) : ?>
-			<?php
-			// Vector Store admin UI lives only in Siteloom Pro (filter).
-			// Free never ships Pro markup — see bin/strip-free-pro-paths.sh.
-			$agentic_vector_partial = apply_filters( 'agentic_vector_store_admin_partial', '' );
-			if ( is_string( $agentic_vector_partial ) && '' !== $agentic_vector_partial && file_exists( $agentic_vector_partial ) ) {
-				include $agentic_vector_partial;
-			} else {
-				?>
-				<div class="notice notice-warning inline" style="margin:12px 0;">
-					<p>
-						<?php esc_html_e( 'Pro is active but the Vector Store admin UI was not found. Reinstall or update Siteloom Pro.', 'siteloom' ); ?>
-					</p>
-				</div>
-				<?php
-			}
-			?>
-		<?php endif; ?>
 
 	<?php endif; ?>
 

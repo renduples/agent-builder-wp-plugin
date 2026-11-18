@@ -26,20 +26,11 @@ class Agent_Updates {
 	const OPT_IN_OPTION = 'agent_builder_agent_updates_optin';
 
 	/**
-	 * Marketplace URL for discovering / installing community agents.
-	 *
-	 * Free and WordPress.org builds no longer phone home for agent update
-	 * checks. Users browse and install from the public marketplace instead.
-	 */
-	const MARKETPLACE_URL = 'https://agentic-plugin.com/community-agents/';
-
-	/**
 	 * Whether remote agent-update checks are available on this site.
 	 *
 	 * This build never calls the store for update checks (WordPress.org
 	 * Guideline 7/8): there is no in-plugin install path for a downloaded agent
-	 * package, and users are directed to the Community Agents marketplace
-	 * (browse-only) instead.
+	 * package.
 	 */
 	public static function is_remote_check_available(): bool {
 		return false;
@@ -55,7 +46,7 @@ class Agent_Updates {
 
 	/**
 	 * Whether the consent prompt still needs to be shown. Always false — this
-	 * build never shows the consent wall, only the marketplace link.
+	 * build never shows the consent wall.
 	 */
 	public static function needs_consent(): bool {
 		return false;
@@ -104,5 +95,4 @@ class Agent_Updates {
 	public static function maybe_check_on_agents_page(): void {
 		// This build never phones home for agent update checks.
 	}
-
 }

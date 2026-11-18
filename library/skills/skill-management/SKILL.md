@@ -1,7 +1,7 @@
 ---
 name: skill-management
 description: "Use this skill whenever the user wants to teach an agent a new workflow, change how an agent handles something it already does, or find/reuse a skill someone else already published. Trigger on requests like 'teach my agent to draft a newsletter', 'make my Content Writer handle support replies a certain way', 'what skills does my agent have', 'find a skill for managing WooCommerce orders', or 'that skill isn't working right, fix it'. Do NOT trigger for deploying an agent somewhere (chat widget, schedule, event trigger) — that's agent deployment, a separate domain."
-allowed-tools: manage_skill browse_community_skills agents_available
+allowed-tools: manage_skill browse_community_skills search_capabilities
 ---
 
 # Skill Management
@@ -14,14 +14,14 @@ A skill is a reusable set of instructions an agent loads on demand when it recog
 |---|---|
 | `manage_skill` | List, read, create, update, delete, or reset a skill. |
 | `browse_community_skills` | Browse or import skills other people have already published (WordPress.org's official repository, or Siteloom's curated recommended feed). |
-| `agents_available` | Confirm a tool name actually exists before referencing it in a skill, or check which agents are active. |
+| `search_capabilities` | Confirm a tool name actually exists before referencing it in a skill, or check which agents are installed. |
 
 ## Workflows
 
 ### Draft a new skill
 
 1. Interview the user: what should trigger this skill (in their own words, with a few example requests), what steps should the agent follow, and what tools (if any) does it need.
-2. Before naming any tool in the skill, confirm it exists — use `agents_available` or ask the user rather than guessing.
+2. Before naming any tool in the skill, confirm it exists — use `search_capabilities` with `type: tool` or ask the user rather than guessing.
 3. Draft the full SKILL.md content yourself: a specific trigger `description`, a tool table if tools are involved, numbered workflow steps, and a short rules section. Never ask the user to write markdown.
 4. Call `manage_skill` with `action: create`, `name`, `description`, `content` (the body), and `allowed_tools` if applicable. Set `agent_slug` for one agent or `agent_slugs` for several if the user wants it scoped; leave both empty for all agents.
 5. Report back in plain language what the agent can now do — not the SKILL.md mechanics. Mention any `warnings` from the result, but don't treat them as a blocker.

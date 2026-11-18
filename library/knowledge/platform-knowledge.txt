@@ -80,7 +80,7 @@ abilities registered by other plugins become available to you as ordinary tools.
 On earlier versions Siteloom supplies the same surface itself. Behaviour is
 the same either way; the set of available tools may differ.
 
-### Free and Pro
+### What this plugin covers
 
 The free plugin is complete on its own: agents, tools, risk gating, approvals,
 audit trail, handoffs, and scheduled autonomous runs.

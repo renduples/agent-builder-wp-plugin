@@ -1684,19 +1684,6 @@ function AgentsTab( { data, setData, onSave, saving, error, saved, clearSaved } 
 					}
 					__nextHasNoMarginBottom
 				/>
-				<div style={ { height: 8 } } />
-				<ToggleControl
-					label={ __( 'Show the WhatsApp Pro promo in admin chat', 'siteloom' ) }
-					help={ __(
-						'Off by default. When on, admin chat shows a link to the WhatsApp connector.',
-						'siteloom'
-					) }
-					checked={ !! data.show_whatsapp_cta }
-					onChange={ ( v ) =>
-						setData( { ...data, show_whatsapp_cta: v } )
-					}
-					__nextHasNoMarginBottom
-				/>
 			</Section>
 			<Section title={ __( 'Active agent overrides', 'siteloom' ) }>
 				<p className="agentic-react-muted" style={ { marginTop: 0 } }>

@@ -33,7 +33,7 @@ class Train_Payload {
 			'page'        => 'train-data',
 			'tab'         => $tab,
 			'title'       => __( 'Knowledge', 'siteloom' ),
-			'description' => __( 'Wiki concepts (OKF) and optional Pro vector store.', 'siteloom' ),
+			'description' => __( 'Wiki concepts (OKF) your agents can look up.', 'siteloom' ),
 			'is_pro'      => false,
 			'concepts'    => $concepts,
 			'tabs'        => array_values(

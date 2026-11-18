@@ -137,11 +137,6 @@ function ActivityCard() {
 					label={ __( 'User-Created Agents', 'siteloom' ) }
 					href={ buildUrl( 'agentic-agents' ) }
 				/>
-				<Metric
-					value={ formatInt( agents.community ) }
-					label={ __( 'Community Agents', 'siteloom' ) }
-					href="https://agentic-plugin.com/community-agents/"
-				/>
 			</div>
 		</Fragment>
 	);

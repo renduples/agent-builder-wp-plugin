@@ -1,7 +1,7 @@
 ---
 name: agent-deployment
 description: "Use this skill whenever the user wants to put an agent to work — embed it as a chat widget, make it check something on a schedule, or have it react automatically to something happening on the site. Trigger on requests like 'put this agent on my homepage', 'add a chat widget to my site', 'make an agent check my site every morning', 'reply to new comments automatically', or 'add an AI panel to the block editor'. Do NOT trigger for creating or configuring an agent's own behaviour (system prompt, tools, knowledge) — that's agent creation/training, a separate domain."
-allowed-tools: manage_agent_shortcode manage_editor_sidebar_agent manage_frontend_modal_agent manage_gutenberg_block_agent manage_admin_bar_launcher manage_scheduled_task manage_event_listener agents_available
+allowed-tools: manage_agent_shortcode manage_editor_sidebar_agent manage_frontend_modal_agent manage_gutenberg_block_agent manage_admin_bar_launcher manage_scheduled_task manage_event_listener get_agent_list
 ---
 
 # Agent Deployment
@@ -19,7 +19,7 @@ Deploying an agent means choosing where and how it runs: embedded in a page, flo
 | `manage_admin_bar_launcher` | Chat access inside wp-admin: a per-agent admin-bar button, or the contextual "Ask AI" launcher on specific screens. |
 | `manage_scheduled_task` | A recurring task an agent runs unattended (hourly/twice-daily/daily/weekly). |
 | `manage_event_listener` | A trigger that runs an agent automatically when a WordPress action hook fires. |
-| `agents_available` | Browse other agents the user could install if none of their active agents fit the request. |
+| `get_agent_list` | See which agents are installed and active before choosing one to deploy. |
 
 ## Workflows
 
@@ -66,4 +66,4 @@ Call `manage_gutenberg_block_agent` with `action: enable`. Tell the user to sear
 - Always confirm before creating anything that runs unattended — scheduled tasks and event listeners. Everything else (widgets, blocks, editor sidebar, launchers) is reversible config, safe to just do and report back.
 - If a deployment already exists for what's being asked, update it instead of creating a duplicate — list first when unsure.
 - After any change, describe the result in plain language ("your Content Writer now appears as a chat bubble on every page"), not the underlying mechanics.
-- If no active agent fits the request, use `agents_available` to suggest one rather than forcing a mismatched agent into the role.
+- If no active agent fits the request, check `get_agent_list` for an installed one to activate; if none fits, say so and suggest Assistant Trainer rather than forcing a mismatched agent into the role.

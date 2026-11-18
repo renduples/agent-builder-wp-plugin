@@ -404,7 +404,7 @@ class Admin_Menu_Handler {
 	/**
 	 * Catalog of major admin links available as dashboard Quick Actions.
 	 *
-	 * @return array<string, array{label:string,url:string,locked?:bool,default?:bool,group?:string,advanced?:bool,pro?:bool}>
+	 * @return array<string, array{label:string,url:string,locked?:bool,default?:bool,group?:string,advanced?:bool}>
 	 */
 	public static function quick_actions_catalog(): array {
 		$catalog = array(

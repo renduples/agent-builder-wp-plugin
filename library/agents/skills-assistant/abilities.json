@@ -14,6 +14,6 @@
       "risk_by_action": { "browse": "none" },
       "reason": "Imports a skill's content from an external source (WordPress.org or Agentic's recommended feed) — browsing what's available is autonomous, importing asks first."
     },
-    "agents_available": { "risk": "none", "reason": "Read-only browsing of the community agent catalog." }
+    "search_capabilities": { "risk": "none", "reason": "Read-only search of the agents and tools on this site." }
   }
 }

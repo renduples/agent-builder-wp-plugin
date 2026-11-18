@@ -3,13 +3,13 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Siteloom AI Agents 4.4.0\n"
-"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/agent-builder-wp-plugin\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wt-final\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-18T15:23:29+00:00\n"
+"POT-Creation-Date: 2026-11-18T15:54:14+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: siteloom\n"
@@ -54,7 +54,7 @@ msgstr ""
 #: admin/settings.php:21
 #: admin/signup.php:14
 #: admin/tools.php:24
-#: admin/train-data.php:21
+#: admin/train-data.php:17
 msgid "You do not have permission to access this page."
 msgstr ""
 
@@ -77,88 +77,88 @@ msgstr ""
 msgid "The agent wizard needs JavaScript enabled. You can also create agents from the Agents page."
 msgstr ""
 
-#: admin/agents.php:31
-#: siteloom.php:440
+#: admin/agents.php:30
+#: siteloom.php:441
 #: src/settings-app/index.js:1196
 msgid "AI Agents"
 msgstr ""
 
-#: admin/agents.php:36
+#: admin/agents.php:35
 msgid "Enable Automatic Agent Updates?"
 msgstr ""
 
-#: admin/agents.php:37
+#: admin/agents.php:36
 msgid "Siteloom can check agentic-plugin.com for newer versions of your installed AI agents."
 msgstr ""
 
-#: admin/agents.php:43
+#: admin/agents.php:42
 msgid "Security patches delivered fast"
 msgstr ""
 
-#: admin/agents.php:44
+#: admin/agents.php:43
 msgid "Agent vulnerabilities can be exploited silently. Updates close those gaps before bad actors find them."
 msgstr ""
 
-#: admin/agents.php:48
+#: admin/agents.php:47
 msgid "Better agent performance"
 msgstr ""
 
-#: admin/agents.php:49
+#: admin/agents.php:48
 msgid "Agent logic, prompts, and tool integrations are continuously improved. Updates mean your agents work smarter."
 msgstr ""
 
-#: admin/agents.php:53
+#: admin/agents.php:52
 msgid "You stay in control"
 msgstr ""
 
-#: admin/agents.php:54
+#: admin/agents.php:53
 msgid "Updates are never applied automatically — you review and install each one yourself, exactly like WordPress plugins."
 msgstr ""
 
 #. translators: %1$s: agentic-plugin.com URL, %2$s: Privacy Policy URL
-#: admin/agents.php:63
+#: admin/agents.php:62
 #, php-format
 msgid "When enabled, your installed agent slugs and version numbers are sent to <a href=\"%1$s\" target=\"_blank\" rel=\"noopener\">agentic-plugin.com</a> to check for updates. No personal data, passwords, or site content are included. See our <a href=\"%2$s\" target=\"_blank\" rel=\"noopener\">Privacy Policy</a>."
 msgstr ""
 
-#: admin/agents.php:81
+#: admin/agents.php:80
 msgid "Enable Agent Updates"
 msgstr ""
 
-#: admin/agents.php:84
+#: admin/agents.php:83
 msgid "No Thanks"
 msgstr ""
 
-#: admin/agents.php:89
+#: admin/agents.php:88
 msgid "This preference resets if you deactivate and reactivate the plugin."
 msgstr ""
 
 #. translators: 1: agent name, 2: chat URL
-#: admin/agents.php:121
+#: admin/agents.php:116
 #, php-format
 msgid "%1$s activated. <a href=\"%2$s\">Chat with this agent now →</a>"
 msgstr ""
 
-#: admin/agents.php:133
+#: admin/agents.php:128
 msgid "Agent deactivated."
 msgstr ""
 
-#: admin/agents.php:142
+#: admin/agents.php:137
 msgid "Agent deleted."
 msgstr ""
 
 #. translators: 1: number of agents, 2: action label
-#: admin/agents.php:182
+#: admin/agents.php:177
 #, php-format
 msgid "%1$d agent %2$s."
 msgid_plural "%1$d agents %2$s."
 msgstr[0] ""
 msgstr[1] ""
 
-#: admin/agents.php:233
+#: admin/agents.php:228
 #: admin/deployment/deployment-admin-ui.php:232
 #: admin/security-log.php:209
-#: admin/settings.php:603
+#: admin/settings.php:601
 #: admin/tools.php:120
 #: includes/admin-pages/class-agents-payload.php:83
 #: includes/admin-pages/class-tools-payload.php:21
@@ -171,73 +171,73 @@ msgstr[1] ""
 msgid "Agents"
 msgstr ""
 
-#: admin/agents.php:235
+#: admin/agents.php:230
 msgid "Add an agent"
 msgstr ""
 
-#: admin/agents.php:238
+#: admin/agents.php:233
 msgid "Interface mode for the Agents screen only"
 msgstr ""
 
-#: admin/agents.php:239
+#: admin/agents.php:234
 msgid "This screen"
 msgstr ""
 
-#: admin/agents.php:242
+#: admin/agents.php:237
 #: admin/deployment.php:49
 #: admin/providers.php:93
-#: admin/settings.php:625
+#: admin/settings.php:623
 #: admin/signup.php:125
 #: admin/signup.php:253
-#: admin/train-data.php:89
-#: admin/train-data.php:123
+#: admin/train-data.php:85
+#: admin/train-data.php:119
 #: includes/class-admin-menu-handler.php:1250
 #: includes/class-admin-settings-rest.php:180
-#: src/dashboard-app/index.js:1586
+#: src/dashboard-app/index.js:1536
 #: src/interface-settings/index.js:182
 #: src/settings-app/index.js:311
 #: src/shared/components.js:189
 msgid "Basic"
 msgstr ""
 
-#: admin/agents.php:245
+#: admin/agents.php:240
 #: admin/deployment.php:52
 #: admin/providers.php:96
-#: admin/settings.php:630
+#: admin/settings.php:628
 #: admin/signup.php:126
 #: admin/signup.php:255
-#: admin/train-data.php:92
-#: admin/train-data.php:126
+#: admin/train-data.php:88
+#: admin/train-data.php:122
 #: includes/class-admin-menu-handler.php:1253
 #: includes/class-admin-settings-rest.php:185
 #: src/dashboard-app/index.js:414
-#: src/dashboard-app/index.js:1416
-#: src/dashboard-app/index.js:1597
+#: src/dashboard-app/index.js:1369
+#: src/dashboard-app/index.js:1547
 #: src/interface-settings/index.js:186
 #: src/settings-app/index.js:313
 #: src/shared/components.js:200
 msgid "Advanced"
 msgstr ""
 
-#: admin/agents.php:267
-#: admin/agents.php:387
+#: admin/agents.php:262
+#: admin/agents.php:376
 #: src/admin-pages/views/AgentsView.js:773
 msgid "No agents installed yet."
 msgstr ""
 
-#: admin/agents.php:278
+#: admin/agents.php:273
 #: src/admin-pages/views/AgentsView.js:82
 msgid "An AI agent for this site."
 msgstr ""
 
-#: admin/agents.php:286
-#: admin/agents.php:419
+#: admin/agents.php:281
+#: admin/agents.php:408
 #: includes/class-admin-menu-handler.php:82
 #: src/admin-pages/views/AgentsView.js:131
 msgid "Chat"
 msgstr ""
 
-#: admin/agents.php:315
+#: admin/agents.php:310
 #: admin/skills.php:595
 #: admin/tools.php:111
 #: includes/admin-pages/class-logs-payload.php:198
@@ -245,68 +245,61 @@ msgstr ""
 msgid "All"
 msgstr ""
 
-#: admin/agents.php:322
+#: admin/agents.php:317
 #: admin/deployment/deployment-scheduled-tasks.php:365
 #: admin/settings-llm.php:258
 #: admin/skills.php:580
 #: src/admin-pages/views/AgentsView.js:116
 #: src/admin-pages/views/AgentsView.js:575
 #: src/admin-pages/views/SkillsView.js:254
-#: src/dashboard-app/index.js:925
+#: src/dashboard-app/index.js:885
 #: src/tasks-app/index.js:48
 msgid "Active"
 msgstr ""
 
-#: admin/agents.php:329
+#: admin/agents.php:324
 #: admin/settings-llm.php:260
 #: src/admin-pages/views/AgentsView.js:120
 msgid "Inactive"
 msgstr ""
 
-#: admin/agents.php:335
-#: src/dashboard-activity/index.js:142
-#: src/dashboard-app/index.js:1151
-#: src/dashboard-app/index.js:1667
-msgid "Community Agents"
-msgstr ""
-
-#: admin/agents.php:347
-#: admin/agents.php:621
+#: admin/agents.php:336
+#: admin/agents.php:610
 msgid "Select bulk action"
 msgstr ""
 
-#: admin/agents.php:349
-#: admin/agents.php:623
+#: admin/agents.php:338
+#: admin/agents.php:612
 msgid "Bulk actions"
 msgstr ""
 
-#: admin/agents.php:350
-#: admin/agents.php:430
-#: admin/agents.php:624
+#: admin/agents.php:339
+#: admin/agents.php:419
+#: admin/agents.php:613
 #: src/admin-pages/views/AgentsView.js:139
 #: src/admin-pages/views/AgentsView.js:170
 msgid "Activate"
 msgstr ""
 
-#: admin/agents.php:351
-#: admin/agents.php:424
-#: admin/agents.php:625
+#: admin/agents.php:340
+#: admin/agents.php:413
+#: admin/agents.php:614
 #: src/admin-pages/views/AgentsView.js:169
 msgid "Deactivate"
 msgstr ""
 
-#: admin/agents.php:352
-#: admin/agents.php:436
-#: admin/agents.php:437
-#: admin/agents.php:626
-#: admin/agents.php:664
+#: admin/agents.php:341
+#: admin/agents.php:425
+#: admin/agents.php:426
+#: admin/agents.php:615
+#: admin/agents.php:653
 #: admin/conversations.php:290
 #: admin/deployment/deployment-scheduled-tasks.php:409
 #: admin/deployment/deployment-scheduled-tasks.php:437
 #: admin/deployment/deployment-shortcodes.php:308
 #: admin/providers.php:487
 #: admin/skills.php:636
-#: admin/train-data.php:234
+#: admin/train-data.php:230
 #: src/admin-pages/views/AgentsView.js:180
 #: src/admin-pages/views/RoutinesView.js:1058
 #: src/admin-pages/views/RulesTab.js:415
@@ -315,13 +308,13 @@ msgstr ""
 msgid "Delete"
 msgstr ""
 
-#: admin/agents.php:354
-#: admin/agents.php:628
+#: admin/agents.php:343
+#: admin/agents.php:617
 msgid "Apply"
 msgstr ""
 
-#: admin/agents.php:367
-#: admin/agents.php:599
+#: admin/agents.php:356
+#: admin/agents.php:588
 #: admin/conversations.php:219
 #: admin/deployment/deployment-admin-bar.php:199
 #: admin/deployment/deployment-event-listeners.php:157
@@ -348,14 +341,14 @@ msgstr ""
 #: src/admin-pages/views/RoutinesView.js:938
 #: src/admin-pages/views/RulesTab.js:361
 #: src/admin-pages/views/SkillsView.js:213
-#: src/settings-app/index.js:1718
-#: src/settings-app/index.js:2328
+#: src/settings-app/index.js:1705
+#: src/settings-app/index.js:2315
 #: src/tasks-app/index.js:684
 msgid "Agent"
 msgstr ""
 
-#: admin/agents.php:370
-#: admin/agents.php:602
+#: admin/agents.php:359
+#: admin/agents.php:591
 #: admin/deployment/deployment-scheduled-tasks.php:295
 #: admin/run-task.php:99
 #: admin/skills.php:332
@@ -369,129 +362,129 @@ msgstr ""
 msgid "Description"
 msgstr ""
 
-#: admin/agents.php:373
-#: admin/agents.php:502
-#: admin/agents.php:605
+#: admin/agents.php:362
+#: admin/agents.php:491
+#: admin/agents.php:594
 #: includes/class-admin-settings-rest.php:162
-#: src/settings-app/index.js:2300
+#: src/settings-app/index.js:2287
 msgid "MCP"
 msgstr ""
 
-#: admin/agents.php:376
-#: admin/agents.php:512
-#: admin/agents.php:608
+#: admin/agents.php:365
+#: admin/agents.php:501
+#: admin/agents.php:597
 msgid "WebMCP"
 msgstr ""
 
-#: admin/agents.php:379
-#: admin/agents.php:521
-#: admin/agents.php:611
+#: admin/agents.php:368
+#: admin/agents.php:510
+#: admin/agents.php:600
 msgid "WhatsApp"
 msgstr ""
 
-#: admin/agents.php:436
+#: admin/agents.php:425
 msgid "Are you sure you want to delete this agent?"
 msgstr ""
 
 #. translators: %s: agent version number
-#: admin/agents.php:452
+#: admin/agents.php:441
 #, php-format
 msgid "Version %s"
 msgstr ""
 
-#: admin/agents.php:460
+#: admin/agents.php:449
 msgid "By"
 msgstr ""
 
-#: admin/agents.php:475
+#: admin/agents.php:464
 msgid "Signature:"
 msgstr ""
 
-#: admin/agents.php:477
+#: admin/agents.php:466
 msgid "Pass"
 msgstr ""
 
-#: admin/agents.php:477
+#: admin/agents.php:466
 msgid "Mismatch"
 msgstr ""
 
 #. translators: %s: comma-separated list of agent capabilities
-#: admin/agents.php:494
+#: admin/agents.php:483
 #, php-format
 msgid "Capabilities: %s"
 msgstr ""
 
-#: admin/agents.php:504
-#: admin/agents.php:505
+#: admin/agents.php:493
+#: admin/agents.php:494
 msgid "Reachable via MCP"
 msgstr ""
 
-#: admin/agents.php:507
+#: admin/agents.php:496
 msgid "Not reachable via MCP"
 msgstr ""
 
-#: admin/agents.php:514
-#: admin/agents.php:515
+#: admin/agents.php:503
+#: admin/agents.php:504
 msgid "Reachable via WebMCP"
 msgstr ""
 
-#: admin/agents.php:517
-#: admin/agents.php:518
+#: admin/agents.php:506
+#: admin/agents.php:507
 msgid "Not reachable via WebMCP"
 msgstr ""
 
-#: admin/agents.php:523
-#: admin/agents.php:524
+#: admin/agents.php:512
+#: admin/agents.php:513
 msgid "Reachable via WhatsApp"
 msgstr ""
 
-#: admin/agents.php:526
-#: admin/agents.php:527
+#: admin/agents.php:515
+#: admin/agents.php:516
 msgid "Not reachable via WhatsApp"
 msgstr ""
 
 #. translators: 1: assistant name 2: new version number 3: details URL 4: zip download URL 5: slug 6: nonce
-#: admin/agents.php:543
+#: admin/agents.php:532
 #, php-format
 msgid "There is a new version of <strong>%1$s</strong> available. <a href=\"%3$s\" target=\"_blank\">View version %2$s details</a> or <a href=\"#\" class=\"agentic-update-now\" data-slug=\"%5$s\" data-nonce=\"%6$s\" data-url=\"%4$s\">update now</a>."
 msgstr ""
 
 #. translators: 1: assistant name 2: new version number 3: details URL
-#: admin/agents.php:569
+#: admin/agents.php:558
 #, php-format
 msgid "There is a new version of <strong>%1$s</strong> available. <a href=\"%3$s\" target=\"_blank\">View version %2$s details</a>."
 msgstr ""
 
-#: admin/agents.php:661
+#: admin/agents.php:650
 msgid "Please select a bulk action."
 msgstr ""
 
-#: admin/agents.php:662
+#: admin/agents.php:651
 msgid "Please select at least one agent."
 msgstr ""
 
-#: admin/agents.php:663
+#: admin/agents.php:652
 msgid "Are you sure you want to delete the selected agents?"
 msgstr ""
 
-#: admin/agents.php:665
+#: admin/agents.php:654
 #: admin/settings-llm.php:281
 msgid "Updating…"
 msgstr ""
 
-#: admin/agents.php:666
+#: admin/agents.php:655
 msgid "Update failed: "
 msgstr ""
 
-#: admin/agents.php:667
+#: admin/agents.php:656
 msgid "Unknown error."
 msgstr ""
 
-#: admin/agents.php:668
+#: admin/agents.php:657
 msgid "update now"
 msgstr ""
 
-#: admin/agents.php:669
+#: admin/agents.php:658
 msgid "Update failed due to a network error."
 msgstr ""
 
@@ -647,7 +640,7 @@ msgstr ""
 
 #: admin/approvals.php:275
 #: admin/settings-memory.php:197
-#: admin/train-data.php:253
+#: admin/train-data.php:249
 #: includes/class-gdpr.php:756
 #: src/admin-pages/views/TrainView.js:21
 msgid "Type"
@@ -714,15 +707,15 @@ msgstr ""
 #: admin/providers.php:368
 #: admin/settings-llm.php:167
 #: admin/skills.php:564
-#: admin/train-data.php:319
+#: admin/train-data.php:315
 #: includes/class-gdpr.php:587
 #: includes/class-gdpr.php:905
 #: includes/functions.php:62
 #: src/admin-pages/views/TrainView.js:22
-#: src/dashboard-app/index.js:756
+#: src/dashboard-app/index.js:738
 #: src/settings-app/index.js:625
-#: src/settings-app/index.js:2011
-#: src/settings-app/index.js:2331
+#: src/settings-app/index.js:1998
+#: src/settings-app/index.js:2318
 #: src/shared/chat-embed.js:23
 #: src/tasks-app/index.js:69
 msgid "Status"
@@ -1244,7 +1237,7 @@ msgstr ""
 
 #: admin/deployment/deployment-event-listeners.php:99
 #: admin/tools.php:112
-#: admin/train-data.php:358
+#: admin/train-data.php:354
 #: includes/admin-pages/class-tools-payload.php:28
 #: src/admin-pages/views/RoutinesView.js:43
 msgid "Content"
@@ -1258,7 +1251,7 @@ msgid "Comments"
 msgstr ""
 
 #: admin/deployment/deployment-event-listeners.php:116
-#: admin/settings.php:605
+#: admin/settings.php:603
 #: includes/admin-pages/class-tools-payload.php:49
 #: includes/class-admin-settings-rest.php:158
 #: includes/class-admin-surfaces.php:144
@@ -1386,7 +1379,7 @@ msgstr ""
 #: src/admin-pages/views/RulesTab.js:164
 #: src/admin-pages/views/SkillsView.js:363
 #: src/admin-pages/views/ToolsView.js:111
-#: src/dashboard-app/index.js:1474
+#: src/dashboard-app/index.js:1424
 #: src/tasks-app/index.js:1000
 msgid "Cancel"
 msgstr ""
@@ -1467,7 +1460,7 @@ msgstr ""
 
 #: admin/deployment/deployment-event-listeners.php:310
 #: admin/deployment/deployment-scheduled-tasks.php:481
-#: src/dashboard-app/index.js:1466
+#: src/dashboard-app/index.js:1416
 #: src/interface-settings/index.js:378
 #: src/shared/components.js:113
 msgid "Saving…"
@@ -1932,7 +1925,7 @@ msgstr ""
 #: src/admin-pages/views/RoutinesView.js:567
 #: src/admin-pages/views/RulesTab.js:365
 #: src/admin-pages/views/ToolsView.js:514
-#: src/settings-app/index.js:2330
+#: src/settings-app/index.js:2317
 msgid "Enabled"
 msgstr ""
 
@@ -1977,7 +1970,7 @@ msgid "&larr; Back"
 msgstr ""
 
 #: admin/deployment/deployment-shortcodes.php:341
-#: src/settings-app/index.js:1710
+#: src/settings-app/index.js:1697
 msgid "No active agents."
 msgstr ""
 
@@ -2045,7 +2038,7 @@ msgstr ""
 
 #: admin/logs.php:29
 #: admin/security-log.php:197
-#: admin/settings.php:606
+#: admin/settings.php:604
 #: admin/tools.php:119
 #: admin/tools.php:399
 #: includes/admin-pages/class-logs-payload.php:252
@@ -2064,7 +2057,7 @@ msgstr ""
 #: includes/class-admin-menu-handler.php:449
 #: src/admin-pages/views/SafetyCenterView.js:811
 #: src/dashboard-activity/index.js:88
-#: src/dashboard-app/index.js:1102
+#: src/dashboard-app/index.js:1062
 msgid "Activity"
 msgstr ""
 
@@ -2101,16 +2094,16 @@ msgstr ""
 #: admin/settings-llm.php:164
 #: assets/js/gutenberg-blocks.js:329
 #: src/agent-wizard/index.js:584
-#: src/dashboard-app/index.js:1249
+#: src/dashboard-app/index.js:1202
 #: src/settings-app/index.js:628
-#: src/settings-app/index.js:1724
+#: src/settings-app/index.js:1711
 msgid "Model"
 msgstr ""
 
 #: admin/partials/chat-playground-panel.php:66
 #: assets/js/gutenberg-blocks.js:320
-#: src/dashboard-app/index.js:1238
-#: src/settings-app/index.js:1721
+#: src/dashboard-app/index.js:1191
+#: src/settings-app/index.js:1708
 msgid "Provider"
 msgstr ""
 
@@ -2119,9 +2112,9 @@ msgid "Vision model"
 msgstr ""
 
 #: admin/partials/chat-playground-panel.php:87
-#: admin/train-data.php:48
+#: admin/train-data.php:44
 #: src/agent-wizard/index.js:747
-#: src/settings-app/index.js:1921
+#: src/settings-app/index.js:1908
 msgid "Instructions"
 msgstr ""
 
@@ -2222,7 +2215,7 @@ msgstr ""
 
 #: admin/providers.php:384
 #: src/settings-app/index.js:643
-#: src/settings-app/index.js:2332
+#: src/settings-app/index.js:2319
 msgid "Connected"
 msgstr ""
 
@@ -2234,7 +2227,7 @@ msgstr ""
 #: admin/providers.php:471
 #: admin/settings-endpoints.php:180
 #: assets/js/gutenberg-blocks.js:65
-#: src/dashboard-app/index.js:1272
+#: src/dashboard-app/index.js:1225
 #: src/settings-app/index.js:672
 msgid "Default"
 msgstr ""
@@ -2623,17 +2616,17 @@ msgid "Clearing an overridden URL (or saving an empty field) resets it to the bu
 msgstr ""
 
 #: admin/settings-endpoints.php:126
-#: src/settings-app/index.js:2010
+#: src/settings-app/index.js:1997
 msgid "Service"
 msgstr ""
 
 #: admin/settings-endpoints.php:127
-#: src/settings-app/index.js:2124
+#: src/settings-app/index.js:2111
 msgid "Base URL"
 msgstr ""
 
 #: admin/settings-endpoints.php:157
-#: src/settings-app/index.js:2200
+#: src/settings-app/index.js:2187
 msgid "Default:"
 msgstr ""
 
@@ -2762,7 +2755,7 @@ msgstr ""
 #: admin/settings-llm.php:272
 #: includes/class-admin-menu-handler.php:1401
 #: src/admin-pages/views/AdminPageFooter.js:41
-#: src/dashboard-app/index.js:615
+#: src/dashboard-app/index.js:597
 #: src/settings-app/index.js:109
 msgid "Terms of Service"
 msgstr ""
@@ -2823,7 +2816,7 @@ msgid "Entity"
 msgstr ""
 
 #: admin/settings-memory.php:199
-#: src/settings-app/index.js:2012
+#: src/settings-app/index.js:1999
 msgid "Key"
 msgstr ""
 
@@ -2844,78 +2837,78 @@ msgstr ""
 msgid "Delete this memory?"
 msgstr ""
 
-#: admin/settings.php:169
+#: admin/settings.php:168
 msgid "Settings reset to defaults."
 msgstr ""
 
 #. translators: %s is the name of the LLM provider set as global default.
-#: admin/settings.php:537
+#: admin/settings.php:535
 #, php-format
 msgid "Settings saved with %s as Global provider."
 msgstr ""
 
-#: admin/settings.php:539
+#: admin/settings.php:537
 #: includes/class-admin-ajax.php:1026
 #: src/shared/components.js:135
 msgid "Settings saved."
 msgstr ""
 
-#: admin/settings.php:581
+#: admin/settings.php:579
 #: includes/admin-pages/class-logs-payload.php:214
 #: includes/class-admin-menu-handler.php:300
 #: includes/class-admin-menu-handler.php:495
 #: includes/class-admin-menu-handler.php:805
 #: includes/class-admin-menu-handler.php:1095
 #: includes/class-admin-notice-manager.php:155
-#: siteloom.php:520
-#: src/settings-app/index.js:2864
+#: siteloom.php:521
+#: src/settings-app/index.js:2851
 msgid "Settings"
 msgstr ""
 
-#: admin/settings.php:602
+#: admin/settings.php:600
 #: includes/class-admin-settings-rest.php:155
 #: src/interface-settings/index.js:149
 #: src/settings-app/index.js:298
 msgid "Interface"
 msgstr ""
 
-#: admin/settings.php:604
+#: admin/settings.php:602
 #: includes/class-admin-menu-handler.php:455
 #: includes/class-admin-settings-rest.php:157
 #: src/settings-app/index.js:609
 msgid "Providers"
 msgstr ""
 
-#: admin/settings.php:607
+#: admin/settings.php:605
 #: includes/class-admin-settings-rest.php:160
-#: src/settings-app/index.js:1999
+#: src/settings-app/index.js:1986
 msgid "APIs"
 msgstr ""
 
-#: admin/settings.php:608
+#: admin/settings.php:606
 #: includes/class-admin-settings-rest.php:161
-#: src/settings-app/index.js:2111
+#: src/settings-app/index.js:2098
 msgid "Endpoints"
 msgstr ""
 
-#: admin/settings.php:658
+#: admin/settings.php:656
 #: src/settings-app/index.js:172
 msgid "Search settings…"
 msgstr ""
 
-#: admin/settings.php:658
+#: admin/settings.php:656
 msgid "Search settings"
 msgstr ""
 
-#: admin/settings.php:660
+#: admin/settings.php:658
 msgid "Settings sections"
 msgstr ""
 
-#: admin/settings.php:679
+#: admin/settings.php:677
 msgid "No settings match your search."
 msgstr ""
 
-#: admin/settings.php:732
+#: admin/settings.php:730
 #: src/interface-settings/index.js:379
 #: src/shared/components.js:114
 msgid "Save changes"
@@ -2982,22 +2975,17 @@ msgid "Open Knowledge"
 msgstr ""
 
 #. translators: %s: URL to Settings → Interface
-#: admin/settings/tab-global.php:30
+#: admin/settings/tab-global.php:29
 #, php-format
 msgid "Chat theme and appearance are managed under <a href=\"%s\"><strong>Interface</strong></a>."
 msgstr ""
 
-#: admin/settings/tab-global.php:124
+#: admin/settings/tab-global.php:123
 msgid "Hide “Powered by Siteloom” branding (default on — credits stay off the site unless you uncheck this)"
 msgstr ""
 
-#: admin/settings/tab-global.php:126
+#: admin/settings/tab-global.php:125
 msgid "When unchecked, a small credit line appears in the chat footer. WordPress.org requires this to stay hidden unless you opt in."
-msgstr ""
-
-#: admin/settings/tab-global.php:129
-#: src/settings-app/index.js:1689
-msgid "Show the WhatsApp Pro promo in admin chat"
 msgstr ""
 
 #: admin/settings/tab-instructions.php:28
@@ -3061,9 +3049,9 @@ msgid "Connect"
 msgstr ""
 
 #: admin/setup.php:426
-#: src/dashboard-app/index.js:1283
-#: src/settings-app/index.js:2183
-#: src/settings-app/index.js:2420
+#: src/dashboard-app/index.js:1236
+#: src/settings-app/index.js:2170
+#: src/settings-app/index.js:2407
 msgid "Test"
 msgstr ""
 
@@ -3216,6 +3204,8 @@ msgstr ""
 
 #: admin/setup.php:872
 #: includes/site-brief/class-site-brief-controller.php:313
+#: includes/site-brief/class-site-brief-controller.php:325
+#: includes/site-brief/class-site-brief-controller.php:526
 msgid "WordPress Assistant"
 msgstr ""
 
@@ -3337,7 +3327,7 @@ msgstr ""
 #: src/agent-wizard/index.js:312
 #: src/deploy-wizard/index.js:197
 #: src/knowledge-wizard/index.js:363
-#: src/settings-app/index.js:2596
+#: src/settings-app/index.js:2583
 #: src/shared/components.js:91
 #: src/tasks-app/index.js:884
 msgid "Loading…"
@@ -3667,7 +3657,7 @@ msgstr ""
 #: admin/skills.php:570
 #: src/admin-pages/views/AgentsView.js:535
 #: src/admin-pages/views/SkillsView.js:218
-#: src/dashboard-app/index.js:790
+#: src/dashboard-app/index.js:750
 msgid "Version"
 msgstr ""
 
@@ -3820,7 +3810,7 @@ msgid "Local"
 msgstr ""
 
 #: admin/skills.php:634
-#: admin/train-data.php:209
+#: admin/train-data.php:205
 #: src/admin-pages/views/AgentsView.js:160
 #: src/admin-pages/views/SkillsView.js:301
 msgid "Export"
@@ -4203,49 +4193,49 @@ msgstr ""
 msgid "changes the deployed codebase"
 msgstr ""
 
-#: admin/train-data.php:47
-#: admin/train-data.php:197
+#: admin/train-data.php:43
+#: admin/train-data.php:193
 msgid "Wiki"
 msgstr ""
 
-#: admin/train-data.php:49
+#: admin/train-data.php:45
 #: src/settings-app/index.js:1489
 msgid "Memory"
 msgstr ""
 
-#: admin/train-data.php:52
+#: admin/train-data.php:48
 #: includes/admin-pages/class-train-payload.php:49
 msgid "Vector Store"
 msgstr ""
 
-#: admin/train-data.php:58
+#: admin/train-data.php:54
 msgid "Facts, policies, and FAQs every agent can look up — the site's shared source of truth."
 msgstr ""
 
-#: admin/train-data.php:59
+#: admin/train-data.php:55
 msgid "How one specific agent talks: its tone, greeting, and persona. Not shared facts — that's the Wiki."
 msgstr ""
 
-#: admin/train-data.php:60
+#: admin/train-data.php:56
 msgid "Short notes an agent keeps between chats, e.g. things a user told it. Optional and site-owned."
 msgstr ""
 
-#: admin/train-data.php:61
+#: admin/train-data.php:57
 msgid "Hosted semantic search over large documents (PDFs, long pages) for faster, more precise recall."
 msgstr ""
 
-#: admin/train-data.php:64
+#: admin/train-data.php:60
 msgid "Site-wide wiki"
 msgstr ""
 
 #. translators: %s: agent name
-#: admin/train-data.php:70
+#: admin/train-data.php:66
 #, php-format
 msgid "Agent: %s"
 msgstr ""
 
-#: admin/train-data.php:85
-#: admin/train-data.php:114
+#: admin/train-data.php:81
+#: admin/train-data.php:110
 #: includes/admin-pages/class-train-payload.php:35
 #: includes/class-admin-menu-handler.php:206
 #: includes/class-admin-menu-handler.php:443
@@ -4256,83 +4246,83 @@ msgstr ""
 msgid "Knowledge"
 msgstr ""
 
-#: admin/train-data.php:100
+#: admin/train-data.php:96
 msgid "What do you want your agents to know?"
 msgstr ""
 
-#: admin/train-data.php:101
+#: admin/train-data.php:97
 msgid "Teach them a fact, policy, or FAQ in a few steps. Paste text, upload a file, or pick pages that already exist on this site."
 msgstr ""
 
-#: admin/train-data.php:104
-#: admin/train-data.php:379
+#: admin/train-data.php:100
+#: admin/train-data.php:375
 #: includes/class-dashboard-rest.php:294
 #: includes/class-dashboard-rest.php:296
 msgid "Add knowledge"
 msgstr ""
 
-#: admin/train-data.php:115
+#: admin/train-data.php:111
 msgid "Teach your agents what is true"
 msgstr ""
 
-#: admin/train-data.php:117
+#: admin/train-data.php:113
 msgid "The free Knowledge Wiki uses Google’s Open Knowledge Format (OKF): plain markdown concepts you can version, search, and maintain like a document library — entirely on your server."
 msgstr ""
 
-#: admin/train-data.php:131
+#: admin/train-data.php:127
 msgid "Docs →"
 msgstr ""
 
-#: admin/train-data.php:150
+#: admin/train-data.php:146
 msgid "Knowledge sections"
 msgstr ""
 
-#: admin/train-data.php:186
+#: admin/train-data.php:182
 msgid "Settings UI is unavailable. Rebuild agent-builder assets."
 msgstr ""
 
-#: admin/train-data.php:205
+#: admin/train-data.php:201
 msgid "Search concepts…"
 msgstr ""
 
-#: admin/train-data.php:208
+#: admin/train-data.php:204
 msgid "Guided setup"
 msgstr ""
 
-#: admin/train-data.php:210
+#: admin/train-data.php:206
 msgid "Import persona text"
 msgstr ""
 
-#: admin/train-data.php:211
+#: admin/train-data.php:207
 msgid "New concept"
 msgstr ""
 
-#: admin/train-data.php:219
+#: admin/train-data.php:215
 msgid "concepts"
 msgstr ""
 
-#: admin/train-data.php:221
+#: admin/train-data.php:217
 msgid "Concepts"
 msgstr ""
 
-#: admin/train-data.php:223
+#: admin/train-data.php:219
 msgid "No concepts yet. Create a FAQ, policy, or product fact to get started."
 msgstr ""
 
-#: admin/train-data.php:226
+#: admin/train-data.php:222
 msgid "No concepts match your search. Try a different keyword or clear the search."
 msgstr ""
 
-#: admin/train-data.php:232
+#: admin/train-data.php:228
 #: src/admin-pages/views/TrainView.js:20
 msgid "Concept"
 msgstr ""
 
-#: admin/train-data.php:235
+#: admin/train-data.php:231
 msgid "Save concept"
 msgstr ""
 
-#: admin/train-data.php:241
+#: admin/train-data.php:237
 #: includes/class-gdpr.php:764
 #: includes/functions.php:61
 #: src/admin-pages/views/AgentsView.js:304
@@ -4342,155 +4332,151 @@ msgstr ""
 msgid "Title"
 msgstr ""
 
-#: admin/train-data.php:242
+#: admin/train-data.php:238
 msgid "Returns policy"
 msgstr ""
 
-#: admin/train-data.php:246
+#: admin/train-data.php:242
 msgid "ID"
 msgstr ""
 
-#: admin/train-data.php:247
+#: admin/train-data.php:243
 msgid "About ID"
 msgstr ""
 
-#: admin/train-data.php:247
+#: admin/train-data.php:243
 msgid "Short name for this concept (e.g. returns-policy). Filled in for you from the title if left blank."
 msgstr ""
 
-#: admin/train-data.php:254
+#: admin/train-data.php:250
 msgid "About type"
 msgstr ""
 
-#: admin/train-data.php:254
+#: admin/train-data.php:250
 msgid "What kind of knowledge this is. Choose Custom to enter your own."
 msgstr ""
 
-#: admin/train-data.php:299
+#: admin/train-data.php:295
 msgid "Custom…"
 msgstr ""
 
-#: admin/train-data.php:306
+#: admin/train-data.php:302
 msgid "Your type"
 msgstr ""
 
-#: admin/train-data.php:312
+#: admin/train-data.php:308
 msgid "Keywords"
 msgstr ""
 
-#: admin/train-data.php:313
+#: admin/train-data.php:309
 msgid "About keywords"
 msgstr ""
 
-#: admin/train-data.php:313
+#: admin/train-data.php:309
 msgid "Optional keywords, comma-separated. Not WordPress post tags."
 msgstr ""
 
-#: admin/train-data.php:315
+#: admin/train-data.php:311
 msgid "shipping, returns"
 msgstr ""
 
-#: admin/train-data.php:320
+#: admin/train-data.php:316
 msgid "About status"
 msgstr ""
 
-#: admin/train-data.php:320
+#: admin/train-data.php:316
 msgid "Draft = work in progress. Stable = ready. Deprecated = keep for history, prefer not to use."
 msgstr ""
 
-#: admin/train-data.php:323
+#: admin/train-data.php:319
 #: includes/admin-pages/class-skills-payload.php:29
 #: src/admin-pages/views/SkillsView.js:156
 #: src/admin-pages/views/SkillsView.js:167
 msgid "Draft"
 msgstr ""
 
-#: admin/train-data.php:324
+#: admin/train-data.php:320
 msgid "Stable"
 msgstr ""
 
-#: admin/train-data.php:325
+#: admin/train-data.php:321
 msgid "Deprecated"
 msgstr ""
 
-#: admin/train-data.php:330
+#: admin/train-data.php:326
 msgid "Review by"
 msgstr ""
 
-#: admin/train-data.php:331
+#: admin/train-data.php:327
 msgid "About review date"
 msgstr ""
 
-#: admin/train-data.php:331
+#: admin/train-data.php:327
 msgid "Optional. After this date the concept is marked as needing a refresh."
 msgstr ""
 
-#: admin/train-data.php:338
+#: admin/train-data.php:334
 msgid "Example"
 msgstr ""
 
-#: admin/train-data.php:339
+#: admin/train-data.php:335
 msgid "Demo only — agents cannot use this until you uncheck Example and adapt it for your site."
 msgstr ""
 
-#: admin/train-data.php:345
+#: admin/train-data.php:341
 msgid "Always include in prompts"
 msgstr ""
 
-#: admin/train-data.php:346
+#: admin/train-data.php:342
 msgid "— inject this concept into every agent’s system prompt (best for site overview, tone, standing policies). Keep short."
 msgstr ""
 
-#: admin/train-data.php:351
+#: admin/train-data.php:347
 msgid "Summary"
 msgstr ""
 
-#: admin/train-data.php:352
+#: admin/train-data.php:348
 msgid "About summary"
 msgstr ""
 
-#: admin/train-data.php:352
+#: admin/train-data.php:348
 msgid "One sentence for the list and search results."
 msgstr ""
 
-#: admin/train-data.php:354
+#: admin/train-data.php:350
 msgid "One sentence that sums this up."
 msgstr ""
 
-#: admin/train-data.php:359
+#: admin/train-data.php:355
 msgid "About content"
 msgstr ""
 
-#: admin/train-data.php:359
+#: admin/train-data.php:355
 msgid "What agents should know. Write plainly; Markdown is optional."
 msgstr ""
 
-#: admin/train-data.php:361
+#: admin/train-data.php:357
 msgid "We accept returns within 30 days with proof of purchase…"
 msgstr ""
 
-#: admin/train-data.php:365
+#: admin/train-data.php:361
 msgid "Related link (optional)"
 msgstr ""
 
-#: admin/train-data.php:366
+#: admin/train-data.php:362
 msgid "About related link"
 msgstr ""
 
-#: admin/train-data.php:366
+#: admin/train-data.php:362
 msgid "Link to a page or doc this is about. Content above is still the main knowledge."
 msgstr ""
 
-#: admin/train-data.php:377
+#: admin/train-data.php:373
 msgid "Your knowledge wiki"
 msgstr ""
 
-#: admin/train-data.php:378
+#: admin/train-data.php:374
 msgid "Add facts, policies, and FAQs your agents can use."
-msgstr ""
-
-#: admin/train-data.php:398
-msgid "Pro is active but the Vector Store admin UI was not found. Reinstall or update Siteloom Pro."
 msgstr ""
 
 #: includes/admin-pages/class-admin-profiles.php:39
@@ -4592,8 +4578,8 @@ msgid "Individual tools were toggled outside a profile."
 msgstr ""
 
 #: includes/admin-pages/class-agent-ready-payload.php:25
-#: src/dashboard-app/index.js:1011
-#: src/dashboard-app/index.js:1063
+#: src/dashboard-app/index.js:971
+#: src/dashboard-app/index.js:1023
 msgid "Site Passport"
 msgstr ""
 
@@ -5073,7 +5059,7 @@ msgid "Agents only use the tools you allow. Higher-risk actions still follow App
 msgstr ""
 
 #: includes/admin-pages/class-train-payload.php:36
-msgid "Wiki concepts (OKF) and optional Pro vector store."
+msgid "Wiki concepts (OKF) your agents can look up."
 msgstr ""
 
 #: includes/admin-pages/class-train-payload.php:44
@@ -5239,7 +5225,7 @@ msgstr ""
 
 #: includes/class-admin-bar-inbox.php:56
 #: includes/class-admin-menu-handler.php:92
-#: src/dashboard-app/index.js:914
+#: src/dashboard-app/index.js:874
 #: src/tasks-app/index.js:659
 msgid "Tasks"
 msgstr ""
@@ -5530,35 +5516,35 @@ msgstr ""
 
 #: includes/class-admin-menu-handler.php:1392
 #: src/admin-pages/views/AdminPageFooter.js:23
-#: src/dashboard-app/index.js:593
+#: src/dashboard-app/index.js:575
 #: src/settings-app/index.js:91
 msgid "Need help?"
 msgstr ""
 
 #: includes/class-admin-menu-handler.php:1393
 #: src/admin-pages/views/AdminPageFooter.js:25
-#: src/dashboard-app/index.js:599
+#: src/dashboard-app/index.js:581
 #: src/settings-app/index.js:93
 msgid "Visit our Support Center"
 msgstr ""
 
 #: includes/class-admin-menu-handler.php:1395
 #: src/admin-pages/views/AdminPageFooter.js:29
-#: src/dashboard-app/index.js:603
+#: src/dashboard-app/index.js:585
 #: src/settings-app/index.js:97
 msgid "Documentation"
 msgstr ""
 
 #: includes/class-admin-menu-handler.php:1403
 #: src/admin-pages/views/AdminPageFooter.js:52
-#: src/dashboard-app/index.js:626
+#: src/dashboard-app/index.js:608
 #: src/settings-app/index.js:120
 msgid "Privacy Policy"
 msgstr ""
 
 #: includes/class-admin-menu-handler.php:1405
 #: src/admin-pages/views/AdminPageFooter.js:62
-#: src/dashboard-app/index.js:636
+#: src/dashboard-app/index.js:618
 #: src/settings-app/index.js:130
 msgid "GDPR Policy"
 msgstr ""
@@ -5627,7 +5613,7 @@ msgstr ""
 #: includes/class-admin-notice-manager.php:255
 #: includes/class-chat-assets.php:62
 #: src/admin-pages/views/ApprovalsView.js:498
-#: src/dashboard-app/index.js:507
+#: src/dashboard-app/index.js:489
 msgid "Dismiss"
 msgstr ""
 
@@ -5875,7 +5861,7 @@ msgstr ""
 msgid "Deep blue with teal highlights."
 msgstr ""
 
-#: includes/class-admin-settings-rest.php:854
+#: includes/class-admin-settings-rest.php:853
 msgid "REST and webhook endpoints for integrations. Full editor remains available via Advanced tools."
 msgstr ""
 
@@ -6221,7 +6207,7 @@ msgid "Agent is already active."
 msgstr ""
 
 #: includes/class-agent-registry.php:525
-msgid "This agent is a purchased add-on that needs a license, and this build cannot verify licenses. Activate it on the Siteloom installation it was purchased for."
+msgid "This agent needs a license key, and this build cannot verify license keys, so it cannot be activated here."
 msgstr ""
 
 #. translators: %s: validation errors
@@ -6559,7 +6545,7 @@ msgstr ""
 msgid "Browse agents"
 msgstr ""
 
-#: includes/class-dashboard-rest.php:454
+#: includes/class-dashboard-rest.php:451
 msgid "Unknown dashboard action."
 msgstr ""
 
@@ -6866,6 +6852,19 @@ msgstr ""
 
 #: includes/class-knowledge-wizard-rest.php:193
 msgid "Added from pasted text."
+msgstr ""
+
+#. translators: %d: number of Application Passwords removed.
+#: includes/class-legacy-relay-passwords.php:157
+#, php-format
+msgid "Siteloom removed %d old relay connection password. If you connect AI apps over MCP, create a new Application Password in your profile."
+msgid_plural "Siteloom removed %d old relay connection passwords. If you connect AI apps over MCP, create a new Application Password in your profile."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/class-legacy-relay-passwords.php:167
+#: src/settings-app/index.js:2454
+msgid "Open your profile"
 msgstr ""
 
 #: includes/class-llm-client.php:233
@@ -8374,12 +8373,12 @@ msgid "Preparing audio…"
 msgstr ""
 
 #: includes/functions.php:33
-#: src/settings-app/index.js:2354
+#: src/settings-app/index.js:2341
 msgid "Copied!"
 msgstr ""
 
 #: includes/functions.php:34
-#: src/settings-app/index.js:2358
+#: src/settings-app/index.js:2345
 msgid "Copy"
 msgstr ""
 
@@ -8904,17 +8903,17 @@ msgstr ""
 msgid "That Site Brief card was not found."
 msgstr ""
 
-#: includes/site-brief/class-site-brief-controller.php:370
+#: includes/site-brief/class-site-brief-controller.php:366
 msgid "That assignment message is no longer available."
 msgstr ""
 
 #. translators: %s: Site Brief card title.
-#: includes/site-brief/class-site-brief-controller.php:617
+#: includes/site-brief/class-site-brief-controller.php:612
 #, php-format
 msgid "Site Brief flagged this on my site: \"%s\"."
 msgstr ""
 
-#: includes/site-brief/class-site-brief-controller.php:626
+#: includes/site-brief/class-site-brief-controller.php:621
 msgid "Please investigate this on my site and help me fix it safely — explain what you find, and ask me before making any change."
 msgstr ""
 
@@ -9016,23 +9015,23 @@ msgstr ""
 msgid "not signed in"
 msgstr ""
 
-#: siteloom.php:417
+#: siteloom.php:418
 msgid "When you delete the plugin, conversations, logs, API keys, settings, every Siteloom database table (including the agents and skills you created or bought) and its data folder in uploads (the agent folders you built, automatic backups, knowledge files and generated documents) are permanently removed."
 msgstr ""
 
-#: siteloom.php:418
+#: siteloom.php:419
 msgid "When you delete the plugin, all Siteloom data, including the agents and skills you created or bought and all automatic backups, will be permanently deleted. This cannot be undone. Continue?"
 msgstr ""
 
-#: siteloom.php:419
+#: siteloom.php:420
 msgid "Delete everything"
 msgstr ""
 
-#: siteloom.php:443
+#: siteloom.php:444
 msgid "Chat with an AI Agent"
 msgstr ""
 
-#: siteloom.php:496
+#: siteloom.php:497
 msgid "Helper"
 msgstr ""
 
@@ -10443,21 +10442,21 @@ msgid "View raw Activity / Audit log"
 msgstr ""
 
 #: src/admin-pages/views/SafetyCenterView.js:509
-#: src/dashboard-app/index.js:1306
+#: src/dashboard-app/index.js:1259
 #: src/interface-settings/index.js:336
-#: src/settings-app/index.js:1879
+#: src/settings-app/index.js:1866
 msgid "EMERGENCY STOP: deactivate and log agent states, cancel all jobs, and disconnect providers. Continue?"
 msgstr ""
 
 #: src/admin-pages/views/SafetyCenterView.js:513
-#: src/dashboard-app/index.js:1310
+#: src/dashboard-app/index.js:1263
 #: src/interface-settings/index.js:340
-#: src/settings-app/index.js:1883
+#: src/settings-app/index.js:1870
 msgid "Turn off emergency stop?"
 msgstr ""
 
 #: src/admin-pages/views/SafetyCenterView.js:530
-#: src/dashboard-app/index.js:1320
+#: src/dashboard-app/index.js:1273
 msgid "Emergency stop restore finished with warnings:"
 msgstr ""
 
@@ -10526,9 +10525,9 @@ msgid "Restore agent system"
 msgstr ""
 
 #: src/admin-pages/views/SafetyCenterView.js:732
-#: src/dashboard-app/index.js:1508
+#: src/dashboard-app/index.js:1458
 #: src/interface-settings/index.js:318
-#: src/settings-app/index.js:1864
+#: src/settings-app/index.js:1851
 msgid "Disable All Agents"
 msgstr ""
 
@@ -10892,7 +10891,7 @@ msgid "If you don’t pick any, a safe set of read-only tools is added so your a
 msgstr ""
 
 #: src/agent-wizard/index.js:677
-msgid "Knowledge uses the Agentic AI service. Connect your license to train agents on your content."
+msgid "Every agent can look up the facts, policies and FAQs in your Knowledge wiki."
 msgstr ""
 
 #: src/agent-wizard/index.js:680
@@ -10943,7 +10942,7 @@ msgid "Continue"
 msgstr ""
 
 #: src/dashboard-activity/index.js:93
-#: src/dashboard-app/index.js:1108
+#: src/dashboard-app/index.js:1068
 msgid "View Activity →"
 msgstr ""
 
@@ -10952,37 +10951,37 @@ msgid "Could not load activity."
 msgstr ""
 
 #: src/dashboard-activity/index.js:106
-#: src/dashboard-app/index.js:1114
+#: src/dashboard-app/index.js:1074
 msgid "Total Actions"
 msgstr ""
 
 #: src/dashboard-activity/index.js:111
-#: src/dashboard-app/index.js:1119
+#: src/dashboard-app/index.js:1079
 msgid "Tokens Used"
 msgstr ""
 
 #: src/dashboard-activity/index.js:119
-#: src/dashboard-app/index.js:1127
+#: src/dashboard-app/index.js:1087
 msgid "Est. Cost"
 msgstr ""
 
 #: src/dashboard-activity/index.js:120
-#: src/dashboard-app/index.js:1128
+#: src/dashboard-app/index.js:1088
 msgid "Estimated Usage"
 msgstr ""
 
 #: src/dashboard-activity/index.js:127
-#: src/dashboard-app/index.js:1135
+#: src/dashboard-app/index.js:1095
 msgid "Active Agents"
 msgstr ""
 
 #: src/dashboard-activity/index.js:132
-#: src/dashboard-app/index.js:1140
+#: src/dashboard-app/index.js:1100
 msgid "Uploaded Agents"
 msgstr ""
 
 #: src/dashboard-activity/index.js:137
-#: src/dashboard-app/index.js:1145
+#: src/dashboard-app/index.js:1105
 msgid "User-Created Agents"
 msgstr ""
 
@@ -11027,7 +11026,7 @@ msgid "Could not load Site Brief."
 msgstr ""
 
 #: src/dashboard-app/index.js:233
-#: src/dashboard-app/index.js:998
+#: src/dashboard-app/index.js:958
 msgid "Scan failed."
 msgstr ""
 
@@ -11054,7 +11053,7 @@ msgid "No urgent items. Last scan %s."
 msgstr ""
 
 #: src/dashboard-app/index.js:384
-#: src/dashboard-app/index.js:546
+#: src/dashboard-app/index.js:528
 msgid "Scan again"
 msgstr ""
 
@@ -11064,352 +11063,322 @@ msgstr ""
 msgid "Assigned to %s on %s"
 msgstr ""
 
-#: src/dashboard-app/index.js:459
-msgid "This finding needs a premium agent. Opens the marketplace in a new tab to get it."
-msgstr ""
-
-#. translators: %s: recommended agent display name.
-#: src/dashboard-app/index.js:467
-#, js-format
-msgid "Get %s"
-msgstr ""
-
-#: src/dashboard-app/index.js:474
+#: src/dashboard-app/index.js:456
 msgid "Open the recommended agent in chat with this finding, to investigate and fix it together"
 msgstr ""
 
-#: src/dashboard-app/index.js:487
+#: src/dashboard-app/index.js:469
 msgid "Assign Agent"
 msgstr ""
 
-#: src/dashboard-app/index.js:495
+#: src/dashboard-app/index.js:477
 msgid "Dismiss to hide this card. It will not return unless the finding changes."
 msgstr ""
 
-#: src/dashboard-app/index.js:511
+#: src/dashboard-app/index.js:493
 msgid "Not now leaves it for later. It may reappear on the next scan."
 msgstr ""
 
-#: src/dashboard-app/index.js:520
+#: src/dashboard-app/index.js:502
 msgid "Not now"
 msgstr ""
 
 #. translators: %d: hidden card count.
-#: src/dashboard-app/index.js:534
+#: src/dashboard-app/index.js:516
 #, js-format
 msgid "Show all (%d)"
 msgstr ""
 
 #. translators: 1: order count, 2: revenue, 3: currency.
-#: src/dashboard-app/index.js:556
+#: src/dashboard-app/index.js:538
 #, js-format
 msgid "Store this month: %1$s orders, %2$s %3$s."
 msgstr ""
 
-#: src/dashboard-app/index.js:580
+#: src/dashboard-app/index.js:562
 msgid "The dashboard summarizes agents, approvals, activity, and providers at a glance."
 msgstr ""
 
-#: src/dashboard-app/index.js:693
+#: src/dashboard-app/index.js:675
 msgid "Drag to rearrange"
 msgstr ""
 
-#: src/dashboard-app/index.js:701
+#: src/dashboard-app/index.js:683
 msgid "Drag to rearrange dashboard card"
 msgstr ""
 
-#: src/dashboard-app/index.js:763
-msgid "Manage License →"
-msgstr ""
-
-#: src/dashboard-app/index.js:769
+#: src/dashboard-app/index.js:741
 msgid "License"
 msgstr ""
 
-#: src/dashboard-app/index.js:785
-msgid "Renew"
-msgstr ""
-
-#: src/dashboard-app/index.js:794
+#: src/dashboard-app/index.js:754
 msgid "Schema"
 msgstr ""
 
-#: src/dashboard-app/index.js:795
+#: src/dashboard-app/index.js:755
 msgid "The version of Siteloom’s database structure. Updates automatically when needed — you don’t need to do anything here."
 msgstr ""
 
-#: src/dashboard-app/index.js:803
+#: src/dashboard-app/index.js:763
 msgid "Pending Jobs"
 msgstr ""
 
-#: src/dashboard-app/index.js:809
+#: src/dashboard-app/index.js:769
 msgid "abandoned — auto-recovered"
 msgstr ""
 
-#: src/dashboard-app/index.js:817
+#: src/dashboard-app/index.js:777
 msgid "Running Jobs"
 msgstr ""
 
-#: src/dashboard-app/index.js:823
+#: src/dashboard-app/index.js:783
 msgid "stuck — auto-recovered"
 msgstr ""
 
-#: src/dashboard-app/index.js:827
+#: src/dashboard-app/index.js:787
 msgid "Completed Jobs"
 msgstr ""
 
-#: src/dashboard-app/index.js:845
+#: src/dashboard-app/index.js:805
 msgid "Approvals & Backups"
 msgstr ""
 
-#: src/dashboard-app/index.js:851
+#: src/dashboard-app/index.js:811
 msgid "View Approvals →"
 msgstr ""
 
-#: src/dashboard-app/index.js:856
+#: src/dashboard-app/index.js:816
 msgid "Pending Approvals"
 msgstr ""
 
-#: src/dashboard-app/index.js:862
+#: src/dashboard-app/index.js:822
 msgid "Completed Approvals"
 msgstr ""
 
-#: src/dashboard-app/index.js:870
+#: src/dashboard-app/index.js:830
 msgid "Files Backed Up"
 msgstr ""
 
-#: src/dashboard-app/index.js:876
+#: src/dashboard-app/index.js:836
 msgid "DB Tables Backed Up"
 msgstr ""
 
 #. translators: %s: number of pending approvals.
-#: src/dashboard-app/index.js:887
+#: src/dashboard-app/index.js:847
 #, js-format
 msgid "%s waiting for your OK."
 msgstr ""
 
-#: src/dashboard-app/index.js:894
+#: src/dashboard-app/index.js:854
 msgid "Open Safety Center →"
 msgstr ""
 
-#: src/dashboard-app/index.js:920
+#: src/dashboard-app/index.js:880
 msgid "Open Tasks →"
 msgstr ""
 
-#: src/dashboard-app/index.js:931
+#: src/dashboard-app/index.js:891
 #: src/tasks-app/index.js:49
 msgid "Waiting on you"
 msgstr ""
 
-#: src/dashboard-app/index.js:941
+#: src/dashboard-app/index.js:901
 msgid "No tasks running. Assign one and you’ll be pinged when it finishes."
 msgstr ""
 
 #. translators: %s: number of additional tasks not shown
-#: src/dashboard-app/index.js:973
+#: src/dashboard-app/index.js:933
 #, js-format
 msgid "%s more — open Tasks to see them all."
 msgstr ""
 
-#: src/dashboard-app/index.js:1017
-#: src/dashboard-app/index.js:1069
+#: src/dashboard-app/index.js:977
+#: src/dashboard-app/index.js:1029
 msgid "View Details →"
 msgstr ""
 
-#: src/dashboard-app/index.js:1022
-#: src/dashboard-app/index.js:1074
+#: src/dashboard-app/index.js:982
+#: src/dashboard-app/index.js:1034
 msgid "Site Score"
 msgstr ""
 
-#: src/dashboard-app/index.js:1023
+#: src/dashboard-app/index.js:983
 msgid "Not scanned yet"
 msgstr ""
 
-#: src/dashboard-app/index.js:1027
+#: src/dashboard-app/index.js:987
 msgid "Check how ready this site is for AI agents. The scan runs on this site only and changes nothing."
 msgstr ""
 
-#: src/dashboard-app/index.js:1045
+#: src/dashboard-app/index.js:1005
 msgid "Scanning…"
 msgstr ""
 
-#: src/dashboard-app/index.js:1046
+#: src/dashboard-app/index.js:1006
 msgid "Scan now"
 msgstr ""
 
-#: src/dashboard-app/index.js:1084
+#: src/dashboard-app/index.js:1044
 msgid "Fix now →"
 msgstr ""
 
-#: src/dashboard-app/index.js:1193
-#: src/settings-app/index.js:2103
-#: src/settings-app/index.js:2261
+#: src/dashboard-app/index.js:1146
+#: src/settings-app/index.js:2090
+#: src/settings-app/index.js:2248
 msgid "Test failed."
 msgstr ""
 
-#: src/dashboard-app/index.js:1203
+#: src/dashboard-app/index.js:1156
 msgid "Connected Providers"
 msgstr ""
 
-#: src/dashboard-app/index.js:1209
+#: src/dashboard-app/index.js:1162
 msgid "Manage Providers →"
 msgstr ""
 
-#: src/dashboard-app/index.js:1215
+#: src/dashboard-app/index.js:1168
 msgid "No AI providers connected."
 msgstr ""
 
-#: src/dashboard-app/index.js:1217
+#: src/dashboard-app/index.js:1170
 msgid "Run the Setup Wizard"
 msgstr ""
 
-#: src/dashboard-app/index.js:1282
-#: src/settings-app/index.js:2182
-#: src/settings-app/index.js:2416
+#: src/dashboard-app/index.js:1235
+#: src/settings-app/index.js:2169
+#: src/settings-app/index.js:2403
 msgid "Testing…"
 msgstr ""
 
-#: src/dashboard-app/index.js:1375
+#: src/dashboard-app/index.js:1328
 msgid "Quick Actions"
 msgstr ""
 
-#: src/dashboard-app/index.js:1382
+#: src/dashboard-app/index.js:1335
 msgid "Manage Actions →"
 msgstr ""
 
-#: src/dashboard-app/index.js:1388
+#: src/dashboard-app/index.js:1341
 msgid "All agents are stopped —"
 msgstr ""
 
-#: src/dashboard-app/index.js:1390
+#: src/dashboard-app/index.js:1343
 msgid "resume in Safety Center"
 msgstr ""
 
-#: src/dashboard-app/index.js:1396
+#: src/dashboard-app/index.js:1349
 msgid "Chat agent offline —"
 msgstr ""
 
-#: src/dashboard-app/index.js:1398
+#: src/dashboard-app/index.js:1351
 msgid "Configure now"
 msgstr ""
 
-#: src/dashboard-app/index.js:1407
+#: src/dashboard-app/index.js:1360
 msgid "Choose which links appear in Quick Actions. Setup Wizard is always available."
 msgstr ""
 
-#: src/dashboard-app/index.js:1419
-msgid "Pro"
-msgstr ""
-
-#: src/dashboard-app/index.js:1422
+#: src/dashboard-app/index.js:1372
 msgid "Required"
 msgstr ""
 
-#: src/dashboard-app/index.js:1467
+#: src/dashboard-app/index.js:1417
 msgid "Save Quick Actions"
 msgstr ""
 
-#: src/dashboard-app/index.js:1511
+#: src/dashboard-app/index.js:1461
 msgid "ACTIVE"
 msgstr ""
 
-#: src/dashboard-app/index.js:1529
+#: src/dashboard-app/index.js:1479
 #: src/interface-settings/index.js:322
-#: src/settings-app/index.js:1868
+#: src/settings-app/index.js:1855
 msgid "Emergency stop"
 msgstr ""
 
-#: src/dashboard-app/index.js:1531
+#: src/dashboard-app/index.js:1481
 #: src/interface-settings/index.js:324
-#: src/settings-app/index.js:1870
+#: src/settings-app/index.js:1857
 msgid ": deactivate and log agent states, cancels all jobs and disconnects providers."
 msgstr ""
 
-#: src/dashboard-app/index.js:1562
+#: src/dashboard-app/index.js:1512
 msgid "Interface Settings"
 msgstr ""
 
-#: src/dashboard-app/index.js:1568
+#: src/dashboard-app/index.js:1518
 msgid "Manage Interface →"
 msgstr ""
 
-#: src/dashboard-app/index.js:1575
+#: src/dashboard-app/index.js:1525
 msgid "Default interface:"
 msgstr ""
 
-#: src/dashboard-app/index.js:1600
+#: src/dashboard-app/index.js:1550
 msgid "Used by any screen you have not set individually. Tools, Approvals, and Activity each have their own Basic/Advanced switch now."
 msgstr ""
 
-#: src/dashboard-app/index.js:1612
+#: src/dashboard-app/index.js:1562
 #: src/settings-app/index.js:281
 msgid "Reset every screen back to your default interface? Any screen you switched individually will lose that override."
 msgstr ""
 
-#: src/dashboard-app/index.js:1628
+#: src/dashboard-app/index.js:1578
 #: src/settings-app/index.js:329
 msgid "Reset all screens to my default"
 msgstr ""
 
-#: src/dashboard-app/index.js:1639
+#: src/dashboard-app/index.js:1589
 msgid "Automatic Agent Updates"
 msgstr ""
 
-#: src/dashboard-app/index.js:1657
+#: src/dashboard-app/index.js:1607
 msgid "Keep installed agents updated automatically. Opt out any time."
 msgstr ""
 
-#: src/dashboard-app/index.js:1678
-msgid "Browse →"
-msgstr ""
-
-#: src/dashboard-app/index.js:1682
-msgid "Discover and install agents created by the WordPress community."
-msgstr ""
-
-#: src/dashboard-app/index.js:1700
+#: src/dashboard-app/index.js:1625
 msgid "Getting Started"
 msgstr ""
 
 #. translators: 1: done count, 2: total
-#: src/dashboard-app/index.js:1705
+#: src/dashboard-app/index.js:1630
 #, js-format
 msgid "%1$d of %2$d steps complete"
 msgstr ""
 
-#: src/dashboard-app/index.js:1792
+#: src/dashboard-app/index.js:1717
 msgid "Could not load dashboard."
 msgstr ""
 
-#: src/dashboard-app/index.js:1922
+#: src/dashboard-app/index.js:1847
 msgid "Loading dashboard…"
 msgstr ""
 
-#: src/dashboard-app/index.js:1932
+#: src/dashboard-app/index.js:1857
 msgid "Dashboard unavailable."
 msgstr ""
 
-#: src/dashboard-app/index.js:2031
+#: src/dashboard-app/index.js:1956
 msgid "Saving layout…"
 msgstr ""
 
-#: src/dashboard-app/index.js:2041
+#: src/dashboard-app/index.js:1966
 msgid "Reset layout"
 msgstr ""
 
-#: src/dashboard-app/index.js:2045
+#: src/dashboard-app/index.js:1970
 msgid "Drag ⋮⋮ to rearrange cards"
 msgstr ""
 
-#: src/dashboard-app/index.js:2056
+#: src/dashboard-app/index.js:1981
 msgid "Emergency stop is ACTIVE"
 msgstr ""
 
-#: src/dashboard-app/index.js:2062
+#: src/dashboard-app/index.js:1987
 msgid "All agents are deactivated, jobs are cancelled, and LLM providers are disconnected. Chat and agent activation are blocked."
 msgstr ""
 
-#: src/dashboard-app/index.js:2067
+#: src/dashboard-app/index.js:1992
 msgid "Manage Interface"
 msgstr ""
 
@@ -12010,173 +11979,165 @@ msgstr ""
 msgid "On by default. Uncheck only if you want a small credit line in the chat footer."
 msgstr ""
 
-#: src/settings-app/index.js:1690
-msgid "Off by default. When on, admin chat shows a link to the WhatsApp connector."
-msgstr ""
-
-#: src/settings-app/index.js:1701
+#: src/settings-app/index.js:1688
 msgid "Active agent overrides"
 msgstr ""
 
-#: src/settings-app/index.js:1703
+#: src/settings-app/index.js:1690
 msgid "Each row starts on the site default provider and model (Providers tab). Change only the agents that need a different setup."
 msgstr ""
 
-#: src/settings-app/index.js:1744
+#: src/settings-app/index.js:1731
 msgid "provider"
 msgstr ""
 
-#: src/settings-app/index.js:1798
+#: src/settings-app/index.js:1785
 msgid "model"
 msgstr ""
 
-#: src/settings-app/index.js:1930
+#: src/settings-app/index.js:1917
 msgid "Customise greetings and personality notes per agent."
 msgstr ""
 
-#: src/settings-app/index.js:1936
+#: src/settings-app/index.js:1923
 msgid "No agents installed."
 msgstr ""
 
-#: src/settings-app/index.js:1940
+#: src/settings-app/index.js:1927
 msgid "Select agent"
 msgstr ""
 
-#: src/settings-app/index.js:1953
+#: src/settings-app/index.js:1940
 msgid "Welcome message"
 msgstr ""
 
-#: src/settings-app/index.js:1966
+#: src/settings-app/index.js:1953
 msgid "Persona notes"
 msgstr ""
 
-#: src/settings-app/index.js:1977
+#: src/settings-app/index.js:1964
 msgid "Response style"
 msgstr ""
 
-#: src/settings-app/index.js:2001
+#: src/settings-app/index.js:1988
 msgid "Third-party API keys used by agent tools."
 msgstr ""
 
-#: src/settings-app/index.js:2023
+#: src/settings-app/index.js:2010
 msgid "Get a key"
 msgstr ""
 
-#: src/settings-app/index.js:2039
+#: src/settings-app/index.js:2026
 msgid "Configured"
 msgstr ""
 
-#: src/settings-app/index.js:2040
+#: src/settings-app/index.js:2027
 msgid "Not configured"
 msgstr ""
 
-#: src/settings-app/index.js:2114
+#: src/settings-app/index.js:2101
 msgid "REST endpoints for integrations."
 msgstr ""
 
-#: src/settings-app/index.js:2120
+#: src/settings-app/index.js:2107
 msgid "Namespace"
 msgstr ""
 
-#: src/settings-app/index.js:2129
+#: src/settings-app/index.js:2116
 msgid "Agentic Services"
 msgstr ""
 
-#: src/settings-app/index.js:2140
+#: src/settings-app/index.js:2127
 msgid "Base URLs the plugin calls for AI chat, knowledge search, and media generation. Leave these on their defaults unless you’re self-hosting a proxy or support asked you to change one."
 msgstr ""
 
-#: src/settings-app/index.js:2209
+#: src/settings-app/index.js:2196
 msgid "Reset to default"
 msgstr ""
 
-#: src/settings-app/index.js:2302
+#: src/settings-app/index.js:2289
 msgid "The Model Context Protocol (MCP) lets AI apps you connect yourself (Claude Desktop, Cursor, Grok and others) talk directly to this site and use an agent's tools. MCP is off for every agent until an administrator turns it on below."
 msgstr ""
 
-#: src/settings-app/index.js:2309
+#: src/settings-app/index.js:2296
 msgid "Turning MCP on for an agent lets any AI app you connect act on this site with the permissions of the WordPress user whose Application Password it uses. Only enable it for agents you need, and only connect apps you trust."
 msgstr ""
 
-#: src/settings-app/index.js:2317
+#: src/settings-app/index.js:2304
 msgid "Agent endpoints"
 msgstr ""
 
-#: src/settings-app/index.js:2319
+#: src/settings-app/index.js:2306
 msgid "Each agent has its own MCP URL, scoped to only the tools that agent is allowed to use."
 msgstr ""
 
-#: src/settings-app/index.js:2329
+#: src/settings-app/index.js:2316
 msgid "MCP URL"
 msgstr ""
 
 #. translators: %s: agent name
-#: src/settings-app/index.js:2371
+#: src/settings-app/index.js:2358
 #, js-format
 msgid "Enable MCP: %s"
 msgstr ""
 
-#: src/settings-app/index.js:2394
+#: src/settings-app/index.js:2381
 msgid "Ready"
 msgstr ""
 
-#: src/settings-app/index.js:2402
+#: src/settings-app/index.js:2389
 msgid "Never connected"
 msgstr ""
 
-#: src/settings-app/index.js:2452
+#: src/settings-app/index.js:2439
 msgid "Connecting an AI app"
 msgstr ""
 
-#: src/settings-app/index.js:2455
+#: src/settings-app/index.js:2442
 msgid "Turn on MCP for the agent you want to use, above."
 msgstr ""
 
-#: src/settings-app/index.js:2461
+#: src/settings-app/index.js:2448
 msgid "Create an Application Password in your own WordPress profile (Users > Profile > Application Passwords). Siteloom never creates or stores one for you."
 msgstr ""
 
-#: src/settings-app/index.js:2467
-msgid "Open your profile"
-msgstr ""
-
-#: src/settings-app/index.js:2475
+#: src/settings-app/index.js:2462
 msgid "In your AI app, add the agent's MCP URL and sign in with your WordPress username and that Application Password."
 msgstr ""
 
-#: src/settings-app/index.js:2482
+#: src/settings-app/index.js:2469
 msgid "The app can only use the tools that agent is allowed to use, limited to what your WordPress user may do. High-risk tools are never available over MCP, and actions that normally need your approval still wait for it. To disconnect an app, revoke its Application Password in your profile or turn MCP off for the agent."
 msgstr ""
 
-#: src/settings-app/index.js:2491
+#: src/settings-app/index.js:2478
 msgid "These actions need your approval before they run. Requests from an AI app appear in Approvals:"
 msgstr ""
 
-#: src/settings-app/index.js:2507
+#: src/settings-app/index.js:2494
 msgid "Open Approvals"
 msgstr ""
 
-#: src/settings-app/index.js:2557
+#: src/settings-app/index.js:2544
 msgid "Could not load this settings panel."
 msgstr ""
 
-#: src/settings-app/index.js:2709
+#: src/settings-app/index.js:2696
 msgid "Settings saved with warnings:"
 msgstr ""
 
-#: src/settings-app/index.js:2743
+#: src/settings-app/index.js:2730
 msgid "Could not save settings."
 msgstr ""
 
-#: src/settings-app/index.js:2753
+#: src/settings-app/index.js:2740
 msgid "Loading settings…"
 msgstr ""
 
-#: src/settings-app/index.js:2764
+#: src/settings-app/index.js:2751
 msgid "Settings unavailable."
 msgstr ""
 
-#: src/settings-app/index.js:2843
+#: src/settings-app/index.js:2830
 msgid "This tab is available via the classic view or an add-on."
 msgstr ""
 

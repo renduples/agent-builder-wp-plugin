@@ -292,6 +292,11 @@ final class Activator {
 		// older versions to the exit-guarded format — see
 		// Tool_Helpers::migrate_legacy_backups().
 		Tool_Helpers::migrate_legacy_backups();
+		// One-time (option-gated): revoke Application Passwords older versions
+		// created for the since-removed relay — see Legacy_Relay_Passwords.
+		Legacy_Relay_Passwords::maybe_revoke_on_upgrade();
+		// One-time (option-gated): drop data left by the removed agent catalog.
+		self::remove_agent_catalog_leftovers();
 
 		$stored = (string) get_option( 'agent_builder_db_schema_version', '' );
 		if ( AGENT_BUILDER_DB_VERSION === $stored ) {
@@ -335,6 +340,28 @@ final class Activator {
 		}
 
 		self::release_upgrade_lock( $lock_value );
+	}
+
+	/**
+	 * Remove what the deleted agent catalog left behind.
+	 *
+	 * Earlier versions could cache a remote agent catalog for Site Brief and
+	 * registered an agents_available tool that browsed it. Both are gone; drop
+	 * the cached catalog, the resolved Site Brief agent map (it may name an
+	 * agent this site does not have) and the tool's registry row. Runs once.
+	 *
+	 * @return void
+	 */
+	private static function remove_agent_catalog_leftovers(): void {
+		if ( false !== get_option( 'agent_builder_agent_catalog_removed', false ) ) {
+			return;
+		}
+		update_option( 'agent_builder_agent_catalog_removed', 1, false );
+
+		delete_transient( 'agent_builder_sb_agent_catalog' );
+		delete_option( 'agent_builder_sb_agent_catalog_last_good' );
+		delete_option( 'agent_builder_sb_agent_map' );
+		Tools_Registry::unregister( 'agents_available' );
 	}
 
 	/**
@@ -1430,7 +1457,6 @@ final class Activator {
 			// GDPR: default retention to 30 days so data is not kept indefinitely on fresh installs.
 			'agent_builder_chat_tts'                => '1',
 			'agent_builder_chat_whitelabel'         => '1',
-			'agent_builder_show_whatsapp_cta'       => '0',
 			'agent_builder_allow_platform_sync'     => '0',
 			'agent_builder_retention_conversations' => 30,
 			'agent_builder_retention_audit_log'     => 30,
@@ -2458,7 +2484,6 @@ final class Activator {
 			'db_create_post'   => 'database',
 			'db_update_post'   => 'database',
 			'db_delete_post'   => 'database',
-			'agents_available' => 'agents',
 		);
 
 		$seeded = Tools_Registry::seed_core_tools( $category_map );

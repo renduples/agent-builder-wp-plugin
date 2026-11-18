@@ -42,7 +42,6 @@ return array(
 		'agentic-costs'        => 'https://agentic-plugin.com/api-credits/',
 		'agentic-connectors'   => 'https://agentic-plugin.com/channels/',
 		'agentic-governance'   => 'https://agentic-plugin.com/permissions-and-safety/',
-		'agentic-marketplace'  => 'https://agentic-plugin.com/community-agents/',
 		'agentic-workflows'    => 'https://agentic-plugin.com/event-automation/',
 		'agentic-health'       => 'https://agentic-plugin.com/troubleshooting/',
 		'agentic-cloudflare'   => 'https://agentic-plugin.com/important-security-settings/',

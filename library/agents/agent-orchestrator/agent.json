@@ -19,8 +19,7 @@
         "manage_gutenberg_block_agent",
         "manage_admin_bar_launcher",
         "manage_scheduled_task",
-        "manage_event_listener",
-        "agents_available"
+        "manage_event_listener"
     ],
     "suggested_prompts": [
         "Put my Content Writer agent on the homepage as a chat widget.",

@@ -299,7 +299,7 @@ class Response_Cache {
 		}
 
 		// Don't cache if write/side-effect tools were called (mutations differ between requests).
-		// Read-only tools (read_file, agents_available, etc.) are safe to cache.
+		// Read-only tools (read_file, search_capabilities, etc.) are safe to cache.
 		if ( ! empty( $response['tools_used'] ) ) {
 			$has_writes = array_intersect( $response['tools_used'], self::WRITE_TOOLS );
 			if ( ! empty( $has_writes ) ) {

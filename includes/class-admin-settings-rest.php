@@ -691,7 +691,6 @@ class Admin_Settings_REST {
 			'chat_tts'           => '0' !== (string) get_option( 'agent_builder_chat_tts', '1' ),
 			'chat_vision'        => '1' === (string) get_option( 'agent_builder_chat_vision', '0' ) || true === get_option( 'agent_builder_chat_vision', false ),
 			'chat_whitelabel'    => '1' === (string) get_option( 'agent_builder_chat_whitelabel', '1' ),
-			'show_whatsapp_cta'  => '1' === (string) get_option( 'agent_builder_show_whatsapp_cta', '0' ),
 		);
 	}
 
@@ -1228,9 +1227,6 @@ class Admin_Settings_REST {
 			if ( array_key_exists( $key, $data ) ) {
 				update_option( 'agent_builder_' . $key, ! empty( $data[ $key ] ) ? '1' : '0' );
 			}
-		}
-		if ( array_key_exists( 'show_whatsapp_cta', $data ) ) {
-			update_option( 'agent_builder_show_whatsapp_cta', ! empty( $data['show_whatsapp_cta'] ) ? '1' : '0' );
 		}
 
 		return $warnings;
