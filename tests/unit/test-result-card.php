@@ -245,6 +245,48 @@ class Test_Result_Card extends TestCase {
 	}
 
 	/**
+	 * A list_posts call the tool gate held (queued for approval, awaiting
+	 * confirmation, deduplicated) never ran, so it yields no "Listed 0" card,
+	 * and collect() drops it while keeping real results.
+	 */
+	public function test_held_tool_call_produces_no_card(): void {
+		foreach ( array( 'queued_for_approval', 'confirmation_required', 'deduplicated' ) as $status ) {
+			$held = array(
+				'status'      => $status,
+				'approval_id' => 12,
+				'message'     => 'This action (list_posts) needs admin approval.',
+			);
+			$this->assertNull( Result_Card::normalize( 'list_posts', $held ), $status );
+		}
+
+		$cards = Result_Card::collect(
+			array(
+				array(
+					'tool'   => 'list_posts',
+					'result' => array(
+						'status'      => 'queued_for_approval',
+						'approval_id' => 12,
+					),
+				),
+				array(
+					'tool'   => 'list_posts',
+					'result' => array(
+						'posts' => array(
+							array(
+								'id'    => 1,
+								'title' => 'Hello',
+							),
+						),
+						'total' => 1,
+					),
+				),
+			)
+		);
+		$this->assertCount( 1, $cards );
+		$this->assertSame( 'list', $cards[0]['type'] );
+	}
+
+	/**
 	 * list_posts normalizes to a list card with a count and sample items.
 	 */
 	public function test_normalize_list_posts(): void {
