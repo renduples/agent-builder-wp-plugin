@@ -326,22 +326,9 @@ class LLM_Client {
 
 			// Add status code context for common HTTP errors.
 			if ( 401 === $status ) {
-				$error_message = 'Invalid API key. Please check your API key in Settings > Agentic.';
+				$error_message = __( 'Invalid API key. Check it under Siteloom → Settings → Providers.', 'siteloom' );
 			} elseif ( 402 === $status || 429 === $status ) {
-				// Pass through the server's own error message; use a generic fallback only if absent.
-				$user_msg = ! empty( $error_message ) ? $error_message : (
-					402 === $status
-						? __( 'The AI service requires payment or additional credits to continue.', 'siteloom' )
-						: __( 'Rate limit reached. Please wait a moment and try again.', 'siteloom' )
-				);
-				return new \WP_Error(
-					402 === $status ? 'insufficient_credits' : 'quota_exceeded',
-					$user_msg,
-					array(
-						'status'      => $status,
-						'user_facing' => true,
-					)
-				);
+				return self::quota_error( $status, (string) $error_message );
 			} elseif ( 503 === $status ) {
 				$retry_after   = (int) ( $data['retry_after'] ?? 10 );
 				$error_message = ! empty( $error_message ) ? $error_message : __( 'The AI model is currently busy. Please try again shortly.', 'siteloom' );
@@ -440,6 +427,36 @@ class LLM_Client {
 		}
 
 		return $data;
+	}
+
+	/**
+	 * User-facing error for "out of credits" (402) and "rate limited" (429).
+	 *
+	 * Shared by chat() and stream_chat() so both show the same plain message.
+	 * Administrators are told where to fix it.
+	 *
+	 * @param int    $status     HTTP status (402 or 429).
+	 * @param string $server_msg Message from the AI service, if any.
+	 * @return \WP_Error
+	 */
+	private static function quota_error( int $status, string $server_msg ): \WP_Error {
+		if ( 402 === $status ) {
+			$msg = __( 'You are out of AI credits, so the agent could not answer.', 'siteloom' );
+			if ( current_user_can( 'manage_options' ) ) {
+				$msg .= ' ' . __( 'Add credits or connect your own AI provider under Siteloom → Settings → Providers.', 'siteloom' );
+			}
+		} else {
+			$msg = '' !== $server_msg ? $server_msg : __( 'Rate limit reached. Please wait a moment and try again.', 'siteloom' );
+		}
+
+		return new \WP_Error(
+			402 === $status ? 'insufficient_credits' : 'quota_exceeded',
+			$msg,
+			array(
+				'status'      => $status,
+				'user_facing' => true,
+			)
+		);
 	}
 
 	/**
@@ -717,6 +734,10 @@ class LLM_Client {
 			$err          = json_decode( $raw, true );
 			$msg          = $err['error']['message'] ?? ( $err['error'] ?? (string) $raw );
 			$fallback_msg = $msg ? $msg : 'Streaming request failed.';
+			// Out of credits or rate limited: same user-facing errors as chat().
+			if ( 402 === $status || 429 === $status ) {
+				return self::quota_error( $status, is_string( $msg ) ? $msg : '' );
+			}
 			return new \WP_Error( 'api_error', $fallback_msg, array( 'status' => $status ) );
 		}
 
