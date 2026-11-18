@@ -77,11 +77,19 @@ class Approval_Queue {
 		$url   = admin_url( 'admin.php?page=agentic-approvals' );
 		$nonce = wp_create_nonce( 'agentic_dismiss_pending_approval_notice' );
 		printf(
-			'<div class="notice notice-warning is-dismissible" id="agentic-pending-approval-notice" data-count="%d" data-nonce="%s"><p><strong>Agentic:</strong> %s pending approval(s). <a href="%s">Review now</a></p></div>',
+			'<div class="notice notice-warning is-dismissible" id="agentic-pending-approval-notice" data-count="%d" data-nonce="%s"><p><strong>%s</strong> %s <a href="%s">%s</a></p></div>',
 			(int) $count,
 			esc_attr( $nonce ),
-			esc_html( $count ),
-			esc_url( $url )
+			esc_html__( 'Siteloom:', 'siteloom' ),
+			esc_html(
+				sprintf(
+					/* translators: %d: number of agent actions waiting for approval. */
+					_n( '%d agent action is waiting for your approval.', '%d agent actions are waiting for your approval.', $count, 'siteloom' ),
+					(int) $count
+				)
+			),
+			esc_url( $url ),
+			esc_html__( 'Review now', 'siteloom' )
 		);
 		\Agentic\Inline_Assets::script( 'notices', array(), '', array( 'wp-util' ) );
 	}

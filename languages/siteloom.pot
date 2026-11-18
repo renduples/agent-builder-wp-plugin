@@ -3,13 +3,13 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Siteloom AI Agents 4.4.0\n"
-"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wt-polish\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/agent-builder-wp-plugin\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-18T13:25:04+00:00\n"
+"POT-Creation-Date: 2026-11-18T15:23:29+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: siteloom\n"
@@ -334,7 +334,7 @@ msgstr ""
 #: admin/deployment/deployment-shortcodes.php:225
 #: admin/run-task.php:87
 #: admin/skills.php:567
-#: includes/class-approval-queue.php:266
+#: includes/class-approval-queue.php:274
 #: includes/class-gdpr.php:201
 #: includes/class-gdpr.php:488
 #: includes/class-gdpr.php:583
@@ -3755,7 +3755,7 @@ msgid "No skills found in this repository."
 msgstr ""
 
 #: admin/skills.php:495
-#: includes/class-approval-queue.php:265
+#: includes/class-approval-queue.php:273
 #: includes/class-gdpr.php:492
 #: src/admin-pages/views/ApprovalsView.js:55
 msgid "Action"
@@ -6423,53 +6423,69 @@ msgstr ""
 msgid "The agent creation tool is unavailable."
 msgstr ""
 
+#: includes/class-approval-queue.php:83
+msgid "Siteloom:"
+msgstr ""
+
+#. translators: %d: number of agent actions waiting for approval.
+#: includes/class-approval-queue.php:87
+#, php-format
+msgid "%d agent action is waiting for your approval."
+msgid_plural "%d agent actions are waiting for your approval."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/class-approval-queue.php:92
+msgid "Review now"
+msgstr ""
+
 #. translators: %s: site name
-#: includes/class-approval-queue.php:259
+#: includes/class-approval-queue.php:267
 #, php-format
 msgid "[%s] Agent action waiting for your approval"
 msgstr ""
 
-#: includes/class-approval-queue.php:263
+#: includes/class-approval-queue.php:271
 msgid "An AI agent wants to make a change that needs your OK before it runs."
 msgstr ""
 
-#: includes/class-approval-queue.php:267
+#: includes/class-approval-queue.php:275
 #: src/admin-pages/views/AgentReadyView.js:230
 #: src/admin-pages/views/ToolsView.js:526
 msgid "Risk"
 msgstr ""
 
-#: includes/class-approval-queue.php:269
+#: includes/class-approval-queue.php:277
 msgid "Why"
 msgstr ""
 
 #. translators: %d: number of additional pending items since last email
-#: includes/class-approval-queue.php:275
+#: includes/class-approval-queue.php:283
 #, php-format
 msgid "Plus about %d more request(s) while email was paused to avoid spam."
 msgstr ""
 
-#: includes/class-approval-queue.php:281
+#: includes/class-approval-queue.php:289
 msgid "Review approvals in WordPress admin"
 msgstr ""
 
-#: includes/class-approval-queue.php:282
+#: includes/class-approval-queue.php:290
 msgid "You can turn these emails off under Approvals → Preferences."
 msgstr ""
 
 #. translators: 1: action label, 2: agent name, 3: risk level
-#: includes/class-approval-queue.php:299
+#: includes/class-approval-queue.php:307
 #, php-format
 msgid "%1$s by %2$s (risk: %3$s)"
 msgstr ""
 
 #. translators: %s: action label
-#: includes/class-approval-queue.php:313
+#: includes/class-approval-queue.php:321
 #, php-format
 msgid "Approval needed: %s"
 msgstr ""
 
-#: includes/class-approval-queue.php:331
+#: includes/class-approval-queue.php:339
 msgid "Approval needed"
 msgstr ""
 
@@ -6853,20 +6869,28 @@ msgid "Added from pasted text."
 msgstr ""
 
 #: includes/class-llm-client.php:233
-#: includes/class-llm-client.php:492
+#: includes/class-llm-client.php:509
 msgid "The hosted Agentic AI connection has no license key, so requests would be rejected. Reconnect from Siteloom → Quick Start, or add your own provider key under Settings → Providers."
 msgstr ""
 
+#: includes/class-llm-client.php:329
+msgid "Invalid API key. Check it under Siteloom → Settings → Providers."
+msgstr ""
+
 #: includes/class-llm-client.php:334
-msgid "The AI service requires payment or additional credits to continue."
-msgstr ""
-
-#: includes/class-llm-client.php:335
-msgid "Rate limit reached. Please wait a moment and try again."
-msgstr ""
-
-#: includes/class-llm-client.php:347
 msgid "The AI model is currently busy. Please try again shortly."
+msgstr ""
+
+#: includes/class-llm-client.php:444
+msgid "You are out of AI credits, so the agent could not answer."
+msgstr ""
+
+#: includes/class-llm-client.php:446
+msgid "Add credits or connect your own AI provider under Siteloom → Settings → Providers."
+msgstr ""
+
+#: includes/class-llm-client.php:449
+msgid "Rate limit reached. Please wait a moment and try again."
 msgstr ""
 
 #: includes/class-manifest-agent.php:141
