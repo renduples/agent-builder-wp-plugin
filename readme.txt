@@ -277,6 +277,7 @@ The Privacy-compliance tool looks for strings such as `connect.facebook.net` in 
 * Agent Builder is now Siteloom AI Agents (plugin slug and text domain: siteloom). Your agents, settings and data carry over unchanged.
 * No links or prompts for paid agents: Site Brief, the dashboard, the Agents screen and the bundled agents only recommend agents installed on your site, and agent search runs entirely on your site.
 * On upgrade, Application Passwords that older versions created for the removed relay ("Agent Builder Relay") are revoked once, with a notice.
+* Fixed: the Activity log reported tampering after old entries were removed by the retention setting.
 * Chat: lists written with "*" or "+" bullets, nested lists and italic text in list items now display correctly.
 * Safer backups: automatic pre-change backups are now private on every web server (guarded files with random names), existing backups are converted on upgrade, and Site Health warns if backup or knowledge files can be read from the web.
 * Uninstall with "Delete all plugin data" now also removes the backup and knowledge folders.

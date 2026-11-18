@@ -408,21 +408,16 @@ class Audit_Log {
 	}
 
 	/**
-	 * Clear old log entries
+	 * Clear old log entries, keeping the integrity chain verifiable.
 	 *
 	 * @param int $days Entries older than this will be deleted.
 	 * @return int Number of deleted entries.
 	 */
 	public function cleanup( int $days = 30 ): int {
-		global $wpdb;
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table cleanup.
-		return $wpdb->query(
-			$wpdb->prepare(
-				"DELETE FROM {$wpdb->prefix}agent_builder_audit_log WHERE created_at < DATE_SUB(UTC_TIMESTAMP(), INTERVAL %d DAY)",
-				$days
-			)
-		);
+		// Goes through Audit_Log_Integrity so the first kept row is anchored —
+		// a plain DELETE here made verify_chain() report tampering as soon as
+		// the oldest rows aged out.
+		return Audit_Log_Integrity::prune_before( gmdate( 'Y-m-d H:i:s', time() - ( $days * DAY_IN_SECONDS ) ) );
 	}
 
 	/**
