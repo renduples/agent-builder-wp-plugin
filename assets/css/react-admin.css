@@ -1797,6 +1797,8 @@
 		margin-left: 0;
 		width: 100%;
 	}
+}
+
 /* ---- Tasks screen (tasks-app entry) ---- */
 .agentic-tasks-tabs .agentic-react-tabs__tab {
 	cursor: pointer;
