@@ -121,6 +121,7 @@ class Get_Recent_Registrations extends \Agentic\Tool_Base {
 	public function get_annotations(): array {
 		return array(
 			'readonly' => true,
+			'personal_data' => true,
 		);
 	}
 }

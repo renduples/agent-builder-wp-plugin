@@ -30,8 +30,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  *   - file: url
  *   - list: count, items (a few sample rows)
  *
- * Unrecognized tools, and tools whose result carries an error or no usable
- * payload, normalize to null — a run that only read data produces no cards.
+ * Unrecognized tools, tools whose result carries an error or no usable
+ * payload, and calls the tool gate held (queued, awaiting confirmation,
+ * deduplicated, blocked) normalize to null.
  */
 class Result_Card {
 
@@ -72,6 +73,21 @@ class Result_Card {
 			'items' => 'comments',
 			'title' => 'Comments',
 		),
+	);
+
+	/**
+	 * Tool-gate statuses (Tool_Executor::execute()) meaning the tool did NOT
+	 * run: it is waiting for approval or confirmation, or was deduplicated.
+	 * Such a result must never produce a card — an empty "Listed 0" under a
+	 * "Needs your approval" card misreads as an actual result.
+	 *
+	 * @var array<int,string>
+	 */
+	private const NOT_EXECUTED_STATUSES = array(
+		'queued_for_approval',
+		'confirmation_required',
+		'deduplicated',
+		'blocked',
 	);
 
 	/**
@@ -119,6 +135,11 @@ class Result_Card {
 	 */
 	public static function normalize( string $tool, array $result ): ?array {
 		if ( ! empty( $result['error'] ) ) {
+			return null;
+		}
+
+		// A queued / confirmation-pending / blocked call never ran.
+		if ( is_string( $result['status'] ?? null ) && in_array( $result['status'], self::NOT_EXECUTED_STATUSES, true ) ) {
 			return null;
 		}
 

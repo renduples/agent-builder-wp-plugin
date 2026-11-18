@@ -7,7 +7,13 @@
  * delete per row. The editor creates/edits through POST/PUT /agentic/v1/routines;
  * the History drawer reads GET /agentic/v1/routines/{id}/history.
  */
-import { useEffect, useState, useCallback } from '@wordpress/element';
+import {
+	createInterpolateElement,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import { __, sprintf } from '@wordpress/i18n';
 import {
@@ -695,7 +701,7 @@ function RoutineHistoryDrawer( { routine, onClose } ) {
 }
 
 function RoutinesView( { data } ) {
-	const agents = ( data && data.agents ) || [];
+	const agents = useMemo( () => ( data && data.agents ) || [], [ data ] );
 	// Single site-wide signal from the page payload — WP-Cron hasn't ticked
 	// recently, so scheduled routines won't fire until it does.
 	const cronStale = !!( data && data.cron_stale );
@@ -711,6 +717,16 @@ function RoutinesView( { data } ) {
 	const [ creating, setCreating ] = useState( false );
 	const [ editing, setEditing ] = useState( null );
 	const [ historyFor, setHistoryFor ] = useState( null );
+
+	// Agent display name + icon by slug, the way the Tasks and Agents screens
+	// show an agent, rather than its raw slug.
+	const agentById = useMemo( () => {
+		const map = {};
+		agents.forEach( ( a ) => {
+			map[ a.id ] = a;
+		} );
+		return map;
+	}, [ agents ] );
 
 	const fetchRoutines = useCallback( ( silent = false ) => {
 		if ( ! silent ) {
@@ -780,13 +796,15 @@ function RoutinesView( { data } ) {
 					status: 'success',
 					message:
 						res && res.run_id
-							? sprintf(
-									/* translators: %s: run id */
+							? createInterpolateElement(
 									__(
-										'Test run started (run %s).',
+										'Test run started. <a>See it in Tasks</a>.',
 										'siteloom'
 									),
-									res.run_id
+									{
+										// eslint-disable-next-line jsx-a11y/anchor-has-content -- content comes from the translated string.
+										a: <a href={ tasksRunUrl( res.run_id ) } />,
+									}
 							  )
 							: __( 'Test run started.', 'siteloom' ),
 				} ),
@@ -846,6 +864,19 @@ function RoutinesView( { data } ) {
 		setEditing( null );
 		setNotice( { status: 'success', message: label } );
 		fetchRoutines( true );
+	};
+
+	const agentCell = ( routine ) => {
+		const agent = agentById[ routine.agent_slug ];
+		if ( ! agent ) {
+			return routine.agent_slug;
+		}
+		return (
+			<span title={ routine.agent_slug }>
+				{ agent.icon ? `${ agent.icon } ` : '' }
+				{ agent.name || routine.agent_slug }
+			</span>
+		);
 	};
 
 	const skill = ( routine ) => {
@@ -920,9 +951,7 @@ function RoutinesView( { data } ) {
 							const trigger = triggerLabel( routine );
 							return (
 								<tr key={ routine.id }>
-									<td>
-										<code>{ routine.agent_slug }</code>
-									</td>
+									<td>{ emptyCell( agentCell( routine ) ) }</td>
 									<td>
 										<strong>
 											{ routine.label ||

@@ -111,6 +111,7 @@ class List_Privileged_Users extends \Agentic\Tool_Base {
 	public function get_annotations(): array {
 		return array(
 			'readonly' => true,
+			'personal_data' => true,
 		);
 	}
 }

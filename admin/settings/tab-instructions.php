@@ -139,7 +139,7 @@ if ( ! $agentic_pa_selected && ! empty( $agentic_all_agents ) ) {
 					id="agentic_persona_notes_<?php echo esc_attr( $agentic_pa_selected ); ?>"
 					rows="5"
 					class="large-text"
-					placeholder="<?php echo esc_attr( "e.g. This agent is deployed on a WooCommerce store selling handmade jewellery in Cape Town, South Africa. Always maintain a warm, personal tone and mention the handcrafted origin when relevant. The store owner's name is Sarah \u2014 use her name occasionally to add a personal touch. When visitors ask about shipping, remind them that all orders are packed by hand and may take 3\u20135 business days." ); ?>"
+					placeholder="<?php echo esc_attr( "e.g. This agent is deployed on a WooCommerce store selling handmade jewellery in Cape Town, South Africa. Always maintain a warm, personal tone and mention the handcrafted origin when relevant. The store owner's name is Sarah — use her name occasionally to add a personal touch. When visitors ask about shipping, remind them that all orders are packed by hand and may take 3–5 business days." ); ?>"
 				><?php echo esc_textarea( $agentic_pa_notes ); ?></textarea>
 				<p class="description">Additional context appended to this agent&rsquo;s system prompt on every conversation. Use it to share business context, tone of voice, or specific instructions &mdash; without overwriting the core system prompt.</p>
 			</td>

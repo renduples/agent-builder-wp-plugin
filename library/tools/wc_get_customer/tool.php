@@ -155,6 +155,7 @@ class Wc_Get_Customer extends \Agentic\Tool_Base {
 			'readonly'    => true,
 			'destructive' => false,
 			'idempotent'  => true,
+			'personal_data' => true,
 		);
 	}
 }

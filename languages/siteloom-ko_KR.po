@@ -6768,12 +6768,12 @@ msgid "Filter by namespace (e.g., wp/v2, wc/v3)."
 msgstr "네임스페이스로 필터링합니다(예: wp/v2, wc/v3)."
 
 #: includes/functions.php:31
-msgid "Warming up the AI model, please wait\\u2026"
-msgstr "AI 모델을 준비하는 중입니다. 잠시만 기다려 주세요\\u2026"
+msgid "Warming up the AI model, please wait…"
+msgstr "AI 모델을 준비하는 중입니다. 잠시만 기다려 주세요…"
 
 #: includes/functions.php:32
-msgid "Preparing audio\\u2026"
-msgstr "오디오를 준비하는 중\\u2026"
+msgid "Preparing audio…"
+msgstr "오디오를 준비하는 중…"
 
 #: includes/functions.php:33
 #: src/settings-app/index.js:2354
@@ -6786,12 +6786,12 @@ msgid "Copy"
 msgstr "복사"
 
 #: includes/functions.php:35
-msgid "\\u25b6 Show Diff"
-msgstr "\\u25b6 차이 보기"
+msgid "▶ Show Diff"
+msgstr "▶ 차이 보기"
 
 #: includes/functions.php:36
-msgid "\\u25bc Hide Diff"
-msgstr "\\u25bc 차이 숨기기"
+msgid "▼ Hide Diff"
+msgstr "▼ 차이 숨기기"
 
 #: includes/functions.php:37
 msgid "Agent wants to make a change."
@@ -6802,12 +6802,12 @@ msgid "An agent wants to perform a high-risk action."
 msgstr "에이전트가 고위험 작업을 수행하려고 합니다."
 
 #: includes/functions.php:39
-msgid "Read aloud: off \\u2014 click to enable"
-msgstr "소리내어 읽기: 꺼짐 \\u2014 클릭하여 활성화"
+msgid "Read aloud: off — click to enable"
+msgstr "소리내어 읽기: 꺼짐 — 클릭하여 활성화"
 
 #: includes/functions.php:40
-msgid "Read aloud: on \\u2014 click to disable"
-msgstr "소리내어 읽기: 켜짐 \\u2014 클릭하여 비활성화"
+msgid "Read aloud: on — click to disable"
+msgstr "소리내어 읽기: 켜짐 — 클릭하여 비활성화"
 
 #: includes/functions.php:41
 msgid "Voice input requires Chrome, Edge, or Safari with HTTPS"
@@ -6816,16 +6816,16 @@ msgstr "음성 입력에는 HTTPS 환경의 Chrome, Edge 또는 Safari가 필요
 #. translators: %s is the number of seconds before the next retry
 #: includes/functions.php:43
 #, php-format
-msgid "The AI model is busy. Retrying in %ss\\u2026"
-msgstr "AI 모델이 혼잡합니다. %s초 후 다시 시도합니다\\u2026"
+msgid "The AI model is busy. Retrying in %ss…"
+msgstr "AI 모델이 혼잡합니다. %s초 후 다시 시도합니다…"
 
 #: includes/functions.php:44
 msgid "Something went wrong. The issue has been reported."
 msgstr "문제가 발생했습니다. 해당 문제가 보고되었습니다."
 
 #: includes/functions.php:45
-msgid "The request timed out. The AI model may be overloaded \\u2014 please try again."
-msgstr "요청 시간이 초과되었습니다. AI 모델에 과부하가 걸렸을 수 있습니다 \\u2014 다시 시도해 주세요."
+msgid "The request timed out. The AI model may be overloaded — please try again."
+msgstr "요청 시간이 초과되었습니다. AI 모델에 과부하가 걸렸을 수 있습니다 — 다시 시도해 주세요."
 
 #: includes/functions.php:46
 msgid "Sorry, there was an error connecting to the agent. Please try again."
@@ -8698,11 +8698,11 @@ msgstr "에이전트가 변경을 하려고 합니다."
 
 #: src/shared/chat-embed.js:187
 msgid "Hide Diff"
-msgstr "\\u25bc 차이 숨기기"
+msgstr "▼ 차이 숨기기"
 
 #: src/shared/chat-embed.js:188
 msgid "Show Diff"
-msgstr "\\u25b6 차이 보기"
+msgstr "▶ 차이 보기"
 
 #: src/shared/chat-embed.js:234
 msgid "Allow Once"

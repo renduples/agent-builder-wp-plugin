@@ -6768,12 +6768,12 @@ msgid "Filter by namespace (e.g., wp/v2, wc/v3)."
 msgstr "名前空間で絞り込みます (例: wp/v2、wc/v3)。"
 
 #: includes/functions.php:31
-msgid "Warming up the AI model, please wait\\u2026"
-msgstr "AI モデルを準備しています。しばらくお待ちください\\u2026"
+msgid "Warming up the AI model, please wait…"
+msgstr "AI モデルを準備しています。しばらくお待ちください…"
 
 #: includes/functions.php:32
-msgid "Preparing audio\\u2026"
-msgstr "音声を準備しています\\u2026"
+msgid "Preparing audio…"
+msgstr "音声を準備しています…"
 
 #: includes/functions.php:33
 #: src/settings-app/index.js:2354
@@ -6786,12 +6786,12 @@ msgid "Copy"
 msgstr "コピー"
 
 #: includes/functions.php:35
-msgid "\\u25b6 Show Diff"
-msgstr "\\u25b6 差分を表示"
+msgid "▶ Show Diff"
+msgstr "▶ 差分を表示"
 
 #: includes/functions.php:36
-msgid "\\u25bc Hide Diff"
-msgstr "\\u25bc 差分を非表示"
+msgid "▼ Hide Diff"
+msgstr "▼ 差分を非表示"
 
 #: includes/functions.php:37
 msgid "Agent wants to make a change."
@@ -6802,12 +6802,12 @@ msgid "An agent wants to perform a high-risk action."
 msgstr "エージェントが高リスクの操作を実行しようとしています。"
 
 #: includes/functions.php:39
-msgid "Read aloud: off \\u2014 click to enable"
-msgstr "読み上げ: オフ \\u2014 クリックして有効化"
+msgid "Read aloud: off — click to enable"
+msgstr "読み上げ: オフ — クリックして有効化"
 
 #: includes/functions.php:40
-msgid "Read aloud: on \\u2014 click to disable"
-msgstr "読み上げ: オン \\u2014 クリックして無効化"
+msgid "Read aloud: on — click to disable"
+msgstr "読み上げ: オン — クリックして無効化"
 
 #: includes/functions.php:41
 msgid "Voice input requires Chrome, Edge, or Safari with HTTPS"
@@ -6816,16 +6816,16 @@ msgstr "音声入力には HTTPS 環境の Chrome、Edge、または Safari が�
 #. translators: %s is the number of seconds before the next retry
 #: includes/functions.php:43
 #, php-format
-msgid "The AI model is busy. Retrying in %ss\\u2026"
-msgstr "AI モデルが混雑しています。%s 秒後に再試行します\\u2026"
+msgid "The AI model is busy. Retrying in %ss…"
+msgstr "AI モデルが混雑しています。%s 秒後に再試行します…"
 
 #: includes/functions.php:44
 msgid "Something went wrong. The issue has been reported."
 msgstr "問題が発生しました。この問題は報告されました。"
 
 #: includes/functions.php:45
-msgid "The request timed out. The AI model may be overloaded \\u2014 please try again."
-msgstr "リクエストがタイムアウトしました。AI モデルが過負荷の可能性があります \\u2014 もう一度お試しください。"
+msgid "The request timed out. The AI model may be overloaded — please try again."
+msgstr "リクエストがタイムアウトしました。AI モデルが過負荷の可能性があります — もう一度お試しください。"
 
 #: includes/functions.php:46
 msgid "Sorry, there was an error connecting to the agent. Please try again."
@@ -8698,11 +8698,11 @@ msgstr "エージェントが変更を行おうとしています。"
 
 #: src/shared/chat-embed.js:187
 msgid "Hide Diff"
-msgstr "\\u25bc 差分を非表示"
+msgstr "▼ 差分を非表示"
 
 #: src/shared/chat-embed.js:188
 msgid "Show Diff"
-msgstr "\\u25b6 差分を表示"
+msgstr "▶ 差分を表示"
 
 #: src/shared/chat-embed.js:234
 msgid "Allow Once"
