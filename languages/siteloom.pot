@@ -3,13 +3,13 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Siteloom AI Agents 4.4.0\n"
-"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/siteloom\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wt-polish\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-16T19:14:49+00:00\n"
+"POT-Creation-Date: 2026-11-18T13:20:38+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: siteloom\n"
@@ -189,8 +189,8 @@ msgstr ""
 #: admin/settings.php:625
 #: admin/signup.php:125
 #: admin/signup.php:253
-#: admin/train-data.php:84
-#: admin/train-data.php:118
+#: admin/train-data.php:89
+#: admin/train-data.php:123
 #: includes/class-admin-menu-handler.php:1250
 #: includes/class-admin-settings-rest.php:180
 #: src/dashboard-app/index.js:1586
@@ -206,8 +206,8 @@ msgstr ""
 #: admin/settings.php:630
 #: admin/signup.php:126
 #: admin/signup.php:255
-#: admin/train-data.php:87
-#: admin/train-data.php:121
+#: admin/train-data.php:92
+#: admin/train-data.php:126
 #: includes/class-admin-menu-handler.php:1253
 #: includes/class-admin-settings-rest.php:185
 #: src/dashboard-app/index.js:414
@@ -306,10 +306,10 @@ msgstr ""
 #: admin/deployment/deployment-shortcodes.php:308
 #: admin/providers.php:487
 #: admin/skills.php:636
-#: admin/train-data.php:229
+#: admin/train-data.php:234
 #: src/admin-pages/views/AgentsView.js:180
-#: src/admin-pages/views/RoutinesView.js:1029
-#: src/admin-pages/views/RulesTab.js:412
+#: src/admin-pages/views/RoutinesView.js:1058
+#: src/admin-pages/views/RulesTab.js:415
 #: src/admin-pages/views/SkillsView.js:194
 #: src/admin-pages/views/SkillsView.js:316
 msgid "Delete"
@@ -344,9 +344,9 @@ msgstr ""
 #: src/admin-pages/views/AgentReadyView.js:227
 #: src/admin-pages/views/AgentsView.js:533
 #: src/admin-pages/views/ApprovalsView.js:713
-#: src/admin-pages/views/RoutinesView.js:444
-#: src/admin-pages/views/RoutinesView.js:907
-#: src/admin-pages/views/RulesTab.js:358
+#: src/admin-pages/views/RoutinesView.js:450
+#: src/admin-pages/views/RoutinesView.js:938
+#: src/admin-pages/views/RulesTab.js:361
 #: src/admin-pages/views/SkillsView.js:213
 #: src/settings-app/index.js:1718
 #: src/settings-app/index.js:2328
@@ -363,7 +363,7 @@ msgstr ""
 #: admin/skills.php:566
 #: admin/tools.php:337
 #: admin/tools.php:398
-#: src/admin-pages/views/RoutinesView.js:487
+#: src/admin-pages/views/RoutinesView.js:493
 #: src/admin-pages/views/SkillsView.js:346
 #: src/agent-wizard/index.js:739
 msgid "Description"
@@ -647,7 +647,7 @@ msgstr ""
 
 #: admin/approvals.php:275
 #: admin/settings-memory.php:197
-#: admin/train-data.php:248
+#: admin/train-data.php:253
 #: includes/class-gdpr.php:756
 #: src/admin-pages/views/TrainView.js:21
 msgid "Type"
@@ -675,7 +675,7 @@ msgstr ""
 #: admin/settings-endpoints.php:128
 #: admin/settings/tab-security.php:300
 #: admin/skills.php:572
-#: src/admin-pages/views/RoutinesView.js:914
+#: src/admin-pages/views/RoutinesView.js:945
 #: src/admin-pages/views/SkillsView.js:157
 #: src/admin-pages/views/SkillsView.js:222
 #: src/settings-app/index.js:629
@@ -714,7 +714,7 @@ msgstr ""
 #: admin/providers.php:368
 #: admin/settings-llm.php:167
 #: admin/skills.php:564
-#: admin/train-data.php:314
+#: admin/train-data.php:319
 #: includes/class-gdpr.php:587
 #: includes/class-gdpr.php:905
 #: includes/functions.php:62
@@ -1244,15 +1244,15 @@ msgstr ""
 
 #: admin/deployment/deployment-event-listeners.php:99
 #: admin/tools.php:112
-#: admin/train-data.php:353
+#: admin/train-data.php:358
 #: includes/admin-pages/class-tools-payload.php:28
-#: src/admin-pages/views/RoutinesView.js:37
+#: src/admin-pages/views/RoutinesView.js:43
 msgid "Content"
 msgstr ""
 
 #: admin/deployment/deployment-event-listeners.php:109
 #: includes/class-admin-surfaces.php:149
-#: src/admin-pages/views/RoutinesView.js:88
+#: src/admin-pages/views/RoutinesView.js:94
 #: src/dashboard-app/index.js:29
 msgid "Comments"
 msgstr ""
@@ -1262,7 +1262,7 @@ msgstr ""
 #: includes/admin-pages/class-tools-payload.php:49
 #: includes/class-admin-settings-rest.php:158
 #: includes/class-admin-surfaces.php:144
-#: src/admin-pages/views/RoutinesView.js:122
+#: src/admin-pages/views/RoutinesView.js:128
 #: src/settings-app/index.js:1074
 #: src/settings-app/index.js:1091
 #: src/settings-app/index.js:1093
@@ -1271,7 +1271,7 @@ msgstr ""
 
 #: admin/deployment/deployment-event-listeners.php:124
 #: includes/admin-pages/class-tools-payload.php:41
-#: src/admin-pages/views/RoutinesView.js:158
+#: src/admin-pages/views/RoutinesView.js:164
 #: src/dashboard-app/index.js:30
 #: src/dashboard-app/index.js:38
 msgid "Media"
@@ -1279,13 +1279,13 @@ msgstr ""
 
 #: admin/deployment/deployment-event-listeners.php:129
 #: includes/class-skills-registry.php:865
-#: src/admin-pages/views/RoutinesView.js:181
+#: src/admin-pages/views/RoutinesView.js:187
 #: src/dashboard-app/index.js:41
 msgid "WooCommerce"
 msgstr ""
 
 #: admin/deployment/deployment-event-listeners.php:136
-#: src/admin-pages/views/RoutinesView.js:216
+#: src/admin-pages/views/RoutinesView.js:222
 msgid "Plugins & Themes"
 msgstr ""
 
@@ -1311,7 +1311,7 @@ msgid "WordPress Event"
 msgstr ""
 
 #: admin/deployment/deployment-event-listeners.php:177
-#: src/admin-pages/views/RoutinesView.js:508
+#: src/admin-pages/views/RoutinesView.js:514
 msgid "— choose an event —"
 msgstr ""
 
@@ -1319,23 +1319,23 @@ msgstr ""
 #: admin/deployment/deployment-event-listeners.php:274
 #: admin/deployment/deployment-scheduled-tasks.php:358
 #: admin/settings-endpoints.php:152
-#: src/admin-pages/views/RoutinesView.js:519
+#: src/admin-pages/views/RoutinesView.js:525
 msgid "Custom"
 msgstr ""
 
 #: admin/deployment/deployment-event-listeners.php:186
-#: src/admin-pages/views/RoutinesView.js:521
+#: src/admin-pages/views/RoutinesView.js:527
 msgid "Custom hook name…"
 msgstr ""
 
 #: admin/deployment/deployment-event-listeners.php:191
-#: src/admin-pages/views/RoutinesView.js:531
+#: src/admin-pages/views/RoutinesView.js:537
 msgid "Enter any WordPress action hook name."
 msgstr ""
 
 #: admin/deployment/deployment-event-listeners.php:197
 #: admin/deployment/deployment-scheduled-tasks.php:279
-#: src/admin-pages/views/RoutinesView.js:462
+#: src/admin-pages/views/RoutinesView.js:468
 msgid "Prompt"
 msgstr ""
 
@@ -1357,14 +1357,14 @@ msgstr ""
 
 #: admin/deployment/deployment-event-listeners.php:213
 #: admin/deployment/deployment-event-listeners.php:244
-#: src/admin-pages/views/RoutinesView.js:538
-#: src/admin-pages/views/RulesTab.js:149
-#: src/admin-pages/views/RulesTab.js:361
+#: src/admin-pages/views/RoutinesView.js:544
+#: src/admin-pages/views/RulesTab.js:152
+#: src/admin-pages/views/RulesTab.js:364
 msgid "Priority"
 msgstr ""
 
 #: admin/deployment/deployment-event-listeners.php:217
-#: src/admin-pages/views/RoutinesView.js:542
+#: src/admin-pages/views/RoutinesView.js:548
 msgid "Lower numbers run first. Default is 10."
 msgstr ""
 
@@ -1382,8 +1382,8 @@ msgstr ""
 #: src/admin-pages/views/AgentsView.js:342
 #: src/admin-pages/views/AgentsView.js:437
 #: src/admin-pages/views/AgentsView.js:479
-#: src/admin-pages/views/RoutinesView.js:568
-#: src/admin-pages/views/RulesTab.js:161
+#: src/admin-pages/views/RoutinesView.js:574
+#: src/admin-pages/views/RulesTab.js:164
 #: src/admin-pages/views/SkillsView.js:363
 #: src/admin-pages/views/ToolsView.js:111
 #: src/dashboard-app/index.js:1474
@@ -1663,12 +1663,12 @@ msgstr ""
 #: admin/deployment/deployment-scheduled-tasks.php:431
 #: admin/deployment/deployment-scheduled-tasks.php:447
 #: admin/run-task.php:104
-#: src/admin-pages/views/RoutinesView.js:481
+#: src/admin-pages/views/RoutinesView.js:487
 msgid "Schedule"
 msgstr ""
 
 #: admin/deployment/deployment-scheduled-tasks.php:282
-#: src/admin-pages/views/RoutinesView.js:467
+#: src/admin-pages/views/RoutinesView.js:473
 msgid "Describe what the agent should do on each run…"
 msgstr ""
 
@@ -1929,8 +1929,8 @@ msgstr ""
 #: admin/deployment/deployment-shortcodes.php:265
 #: admin/tools.php:334
 #: admin/tools.php:396
-#: src/admin-pages/views/RoutinesView.js:561
-#: src/admin-pages/views/RulesTab.js:362
+#: src/admin-pages/views/RoutinesView.js:567
+#: src/admin-pages/views/RulesTab.js:365
 #: src/admin-pages/views/ToolsView.js:514
 #: src/settings-app/index.js:2330
 msgid "Enabled"
@@ -1956,8 +1956,8 @@ msgstr ""
 #: admin/deployment/deployment-shortcodes.php:302
 #: admin/skills.php:632
 #: src/admin-pages/views/AgentsView.js:149
-#: src/admin-pages/views/RoutinesView.js:982
-#: src/admin-pages/views/RulesTab.js:398
+#: src/admin-pages/views/RoutinesView.js:1011
+#: src/admin-pages/views/RulesTab.js:401
 #: src/admin-pages/views/SkillsView.js:295
 #: src/settings-app/index.js:666
 #: src/shared/result-card.js:63
@@ -2119,7 +2119,7 @@ msgid "Vision model"
 msgstr ""
 
 #: admin/partials/chat-playground-panel.php:87
-#: admin/train-data.php:45
+#: admin/train-data.php:48
 #: src/agent-wizard/index.js:747
 #: src/settings-app/index.js:1921
 msgid "Instructions"
@@ -3332,8 +3332,8 @@ msgstr ""
 
 #: admin/signup.php:135
 #: src/admin-pages/index.js:36
-#: src/admin-pages/views/RoutinesView.js:619
-#: src/admin-pages/views/RoutinesView.js:883
+#: src/admin-pages/views/RoutinesView.js:625
+#: src/admin-pages/views/RoutinesView.js:914
 #: src/agent-wizard/index.js:312
 #: src/deploy-wizard/index.js:197
 #: src/knowledge-wizard/index.js:363
@@ -3627,7 +3627,7 @@ msgstr ""
 #: admin/skills.php:565
 #: src/admin-pages/views/AgentsView.js:295
 #: src/admin-pages/views/AgentsView.js:412
-#: src/admin-pages/views/RoutinesView.js:452
+#: src/admin-pages/views/RoutinesView.js:458
 #: src/agent-wizard/index.js:731
 #: src/settings-app/index.js:626
 msgid "Name"
@@ -3820,7 +3820,7 @@ msgid "Local"
 msgstr ""
 
 #: admin/skills.php:634
-#: admin/train-data.php:204
+#: admin/train-data.php:209
 #: src/admin-pages/views/AgentsView.js:160
 #: src/admin-pages/views/SkillsView.js:301
 msgid "Export"
@@ -4203,49 +4203,49 @@ msgstr ""
 msgid "changes the deployed codebase"
 msgstr ""
 
-#: admin/train-data.php:44
-#: admin/train-data.php:192
+#: admin/train-data.php:47
+#: admin/train-data.php:197
 msgid "Wiki"
 msgstr ""
 
-#: admin/train-data.php:46
+#: admin/train-data.php:49
 #: src/settings-app/index.js:1489
 msgid "Memory"
 msgstr ""
 
-#: admin/train-data.php:47
+#: admin/train-data.php:52
 #: includes/admin-pages/class-train-payload.php:49
 msgid "Vector Store"
 msgstr ""
 
-#: admin/train-data.php:53
+#: admin/train-data.php:58
 msgid "Facts, policies, and FAQs every agent can look up — the site's shared source of truth."
 msgstr ""
 
-#: admin/train-data.php:54
+#: admin/train-data.php:59
 msgid "How one specific agent talks: its tone, greeting, and persona. Not shared facts — that's the Wiki."
 msgstr ""
 
-#: admin/train-data.php:55
+#: admin/train-data.php:60
 msgid "Short notes an agent keeps between chats, e.g. things a user told it. Optional and site-owned."
 msgstr ""
 
-#: admin/train-data.php:56
+#: admin/train-data.php:61
 msgid "Hosted semantic search over large documents (PDFs, long pages) for faster, more precise recall."
 msgstr ""
 
-#: admin/train-data.php:59
+#: admin/train-data.php:64
 msgid "Site-wide wiki"
 msgstr ""
 
 #. translators: %s: agent name
-#: admin/train-data.php:65
+#: admin/train-data.php:70
 #, php-format
 msgid "Agent: %s"
 msgstr ""
 
-#: admin/train-data.php:80
-#: admin/train-data.php:109
+#: admin/train-data.php:85
+#: admin/train-data.php:114
 #: includes/admin-pages/class-train-payload.php:35
 #: includes/class-admin-menu-handler.php:206
 #: includes/class-admin-menu-handler.php:443
@@ -4256,83 +4256,83 @@ msgstr ""
 msgid "Knowledge"
 msgstr ""
 
-#: admin/train-data.php:95
+#: admin/train-data.php:100
 msgid "What do you want your agents to know?"
 msgstr ""
 
-#: admin/train-data.php:96
+#: admin/train-data.php:101
 msgid "Teach them a fact, policy, or FAQ in a few steps. Paste text, upload a file, or pick pages that already exist on this site."
 msgstr ""
 
-#: admin/train-data.php:99
-#: admin/train-data.php:374
+#: admin/train-data.php:104
+#: admin/train-data.php:379
 #: includes/class-dashboard-rest.php:294
 #: includes/class-dashboard-rest.php:296
 msgid "Add knowledge"
 msgstr ""
 
-#: admin/train-data.php:110
+#: admin/train-data.php:115
 msgid "Teach your agents what is true"
 msgstr ""
 
-#: admin/train-data.php:112
+#: admin/train-data.php:117
 msgid "The free Knowledge Wiki uses Google’s Open Knowledge Format (OKF): plain markdown concepts you can version, search, and maintain like a document library — entirely on your server."
 msgstr ""
 
-#: admin/train-data.php:126
+#: admin/train-data.php:131
 msgid "Docs →"
 msgstr ""
 
-#: admin/train-data.php:145
+#: admin/train-data.php:150
 msgid "Knowledge sections"
 msgstr ""
 
-#: admin/train-data.php:181
+#: admin/train-data.php:186
 msgid "Settings UI is unavailable. Rebuild agent-builder assets."
 msgstr ""
 
-#: admin/train-data.php:200
+#: admin/train-data.php:205
 msgid "Search concepts…"
 msgstr ""
 
-#: admin/train-data.php:203
+#: admin/train-data.php:208
 msgid "Guided setup"
 msgstr ""
 
-#: admin/train-data.php:205
+#: admin/train-data.php:210
 msgid "Import persona text"
 msgstr ""
 
-#: admin/train-data.php:206
+#: admin/train-data.php:211
 msgid "New concept"
 msgstr ""
 
-#: admin/train-data.php:214
+#: admin/train-data.php:219
 msgid "concepts"
 msgstr ""
 
-#: admin/train-data.php:216
+#: admin/train-data.php:221
 msgid "Concepts"
 msgstr ""
 
-#: admin/train-data.php:218
+#: admin/train-data.php:223
 msgid "No concepts yet. Create a FAQ, policy, or product fact to get started."
 msgstr ""
 
-#: admin/train-data.php:221
+#: admin/train-data.php:226
 msgid "No concepts match your search. Try a different keyword or clear the search."
 msgstr ""
 
-#: admin/train-data.php:227
+#: admin/train-data.php:232
 #: src/admin-pages/views/TrainView.js:20
 msgid "Concept"
 msgstr ""
 
-#: admin/train-data.php:230
+#: admin/train-data.php:235
 msgid "Save concept"
 msgstr ""
 
-#: admin/train-data.php:236
+#: admin/train-data.php:241
 #: includes/class-gdpr.php:764
 #: includes/functions.php:61
 #: src/admin-pages/views/AgentsView.js:304
@@ -4342,159 +4342,155 @@ msgstr ""
 msgid "Title"
 msgstr ""
 
-#: admin/train-data.php:237
+#: admin/train-data.php:242
 msgid "Returns policy"
 msgstr ""
 
-#: admin/train-data.php:241
+#: admin/train-data.php:246
 msgid "ID"
 msgstr ""
 
-#: admin/train-data.php:242
+#: admin/train-data.php:247
 msgid "About ID"
 msgstr ""
 
-#: admin/train-data.php:242
+#: admin/train-data.php:247
 msgid "Short name for this concept (e.g. returns-policy). Filled in for you from the title if left blank."
 msgstr ""
 
-#: admin/train-data.php:249
+#: admin/train-data.php:254
 msgid "About type"
 msgstr ""
 
-#: admin/train-data.php:249
+#: admin/train-data.php:254
 msgid "What kind of knowledge this is. Choose Custom to enter your own."
 msgstr ""
 
-#: admin/train-data.php:294
+#: admin/train-data.php:299
 msgid "Custom…"
 msgstr ""
 
-#: admin/train-data.php:301
+#: admin/train-data.php:306
 msgid "Your type"
 msgstr ""
 
-#: admin/train-data.php:307
+#: admin/train-data.php:312
 msgid "Keywords"
 msgstr ""
 
-#: admin/train-data.php:308
+#: admin/train-data.php:313
 msgid "About keywords"
 msgstr ""
 
-#: admin/train-data.php:308
+#: admin/train-data.php:313
 msgid "Optional keywords, comma-separated. Not WordPress post tags."
 msgstr ""
 
-#: admin/train-data.php:310
+#: admin/train-data.php:315
 msgid "shipping, returns"
 msgstr ""
 
-#: admin/train-data.php:315
+#: admin/train-data.php:320
 msgid "About status"
 msgstr ""
 
-#: admin/train-data.php:315
+#: admin/train-data.php:320
 msgid "Draft = work in progress. Stable = ready. Deprecated = keep for history, prefer not to use."
 msgstr ""
 
-#: admin/train-data.php:318
+#: admin/train-data.php:323
 #: includes/admin-pages/class-skills-payload.php:29
 #: src/admin-pages/views/SkillsView.js:156
 #: src/admin-pages/views/SkillsView.js:167
 msgid "Draft"
 msgstr ""
 
-#: admin/train-data.php:319
+#: admin/train-data.php:324
 msgid "Stable"
 msgstr ""
 
-#: admin/train-data.php:320
+#: admin/train-data.php:325
 msgid "Deprecated"
 msgstr ""
 
-#: admin/train-data.php:325
+#: admin/train-data.php:330
 msgid "Review by"
 msgstr ""
 
-#: admin/train-data.php:326
+#: admin/train-data.php:331
 msgid "About review date"
 msgstr ""
 
-#: admin/train-data.php:326
+#: admin/train-data.php:331
 msgid "Optional. After this date the concept is marked as needing a refresh."
 msgstr ""
 
-#: admin/train-data.php:333
+#: admin/train-data.php:338
 msgid "Example"
 msgstr ""
 
-#: admin/train-data.php:334
+#: admin/train-data.php:339
 msgid "Demo only — agents cannot use this until you uncheck Example and adapt it for your site."
 msgstr ""
 
-#: admin/train-data.php:340
+#: admin/train-data.php:345
 msgid "Always include in prompts"
 msgstr ""
 
-#: admin/train-data.php:341
+#: admin/train-data.php:346
 msgid "— inject this concept into every agent’s system prompt (best for site overview, tone, standing policies). Keep short."
 msgstr ""
 
-#: admin/train-data.php:346
+#: admin/train-data.php:351
 msgid "Summary"
 msgstr ""
 
-#: admin/train-data.php:347
+#: admin/train-data.php:352
 msgid "About summary"
 msgstr ""
 
-#: admin/train-data.php:347
+#: admin/train-data.php:352
 msgid "One sentence for the list and search results."
 msgstr ""
 
-#: admin/train-data.php:349
+#: admin/train-data.php:354
 msgid "One sentence that sums this up."
 msgstr ""
 
-#: admin/train-data.php:354
+#: admin/train-data.php:359
 msgid "About content"
 msgstr ""
 
-#: admin/train-data.php:354
+#: admin/train-data.php:359
 msgid "What agents should know. Write plainly; Markdown is optional."
 msgstr ""
 
-#: admin/train-data.php:356
+#: admin/train-data.php:361
 msgid "We accept returns within 30 days with proof of purchase…"
 msgstr ""
 
-#: admin/train-data.php:360
+#: admin/train-data.php:365
 msgid "Related link (optional)"
 msgstr ""
 
-#: admin/train-data.php:361
+#: admin/train-data.php:366
 msgid "About related link"
 msgstr ""
 
-#: admin/train-data.php:361
+#: admin/train-data.php:366
 msgid "Link to a page or doc this is about. Content above is still the main knowledge."
 msgstr ""
 
-#: admin/train-data.php:372
+#: admin/train-data.php:377
 msgid "Your knowledge wiki"
 msgstr ""
 
-#: admin/train-data.php:373
+#: admin/train-data.php:378
 msgid "Add facts, policies, and FAQs your agents can use."
 msgstr ""
 
-#: admin/train-data.php:393
+#: admin/train-data.php:398
 msgid "Pro is active but the Vector Store admin UI was not found. Reinstall or update Siteloom Pro."
-msgstr ""
-
-#: admin/train-data.php:402
-msgid "The free Knowledge Wiki stays fully available without Pro. Need large-scale semantic search across big document sets instead? Hosted vector RAG is available separately in Siteloom Pro."
 msgstr ""
 
 #: includes/admin-pages/class-admin-profiles.php:39
@@ -5485,7 +5481,7 @@ msgid "Agents only use the tools you allow. Higher-risk actions still follow App
 msgstr ""
 
 #: includes/class-admin-menu-handler.php:1337
-msgid "Knowledge stays on your site for the free wiki; hosted vector features require Siteloom Pro."
+msgid "Knowledge stays on your site in the Knowledge Wiki."
 msgstr ""
 
 #: includes/class-admin-menu-handler.php:1339
@@ -6156,7 +6152,7 @@ msgid "Agent is required."
 msgstr ""
 
 #: includes/class-agent-lifecycle.php:254
-#: src/admin-pages/views/RoutinesView.js:339
+#: src/admin-pages/views/RoutinesView.js:345
 msgid "Prompt is required."
 msgstr ""
 
@@ -7208,7 +7204,7 @@ msgstr ""
 
 #: includes/class-rest-api.php:648
 #: src/admin-pages/views/AgentsView.js:45
-#: src/admin-pages/views/RoutinesView.js:757
+#: src/admin-pages/views/RoutinesView.js:773
 #: src/shared/chat-embed.js:132
 #: src/shared/chat-embed.js:337
 msgid "Something went wrong."
@@ -8346,11 +8342,11 @@ msgid "Filter by namespace (e.g., wp/v2, wc/v3)."
 msgstr ""
 
 #: includes/functions.php:31
-msgid "Warming up the AI model, please wait\\u2026"
+msgid "Warming up the AI model, please wait…"
 msgstr ""
 
 #: includes/functions.php:32
-msgid "Preparing audio\\u2026"
+msgid "Preparing audio…"
 msgstr ""
 
 #: includes/functions.php:33
@@ -8364,11 +8360,11 @@ msgid "Copy"
 msgstr ""
 
 #: includes/functions.php:35
-msgid "\\u25b6 Show Diff"
+msgid "▶ Show Diff"
 msgstr ""
 
 #: includes/functions.php:36
-msgid "\\u25bc Hide Diff"
+msgid "▼ Hide Diff"
 msgstr ""
 
 #: includes/functions.php:37
@@ -8380,11 +8376,11 @@ msgid "An agent wants to perform a high-risk action."
 msgstr ""
 
 #: includes/functions.php:39
-msgid "Read aloud: off \\u2014 click to enable"
+msgid "Read aloud: off — click to enable"
 msgstr ""
 
 #: includes/functions.php:40
-msgid "Read aloud: on \\u2014 click to disable"
+msgid "Read aloud: on — click to disable"
 msgstr ""
 
 #: includes/functions.php:41
@@ -8394,7 +8390,7 @@ msgstr ""
 #. translators: %s is the number of seconds before the next retry
 #: includes/functions.php:43
 #, php-format
-msgid "The AI model is busy. Retrying in %ss\\u2026"
+msgid "The AI model is busy. Retrying in %ss…"
 msgstr ""
 
 #: includes/functions.php:44
@@ -8402,7 +8398,7 @@ msgid "Something went wrong. The issue has been reported."
 msgstr ""
 
 #: includes/functions.php:45
-msgid "The request timed out. The AI model may be overloaded \\u2014 please try again."
+msgid "The request timed out. The AI model may be overloaded — please try again."
 msgstr ""
 
 #: includes/functions.php:46
@@ -9413,13 +9409,13 @@ msgstr ""
 #. translators: %s: deleted agent name
 #. translators: %s: routine label
 #: src/admin-pages/views/AgentsView.js:708
-#: src/admin-pages/views/RoutinesView.js:823
+#: src/admin-pages/views/RoutinesView.js:841
 #, js-format
 msgid "Deleted “%s”."
 msgstr ""
 
 #: src/admin-pages/views/AgentsView.js:714
-#: src/admin-pages/views/RoutinesView.js:833
+#: src/admin-pages/views/RoutinesView.js:851
 #: src/admin-pages/views/SkillsView.js:61
 msgid "Delete failed."
 msgstr ""
@@ -9788,471 +9784,481 @@ msgstr ""
 msgid "When agents chat or use tools, their activity will show up here."
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:27
+#: src/admin-pages/views/RoutinesView.js:33
 msgid "Once Hourly"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:28
+#: src/admin-pages/views/RoutinesView.js:34
 msgid "Twice Daily"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:29
+#: src/admin-pages/views/RoutinesView.js:35
 msgid "Once Daily"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:30
+#: src/admin-pages/views/RoutinesView.js:36
 msgid "Once Weekly"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:43
+#: src/admin-pages/views/RoutinesView.js:49
 msgid "post saved or updated"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:48
+#: src/admin-pages/views/RoutinesView.js:54
 msgid "post published"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:54
+#: src/admin-pages/views/RoutinesView.js:60
 msgid "draft published"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:60
+#: src/admin-pages/views/RoutinesView.js:66
 msgid "scheduled post goes live"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:65
+#: src/admin-pages/views/RoutinesView.js:71
 msgid "post updated"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:71
+#: src/admin-pages/views/RoutinesView.js:77
 msgid "post permanently deleted"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:77
+#: src/admin-pages/views/RoutinesView.js:83
 msgid "post moved to trash"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:83
+#: src/admin-pages/views/RoutinesView.js:89
 msgid "post restored from trash"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:94
+#: src/admin-pages/views/RoutinesView.js:100
 msgid "new comment inserted"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:100
+#: src/admin-pages/views/RoutinesView.js:106
 msgid "comment submitted"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:105
+#: src/admin-pages/views/RoutinesView.js:111
 msgid "comment edited"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:111
+#: src/admin-pages/views/RoutinesView.js:117
 msgid "comment deleted"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:117
+#: src/admin-pages/views/RoutinesView.js:123
 msgid "comment marked spam"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:128
+#: src/admin-pages/views/RoutinesView.js:134
 msgid "new user registered"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:134
+#: src/admin-pages/views/RoutinesView.js:140
 msgid "user profile updated"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:138
+#: src/admin-pages/views/RoutinesView.js:144
 msgid "user logged in"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:143
+#: src/admin-pages/views/RoutinesView.js:149
 msgid "user logged out"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:147
+#: src/admin-pages/views/RoutinesView.js:153
 msgid "user deleted"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:153
+#: src/admin-pages/views/RoutinesView.js:159
 msgid "password reset"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:164
+#: src/admin-pages/views/RoutinesView.js:170
 msgid "file uploaded"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:170
+#: src/admin-pages/views/RoutinesView.js:176
 msgid "attachment updated"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:176
+#: src/admin-pages/views/RoutinesView.js:182
 msgid "attachment deleted"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:187
+#: src/admin-pages/views/RoutinesView.js:193
 msgid "new order created"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:193
+#: src/admin-pages/views/RoutinesView.js:199
 msgid "order status changed"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:199
+#: src/admin-pages/views/RoutinesView.js:205
 msgid "payment completed"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:205
+#: src/admin-pages/views/RoutinesView.js:211
 msgid "product low stock"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:211
+#: src/admin-pages/views/RoutinesView.js:217
 msgid "product out of stock"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:222
+#: src/admin-pages/views/RoutinesView.js:228
 msgid "plugin activated"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:228
+#: src/admin-pages/views/RoutinesView.js:234
 msgid "plugin deactivated"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:234
+#: src/admin-pages/views/RoutinesView.js:240
 msgid "plugin/theme updated"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:239
+#: src/admin-pages/views/RoutinesView.js:245
 msgid "theme switched"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:335
+#: src/admin-pages/views/RoutinesView.js:341
 msgid "Choose an agent."
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:343
+#: src/admin-pages/views/RoutinesView.js:349
 msgid "Choose or enter a hook name."
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:380
+#: src/admin-pages/views/RoutinesView.js:386
 msgid "Could not save the routine."
 msgstr ""
 
 #. translators: %s: routine label
-#: src/admin-pages/views/RoutinesView.js:388
+#: src/admin-pages/views/RoutinesView.js:394
 #, js-format
 msgid "Edit routine: %s"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:389
-#: src/admin-pages/views/RoutinesView.js:687
-#: src/admin-pages/views/RoutinesView.js:908
-#: src/admin-pages/views/RoutinesView.js:929
+#: src/admin-pages/views/RoutinesView.js:395
+#: src/admin-pages/views/RoutinesView.js:693
+#: src/admin-pages/views/RoutinesView.js:939
+#: src/admin-pages/views/RoutinesView.js:958
 msgid "Routine"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:391
-#: src/admin-pages/views/RoutinesView.js:578
-#: src/admin-pages/views/RoutinesView.js:1067
+#: src/admin-pages/views/RoutinesView.js:397
+#: src/admin-pages/views/RoutinesView.js:584
+#: src/admin-pages/views/RoutinesView.js:1096
 msgid "Add routine"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:407
+#: src/admin-pages/views/RoutinesView.js:413
 msgid "No agents are available to run a routine."
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:422
+#: src/admin-pages/views/RoutinesView.js:428
 msgid "Scheduled task"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:431
+#: src/admin-pages/views/RoutinesView.js:437
 msgid "Event listener"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:436
+#: src/admin-pages/views/RoutinesView.js:442
 msgid "The routine type cannot be changed after creation."
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:455
+#: src/admin-pages/views/RoutinesView.js:461
 msgid "Optional — auto-generated if blank."
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:471
+#: src/admin-pages/views/RoutinesView.js:477
 msgid "Describe what the agent should do when this event fires…"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:490
+#: src/admin-pages/views/RoutinesView.js:496
 msgid "Optional short note."
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:499
+#: src/admin-pages/views/RoutinesView.js:505
 msgid "WordPress event"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:527
+#: src/admin-pages/views/RoutinesView.js:533
 msgid "Custom hook name"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:551
+#: src/admin-pages/views/RoutinesView.js:557
 msgid "Skill slug"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:554
+#: src/admin-pages/views/RoutinesView.js:560
 msgid "Optional. The slug of a skill to attach to this routine."
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:577
+#: src/admin-pages/views/RoutinesView.js:583
 msgid "Save routine"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:605
+#: src/admin-pages/views/RoutinesView.js:611
 msgid "Could not load history."
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:631
+#: src/admin-pages/views/RoutinesView.js:637
 msgid "No runs yet. Use “Test run” to run this routine once now."
 msgstr ""
 
 #. translators: %d: token count
-#: src/admin-pages/views/RoutinesView.js:659
+#: src/admin-pages/views/RoutinesView.js:665
 #, js-format
 msgid "%d tokens"
 msgstr ""
 
 #. translators: %d: iteration count
-#: src/admin-pages/views/RoutinesView.js:667
+#: src/admin-pages/views/RoutinesView.js:673
 #, js-format
 msgid "%d steps"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:673
+#: src/admin-pages/views/RoutinesView.js:679
 msgid "View in Tasks"
 msgstr ""
 
 #. translators: %s: routine label
-#: src/admin-pages/views/RoutinesView.js:686
+#: src/admin-pages/views/RoutinesView.js:692
 #, js-format
 msgid "History: %s"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:728
+#: src/admin-pages/views/RoutinesView.js:744
 msgid "Could not load routines."
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:770
+#: src/admin-pages/views/RoutinesView.js:786
 msgid "Routine paused."
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:771
+#: src/admin-pages/views/RoutinesView.js:787
 msgid "Routine resumed."
 msgstr ""
 
-#. translators: %s: run id
-#: src/admin-pages/views/RoutinesView.js:785
-#, js-format
-msgid "Test run started (run %s)."
+#: src/admin-pages/views/RoutinesView.js:800
+msgid "Test run started. <a>See it in Tasks</a>."
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:791
+#: src/admin-pages/views/RoutinesView.js:809
 msgid "Test run started."
 msgstr ""
 
 #. translators: %s: routine label
-#: src/admin-pages/views/RoutinesView.js:802
+#: src/admin-pages/views/RoutinesView.js:820
 #, js-format
 msgid "Delete “%s”? This cannot be undone."
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:895
+#: src/admin-pages/views/RoutinesView.js:926
 msgid "No routines yet. Routines run your agents on a schedule or in response to site events."
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:909
+#: src/admin-pages/views/RoutinesView.js:940
 msgid "Trigger"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:910
+#: src/admin-pages/views/RoutinesView.js:941
 #: src/admin-pages/views/SkillsView.js:212
 msgid "Skill"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:911
+#: src/admin-pages/views/RoutinesView.js:942
 msgid "Next run"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:912
+#: src/admin-pages/views/RoutinesView.js:943
 msgid "Last status"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:913
+#: src/admin-pages/views/RoutinesView.js:944
 msgid "On / Off"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:959
-#: src/admin-pages/views/RoutinesView.js:970
+#: src/admin-pages/views/RoutinesView.js:988
+#: src/admin-pages/views/RoutinesView.js:999
 #: src/admin-pages/views/SafetyCenterView.js:709
 msgid "On"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:963
-#: src/admin-pages/views/RoutinesView.js:971
+#: src/admin-pages/views/RoutinesView.js:992
+#: src/admin-pages/views/RoutinesView.js:1000
 #: src/admin-pages/views/SafetyCenterView.js:710
 #: src/settings-app/index.js:848
 msgid "Off"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:993
+#: src/admin-pages/views/RoutinesView.js:1022
 msgid "Pause"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:994
+#: src/admin-pages/views/RoutinesView.js:1023
 msgid "Resume"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:1005
+#: src/admin-pages/views/RoutinesView.js:1034
 msgid "Test run"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:1018
+#: src/admin-pages/views/RoutinesView.js:1047
 msgid "History"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:1045
+#: src/admin-pages/views/RoutinesView.js:1074
 msgid "Scheduled background tasks are overdue (no recent cron tick). Routines on a schedule will not run until WP-Cron ticks again."
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:1050
+#: src/admin-pages/views/RoutinesView.js:1079
 msgid "Check Site Health"
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:1079
+#: src/admin-pages/views/RoutinesView.js:1108
 msgid "Routine created."
 msgstr ""
 
-#: src/admin-pages/views/RoutinesView.js:1090
+#: src/admin-pages/views/RoutinesView.js:1119
 msgid "Routine saved."
 msgstr ""
 
-#: src/admin-pages/views/RulesTab.js:26
+#: src/admin-pages/views/RulesTab.js:27
 msgid "Ask me first…"
 msgstr ""
 
-#: src/admin-pages/views/RulesTab.js:27
+#: src/admin-pages/views/RulesTab.js:28
 msgid "Allow automatically…"
 msgstr ""
 
-#: src/admin-pages/views/RulesTab.js:28
+#: src/admin-pages/views/RulesTab.js:29
 msgid "Never…"
 msgstr ""
 
+#: src/admin-pages/views/RulesTab.js:34
+msgid "Ask me first"
+msgstr ""
+
+#: src/admin-pages/views/RulesTab.js:35
+msgid "Allow automatically"
+msgstr ""
+
 #: src/admin-pages/views/RulesTab.js:36
+msgid "Never"
+msgstr ""
+
+#: src/admin-pages/views/RulesTab.js:39
 #: src/admin-pages/views/SkillsView.js:270
 msgid "All agents"
 msgstr ""
 
-#: src/admin-pages/views/RulesTab.js:67
+#: src/admin-pages/views/RulesTab.js:70
 msgid "Describe the rule in plain language first."
 msgstr ""
 
-#: src/admin-pages/views/RulesTab.js:95
+#: src/admin-pages/views/RulesTab.js:98
 msgid "Could not save the rule."
 msgstr ""
 
-#: src/admin-pages/views/RulesTab.js:104
+#: src/admin-pages/views/RulesTab.js:107
 msgid "Edit rule"
 msgstr ""
 
-#: src/admin-pages/views/RulesTab.js:105
-#: src/admin-pages/views/RulesTab.js:171
-#: src/admin-pages/views/RulesTab.js:324
+#: src/admin-pages/views/RulesTab.js:108
+#: src/admin-pages/views/RulesTab.js:174
+#: src/admin-pages/views/RulesTab.js:327
 msgid "Add rule"
 msgstr ""
 
-#: src/admin-pages/views/RulesTab.js:117
+#: src/admin-pages/views/RulesTab.js:120
 msgid "Applies to"
 msgstr ""
 
-#: src/admin-pages/views/RulesTab.js:121
+#: src/admin-pages/views/RulesTab.js:124
 msgid "Choose one agent, or “All agents” to apply the rule to every agent on this site."
 msgstr ""
 
-#: src/admin-pages/views/RulesTab.js:128
-#: src/admin-pages/views/RulesTab.js:359
+#: src/admin-pages/views/RulesTab.js:131
+#: src/admin-pages/views/RulesTab.js:362
 msgid "Rule"
 msgstr ""
 
-#: src/admin-pages/views/RulesTab.js:131
+#: src/admin-pages/views/RulesTab.js:134
 msgid "Ask me first before publishing anything."
 msgstr ""
 
-#: src/admin-pages/views/RulesTab.js:135
+#: src/admin-pages/views/RulesTab.js:138
 msgid "Describe what the agent should do in plain language."
 msgstr ""
 
-#: src/admin-pages/views/RulesTab.js:142
-#: src/admin-pages/views/RulesTab.js:360
+#: src/admin-pages/views/RulesTab.js:145
+#: src/admin-pages/views/RulesTab.js:363
 msgid "Effect"
 msgstr ""
 
-#: src/admin-pages/views/RulesTab.js:153
+#: src/admin-pages/views/RulesTab.js:156
 msgid "Lower numbers run first when more than one rule matches."
 msgstr ""
 
-#: src/admin-pages/views/RulesTab.js:170
+#: src/admin-pages/views/RulesTab.js:173
 msgid "Save rule"
 msgstr ""
 
-#: src/admin-pages/views/RulesTab.js:194
+#: src/admin-pages/views/RulesTab.js:197
 msgid "Could not load rules."
 msgstr ""
 
-#: src/admin-pages/views/RulesTab.js:250
+#: src/admin-pages/views/RulesTab.js:253
 msgid "Rule enabled."
 msgstr ""
 
-#: src/admin-pages/views/RulesTab.js:251
+#: src/admin-pages/views/RulesTab.js:254
 msgid "Rule disabled."
 msgstr ""
 
-#: src/admin-pages/views/RulesTab.js:258
+#: src/admin-pages/views/RulesTab.js:261
 msgid "Could not update the rule."
 msgstr ""
 
-#: src/admin-pages/views/RulesTab.js:267
+#: src/admin-pages/views/RulesTab.js:270
 msgid "Delete this rule? Agents will no longer follow it."
 msgstr ""
 
-#: src/admin-pages/views/RulesTab.js:282
+#: src/admin-pages/views/RulesTab.js:285
 msgid "Rule deleted."
 msgstr ""
 
-#: src/admin-pages/views/RulesTab.js:288
+#: src/admin-pages/views/RulesTab.js:291
 msgid "Could not delete the rule."
 msgstr ""
 
-#: src/admin-pages/views/RulesTab.js:297
+#: src/admin-pages/views/RulesTab.js:300
 msgid "Rule saved."
 msgstr ""
 
-#: src/admin-pages/views/RulesTab.js:315
-msgid "Rules tell agents how much to ask before acting. An agent pauses for anything a rule asks about, and runs automatically when a rule allows it."
+#: src/admin-pages/views/RulesTab.js:318
+msgid "Rules tell agents how much to ask before acting. An agent pauses for anything a rule asks about, and runs automatically when a rule allows it. Rules apply to actions that change your site. Read-only lookups are never held by a rule."
 msgstr ""
 
-#: src/admin-pages/views/RulesTab.js:329
+#: src/admin-pages/views/RulesTab.js:332
 msgid "Only administrators can add or edit rules."
 msgstr ""
 
-#: src/admin-pages/views/RulesTab.js:339
+#: src/admin-pages/views/RulesTab.js:342
 msgid "Loading rules…"
 msgstr ""
 
-#: src/admin-pages/views/RulesTab.js:344
+#: src/admin-pages/views/RulesTab.js:347
 msgid "No rules yet"
 msgstr ""
 
-#: src/admin-pages/views/RulesTab.js:347
+#: src/admin-pages/views/RulesTab.js:350
 msgid "Add a rule to decide how much an agent should ask before it changes your site."
 msgstr ""
 

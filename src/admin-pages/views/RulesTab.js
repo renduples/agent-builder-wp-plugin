@@ -20,18 +20,21 @@ const RULES_PATH = 'agentic/v1/approval-rules';
 // new route or a duplicate client-side agent list.
 const AGENTS_PATH = 'agentic/v1/admin-page?page=agents';
 
-// Plain-English effect copy from PLAN §7 M12. Each completes the sentence the
-// rule_text starts, e.g. "Ask me first before publishing anything."
+// Plain-English effect copy from PLAN §7 M12. In the select each label
+// completes the sentence the rule_text starts ("Ask me first… before
+// publishing anything."), hence the trailing ellipsis there.
 const EFFECT_OPTIONS = [
 	{ value: 'ask', label: __( 'Ask me first…', 'siteloom' ) },
 	{ value: 'allow', label: __( 'Allow automatically…', 'siteloom' ) },
 	{ value: 'deny', label: __( 'Never…', 'siteloom' ) },
 ];
 
-const EFFECT_LABELS = EFFECT_OPTIONS.reduce( ( map, o ) => {
-	map[ o.value ] = o.label;
-	return map;
-}, {} );
+// The rules table shows the effect on its own, so it gets clean labels.
+const EFFECT_LABELS = {
+	ask: __( 'Ask me first', 'siteloom' ),
+	allow: __( 'Allow automatically', 'siteloom' ),
+	deny: __( 'Never', 'siteloom' ),
+};
 
 const ALL_AGENTS_LABEL = __( 'All agents', 'siteloom' );
 
@@ -313,7 +316,7 @@ function RulesTab() {
 
 			<p className="agentic-react-muted">
 				{ __(
-					'Rules tell agents how much to ask before acting. An agent pauses for anything a rule asks about, and runs automatically when a rule allows it.',
+					'Rules tell agents how much to ask before acting. An agent pauses for anything a rule asks about, and runs automatically when a rule allows it. Rules apply to actions that change your site. Read-only lookups are never held by a rule.',
 					'siteloom'
 				) }
 			</p>

@@ -6778,12 +6778,12 @@ msgid "Filter by namespace (e.g., wp/v2, wc/v3)."
 msgstr "Filtruj według przestrzeni nazw (np. wp/v2, wc/v3)."
 
 #: includes/functions.php:31
-msgid "Warming up the AI model, please wait\\u2026"
-msgstr "Rozgrzewanie modelu AI, proszę czekać\\u2026"
+msgid "Warming up the AI model, please wait…"
+msgstr "Rozgrzewanie modelu AI, proszę czekać…"
 
 #: includes/functions.php:32
-msgid "Preparing audio\\u2026"
-msgstr "Przygotowywanie dźwięku\\u2026"
+msgid "Preparing audio…"
+msgstr "Przygotowywanie dźwięku…"
 
 #: includes/functions.php:33
 #: src/settings-app/index.js:2354
@@ -6796,12 +6796,12 @@ msgid "Copy"
 msgstr "Kopiuj"
 
 #: includes/functions.php:35
-msgid "\\u25b6 Show Diff"
-msgstr "\\u25b6 Pokaż różnice"
+msgid "▶ Show Diff"
+msgstr "▶ Pokaż różnice"
 
 #: includes/functions.php:36
-msgid "\\u25bc Hide Diff"
-msgstr "\\u25bc Ukryj różnice"
+msgid "▼ Hide Diff"
+msgstr "▼ Ukryj różnice"
 
 #: includes/functions.php:37
 msgid "Agent wants to make a change."
@@ -6812,12 +6812,12 @@ msgid "An agent wants to perform a high-risk action."
 msgstr "Agent chce wykonać działanie wysokiego ryzyka."
 
 #: includes/functions.php:39
-msgid "Read aloud: off \\u2014 click to enable"
-msgstr "Czytanie na głos: wyłączone \\u2014 kliknij, aby włączyć"
+msgid "Read aloud: off — click to enable"
+msgstr "Czytanie na głos: wyłączone — kliknij, aby włączyć"
 
 #: includes/functions.php:40
-msgid "Read aloud: on \\u2014 click to disable"
-msgstr "Czytanie na głos: włączone \\u2014 kliknij, aby wyłączyć"
+msgid "Read aloud: on — click to disable"
+msgstr "Czytanie na głos: włączone — kliknij, aby wyłączyć"
 
 #: includes/functions.php:41
 msgid "Voice input requires Chrome, Edge, or Safari with HTTPS"
@@ -6826,16 +6826,16 @@ msgstr "Wprowadzanie głosowe wymaga przeglądarki Chrome, Edge lub Safari z po�
 #. translators: %s is the number of seconds before the next retry
 #: includes/functions.php:43
 #, php-format
-msgid "The AI model is busy. Retrying in %ss\\u2026"
-msgstr "Model AI jest zajęty. Ponowna próba za %ss\\u2026"
+msgid "The AI model is busy. Retrying in %ss…"
+msgstr "Model AI jest zajęty. Ponowna próba za %ss…"
 
 #: includes/functions.php:44
 msgid "Something went wrong. The issue has been reported."
 msgstr "Coś poszło nie tak. Problem został zgłoszony."
 
 #: includes/functions.php:45
-msgid "The request timed out. The AI model may be overloaded \\u2014 please try again."
-msgstr "Przekroczono limit czasu żądania. Model AI może być przeciążony \\u2014 spróbuj ponownie."
+msgid "The request timed out. The AI model may be overloaded — please try again."
+msgstr "Przekroczono limit czasu żądania. Model AI może być przeciążony — spróbuj ponownie."
 
 #: includes/functions.php:46
 msgid "Sorry, there was an error connecting to the agent. Please try again."
@@ -8708,11 +8708,11 @@ msgstr "Agent chce wprowadzić zmianę."
 
 #: src/shared/chat-embed.js:187
 msgid "Hide Diff"
-msgstr "\\u25bc Ukryj różnice"
+msgstr "▼ Ukryj różnice"
 
 #: src/shared/chat-embed.js:188
 msgid "Show Diff"
-msgstr "\\u25b6 Pokaż różnice"
+msgstr "▶ Pokaż różnice"
 
 #: src/shared/chat-embed.js:234
 msgid "Allow Once"

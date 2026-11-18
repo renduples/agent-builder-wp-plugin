@@ -6768,12 +6768,12 @@ msgid "Filter by namespace (e.g., wp/v2, wc/v3)."
 msgstr "按命名空间筛选（例如 wp/v2、wc/v3）。"
 
 #: includes/functions.php:31
-msgid "Warming up the AI model, please wait\\u2026"
-msgstr "正在预热 AI 模型，请稍候\\u2026"
+msgid "Warming up the AI model, please wait…"
+msgstr "正在预热 AI 模型，请稍候…"
 
 #: includes/functions.php:32
-msgid "Preparing audio\\u2026"
-msgstr "正在准备音频\\u2026"
+msgid "Preparing audio…"
+msgstr "正在准备音频…"
 
 #: includes/functions.php:33
 #: src/settings-app/index.js:2354
@@ -6786,12 +6786,12 @@ msgid "Copy"
 msgstr "复制"
 
 #: includes/functions.php:35
-msgid "\\u25b6 Show Diff"
-msgstr "\\u25b6 显示差异"
+msgid "▶ Show Diff"
+msgstr "▶ 显示差异"
 
 #: includes/functions.php:36
-msgid "\\u25bc Hide Diff"
-msgstr "\\u25bc 隐藏差异"
+msgid "▼ Hide Diff"
+msgstr "▼ 隐藏差异"
 
 #: includes/functions.php:37
 msgid "Agent wants to make a change."
@@ -6802,12 +6802,12 @@ msgid "An agent wants to perform a high-risk action."
 msgstr "有智能体想要执行一项高风险操作。"
 
 #: includes/functions.php:39
-msgid "Read aloud: off \\u2014 click to enable"
-msgstr "朗读：关闭 \\u2014 点击以启用"
+msgid "Read aloud: off — click to enable"
+msgstr "朗读：关闭 — 点击以启用"
 
 #: includes/functions.php:40
-msgid "Read aloud: on \\u2014 click to disable"
-msgstr "朗读：开启 \\u2014 点击以禁用"
+msgid "Read aloud: on — click to disable"
+msgstr "朗读：开启 — 点击以禁用"
 
 #: includes/functions.php:41
 msgid "Voice input requires Chrome, Edge, or Safari with HTTPS"
@@ -6816,16 +6816,16 @@ msgstr "语音输入需要在 HTTPS 下使用 Chrome、Edge 或 Safari"
 #. translators: %s is the number of seconds before the next retry
 #: includes/functions.php:43
 #, php-format
-msgid "The AI model is busy. Retrying in %ss\\u2026"
-msgstr "AI 模型繁忙。将在 %s 秒后重试\\u2026"
+msgid "The AI model is busy. Retrying in %ss…"
+msgstr "AI 模型繁忙。将在 %s 秒后重试…"
 
 #: includes/functions.php:44
 msgid "Something went wrong. The issue has been reported."
 msgstr "出现了问题。该问题已被上报。"
 
 #: includes/functions.php:45
-msgid "The request timed out. The AI model may be overloaded \\u2014 please try again."
-msgstr "请求超时。AI 模型可能负载过高 \\u2014 请重试。"
+msgid "The request timed out. The AI model may be overloaded — please try again."
+msgstr "请求超时。AI 模型可能负载过高 — 请重试。"
 
 #: includes/functions.php:46
 msgid "Sorry, there was an error connecting to the agent. Please try again."
@@ -8698,11 +8698,11 @@ msgstr "智能体想要进行更改。"
 
 #: src/shared/chat-embed.js:187
 msgid "Hide Diff"
-msgstr "\\u25bc 隐藏差异"
+msgstr "▼ 隐藏差异"
 
 #: src/shared/chat-embed.js:188
 msgid "Show Diff"
-msgstr "\\u25b6 显示差异"
+msgstr "▶ 显示差异"
 
 #: src/shared/chat-embed.js:234
 msgid "Allow Once"
