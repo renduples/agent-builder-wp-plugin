@@ -7,7 +7,7 @@
  *
  * @package    Agent_Builder
  * @subpackage Includes
- * @author     Siteloom Team <support@agentic-plugin.com>
+ * @author     AgentStructor Team <support@agentic-plugin.com>
  * @license    GPL-2.0-or-later https://www.gnu.org/licenses/gpl-2.0.html
  * @link       https://agentic-plugin.com
  * @since      0.1.0
@@ -207,7 +207,7 @@ abstract class Agent_Base {
 	 * @return string Author name
 	 */
 	public function get_author(): string {
-		return $this->parse_header()['author'] ?? __( 'Unknown', 'siteloom' );
+		return $this->parse_header()['author'] ?? __( 'Unknown', 'agentstructor' );
 	}
 
 	/**
@@ -372,7 +372,7 @@ abstract class Agent_Base {
 	protected function get_default_welcome_message(): string {
 		return sprintf(
 			/* translators: 1: agent name, 2: agent description */
-			__( "Hello! I'm %1\$s. %2\$s\n\nHow can I help you today?", 'siteloom' ),
+			__( "Hello! I'm %1\$s. %2\$s\n\nHow can I help you today?", 'agentstructor' ),
 			$this->get_name(),
 			$this->get_description()
 		);

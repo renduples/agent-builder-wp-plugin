@@ -57,13 +57,13 @@ function LogsView( { data, reload } ) {
 			<p className="agentic-react-muted" style={ { marginTop: 0 } }>
 				{ __(
 					'This is a friendly activity feed. Technical names stay in Advanced detail when useful.',
-					'siteloom'
+					'agentstructor'
 				) }
 			</p>
 
 			{ data.tab === 'audit' && data.integrity && (
 				<p className="agentic-react-muted">
-					{ __( 'Log integrity:', 'siteloom' ) }{ ' ' }
+					{ __( 'Log integrity:', 'agentstructor' ) }{ ' ' }
 					<span
 						className={
 							'agentic-react-badge' +
@@ -73,19 +73,19 @@ function LogsView( { data, reload } ) {
 							data.integrity.valid
 								? sprintf(
 										/* translators: %d: number of log entries checked */
-										__( '%d entries checked, chain intact.', 'siteloom' ),
+										__( '%d entries checked, chain intact.', 'agentstructor' ),
 										data.integrity.checked || 0
 								  )
 								: sprintf(
 										/* translators: %d: id of the first entry where the hash chain broke */
-										__( 'Chain broken at entry #%d — an entry was edited or deleted after the fact.', 'siteloom' ),
+										__( 'Chain broken at entry #%d — an entry was edited or deleted after the fact.', 'agentstructor' ),
 										data.integrity.broken_at_id || 0
 								  )
 						}
 					>
 						{ data.integrity.valid
-							? __( 'Verified', 'siteloom' )
-							: __( 'Tampering detected', 'siteloom' ) }
+							? __( 'Verified', 'agentstructor' )
+							: __( 'Tampering detected', 'agentstructor' ) }
 					</span>
 				</p>
 			) }
@@ -97,7 +97,7 @@ function LogsView( { data, reload } ) {
 						{ stats.total ?? rows.length }
 					</span>
 					<span className="agentic-react-activity-stat__lbl">
-						{ __( 'Events', 'siteloom' ) }
+						{ __( 'Events', 'agentstructor' ) }
 					</span>
 				</div>
 				{ data.tab === 'audit' && (
@@ -107,7 +107,7 @@ function LogsView( { data, reload } ) {
 								{ stats.tools ?? 0 }
 							</span>
 							<span className="agentic-react-activity-stat__lbl">
-								{ __( 'Tools used', 'siteloom' ) }
+								{ __( 'Tools used', 'agentstructor' ) }
 							</span>
 						</div>
 						<div className="agentic-react-activity-stat">
@@ -115,7 +115,7 @@ function LogsView( { data, reload } ) {
 								{ stats.approvals ?? 0 }
 							</span>
 							<span className="agentic-react-activity-stat__lbl">
-								{ __( 'Approvals', 'siteloom' ) }
+								{ __( 'Approvals', 'agentstructor' ) }
 							</span>
 						</div>
 						{ Number( stats.tokens ) > 0 && (
@@ -124,7 +124,7 @@ function LogsView( { data, reload } ) {
 									{ Number( stats.tokens ).toLocaleString() }
 								</span>
 								<span className="agentic-react-activity-stat__lbl">
-									{ __( 'Tokens', 'siteloom' ) }
+									{ __( 'Tokens', 'agentstructor' ) }
 								</span>
 							</div>
 						) }
@@ -137,7 +137,7 @@ function LogsView( { data, reload } ) {
 			{ /* Period */ }
 			<nav
 				className="agentic-react-risk-filters"
-				aria-label={ __( 'Time period', 'siteloom' ) }
+				aria-label={ __( 'Time period', 'agentstructor' ) }
 			>
 				{ ( data.period_options || [] ).map( ( p ) => (
 					<button
@@ -158,7 +158,7 @@ function LogsView( { data, reload } ) {
 			{ data.tab === 'audit' && (
 				<nav
 					className="agentic-react-risk-filters"
-					aria-label={ __( 'Activity type', 'siteloom' ) }
+					aria-label={ __( 'Activity type', 'agentstructor' ) }
 				>
 					{ ( data.kind_filters || [] ).map( ( f ) => {
 						const count = kindCounts[ f.id ] ?? 0;
@@ -190,13 +190,13 @@ function LogsView( { data, reload } ) {
 				<SearchControl
 					value={ q }
 					onChange={ setQ }
-					placeholder={ __( 'Search activity…', 'siteloom' ) }
+					placeholder={ __( 'Search activity…', 'agentstructor' ) }
 					__nextHasNoMarginBottom
 				/>
 				<span className="agentic-react-muted">
 					{ rows.length === 1
-						? __( '1 event', 'siteloom' )
-						: `${ rows.length } ${ __( 'events', 'siteloom' ) }` }
+						? __( '1 event', 'agentstructor' )
+						: `${ rows.length } ${ __( 'events', 'agentstructor' ) }` }
 				</span>
 				{ data.export_url && (
 					<Button
@@ -204,10 +204,10 @@ function LogsView( { data, reload } ) {
 						href={ data.export_url }
 						title={ __(
 							'Download this log as a CSV file — handy to attach when emailing support about an issue.',
-							'siteloom'
+							'agentstructor'
 						) }
 					>
-						{ __( 'Export CSV', 'siteloom' ) }
+						{ __( 'Export CSV', 'agentstructor' ) }
 					</Button>
 				) }
 			</div>
@@ -216,18 +216,18 @@ function LogsView( { data, reload } ) {
 				<div className="agentic-react-approvals-empty">
 					<p>
 						<strong>
-							{ __( 'Nothing here yet', 'siteloom' ) }
+							{ __( 'Nothing here yet', 'agentstructor' ) }
 						</strong>
 					</p>
 					<p className="agentic-react-muted">
 						{ q || kind !== 'all'
 							? __(
 									'No events match this filter. Try another period or clear search.',
-									'siteloom'
+									'agentstructor'
 							  )
 							: __(
 									'When agents chat or use tools, their activity will show up here.',
-									'siteloom'
+									'agentstructor'
 							  ) }
 					</p>
 				</div>

@@ -17,7 +17,7 @@ description: "Use this skill whenever a Word document (.docx) is the primary inp
 
 ## File Paths
 
-All paths are **relative to the WordPress uploads directory** (e.g. `"2024/01/contract.docx"`). Created files are saved to `siteloom/exports/` (e.g. `"siteloom/exports/report.docx"`).
+All paths are **relative to the WordPress uploads directory** (e.g. `"2024/01/contract.docx"`). Created files are saved to `agentstructor/exports/` (e.g. `"agentstructor/exports/report.docx"`).
 
 ## Workflows
 

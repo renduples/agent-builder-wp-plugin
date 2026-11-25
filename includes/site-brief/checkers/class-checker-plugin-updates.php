@@ -94,12 +94,12 @@ class Checker_Plugin_Updates extends Site_Brief_Checker {
 		$title = ( 1 === $count )
 			? sprintf(
 				/* translators: %s: plugin name. */
-				__( '%s has an update', 'siteloom' ),
+				__( '%s has an update', 'agentstructor' ),
 				$plugins[0]['name']
 			)
 			: sprintf(
 				/* translators: %d: number of plugins. */
-				_n( '%d plugin has updates', '%d plugins have updates', $count, 'siteloom' ),
+				_n( '%d plugin has updates', '%d plugins have updates', $count, 'agentstructor' ),
 				$count
 			);
 
@@ -109,7 +109,7 @@ class Checker_Plugin_Updates extends Site_Brief_Checker {
 					'title'            => $title,
 					'evidence'         => implode( ', ', $lines ),
 					'evidence_payload' => $plugins,
-					'proposed_action'  => __( 'Open the Plugins screen to review updates. Siteloom will not auto-update.', 'siteloom' ),
+					'proposed_action'  => __( 'Open the Plugins screen to review updates. AgentStructor will not auto-update.', 'agentstructor' ),
 					'action_risk'      => 'medium',
 					'raw'              => $plugins,
 				)

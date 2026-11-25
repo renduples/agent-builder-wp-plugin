@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! current_user_can( 'manage_options' ) ) {
-	wp_die( esc_html__( 'You do not have permission to access this page.', 'siteloom' ) );
+	wp_die( esc_html__( 'You do not have permission to access this page.', 'agentstructor' ) );
 }
 
 global $wpdb;
@@ -30,7 +30,7 @@ if ( isset( $_GET['delete_memory'], $_GET['_wpnonce'] )
 ) {
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 	$wpdb->delete( $agentic_mem_table, array( 'id' => absint( $_GET['delete_memory'] ) ), array( '%d' ) );
-	$agentic_mem_notice = __( 'Memory entry deleted.', 'siteloom' );
+	$agentic_mem_notice = __( 'Memory entry deleted.', 'agentstructor' );
 }
 
 // Bulk clear.
@@ -54,7 +54,7 @@ if ( isset( $_POST['agentic_mem_clear_nonce'] ) && wp_verify_nonce( sanitize_tex
 		$agentic_deleted    = $wpdb->delete( $agentic_mem_table, $agentic_where, $agentic_fmt );
 		$agentic_mem_notice = sprintf(
 			/* translators: %d: number of deleted rows */
-			__( '%d memory entries cleared.', 'siteloom' ),
+			__( '%d memory entries cleared.', 'agentstructor' ),
 			$agentic_deleted
 		);
 	}
@@ -64,7 +64,7 @@ if ( isset( $_POST['agentic_mem_clear_nonce'] ) && wp_verify_nonce( sanitize_tex
 if ( isset( $_POST['agentic_mem_ttl_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['agentic_mem_ttl_nonce'] ) ), 'agentic_mem_ttl_save' ) ) {
 	$agentic_ttl = absint( $_POST['agent_builder_memory_ttl_days'] ?? 0 );
 	update_option( 'agent_builder_memory_ttl_days', $agentic_ttl );
-	$agentic_mem_notice = __( 'Memory settings saved.', 'siteloom' );
+	$agentic_mem_notice = __( 'Memory settings saved.', 'agentstructor' );
 }
 
 // ── Filters ──────────────────────────────────────────────────────────────────
@@ -115,7 +115,7 @@ $agentic_ttl_days    = (int) get_option( 'agent_builder_memory_ttl_days', 0 );
 <div class="notice notice-success"><p><?php echo esc_html( $agentic_mem_notice ); ?></p></div>
 <?php endif; ?>
 
-<p class="agentic-settings-lead"><?php esc_html_e( 'Persistent key-value memory stored by agents across conversations — user preferences, prior decisions, and accumulated context.', 'siteloom' ); ?></p>
+<p class="agentic-settings-lead"><?php esc_html_e( 'Persistent key-value memory stored by agents across conversations — user preferences, prior decisions, and accumulated context.', 'agentstructor' ); ?></p>
 
 <!-- TTL Setting -->
 <div class="agentic-memory-box">
@@ -125,7 +125,7 @@ $agentic_ttl_days    = (int) get_option( 'agent_builder_memory_ttl_days', 0 );
 		<div class="agentic-flex-gap-8 agentic-mt-6">
 			<input type="number" name="agent_builder_memory_ttl_days" id="agent_builder_memory_ttl_days" value="<?php echo esc_attr( $agentic_ttl_days ); ?>" min="0" style="width:80px;" />
 			<span>days (0 = never expires)</span>
-			<input type="submit" class="button" value="<?php esc_attr_e( 'Save', 'siteloom' ); ?>" />
+			<input type="submit" class="button" value="<?php esc_attr_e( 'Save', 'agentstructor' ); ?>" />
 		</div>
 		<p class="description agentic-mt-6">Memories without an explicit TTL will be auto-cleaned after this many days. Set to 0 to keep memories indefinitely.</p>
 	</form>
@@ -151,12 +151,12 @@ $agentic_ttl_days    = (int) get_option( 'agent_builder_memory_ttl_days', 0 );
 			<?php endforeach; ?>
 		</select>
 
-		<input type="submit" class="button" value="<?php esc_attr_e( 'Filter', 'siteloom' ); ?>" />
+		<input type="submit" class="button" value="<?php esc_attr_e( 'Filter', 'agentstructor' ); ?>" />
 	</form>
 
 	<!-- Bulk clear -->
 	<?php if ( $agentic_total > 0 ) : ?>
-	<form method="post" class="agentic-ml-auto" data-agentic-confirm="<?php echo esc_attr( __( 'Clear matching memories? This cannot be undone.', 'siteloom' ) ); ?>" data-agentic-confirm-danger>
+	<form method="post" class="agentic-ml-auto" data-agentic-confirm="<?php echo esc_attr( __( 'Clear matching memories? This cannot be undone.', 'agentstructor' ) ); ?>" data-agentic-confirm-danger>
 		<?php wp_nonce_field( 'agentic_mem_clear', 'agentic_mem_clear_nonce' ); ?>
 		<input type="hidden" name="agentic_mem_clear_type" value="<?php echo esc_attr( $agentic_mem_filter_type ); ?>" />
 		<input type="hidden" name="agentic_mem_clear_entity" value="<?php echo esc_attr( $agentic_mem_filter_entity ); ?>" />
@@ -164,9 +164,9 @@ $agentic_ttl_days    = (int) get_option( 'agent_builder_memory_ttl_days', 0 );
 			<?php
 			if ( $agentic_mem_filter_type || $agentic_mem_filter_entity ) {
 				/* translators: %d: number of memory entries */
-				printf( esc_html__( 'Clear Filtered (%d)', 'siteloom' ), absint( $agentic_total ) );
+				printf( esc_html__( 'Clear Filtered (%d)', 'agentstructor' ), absint( $agentic_total ) );
 			} else {
-				esc_html_e( 'Clear All Memories', 'siteloom' );
+				esc_html_e( 'Clear All Memories', 'agentstructor' );
 			}
 			?>
 		</button>
@@ -179,7 +179,7 @@ $agentic_ttl_days    = (int) get_option( 'agent_builder_memory_ttl_days', 0 );
 	<?php
 	printf(
 		/* translators: %d: memory count */
-		esc_html__( '%d memory entries', 'siteloom' ),
+		esc_html__( '%d memory entries', 'agentstructor' ),
 		absint( $agentic_total )
 	);
 	?>
@@ -187,19 +187,19 @@ $agentic_ttl_days    = (int) get_option( 'agent_builder_memory_ttl_days', 0 );
 
 <?php if ( empty( $agentic_rows ) ) : ?>
 	<div class="agentic-memory-empty">
-		<p class="agentic-text-sm agentic-mt-0"><?php esc_html_e( 'No memory entries found.', 'siteloom' ); ?></p>
-		<p class="agentic-mt-8"><?php esc_html_e( 'Agent memories will appear here as your agents accumulate context across conversations.', 'siteloom' ); ?></p>
+		<p class="agentic-text-sm agentic-mt-0"><?php esc_html_e( 'No memory entries found.', 'agentstructor' ); ?></p>
+		<p class="agentic-mt-8"><?php esc_html_e( 'Agent memories will appear here as your agents accumulate context across conversations.', 'agentstructor' ); ?></p>
 	</div>
 <?php else : ?>
 	<table class="widefat striped agentic-table-1200">
 		<thead>
 			<tr>
-				<th class="agentic-col-110"><?php esc_html_e( 'Type', 'siteloom' ); ?></th>
-				<th class="agentic-col-120"><?php esc_html_e( 'Entity', 'siteloom' ); ?></th>
-				<th class="agentic-col-180"><?php esc_html_e( 'Key', 'siteloom' ); ?></th>
-				<th><?php esc_html_e( 'Value', 'siteloom' ); ?></th>
-				<th class="agentic-col-100"><?php esc_html_e( 'Expires', 'siteloom' ); ?></th>
-				<th class="agentic-col-130"><?php esc_html_e( 'Updated', 'siteloom' ); ?></th>
+				<th class="agentic-col-110"><?php esc_html_e( 'Type', 'agentstructor' ); ?></th>
+				<th class="agentic-col-120"><?php esc_html_e( 'Entity', 'agentstructor' ); ?></th>
+				<th class="agentic-col-180"><?php esc_html_e( 'Key', 'agentstructor' ); ?></th>
+				<th><?php esc_html_e( 'Value', 'agentstructor' ); ?></th>
+				<th class="agentic-col-100"><?php esc_html_e( 'Expires', 'agentstructor' ); ?></th>
+				<th class="agentic-col-130"><?php esc_html_e( 'Updated', 'agentstructor' ); ?></th>
 				<th class="agentic-col-60"></th>
 			</tr>
 		</thead>
@@ -225,7 +225,7 @@ $agentic_ttl_days    = (int) get_option( 'agent_builder_memory_ttl_days', 0 );
 					<?php echo esc_html( wp_date( 'M j, Y H:i', strtotime( $agentic_row['updated_at'] ) ) ); ?>
 				</td>
 				<td>
-					<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=agentic-settings&tab=memory&delete_memory=' . $agentic_row['id'] ), 'agentic_mem_delete_' . $agentic_row['id'] ) ); ?>" class="button button-small agentic-link-danger" data-agentic-confirm="<?php echo esc_attr( __( 'Delete this memory?', 'siteloom' ) ); ?>" data-agentic-confirm-danger>&times;</a>
+					<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=agentic-settings&tab=memory&delete_memory=' . $agentic_row['id'] ), 'agentic_mem_delete_' . $agentic_row['id'] ) ); ?>" class="button button-small agentic-link-danger" data-agentic-confirm="<?php echo esc_attr( __( 'Delete this memory?', 'agentstructor' ) ); ?>" data-agentic-confirm-danger>&times;</a>
 				</td>
 			</tr>
 			<?php endforeach; ?>

@@ -1,5 +1,5 @@
 /**
- * Shared WordPress-components building blocks for Siteloom admin.
+ * Shared WordPress-components building blocks for AgentStructor admin.
  */
 import { useState } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
@@ -88,7 +88,7 @@ export function Panel( {
 				{ isLoading ? (
 					<p>
 						<Spinner />{ ' ' }
-						{ __( 'Loading…', 'siteloom' ) }
+						{ __( 'Loading…', 'agentstructor' ) }
 					</p>
 				) : (
 					children
@@ -110,8 +110,8 @@ export function SaveBar( { onSave, saving, label } ) {
 					disabled={ saving }
 				>
 					{ saving
-						? __( 'Saving…', 'siteloom' )
-						: label || __( 'Save changes', 'siteloom' ) }
+						? __( 'Saving…', 'agentstructor' )
+						: label || __( 'Save changes', 'agentstructor' ) }
 				</Button>
 			</FlexItem>
 		</Flex>
@@ -132,7 +132,7 @@ export function StatusNotice( { error, saved, onDismissSaved } ) {
 					isDismissible
 					onRemove={ onDismissSaved }
 				>
-					{ __( 'Settings saved.', 'siteloom' ) }
+					{ __( 'Settings saved.', 'agentstructor' ) }
 				</Notice>
 			) }
 		</>
@@ -186,7 +186,7 @@ export function ScreenModeToggle( { screen, isAdvanced, onChanged } ) {
 				disabled={ busy }
 				onClick={ () => setMode( 'basic' ) }
 			>
-				{ __( 'Basic', 'siteloom' ) }
+				{ __( 'Basic', 'agentstructor' ) }
 			</button>
 			<button
 				type="button"
@@ -197,12 +197,12 @@ export function ScreenModeToggle( { screen, isAdvanced, onChanged } ) {
 				disabled={ busy }
 				onClick={ () => setMode( 'advanced' ) }
 			>
-				{ __( 'Advanced', 'siteloom' ) }
+				{ __( 'Advanced', 'agentstructor' ) }
 			</button>
 			<InfoTip
 				text={ __(
 					'Only changes this screen. Other screens and your site-wide default (Settings → Interface) are unaffected.',
-					'siteloom'
+					'agentstructor'
 				) }
 			/>
 		</span>
@@ -230,7 +230,7 @@ export function InfoTip( { text, children } ) {
 				<button
 					type="button"
 					className="agentic-react-infotip"
-					aria-label={ __( 'More info', 'siteloom' ) }
+					aria-label={ __( 'More info', 'agentstructor' ) }
 				>
 					?
 				</button>

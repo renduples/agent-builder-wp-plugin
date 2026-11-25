@@ -89,12 +89,12 @@ class Checker_Forms extends Site_Brief_Checker {
 					'subject'          => 'native',
 					'title'            => sprintf(
 						/* translators: %d: forms with zero entries. */
-						_n( '%d native form has no submissions', '%d native forms have no submissions', count( $zero ), 'siteloom' ),
+						_n( '%d native form has no submissions', '%d native forms have no submissions', count( $zero ), 'agentstructor' ),
 						count( $zero )
 					),
 					'evidence'         => implode( ', ', $titles ),
 					'evidence_payload' => $zero,
-					'proposed_action'  => __( 'For information only. Site Brief cannot test email delivery in this version.', 'siteloom' ),
+					'proposed_action'  => __( 'For information only. Site Brief cannot test email delivery in this version.', 'agentstructor' ),
 					'action_risk'      => 'none',
 					'approve'          => array( 'type' => 'none' ),
 					'raw'              => array( 'count' => count( $zero ) ),
@@ -119,10 +119,10 @@ class Checker_Forms extends Site_Brief_Checker {
 					$cards[] = $this->card(
 						array(
 							'subject'          => 'plugin',
-							'title'            => __( 'Form submissions look stale or empty', 'siteloom' ),
+							'title'            => __( 'Form submissions look stale or empty', 'agentstructor' ),
 							'evidence'         => sprintf(
 								/* translators: %s: form plugin slugs. */
-								__( 'Detected: %s. Site Brief cannot test mail delivery in this version.', 'siteloom' ),
+								__( 'Detected: %s. Site Brief cannot test mail delivery in this version.', 'agentstructor' ),
 								implode( ', ', $slugs )
 							),
 							'evidence_payload' => array(
@@ -130,7 +130,7 @@ class Checker_Forms extends Site_Brief_Checker {
 								'total'   => $total,
 								'week'    => $week,
 							),
-							'proposed_action'  => __( 'For information only. Site Brief cannot check your mail server.', 'siteloom' ),
+							'proposed_action'  => __( 'For information only. Site Brief cannot check your mail server.', 'agentstructor' ),
 							'action_risk'      => 'none',
 							'approve'          => array( 'type' => 'none' ),
 							'raw'              => array(

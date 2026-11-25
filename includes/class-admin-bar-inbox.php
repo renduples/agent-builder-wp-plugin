@@ -53,7 +53,7 @@ class Admin_Bar_Inbox {
 		$count = Notifications::unread_count( $user_id );
 
 		$title  = '<span class="ab-icon dashicons dashicons-bell" style="font-size: 18px; line-height: 1.3;"></span>';
-		$title .= '<span class="ab-label">' . esc_html__( 'Tasks', 'siteloom' ) . '</span>';
+		$title .= '<span class="ab-label">' . esc_html__( 'Tasks', 'agentstructor' ) . '</span>';
 		if ( $count > 0 ) {
 			$title .= '<span class="agentic-inbox-badge" style="display:inline-block;margin-left:5px;background:#d63638;color:#fff;border-radius:9px;padding:0 6px;font-size:11px;line-height:18px;font-weight:600;">' . number_format_i18n( $count ) . '</span>';
 		}
@@ -64,7 +64,7 @@ class Admin_Bar_Inbox {
 				'title' => $title,
 				'href'  => admin_url( 'admin.php?page=agentic-tasks' ),
 				'meta'  => array(
-					'title' => __( 'Tasks and notifications', 'siteloom' ),
+					'title' => __( 'Tasks and notifications', 'agentstructor' ),
 				),
 			)
 		);

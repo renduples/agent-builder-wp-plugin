@@ -110,7 +110,7 @@ class Generate_System_Prompt extends Tool_Base {
 			'5. Explain what you did and why when it adds value.' .
 			$constraints_section .
 			$tools_section . "\n\n" .
-			'Follow WordPress best practices and the Siteloom philosophy in everything you do.';
+			'Follow WordPress best practices and the AgentStructor philosophy in everything you do.';
 
 		return array(
 			'system_prompt' => $prompt,

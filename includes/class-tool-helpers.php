@@ -38,7 +38,7 @@ class Tool_Helpers {
 		$user_id = get_current_user_id();
 		if ( $user_id > 0 && ! current_user_can( 'manage_options' ) ) {
 			return array(
-				'error' => __( 'Administrator privileges are required for this action.', 'siteloom' ),
+				'error' => __( 'Administrator privileges are required for this action.', 'agentstructor' ),
 			);
 		}
 		return null;
@@ -449,7 +449,7 @@ class Tool_Helpers {
 	public static function read_robots_txt(): array {
 		$robots = Virtual_Site_Files::robots_txt();
 		if ( 'virtual' === $robots['source'] ) {
-			$robots['note'] = 'WordPress generates this file dynamically; Siteloom adds its AI crawler rules to it without writing any file.';
+			$robots['note'] = 'WordPress generates this file dynamically; AgentStructor adds its AI crawler rules to it without writing any file.';
 		}
 		return $robots;
 	}
@@ -1183,7 +1183,7 @@ class Tool_Helpers {
 			return array(
 				'success' => false,
 				'manual'  => true,
-				'message' => 'This is a backup of ' . $relative . ' at the site root, which Siteloom no longer writes. To restore it, replace the content of ' . $original . ' with the content below yourself.',
+				'message' => 'This is a backup of ' . $relative . ' at the site root, which AgentStructor no longer writes. To restore it, replace the content of ' . $original . ' with the content below yourself.',
 				'content' => $parsed['content'],
 			);
 		}

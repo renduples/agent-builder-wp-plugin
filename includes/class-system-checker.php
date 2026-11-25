@@ -2,12 +2,12 @@
 /**
  * System Requirements Checker
  *
- * Tests server configuration to ensure Siteloom can run successfully.
+ * Tests server configuration to ensure AgentStructor can run successfully.
  * Checks PHP settings, WordPress config, server timeouts, and LLM API connectivity.
  *
  * @package    Agent_Builder
  * @subpackage Includes
- * @author     Siteloom Team <support@agentic-plugin.com>
+ * @author     AgentStructor Team <support@agentic-plugin.com>
  * @license    GPL-2.0-or-later https://www.gnu.org/licenses/gpl-2.0.html
  * @link       https://agentic-plugin.com
  * @since      0.1.0
@@ -127,7 +127,7 @@ class System_Checker {
 					'name'     => 'LLM API Key',
 					'status'   => $has_api_key ? 'pass' : 'warning',
 					'value'    => $has_api_key ? 'Configured' : 'Not set',
-					'required' => 'Required for Siteloom',
+					'required' => 'Required for AgentStructor',
 					'fix'      => 'Enter your API key in Settings → Providers.',
 				);
 

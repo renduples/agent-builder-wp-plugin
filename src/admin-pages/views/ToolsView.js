@@ -13,12 +13,12 @@ import { RISK_EXPLANATIONS } from '../constants';
 import TabBar from './TabBar';
 
 const HIGH_RISK_REASONS = {
-	force_password_reset: __( 'can affect account access', 'siteloom' ),
-	wc_create_refund: __( 'moves money', 'siteloom' ),
-	delete_form: __( 'can permanently remove data', 'siteloom' ),
-	git_push: __( 'changes the deployed codebase', 'siteloom' ),
-	git_pull: __( 'changes the deployed codebase', 'siteloom' ),
-	git_commit: __( 'changes the deployed codebase', 'siteloom' ),
+	force_password_reset: __( 'can affect account access', 'agentstructor' ),
+	wc_create_refund: __( 'moves money', 'agentstructor' ),
+	delete_form: __( 'can permanently remove data', 'agentstructor' ),
+	git_push: __( 'changes the deployed codebase', 'agentstructor' ),
+	git_pull: __( 'changes the deployed codebase', 'agentstructor' ),
+	git_commit: __( 'changes the deployed codebase', 'agentstructor' ),
 };
 
 function highRiskReason( toolId ) {
@@ -54,8 +54,8 @@ function ToolRiskEnableModal( { gate, onCancel, onEnable } ) {
 		<Modal
 			title={
 				isExtreme
-					? __( 'This tool cannot be enabled', 'siteloom' )
-					: __( 'Enable high-risk tool?', 'siteloom' )
+					? __( 'This tool cannot be enabled', 'agentstructor' )
+					: __( 'Enable high-risk tool?', 'agentstructor' )
 			}
 			onRequestClose={ onCancel }
 			className="agentic-tool-risk-modal"
@@ -64,17 +64,17 @@ function ToolRiskEnableModal( { gate, onCancel, onEnable } ) {
 				<>
 					<p>
 						<strong>{ name }</strong>{ ' ' }
-						{ __( 'is marked Extreme Risk.', 'siteloom' ) }
+						{ __( 'is marked Extreme Risk.', 'agentstructor' ) }
 					</p>
 					<p>
 						{ __(
 							'Extreme-risk tools are hidden from agents entirely and blocked from running, because they are too risky for normal use.',
-							'siteloom'
+							'agentstructor'
 						) }
 					</p>
 					<div className="agentic-tool-risk-modal__actions">
 						<Button variant="primary" onClick={ onCancel }>
-							{ __( 'Close', 'siteloom' ) }
+							{ __( 'Close', 'agentstructor' ) }
 						</Button>
 					</div>
 				</>
@@ -84,34 +84,34 @@ function ToolRiskEnableModal( { gate, onCancel, onEnable } ) {
 						<strong>{ name }</strong>{ ' ' }
 						{ __(
 							'can make a significant change to your site.',
-							'siteloom'
+							'agentstructor'
 						) }
 					</p>
 					<p>
 						{ sprintf(
 							/* translators: %s: plain-language reason this tool is high-risk */
-							__( 'Why this is high-risk: %s', 'siteloom' ),
+							__( 'Why this is high-risk: %s', 'agentstructor' ),
 							highRiskReason( gate.name )
 						) }
 					</p>
 					<p>
 						{ __(
 							'If an agent uses this tool later, the action will still wait for human review in the Approvals queue before it runs.',
-							'siteloom'
+							'agentstructor'
 						) }
 					</p>
 					<p className="agentic-react-muted">
 						{ __(
 							'Enabling this tool makes it available to eligible agents. It does not run the tool immediately.',
-							'siteloom'
+							'agentstructor'
 						) }
 					</p>
 					<div className="agentic-tool-risk-modal__actions">
 						<Button variant="secondary" onClick={ onCancel }>
-							{ __( 'Cancel', 'siteloom' ) }
+							{ __( 'Cancel', 'agentstructor' ) }
 						</Button>
 						<Button variant="primary" onClick={ onEnable }>
-							{ __( 'Enable tool', 'siteloom' ) }
+							{ __( 'Enable tool', 'agentstructor' ) }
 						</Button>
 					</div>
 				</>
@@ -150,7 +150,7 @@ function ToolsBasicProfiles( { data, reload } ) {
 						/* translators: 1: enabled count, 2: disabled count */
 						__(
 							'Profile applied: %1$d tools on, %2$d tools off.',
-							'siteloom'
+							'agentstructor'
 						),
 						r.enabled ?? 0,
 						r.disabled ?? 0
@@ -161,7 +161,7 @@ function ToolsBasicProfiles( { data, reload } ) {
 			.catch( ( e ) =>
 				setErr(
 					e.message ||
-						__( 'Could not apply profile.', 'siteloom' )
+						__( 'Could not apply profile.', 'agentstructor' )
 				)
 			)
 			.finally( () => setBusy( '' ) );
@@ -175,11 +175,11 @@ function ToolsBasicProfiles( { data, reload } ) {
 			<p className="agentic-react-muted">
 				{ __(
 					'These profiles control which tools every agent may use. Approvals still apply for riskier actions.',
-					'siteloom'
+					'agentstructor'
 				) }{ ' ' }
 				{ __(
 					'Switch to Advanced (top right) for the full tool-by-tool list.',
-					'siteloom'
+					'agentstructor'
 				) }
 			</p>
 
@@ -198,7 +198,7 @@ function ToolsBasicProfiles( { data, reload } ) {
 				<Notice status="warning" isDismissible={ false }>
 					{ __(
 						'Tools were customized outside a profile. Choose a card below to reset to a simple safety level.',
-						'siteloom'
+						'agentstructor'
 					) }
 				</Notice>
 			) }
@@ -239,14 +239,14 @@ function ToolsBasicProfiles( { data, reload } ) {
 							>
 								{ sprintf(
 									/* translators: %s: risk level */
-									__( 'Up to %s risk', 'siteloom' ),
+									__( 'Up to %s risk', 'agentstructor' ),
 									p.max_risk || 'low'
 								) }
 							</span>
 						</span>
 						{ ( p.active || active === p.id ) && (
 							<span className="agentic-react-profile-card__badge">
-								{ __( 'Current', 'siteloom' ) }
+								{ __( 'Current', 'agentstructor' ) }
 							</span>
 						) }
 					</button>
@@ -258,7 +258,7 @@ function ToolsBasicProfiles( { data, reload } ) {
 					/* translators: 1: enabled tools, 2: disabled tools, 3: max risk */
 					__(
 						'Right now: %1$d tools on, %2$d off · highest enabled risk: %3$s',
-						'siteloom'
+						'agentstructor'
 					),
 					data.enabled_count ?? 0,
 					data.disabled_count ?? 0,
@@ -313,12 +313,12 @@ function ToolsView( { data, reload, patchData } ) {
 
 	const riskFilters = useMemo(
 		() => [
-			{ id: 'all', label: __( 'All risks', 'siteloom' ) },
-			{ id: 'none', label: __( 'None', 'siteloom' ) },
-			{ id: 'low', label: __( 'Low', 'siteloom' ) },
-			{ id: 'medium', label: __( 'Medium', 'siteloom' ) },
-			{ id: 'high', label: __( 'High', 'siteloom' ) },
-			{ id: 'extreme', label: __( 'Extreme', 'siteloom' ) },
+			{ id: 'all', label: __( 'All risks', 'agentstructor' ) },
+			{ id: 'none', label: __( 'None', 'agentstructor' ) },
+			{ id: 'low', label: __( 'Low', 'agentstructor' ) },
+			{ id: 'medium', label: __( 'Medium', 'agentstructor' ) },
+			{ id: 'high', label: __( 'High', 'agentstructor' ) },
+			{ id: 'extreme', label: __( 'Extreme', 'agentstructor' ) },
 		],
 		[]
 	);
@@ -384,7 +384,7 @@ function ToolsView( { data, reload, patchData } ) {
 			.catch( ( e ) => {
 				setRowEnabled( name, ! enabled );
 				setErr(
-					e.message || __( 'Toggle failed.', 'siteloom' )
+					e.message || __( 'Toggle failed.', 'agentstructor' )
 				);
 			} )
 			.finally( () => setBusy( '' ) );
@@ -436,28 +436,28 @@ function ToolsView( { data, reload, patchData } ) {
 				<p className="agentic-react-muted" style={ { marginTop: 0 } }>
 					{ __(
 						'You are in Advanced view (full tool list).',
-						'siteloom'
+						'agentstructor'
 					) }
 				</p>
 				<div className="agentic-react-tools-toolbar">
 					<SearchControl
 						value={ q }
 						onChange={ setQ }
-						placeholder={ __( 'Search tools…', 'siteloom' ) }
+						placeholder={ __( 'Search tools…', 'agentstructor' ) }
 						__nextHasNoMarginBottom
 					/>
 					<span className="agentic-react-muted">
 						{ rows.length === 1
-							? __( '1 tool', 'siteloom' )
+							? __( '1 tool', 'agentstructor' )
 							: `${ rows.length } ${ __(
 									'tools',
-									'siteloom'
+									'agentstructor'
 							  ) }` }
 					</span>
 				</div>
 				<nav
 						className="agentic-react-risk-filters"
-						aria-label={ __( 'Filter by risk', 'siteloom' ) }
+						aria-label={ __( 'Filter by risk', 'agentstructor' ) }
 					>
 						{ riskFilters.map( ( f ) => {
 							const count = riskCounts[ f.id ] ?? 0;
@@ -498,11 +498,11 @@ function ToolsView( { data, reload, patchData } ) {
 							{ q || riskFilter !== 'all'
 								? __(
 										'No tools match this search or risk filter.',
-										'siteloom'
+										'agentstructor'
 								  )
 								: __(
 										'No tools in this category.',
-										'siteloom'
+										'agentstructor'
 								  ) }
 						</p>
 					) : (
@@ -511,22 +511,22 @@ function ToolsView( { data, reload, patchData } ) {
 								<thead>
 									<tr>
 										<th>
-											{ __( 'Enabled', 'siteloom' ) }
+											{ __( 'Enabled', 'agentstructor' ) }
 										</th>
-										<th>{ __( 'Tool', 'siteloom' ) }</th>
+										<th>{ __( 'Tool', 'agentstructor' ) }</th>
 										{ activeTab === 'all' && (
 											<th>
 												{ __(
 													'Category',
-													'siteloom'
+													'agentstructor'
 												) }
 											</th>
 										) }
 										<th>
-											{ __( 'Risk', 'siteloom' ) }
+											{ __( 'Risk', 'agentstructor' ) }
 										</th>
 										<th>
-											{ __( 'Source', 'siteloom' ) }
+											{ __( 'Source', 'agentstructor' ) }
 										</th>
 									</tr>
 								</thead>
@@ -546,7 +546,7 @@ function ToolsView( { data, reload, patchData } ) {
 																/* translators: %s: tool name */
 																__(
 																	'Enabled: %s',
-																	'siteloom'
+																	'agentstructor'
 																),
 																r.title || r.id
 															) }
@@ -598,7 +598,7 @@ function ToolsView( { data, reload, patchData } ) {
 													{ r.risk_level ||
 														__(
 															'none',
-															'siteloom'
+															'agentstructor'
 														) }
 												</span>
 												<InfoTip

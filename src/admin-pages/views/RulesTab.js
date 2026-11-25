@@ -24,19 +24,19 @@ const AGENTS_PATH = 'agentic/v1/admin-page?page=agents';
 // completes the sentence the rule_text starts ("Ask me first… before
 // publishing anything."), hence the trailing ellipsis there.
 const EFFECT_OPTIONS = [
-	{ value: 'ask', label: __( 'Ask me first…', 'siteloom' ) },
-	{ value: 'allow', label: __( 'Allow automatically…', 'siteloom' ) },
-	{ value: 'deny', label: __( 'Never…', 'siteloom' ) },
+	{ value: 'ask', label: __( 'Ask me first…', 'agentstructor' ) },
+	{ value: 'allow', label: __( 'Allow automatically…', 'agentstructor' ) },
+	{ value: 'deny', label: __( 'Never…', 'agentstructor' ) },
 ];
 
 // The rules table shows the effect on its own, so it gets clean labels.
 const EFFECT_LABELS = {
-	ask: __( 'Ask me first', 'siteloom' ),
-	allow: __( 'Allow automatically', 'siteloom' ),
-	deny: __( 'Never', 'siteloom' ),
+	ask: __( 'Ask me first', 'agentstructor' ),
+	allow: __( 'Allow automatically', 'agentstructor' ),
+	deny: __( 'Never', 'agentstructor' ),
 };
 
-const ALL_AGENTS_LABEL = __( 'All agents', 'siteloom' );
+const ALL_AGENTS_LABEL = __( 'All agents', 'agentstructor' );
 
 function ruleEnabled( rule ) {
 	return rule.enabled === 1 || rule.enabled === '1' || rule.enabled === true;
@@ -69,7 +69,7 @@ function RuleModal( { rule, agentOptions, onClose, onSaved } ) {
 			setErr(
 				__(
 					'Describe the rule in plain language first.',
-					'siteloom'
+					'agentstructor'
 				)
 			);
 			return;
@@ -95,7 +95,7 @@ function RuleModal( { rule, agentOptions, onClose, onSaved } ) {
 				setBusy( false );
 				setErr(
 					e.message ||
-						__( 'Could not save the rule.', 'siteloom' )
+						__( 'Could not save the rule.', 'agentstructor' )
 				);
 			} );
 	};
@@ -104,8 +104,8 @@ function RuleModal( { rule, agentOptions, onClose, onSaved } ) {
 		<Modal
 			title={
 				isEdit
-					? __( 'Edit rule', 'siteloom' )
-					: __( 'Add rule', 'siteloom' )
+					? __( 'Edit rule', 'agentstructor' )
+					: __( 'Add rule', 'agentstructor' )
 			}
 			onRequestClose={ onClose }
 			className="agentic-rules-modal"
@@ -117,51 +117,51 @@ function RuleModal( { rule, agentOptions, onClose, onSaved } ) {
 			) }
 
 			<SelectControl
-				label={ __( 'Applies to', 'siteloom' ) }
+				label={ __( 'Applies to', 'agentstructor' ) }
 				value={ agentSlug }
 				options={ agentOptions }
 				onChange={ setAgentSlug }
 				help={ __(
 					'Choose one agent, or “All agents” to apply the rule to every agent on this site.',
-					'siteloom'
+					'agentstructor'
 				) }
 			/>
 
 			<TextareaControl
-				label={ __( 'Rule', 'siteloom' ) }
+				label={ __( 'Rule', 'agentstructor' ) }
 				value={ ruleText }
 				onChange={ setRuleText }
 				placeholder={ __(
 					'Ask me first before publishing anything.',
-					'siteloom'
+					'agentstructor'
 				) }
 				help={ __(
 					'Describe what the agent should do in plain language.',
-					'siteloom'
+					'agentstructor'
 				) }
 			/>
 
 			<SelectControl
-				label={ __( 'Effect', 'siteloom' ) }
+				label={ __( 'Effect', 'agentstructor' ) }
 				value={ effect }
 				options={ EFFECT_OPTIONS }
 				onChange={ setEffect }
 			/>
 
 			<TextControl
-				label={ __( 'Priority', 'siteloom' ) }
+				label={ __( 'Priority', 'agentstructor' ) }
 				type="number"
 				value={ priority }
 				onChange={ setPriority }
 				help={ __(
 					'Lower numbers run first when more than one rule matches.',
-					'siteloom'
+					'agentstructor'
 				) }
 			/>
 
 			<div className="agentic-agents-drawer__actions">
 				<Button variant="secondary" onClick={ onClose }>
-					{ __( 'Cancel', 'siteloom' ) }
+					{ __( 'Cancel', 'agentstructor' ) }
 				</Button>
 				<Button
 					variant="primary"
@@ -170,8 +170,8 @@ function RuleModal( { rule, agentOptions, onClose, onSaved } ) {
 					onClick={ save }
 				>
 					{ isEdit
-						? __( 'Save rule', 'siteloom' )
-						: __( 'Add rule', 'siteloom' ) }
+						? __( 'Save rule', 'agentstructor' )
+						: __( 'Add rule', 'agentstructor' ) }
 				</Button>
 			</div>
 		</Modal>
@@ -194,7 +194,7 @@ function RulesTab() {
 			.catch( ( e ) => {
 				setRules( [] );
 				setErr(
-					e.message || __( 'Could not load rules.', 'siteloom' )
+					e.message || __( 'Could not load rules.', 'agentstructor' )
 				);
 			} );
 	};
@@ -250,15 +250,15 @@ function RulesTab() {
 			.then( () => {
 				setOk(
 					next
-						? __( 'Rule enabled.', 'siteloom' )
-						: __( 'Rule disabled.', 'siteloom' )
+						? __( 'Rule enabled.', 'agentstructor' )
+						: __( 'Rule disabled.', 'agentstructor' )
 				);
 				loadRules();
 			} )
 			.catch( ( e ) =>
 				setErr(
 					e.message ||
-						__( 'Could not update the rule.', 'siteloom' )
+						__( 'Could not update the rule.', 'agentstructor' )
 				)
 			)
 			.finally( () => setBusyId( '' ) );
@@ -269,7 +269,7 @@ function RulesTab() {
 			! window.confirm(
 				__(
 					'Delete this rule? Agents will no longer follow it.',
-					'siteloom'
+					'agentstructor'
 				)
 			)
 		) {
@@ -282,13 +282,13 @@ function RulesTab() {
 			method: 'DELETE',
 		} )
 			.then( () => {
-				setOk( __( 'Rule deleted.', 'siteloom' ) );
+				setOk( __( 'Rule deleted.', 'agentstructor' ) );
 				loadRules();
 			} )
 			.catch( ( e ) =>
 				setErr(
 					e.message ||
-						__( 'Could not delete the rule.', 'siteloom' )
+						__( 'Could not delete the rule.', 'agentstructor' )
 				)
 			)
 			.finally( () => setBusyId( '' ) );
@@ -297,7 +297,7 @@ function RulesTab() {
 	const onSaved = () => {
 		setAdding( false );
 		setEditing( null );
-		setOk( __( 'Rule saved.', 'siteloom' ) );
+		setOk( __( 'Rule saved.', 'agentstructor' ) );
 		loadRules();
 	};
 
@@ -317,21 +317,21 @@ function RulesTab() {
 			<p className="agentic-react-muted">
 				{ __(
 					'Rules tell agents how much to ask before acting. An agent pauses for anything a rule asks about, and runs automatically when a rule allows it. Rules apply to actions that change your site or read personal data. Other read-only lookups are never held by a rule.',
-					'siteloom'
+					'agentstructor'
 				) }
 			</p>
 
 			<div className="agentic-agents-toolbar">
 				{ isAdmin && (
 					<Button variant="primary" onClick={ () => setAdding( true ) }>
-						{ __( 'Add rule', 'siteloom' ) }
+						{ __( 'Add rule', 'agentstructor' ) }
 					</Button>
 				) }
 				{ ! isAdmin && (
 					<span className="agentic-react-muted">
 						{ __(
 							'Only administrators can add or edit rules.',
-							'siteloom'
+							'agentstructor'
 						) }
 					</span>
 				) }
@@ -339,17 +339,17 @@ function RulesTab() {
 
 			{ rules === null ? (
 				<p>
-					<Spinner /> { __( 'Loading rules…', 'siteloom' ) }
+					<Spinner /> { __( 'Loading rules…', 'agentstructor' ) }
 				</p>
 			) : ! rules.length ? (
 				<div className="agentic-react-approvals-empty">
 					<p>
-						<strong>{ __( 'No rules yet', 'siteloom' ) }</strong>
+						<strong>{ __( 'No rules yet', 'agentstructor' ) }</strong>
 					</p>
 					<p className="agentic-react-muted">
 						{ __(
 							'Add a rule to decide how much an agent should ask before it changes your site.',
-							'siteloom'
+							'agentstructor'
 						) }
 					</p>
 				</div>
@@ -358,11 +358,11 @@ function RulesTab() {
 					<table className="agentic-react-table agentic-rules-table">
 						<thead>
 							<tr>
-								<th>{ __( 'Agent', 'siteloom' ) }</th>
-								<th>{ __( 'Rule', 'siteloom' ) }</th>
-								<th>{ __( 'Effect', 'siteloom' ) }</th>
-								<th>{ __( 'Priority', 'siteloom' ) }</th>
-								<th>{ __( 'Enabled', 'siteloom' ) }</th>
+								<th>{ __( 'Agent', 'agentstructor' ) }</th>
+								<th>{ __( 'Rule', 'agentstructor' ) }</th>
+								<th>{ __( 'Effect', 'agentstructor' ) }</th>
+								<th>{ __( 'Priority', 'agentstructor' ) }</th>
+								<th>{ __( 'Enabled', 'agentstructor' ) }</th>
 								{ isAdmin && <th /> }
 							</tr>
 						</thead>
@@ -400,7 +400,7 @@ function RulesTab() {
 													>
 														{ __(
 															'Edit',
-															'siteloom'
+															'agentstructor'
 														) }
 													</Button>
 													<Button
@@ -414,7 +414,7 @@ function RulesTab() {
 													>
 														{ __(
 															'Delete',
-															'siteloom'
+															'agentstructor'
 														) }
 													</Button>
 												</div>

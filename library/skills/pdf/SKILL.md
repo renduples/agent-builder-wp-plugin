@@ -19,7 +19,7 @@ allowed-tools: get_pdf_info read_pdf create_pdf merge_pdfs
 
 ## File Paths
 
-All file paths are **relative to the WordPress uploads directory** (e.g. `"2024/01/contract.pdf"`). Created files are saved to `siteloom/exports/` (e.g. `"siteloom/exports/invoice-123.pdf"`).
+All file paths are **relative to the WordPress uploads directory** (e.g. `"2024/01/contract.pdf"`). Created files are saved to `agentstructor/exports/` (e.g. `"agentstructor/exports/invoice-123.pdf"`).
 
 ## Workflows
 

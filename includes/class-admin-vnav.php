@@ -70,10 +70,10 @@ class Admin_Vnav {
 			'items'              => array(),
 			'groups'             => array(),
 			'search'             => null,
-			'search_placeholder' => __( 'Search…', 'siteloom' ),
-			'aria_label'         => __( 'Sections', 'siteloom' ),
+			'search_placeholder' => __( 'Search…', 'agentstructor' ),
+			'aria_label'         => __( 'Sections', 'agentstructor' ),
 			'id'                 => '',
-			'empty_text'         => __( 'No sections match your search.', 'siteloom' ),
+			'empty_text'         => __( 'No sections match your search.', 'agentstructor' ),
 		);
 		$args     = array_merge( $defaults, $args );
 

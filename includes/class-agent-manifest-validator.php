@@ -11,7 +11,7 @@
  *
  * @package    Agent_Builder
  * @subpackage Includes
- * @author     Siteloom Team <support@agentic-plugin.com>
+ * @author     AgentStructor Team <support@agentic-plugin.com>
  * @license    GPL-2.0-or-later https://www.gnu.org/licenses/gpl-2.0.html
  * @link       https://agentic-plugin.com
  * @since      2.10.0
@@ -102,17 +102,17 @@ final class Agent_Manifest_Validator {
 			$slug = sanitize_title( (string) ( $raw['name'] ?? '' ) );
 		}
 		if ( '' === $slug ) {
-			return new \WP_Error( 'invalid_slug', __( 'A valid agent slug or name is required.', 'siteloom' ) );
+			return new \WP_Error( 'invalid_slug', __( 'A valid agent slug or name is required.', 'agentstructor' ) );
 		}
 
 		$name = self::clean_text( (string) ( $raw['name'] ?? '' ), self::MAX_NAME );
 		if ( '' === $name ) {
-			return new \WP_Error( 'invalid_name', __( 'Agent name is required.', 'siteloom' ) );
+			return new \WP_Error( 'invalid_name', __( 'Agent name is required.', 'agentstructor' ) );
 		}
 
 		$description = self::clean_text( (string) ( $raw['description'] ?? '' ), self::MAX_DESCRIPTION );
 		if ( '' === $description ) {
-			return new \WP_Error( 'invalid_description', __( 'Agent description is required.', 'siteloom' ) );
+			return new \WP_Error( 'invalid_description', __( 'Agent description is required.', 'agentstructor' ) );
 		}
 
 		$category = strtolower( sanitize_key( (string) ( $raw['category'] ?? 'admin' ) ) );

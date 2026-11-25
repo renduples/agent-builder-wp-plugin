@@ -85,7 +85,7 @@ class Create_Pdf extends \Agentic\Tool_Base {
 	 * @return string
 	 */
 	public function get_unavailable_reason(): string {
-		return __( 'Generating PDFs requires the mPDF library, which is not bundled with the free plugin.', 'siteloom' );
+		return __( 'Generating PDFs requires the mPDF library, which is not bundled with the free plugin.', 'agentstructor' );
 	}
 
 	public function execute( array $arguments ): array {

@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
-<ruleset name="Siteloom AI Agents">
-	<description>Coding standards for the Siteloom AI Agents WordPress plugin.</description>
+<ruleset name="AgentStructor – Build and Train Your Own AI Agents">
+	<description>Coding standards for the AgentStructor – Build and Train Your Own AI Agents WordPress plugin.</description>
 
 	<file>.</file>
 
@@ -65,7 +65,7 @@
 	<rule ref="WordPress.WP.I18n">
 		<properties>
 			<property name="text_domain" type="array">
-				<element value="siteloom"/>
+				<element value="agentstructor"/>
 			</property>
 		</properties>
 	</rule>

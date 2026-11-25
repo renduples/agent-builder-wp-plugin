@@ -90,12 +90,12 @@ class Logs_Payload {
 				foreach ( (array) $items as $item ) {
 					$agent  = (string) ( $item['agent_id'] ?? '' );
 					$user   = absint( $item['user_id'] ?? 0 );
-					$uname  = $user ? ( get_userdata( $user )->display_name ?? ( 'User #' . $user ) ) : __( 'Guest', 'siteloom' );
+					$uname  = $user ? ( get_userdata( $user )->display_name ?? ( 'User #' . $user ) ) : __( 'Guest', 'agentstructor' );
 					$rows[] = array(
 						'id'         => (string) ( $item['id'] ?? '' ),
 						'title'      => sprintf(
 							/* translators: 1: agent name, 2: conversation id */
-							__( 'Chat with %1$s (#%2$s)', 'siteloom' ),
+							__( 'Chat with %1$s (#%2$s)', 'agentstructor' ),
 							self::friendly_agent_name( $agent ),
 							(string) ( $item['id'] ?? '' )
 						),
@@ -156,24 +156,24 @@ class Logs_Payload {
 		}
 
 		$period_labels = array(
-			'day'   => __( 'Today', 'siteloom' ),
-			'week'  => __( 'Last 7 days', 'siteloom' ),
-			'month' => __( 'Last 30 days', 'siteloom' ),
+			'day'   => __( 'Today', 'agentstructor' ),
+			'week'  => __( 'Last 7 days', 'agentstructor' ),
+			'month' => __( 'Last 30 days', 'agentstructor' ),
 		);
 
 		return array(
 			'page'           => 'logs',
 			'tab'            => $tab,
-			'title'          => __( 'Activity', 'siteloom' ),
+			'title'          => __( 'Activity', 'agentstructor' ),
 			'panel_title'    => match ( $tab ) {
-				'conversations' => __( 'Recent conversations', 'siteloom' ),
-				'security'      => __( 'Security events', 'siteloom' ),
-				default         => __( 'What your agents have been doing', 'siteloom' ),
+				'conversations' => __( 'Recent conversations', 'agentstructor' ),
+				'security'      => __( 'Security events', 'agentstructor' ),
+				default         => __( 'What your agents have been doing', 'agentstructor' ),
 			},
 			'description'    => match ( $tab ) {
-				'conversations' => __( 'Chats between people and agents on this site.', 'siteloom' ),
-				'security'      => __( 'Security-related events. Most sites stay quiet here.', 'siteloom' ),
-				default         => __( 'A simple timeline of agent work — tools used, approvals, and important system events. No technical jargon required.', 'siteloom' ),
+				'conversations' => __( 'Chats between people and agents on this site.', 'agentstructor' ),
+				'security'      => __( 'Security-related events. Most sites stay quiet here.', 'agentstructor' ),
+				default         => __( 'A simple timeline of agent work — tools used, approvals, and important system events. No technical jargon required.', 'agentstructor' ),
 			},
 			'rows'           => $rows,
 			'stats'          => $stats,
@@ -195,27 +195,27 @@ class Logs_Payload {
 			'kind_filters'   => array(
 				array(
 					'id'    => 'all',
-					'label' => __( 'All', 'siteloom' ),
+					'label' => __( 'All', 'agentstructor' ),
 				),
 				array(
 					'id'    => 'tool',
-					'label' => __( 'Tools used', 'siteloom' ),
+					'label' => __( 'Tools used', 'agentstructor' ),
 				),
 				array(
 					'id'    => 'approval',
-					'label' => __( 'Approvals', 'siteloom' ),
+					'label' => __( 'Approvals', 'agentstructor' ),
 				),
 				array(
 					'id'    => 'chat',
-					'label' => __( 'Chats', 'siteloom' ),
+					'label' => __( 'Chats', 'agentstructor' ),
 				),
 				array(
 					'id'    => 'settings',
-					'label' => __( 'Settings', 'siteloom' ),
+					'label' => __( 'Settings', 'agentstructor' ),
 				),
 				array(
 					'id'    => 'other',
-					'label' => __( 'Other', 'siteloom' ),
+					'label' => __( 'Other', 'agentstructor' ),
 				),
 			),
 			'is_advanced'    => $is_advanced,
@@ -234,22 +234,22 @@ class Logs_Payload {
 			'docs_url'       => 'https://agentic-plugin.com/documentation/activity/',
 			'footer_policy'  => __(
 				'Activity helps you understand what agents did on your site. Logs are stored locally and purged according to your retention settings. Chat content lives under Conversations.',
-				'siteloom'
+				'agentstructor'
 			),
 			'tabs'           => array(
 				array(
 					'id'    => 'audit',
-					'label' => __( 'Timeline', 'siteloom' ),
+					'label' => __( 'Timeline', 'agentstructor' ),
 					'url'   => admin_url( 'admin.php?page=agentic-audit-log&tab=audit&period=' . rawurlencode( $period ) ),
 				),
 				array(
 					'id'    => 'conversations',
-					'label' => __( 'Conversations', 'siteloom' ),
+					'label' => __( 'Conversations', 'agentstructor' ),
 					'url'   => admin_url( 'admin.php?page=agentic-audit-log&tab=conversations&period=' . rawurlencode( $period ) ),
 				),
 				array(
 					'id'    => 'security',
-					'label' => __( 'Security', 'siteloom' ),
+					'label' => __( 'Security', 'agentstructor' ),
 					'url'   => admin_url( 'admin.php?page=agentic-audit-log&tab=security&period=' . rawurlencode( $period ) ),
 				),
 			),
@@ -284,7 +284,7 @@ class Logs_Payload {
 			if ( $target && 'conversation' !== $target && 'tool_call' === $action ) {
 				$title = sprintf(
 					/* translators: %s: tool name */
-					__( 'Used tool: %s', 'siteloom' ),
+					__( 'Used tool: %s', 'agentstructor' ),
 					str_replace( '_', ' ', $target )
 				);
 			}
@@ -328,7 +328,7 @@ class Logs_Payload {
 		if ( $tokens > 0 ) {
 			$detail_bits[] = sprintf(
 				/* translators: %s: token count */
-				__( '%s tokens', 'siteloom' ),
+				__( '%s tokens', 'agentstructor' ),
 				number_format_i18n( $tokens )
 			);
 		}
@@ -351,36 +351,36 @@ class Logs_Payload {
 
 	private static function friendly_action_title( string $action ): string {
 		$map = array(
-			'chat_start'                 => __( 'Started a chat', 'siteloom' ),
-			'chat_complete'              => __( 'Finished a chat', 'siteloom' ),
-			'tool_call'                  => __( 'Used a tool', 'siteloom' ),
-			'tool_choice'                => __( 'Chose tools for a reply', 'siteloom' ),
-			'tool_executed_on_approval'  => __( 'Ran an approved action', 'siteloom' ),
-			'tool_enabled'               => __( 'Tool turned on', 'siteloom' ),
-			'tool_disabled'              => __( 'Tool turned off', 'siteloom' ),
-			'tools_profile_applied'      => __( 'Tools safety profile applied', 'siteloom' ),
-			'site_tool_created'          => __( 'Site-local tool created', 'siteloom' ),
-			'site_tool_updated'          => __( 'Site-local tool updated', 'siteloom' ),
-			'site_tool_deleted'          => __( 'Site-local tool deleted', 'siteloom' ),
-			'approval_queued'            => __( 'Action waiting for approval', 'siteloom' ),
-			'approval_approved'          => __( 'You approved an action', 'siteloom' ),
-			'approval_rejected'          => __( 'You rejected an action', 'siteloom' ),
-			'action_approved'            => __( 'You approved an action', 'siteloom' ),
-			'action_rejected'            => __( 'You rejected an action', 'siteloom' ),
-			'approval_prefs_saved'       => __( 'Approval preferences saved', 'siteloom' ),
-			'ui_mode_changed'            => __( 'Interface mode changed', 'siteloom' ),
-			'default_agent_mode_changed' => __( 'Default agent mode changed', 'siteloom' ),
-			'deployment_created'         => __( 'Deployment created', 'siteloom' ),
-			'deployment_updated'         => __( 'Deployment updated', 'siteloom' ),
-			'deployment_enabled'         => __( 'Deployment enabled', 'siteloom' ),
-			'deployment_disabled'        => __( 'Deployment disabled', 'siteloom' ),
-			'deployment_deleted'         => __( 'Deployment deleted', 'siteloom' ),
-			'settings_changed'           => __( 'Settings changed', 'siteloom' ),
-			'endpoint_url_changed'       => __( 'Changed a service endpoint URL', 'siteloom' ),
-			'knowledge_added'            => __( 'Added knowledge', 'siteloom' ),
-			'agent_activated'            => __( 'Agent activated', 'siteloom' ),
-			'agent_deactivated'          => __( 'Agent deactivated', 'siteloom' ),
-			'agent_installed'            => __( 'Agent created', 'siteloom' ),
+			'chat_start'                 => __( 'Started a chat', 'agentstructor' ),
+			'chat_complete'              => __( 'Finished a chat', 'agentstructor' ),
+			'tool_call'                  => __( 'Used a tool', 'agentstructor' ),
+			'tool_choice'                => __( 'Chose tools for a reply', 'agentstructor' ),
+			'tool_executed_on_approval'  => __( 'Ran an approved action', 'agentstructor' ),
+			'tool_enabled'               => __( 'Tool turned on', 'agentstructor' ),
+			'tool_disabled'              => __( 'Tool turned off', 'agentstructor' ),
+			'tools_profile_applied'      => __( 'Tools safety profile applied', 'agentstructor' ),
+			'site_tool_created'          => __( 'Site-local tool created', 'agentstructor' ),
+			'site_tool_updated'          => __( 'Site-local tool updated', 'agentstructor' ),
+			'site_tool_deleted'          => __( 'Site-local tool deleted', 'agentstructor' ),
+			'approval_queued'            => __( 'Action waiting for approval', 'agentstructor' ),
+			'approval_approved'          => __( 'You approved an action', 'agentstructor' ),
+			'approval_rejected'          => __( 'You rejected an action', 'agentstructor' ),
+			'action_approved'            => __( 'You approved an action', 'agentstructor' ),
+			'action_rejected'            => __( 'You rejected an action', 'agentstructor' ),
+			'approval_prefs_saved'       => __( 'Approval preferences saved', 'agentstructor' ),
+			'ui_mode_changed'            => __( 'Interface mode changed', 'agentstructor' ),
+			'default_agent_mode_changed' => __( 'Default agent mode changed', 'agentstructor' ),
+			'deployment_created'         => __( 'Deployment created', 'agentstructor' ),
+			'deployment_updated'         => __( 'Deployment updated', 'agentstructor' ),
+			'deployment_enabled'         => __( 'Deployment enabled', 'agentstructor' ),
+			'deployment_disabled'        => __( 'Deployment disabled', 'agentstructor' ),
+			'deployment_deleted'         => __( 'Deployment deleted', 'agentstructor' ),
+			'settings_changed'           => __( 'Settings changed', 'agentstructor' ),
+			'endpoint_url_changed'       => __( 'Changed a service endpoint URL', 'agentstructor' ),
+			'knowledge_added'            => __( 'Added knowledge', 'agentstructor' ),
+			'agent_activated'            => __( 'Agent activated', 'agentstructor' ),
+			'agent_deactivated'          => __( 'Agent deactivated', 'agentstructor' ),
+			'agent_installed'            => __( 'Agent created', 'agentstructor' ),
 		);
 		if ( isset( $map[ $action ] ) ) {
 			return $map[ $action ];
@@ -391,7 +391,7 @@ class Logs_Payload {
 
 	private static function friendly_agent_name( string $slug ): string {
 		if ( '' === $slug || 'human' === $slug || 'system' === $slug ) {
-			return __( 'You / system', 'siteloom' );
+			return __( 'You / system', 'agentstructor' );
 		}
 		if ( class_exists( '\Agentic_Agent_Registry' ) ) {
 			$agent = \Agentic_Agent_Registry::get_instance()->get_agent_instance( $slug );
@@ -405,9 +405,9 @@ class Logs_Payload {
 
 	private static function friendly_security_title( string $event ): string {
 		$map = array(
-			'approval_execution_exception' => __( 'Approved action failed while running', 'siteloom' ),
-			'chat_exception'               => __( 'Chat hit an error', 'siteloom' ),
-			'chat_error'                   => __( 'Chat error recorded', 'siteloom' ),
+			'approval_execution_exception' => __( 'Approved action failed while running', 'agentstructor' ),
+			'chat_exception'               => __( 'Chat hit an error', 'agentstructor' ),
+			'chat_error'                   => __( 'Chat error recorded', 'agentstructor' ),
 		);
 		return $map[ $event ] ?? ucwords( str_replace( array( '_', '-' ), ' ', $event ) );
 	}
@@ -438,7 +438,7 @@ class Logs_Payload {
 		}
 		return sprintf(
 			/* translators: %s: human time diff */
-			__( '%s ago', 'siteloom' ),
+			__( '%s ago', 'agentstructor' ),
 			human_time_diff( $ts, time() )
 		);
 	}

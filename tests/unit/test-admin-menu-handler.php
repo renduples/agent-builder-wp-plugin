@@ -49,7 +49,7 @@ class Test_Admin_Menu_Handler extends TestCase {
 		foreach ( $known as $slug ) {
 			$this->assertTrue(
 				Admin_Menu_Handler::is_known_admin_page( $slug ),
-				"Expected {$slug} to be a known Siteloom page."
+				"Expected {$slug} to be a known AgentStructor page."
 			);
 		}
 	}
@@ -102,7 +102,7 @@ class Test_Admin_Menu_Handler extends TestCase {
 			$this->fail( 'Expected maybe_show_access_notice() to wp_die() on an unknown slug.' );
 		} catch ( \WPDieException $e ) {
 			$this->assertSame( 404, $e->getCode() );
-			$this->assertStringContainsString( "This Siteloom page doesn", $e->getMessage() );
+			$this->assertStringContainsString( "This AgentStructor page doesn", $e->getMessage() );
 			$this->assertStringContainsString( 'page=agent-builder', $e->getMessage() );
 		}
 	}

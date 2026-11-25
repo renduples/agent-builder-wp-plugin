@@ -96,7 +96,7 @@ class Core_AI_Adapter {
 
 		return new \WP_Error(
 			'core_ai_unavailable',
-			__( 'The WordPress core AI provider is selected but no handler returned a response.', 'siteloom' )
+			__( 'The WordPress core AI provider is selected but no handler returned a response.', 'agentstructor' )
 		);
 	}
 }

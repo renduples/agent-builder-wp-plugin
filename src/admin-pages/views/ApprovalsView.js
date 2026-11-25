@@ -16,7 +16,7 @@ import GrantsTab from './GrantsTab';
 
 const APPROVAL_ACTION_HINT = __(
 	'An agent tried to run this specific action and paused here first. Nothing happens until you decide — approve to let it run once, or reject to cancel it.',
-	'siteloom'
+	'agentstructor'
 );
 
 
@@ -52,7 +52,7 @@ function ApprovalsView( { data, reload } ) {
 
 	const decide = ( row, action ) => {
 		const id = row.id;
-		const title = row.title || __( 'Action', 'siteloom' );
+		const title = row.title || __( 'Action', 'agentstructor' );
 		setBusy( `d-${ id }` );
 		setErr( '' );
 		setOk( '' );
@@ -67,17 +67,17 @@ function ApprovalsView( { data, reload } ) {
 				steps: [
 					{
 						key: 'approve',
-						label: __( 'Recording your approval…', 'siteloom' ),
+						label: __( 'Recording your approval…', 'agentstructor' ),
 						state: 'active',
 					},
 					{
 						key: 'run',
-						label: __( 'Running the approved action…', 'siteloom' ),
+						label: __( 'Running the approved action…', 'agentstructor' ),
 						state: 'pending',
 					},
 					{
 						key: 'done',
-						label: __( 'Confirming result…', 'siteloom' ),
+						label: __( 'Confirming result…', 'agentstructor' ),
 						state: 'pending',
 					},
 				],
@@ -92,7 +92,7 @@ function ApprovalsView( { data, reload } ) {
 				steps: [
 					{
 						key: 'reject',
-						label: __( 'Rejecting this request…', 'siteloom' ),
+						label: __( 'Rejecting this request…', 'agentstructor' ),
 						state: 'active',
 					},
 				],
@@ -130,14 +130,14 @@ function ApprovalsView( { data, reload } ) {
 							baseMsg ||
 							__(
 								'Rejected — the action will not run.',
-								'siteloom'
+								'agentstructor'
 							),
 						steps: [
 							{
 								key: 'reject',
 								label: __(
 									'Request rejected',
-									'siteloom'
+									'agentstructor'
 								),
 								state: 'done',
 							},
@@ -147,7 +147,7 @@ function ApprovalsView( { data, reload } ) {
 						baseMsg ||
 							__(
 								'Rejected — the action will not run.',
-								'siteloom'
+								'agentstructor'
 							)
 					);
 				} else {
@@ -160,18 +160,18 @@ function ApprovalsView( { data, reload } ) {
 						? exec?.message ||
 						  __(
 								'Approved, but the action could not be started.',
-								'siteloom'
+								'agentstructor'
 						  )
 						: success
 						? exec?.message ||
 						  __(
 								'Action completed successfully.',
-								'siteloom'
+								'agentstructor'
 						  )
 						: exec?.message ||
 						  __(
 								'Action ran but reported a problem.',
-								'siteloom'
+								'agentstructor'
 						  );
 					const detail = exec?.detail
 						? String( exec.detail )
@@ -190,7 +190,7 @@ function ApprovalsView( { data, reload } ) {
 								key: 'approve',
 								label: __(
 									'Approval recorded',
-									'siteloom'
+									'agentstructor'
 								),
 								state: 'done',
 							},
@@ -208,11 +208,11 @@ function ApprovalsView( { data, reload } ) {
 								label: success
 									? __(
 											'Done — agent task finished',
-											'siteloom'
+											'agentstructor'
 									  )
 									: __(
 											'Finished with errors — check detail below',
-											'siteloom'
+											'agentstructor'
 									  ),
 								state: success ? 'done' : 'error',
 							},
@@ -224,7 +224,7 @@ function ApprovalsView( { data, reload } ) {
 									runLabel ||
 									__(
 										'Approved and completed.',
-										'siteloom'
+										'agentstructor'
 									)
 							: runLabel
 					);
@@ -234,7 +234,7 @@ function ApprovalsView( { data, reload } ) {
 			.catch( ( e ) => {
 				const msg =
 					e.message ||
-					__( 'Could not update that item.', 'siteloom' );
+					__( 'Could not update that item.', 'agentstructor' );
 				setErr( msg );
 				setProgress( {
 					id,
@@ -268,13 +268,13 @@ function ApprovalsView( { data, reload } ) {
 						/* translators: %d: number of pending actions */
 						__(
 							'Approve all %d actions in this group? They will run in order.',
-							'siteloom'
+							'agentstructor'
 						),
 						ids.length
 				  )
 				: sprintf(
 						/* translators: %d: number of pending actions */
-						__( 'Reject all %d actions in this group?', 'siteloom' ),
+						__( 'Reject all %d actions in this group?', 'agentstructor' ),
 						ids.length
 				  );
 		if ( ! window.confirm( confirmMsg ) ) {
@@ -305,12 +305,12 @@ function ApprovalsView( { data, reload } ) {
 						action === 'approve'
 							? sprintf(
 									/* translators: %d: number of approved actions */
-									__( 'Approved %d actions.', 'siteloom' ),
+									__( 'Approved %d actions.', 'agentstructor' ),
 									succeeded
 							  )
 							: sprintf(
 									/* translators: %d: number of rejected actions */
-									__( 'Rejected %d actions.', 'siteloom' ),
+									__( 'Rejected %d actions.', 'agentstructor' ),
 									succeeded
 							  )
 					);
@@ -324,16 +324,16 @@ function ApprovalsView( { data, reload } ) {
 									/* translators: 1: number completed, 2: number requested, 3: failure reason */
 									__(
 										'Stopped after %1$d of %2$d — %3$s',
-										'siteloom'
+										'agentstructor'
 									),
 									succeeded,
 									ids.length,
 									failedResult?.message ||
-										__( 'one action failed.', 'siteloom' )
+										__( 'one action failed.', 'agentstructor' )
 							  )
 							: sprintf(
 									/* translators: 1: number succeeded, 2: number failed */
-									__( '%1$d succeeded, %2$d failed.', 'siteloom' ),
+									__( '%1$d succeeded, %2$d failed.', 'agentstructor' ),
 									succeeded,
 									failed
 							  )
@@ -344,7 +344,7 @@ function ApprovalsView( { data, reload } ) {
 			.catch( ( e ) =>
 				setErr(
 					e.message ||
-						__( 'Could not process that group.', 'siteloom' )
+						__( 'Could not process that group.', 'agentstructor' )
 				)
 			)
 			.finally( () => setBusy( '' ) );
@@ -357,7 +357,7 @@ function ApprovalsView( { data, reload } ) {
 			setErr(
 				__(
 					'Check the box to accept the increased risk before choosing “Trust more”.',
-					'siteloom'
+					'agentstructor'
 				)
 			);
 			return;
@@ -378,13 +378,13 @@ function ApprovalsView( { data, reload } ) {
 		} )
 			.then( () => {
 				setComfort( c );
-				setOk( __( 'Preferences saved.', 'siteloom' ) );
+				setOk( __( 'Preferences saved.', 'agentstructor' ) );
 				reload( { silent: true } );
 			} )
 			.catch( ( e ) =>
 				setErr(
 					e.message ||
-						__( 'Could not save preferences.', 'siteloom' )
+						__( 'Could not save preferences.', 'agentstructor' )
 				)
 			)
 			.finally( () => setBusy( '' ) );
@@ -408,8 +408,8 @@ function ApprovalsView( { data, reload } ) {
 		};
 		return [
 			...base.filter( ( t ) => t.id !== 'backups' ),
-			{ id: 'rules', label: __( 'Rules', 'siteloom' ), url: tabUrl( 'rules' ) },
-			{ id: 'grants', label: __( 'Grants', 'siteloom' ), url: tabUrl( 'grants' ) },
+			{ id: 'rules', label: __( 'Rules', 'agentstructor' ), url: tabUrl( 'rules' ) },
+			{ id: 'grants', label: __( 'Grants', 'agentstructor' ), url: tabUrl( 'grants' ) },
 			...base.filter( ( t ) => t.id === 'backups' ),
 		];
 	}, [ data.tabs ] );
@@ -443,11 +443,11 @@ function ApprovalsView( { data, reload } ) {
 				{ data.is_advanced
 					? __(
 							'Advanced view shows technical detail.',
-							'siteloom'
+							'agentstructor'
 					  )
 					: __(
 							'Simple view for non-technical admins.',
-							'siteloom'
+							'agentstructor'
 					  ) }
 			</p>
 
@@ -482,9 +482,9 @@ function ApprovalsView( { data, reload } ) {
 						<strong>
 							{ progress.phase === 'done'
 								? progress.ok
-									? __( 'Complete', 'siteloom' )
-									: __( 'Needs attention', 'siteloom' )
-								: __( 'Working…', 'siteloom' ) }
+									? __( 'Complete', 'agentstructor' )
+									: __( 'Needs attention', 'agentstructor' )
+								: __( 'Working…', 'agentstructor' ) }
 							{ progress.title
 								? ` — ${ progress.title }`
 								: '' }
@@ -495,7 +495,7 @@ function ApprovalsView( { data, reload } ) {
 								className="button-link"
 								onClick={ () => setProgress( null ) }
 							>
-								{ __( 'Dismiss', 'siteloom' ) }
+								{ __( 'Dismiss', 'agentstructor' ) }
 							</button>
 						) }
 					</div>
@@ -523,11 +523,11 @@ function ApprovalsView( { data, reload } ) {
 
 			{ /* —— Preferences —— */ }
 			<div className="agentic-react-approvals-prefs">
-				<h3>{ __( 'Preferences', 'siteloom' ) }</h3>
+				<h3>{ __( 'Preferences', 'agentstructor' ) }</h3>
 				<p className="agentic-react-muted">
 					{ __(
 						'Choose how closely you want to watch agents, and whether we should email you when something is waiting.',
-						'siteloom'
+						'agentstructor'
 					) }
 				</p>
 
@@ -568,7 +568,7 @@ function ApprovalsView( { data, reload } ) {
 							</span>
 							{ ( comfort === p.id || p.active ) && (
 								<span className="agentic-react-profile-card__badge">
-									{ __( 'Current', 'siteloom' ) }
+									{ __( 'Current', 'agentstructor' ) }
 								</span>
 							) }
 						</button>
@@ -587,7 +587,7 @@ function ApprovalsView( { data, reload } ) {
 						<span>
 							{ __(
 								'I understand agents may change my site with less waiting, and I accept that increased risk.',
-								'siteloom'
+								'agentstructor'
 							) }
 						</span>
 					</label>
@@ -602,7 +602,7 @@ function ApprovalsView( { data, reload } ) {
 						>
 							{ __(
 								'Save “Trust more” preference',
-								'siteloom'
+								'agentstructor'
 							) }
 						</Button>
 					</p>
@@ -620,14 +620,14 @@ function ApprovalsView( { data, reload } ) {
 						<span>
 							{ __(
 								'Email me when an action is waiting for approval',
-								'siteloom'
+								'agentstructor'
 							) }
 						</span>
 					</label>
 					{ emailNotify && (
 						<label className="agentic-react-form-full">
 							<span>
-								{ __( 'Send alerts to', 'siteloom' ) }
+								{ __( 'Send alerts to', 'agentstructor' ) }
 							</span>
 							<input
 								type="email"
@@ -645,7 +645,7 @@ function ApprovalsView( { data, reload } ) {
 							disabled={ busy === 'prefs' }
 							onClick={ () => savePrefs( comfort ) }
 						>
-							{ __( 'Save email preferences', 'siteloom' ) }
+							{ __( 'Save email preferences', 'agentstructor' ) }
 						</Button>
 					</p>
 				</div>
@@ -653,7 +653,7 @@ function ApprovalsView( { data, reload } ) {
 
 			{ /* —— Queue —— */ }
 			<h3>
-				{ __( 'Waiting for you', 'siteloom' ) }
+				{ __( 'Waiting for you', 'agentstructor' ) }
 				{ data.pending_count
 					? ` (${ data.pending_count })`
 					: '' }
@@ -663,24 +663,24 @@ function ApprovalsView( { data, reload } ) {
 				<div className="agentic-react-approvals-empty">
 					<p>
 						<strong>
-							{ __( 'You’re all caught up', 'siteloom' ) }
+							{ __( 'You’re all caught up', 'agentstructor' ) }
 						</strong>
 					</p>
 					<p className="agentic-react-muted">
 						{ __(
 							'Approvals pause any action an agent rates as risky until you say yes — nothing waiting here means nothing is on hold right now.',
-							'siteloom'
+							'agentstructor'
 						) }
 					</p>
 					<p className="agentic-react-muted">
 						{ __(
 							'When an agent needs permission for a bigger change, it will show up here',
-							'siteloom'
+							'agentstructor'
 						) }
 						{ emailNotify
 							? __(
 									' — and we’ll email you.',
-									'siteloom'
+									'agentstructor'
 							  )
 							: '.' }
 					</p>
@@ -707,12 +707,12 @@ function ApprovalsView( { data, reload } ) {
 												/* translators: 1: agent name, 2: number of actions, 3: relative time */
 												__(
 													'%1$s · %2$d actions · %3$s ago',
-													'siteloom'
+													'agentstructor'
 												),
 												group.agent_id ||
 													__(
 														'Agent',
-														'siteloom'
+														'agentstructor'
 													),
 												items.length,
 												group.time_ago || ''
@@ -733,11 +733,11 @@ function ApprovalsView( { data, reload } ) {
 												{ groupBusy
 													? __(
 															'Working…',
-															'siteloom'
+															'agentstructor'
 													  )
 													: __(
 															'Approve all',
-															'siteloom'
+															'agentstructor'
 													  ) }
 											</Button>
 											<Button
@@ -754,7 +754,7 @@ function ApprovalsView( { data, reload } ) {
 											>
 												{ __(
 													'Reject all',
-													'siteloom'
+													'agentstructor'
 												) }
 											</Button>
 										</div>
@@ -820,11 +820,11 @@ function ApprovalsView( { data, reload } ) {
 												{ busy === `d-${ r.id }`
 													? __(
 															'Working…',
-															'siteloom'
+															'agentstructor'
 													  )
 													: __(
 															'Approve',
-															'siteloom'
+															'agentstructor'
 													  ) }
 											</Button>
 											<Button
@@ -835,7 +835,7 @@ function ApprovalsView( { data, reload } ) {
 													decide( r, 'reject' )
 												}
 											>
-												{ __( 'Reject', 'siteloom' ) }
+												{ __( 'Reject', 'agentstructor' ) }
 											</Button>
 										</div>
 									</div>
@@ -849,10 +849,10 @@ function ApprovalsView( { data, reload } ) {
 			<p className="agentic-react-muted" style={ { marginTop: 16 } }>
 				{ __(
 					'Agents back up files and database tables automatically before changing them.',
-					'siteloom'
+					'agentstructor'
 				) }{ ' ' }
 				<a href={ data.tabs?.find( ( t ) => t.id === 'backups' )?.url }>
-					{ __( 'View backups and restore', 'siteloom' ) }
+					{ __( 'View backups and restore', 'agentstructor' ) }
 				</a>
 			</p>
 		</>

@@ -30,13 +30,13 @@ description: "Use when user wants to clean up auto-drafts, delete spam comments,
 ### Security hardening
 
 1. Call `toggle_xml_rpc` with `enabled: false` to disable XML-RPC (recommended for most sites).
-2. Call `toggle_file_editing` with `allow_editing: false`. If the file editor is still enabled, give the user the returned `wp_config_line` and explain that the site administrator adds it to wp-config.php (Siteloom does not change this setting itself).
+2. Call `toggle_file_editing` with `allow_editing: false`. If the file editor is still enabled, give the user the returned `wp_config_line` and explain that the site administrator adds it to wp-config.php (AgentStructor does not change this setting itself).
 3. Confirm the XML-RPC setting is applied and explain what each recommendation does.
 
 ## Rules
 
 - All three cleanup tools (`cleanup_auto_drafts`, `cleanup_spam_comments`, `purge_expired_transients`) are marked destructive — always run `dry_run: true` first unless the user explicitly says to proceed.
-- `toggle_xml_rpc` stores its setting in wp_options and is enforced by Siteloom via a WordPress filter — it requires Siteloom to remain active to take effect.
+- `toggle_xml_rpc` stores its setting in wp_options and is enforced by AgentStructor via a WordPress filter — it requires AgentStructor to remain active to take effect.
 - `toggle_file_editing` only reports and recommends: disabling the file editor is done by adding `define( 'DISALLOW_FILE_EDIT', true );` to wp-config.php, which the site administrator does themselves.
 - Purging transients is safe for performance but may temporarily slow down pages that rely on cached data as those caches are rebuilt.
 - `manage_cache` is HIGH risk and disabled by default (an admin must enable it on Tools). Its `flush_object_cache`, `reset_opcode_cache` and `purge_page_cache` actions can affect other sites sharing the same Redis/Memcached/PHP-FPM/cache instance and cause a temporary load spike — always preview with `dry_run: true` and confirm with the user before running for real.

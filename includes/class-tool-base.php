@@ -331,7 +331,7 @@ abstract class Tool_Base {
 	}
 
 	/**
-	 * Whether this tool is only available when Siteloom Pro is active.
+	 * Whether this tool is only available when AgentStructor Pro is active.
 	 *
 	 * Pro-only tools are skipped by the loader on free installs and are
 	 * excluded from the WordPress.org package (see .distignore). Used for

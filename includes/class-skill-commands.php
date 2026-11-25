@@ -55,7 +55,7 @@ class Skill_Commands {
 				'description' => (string) ( $skill['description'] ?? '' ),
 				'client_side' => false,
 				'has_args'    => true,
-				'arg_hint'    => __( 'describe the task', 'siteloom' ),
+				'arg_hint'    => __( 'describe the task', 'agentstructor' ),
 				'contexts'    => array( 'backend', 'frontend' ),
 			);
 		}

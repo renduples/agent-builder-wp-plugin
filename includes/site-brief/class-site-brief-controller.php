@@ -183,14 +183,14 @@ class Site_Brief_Controller {
 		if ( ! is_user_logged_in() ) {
 			return new \WP_Error(
 				'rest_not_logged_in',
-				__( 'You must be logged in to use Site Brief.', 'siteloom' ),
+				__( 'You must be logged in to use Site Brief.', 'agentstructor' ),
 				array( 'status' => 401 )
 			);
 		}
 		if ( ! current_user_can( $cap ) && ! current_user_can( 'manage_options' ) ) {
 			return new \WP_Error(
 				'rest_forbidden',
-				__( 'You do not have permission to do this.', 'siteloom' ),
+				__( 'You do not have permission to do this.', 'agentstructor' ),
 				array( 'status' => 403 )
 			);
 		}
@@ -215,7 +215,7 @@ class Site_Brief_Controller {
 		if ( ! Provider_Registry::has_usable_provider() ) {
 			return new \WP_Error(
 				'site_brief_no_provider',
-				__( 'Connect an AI provider before scanning. Site Brief does not run without one.', 'siteloom' ),
+				__( 'Connect an AI provider before scanning. Site Brief does not run without one.', 'agentstructor' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -264,7 +264,7 @@ class Site_Brief_Controller {
 		if ( null === $card ) {
 			return new \WP_Error(
 				'site_brief_unknown_card',
-				__( 'That Site Brief card was not found.', 'siteloom' ),
+				__( 'That Site Brief card was not found.', 'agentstructor' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -301,7 +301,7 @@ class Site_Brief_Controller {
 		if ( null === $card ) {
 			return new \WP_Error(
 				'site_brief_unknown_card',
-				__( 'That Site Brief card was not found.', 'siteloom' ),
+				__( 'That Site Brief card was not found.', 'agentstructor' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -310,7 +310,7 @@ class Site_Brief_Controller {
 		$agent_label = sanitize_text_field( (string) ( $card['agent_label'] ?? '' ) );
 		if ( '' === $agent ) {
 			$agent       = 'wordpress-assistant';
-			$agent_label = __( 'WordPress Assistant', 'siteloom' );
+			$agent_label = __( 'WordPress Assistant', 'agentstructor' );
 		}
 		if ( '' === $agent_label ) {
 			$agent_label = $agent;
@@ -322,7 +322,7 @@ class Site_Brief_Controller {
 		// assignment.
 		if ( ! self::is_agent_available( $agent ) ) {
 			$agent       = 'wordpress-assistant';
-			$agent_label = __( 'WordPress Assistant', 'siteloom' );
+			$agent_label = __( 'WordPress Assistant', 'agentstructor' );
 		}
 
 		self::maybe_activate_agent( $agent );
@@ -363,7 +363,7 @@ class Site_Brief_Controller {
 		if ( '' === $message ) {
 			return new \WP_Error(
 				'site_brief_opening_gone',
-				__( 'That assignment message is no longer available.', 'siteloom' ),
+				__( 'That assignment message is no longer available.', 'agentstructor' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -523,7 +523,7 @@ class Site_Brief_Controller {
 			$agent_slug = (string) ( $card['agent'] ?? '' );
 			if ( '' !== $agent_slug && ! self::is_agent_available( $agent_slug ) ) {
 				$card['agent']       = 'wordpress-assistant';
-				$card['agent_label'] = __( 'WordPress Assistant', 'siteloom' );
+				$card['agent_label'] = __( 'WordPress Assistant', 'agentstructor' );
 			}
 
 			if ( ! $advanced ) {
@@ -609,7 +609,7 @@ class Site_Brief_Controller {
 		$parts   = array();
 		$parts[] = sprintf(
 			/* translators: %s: Site Brief card title. */
-			__( 'Site Brief flagged this on my site: "%s".', 'siteloom' ),
+			__( 'Site Brief flagged this on my site: "%s".', 'agentstructor' ),
 			$title
 		);
 		if ( '' !== $ev ) {
@@ -620,7 +620,7 @@ class Site_Brief_Controller {
 		}
 		$parts[] = __(
 			'Please investigate this on my site and help me fix it safely — explain what you find, and ask me before making any change.',
-			'siteloom'
+			'agentstructor'
 		);
 		return implode( ' ', $parts );
 	}

@@ -1,11 +1,11 @@
 import { __ } from '@wordpress/i18n';
 
 const RISK_EXPLANATIONS = {
-	none: __( 'Safe to run automatically — read-only, no approval needed.', 'siteloom' ),
-	low: __( 'Runs automatically by default; may read data that includes personal information.', 'siteloom' ),
-	medium: __( 'Changes something — agents pause for your in-chat confirmation first.', 'siteloom' ),
-	high: __( 'A significant or bulk change — waits in the Approvals queue for you to allow it.', 'siteloom' ),
-	extreme: __( 'Too risky to allow at all — hidden from agents entirely, cannot be enabled.', 'siteloom' ),
+	none: __( 'Safe to run automatically — read-only, no approval needed.', 'agentstructor' ),
+	low: __( 'Runs automatically by default; may read data that includes personal information.', 'agentstructor' ),
+	medium: __( 'Changes something — agents pause for your in-chat confirmation first.', 'agentstructor' ),
+	high: __( 'A significant or bulk change — waits in the Approvals queue for you to allow it.', 'agentstructor' ),
+	extreme: __( 'Too risky to allow at all — hidden from agents entirely, cannot be enabled.', 'agentstructor' ),
 };
 
 // Per-tool HIGH reasons from docs/m2-safety-center-design.md §3.5.

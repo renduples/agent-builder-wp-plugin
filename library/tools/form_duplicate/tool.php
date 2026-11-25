@@ -97,7 +97,7 @@ class Form_Duplicate extends \Agentic\Tool_Base {
 		}
 
 		/* translators: %s: original form title */
-		$new_title = sprintf( __( 'Copy of %s', 'siteloom' ), $source->post_title );
+		$new_title = sprintf( __( 'Copy of %s', 'agentstructor' ), $source->post_title );
 
 		$new_id = wp_insert_post(
 			array(

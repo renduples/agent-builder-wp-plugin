@@ -5,7 +5,7 @@
  * Lets a team-lead agent hand a subtask to another active agent and get its
  * result back. Delegation is sequential and in-process; depth, fan-out, and
  * cost/token budgets are enforced by Agent_Run. Parallel, durable, and visual
- * workflow orchestration are reserved for Siteloom Pro.
+ * workflow orchestration are reserved for AgentStructor Pro.
  *
  * @package    Agent_Builder
  * @subpackage Tools

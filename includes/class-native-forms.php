@@ -110,23 +110,23 @@ class Agentic_Native_Forms {
 		register_post_type(
 			self::FORM_CPT,
 			array(
-				'label'           => __( 'Forms', 'siteloom' ),
+				'label'           => __( 'Forms', 'agentstructor' ),
 				'labels'          => array(
-					'name'               => __( 'Agentic Forms', 'siteloom' ),
-					'singular_name'      => __( 'Agentic Form', 'siteloom' ),
-					'menu_name'          => __( 'Forms', 'siteloom' ),
-					'all_items'          => __( 'All Forms', 'siteloom' ),
-					'view_item'          => __( 'View Form', 'siteloom' ),
-					'add_new_item'       => __( 'Add New Form', 'siteloom' ),
-					'add_new'            => __( 'Add New', 'siteloom' ),
-					'edit_item'          => __( 'Edit Form', 'siteloom' ),
-					'search_items'       => __( 'Search Forms', 'siteloom' ),
-					'not_found'          => __( 'No forms found.', 'siteloom' ),
-					'not_found_in_trash' => __( 'No forms found in Trash.', 'siteloom' ),
+					'name'               => __( 'Agentic Forms', 'agentstructor' ),
+					'singular_name'      => __( 'Agentic Form', 'agentstructor' ),
+					'menu_name'          => __( 'Forms', 'agentstructor' ),
+					'all_items'          => __( 'All Forms', 'agentstructor' ),
+					'view_item'          => __( 'View Form', 'agentstructor' ),
+					'add_new_item'       => __( 'Add New Form', 'agentstructor' ),
+					'add_new'            => __( 'Add New', 'agentstructor' ),
+					'edit_item'          => __( 'Edit Form', 'agentstructor' ),
+					'search_items'       => __( 'Search Forms', 'agentstructor' ),
+					'not_found'          => __( 'No forms found.', 'agentstructor' ),
+					'not_found_in_trash' => __( 'No forms found in Trash.', 'agentstructor' ),
 				),
 				'public'          => false,
 				'show_ui'         => true,
-				'show_in_menu'    => false,   // added under Siteloom menu separately.
+				'show_in_menu'    => false,   // added under AgentStructor menu separately.
 				'show_in_rest'    => false,   // managed via custom REST routes below.
 				'capability_type' => 'post',
 				'capabilities'    => array(
@@ -142,7 +142,7 @@ class Agentic_Native_Forms {
 		register_post_type(
 			self::ENTRY_CPT,
 			array(
-				'label'           => __( 'Form Entries', 'siteloom' ),
+				'label'           => __( 'Form Entries', 'agentstructor' ),
 				'public'          => false,
 				'show_ui'         => false,
 				'show_in_menu'    => false,
@@ -331,7 +331,7 @@ class Agentic_Native_Forms {
 		if ( empty( $submitted_nonce ) || ! wp_verify_nonce( $submitted_nonce, 'wp_rest' ) ) {
 			return new WP_Error(
 				'invalid_nonce',
-				__( 'Security check failed. Please refresh the page and try again.', 'siteloom' ),
+				__( 'Security check failed. Please refresh the page and try again.', 'agentstructor' ),
 				array( 'status' => 403 )
 			);
 		}
@@ -354,7 +354,7 @@ class Agentic_Native_Forms {
 
 			if ( $required && '' === trim( $value ) ) {
 				/* translators: %s: field label */
-				$errors[] = sprintf( __( '%s is required.', 'siteloom' ), $label );
+				$errors[] = sprintf( __( '%s is required.', 'agentstructor' ), $label );
 			}
 
 			$payload[ $name ] = array(
@@ -384,7 +384,7 @@ class Agentic_Native_Forms {
 					array(
 						'success'  => true,
 						'entry_id' => 0,
-						'message'  => $definition['confirmation_message'] ?? __( 'Thank you — your submission has been received!', 'siteloom' ),
+						'message'  => $definition['confirmation_message'] ?? __( 'Thank you — your submission has been received!', 'agentstructor' ),
 					),
 					201
 				);
@@ -396,7 +396,7 @@ class Agentic_Native_Forms {
 			$turnstile_token  = (string) ( $request->get_param( 'cf-turnstile-response' ) ?? '' );
 			$turnstile_result = \Agentic\Turnstile::verify( $turnstile_token );
 			if ( null !== $turnstile_result && ! $turnstile_result['pass'] ) {
-				return new WP_Error( 'turnstile_failed', __( 'Security verification failed. Please try again.', 'siteloom' ), array( 'status' => 403 ) );
+				return new WP_Error( 'turnstile_failed', __( 'Security verification failed. Please try again.', 'agentstructor' ), array( 'status' => 403 ) );
 			}
 		}
 
@@ -428,7 +428,7 @@ class Agentic_Native_Forms {
 
 		// Confirmation: redirect or message.
 		$confirmation = $definition['confirmation'] ?? array();
-		$message      = $definition['confirmation_message'] ?? __( 'Thank you — your submission has been received!', 'siteloom' );
+		$message      = $definition['confirmation_message'] ?? __( 'Thank you — your submission has been received!', 'agentstructor' );
 		$redirect     = '';
 
 		if ( ! empty( $confirmation['type'] ) && 'redirect' === $confirmation['type'] && ! empty( $confirmation['url'] ) ) {
@@ -544,7 +544,7 @@ class Agentic_Native_Forms {
 	public function save_entry( int $form_id, string $form_title, array $payload ): int|WP_Error {
 		$entry_title = sprintf(
 			/* translators: 1: form title, 2: date/time */
-			__( '%1$s — %2$s', 'siteloom' ),
+			__( '%1$s — %2$s', 'agentstructor' ),
 			$form_title,
 			current_time( 'mysql' )
 		);
@@ -648,12 +648,12 @@ class Agentic_Native_Forms {
 		$config = $this->get_notification_config( $form_id );
 
 		/* translators: %s: form title */
-		$subject = sprintf( __( 'New form submission: %s', 'siteloom' ), $form_title );
+		$subject = sprintf( __( 'New form submission: %s', 'agentstructor' ), $form_title );
 
 		// Build HTML body for branded email.
 		$body_html = '<p>' . sprintf(
 			/* translators: %s: form title */
-			esc_html__( 'You received a new submission for "%s".', 'siteloom' ),
+			esc_html__( 'You received a new submission for "%s".', 'agentstructor' ),
 			esc_html( $form_title )
 		) . '</p>';
 
@@ -669,7 +669,7 @@ class Agentic_Native_Forms {
 		$body_html .= '</table>';
 
 		$entries_url = admin_url( 'edit.php?post_type=' . self::ENTRY_CPT . '&post_parent=' . $form_id );
-		$body_html  .= \Agentic\Email_Helper::button( $entries_url, __( 'View All Entries', 'siteloom' ) );
+		$body_html  .= \Agentic\Email_Helper::button( $entries_url, __( 'View All Entries', 'agentstructor' ) );
 
 		// Admin notification.
 		if ( $config['admin_enabled'] ) {
@@ -679,7 +679,7 @@ class Agentic_Native_Forms {
 					$admin_email,
 					$subject,
 					array(
-						'heading' => __( 'New Form Submission', 'siteloom' ),
+						'heading' => __( 'New Form Submission', 'agentstructor' ),
 						'body'    => $body_html,
 					)
 				);
@@ -695,7 +695,7 @@ class Agentic_Native_Forms {
 						$email,
 						$subject,
 						array(
-							'heading' => __( 'New Form Submission', 'siteloom' ),
+							'heading' => __( 'New Form Submission', 'agentstructor' ),
 							'body'    => $body_html,
 						)
 					);
@@ -707,7 +707,7 @@ class Agentic_Native_Forms {
 		if ( $config['confirmation_enabled'] && ! empty( $config['confirmation_subject'] ) ) {
 			$submitter_email = $this->find_submitter_email( $payload );
 			if ( $submitter_email ) {
-				$conf_body_text = ! empty( $config['confirmation_body'] ) ? $config['confirmation_body'] : __( 'Thank you for your submission. We will be in touch soon.', 'siteloom' );
+				$conf_body_text = ! empty( $config['confirmation_body'] ) ? $config['confirmation_body'] : __( 'Thank you for your submission. We will be in touch soon.', 'agentstructor' );
 				$conf_body      = '<p>' . esc_html( $conf_body_text ) . '</p>';
 				\Agentic\Email_Helper::send(
 					$submitter_email,
@@ -847,17 +847,17 @@ class Agentic_Native_Forms {
 		$form_id = absint( $atts['id'] );
 
 		if ( 0 === $form_id ) {
-			return '<p class="agentic-form-error">' . esc_html__( 'Invalid form ID.', 'siteloom' ) . '</p>';
+			return '<p class="agentic-form-error">' . esc_html__( 'Invalid form ID.', 'agentstructor' ) . '</p>';
 		}
 
 		$post = get_post( $form_id );
 		if ( ! $post || self::FORM_CPT !== $post->post_type ) {
-			return '<p class="agentic-form-error">' . esc_html__( 'Form not found.', 'siteloom' ) . '</p>';
+			return '<p class="agentic-form-error">' . esc_html__( 'Form not found.', 'agentstructor' ) . '</p>';
 		}
 
 		$definition = $this->get_definition( $form_id );
 		if ( empty( $definition['fields'] ) ) {
-			return '<p class="agentic-form-error">' . esc_html__( 'This form has no fields.', 'siteloom' ) . '</p>';
+			return '<p class="agentic-form-error">' . esc_html__( 'This form has no fields.', 'agentstructor' ) . '</p>';
 		}
 
 		$submit_url = rest_url( self::REST_NS . '/native-forms/' . $form_id . '/submit' );
@@ -909,14 +909,14 @@ class Agentic_Native_Forms {
 
 				<p class="agentic-form-submit">
 					<button type="submit" class="agentic-form-btn">
-						<?php echo esc_html( $definition['submit_label'] ?? __( 'Submit', 'siteloom' ) ); ?>
+						<?php echo esc_html( $definition['submit_label'] ?? __( 'Submit', 'agentstructor' ) ); ?>
 					</button>
 					<span class="agentic-form-spinner" style="display:none;" aria-hidden="true"></span>
 				</p>
 
 			</form>
 			<div class="agentic-form-success" style="display:none;" role="alert">
-				<?php echo esc_html( $definition['confirmation_message'] ?? __( 'Thank you — your submission has been received!', 'siteloom' ) ); ?>
+				<?php echo esc_html( $definition['confirmation_message'] ?? __( 'Thank you — your submission has been received!', 'agentstructor' ) ); ?>
 			</div>
 			<div class="agentic-form-errors" style="display:none;" role="alert"></div>
 		</div>
@@ -1337,16 +1337,16 @@ class Agentic_Native_Forms {
 		// Access control.
 		$can_view = $is_public ? is_user_logged_in() : current_user_can( 'manage_options' );
 		if ( ! $can_view ) {
-			return '<p class="agentic-form-error">' . esc_html__( 'You do not have permission to view form entries.', 'siteloom' ) . '</p>';
+			return '<p class="agentic-form-error">' . esc_html__( 'You do not have permission to view form entries.', 'agentstructor' ) . '</p>';
 		}
 
 		if ( 0 === $form_id ) {
-			return '<p class="agentic-form-error">' . esc_html__( 'Invalid form ID.', 'siteloom' ) . '</p>';
+			return '<p class="agentic-form-error">' . esc_html__( 'Invalid form ID.', 'agentstructor' ) . '</p>';
 		}
 
 		$post = get_post( $form_id );
 		if ( ! $post || self::FORM_CPT !== $post->post_type ) {
-			return '<p class="agentic-form-error">' . esc_html__( 'Form not found.', 'siteloom' ) . '</p>';
+			return '<p class="agentic-form-error">' . esc_html__( 'Form not found.', 'agentstructor' ) . '</p>';
 		}
 
 		$definition = $this->get_definition( $form_id );
@@ -1361,19 +1361,19 @@ class Agentic_Native_Forms {
 			<h3 class="agentic-entries-title">
 				<?php
 				/* translators: %s: form title */
-				printf( esc_html__( 'Entries: %s', 'siteloom' ), esc_html( $post->post_title ) );
+				printf( esc_html__( 'Entries: %s', 'agentstructor' ), esc_html( $post->post_title ) );
 				?>
 				<span class="agentic-entries-count">(<?php echo esc_html( (string) $total ); ?>)</span>
 			</h3>
 
 			<?php if ( empty( $entries ) ) : ?>
-				<p class="agentic-entries-empty"><?php esc_html_e( 'No entries yet.', 'siteloom' ); ?></p>
+				<p class="agentic-entries-empty"><?php esc_html_e( 'No entries yet.', 'agentstructor' ); ?></p>
 			<?php else : ?>
 				<div class="agentic-entries-table-wrap">
 					<table class="agentic-entries-table">
 						<thead>
 							<tr>
-								<th><?php esc_html_e( 'Date', 'siteloom' ); ?></th>
+								<th><?php esc_html_e( 'Date', 'agentstructor' ); ?></th>
 								<?php foreach ( $field_defs as $fdef ) : ?>
 									<th><?php echo esc_html( $fdef['label'] ?? $fdef['name'] ?? '' ); ?></th>
 								<?php endforeach; ?>

@@ -96,7 +96,7 @@ class Get_Image_Credits extends \Agentic\Tool_Base {
 		$user_id = $api_key;
 
 		if ( empty( $api_key ) ) {
-			return array( 'error' => 'Agentic Image Generation requires connecting an Agentic AI account — go to Siteloom → Settings → Providers and connect Agentic AI.' );
+			return array( 'error' => 'Agentic Image Generation requires connecting an Agentic AI account — go to AgentStructor → Settings → Providers and connect Agentic AI.' );
 		}
 
 		$url      = add_query_arg( array( 'user_id' => rawurlencode( $user_id ) ), \Agentic\Service_Registry::url( 'agentic-imagegen', '/credits' ) );

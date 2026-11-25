@@ -25,7 +25,7 @@ if ( ! $agentic_pa_selected && ! empty( $agentic_all_agents ) ) {
 	$agentic_pa_selected = array_key_first( $agentic_all_agents );
 }
 ?>
-<p class="agentic-settings-lead"><?php esc_html_e( 'Customise how each agent greets visitors and add context that shapes its personality. Instructions are appended to the agent’s system prompt — they do not replace it.', 'siteloom' ); ?></p>
+<p class="agentic-settings-lead"><?php esc_html_e( 'Customise how each agent greets visitors and add context that shapes its personality. Instructions are appended to the agent’s system prompt — they do not replace it.', 'agentstructor' ); ?></p>
 
 <?php if ( empty( $agentic_all_agents ) ) : ?>
 <p><em>No agents are currently installed.</em></p>

@@ -19,10 +19,10 @@ import { ResultCards } from './result-card';
 // Human labels for the key-argument summary rows on a Proposed Change card.
 // Mirrors the summary labels in assets/js/chat.js and assets/js/chat-overlay.js.
 const PROPOSAL_SUMMARY_LABELS = {
-	title: __( 'Title', 'siteloom' ),
-	status: __( 'Status', 'siteloom' ),
-	post_type: __( 'Post type', 'siteloom' ),
-	post_id: __( 'Post', 'siteloom' ),
+	title: __( 'Title', 'agentstructor' ),
+	status: __( 'Status', 'agentstructor' ),
+	post_type: __( 'Post type', 'agentstructor' ),
+	post_id: __( 'Post', 'agentstructor' ),
 };
 
 function generateChatSessionId() {
@@ -69,7 +69,7 @@ export function ContentPreview( { text } ) {
 	return (
 		<div className="agentic-proposal-content">
 			<strong className="agentic-proposal-content-label">
-				{ __( 'Content preview', 'siteloom' ) }
+				{ __( 'Content preview', 'agentstructor' ) }
 			</strong>
 			<div className="agentic-proposal-content-body">
 				{ expanded ? full : clipped }
@@ -82,8 +82,8 @@ export function ContentPreview( { text } ) {
 					onClick={ () => setExpanded( ! expanded ) }
 				>
 					{ expanded
-						? __( 'Show less', 'siteloom' )
-						: __( 'Show full content', 'siteloom' ) }
+						? __( 'Show less', 'agentstructor' )
+						: __( 'Show full content', 'agentstructor' ) }
 				</button>
 			) }
 		</div>
@@ -122,14 +122,14 @@ export function ProposalCard( { proposal, sessionId } ) {
 			setIsError( false );
 			setStatus(
 				'reject' === action
-					? __( 'Denied — no change made.', 'siteloom' )
-					: __( 'Done — change applied.', 'siteloom' )
+					? __( 'Denied — no change made.', 'agentstructor' )
+					: __( 'Done — change applied.', 'agentstructor' )
 			);
 		} catch ( err ) {
 			setIsError( true );
 			setStatus(
 				( err && err.message ) ||
-					__( 'Something went wrong.', 'siteloom' )
+					__( 'Something went wrong.', 'agentstructor' )
 			);
 			setBusy( false );
 		}
@@ -139,14 +139,14 @@ export function ProposalCard( { proposal, sessionId } ) {
 		<div className="agentic-proposal-card">
 			<div className="agentic-proposal-header">
 				{ isApproval
-					? __( 'Needs Your Approval', 'siteloom' )
-					: __( 'Proposed Change', 'siteloom' ) }
+					? __( 'Needs Your Approval', 'agentstructor' )
+					: __( 'Proposed Change', 'agentstructor' ) }
 			</div>
 			<div className="agentic-proposal-desc">
 				{ proposal.description ||
 					__(
 						'The agent wants to make a change.',
-						'siteloom'
+						'agentstructor'
 					) }
 			</div>
 			{ proposal.summary &&
@@ -184,8 +184,8 @@ export function ProposalCard( { proposal, sessionId } ) {
 						onClick={ () => setShowDiff( ! showDiff ) }
 					>
 						{ showDiff
-							? '▼ ' + __( 'Hide Diff', 'siteloom' )
-							: '▶ ' + __( 'Show Diff', 'siteloom' ) }
+							? '▼ ' + __( 'Hide Diff', 'agentstructor' )
+							: '▶ ' + __( 'Show Diff', 'agentstructor' ) }
 					</button>
 					{ showDiff && (
 						<pre className="agentic-proposal-diff">
@@ -212,7 +212,7 @@ export function ProposalCard( { proposal, sessionId } ) {
 							className="agentic-proposal-btn agentic-proposal-approve"
 							onClick={ () => decide( 'once' ) }
 						>
-							{ __( 'Approve', 'siteloom' ) }
+							{ __( 'Approve', 'agentstructor' ) }
 						</button>
 						<button
 							type="button"
@@ -220,7 +220,7 @@ export function ProposalCard( { proposal, sessionId } ) {
 							className="agentic-proposal-btn agentic-proposal-reject"
 							onClick={ () => decide( 'reject' ) }
 						>
-							{ __( 'Reject', 'siteloom' ) }
+							{ __( 'Reject', 'agentstructor' ) }
 						</button>
 					</>
 				) : (
@@ -231,7 +231,7 @@ export function ProposalCard( { proposal, sessionId } ) {
 							className="agentic-proposal-btn agentic-proposal-approve"
 							onClick={ () => decide( 'once' ) }
 						>
-							{ __( 'Allow Once', 'siteloom' ) }
+							{ __( 'Allow Once', 'agentstructor' ) }
 						</button>
 						<button
 							type="button"
@@ -239,7 +239,7 @@ export function ProposalCard( { proposal, sessionId } ) {
 							className="agentic-proposal-btn agentic-proposal-session"
 							onClick={ () => decide( 'session' ) }
 						>
-							{ __( 'Allow this Session', 'siteloom' ) }
+							{ __( 'Allow this Session', 'agentstructor' ) }
 						</button>
 						<button
 							type="button"
@@ -247,7 +247,7 @@ export function ProposalCard( { proposal, sessionId } ) {
 							className="agentic-proposal-btn agentic-proposal-always"
 							onClick={ () => decide( 'always' ) }
 						>
-							{ __( 'Always Allow', 'siteloom' ) }
+							{ __( 'Always Allow', 'agentstructor' ) }
 						</button>
 						<button
 							type="button"
@@ -255,7 +255,7 @@ export function ProposalCard( { proposal, sessionId } ) {
 							className="agentic-proposal-btn agentic-proposal-reject"
 							onClick={ () => decide( 'reject' ) }
 						>
-							{ __( 'Deny', 'siteloom' ) }
+							{ __( 'Deny', 'agentstructor' ) }
 						</button>
 					</>
 				) }
@@ -296,7 +296,7 @@ export function ChatEmbed( { assistant, deploymentContext, className = '' } ) {
 			<Notice status="info" isDismissible={ false }>
 				{ sprintfActivating( assistant?.name ) }{ ' ' }
 				<a href="admin.php?page=agentic-agents">
-					{ __( 'Check the Agents page', 'siteloom' ) }
+					{ __( 'Check the Agents page', 'agentstructor' ) }
 				</a>
 			</Notice>
 		);
@@ -334,7 +334,7 @@ export function ChatEmbed( { assistant, deploymentContext, className = '' } ) {
 						role: 'assistant',
 						content:
 							data.response ||
-							__( 'Something went wrong.', 'siteloom' ),
+							__( 'Something went wrong.', 'agentstructor' ),
 						isError: true,
 					} )
 				);
@@ -362,7 +362,7 @@ export function ChatEmbed( { assistant, deploymentContext, className = '' } ) {
 						( err && err.message ) ||
 						__(
 							'Connection error. Please try again.',
-							'siteloom'
+							'agentstructor'
 						),
 					isError: true,
 				} )
@@ -408,7 +408,7 @@ export function ChatEmbed( { assistant, deploymentContext, className = '' } ) {
 					!! ( assistant.suggested_prompts || [] ).length && (
 						<>
 							<p className="agentic-starter-label">
-								{ __( 'Try asking', 'siteloom' ) }
+								{ __( 'Try asking', 'agentstructor' ) }
 							</p>
 							<div className="agentic-suggested-prompts">
 								{ assistant.suggested_prompts.map(
@@ -490,7 +490,7 @@ export function ChatEmbed( { assistant, deploymentContext, className = '' } ) {
 						className="agentic-send-btn"
 						disabled={ sending || ! input.trim() }
 					>
-						{ __( 'Send', 'siteloom' ) }
+						{ __( 'Send', 'agentstructor' ) }
 					</button>
 				</form>
 			</div>
@@ -500,16 +500,16 @@ export function ChatEmbed( { assistant, deploymentContext, className = '' } ) {
 
 function sprintfActivating( name ) {
 	return (
-		( name || __( 'This assistant', 'siteloom' ) ) +
+		( name || __( 'This assistant', 'agentstructor' ) ) +
 		' ' +
-		__( 'is still activating.', 'siteloom' )
+		__( 'is still activating.', 'agentstructor' )
 	);
 }
 
 function sprintfThinking( name ) {
-	return name + ' ' + __( 'is thinking…', 'siteloom' );
+	return name + ' ' + __( 'is thinking…', 'agentstructor' );
 }
 
 function sprintfAsk( name ) {
-	return __( 'Ask', 'siteloom' ) + ' ' + name + '…';
+	return __( 'Ask', 'agentstructor' ) + ' ' + name + '…';
 }

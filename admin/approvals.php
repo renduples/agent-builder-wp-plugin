@@ -4,7 +4,7 @@
  *
  * @package    Agent_Builder
  * @subpackage Admin
- * @author     Siteloom Team <support@agentic-plugin.com>
+ * @author     AgentStructor Team <support@agentic-plugin.com>
  * @license    GPL-2.0-or-later https://www.gnu.org/licenses/gpl-2.0.html
  * @link       https://agentic-plugin.com
  * @since      0.1.0
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 use Agentic\Approval_Queue;
 
 if ( ! current_user_can( 'manage_options' ) ) {
-	wp_die( esc_html__( 'You do not have permission to access this page.', 'siteloom' ) );
+	wp_die( esc_html__( 'You do not have permission to access this page.', 'agentstructor' ) );
 }
 
 \Agentic\Plugin::get_instance()->load_chat_components();
@@ -36,7 +36,7 @@ $agent_builder_agent_mode = get_option( 'agent_builder_agent_mode', 'supervised'
 <div class="wrap agentic-admin">
 	<h1>
 		<span class="dashicons dashicons-yes-alt agentic-di-xl agentic-di-mr10"></span>
-		<?php esc_html_e( 'Approvals', 'siteloom' ); ?>
+		<?php esc_html_e( 'Approvals', 'agentstructor' ); ?>
 	</h1>
 
 	<?php
@@ -44,13 +44,13 @@ $agent_builder_agent_mode = get_option( 'agent_builder_agent_mode', 'supervised'
 	$agentic_approvals_items = array(
 		array(
 			'slug'  => 'approvals',
-			'label' => __( 'Approvals', 'siteloom' ),
+			'label' => __( 'Approvals', 'agentstructor' ),
 			'url'   => admin_url( 'admin.php?page=agentic-approvals&tab=approvals' ),
 			'badge' => $agentic_pending_count > 0 ? '<span class="agentic-tab-badge">' . esc_html( $agentic_pending_count ) . '</span>' : '',
 		),
 		array(
 			'slug'  => 'backups',
-			'label' => __( 'Backups', 'siteloom' ),
+			'label' => __( 'Backups', 'agentstructor' ),
 			'url'   => admin_url( 'admin.php?page=agentic-approvals&tab=backups' ),
 		),
 	);
@@ -58,7 +58,7 @@ $agent_builder_agent_mode = get_option( 'agent_builder_agent_mode', 'supervised'
 		array(
 			'active'     => $agentic_active_tab,
 			'items'      => $agentic_approvals_items,
-			'aria_label' => __( 'Approval sections', 'siteloom' ),
+			'aria_label' => __( 'Approval sections', 'agentstructor' ),
 			'id'         => 'agentic-approvals-nav',
 		)
 	);
@@ -119,22 +119,22 @@ $agent_builder_agent_mode = get_option( 'agent_builder_agent_mode', 'supervised'
 		?>
 
 		<p class="description agentic-mt-16">
-			<?php esc_html_e( 'Review and approve actions requested by AI agents before they are executed.', 'siteloom' ); ?>
+			<?php esc_html_e( 'Review and approve actions requested by AI agents before they are executed.', 'agentstructor' ); ?>
 			<?php if ( 'supervised' === $agent_builder_agent_mode ) : ?>
-				<strong><?php esc_html_e( 'Mode:', 'siteloom' ); ?></strong> <?php esc_html_e( 'Supervised — high-risk actions require approval.', 'siteloom' ); ?>
+				<strong><?php esc_html_e( 'Mode:', 'agentstructor' ); ?></strong> <?php esc_html_e( 'Supervised — high-risk actions require approval.', 'agentstructor' ); ?>
 			<?php elseif ( 'autonomous' === $agent_builder_agent_mode ) : ?>
-				<strong><?php esc_html_e( 'Mode:', 'siteloom' ); ?></strong> <?php esc_html_e( 'Autonomous — all actions execute automatically.', 'siteloom' ); ?>
+				<strong><?php esc_html_e( 'Mode:', 'agentstructor' ); ?></strong> <?php esc_html_e( 'Autonomous — all actions execute automatically.', 'agentstructor' ); ?>
 			<?php else : ?>
-				<strong><?php esc_html_e( 'Mode:', 'siteloom' ); ?></strong> <?php esc_html_e( 'Disabled — agents cannot make file changes.', 'siteloom' ); ?>
+				<strong><?php esc_html_e( 'Mode:', 'agentstructor' ); ?></strong> <?php esc_html_e( 'Disabled — agents cannot make file changes.', 'agentstructor' ); ?>
 			<?php endif; ?>
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-settings' ) ); ?>"><?php esc_html_e( 'Change mode', 'siteloom' ); ?></a>
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-settings' ) ); ?>"><?php esc_html_e( 'Change mode', 'agentstructor' ); ?></a>
 		</p>
 
 		<?php if ( 'autonomous' === $agent_builder_agent_mode ) : ?>
 			<div class="notice notice-warning">
 				<p>
-					<strong><?php esc_html_e( 'Warning:', 'siteloom' ); ?></strong>
-					<?php esc_html_e( 'Autonomous mode is enabled. Actions are executed immediately without requiring approval. The queue below will remain empty.', 'siteloom' ); ?>
+					<strong><?php esc_html_e( 'Warning:', 'agentstructor' ); ?></strong>
+					<?php esc_html_e( 'Autonomous mode is enabled. Actions are executed immediately without requiring approval. The queue below will remain empty.', 'agentstructor' ); ?>
 				</p>
 			</div>
 		<?php endif; ?>
@@ -142,8 +142,8 @@ $agent_builder_agent_mode = get_option( 'agent_builder_agent_mode', 'supervised'
 		<?php if ( $agentic_show_empty_note ) : ?>
 			<div class="agentic-card agentic-approval-empty-card">
 				<span class="dashicons dashicons-thumbs-up agentic-di-xxl agentic-di-green agentic-di-mb10"></span>
-				<h2 class="agentic-approval-h2"><?php esc_html_e( 'All caught up!', 'siteloom' ); ?></h2>
-				<p class="agentic-text-dim"><?php esc_html_e( 'No pending approvals at this time.', 'siteloom' ); ?></p>
+				<h2 class="agentic-approval-h2"><?php esc_html_e( 'All caught up!', 'agentstructor' ); ?></h2>
+				<p class="agentic-text-dim"><?php esc_html_e( 'No pending approvals at this time.', 'agentstructor' ); ?></p>
 			</div>
 		<?php else : ?>
 			<div class="agentic-mt-20">
@@ -162,16 +162,16 @@ $agent_builder_agent_mode = get_option( 'agent_builder_agent_mode', 'supervised'
 								<h3 class="agentic-approval-h3">
 									<?php echo esc_html( $agentic_group_label ); ?>
 									<span class="agentic-approval-count-note">
-										&mdash; <?php echo esc_html( $agentic_group_count ); ?> <?php echo esc_html( _n( 'action', 'actions', $agentic_group_count, 'siteloom' ) ); ?> &bull; <?php echo esc_html( $agentic_group_time ); ?> ago
+										&mdash; <?php echo esc_html( $agentic_group_count ); ?> <?php echo esc_html( _n( 'action', 'actions', $agentic_group_count, 'agentstructor' ) ); ?> &bull; <?php echo esc_html( $agentic_group_time ); ?> ago
 									</span>
 								</h3>
 							</div>
 							<div class="agentic-flex-gap-8">
 								<button class="button button-primary agentic-approve-all-btn" data-ids="<?php echo esc_attr( $agentic_group_ids ); ?>">
-									<span class="dashicons dashicons-yes-alt agentic-di-va-m2"></span> <?php esc_html_e( 'Approve All', 'siteloom' ); ?>
+									<span class="dashicons dashicons-yes-alt agentic-di-va-m2"></span> <?php esc_html_e( 'Approve All', 'agentstructor' ); ?>
 								</button>
 								<button class="button agentic-reject-all-btn" data-ids="<?php echo esc_attr( $agentic_group_ids ); ?>">
-									<span class="dashicons dashicons-dismiss agentic-di-va-m2"></span> <?php esc_html_e( 'Reject All', 'siteloom' ); ?>
+									<span class="dashicons dashicons-dismiss agentic-di-va-m2"></span> <?php esc_html_e( 'Reject All', 'agentstructor' ); ?>
 								</button>
 							</div>
 						</div>
@@ -211,22 +211,22 @@ $agent_builder_agent_mode = get_option( 'agent_builder_agent_mode', 'supervised'
 											<span class="button button-small agentic-step-pending" data-id="<?php echo esc_attr( $agentic_item['id'] ); ?>" data-step="<?php echo esc_attr( $agentic_step_num ); ?>" data-depends="<?php echo esc_attr( $agentic_step_idx ); ?>" style="color: #999; border-color: #ddd; cursor: default;">
 												<?php
 												/* translators: %d: step number this item is waiting for */
-												printf( esc_html__( 'Pending %d', 'siteloom' ), esc_html( $agentic_step_idx ) );
+												printf( esc_html__( 'Pending %d', 'agentstructor' ), esc_html( $agentic_step_idx ) );
 												?>
 											</span>
 										<?php else : ?>
 											<button class="button button-small button-primary agentic-approve-btn" data-id="<?php echo esc_attr( $agentic_item['id'] ); ?>">
-												<?php esc_html_e( 'Approve', 'siteloom' ); ?>
+												<?php esc_html_e( 'Approve', 'agentstructor' ); ?>
 											</button>
 											<button class="button button-small agentic-reject-btn" data-id="<?php echo esc_attr( $agentic_item['id'] ); ?>">
-												<?php esc_html_e( 'Reject', 'siteloom' ); ?>
+												<?php esc_html_e( 'Reject', 'agentstructor' ); ?>
 											</button>
 										<?php endif; ?>
 										</div>
 									</div>
 
 									<details class="agentic-approval-details">
-										<summary class="agentic-approval-summary"><?php esc_html_e( 'View Details', 'siteloom' ); ?></summary>
+										<summary class="agentic-approval-summary"><?php esc_html_e( 'View Details', 'agentstructor' ); ?></summary>
 										<div class="agentic-approval-json">
 											<pre class="agentic-text-xxs agentic-pre-wrap"><?php echo esc_html( wp_json_encode( $agentic_params, JSON_PRETTY_PRINT ) ); ?></pre>
 										</div>
@@ -247,15 +247,15 @@ $agent_builder_agent_mode = get_option( 'agent_builder_agent_mode', 'supervised'
 		?>
 
 		<p class="description agentic-mt-16">
-			<?php esc_html_e( 'Automatic backups created before AI agents modify files or database tables. Restore with one click.', 'siteloom' ); ?>
-			<a href="https://agentic-plugin.com/backups/" target="_blank" rel="noopener noreferrer" class="agentic-ml-6"><?php esc_html_e( 'Learn more', 'siteloom' ); ?> &rarr;</a>
+			<?php esc_html_e( 'Automatic backups created before AI agents modify files or database tables. Restore with one click.', 'agentstructor' ); ?>
+			<a href="https://agentic-plugin.com/backups/" target="_blank" rel="noopener noreferrer" class="agentic-ml-6"><?php esc_html_e( 'Learn more', 'agentstructor' ); ?> &rarr;</a>
 		</p>
 
 		<?php if ( ! $agentic_has_any ) : ?>
 			<div class="agentic-card agentic-approval-empty-card">
 				<span class="dashicons dashicons-backup agentic-di-xxl agentic-di-grey agentic-di-mb10"></span>
-				<h2 class="agentic-approval-h2"><?php esc_html_e( 'No backups yet', 'siteloom' ); ?></h2>
-				<p class="agentic-text-dim"><?php esc_html_e( 'When agents modify files or database tables, backups are created automatically and will appear here.', 'siteloom' ); ?></p>
+				<h2 class="agentic-approval-h2"><?php esc_html_e( 'No backups yet', 'agentstructor' ); ?></h2>
+				<p class="agentic-text-dim"><?php esc_html_e( 'When agents modify files or database tables, backups are created automatically and will appear here.', 'agentstructor' ); ?></p>
 			</div>
 		<?php else : ?>
 
@@ -263,20 +263,20 @@ $agent_builder_agent_mode = get_option( 'agent_builder_agent_mode', 'supervised'
 			<?php if ( ! empty( $agentic_table_backups ) ) : ?>
 				<h3 class="agentic-backup-section-h3">
 					<span class="dashicons dashicons-database agentic-di-va-m4"></span>
-					<?php esc_html_e( 'Database Tables', 'siteloom' ); ?>
+					<?php esc_html_e( 'Database Tables', 'agentstructor' ); ?>
 				</h3>
 				<p class="description">
-					<?php esc_html_e( 'Full table snapshots taken before write operations. Up to 3 copies kept per table.', 'siteloom' ); ?>
+					<?php esc_html_e( 'Full table snapshots taken before write operations. Up to 3 copies kept per table.', 'agentstructor' ); ?>
 				</p>
 				<table class="wp-list-table widefat fixed striped agentic-mt-10">
 					<thead>
 						<tr>
-							<th class="agentic-col-22"><?php esc_html_e( 'Table', 'siteloom' ); ?></th>
-							<th class="agentic-col-10"><?php esc_html_e( 'Type', 'siteloom' ); ?></th>
-							<th class="agentic-col-20"><?php esc_html_e( 'Backed Up', 'siteloom' ); ?></th>
-							<th class="agentic-col-8"><?php esc_html_e( 'Rows', 'siteloom' ); ?></th>
-							<th class="agentic-col-10"><?php esc_html_e( 'Size', 'siteloom' ); ?></th>
-							<th class="agentic-col-30"><?php esc_html_e( 'Actions', 'siteloom' ); ?></th>
+							<th class="agentic-col-22"><?php esc_html_e( 'Table', 'agentstructor' ); ?></th>
+							<th class="agentic-col-10"><?php esc_html_e( 'Type', 'agentstructor' ); ?></th>
+							<th class="agentic-col-20"><?php esc_html_e( 'Backed Up', 'agentstructor' ); ?></th>
+							<th class="agentic-col-8"><?php esc_html_e( 'Rows', 'agentstructor' ); ?></th>
+							<th class="agentic-col-10"><?php esc_html_e( 'Size', 'agentstructor' ); ?></th>
+							<th class="agentic-col-30"><?php esc_html_e( 'Actions', 'agentstructor' ); ?></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -287,9 +287,9 @@ $agent_builder_agent_mode = get_option( 'agent_builder_agent_mode', 'supervised'
 								</td>
 								<td>
 									<?php if ( 'partial' === ( $agentic_tb['type'] ?? 'full' ) ) : ?>
-										<span class="agentic-badge agentic-badge-partial"><?php esc_html_e( 'Partial', 'siteloom' ); ?></span>
+										<span class="agentic-badge agentic-badge-partial"><?php esc_html_e( 'Partial', 'agentstructor' ); ?></span>
 									<?php else : ?>
-										<span class="agentic-badge agentic-badge-full"><?php esc_html_e( 'Full', 'siteloom' ); ?></span>
+										<span class="agentic-badge agentic-badge-full"><?php esc_html_e( 'Full', 'agentstructor' ); ?></span>
 									<?php endif; ?>
 								<td>
 									<?php
@@ -304,7 +304,7 @@ $agent_builder_agent_mode = get_option( 'agent_builder_agent_mode', 'supervised'
 								<td><?php echo esc_html( size_format( $agentic_tb['size'] ) ); ?></td>
 								<td>
 									<button class="button button-primary button-small agentic-restore-table-btn" data-file="<?php echo esc_attr( $agentic_tb['file'] ); ?>">
-										<span class="dashicons dashicons-backup agentic-di-md agentic-di-va-m3"></span> <?php esc_html_e( 'Restore', 'siteloom' ); ?>
+										<span class="dashicons dashicons-backup agentic-di-md agentic-di-va-m3"></span> <?php esc_html_e( 'Restore', 'agentstructor' ); ?>
 									</button>
 									<button class="button button-small agentic-delete-table-backup-btn" data-file="<?php echo esc_attr( $agentic_tb['file'] ); ?>" style="margin-left: 4px; color: #b32d2e;">
 										<span class="dashicons dashicons-trash agentic-di-md agentic-di-va-m3"></span>
@@ -320,19 +320,19 @@ $agent_builder_agent_mode = get_option( 'agent_builder_agent_mode', 'supervised'
 			<?php if ( ! empty( $agentic_file_backups ) ) : ?>
 				<h3 class="agentic-backup-section-h3">
 					<span class="dashicons dashicons-media-text agentic-di-va-m4"></span>
-					<?php esc_html_e( 'Files', 'siteloom' ); ?>
+					<?php esc_html_e( 'Files', 'agentstructor' ); ?>
 				</h3>
 				<p class="description">
-					<?php esc_html_e( 'File snapshots taken before write operations.', 'siteloom' ); ?>
+					<?php esc_html_e( 'File snapshots taken before write operations.', 'agentstructor' ); ?>
 				</p>
 				<table class="wp-list-table widefat fixed striped agentic-mt-10">
 					<thead>
 						<tr>
-							<th class="agentic-col-35"><?php esc_html_e( 'Original File', 'siteloom' ); ?></th>
-							<th class="agentic-col-22"><?php esc_html_e( 'Backed Up', 'siteloom' ); ?></th>
-							<th class="agentic-col-10"><?php esc_html_e( 'Size', 'siteloom' ); ?></th>
-							<th class="agentic-col-12"><?php esc_html_e( 'Status', 'siteloom' ); ?></th>
-							<th class="agentic-col-21"><?php esc_html_e( 'Actions', 'siteloom' ); ?></th>
+							<th class="agentic-col-35"><?php esc_html_e( 'Original File', 'agentstructor' ); ?></th>
+							<th class="agentic-col-22"><?php esc_html_e( 'Backed Up', 'agentstructor' ); ?></th>
+							<th class="agentic-col-10"><?php esc_html_e( 'Size', 'agentstructor' ); ?></th>
+							<th class="agentic-col-12"><?php esc_html_e( 'Status', 'agentstructor' ); ?></th>
+							<th class="agentic-col-21"><?php esc_html_e( 'Actions', 'agentstructor' ); ?></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -355,18 +355,18 @@ $agent_builder_agent_mode = get_option( 'agent_builder_agent_mode', 'supervised'
 									<?php if ( $agentic_backup['original_exists'] ) : ?>
 										<span class="agentic-text-blue">
 											<span class="dashicons dashicons-yes-alt agentic-di-md agentic-di-va-m3"></span>
-											<?php esc_html_e( 'File exists', 'siteloom' ); ?>
+											<?php esc_html_e( 'File exists', 'agentstructor' ); ?>
 										</span>
 									<?php else : ?>
 										<span class="agentic-text-danger">
 											<span class="dashicons dashicons-warning agentic-di-md agentic-di-va-m3"></span>
-											<?php esc_html_e( 'Deleted', 'siteloom' ); ?>
+											<?php esc_html_e( 'Deleted', 'agentstructor' ); ?>
 										</span>
 									<?php endif; ?>
 								</td>
 								<td>
 									<button class="button button-primary button-small agentic-restore-btn" data-file="<?php echo esc_attr( $agentic_backup['file'] ); ?>">
-										<span class="dashicons dashicons-backup agentic-di-md agentic-di-va-m3"></span> <?php esc_html_e( 'Restore', 'siteloom' ); ?>
+										<span class="dashicons dashicons-backup agentic-di-md agentic-di-va-m3"></span> <?php esc_html_e( 'Restore', 'agentstructor' ); ?>
 									</button>
 									<button class="button button-small agentic-delete-backup-btn" data-file="<?php echo esc_attr( $agentic_backup['file'] ); ?>" style="margin-left: 4px; color: #b32d2e;">
 										<span class="dashicons dashicons-trash agentic-di-md agentic-di-va-m3"></span>
@@ -379,8 +379,8 @@ $agent_builder_agent_mode = get_option( 'agent_builder_agent_mode', 'supervised'
 			<?php endif; ?>
 
 			<p class="description agentic-mt-16">
-				<?php esc_html_e( 'Backups stored in', 'siteloom' ); ?> <code><?php echo esc_html( str_replace( wp_normalize_path( ABSPATH ), '', wp_normalize_path( \Agentic\File_Manager::backups_dir() ) ) ); ?>/</code>.
-				<?php esc_html_e( 'Database tables keep up to 3 snapshots each. File backups are kept until manually deleted.', 'siteloom' ); ?>
+				<?php esc_html_e( 'Backups stored in', 'agentstructor' ); ?> <code><?php echo esc_html( str_replace( wp_normalize_path( ABSPATH ), '', wp_normalize_path( \Agentic\File_Manager::backups_dir() ) ) ); ?>/</code>.
+				<?php esc_html_e( 'Database tables keep up to 3 snapshots each. File backups are kept until manually deleted.', 'agentstructor' ); ?>
 			</p>
 		<?php endif; ?>
 

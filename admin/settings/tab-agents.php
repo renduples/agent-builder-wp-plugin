@@ -67,8 +67,8 @@ if ( ! empty( $agent_builder_active_agents ) ) :
 	}
 	?>
 
-<p class="agentic-settings-lead"><?php esc_html_e( 'Choose the default LLM provider and optionally override it per agent.', 'siteloom' ); ?></p>
-<h3 class="agentic-settings-section-title"><?php esc_html_e( 'LLM provider configuration', 'siteloom' ); ?></h3>
+<p class="agentic-settings-lead"><?php esc_html_e( 'Choose the default LLM provider and optionally override it per agent.', 'agentstructor' ); ?></p>
+<h3 class="agentic-settings-section-title"><?php esc_html_e( 'LLM provider configuration', 'agentstructor' ); ?></h3>
 <p>Configure the LLM provider, model, and mode for your agents. Not sure where to start? — <a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-setup' ) ); ?>">Use the setup Wizard</a>.</p>
 
 <table class="wp-list-table widefat fixed striped" id="agentic-agent-overrides-table">
@@ -184,7 +184,7 @@ if ( ! empty( $agent_builder_active_agents ) ) :
 					</option>
 					<?php endforeach; ?>
 				</select>
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-settings&tab=security' ) ); ?>" title="<?php esc_attr_e( 'Security settings', 'siteloom' ); ?>" style="text-decoration:none;vertical-align:middle;"><span class="dashicons dashicons-admin-generic" style="font-size:16px;width:16px;height:16px;color:#787c82;"></span></a>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-settings&tab=security' ) ); ?>" title="<?php esc_attr_e( 'Security settings', 'agentstructor' ); ?>" style="text-decoration:none;vertical-align:middle;"><span class="dashicons dashicons-admin-generic" style="font-size:16px;width:16px;height:16px;color:#787c82;"></span></a>
 			</td>
 			<td class="agentic-td-center">
 				<?php
@@ -240,7 +240,7 @@ if ( ! empty( $agent_builder_active_agents ) ) :
 
 <p class="agentic-mt-8"><a href="#" class="agentic-reset-defaults" data-section="agents_llm">Reset LLM overrides to defaults</a></p>
 
-<h3 class="agentic-settings-section-title"><?php esc_html_e( 'Chat features per agent', 'siteloom' ); ?></h3>
+<h3 class="agentic-settings-section-title"><?php esc_html_e( 'Chat features per agent', 'agentstructor' ); ?></h3>
 <p>Override which chat features are available per agent. Unchecked features fall back to the global <a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-settings&tab=global' ) ); ?>">Chat Settings</a>.</p>
 
 <table class="wp-list-table widefat fixed striped">

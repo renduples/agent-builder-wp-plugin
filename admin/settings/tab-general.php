@@ -20,37 +20,37 @@ $agent_builder_frontend_address = (string) get_option( 'agent_builder_frontend_a
 $agentic_wiki_url         = admin_url( 'admin.php?page=agentic-train-data&tab=wiki' );
 ?>
 
-<p class="agentic-settings-lead"><?php esc_html_e( 'How agents address people. Site facts and standing guidance belong in Knowledge Wiki.', 'siteloom' ); ?></p>
-<h3 class="agentic-settings-section-title"><?php esc_html_e( 'Personalization', 'siteloom' ); ?></h3>
+<p class="agentic-settings-lead"><?php esc_html_e( 'How agents address people. Site facts and standing guidance belong in Knowledge Wiki.', 'agentstructor' ); ?></p>
+<h3 class="agentic-settings-section-title"><?php esc_html_e( 'Personalization', 'agentstructor' ); ?></h3>
 
 <table class="form-table" role="presentation">
 	<tr>
 		<th scope="row">
-			<label for="agent_builder_admin_address"><?php esc_html_e( 'What should agents call administrators?', 'siteloom' ); ?></label>
+			<label for="agent_builder_admin_address"><?php esc_html_e( 'What should agents call administrators?', 'agentstructor' ); ?></label>
 		</th>
 		<td>
-			<input type="text" id="agent_builder_admin_address" name="agent_builder_admin_address" class="regular-text" maxlength="60" value="<?php echo esc_attr( $agent_builder_admin_address ); ?>" placeholder="<?php esc_attr_e( 'e.g. Sam, or “the site owner”', 'siteloom' ); ?>" />
-			<p class="description"><?php esc_html_e( 'How agents address signed-in administrators in conversation. Leave blank to use the WordPress display name.', 'siteloom' ); ?></p>
+			<input type="text" id="agent_builder_admin_address" name="agent_builder_admin_address" class="regular-text" maxlength="60" value="<?php echo esc_attr( $agent_builder_admin_address ); ?>" placeholder="<?php esc_attr_e( 'e.g. Sam, or “the site owner”', 'agentstructor' ); ?>" />
+			<p class="description"><?php esc_html_e( 'How agents address signed-in administrators in conversation. Leave blank to use the WordPress display name.', 'agentstructor' ); ?></p>
 		</td>
 	</tr>
 	<tr>
 		<th scope="row">
-			<label for="agent_builder_frontend_address"><?php esc_html_e( 'What should agents call frontend visitors?', 'siteloom' ); ?></label>
+			<label for="agent_builder_frontend_address"><?php esc_html_e( 'What should agents call frontend visitors?', 'agentstructor' ); ?></label>
 		</th>
 		<td>
-			<input type="text" id="agent_builder_frontend_address" name="agent_builder_frontend_address" class="regular-text" maxlength="60" value="<?php echo esc_attr( $agent_builder_frontend_address ); ?>" placeholder="<?php esc_attr_e( 'e.g. there, or “valued customer”', 'siteloom' ); ?>" />
-			<p class="description"><?php esc_html_e( 'How agents address visitors using a chat shortcode or block on the public site. Leave blank for a neutral greeting.', 'siteloom' ); ?></p>
+			<input type="text" id="agent_builder_frontend_address" name="agent_builder_frontend_address" class="regular-text" maxlength="60" value="<?php echo esc_attr( $agent_builder_frontend_address ); ?>" placeholder="<?php esc_attr_e( 'e.g. there, or “valued customer”', 'agentstructor' ); ?>" />
+			<p class="description"><?php esc_html_e( 'How agents address visitors using a chat shortcode or block on the public site. Leave blank for a neutral greeting.', 'agentstructor' ); ?></p>
 		</td>
 	</tr>
 	<tr>
-		<th scope="row"><?php esc_html_e( 'Site knowledge', 'siteloom' ); ?></th>
+		<th scope="row"><?php esc_html_e( 'Site knowledge', 'agentstructor' ); ?></th>
 		<td>
 			<p class="description" style="margin-top:0">
 				<?php
 				printf(
 					wp_kses(
 						/* translators: %s: Knowledge admin URL */
-						__( 'Standing facts, tone, and “always keep in mind” guidance are managed under <a href="%s"><strong>Knowledge</strong></a>. Mark a concept <strong>Always include in prompts</strong> so every agent receives it automatically (for example Site overview).', 'siteloom' ),
+						__( 'Standing facts, tone, and “always keep in mind” guidance are managed under <a href="%s"><strong>Knowledge</strong></a>. Mark a concept <strong>Always include in prompts</strong> so every agent receives it automatically (for example Site overview).', 'agentstructor' ),
 						array(
 							'a'      => array( 'href' => array() ),
 							'strong' => array(),
@@ -62,7 +62,7 @@ $agentic_wiki_url         = admin_url( 'admin.php?page=agentic-train-data&tab=wi
 			</p>
 			<p>
 				<a class="button button-secondary" href="<?php echo esc_url( $agentic_wiki_url ); ?>">
-					<?php esc_html_e( 'Open Knowledge', 'siteloom' ); ?>
+					<?php esc_html_e( 'Open Knowledge', 'agentstructor' ); ?>
 				</a>
 			</p>
 		</td>

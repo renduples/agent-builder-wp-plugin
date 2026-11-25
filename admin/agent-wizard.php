@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! current_user_can( 'manage_options' ) ) {
-	wp_die( esc_html__( 'You do not have permission to access this page.', 'siteloom' ) );
+	wp_die( esc_html__( 'You do not have permission to access this page.', 'agentstructor' ) );
 }
 
 $agentic_aw_asset_file = AGENT_BUILDER_DIR . 'build/agent-wizard.asset.php';
@@ -34,7 +34,7 @@ if ( file_exists( $agentic_aw_asset_file ) ) {
 		true
 	);
 	wp_enqueue_style( 'wp-components' );
-	wp_set_script_translations( 'agentic-agent-wizard', 'siteloom', AGENT_BUILDER_DIR . 'languages' );
+	wp_set_script_translations( 'agentic-agent-wizard', 'agentstructor', AGENT_BUILDER_DIR . 'languages' );
 
 	wp_localize_script(
 		'agentic-agent-wizard',
@@ -49,18 +49,18 @@ if ( file_exists( $agentic_aw_asset_file ) ) {
 }
 ?>
 <div class="wrap agentic-agent-wizard-wrap">
-	<h1><?php esc_html_e( 'Train an Agent', 'siteloom' ); ?></h1>
+	<h1><?php esc_html_e( 'Train an Agent', 'agentstructor' ); ?></h1>
 	<p class="agentic-wizard-intro">
-		<?php esc_html_e( 'Create a new AI agent in a few quick steps. You can refine everything later from the Agents and Settings pages.', 'siteloom' ); ?>
+		<?php esc_html_e( 'Create a new AI agent in a few quick steps. You can refine everything later from the Agents and Settings pages.', 'agentstructor' ); ?>
 	</p>
 
 	<div id="agentic-agent-wizard-root">
-		<p><?php esc_html_e( 'Loading the agent wizard…', 'siteloom' ); ?></p>
+		<p><?php esc_html_e( 'Loading the agent wizard…', 'agentstructor' ); ?></p>
 	</div>
 
 	<noscript>
 		<div class="notice notice-warning">
-			<p><?php esc_html_e( 'The agent wizard needs JavaScript enabled. You can also create agents from the Agents page.', 'siteloom' ); ?></p>
+			<p><?php esc_html_e( 'The agent wizard needs JavaScript enabled. You can also create agents from the Agents page.', 'agentstructor' ); ?></p>
 		</div>
 	</noscript>
 </div>

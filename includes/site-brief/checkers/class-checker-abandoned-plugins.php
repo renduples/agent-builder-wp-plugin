@@ -90,12 +90,12 @@ class Checker_Abandoned_Plugins extends Site_Brief_Checker {
 				array(
 					'title'            => sprintf(
 						/* translators: %d: abandoned plugin count. */
-						_n( '%d abandoned plugin', '%d abandoned plugins', $count, 'siteloom' ),
+						_n( '%d abandoned plugin', '%d abandoned plugins', $count, 'agentstructor' ),
 						$count
 					),
 					'evidence'         => implode( ', ', $names ),
 					'evidence_payload' => $abandoned,
-					'proposed_action'  => __( 'Review on the Plugins screen. Site Brief will not uninstall anything.', 'siteloom' ),
+					'proposed_action'  => __( 'Review on the Plugins screen. Site Brief will not uninstall anything.', 'agentstructor' ),
 					'action_risk'      => 'none',
 					'raw'              => array_slice( $abandoned, 0, 8 ),
 				)

@@ -11,7 +11,7 @@
  * cancelled, and correlated with audit rows from any process.
  *
  * Free tier: sequential, in-process delegation only. Parallel, durable, and
- * visual workflow orchestration are reserved for Siteloom Pro.
+ * visual workflow orchestration are reserved for AgentStructor Pro.
  *
  * @package    Agent_Builder
  * @subpackage Includes

@@ -1,19 +1,19 @@
-# Siteloom
+# AgentStructor
 
 > ### ⬇️ Install in WordPress (no coding needed)
 > 1. **[Download agent-builder.zip](https://agentic-plugin.com/downloads/agent-builder.zip)**. It is always the latest version.
 > 2. In your WordPress admin, go to **Plugins → Add Plugin → Upload Plugin**, choose the file, and click **Install Now**.
-> 3. Click **Activate**. Siteloom opens a short setup wizard to connect your AI provider.
+> 3. Click **Activate**. AgentStructor opens a short setup wizard to connect your AI provider.
 >
 > Updates then arrive in your normal WordPress update screen.
 >
-> This download is the **self-hosted build** of Siteloom: the same plugin as the code in this repository, packaged with its libraries and an updater that checks agentic-plugin.com. When Siteloom is listed on WordPress.org you will also be able to install it from **Plugins → Add Plugin** by searching for "Siteloom".
+> This download is the **self-hosted build** of AgentStructor: the same plugin as the code in this repository, packaged with its libraries and an updater that checks agentic-plugin.com. When AgentStructor is listed on WordPress.org you will also be able to install it from **Plugins → Add Plugin** by searching for "AgentStructor".
 >
 > ⚠️ Don't use GitHub's green **Code → Download ZIP** button. That is the source code, not an installable plugin: it is missing required libraries and unzips under the wrong folder name.
 
 **Version:** 4.4.0
 
-Free [Siteloom](https://agentic-plugin.com/) WordPress plugin.
+Free [AgentStructor](https://agentic-plugin.com/) WordPress plugin.
 
 - **Plugin slug:** `agent-builder`
 - **License:** GPL-2.0-or-later
@@ -57,7 +57,7 @@ Give AI agents real WordPress work. Hand a job to an agent, walk away, and get p
 2. Optional document tools: `composer install --no-dev`
 3. Optional rebuild admin React: `npm ci && npm run build`
    Pre-built assets already ship in `build/`.
-4. Activate **Siteloom** in WordPress.
+4. Activate **AgentStructor** in WordPress.
 
 ## Project structure
 
@@ -123,7 +123,7 @@ and the parser are covered by the PHPUnit suite, so a bad tool name or agent slu
 in milliseconds rather than partway through a paid run.
 
 The catalog ships inside the plugin and is treated as read-only; the first edit copies it to
-`wp-content/uploads/siteloom/knowledge/prompt-tests/`, so your additions survive plugin updates and
+`wp-content/uploads/agentstructor/knowledge/prompt-tests/`, so your additions survive plugin updates and
 nothing writes inside the plugin directory.
 
 Assistant Trainer can also drive this from chat — running prompts, then proposing the tools or

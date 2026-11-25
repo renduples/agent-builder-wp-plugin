@@ -110,7 +110,7 @@ class Create_Short_Link extends Tool_Base {
 			'short_url'   => site_url( '/go/' . $slug ),
 			'target_url'  => $target_url,
 			'redirect'    => '301 permanent',
-			'enforced_by' => 'template_redirect hook in Siteloom (active on every frontend request)',
+			'enforced_by' => 'template_redirect hook in AgentStructor (active on every frontend request)',
 		);
 	}
 }

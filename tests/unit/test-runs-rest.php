@@ -489,7 +489,7 @@ class Test_Runs_REST extends TestCase {
 		$proposal = \Agentic\Agent_Proposals::create(
 			'create_post_content',
 			array(
-				'title'   => 'Hello from Siteloom',
+				'title'   => 'Hello from AgentStructor',
 				'status'  => 'draft',
 				'content' => '<p>Welcome, <em>visitors</em>!</p><p>Second paragraph.</p>',
 			),
@@ -506,7 +506,7 @@ class Test_Runs_REST extends TestCase {
 		$this->assertSame( 200, $resp->get_status() );
 
 		$awaiting = $resp->get_data()['awaiting'];
-		$this->assertSame( 'Hello from Siteloom', $awaiting['summary']['title'] );
+		$this->assertSame( 'Hello from AgentStructor', $awaiting['summary']['title'] );
 		$this->assertSame( "Welcome, visitors!\nSecond paragraph.", $awaiting['content_preview'] );
 	}
 

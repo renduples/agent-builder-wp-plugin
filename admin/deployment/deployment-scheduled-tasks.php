@@ -43,7 +43,7 @@ if ( isset( $_POST['agentic_delete_task'] ) && check_admin_referer( 'agentic_del
 				'changes' => array( 'hook' => $agentic_delete_hook ),
 			)
 		);
-		echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Scheduled task removed from the cron queue.', 'siteloom' ) . '</p></div>';
+		echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Scheduled task removed from the cron queue.', 'agentstructor' ) . '</p></div>';
 	}
 }
 
@@ -117,7 +117,7 @@ if ( isset( $_POST['agentic_schedule_task'] ) && check_admin_referer( 'agentic_s
 				),
 			)
 		);
-		echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Scheduled task registered.', 'siteloom' ) . '</p></div>';
+		echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Scheduled task registered.', 'agentstructor' ) . '</p></div>';
 	}
 }
 
@@ -240,31 +240,31 @@ $agentic_ajax_url    = admin_url( 'admin-ajax.php' );
 	Add Scheduled Task Form
 	===================================================================== -->
 <div id="agentic-sched-form-wrap" class="agentic-trigger-form">
-	<h2 class="agentic-section-h2b"><?php esc_html_e( 'Add Scheduled Task', 'siteloom' ); ?></h2>
-	<p class="description"><?php esc_html_e( 'Run any active agent on a WP-Cron schedule with an AI prompt. Built-in tasks from agents also appear in the table below.', 'siteloom' ); ?></p>
+	<h2 class="agentic-section-h2b"><?php esc_html_e( 'Add Scheduled Task', 'agentstructor' ); ?></h2>
+	<p class="description"><?php esc_html_e( 'Run any active agent on a WP-Cron schedule with an AI prompt. Built-in tasks from agents also appear in the table below.', 'agentstructor' ); ?></p>
 
 	<input type="hidden" id="agentic-sched-editing-id" value="">
 
 	<table class="form-table agentic-table-mt-0">
 		<tr>
 			<th scope="row" class="agentic-trigger-form-th">
-				<label for="agentic-sched-agent"><?php esc_html_e( 'Agent', 'siteloom' ); ?></label>
+				<label for="agentic-sched-agent"><?php esc_html_e( 'Agent', 'agentstructor' ); ?></label>
 			</th>
 			<td class="agentic-trigger-form-td">
 				<select id="agentic-sched-agent" class="agentic-select-260">
-					<option value=""><?php esc_html_e( '— choose an agent —', 'siteloom' ); ?></option>
+					<option value=""><?php esc_html_e( '— choose an agent —', 'agentstructor' ); ?></option>
 					<?php foreach ( $agentic_agent_options as $agentic_slug => $agentic_label ) : ?>
 					<option value="<?php echo esc_attr( $agentic_slug ); ?>"><?php echo esc_html( $agentic_label ); ?></option>
 					<?php endforeach; ?>
 				</select>
 				<?php if ( empty( $agentic_agent_options ) ) : ?>
-					<p class="description agentic-text-danger"><?php esc_html_e( 'No agents active. Activate an agent first.', 'siteloom' ); ?></p>
+					<p class="description agentic-text-danger"><?php esc_html_e( 'No agents active. Activate an agent first.', 'agentstructor' ); ?></p>
 				<?php endif; ?>
 			</td>
 		</tr>
 		<tr>
 			<th scope="row" class="agentic-trigger-form-th">
-				<label for="agentic-sched-recurrence"><?php esc_html_e( 'Schedule', 'siteloom' ); ?></label>
+				<label for="agentic-sched-recurrence"><?php esc_html_e( 'Schedule', 'agentstructor' ); ?></label>
 			</th>
 			<td class="agentic-trigger-form-td">
 				<select id="agentic-sched-recurrence" class="agentic-select-260">
@@ -276,35 +276,35 @@ $agentic_ajax_url    = admin_url( 'admin-ajax.php' );
 		</tr>
 		<tr>
 			<th scope="row" class="agentic-trigger-form-th">
-				<label for="agentic-sched-prompt"><?php esc_html_e( 'Prompt', 'siteloom' ); ?></label>
+				<label for="agentic-sched-prompt"><?php esc_html_e( 'Prompt', 'agentstructor' ); ?></label>
 			</th>
 			<td class="agentic-trigger-form-td">
-				<textarea id="agentic-sched-prompt" rows="3" class="agentic-textarea-full" placeholder="<?php esc_attr_e( 'Describe what the agent should do on each run…', 'siteloom' ); ?>"></textarea>
+				<textarea id="agentic-sched-prompt" rows="3" class="agentic-textarea-full" placeholder="<?php esc_attr_e( 'Describe what the agent should do on each run…', 'agentstructor' ); ?>"></textarea>
 			</td>
 		</tr>
 		<tr>
 			<th scope="row" class="agentic-trigger-form-th">
-				<label for="agentic-sched-name"><?php esc_html_e( 'Label', 'siteloom' ); ?></label>
+				<label for="agentic-sched-name"><?php esc_html_e( 'Label', 'agentstructor' ); ?></label>
 			</th>
 			<td class="agentic-trigger-form-td">
-				<input type="text" id="agentic-sched-name" class="regular-text" placeholder="<?php esc_attr_e( 'Optional — auto-generated if blank', 'siteloom' ); ?>">
+				<input type="text" id="agentic-sched-name" class="regular-text" placeholder="<?php esc_attr_e( 'Optional — auto-generated if blank', 'agentstructor' ); ?>">
 			</td>
 		</tr>
 		<tr>
 			<th scope="row" class="agentic-trigger-form-th">
-				<label for="agentic-sched-description"><?php esc_html_e( 'Description', 'siteloom' ); ?></label>
+				<label for="agentic-sched-description"><?php esc_html_e( 'Description', 'agentstructor' ); ?></label>
 			</th>
 			<td class="agentic-trigger-form-td">
-				<input type="text" id="agentic-sched-description" class="regular-text" placeholder="<?php esc_attr_e( 'Optional short note', 'siteloom' ); ?>">
+				<input type="text" id="agentic-sched-description" class="regular-text" placeholder="<?php esc_attr_e( 'Optional short note', 'agentstructor' ); ?>">
 			</td>
 		</tr>
 	</table>
 
 	<div class="agentic-action-row">
 		<button type="button" id="agentic-sched-save" class="button button-primary" <?php disabled( empty( $agentic_agent_options ) ); ?>>
-			<?php esc_html_e( 'Add & Schedule', 'siteloom' ); ?>
+			<?php esc_html_e( 'Add & Schedule', 'agentstructor' ); ?>
 		</button>
-		<button type="button" id="agentic-sched-cancel" class="button" hidden><?php esc_html_e( 'Cancel', 'siteloom' ); ?></button>
+		<button type="button" id="agentic-sched-cancel" class="button" hidden><?php esc_html_e( 'Cancel', 'agentstructor' ); ?></button>
 		<span id="agentic-sched-status" class="agentic-trigger-status"></span>
 	</div>
 </div>
@@ -314,22 +314,22 @@ $agentic_ajax_url    = admin_url( 'admin-ajax.php' );
 	===================================================================== -->
 <?php if ( empty( $agentic_all_tasks ) ) : ?>
 	<div class="notice notice-info inline">
-		<p><?php esc_html_e( 'No scheduled tasks yet. Add one above, or activate agents that define built-in scheduled tasks (for example Site Auditor or AI Radar).', 'siteloom' ); ?></p>
+		<p><?php esc_html_e( 'No scheduled tasks yet. Add one above, or activate agents that define built-in scheduled tasks (for example Site Auditor or AI Radar).', 'agentstructor' ); ?></p>
 	</div>
 <?php else : ?>
 	<div class="agentic-table-scroll">
 	<table class="widefat striped agentic-table-min-900">
 		<thead>
 			<tr>
-				<th><?php esc_html_e( 'Agent', 'siteloom' ); ?></th>
-				<th><?php esc_html_e( 'Task', 'siteloom' ); ?></th>
-				<th><?php esc_html_e( 'Schedule', 'siteloom' ); ?></th>
-				<th><?php esc_html_e( 'Mode', 'siteloom' ); ?></th>
-				<th><?php esc_html_e( 'Source', 'siteloom' ); ?></th>
-				<th><?php esc_html_e( 'Status', 'siteloom' ); ?></th>
-				<th><?php esc_html_e( 'Next Run', 'siteloom' ); ?></th>
-				<th><?php esc_html_e( 'Last Run', 'siteloom' ); ?></th>
-				<th><?php esc_html_e( 'Actions', 'siteloom' ); ?></th>
+				<th><?php esc_html_e( 'Agent', 'agentstructor' ); ?></th>
+				<th><?php esc_html_e( 'Task', 'agentstructor' ); ?></th>
+				<th><?php esc_html_e( 'Schedule', 'agentstructor' ); ?></th>
+				<th><?php esc_html_e( 'Mode', 'agentstructor' ); ?></th>
+				<th><?php esc_html_e( 'Source', 'agentstructor' ); ?></th>
+				<th><?php esc_html_e( 'Status', 'agentstructor' ); ?></th>
+				<th><?php esc_html_e( 'Next Run', 'agentstructor' ); ?></th>
+				<th><?php esc_html_e( 'Last Run', 'agentstructor' ); ?></th>
+				<th><?php esc_html_e( 'Actions', 'agentstructor' ); ?></th>
 			</tr>
 		</thead>
 		<tbody>
@@ -348,23 +348,23 @@ $agentic_ajax_url    = admin_url( 'admin-ajax.php' );
 				<td><?php echo esc_html( $agentic_task_row['schedule_display'] ); ?></td>
 				<td>
 					<?php if ( 'autonomous' === $agentic_task_row['mode'] ) : ?>
-						<span title="<?php esc_attr_e( 'Runs through the LLM with AI reasoning and tool calls', 'siteloom' ); ?>" style="color: #2271b1;">🤖 <?php esc_html_e( 'AI', 'siteloom' ); ?></span>
+						<span title="<?php esc_attr_e( 'Runs through the LLM with AI reasoning and tool calls', 'agentstructor' ); ?>" style="color: #2271b1;">🤖 <?php esc_html_e( 'AI', 'agentstructor' ); ?></span>
 					<?php else : ?>
-						<span title="<?php esc_attr_e( 'Runs the callback method directly without LLM', 'siteloom' ); ?>" style="color: #646970;">⚙️ <?php esc_html_e( 'Direct', 'siteloom' ); ?></span>
+						<span title="<?php esc_attr_e( 'Runs the callback method directly without LLM', 'agentstructor' ); ?>" style="color: #646970;">⚙️ <?php esc_html_e( 'Direct', 'agentstructor' ); ?></span>
 					<?php endif; ?>
 				</td>
 				<td>
 					<?php if ( 'user' === $agentic_task_row['source'] ) : ?>
-						<span class="agentic-badge-pill-blue"><?php esc_html_e( 'Custom', 'siteloom' ); ?></span>
+						<span class="agentic-badge-pill-blue"><?php esc_html_e( 'Custom', 'agentstructor' ); ?></span>
 					<?php else : ?>
-						<span class="agentic-badge-pill-grey"><?php esc_html_e( 'Built-in', 'siteloom' ); ?></span>
+						<span class="agentic-badge-pill-grey"><?php esc_html_e( 'Built-in', 'agentstructor' ); ?></span>
 					<?php endif; ?>
 				</td>
 				<td>
 					<?php if ( $agentic_task_row['registered'] ) : ?>
-						<span class="agentic-status-active">&#9679; <?php esc_html_e( 'Active', 'siteloom' ); ?></span>
+						<span class="agentic-status-active">&#9679; <?php esc_html_e( 'Active', 'agentstructor' ); ?></span>
 					<?php else : ?>
-						<span class="agentic-status-inactive">&#9679; <?php esc_html_e( 'Not Scheduled', 'siteloom' ); ?></span>
+						<span class="agentic-status-inactive">&#9679; <?php esc_html_e( 'Not Scheduled', 'agentstructor' ); ?></span>
 					<?php endif; ?>
 				</td>
 				<td>
@@ -375,9 +375,9 @@ $agentic_ajax_url    = admin_url( 'admin-ajax.php' );
 							$agentic_diff = $agentic_task_row['next_run'] - time();
 							if ( $agentic_diff > 0 ) {
 								/* translators: %s: human-readable time difference */
-								printf( esc_html__( 'in %s', 'siteloom' ), esc_html( human_time_diff( time(), $agentic_task_row['next_run'] ) ) );
+								printf( esc_html__( 'in %s', 'agentstructor' ), esc_html( human_time_diff( time(), $agentic_task_row['next_run'] ) ) );
 							} else {
-								esc_html_e( 'overdue', 'siteloom' );
+								esc_html_e( 'overdue', 'agentstructor' );
 							}
 							?>
 						</small>
@@ -400,22 +400,22 @@ $agentic_ajax_url    = admin_url( 'admin-ajax.php' );
 				<td>
 					<?php if ( $agentic_task_row['registered'] ) : ?>
 						<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=agentic-run-task&agent=' . rawurlencode( $agentic_task_row['agent_id'] ) . '&task=' . rawurlencode( $agentic_task_row['task_id'] ) ), 'agentic_run_task', '_wpnonce' ) ); ?>" class="button button-small">
-							<?php esc_html_e( 'Run Now', 'siteloom' ); ?>
+							<?php esc_html_e( 'Run Now', 'agentstructor' ); ?>
 						</a>
 						<?php if ( 'user' === $agentic_task_row['source'] ) : ?>
 						<button type="button"
 							class="button button-small agentic-sched-delete agentic-text-danger"
 							data-id="<?php echo esc_attr( $agentic_task_row['task_id'] ); ?>">
-							<?php esc_html_e( 'Delete', 'siteloom' ); ?>
+							<?php esc_html_e( 'Delete', 'agentstructor' ); ?>
 						</button>
 						<?php else : ?>
-						<form method="post" class="agentic-form-inline" data-agentic-confirm="<?php echo esc_attr( __( 'Remove this scheduled task from the cron queue?', 'siteloom' ) ); ?>" data-agentic-confirm-danger>
+						<form method="post" class="agentic-form-inline" data-agentic-confirm="<?php echo esc_attr( __( 'Remove this scheduled task from the cron queue?', 'agentstructor' ) ); ?>" data-agentic-confirm-danger>
 							<?php wp_nonce_field( 'agentic_delete_task' ); ?>
 							<input type="hidden" name="agentic_delete_hook"    value="<?php echo esc_attr( $agentic_task_row['hook'] ); ?>">
 							<input type="hidden" name="agentic_delete_agent"   value="<?php echo esc_attr( $agentic_task_row['agent_id'] ); ?>">
 							<input type="hidden" name="agentic_delete_task_id" value="<?php echo esc_attr( $agentic_task_row['task_id'] ); ?>">
 							<button type="submit" name="agentic_delete_task" value="1" class="button button-small agentic-text-danger">
-								<?php esc_html_e( 'Unschedule', 'siteloom' ); ?>
+								<?php esc_html_e( 'Unschedule', 'agentstructor' ); ?>
 							</button>
 						</form>
 						<?php endif; ?>
@@ -428,13 +428,13 @@ $agentic_ajax_url    = admin_url( 'admin-ajax.php' );
 							<input type="hidden" name="agentic_sched_agent"      value="<?php echo esc_attr( $agentic_task_row['agent_id'] ); ?>">
 							<input type="hidden" name="agentic_sched_task_id"    value="<?php echo esc_attr( $agentic_task_row['task_id'] ); ?>">
 							<button type="submit" name="agentic_schedule_task" value="1" class="button button-small button-primary">
-								<?php esc_html_e( 'Schedule', 'siteloom' ); ?>
+								<?php esc_html_e( 'Schedule', 'agentstructor' ); ?>
 							</button>
 						</form>
 						<button type="button"
 							class="button button-small agentic-sched-delete agentic-text-danger"
 							data-id="<?php echo esc_attr( $agentic_task_row['task_id'] ); ?>">
-							<?php esc_html_e( 'Delete', 'siteloom' ); ?>
+							<?php esc_html_e( 'Delete', 'agentstructor' ); ?>
 						</button>
 						<?php else : ?>
 						<form method="post" class="agentic-form-inline">
@@ -444,7 +444,7 @@ $agentic_ajax_url    = admin_url( 'admin-ajax.php' );
 							<input type="hidden" name="agentic_sched_agent"      value="<?php echo esc_attr( $agentic_task_row['agent_id'] ); ?>">
 							<input type="hidden" name="agentic_sched_task_id"    value="<?php echo esc_attr( $agentic_task_row['task_id'] ); ?>">
 							<button type="submit" name="agentic_schedule_task" value="1" class="button button-small button-primary">
-								<?php esc_html_e( 'Schedule', 'siteloom' ); ?>
+								<?php esc_html_e( 'Schedule', 'agentstructor' ); ?>
 							</button>
 						</form>
 						<?php endif; ?>
@@ -458,13 +458,13 @@ $agentic_ajax_url    = admin_url( 'admin-ajax.php' );
 <?php endif; ?>
 
 	<div class="agentic-embed-note">
-		<h3><?php esc_html_e( 'How Scheduled Tasks Work', 'siteloom' ); ?></h3>
+		<h3><?php esc_html_e( 'How Scheduled Tasks Work', 'agentstructor' ); ?></h3>
 		<ul>
-			<li><?php esc_html_e( 'Tasks use WordPress cron (WP-Cron), which runs when someone visits your site.', 'siteloom' ); ?></li>
-			<li><?php esc_html_e( 'For reliable scheduling on low-traffic sites, set up a real cron job to hit wp-cron.php.', 'siteloom' ); ?></li>
-			<li><?php esc_html_e( 'Custom tasks you add here are scheduled immediately and run through the LLM with full tool access.', 'siteloom' ); ?></li>
-			<li><?php esc_html_e( 'Built-in tasks ship with some agents; use Schedule to put them on the cron queue, or Unschedule to pause them without deleting the definition.', 'siteloom' ); ?></li>
-			<li><?php esc_html_e( 'Every execution is logged in the Audit Log with timing, mode, and outcome details.', 'siteloom' ); ?></li>
+			<li><?php esc_html_e( 'Tasks use WordPress cron (WP-Cron), which runs when someone visits your site.', 'agentstructor' ); ?></li>
+			<li><?php esc_html_e( 'For reliable scheduling on low-traffic sites, set up a real cron job to hit wp-cron.php.', 'agentstructor' ); ?></li>
+			<li><?php esc_html_e( 'Custom tasks you add here are scheduled immediately and run through the LLM with full tool access.', 'agentstructor' ); ?></li>
+			<li><?php esc_html_e( 'Built-in tasks ship with some agents; use Schedule to put them on the cron queue, or Unschedule to pause them without deleting the definition.', 'agentstructor' ); ?></li>
+			<li><?php esc_html_e( 'Every execution is logged in the Audit Log with timing, mode, and outcome details.', 'agentstructor' ); ?></li>
 		</ul>
 	</div>
 
@@ -475,14 +475,14 @@ $agentic_ajax_url    = admin_url( 'admin-ajax.php' );
 		'ajaxUrl' => $agentic_ajax_url,
 		'nonce'   => $agentic_tasks_nonce,
 		'i18n'    => array(
-			'addSchedule'   => __( 'Add & Schedule', 'siteloom' ),
-			'chooseAgent'   => __( 'Please choose an agent.', 'siteloom' ),
-			'enterPrompt'   => __( 'Please enter a prompt.', 'siteloom' ),
-			'saving'        => __( 'Saving…', 'siteloom' ),
-			'saveError'     => __( 'Error saving task.', 'siteloom' ),
-			'requestFailed' => __( 'Request failed.', 'siteloom' ),
-			'confirmDelete' => __( 'Permanently delete this custom scheduled task?', 'siteloom' ),
-			'deleteError'   => __( 'Could not delete task.', 'siteloom' ),
+			'addSchedule'   => __( 'Add & Schedule', 'agentstructor' ),
+			'chooseAgent'   => __( 'Please choose an agent.', 'agentstructor' ),
+			'enterPrompt'   => __( 'Please enter a prompt.', 'agentstructor' ),
+			'saving'        => __( 'Saving…', 'agentstructor' ),
+			'saveError'     => __( 'Error saving task.', 'agentstructor' ),
+			'requestFailed' => __( 'Request failed.', 'agentstructor' ),
+			'confirmDelete' => __( 'Permanently delete this custom scheduled task?', 'agentstructor' ),
+			'deleteError'   => __( 'Could not delete task.', 'agentstructor' ),
 		),
 	),
 	'agenticDeployScheduled',

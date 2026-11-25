@@ -82,18 +82,18 @@ if ( $agentic_edit_slug ) {
 <div class="agentic-react-admin__page-head">
 	<div>
 	<?php if ( ! $agentic_show_form ) : ?>
-		<p class="agentic-settings-lead"><?php esc_html_e( 'Configure the AI providers available on this site.', 'siteloom' ); ?></p>
+		<p class="agentic-settings-lead"><?php esc_html_e( 'Configure the AI providers available on this site.', 'agentstructor' ); ?></p>
 		<p class="agentic-settings-actions">
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-settings&tab=providers&add_provider=1' ) ); ?>" class="button button-primary"><?php esc_html_e( 'Add Provider', 'siteloom' ); ?></a>
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-settings&tab=providers&add_provider=1' ) ); ?>" class="button button-primary"><?php esc_html_e( 'Add Provider', 'agentstructor' ); ?></a>
 		</p>
 	<?php endif; ?>
 	</div>
 	<span class="agentic-screen-mode-toggle" id="agentic-providers-mode-toggle">
 		<button type="button" class="button button-small<?php echo ! $agentic_providers_advanced ? ' button-primary' : ''; ?>" data-mode="basic">
-			<?php esc_html_e( 'Basic', 'siteloom' ); ?>
+			<?php esc_html_e( 'Basic', 'agentstructor' ); ?>
 		</button>
 		<button type="button" class="button button-small<?php echo $agentic_providers_advanced ? ' button-primary' : ''; ?>" data-mode="advanced">
-			<?php esc_html_e( 'Advanced', 'siteloom' ); ?>
+			<?php esc_html_e( 'Advanced', 'agentstructor' ); ?>
 		</button>
 	</span>
 </div>
@@ -106,13 +106,13 @@ if ( $agentic_edit_slug ) {
 <div class="agentic-form-card">
 	<div class="agentic-form-card-head">
 		<h3>
-			<?php echo $agentic_edit_prov ? esc_html__( 'Edit Provider', 'siteloom' ) : esc_html__( 'Add Provider', 'siteloom' ); ?>
+			<?php echo $agentic_edit_prov ? esc_html__( 'Edit Provider', 'agentstructor' ) : esc_html__( 'Add Provider', 'agentstructor' ); ?>
 		</h3>
 	</div>
 	<div class="agentic-form-card-body">
 	<?php if ( ! $agentic_edit_prov ) : ?>
 	<p class="description agentic-mb-12">
-		<?php esc_html_e( 'Use an endpoint that speaks the OpenAI Chat Completions format (many hosts expose this as /v1/chat/completions).', 'siteloom' ); ?>
+		<?php esc_html_e( 'Use an endpoint that speaks the OpenAI Chat Completions format (many hosts expose this as /v1/chat/completions).', 'agentstructor' ); ?>
 	</p>
 	<?php endif; ?>
 	<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=agentic-settings&tab=providers' ) ); ?>">
@@ -351,7 +351,7 @@ if ( $agentic_edit_slug ) {
 		</table>
 
 		<p class="agentic-mt-16">
-			<?php submit_button( $agentic_edit_prov ? __( 'Update Provider', 'siteloom' ) : __( 'Add Provider', 'siteloom' ), 'primary', 'submit', false ); ?>
+			<?php submit_button( $agentic_edit_prov ? __( 'Update Provider', 'agentstructor' ) : __( 'Add Provider', 'agentstructor' ), 'primary', 'submit', false ); ?>
 			&nbsp;
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-settings&tab=providers' ) ); ?>" class="button">Cancel</a>
 		</p>
@@ -365,7 +365,7 @@ if ( $agentic_edit_slug ) {
 	<thead>
 		<tr>
 			<th class="agentic-col-status" scope="col">
-				<span class="screen-reader-text"><?php esc_html_e( 'Status', 'siteloom' ); ?></span>
+				<span class="screen-reader-text"><?php esc_html_e( 'Status', 'agentstructor' ); ?></span>
 			</th>
 			<th class="agentic-col-20">Name</th>
 			<th class="agentic-col-10">Slug</th>
@@ -381,8 +381,8 @@ if ( $agentic_edit_slug ) {
 			$agentic_is_default   = ( $agentic_prov['slug'] === $agentic_current_default );
 			$agentic_is_connected = \Agentic\Admin_Menu_Handler::provider_is_connected( $agentic_prov );
 			$agentic_status_label = $agentic_is_connected
-				? __( 'Connected', 'siteloom' )
-				: __( 'Not connected', 'siteloom' );
+				? __( 'Connected', 'agentstructor' )
+				: __( 'Not connected', 'agentstructor' );
 			?>
 		<tr<?php echo $agentic_is_default ? ' class="agentic-row-highlight"' : ''; ?>>
 			<td class="agentic-provider-status-cell">
@@ -468,23 +468,23 @@ if ( $agentic_edit_slug ) {
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-settings&tab=providers&edit_provider=' . rawurlencode( $agentic_prov['slug'] ) ) ); ?>">Edit</a>
 				<?php if ( $agentic_is_default ) : ?>
 				&nbsp;|&nbsp;
-				<span class="agentic-badge-primary"><?php esc_html_e( 'Default', 'siteloom' ); ?></span>
+				<span class="agentic-badge-primary"><?php esc_html_e( 'Default', 'agentstructor' ); ?></span>
 				<?php elseif ( $agentic_is_connected ) : ?>
 				&nbsp;|&nbsp;
 				<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=agentic-settings&tab=providers' ) ); ?>" class="agentic-form-inline">
 					<?php wp_nonce_field( 'agentic_provider_nonce' ); ?>
 					<input type="hidden" name="agentic_provider_action" value="set_default">
 					<input type="hidden" name="provider_slug" value="<?php echo esc_attr( $agentic_prov['slug'] ); ?>">
-					<button type="submit" class="button-link agentic-provider-setdefault-btn"><?php esc_html_e( 'Set Default', 'siteloom' ); ?></button>
+					<button type="submit" class="button-link agentic-provider-setdefault-btn"><?php esc_html_e( 'Set Default', 'agentstructor' ); ?></button>
 				</form>
 				<?php endif; ?>
 				<?php if ( ! $agentic_prov['is_builtin'] ) : ?>
 				&nbsp;|&nbsp;
-				<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=agentic-settings&tab=providers' ) ); ?>" class="agentic-form-inline" data-agentic-confirm="<?php echo esc_attr( sprintf( /* translators: %s: provider name */ __( 'Delete provider “%s”? This cannot be undone.', 'siteloom' ), $agentic_prov['name'] ) ); ?>" data-agentic-confirm-danger>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=agentic-settings&tab=providers' ) ); ?>" class="agentic-form-inline" data-agentic-confirm="<?php echo esc_attr( sprintf( /* translators: %s: provider name */ __( 'Delete provider “%s”? This cannot be undone.', 'agentstructor' ), $agentic_prov['name'] ) ); ?>" data-agentic-confirm-danger>
 					<?php wp_nonce_field( 'agentic_provider_nonce' ); ?>
 					<input type="hidden" name="agentic_provider_action" value="delete">
 					<input type="hidden" name="provider_slug" value="<?php echo esc_attr( $agentic_prov['slug'] ); ?>">
-					<button type="submit" class="button-link agentic-provider-delete-btn"><?php esc_html_e( 'Delete', 'siteloom' ); ?></button>
+					<button type="submit" class="button-link agentic-provider-delete-btn"><?php esc_html_e( 'Delete', 'agentstructor' ); ?></button>
 				</form>
 				<?php endif; ?>
 			</td>
@@ -504,9 +504,9 @@ if ( $agentic_show_form && $agentic_edit_slug && $agentic_providers_advanced ) {
 			'nonce'     => (string) $agentic_models_nonce,
 			'autoFetch' => (bool) $agentic_form_has_key,
 			'i18n'      => array(
-				'cached'        => __( 'Cached — click ↺ Refresh for latest.', 'siteloom' ),
-				'loadFailed'    => __( 'Could not load models from API.', 'siteloom' ),
-				'requestFailed' => __( 'Request failed. Is your API key saved?', 'siteloom' ),
+				'cached'        => __( 'Cached — click ↺ Refresh for latest.', 'agentstructor' ),
+				'loadFailed'    => __( 'Could not load models from API.', 'agentstructor' ),
+				'requestFailed' => __( 'Request failed. Is your API key saved?', 'agentstructor' ),
 			),
 		),
 		'agenticProviderModels'

@@ -30,36 +30,36 @@ const CFG = ( typeof window !== 'undefined' && window.agenticDeployWizard ) || {
 const SURFACES = [
 	{
 		key: 'chat_widget',
-		label: __( 'Chat widget', 'siteloom' ),
-		hint: __( 'A floating chat bubble visitors can open on your site.', 'siteloom' ),
+		label: __( 'Chat widget', 'agentstructor' ),
+		hint: __( 'A floating chat bubble visitors can open on your site.', 'agentstructor' ),
 	},
 	{
 		key: 'admin_bar',
-		label: __( 'Admin bar', 'siteloom' ),
-		hint: __( 'A quick-chat menu in the WordPress toolbar for logged-in admins.', 'siteloom' ),
+		label: __( 'Admin bar', 'agentstructor' ),
+		hint: __( 'A quick-chat menu in the WordPress toolbar for logged-in admins.', 'agentstructor' ),
 	},
 	{
 		key: 'ask_ai',
-		label: __( 'Ask AI launcher', 'siteloom' ),
-		hint: __( 'A contextual "Ask AI" prompt on admin screens like Plugins or Media.', 'siteloom' ),
+		label: __( 'Ask AI launcher', 'agentstructor' ),
+		hint: __( 'A contextual "Ask AI" prompt on admin screens like Plugins or Media.', 'agentstructor' ),
 	},
 	{
 		key: 'gutenberg_block',
-		label: __( 'Gutenberg block', 'siteloom' ),
-		hint: __( 'Makes this agent insertable as a block in any post or page.', 'siteloom' ),
+		label: __( 'Gutenberg block', 'agentstructor' ),
+		hint: __( 'Makes this agent insertable as a block in any post or page.', 'agentstructor' ),
 	},
 ];
 
 const STEPS = [
-	{ key: 'pick', label: __( 'Agent & surface', 'siteloom' ) },
-	{ key: 'configure', label: __( 'Configure', 'siteloom' ) },
+	{ key: 'pick', label: __( 'Agent & surface', 'agentstructor' ) },
+	{ key: 'configure', label: __( 'Configure', 'agentstructor' ) },
 ];
 
 function Stepper( { current } ) {
 	return (
 		<ol
 			className="agentic-wizard-steps"
-			aria-label={ __( 'Wizard steps', 'siteloom' ) }
+			aria-label={ __( 'Wizard steps', 'agentstructor' ) }
 		>
 			{ STEPS.map( ( stepItem, index ) => (
 				<li
@@ -119,7 +119,7 @@ function App() {
 			.catch( ( err ) =>
 				setLoadError(
 					err.message ||
-						__( 'Could not load the wizard.', 'siteloom' )
+						__( 'Could not load the wizard.', 'agentstructor' )
 				)
 			);
 	}
@@ -134,15 +134,15 @@ function App() {
 	const pagesOptionsFor = ( surfaceKey ) =>
 		surfaceKey === 'admin_bar'
 			? [
-					{ label: __( 'Everywhere', 'siteloom' ), value: 'all' },
-					{ label: __( 'Admin only', 'siteloom' ), value: 'admin' },
-					{ label: __( 'Front end only', 'siteloom' ), value: 'front' },
+					{ label: __( 'Everywhere', 'agentstructor' ), value: 'all' },
+					{ label: __( 'Admin only', 'agentstructor' ), value: 'admin' },
+					{ label: __( 'Front end only', 'agentstructor' ), value: 'front' },
 			  ]
 			: [
-					{ label: __( 'Everywhere', 'siteloom' ), value: 'all' },
-					{ label: __( 'Front end only', 'siteloom' ), value: 'front' },
-					{ label: __( 'Single posts/pages only', 'siteloom' ), value: 'singular' },
-					{ label: __( 'Homepage only', 'siteloom' ), value: 'homepage' },
+					{ label: __( 'Everywhere', 'agentstructor' ), value: 'all' },
+					{ label: __( 'Front end only', 'agentstructor' ), value: 'front' },
+					{ label: __( 'Single posts/pages only', 'agentstructor' ), value: 'singular' },
+					{ label: __( 'Homepage only', 'agentstructor' ), value: 'homepage' },
 			  ];
 
 	const submit = () => {
@@ -176,7 +176,7 @@ function App() {
 					err.message ||
 						__(
 							'Something went wrong publishing this agent.',
-							'siteloom'
+							'agentstructor'
 						)
 				)
 			)
@@ -194,7 +194,7 @@ function App() {
 	if ( ! options ) {
 		return (
 			<div className="agentic-wizard-loading">
-				<Spinner /> { __( 'Loading…', 'siteloom' ) }
+				<Spinner /> { __( 'Loading…', 'agentstructor' ) }
 			</div>
 		);
 	}
@@ -204,10 +204,10 @@ function App() {
 			<Notice status="warning" isDismissible={ false }>
 				{ __(
 					'No active agents yet. Activate or train an agent first, then come back to publish it.',
-					'siteloom'
+					'agentstructor'
 				) }{ ' ' }
 				<a href={ CFG.agentsUrl }>
-					{ __( 'Go to Agents', 'siteloom' ) }
+					{ __( 'Go to Agents', 'agentstructor' ) }
 				</a>
 			</Notice>
 		);
@@ -223,7 +223,7 @@ function App() {
 						{ '🚀 ' }
 						{ sprintf(
 							/* translators: 1: agent name, 2: surface name. */
-							__( '%1$s is published on %2$s!', 'siteloom' ),
+							__( '%1$s is published on %2$s!', 'agentstructor' ),
 							( agentInfo && agentInfo.name ) || agent,
 							( surfaceInfo && surfaceInfo.label ) || surface
 						) }
@@ -231,7 +231,7 @@ function App() {
 					<p>
 						{ __(
 							'Fine-tune this further, or publish on another surface.',
-							'siteloom'
+							'agentstructor'
 						) }
 					</p>
 					<Flex justify="flex-start" gap={ 3 } wrap>
@@ -243,17 +243,17 @@ function App() {
 									setStep( 0 );
 								} }
 							>
-								{ __( 'Publish on another surface', 'siteloom' ) }
+								{ __( 'Publish on another surface', 'agentstructor' ) }
 							</Button>
 						</FlexItem>
 						<FlexItem>
 							<Button variant="secondary" href={ done.manage_url }>
-								{ __( 'Manage in Publish', 'siteloom' ) }
+								{ __( 'Manage in Publish', 'agentstructor' ) }
 							</Button>
 						</FlexItem>
 						<FlexItem>
 							<Button variant="tertiary" href={ CFG.dashboardUrl }>
-								{ __( 'Back to Dashboard', 'siteloom' ) }
+								{ __( 'Back to Dashboard', 'agentstructor' ) }
 							</Button>
 						</FlexItem>
 					</Flex>
@@ -277,7 +277,7 @@ function App() {
 				{ step === 0 && (
 					<Fragment>
 						<SelectControl
-							label={ __( 'Which agent?', 'siteloom' ) }
+							label={ __( 'Which agent?', 'agentstructor' ) }
 							value={ agent }
 							options={ options.agents.map( ( a ) => ( {
 								label: `${ a.icon || '' } ${ a.name }`.trim(),
@@ -287,7 +287,7 @@ function App() {
 							__next40pxDefaultSize
 						/>
 						<p className="agentic-wizard-sublabel">
-							{ __( 'Where should people reach it?', 'siteloom' ) }
+							{ __( 'Where should people reach it?', 'agentstructor' ) }
 						</p>
 						<div className="agentic-wizard-tools">
 							{ SURFACES.map( ( s ) => (
@@ -315,7 +315,7 @@ function App() {
 					<p className="agentic-wizard-hint">
 						{ __(
 							'Nothing else to configure — saving makes this agent available to insert as a block from any post or page editor.',
-							'siteloom'
+							'agentstructor'
 						) }
 					</p>
 				) }
@@ -323,17 +323,17 @@ function App() {
 				{ step === 1 && ( surface === 'chat_widget' || surface === 'admin_bar' ) && (
 					<Fragment>
 						<SelectControl
-							label={ __( 'Position', 'siteloom' ) }
+							label={ __( 'Position', 'agentstructor' ) }
 							value={ position }
 							options={ [
-								{ label: __( 'Bottom right', 'siteloom' ), value: 'bottom-right' },
-								{ label: __( 'Bottom left', 'siteloom' ), value: 'bottom-left' },
+								{ label: __( 'Bottom right', 'agentstructor' ), value: 'bottom-right' },
+								{ label: __( 'Bottom left', 'agentstructor' ), value: 'bottom-left' },
 							] }
 							onChange={ setPosition }
 							__next40pxDefaultSize
 						/>
 						<SelectControl
-							label={ __( 'Show on', 'siteloom' ) }
+							label={ __( 'Show on', 'agentstructor' ) }
 							value={ pages }
 							options={ pagesOptionsFor( surface ) }
 							onChange={ setPages }
@@ -341,7 +341,7 @@ function App() {
 						/>
 						{ surface === 'chat_widget' && (
 							<CheckboxControl
-								label={ __( 'Only show to logged-in visitors', 'siteloom' ) }
+								label={ __( 'Only show to logged-in visitors', 'agentstructor' ) }
 								checked={ requireLogin }
 								onChange={ setRequireLogin }
 							/>
@@ -357,7 +357,7 @@ function App() {
 									/* translators: %s: agent name. */
 									__(
 										'Ask AI launchers are already turned on for some admin screens. Saving makes %s the agent that answers them, replacing the current choice — the screens themselves stay as configured.',
-										'siteloom'
+										'agentstructor'
 									),
 									( options.agents.find( ( a ) => a.slug === agent ) || {} )
 										.name || agent
@@ -366,7 +366,7 @@ function App() {
 						) : (
 							<Fragment>
 								<p className="agentic-wizard-sublabel">
-									{ __( 'Which admin screens?', 'siteloom' ) }
+									{ __( 'Which admin screens?', 'agentstructor' ) }
 								</p>
 								{ ( options.ask_ai_screens || [] ).map( ( s ) => (
 									<CheckboxControl
@@ -391,7 +391,7 @@ function App() {
 								onClick={ () => setStep( step - 1 ) }
 								disabled={ submitting }
 							>
-								{ __( 'Back', 'siteloom' ) }
+								{ __( 'Back', 'agentstructor' ) }
 							</Button>
 						) }
 					</FlexItem>
@@ -402,7 +402,7 @@ function App() {
 								onClick={ () => setStep( 1 ) }
 								disabled={ ! agent }
 							>
-								{ __( 'Continue', 'siteloom' ) }
+								{ __( 'Continue', 'agentstructor' ) }
 							</Button>
 						) : (
 							<Button
@@ -411,7 +411,7 @@ function App() {
 								isBusy={ submitting }
 								disabled={ submitting }
 							>
-								{ __( 'Publish', 'siteloom' ) }
+								{ __( 'Publish', 'agentstructor' ) }
 							</Button>
 						) }
 					</FlexItem>

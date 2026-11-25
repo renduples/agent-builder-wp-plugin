@@ -91,7 +91,7 @@ class Checker_Site_Health extends Site_Brief_Checker {
 				'subject'          => 'score',
 				'title'            => sprintf(
 					/* translators: 1: health score, 2: grade. */
-					__( 'Site health score %1$d (%2$s).', 'siteloom' ),
+					__( 'Site health score %1$d (%2$s).', 'agentstructor' ),
 					$score,
 					$grade
 				),
@@ -101,7 +101,7 @@ class Checker_Site_Health extends Site_Brief_Checker {
 						'%d issue found by WordPress Site Health.',
 						'%d issues found by WordPress Site Health.',
 						count( $issues ),
-						'siteloom'
+						'agentstructor'
 					),
 					count( $issues )
 				),
@@ -110,7 +110,7 @@ class Checker_Site_Health extends Site_Brief_Checker {
 					'grade'  => $grade,
 					'issues' => count( $issues ),
 				),
-				'proposed_action'  => __( 'Open Site Health for details. The scan does not apply a fix.', 'siteloom' ),
+				'proposed_action'  => __( 'Open Site Health for details. The scan does not apply a fix.', 'agentstructor' ),
 				'action_risk'      => 'none',
 				'raw'              => array(
 					'score' => $score,
@@ -127,7 +127,7 @@ class Checker_Site_Health extends Site_Brief_Checker {
 					'title'            => $issue,
 					'evidence'         => '',
 					'evidence_payload' => array( 'issue' => $issue ),
-					'proposed_action'  => __( 'Open Site Health for details. The scan does not apply a fix.', 'siteloom' ),
+					'proposed_action'  => __( 'Open Site Health for details. The scan does not apply a fix.', 'agentstructor' ),
 					'action_risk'      => 'none',
 					'raw'              => array( 'issue' => $issue ),
 				)

@@ -57,21 +57,21 @@ class Approvals_Payload {
 		return array(
 			'page'             => 'approvals',
 			'tab'              => $tab,
-			'title'            => __( 'Approvals', 'siteloom' ),
-			'panel_title'      => __( 'Things waiting for your OK', 'siteloom' ),
-			'description'      => __( 'When an agent wants to change something important, it waits here until you approve or reject it.', 'siteloom' ),
+			'title'            => __( 'Approvals', 'agentstructor' ),
+			'panel_title'      => __( 'Things waiting for your OK', 'agentstructor' ),
+			'description'      => __( 'When an agent wants to change something important, it waits here until you approve or reject it.', 'agentstructor' ),
 			'pending_count'    => count( $rows ),
 			'rows'             => $rows,
 			'groups'           => self::group_pending_for_bulk( $rows ),
 			'tabs'             => array(
 				array(
 					'id'    => 'approvals',
-					'label' => __( 'Approvals', 'siteloom' ),
+					'label' => __( 'Approvals', 'agentstructor' ),
 					'url'   => admin_url( 'admin.php?page=agentic-approvals&tab=approvals' ),
 				),
 				array(
 					'id'    => 'backups',
-					'label' => __( 'Backups', 'siteloom' ),
+					'label' => __( 'Backups', 'agentstructor' ),
 					'url'   => admin_url( 'admin.php?page=agentic-approvals&tab=backups' ),
 				),
 			),
@@ -83,7 +83,7 @@ class Approvals_Payload {
 			'docs_url'         => 'https://agentic-plugin.com/documentation/approvals/',
 			'footer_policy'    => __(
 				'Approvals keep high-risk agent actions under human control. Email alerts use your admin address and never include passwords. See Privacy Policy for how providers process chat.',
-				'siteloom'
+				'agentstructor'
 			),
 		);
 	}

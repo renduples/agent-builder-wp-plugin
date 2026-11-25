@@ -54,7 +54,7 @@ class Checker_Core_Integrity extends Site_Brief_Checker {
 	 * {@inheritdoc}
 	 */
 	public function get_label(): string {
-		return __( 'Core file integrity', 'siteloom' );
+		return __( 'Core file integrity', 'agentstructor' );
 	}
 
 	/**
@@ -87,7 +87,7 @@ class Checker_Core_Integrity extends Site_Brief_Checker {
 				array(
 					'title'            => sprintf(
 						/* translators: %d: mismatched core files. */
-						_n( '%d WordPress core file does not match checksums', '%d WordPress core files do not match checksums', $issues, 'siteloom' ),
+						_n( '%d WordPress core file does not match checksums', '%d WordPress core files do not match checksums', $issues, 'agentstructor' ),
 						$issues
 					),
 					'evidence'         => implode( ', ', $sample ),
@@ -96,7 +96,7 @@ class Checker_Core_Integrity extends Site_Brief_Checker {
 						'missing'  => count( $missing ),
 						'sample'   => $sample,
 					),
-					'proposed_action'  => __( 'Restore core files from a host backup or a fresh WordPress copy. Site Brief will never rewrite core files.', 'siteloom' ),
+					'proposed_action'  => __( 'Restore core files from a host backup or a fresh WordPress copy. Site Brief will never rewrite core files.', 'agentstructor' ),
 					'action_risk'      => 'none',
 					'approve'          => array( 'type' => 'none' ),
 					'raw'              => array(

@@ -1,12 +1,12 @@
 # Security Policy
 
-Agentic Tech LLC maintains Siteloom. We take reports about the plugin's security seriously and handle them as described below.
+Agentic Tech LLC maintains AgentStructor. We take reports about the plugin's security seriously and handle them as described below.
 
 ## Reporting a vulnerability
 
 Please report privately. Do not open a public GitHub issue, forum post or pull request for a security problem.
 
-- **Patchstack (preferred):** [Siteloom Vulnerability Disclosure Program](https://patchstack.com/database/vdp/4f108df7-e398-4bbb-bdc8-b4d93aa3cbc3). Patchstack helps with verification and CVE assignment and notifies us.
+- **Patchstack (preferred):** [AgentStructor Vulnerability Disclosure Program](https://patchstack.com/database/vdp/4f108df7-e398-4bbb-bdc8-b4d93aa3cbc3). Patchstack helps with verification and CVE assignment and notifies us.
 - **Email:** security@agentic-plugin.com
 - **GitHub:** use "Report a vulnerability" on this repository's **Security** tab (private advisory).
 
@@ -25,8 +25,8 @@ We credit reporters in the changelog and advisory unless you ask us not to.
 
 ## Scope
 
-- Siteloom (WordPress.org edition, this repository)
-- Siteloom self-hosted edition and Siteloom Pro
+- AgentStructor (WordPress.org edition, this repository)
+- AgentStructor self-hosted edition and AgentStructor Pro
 - Hosted services under `*.agentic-plugin.com` that the plugin connects to
 
 Out of scope: vulnerabilities in WordPress core, other plugins or themes, and third-party AI providers. Please report those to their own maintainers. Social engineering, physical attacks and denial-of-service testing are also out of scope.

@@ -85,30 +85,30 @@ function ActivityCard() {
 	return (
 		<Fragment>
 			<div className="agentic-card-header agentic-flex-between">
-				<h2>{ __( 'Activity', 'siteloom' ) }</h2>
+				<h2>{ __( 'Activity', 'agentstructor' ) }</h2>
 				<a
 					className="agentic-card-header-link"
 					href={ activityLogUrl }
 				>
-					{ __( 'View Activity →', 'siteloom' ) }
+					{ __( 'View Activity →', 'agentstructor' ) }
 				</a>
 			</div>
 
 			{ error && (
 				<p className="agentic-status-error">
-					{ __( 'Could not load activity.', 'siteloom' ) }
+					{ __( 'Could not load activity.', 'agentstructor' ) }
 				</p>
 			) }
 
 			<div className="agentic-metrics-grid">
 				<Metric
 					value={ formatInt( activity.actions ) }
-					label={ __( 'Total Actions', 'siteloom' ) }
+					label={ __( 'Total Actions', 'agentstructor' ) }
 					href={ activityLogUrl }
 				/>
 				<Metric
 					value={ formatInt( activity.tokens ) }
-					label={ __( 'Tokens Used', 'siteloom' ) }
+					label={ __( 'Tokens Used', 'agentstructor' ) }
 					href={ usageLink }
 				/>
 				{ Number( activity.cost ) > 0 && (
@@ -116,25 +116,25 @@ function ActivityCard() {
 						value={ '$' + Number( activity.cost ).toFixed( 4 ) }
 						label={
 							isPro
-								? __( 'Est. Cost', 'siteloom' )
-								: __( 'Estimated Usage', 'siteloom' )
+								? __( 'Est. Cost', 'agentstructor' )
+								: __( 'Estimated Usage', 'agentstructor' )
 						}
 						href={ usageLink }
 					/>
 				) }
 				<Metric
 					value={ formatInt( agents.active ) }
-					label={ __( 'Active Agents', 'siteloom' ) }
+					label={ __( 'Active Agents', 'agentstructor' ) }
 					href={ buildUrl( 'agentic-agents' ) }
 				/>
 				<Metric
 					value={ formatInt( agents.uploaded ) }
-					label={ __( 'Uploaded Agents', 'siteloom' ) }
+					label={ __( 'Uploaded Agents', 'agentstructor' ) }
 					href={ buildUrl( 'agentic-agents' ) }
 				/>
 				<Metric
 					value={ formatInt( agents.user_created ) }
-					label={ __( 'User-Created Agents', 'siteloom' ) }
+					label={ __( 'User-Created Agents', 'agentstructor' ) }
 					href={ buildUrl( 'agentic-agents' ) }
 				/>
 			</div>

@@ -1,6 +1,6 @@
 <?php
 /**
- * WP-CLI Commands for Siteloom (Free + basic layer)
+ * WP-CLI Commands for AgentStructor (Free + basic layer)
  *
  * Provides core CLI access: list, info.
  *
@@ -26,7 +26,7 @@ if ( ! defined( 'WP_CLI' ) || ! WP_CLI ) {
 }
 
 /**
- * Core WP-CLI commands for Siteloom.
+ * Core WP-CLI commands for AgentStructor.
  *
  * This is the "free" / basic layer per the 2026 WP7 architecture decision.
  */

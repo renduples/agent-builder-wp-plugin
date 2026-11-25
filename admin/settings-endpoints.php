@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! current_user_can( 'manage_options' ) ) {
-	wp_die( esc_html__( 'You do not have permission to access this page.', 'siteloom' ) );
+	wp_die( esc_html__( 'You do not have permission to access this page.', 'agentstructor' ) );
 }
 
 // ── Handle form submission ────────────────────────────────────────────────────
@@ -40,7 +40,7 @@ if (
 		if ( ! empty( $agentic_ep_url ) && ! filter_var( $agentic_ep_url, FILTER_VALIDATE_URL ) ) {
 			$agentic_ep_errors[] = sprintf(
 				/* translators: %s: service slug */
-				esc_html__( 'Invalid URL for %s — changes not saved.', 'siteloom' ),
+				esc_html__( 'Invalid URL for %s — changes not saved.', 'agentstructor' ),
 				esc_html( $agentic_ep_slug )
 			);
 			continue;
@@ -97,11 +97,11 @@ if (
 $agentic_ep_services = \Agentic\Service_Registry::get_all();
 
 if ( isset( $_GET['saved'] ) ) : ?>
-	<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Endpoints saved.', 'siteloom' ); ?></p></div>
+	<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Endpoints saved.', 'agentstructor' ); ?></p></div>
 <?php endif; ?>
 
 <?php if ( isset( $_GET['reset'] ) ) : ?>
-	<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Endpoint reset to default.', 'siteloom' ); ?></p></div>
+	<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Endpoint reset to default.', 'agentstructor' ); ?></p></div>
 <?php endif; ?>
 
 <?php foreach ( $agentic_ep_errors as $agentic_ep_error ) : ?>
@@ -110,10 +110,10 @@ if ( isset( $_GET['saved'] ) ) : ?>
 
 <div class="agentic-endpoints-intro" style="max-width:680px;margin:16px 0 24px;">
 	<p>
-		<?php esc_html_e( 'These are the base URLs for all Agentic remote services. By default they point to the official Agentic infrastructure. You can override any URL to route traffic through a proxy, use a staging server, or self-host a compatible service.', 'siteloom' ); ?>
+		<?php esc_html_e( 'These are the base URLs for all Agentic remote services. By default they point to the official Agentic infrastructure. You can override any URL to route traffic through a proxy, use a staging server, or self-host a compatible service.', 'agentstructor' ); ?>
 	</p>
 	<p>
-		<?php esc_html_e( 'Clearing an overridden URL (or saving an empty field) resets it to the built-in default. The Reset link next to each row also restores the default immediately.', 'siteloom' ); ?>
+		<?php esc_html_e( 'Clearing an overridden URL (or saving an empty field) resets it to the built-in default. The Reset link next to each row also restores the default immediately.', 'agentstructor' ); ?>
 	</p>
 </div>
 
@@ -123,9 +123,9 @@ if ( isset( $_GET['saved'] ) ) : ?>
 	<table class="wp-list-table widefat fixed striped" style="max-width:960px;">
 		<thead>
 			<tr>
-				<th style="width:200px;"><?php esc_html_e( 'Service', 'siteloom' ); ?></th>
-				<th><?php esc_html_e( 'Base URL', 'siteloom' ); ?></th>
-				<th style="width:80px;"><?php esc_html_e( 'Actions', 'siteloom' ); ?></th>
+				<th style="width:200px;"><?php esc_html_e( 'Service', 'agentstructor' ); ?></th>
+				<th><?php esc_html_e( 'Base URL', 'agentstructor' ); ?></th>
+				<th style="width:80px;"><?php esc_html_e( 'Actions', 'agentstructor' ); ?></th>
 			</tr>
 		</thead>
 		<tbody>
@@ -149,12 +149,12 @@ if ( isset( $_GET['saved'] ) ) : ?>
 				<td>
 					<strong><?php echo esc_html( $agentic_ep_svc['name'] ); ?></strong>
 					<?php if ( $agentic_ep_is_mod ) : ?>
-						<span style="display:inline-block;background:#2271b1;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px;margin-left:4px;"><?php esc_html_e( 'Custom', 'siteloom' ); ?></span>
+						<span style="display:inline-block;background:#2271b1;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px;margin-left:4px;"><?php esc_html_e( 'Custom', 'agentstructor' ); ?></span>
 					<?php endif; ?>
 					<br><small style="color:#646970;"><?php echo esc_html( $agentic_ep_svc['description'] ); ?></small>
 					<?php if ( $agentic_ep_is_mod ) : ?>
 						<br><small style="color:#646970;">
-							<?php esc_html_e( 'Default:', 'siteloom' ); ?>
+							<?php esc_html_e( 'Default:', 'agentstructor' ); ?>
 							<code><?php echo esc_html( $agentic_ep_svc['default_url'] ); ?></code>
 						</small>
 					<?php endif; ?>
@@ -172,12 +172,12 @@ if ( isset( $_GET['saved'] ) ) : ?>
 				<td>
 					<?php if ( $agentic_ep_is_mod ) : ?>
 						<a href="<?php echo esc_url( $agentic_reset_url ); ?>"
-							data-agentic-confirm="<?php echo esc_attr( __( 'Reset this endpoint to its default URL?', 'siteloom' ) ); ?>"
+							data-agentic-confirm="<?php echo esc_attr( __( 'Reset this endpoint to its default URL?', 'agentstructor' ) ); ?>"
 							style="color:#b32d2e;">
-							<?php esc_html_e( 'Reset', 'siteloom' ); ?>
+							<?php esc_html_e( 'Reset', 'agentstructor' ); ?>
 						</a>
 					<?php else : ?>
-						<span style="color:#c3c4c7;"><?php esc_html_e( 'Default', 'siteloom' ); ?></span>
+						<span style="color:#c3c4c7;"><?php esc_html_e( 'Default', 'agentstructor' ); ?></span>
 					<?php endif; ?>
 				</td>
 			</tr>
@@ -186,6 +186,6 @@ if ( isset( $_GET['saved'] ) ) : ?>
 	</table>
 
 	<p class="submit" style="margin-top:16px;">
-		<input type="submit" name="agentic_save_endpoints" class="button-primary" value="<?php esc_attr_e( 'Save Endpoints', 'siteloom' ); ?>" />
+		<input type="submit" name="agentic_save_endpoints" class="button-primary" value="<?php esc_attr_e( 'Save Endpoints', 'agentstructor' ); ?>" />
 	</p>
 </form>

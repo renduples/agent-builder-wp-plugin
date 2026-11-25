@@ -11,7 +11,7 @@ description: "Use when user wants to add custom CSS or JavaScript to the site, l
 |------|-------------|
 | `add_custom_css` | Add a CSS snippet that will be output on all pages or frontend only. |
 | `add_custom_js` | Add a JavaScript snippet to the page head or footer. |
-| `list_code_snippets` | List all CSS and JS snippets currently managed by Siteloom. |
+| `list_code_snippets` | List all CSS and JS snippets currently managed by AgentStructor. |
 
 ## Workflows
 
@@ -32,11 +32,11 @@ description: "Use when user wants to add custom CSS or JavaScript to the site, l
 
 1. Call `list_code_snippets` to retrieve all CSS and JS snippets.
 2. Present them with their label, type, location, size, and creation date.
-3. If the user wants to remove a snippet, note they'll need to do so via the Siteloom settings panel (no delete tool yet).
+3. If the user wants to remove a snippet, note they'll need to do so via the AgentStructor settings panel (no delete tool yet).
 
 ## Rules
 
 - Always ask the user to review injected JavaScript before adding it — malicious or broken JS can break the frontend for all visitors.
 - CSS snippets with `location: global` are also registered with the WordPress customizer via `wp_update_custom_css_post`, which may overwrite existing customizer CSS if it has been manually edited there.
 - JS snippets are output as raw inline `<script>` tags — they are not defer/async by default. For performance-sensitive scripts, recommend the user use the footer location.
-- There is currently no delete tool — to remove a snippet, the user must go to Siteloom settings or use the `update_option` tool to modify `agentic_custom_css` or `agentic_custom_js` directly.
+- There is currently no delete tool — to remove a snippet, the user must go to AgentStructor settings or use the `update_option` tool to modify `agentic_custom_css` or `agentic_custom_js` directly.

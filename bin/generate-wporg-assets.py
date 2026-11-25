@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build .wordpress-org/ plugin-directory assets from existing brand + screenshots.
 
-Reuses assets/icon.svg (the Siteloom icon; the current listing art is made by creatives/siteloom/make.py). Banners are composed with
+Reuses assets/icon.svg (the A mark). The current banners are the original ones with the title retyped; see creatives/agentstructor/README.md. Banners are composed with
 Pillow using that mark plus colours already used in the mark and admin.css:
 
   #5b56db / #ab4ff3  mark gradient (assets/icon.svg)
@@ -90,7 +90,7 @@ def write_banners(mark: Image.Image) -> None:
     bold = ImageFont.truetype(FONT_BOLD, 84)
     regular = ImageFont.truetype(FONT_REG, 32)
     text_x = 430
-    draw.text((text_x, 168), "Siteloom AI Agents", font=bold, fill=TEXT)
+    draw.text((text_x, 168), "AgentStructor", font=bold, fill=TEXT)
     draw.text(
         (text_x, 278),
         "AI agents for WordPress, with built-in safety.",
