@@ -64,11 +64,13 @@ class Generate_System_Prompt extends Tool_Base {
 			'constraints' => array(
 				'type'        => 'array',
 				'description' => 'Things the agent should never do.',
+				'items'       => array( 'type' => 'string' ),
 				'required'    => false,
 			),
 			'tool_names'  => array(
 				'type'        => 'array',
 				'description' => 'Names of available tools.',
+				'items'       => array( 'type' => 'string' ),
 				'required'    => false,
 			),
 		);

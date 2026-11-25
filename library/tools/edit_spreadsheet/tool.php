@@ -89,6 +89,7 @@ class Edit_Spreadsheet extends \Agentic\Tool_Base {
 							'row'   => array(
 								'type'        => 'array',
 								'description' => 'Array of values for append_row.',
+								'items'       => array( 'type' => 'string' ),
 							),
 							'name'  => array(
 								'type'        => 'string',

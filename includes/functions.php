@@ -50,6 +50,7 @@ function agent_builder_chat_i18n(): array {
 		'errorApproval'       => __( 'Error processing approval: %s', 'agentstructor' ),
 		'errorTurnstile'      => __( 'Browser verification failed. Please refresh the page and try again.', 'agentstructor' ),
 		'errorTtsLimit'       => __( 'Text-to-speech is currently unavailable. Please try again later.', 'agentstructor' ),
+		'errorEmptyResponse'  => __( 'The agent returned an empty response. Please try again.', 'agentstructor' ),
 		/* translators: %s is the name of the agent that handed off the conversation */
 		'handoffBanner'       => __( 'Handed off from %s. Context from the previous agent has been shared.', 'agentstructor' ),
 		'reasoningSummary'    => __( 'Agent reasoning & steps', 'agentstructor' ),

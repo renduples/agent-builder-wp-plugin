@@ -74,6 +74,7 @@ class Create_Spreadsheet extends \Agentic\Tool_Base {
 					'items'       => array(
 						'type'        => 'array',
 						'description' => 'One row of values. Strings, numbers, or Excel formula strings starting with "=".',
+						'items'       => array( 'type' => 'string' ),
 					),
 					'description' => 'Data rows to write below the header.',
 				),

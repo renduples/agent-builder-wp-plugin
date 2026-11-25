@@ -66,6 +66,7 @@ class Generate_Agent extends Tool_Base {
 			'capabilities'        => array(
 				'type'        => 'array',
 				'description' => 'Required WordPress capabilities.',
+				'items'       => array( 'type' => 'string' ),
 				'required'    => false,
 			),
 			'tools'               => array(
@@ -86,6 +87,15 @@ class Generate_Agent extends Tool_Base {
 						'parameters'  => array(
 							'type'        => 'array',
 							'description' => 'Parameter definitions.',
+							'items'       => array(
+								'type'       => 'object',
+								'properties' => array(
+									'name'        => array( 'type' => 'string' ),
+									'type'        => array( 'type' => 'string' ),
+									'description' => array( 'type' => 'string' ),
+									'required'    => array( 'type' => 'boolean' ),
+								),
+							),
 						),
 					),
 				),
@@ -98,6 +108,7 @@ class Generate_Agent extends Tool_Base {
 			'suggested_prompts'   => array(
 				'type'        => 'array',
 				'description' => 'Example prompts.',
+				'items'       => array( 'type' => 'string' ),
 				'required'    => false,
 			),
 		);

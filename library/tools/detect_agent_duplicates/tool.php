@@ -69,6 +69,7 @@ class Detect_Agent_Duplicates extends Tool_Base {
 			'tool_names'  => array(
 				'type'        => 'array',
 				'description' => 'Proposed tool names.',
+				'items'       => array( 'type' => 'string' ),
 				'required'    => false,
 			),
 			'threshold'   => array(

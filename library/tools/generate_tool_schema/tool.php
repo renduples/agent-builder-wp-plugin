@@ -59,6 +59,15 @@ class Generate_Tool_Schema extends Tool_Base {
 			'parameters'       => array(
 				'type'        => 'array',
 				'description' => 'Array of parameter definitions.',
+				'items'       => array(
+					'type'       => 'object',
+					'properties' => array(
+						'name'        => array( 'type' => 'string' ),
+						'type'        => array( 'type' => 'string' ),
+						'description' => array( 'type' => 'string' ),
+						'required'    => array( 'type' => 'boolean' ),
+					),
+				),
 				'required'    => false,
 			),
 		);
