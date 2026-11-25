@@ -1254,6 +1254,18 @@ class Agent_Controller {
 					}
 				}
 			} else {
+				// No tool calls and no text is a failed turn, not an answer — an
+				// empty "end" left the user staring at a blank bubble with no error.
+				if ( self::is_empty_reply( $assistant_message, $choice ) ) {
+					return array(
+						'response'    => __( 'The AI model returned an empty response. Please try again, or check this agent\'s model and provider settings.', 'agentstructor' ),
+						'error'       => true,
+						'agent_id'    => $current_agent_id,
+						'tokens_used' => $total_tokens,
+						'iterations'  => $iterations,
+					);
+				}
+
 				// No more tool calls, we have our final response.
 				$response = $assistant_message['content'];
 				if ( 'length' === ( $choice['finish_reason'] ?? '' ) ) {
@@ -1807,6 +1819,22 @@ class Agent_Controller {
 					}
 				}
 			} else {
+				if ( self::is_empty_reply( $assistant_message, $choice ) ) {
+					$this->audit->log(
+						$agent_id,
+						'autonomous_chat_error',
+						'scheduled_task',
+						array(
+							'task_id' => $task_id,
+							'error'   => 'The AI model returned an empty response.',
+						)
+					);
+					if ( $owns_run ) {
+						$run->finish( 'failed', array( 'error' => 'The AI model returned an empty response.' ) );
+					}
+					return null;
+				}
+
 				$response = $assistant_message['content'];
 				if ( 'length' === ( $choice['finish_reason'] ?? '' ) ) {
 					$response .= "\n\n" . __( '[Note: this result was cut short — the model hit its token limit before finishing.]', 'agentstructor' );
@@ -2082,6 +2110,21 @@ class Agent_Controller {
 		// 1200 chars is plenty for UI + audit without bloating the DB.
 		// The full response is still stored in details/response columns.
 		return substr( $content, 0, 1200 );
+	}
+
+	/**
+	 * Whether a tool-free assistant turn carries no answer at all.
+	 *
+	 * A length-truncated turn is not empty: the caller appends a truncation
+	 * notice so the user still sees why it stopped.
+	 *
+	 * @param array $assistant_message The message array from the LLM response.
+	 * @param array $choice            The choice the message came from.
+	 * @return bool
+	 */
+	private static function is_empty_reply( array $assistant_message, array $choice ): bool {
+		return '' === trim( (string) ( $assistant_message['content'] ?? '' ) )
+			&& 'length' !== ( $choice['finish_reason'] ?? '' );
 	}
 
 	/**

@@ -1179,6 +1179,14 @@
                                 } else if (evt.type === 'gate_decision') {
                                     livePane.gate(evt.tool, evt.decision);
                                 } else if (evt.type === 'end') {
+                                    // Never leave a blank bubble: a reply with no text,
+                                    // no tool output and no pending proposal is a failure.
+                                    const isBlank = !evt.response && !accText && !evt.pending_proposal
+                                        && !(evt.cards && evt.cards.length);
+                                    if (isBlank) {
+                                        evt.response = skillLabel('errorEmptyResponse', 'The agent returned an empty response. Please try again.');
+                                        evt.error = true;
+                                    }
                                     const finalText = evt.response || accText;
                                     livePane.finish();
                                     if (contentDiv && evt.response) {

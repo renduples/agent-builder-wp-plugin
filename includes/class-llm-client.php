@@ -569,6 +569,7 @@ class LLM_Client {
 		$acc_text       = '';
 		$tool_calls_raw = array();
 		$finish_reason  = 'stop';
+		$stream_error   = null;
 		$usage          = array(
 			'prompt_tokens'     => 0,
 			'completion_tokens' => 0,
@@ -577,6 +578,7 @@ class LLM_Client {
 
 		$curl_hook = function ( $handle ) use (
 			&$stream_buf,
+			&$stream_error,
 			$on_token,
 			&$acc_text,
 			&$tool_calls_raw,
@@ -593,6 +595,7 @@ class LLM_Client {
 					$data
 				) use (
 					&$stream_buf,
+					&$stream_error,
 					$on_token,
 					&$acc_text,
 					&$tool_calls_raw,
@@ -619,6 +622,10 @@ class LLM_Client {
 							}
 							$chunk = json_decode( $json_str, true );
 							if ( ! is_array( $chunk ) ) {
+								continue;
+							}
+							if ( self::is_stream_error_chunk( $chunk ) ) {
+								$stream_error = $chunk;
 								continue;
 							}
 
@@ -675,6 +682,13 @@ class LLM_Client {
 
 		remove_action( 'http_api_curl', $curl_hook );
 
+		// A body that never passed through the cURL WRITEFUNCTION (another HTTP
+		// transport, or a pre_http_request short-circuit) is still SSE — parse it
+		// the same way instead of returning an empty reply.
+		if ( '' === $stream_buf && ! is_wp_error( $response ) ) {
+			$stream_buf = (string) wp_remote_retrieve_body( $response );
+		}
+
 		// Drain any remaining SSE data in $stream_buf not terminated by \n\n.
 		// The agentic/Google proxy sometimes closes the connection without a trailing
 		// double-newline, leaving the final frame unparsed and $acc_text empty.
@@ -691,6 +705,10 @@ class LLM_Client {
 				}
 				$chunk = json_decode( $json_str, true );
 				if ( ! is_array( $chunk ) ) {
+					continue;
+				}
+				if ( self::is_stream_error_chunk( $chunk ) ) {
+					$stream_error = $chunk;
 					continue;
 				}
 				if ( 'anthropic' === $resp_format ) {
@@ -741,6 +759,20 @@ class LLM_Client {
 			return new \WP_Error( 'api_error', $fallback_msg, array( 'status' => $status ) );
 		}
 
+		// Providers and the hosted relay report failures that happen after the
+		// stream opened (e.g. Vertex rejecting a tool schema) as an SSE error
+		// frame on an HTTP 200. Ignoring it produced an empty, error-free reply.
+		if ( null !== $stream_error ) {
+			$err          = $stream_error['error'] ?? array();
+			$msg          = is_array( $err ) ? (string) ( $err['message'] ?? '' ) : (string) $err;
+			$code         = is_array( $err ) && is_numeric( $err['code'] ?? null ) ? (int) $err['code'] : 0;
+			$fallback_msg = '' !== $msg ? $msg : 'Streaming request failed.';
+			if ( 402 === $code || 429 === $code ) {
+				return self::quota_error( $code, $msg );
+			}
+			return new \WP_Error( 'api_error', $fallback_msg, array( 'status' => $code ? $code : 500 ) );
+		}
+
 		if ( 0 === $usage['total_tokens'] ) {
 			$usage['total_tokens'] = $usage['prompt_tokens'] + $usage['completion_tokens'];
 		}
@@ -780,6 +812,19 @@ class LLM_Client {
 			),
 			'usage'   => $usage,
 		);
+	}
+
+	/**
+	 * Whether a decoded SSE chunk is an error frame rather than content.
+	 *
+	 * OpenAI-compatible, Google and the hosted relay send {"error": {...}};
+	 * Anthropic sends {"type": "error", "error": {...}}.
+	 *
+	 * @param array $chunk Decoded JSON chunk.
+	 * @return bool
+	 */
+	private static function is_stream_error_chunk( array $chunk ): bool {
+		return ! empty( $chunk['error'] ) || 'error' === ( $chunk['type'] ?? '' );
 	}
 
 	/**
@@ -1932,6 +1977,36 @@ class LLM_Client {
 	}
 
 	/**
+	 * Give every array node in a property schema an `items` schema.
+	 *
+	 * Gemini rejects the whole request ("items: missing field") and OpenAI
+	 * rejects the tool when any array lacks `items`, so one loose tool schema
+	 * silently breaks every chat for the agent that carries it. Untyped items
+	 * fall back to strings, the common case for list parameters.
+	 *
+	 * @param array $def Property schema.
+	 * @return array
+	 */
+	private static function ensure_array_items( array $def ): array {
+		$type     = $def['type'] ?? null;
+		$is_array = 'array' === $type || ( is_array( $type ) && in_array( 'array', $type, true ) );
+		if ( $is_array && ( ! isset( $def['items'] ) || ! is_array( $def['items'] ) || array() === $def['items'] ) ) {
+			$def['items'] = array( 'type' => 'string' );
+		}
+		if ( isset( $def['items'] ) && is_array( $def['items'] ) ) {
+			$def['items'] = self::ensure_array_items( $def['items'] );
+		}
+		if ( isset( $def['properties'] ) && is_array( $def['properties'] ) ) {
+			foreach ( $def['properties'] as $key => $child ) {
+				if ( is_array( $child ) ) {
+					$def['properties'][ $key ] = self::ensure_array_items( $child );
+				}
+			}
+		}
+		return $def;
+	}
+
+	/**
 	 * Normalize a tool parameter schema into valid JSON Schema for function calling.
 	 *
 	 * Handles:
@@ -2050,7 +2125,7 @@ class LLM_Client {
 			if ( $for_google ) {
 				unset( $def['additionalProperties'] );
 			}
-			$clean_props[ $name ] = $def;
+			$clean_props[ $name ] = self::ensure_array_items( $def );
 		}
 
 		$schema = array(
