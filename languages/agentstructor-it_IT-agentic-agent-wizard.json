@@ -1,0 +1,222 @@
+{
+  "translation-revision-date": "2026-08-20 16:00+0000",
+  "generator": "WP-CLI/2.12.0",
+  "source": "src/agent-wizard/index.js",
+  "domain": "messages",
+  "locale_data": {
+    "messages": {
+      "": {
+        "domain": "messages",
+        "lang": "it_IT",
+        "plural-forms": "nplurals=2; plural=(n != 1);"
+      },
+      "Description": [
+        "Descrizione"
+      ],
+      "Tools": [
+        "Strumenti"
+      ],
+      "Add Knowledge": [
+        "Aggiungi conoscenza"
+      ],
+      "Model": [
+        "Modello"
+      ],
+      "Back": [
+        "Indietro"
+      ],
+      "Loading…": [
+        "Caricamento…"
+      ],
+      "Name": [
+        "Nome"
+      ],
+      "Category": [
+        "Categoria"
+      ],
+      "Instructions": [
+        "Istruzioni"
+      ],
+      "Knowledge": [
+        "Conoscenza"
+      ],
+      "Basics": [
+        "Informazioni di base"
+      ],
+      "Persona": [
+        "Personalità"
+      ],
+      "Capabilities": [
+        "Capacità"
+      ],
+      "Review": [
+        "Riepilogo"
+      ],
+      "Could not load the wizard.": [
+        "Impossibile caricare la procedura guidata."
+      ],
+      "Could not load your content.": [
+        "Impossibile caricare i tuoi contenuti."
+      ],
+      "%s pages/posts": [
+        "%s pagine/articoli"
+      ],
+      "%s files": [
+        "%s file"
+      ],
+      "(none)": [
+        "(nessuno)"
+      ],
+      "Something went wrong creating the agent.": [
+        "Si è verificato un problema durante la creazione dell'agente."
+      ],
+      "%s is ready!": [
+        "%s è pronto!"
+      ],
+      "Your agent has been created and activated. Add knowledge to make it smarter, or start chatting right away.": [
+        "Il tuo agente è stato creato e attivato. Aggiungi conoscenza per renderlo più efficace, oppure inizia subito a chattare."
+      ],
+      "Your agent was created. Activate it from the Agents page, then add knowledge or start chatting.": [
+        "Il tuo agente è stato creato. Attivalo dalla pagina Agenti, quindi aggiungi conoscenza o inizia a chattare."
+      ],
+      "Training your agent on your knowledge… %s": [
+        "Addestramento dell'agente sulla tua conoscenza… %s"
+      ],
+      "Knowledge training finished — %s sources trained.": [
+        "Addestramento della conoscenza completato — %s fonti addestrate."
+      ],
+      "A safe set of read-only tools was added so your agent works right away. You can change its tools later from the Agents page.": [
+        "È stato aggiunto un set sicuro di strumenti di sola lettura affinché il tuo agente funzioni subito. Potrai modificarne gli strumenti in seguito dalla pagina Agenti."
+      ],
+      "Open Chat": [
+        "Apri la chat"
+      ],
+      "Publish This Agent": [
+        "Pubblica questo agente"
+      ],
+      "Fine-tune Persona": [
+        "Perfeziona la personalità"
+      ],
+      "View all Agents": [
+        "Visualizza tutti gli agenti"
+      ],
+      "Agent name": [
+        "Nome dell'agente"
+      ],
+      "A friendly name, e.g. \"Support Helper\".": [
+        "Un nome semplice, es. “Assistente supporto”."
+      ],
+      "Identifier (slug)": [
+        "Identificativo (slug)"
+      ],
+      "Used in URLs and files. Auto-filled from the name.": [
+        "Usato negli URL e nei file. Compilato automaticamente a partire dal nome."
+      ],
+      "What does this agent do?": [
+        "Che cosa fa questo agente?"
+      ],
+      "A short description shown in the agents list.": [
+        "Una breve descrizione mostrata nell'elenco degli agenti."
+      ],
+      "Icon": [
+        "Icona"
+      ],
+      "Instructions (system prompt)": [
+        "Istruzioni (system prompt)"
+      ],
+      "Describe how the agent should behave, its tone, and what it should focus on.": [
+        "Descrivi come deve comportarsi l'agente, il suo tono e su cosa deve concentrarsi."
+      ],
+      "Welcome message (optional)": [
+        "Messaggio di benvenuto (facoltativo)"
+      ],
+      "The greeting shown when a chat starts.": [
+        "Il saluto mostrato all'avvio di una chat."
+      ],
+      "Suggested prompts (optional)": [
+        "Prompt suggeriti (facoltativo)"
+      ],
+      "e.g. Summarize my latest posts": [
+        "es. Riassumi i miei ultimi articoli"
+      ],
+      "+ Add another prompt": [
+        "+ Aggiungi un altro prompt"
+      ],
+      "AI provider": [
+        "Provider AI"
+      ],
+      "(needs API key)": [
+        "(richiede una chiave API)"
+      ],
+      "Leave as-is to use your site default.": [
+        "Lascia invariato per usare l'impostazione predefinita del sito."
+      ],
+      "Autonomy": [
+        "Autonomia"
+      ],
+      "Supervised — asks before taking actions (recommended)": [
+        "Supervisionato — chiede conferma prima di eseguire azioni (consigliato)"
+      ],
+      "Autonomous — acts on its own": [
+        "Autonomo — agisce da solo"
+      ],
+      "Disabled — replies only, never acts": [
+        "Disattivato — risponde soltanto, non agisce mai"
+      ],
+      "This only controls how often the agent pauses to ask you. Higher-risk actions still queue for your approval, and the riskiest actions are always blocked, no matter which autonomy level you pick.": [
+        "Questa impostazione controlla solo la frequenza con cui l'agente si ferma per chiederti conferma. Le azioni a rischio più elevato restano comunque in attesa della tua approvazione e le azioni più rischiose sono sempre bloccate, indipendentemente dal livello di autonomia scelto."
+      ],
+      "Tools this agent can use (optional)": [
+        "Strumenti che questo agente può usare (facoltativo)"
+      ],
+      "If you don’t pick any, a safe set of read-only tools is added so your agent works right away.": [
+        "Se non ne selezioni nessuno, verrà aggiunto un set sicuro di strumenti di sola lettura affinché il tuo agente funzioni subito."
+      ],
+      "Optionally give your agents knowledge to draw on. Selected pages, posts and files are embedded into your shared Vector Store after the agent is created — training runs in the background.": [
+        "Se vuoi, puoi fornire ai tuoi agenti una conoscenza a cui attingere. Le pagine, gli articoli e i file selezionati vengono incorporati nel tuo Vector Store condiviso dopo la creazione dell'agente — l'addestramento viene eseguito in background."
+      ],
+      "Upload files (PDF or text)": [
+        "Carica file (PDF o testo)"
+      ],
+      "%s file(s) selected.": [
+        "%s file selezionati."
+      ],
+      "Train on your site content": [
+        "Addestra sui contenuti del tuo sito"
+      ],
+      "Loading your content…": [
+        "Caricamento dei tuoi contenuti…"
+      ],
+      "No published pages or posts found.": [
+        "Nessuna pagina o articolo pubblicato trovato."
+      ],
+      "trained": [
+        "addestrato"
+      ],
+      "Identifier": [
+        "Identificativo"
+      ],
+      "Provider / Model": [
+        "Provider / Modello"
+      ],
+      "Continue": [
+        "Continua"
+      ],
+      "Create agent": [
+        "Crea agente"
+      ],
+      "Wizard steps": [
+        ""
+      ],
+      "Suggested prompt %s": [
+        ""
+      ],
+      "Add knowledge later from the Knowledge page.": [
+        ""
+      ],
+      "Every agent can look up the facts, policies and FAQs in your Knowledge wiki.": [
+        ""
+      ]
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "translation-revision-date": "2026-08-20 16:00+0000",
+  "generator": "WP-CLI/2.12.0",
+  "source": "src/dashboard-activity/index.js",
+  "domain": "messages",
+  "locale_data": {
+    "messages": {
+      "": {
+        "domain": "messages",
+        "lang": "ru_RU",
+        "plural-forms": "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
+      },
+      "Activity": [
+        "Активность"
+      ],
+      "View Activity →": [
+        "Показать активность →"
+      ],
+      "Could not load activity.": [
+        "Не удалось загрузить активность."
+      ],
+      "Total Actions": [
+        "Всего действий"
+      ],
+      "Tokens Used": [
+        "Использовано токенов"
+      ],
+      "Est. Cost": [
+        "Прибл. стоимость"
+      ],
+      "Estimated Usage": [
+        "Оценка использования"
+      ],
+      "Active Agents": [
+        "Активные агенты"
+      ],
+      "Uploaded Agents": [
+        "Загруженные агенты"
+      ],
+      "User-Created Agents": [
+        "Агенты, созданные пользователями"
+      ]
+    }
+  }
+}

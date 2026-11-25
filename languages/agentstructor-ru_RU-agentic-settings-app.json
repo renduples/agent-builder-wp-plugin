@@ -1,0 +1,642 @@
+{
+  "translation-revision-date": "2026-08-20 16:00+0000",
+  "generator": "WP-CLI/2.12.0",
+  "source": "src/settings-app/index.js",
+  "domain": "messages",
+  "locale_data": {
+    "messages": {
+      "": {
+        "domain": "messages",
+        "lang": "ru_RU",
+        "plural-forms": "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
+      },
+      "AI Agents": [
+        "ИИ-агенты"
+      ],
+      "Agents": [
+        "Агенты"
+      ],
+      "Agent": [
+        "Агент"
+      ],
+      "Actions": [
+        "Действия"
+      ],
+      "Status": [
+        "Статус"
+      ],
+      "Basic": [
+        "Основные"
+      ],
+      "Advanced": [
+        "Дополнительно"
+      ],
+      "No agents installed.": [
+        "Агенты не установлены."
+      ],
+      "Users": [
+        "Пользователи"
+      ],
+      "Enabled": [
+        "Включено"
+      ],
+      "Edit": [
+        "Изменить"
+      ],
+      "No active agents.": [
+        "Активных агентов нет."
+      ],
+      "Security": [
+        "Безопасность"
+      ],
+      "Add Provider": [
+        "Добавить провайдера"
+      ],
+      "Connected": [
+        "Подключено"
+      ],
+      "Not connected": [
+        "Не подключено"
+      ],
+      "Default": [
+        "По умолчанию"
+      ],
+      "Set Default": [
+        "Сделать основным"
+      ],
+      "Service": [
+        "Сервис"
+      ],
+      "Base URL": [
+        "Базовый URL"
+      ],
+      "Default:": [
+        "По умолчанию:"
+      ],
+      "Model": [
+        "Модель"
+      ],
+      "Terms of Service": [
+        "Условия использования"
+      ],
+      "Key": [
+        "Ключ"
+      ],
+      "Settings": [
+        "Настройки"
+      ],
+      "Interface": [
+        "Интерфейс"
+      ],
+      "Providers": [
+        "Провайдеры"
+      ],
+      "APIs": [
+        "API"
+      ],
+      "Endpoints": [
+        "Конечные точки"
+      ],
+      "Search settings…": [
+        "Поиск по настройкам…"
+      ],
+      "What should agents call administrators?": [
+        "Как агентам обращаться к администраторам?"
+      ],
+      "What should agents call frontend visitors?": [
+        "Как агентам обращаться к посетителям сайта?"
+      ],
+      "Test": [
+        "Проверка"
+      ],
+      "Supervised": [
+        "Контролируемый"
+      ],
+      "Autonomous": [
+        "Автономный"
+      ],
+      "Loading…": [
+        "Загрузка…"
+      ],
+      "Name": [
+        "Название"
+      ],
+      "Instructions": [
+        "Инструкции"
+      ],
+      "Memory": [
+        "Память"
+      ],
+      "Knowledge": [
+        "Знания"
+      ],
+      "Settings control how agents behave on this site. Changes are stored locally and take effect for new conversations.": [
+        "Настройки определяют поведение агентов на этом сайте. Изменения сохраняются локально и применяются к новым диалогам."
+      ],
+      "Need help?": [
+        "Нужна помощь?"
+      ],
+      "Visit our Support Center": [
+        "Перейти в центр поддержки"
+      ],
+      "Documentation": [
+        "Документация"
+      ],
+      "Privacy Policy": [
+        "Политика конфиденциальности"
+      ],
+      "GDPR Policy": [
+        "Политика GDPR"
+      ],
+      "MCP": [
+        "MCP"
+      ],
+      "Copied!": [
+        "Скопировано!"
+      ],
+      "Copy": [
+        "Копировать"
+      ],
+      "Provider": [
+        "Провайдер"
+      ],
+      "Test failed.": [
+        "Тест не пройден."
+      ],
+      "Testing…": [
+        "Проверка…"
+      ],
+      "EMERGENCY STOP: deactivate and log agent states, cancel all jobs, and disconnect providers. Continue?": [
+        "АВАРИЙНАЯ ОСТАНОВКА: деактивировать агентов с записью их состояний в журнал, отменить все задачи и отключить провайдеров. Продолжить?"
+      ],
+      "Turn off emergency stop?": [
+        "Отключить аварийную остановку?"
+      ],
+      "Disable All Agents": [
+        "Отключить всех агентов"
+      ],
+      "Emergency stop": [
+        "Аварийная остановка"
+      ],
+      ": deactivate and log agent states, cancels all jobs and disconnects providers.": [
+        ": деактивирует агентов с записью их состояний в журнал, отменяет все задачи и отключает провайдеров."
+      ],
+      "Reset every screen back to your default interface? Any screen you switched individually will lose that override.": [
+        "Сбросить все экраны к интерфейсу по умолчанию? Все экраны, переключённые Вами отдельно, потеряют свои индивидуальные настройки."
+      ],
+      "Reset all screens to my default": [
+        "Сбросить все экраны к моему значению по умолчанию"
+      ],
+      "Show the Getting Started checklist on the dashboard": [
+        "Показывать список «Начало работы» в консоли"
+      ],
+      "Chat font": [
+        "Шрифт чата"
+      ],
+      "Use theme accent colour": [
+        "Использовать акцентный цвет темы"
+      ],
+      "Accent colour": [
+        "Акцентный цвет"
+      ],
+      "Could not load settings.": [
+        "Не удалось загрузить настройки."
+      ],
+      "Default interface mode": [
+        "Режим интерфейса по умолчанию"
+      ],
+      "How agents address people": [
+        "Как агенты обращаются к людям"
+      ],
+      "Site knowledge and standing guidance are under": [
+        "Знания о сайте и постоянные указания находятся в разделе"
+      ],
+      "Per-agent personality is under Knowledge → Instructions.": [
+        "Личность отдельного агента настраивается в разделе «Знания → Инструкции»."
+      ],
+      "Leave blank to use the WordPress display name.": [
+        "Оставьте поле пустым, чтобы использовать отображаемое имя WordPress."
+      ],
+      "Chat theme": [
+        "Тема чата"
+      ],
+      "Visual theme for admin chat and frontend shortcodes. Click a preview to select.": [
+        "Визуальная тема для чата в консоли и шорткодов на сайте. Нажмите на превью, чтобы выбрать."
+      ],
+      "AI Agent": [
+        "ИИ-агент"
+      ],
+      "Hello! How can I help?": [
+        "Здравствуйте! Чем я могу помочь?"
+      ],
+      "Update my homepage": [
+        "Обновить мою главную страницу"
+      ],
+      "Configure the AI providers available on this site. Only a connected provider can be set as the site default.": [
+        "Настройте провайдеров ИИ, доступных на этом сайте. Провайдером по умолчанию можно назначить только подключённого провайдера."
+      ],
+      "Slug": [
+        "Ярлык"
+      ],
+      "API keys: use Edit on a provider. Setting a default updates the global provider and model used by agents.": [
+        "Ключи API: нажмите «Изменить» у нужного провайдера. Назначение провайдера по умолчанию обновляет глобального провайдера и модель, используемые агентами."
+      ],
+      "Default agent mode": [
+        "Режим агента по умолчанию"
+      ],
+      "Read-only": [
+        "Только чтение"
+      ],
+      "Message scanning": [
+        "Сканирование сообщений"
+      ],
+      "Require chat consent": [
+        "Требовать согласие на чат"
+      ],
+      "Consent text": [
+        "Текст согласия"
+      ],
+      "Conversation retention (days)": [
+        "Хранение переписок (дней)"
+      ],
+      "Audit log retention (days)": [
+        "Хранение журнала аудита (дней)"
+      ],
+      "Refresh model catalog from Agentic": [
+        "Обновить каталог моделей с Agentic"
+      ],
+      "Off by default. When on, a daily cron fetches model names and list prices from agentic-plugin.com. BYOK providers work without this; enable it only if you want the curated catalog.": [
+        "По умолчанию выключено. Если включено, ежедневная задача cron загружает названия моделей и каталожные цены с agentic-plugin.com. Провайдеры BYOK работают без этого; включайте, только если нужен отобранный каталог."
+      ],
+      "Request Rate Limits": [
+        "Ограничения частоты запросов"
+      ],
+      "IP-based throttle applied before role-based daily quotas. Protects against rapid-fire requests.": [
+        "Ограничение по IP-адресу применяется до дневных квот по ролям. Защищает от шквала запросов."
+      ],
+      "Authenticated users (requests per minute)": [
+        "Авторизованные пользователи (запросов в минуту)"
+      ],
+      "Anonymous visitors (requests per minute)": [
+        "Анонимные посетители (запросов в минуту)"
+      ],
+      "Control who can administer the plugin and use AI agents.": [
+        "Определите, кто может администрировать плагин и использовать ИИ-агентов."
+      ],
+      "Control which WordPress roles can administer the plugin and interact with AI agents. Administrators always retain full access.": [
+        "Определите, какие роли WordPress могут управлять плагином и взаимодействовать с ИИ-агентами. Администраторы всегда сохраняют полный доступ."
+      ],
+      "These rules apply site-wide. A user needs at least one ticked box to access the corresponding feature. Removing a role from all plugin privileges will hide the AgentStructor menu from that role entirely.": [
+        "Эти правила действуют на всём сайте. Чтобы получить доступ к соответствующей функции, у пользователя должен быть отмечен хотя бы один флажок. Если снять с роли все права плагина, меню AgentStructor будет полностью скрыто от этой роли."
+      ],
+      "Plugin Administration": [
+        "Администрирование плагина"
+      ],
+      "Who can access and configure the AgentStructor admin pages.": [
+        "Кто может открывать и настраивать административные страницы AgentStructor."
+      ],
+      "Permission": [
+        "Право доступа"
+      ],
+      "Administrators always have full access": [
+        "Администраторы всегда имеют полный доступ"
+      ],
+      "Who can chat with and interact with installed AI agents, and how much they may use per day.": [
+        "Кто может общаться и взаимодействовать с установленными ИИ-агентами и сколько может использовать их в день."
+      ],
+      "Permission / Limit": [
+        "Право доступа / лимит"
+      ],
+      "Visitor": [
+        "Посетитель"
+      ],
+      "Not logged in": [
+        "Не авторизован"
+      ],
+      "Allow non-logged-in visitors to use frontend chat": [
+        "Разрешить неавторизованным посетителям использовать чат на сайте"
+      ],
+      "Daily Limits": [
+        "Дневные лимиты"
+      ],
+      "0 = unlimited, resets at midnight UTC. Administrators are never limited.": [
+        "0 = без ограничений, сброс в полночь по UTC. Для администраторов ограничения не действуют."
+      ],
+      "Queries / day": [
+        "Запросов в день"
+      ],
+      "Max AI chat messages per user per day.": [
+        "Максимальное количество сообщений в чате с ИИ на пользователя в день."
+      ],
+      "Tokens / day": [
+        "Токенов в день"
+      ],
+      "Max AI tokens consumed per user per day.": [
+        "Максимальное количество токенов ИИ, потребляемых одним пользователем в день."
+      ],
+      "How enforcement works: these settings control WordPress admin menu visibility, admin bar chat access, the REST chat API, and AJAX task triggers. Unchecked roles are blocked at the server, not just hidden in the UI. Request rate limits are under Security.": [
+        "Как это работает: эти настройки управляют видимостью меню в консоли WordPress, доступом к чату на панели администратора, REST API чата и запуском задач через AJAX. Роли без отметок блокируются на сервере, а не просто скрываются в интерфейсе. Ограничения частоты запросов находятся в разделе «Безопасность»."
+      ],
+      "Persistent key-value memory agents use across conversations.": [
+        "Постоянная память типа «ключ — значение», которую агенты используют между переписками."
+      ],
+      "Default memory TTL (days)": [
+        "Время хранения памяти по умолчанию (дней)"
+      ],
+      "0 = never expires": [
+        "0 = не истекает никогда"
+      ],
+      "Enable local browser memory": [
+        "Включить локальную память браузера"
+      ],
+      "(default)": [
+        "(по умолчанию)"
+      ],
+      "Chat capabilities and per-agent provider/model. Set the site default provider on the Providers tab. Theme is under Interface.": [
+        "Возможности чата и провайдер/модель для каждого агента. Провайдер сайта по умолчанию задаётся на вкладке «Провайдеры». Тема находится в разделе «Интерфейс»."
+      ],
+      "Chat features": [
+        "Возможности чата"
+      ],
+      "Features available in agent chat.": [
+        "Функции, доступные в чате с агентом."
+      ],
+      "Audio input": [
+        "Голосовой ввод"
+      ],
+      "Text-to-speech": [
+        "Синтез речи"
+      ],
+      "Vision / image input": [
+        "Распознавание изображений"
+      ],
+      "Hide “Powered by AgentStructor” branding": [
+        "Скрыть подпись «Работает на AgentStructor»"
+      ],
+      "On by default. Uncheck only if you want a small credit line in the chat footer.": [
+        "По умолчанию включено. Снимите флажок, только если хотите небольшую строку благодарности в подвале чата."
+      ],
+      "Active agent overrides": [
+        "Переопределения для активных агентов"
+      ],
+      "Each row starts on the site default provider and model (Providers tab). Change only the agents that need a different setup.": [
+        "Каждая строка изначально использует провайдера и модель сайта по умолчанию (вкладка «Провайдеры»). Изменяйте только тех агентов, которым нужна другая конфигурация."
+      ],
+      "provider": [
+        "провайдер"
+      ],
+      "model": [
+        "модель"
+      ],
+      "Customise greetings and personality notes per agent.": [
+        "Настройте приветствия и заметки о личности для каждого агента."
+      ],
+      "Select agent": [
+        "Выберите агента"
+      ],
+      "Welcome message": [
+        "Приветственное сообщение"
+      ],
+      "Persona notes": [
+        "Заметки о персоне"
+      ],
+      "Response style": [
+        "Стиль ответов"
+      ],
+      "Third-party API keys used by agent tools.": [
+        "Ключи API сторонних сервисов, используемые инструментами агентов."
+      ],
+      "Get a key": [
+        "Получить ключ"
+      ],
+      "Configured": [
+        "Настроено"
+      ],
+      "Not configured": [
+        "Не настроено"
+      ],
+      "REST endpoints for integrations.": [
+        "Конечные точки REST для интеграций."
+      ],
+      "Namespace": [
+        "Пространство имён"
+      ],
+      "Agentic Services": [
+        "Agentic Services"
+      ],
+      "Base URLs the plugin calls for AI chat, knowledge search, and media generation. Leave these on their defaults unless you’re self-hosting a proxy or support asked you to change one.": [
+        "Базовые URL, к которым плагин обращается для чата с ИИ, поиска по знаниям и генерации медиафайлов. Оставьте значения по умолчанию, если только Вы не размещаете собственный прокси-сервер или служба поддержки не попросила их изменить."
+      ],
+      "Reset to default": [
+        "Сбросить к значению по умолчанию"
+      ],
+      "Agent endpoints": [
+        "Конечные точки агентов"
+      ],
+      "Each agent has its own MCP URL, scoped to only the tools that agent is allowed to use.": [
+        "У каждого агента свой MCP URL, ограниченный только теми инструментами, которые этому агенту разрешено использовать."
+      ],
+      "MCP URL": [
+        "MCP URL"
+      ],
+      "Ready": [
+        "Готов"
+      ],
+      "Could not load this settings panel.": [
+        "Не удалось загрузить эту панель настроек."
+      ],
+      "Settings saved with warnings:": [
+        "Настройки сохранены с предупреждениями:"
+      ],
+      "Could not save settings.": [
+        "Не удалось сохранить настройки."
+      ],
+      "Loading settings…": [
+        "Загрузка настроек…"
+      ],
+      "Settings unavailable.": [
+        "Настройки недоступны."
+      ],
+      "This tab is available via the classic view or an add-on.": [
+        "Эта вкладка доступна в классическом представлении или через дополнение."
+      ],
+      "Agent activity email": [
+        ""
+      ],
+      "Off": [
+        ""
+      ],
+      "Advanced settings": [
+        ""
+      ],
+      "Hide advanced settings": [
+        ""
+      ],
+      "Starting point for screens you have not switched individually. Basic is guided and uses plain language; Advanced shows every control.": [
+        ""
+      ],
+      "Agents propose actions for you to approve before anything changes. Recommended for most sites.": [
+        ""
+      ],
+      "Agents act immediately without waiting for your OK. Use only if you trust them on this site.": [
+        ""
+      ],
+      "Agents can chat but cannot change anything on the site.": [
+        ""
+      ],
+      "Blocks common injection patterns and flags personal data in chat messages.": [
+        ""
+      ],
+      "Ask visitors to agree before chatting. Required in some regions.": [
+        ""
+      ],
+      "Daily digest": [
+        ""
+      ],
+      "Instant": [
+        ""
+      ],
+      "How administrators are emailed about agent activity. Users can opt out individually from their own profile.": [
+        ""
+      ],
+      "How long to keep chat history. 0 means keep forever.": [
+        ""
+      ],
+      "The Model Context Protocol (MCP) lets AI apps you connect yourself (Claude Desktop, Cursor, Grok and others) talk directly to this site and use an agent's tools. MCP is off for every agent until an administrator turns it on below.": [
+        ""
+      ],
+      "Turning MCP on for an agent lets any AI app you connect act on this site with the permissions of the WordPress user whose Application Password it uses. Only enable it for agents you need, and only connect apps you trust.": [
+        ""
+      ],
+      "Enable MCP: %s": [
+        ""
+      ],
+      "Never connected": [
+        ""
+      ],
+      "Connecting an AI app": [
+        ""
+      ],
+      "Turn on MCP for the agent you want to use, above.": [
+        ""
+      ],
+      "Create an Application Password in your own WordPress profile (Users > Profile > Application Passwords). AgentStructor never creates or stores one for you.": [
+        ""
+      ],
+      "Open your profile": [
+        ""
+      ],
+      "In your AI app, add the agent's MCP URL and sign in with your WordPress username and that Application Password.": [
+        ""
+      ],
+      "The app can only use the tools that agent is allowed to use, limited to what your WordPress user may do. High-risk tools are never available over MCP, and actions that normally need your approval still wait for it. To disconnect an app, revoke its Application Password in your profile or turn MCP off for the agent.": [
+        ""
+      ],
+      "These actions need your approval before they run. Requests from an AI app appear in Approvals:": [
+        ""
+      ],
+      "Open Approvals": [
+        ""
+      ],
+      "Saving…": [
+        "Сохранение…"
+      ],
+      "Settings saved.": [
+        "Настройки сохранены."
+      ],
+      "Save changes": [
+        "Сохранить изменения"
+      ],
+      "Only changes this screen. Other screens and your site-wide default (Settings → Interface) are unaffected.": [
+        "Изменяет только этот экран. Другие экраны и значение по умолчанию для всего сайта (Настройки → Интерфейс) останутся без изменений."
+      ],
+      "More info": [
+        "Подробнее"
+      ],
+      "Approve": [
+        "Подтвердить"
+      ],
+      "Reject": [
+        "Отклонить"
+      ],
+      "Check the Agents page": [
+        "Откройте страницу «Агенты»"
+      ],
+      "Send": [
+        "Отправить"
+      ],
+      "Connection error. Please try again.": [
+        "Ошибка подключения. Попробуйте ещё раз."
+      ],
+      "Title": [
+        "Заголовок"
+      ],
+      "Deny": [
+        "Запретить"
+      ],
+      "Something went wrong.": [
+        "Что-то пошло не так."
+      ],
+      "Try asking": [
+        "Попробуйте спросить"
+      ],
+      "Denied — no change made.": [
+        "Запрещено — изменения не внесены."
+      ],
+      "Done — change applied.": [
+        "Готово — изменение применено."
+      ],
+      "Needs Your Approval": [
+        "Требуется ваше подтверждение"
+      ],
+      "Proposed Change": [
+        "Предлагаемое изменение"
+      ],
+      "The agent wants to make a change.": [
+        "Агент хочет внести изменение."
+      ],
+      "Hide Diff": [
+        "▼ Скрыть различия"
+      ],
+      "Show Diff": [
+        "▶ Показать различия"
+      ],
+      "Allow Once": [
+        "Разрешить один раз"
+      ],
+      "Allow this Session": [
+        "Разрешить в этой сессии"
+      ],
+      "Always Allow": [
+        "Всегда разрешать"
+      ],
+      "This assistant": [
+        "Этот агент"
+      ],
+      "is still activating.": [
+        "ещё активируется."
+      ],
+      "is thinking…": [
+        "думает…"
+      ],
+      "Ask": [
+        "Спросить"
+      ],
+      "Post type": [
+        ""
+      ],
+      "Post": [
+        ""
+      ],
+      "Content preview": [
+        ""
+      ],
+      "Show full content": [
+        ""
+      ],
+      "Show less": [
+        ""
+      ]
+    }
+  }
+}

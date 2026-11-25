@@ -1,0 +1,411 @@
+{
+  "translation-revision-date": "2026-08-20 16:00+0000",
+  "generator": "WP-CLI/2.12.0",
+  "source": "src/dashboard-app/index.js",
+  "domain": "messages",
+  "locale_data": {
+    "messages": {
+      "": {
+        "domain": "messages",
+        "lang": "ja",
+        "plural-forms": "nplurals=1; plural=0;"
+      },
+      "Active": [
+        "有効"
+      ],
+      "Status": [
+        "ステータス"
+      ],
+      "Basic": [
+        "基本"
+      ],
+      "Advanced": [
+        "詳細"
+      ],
+      "Saving…": [
+        "保存中…"
+      ],
+      "Comments": [
+        "コメント"
+      ],
+      "Media": [
+        "メディア"
+      ],
+      "WooCommerce": [
+        "WooCommerce"
+      ],
+      "Cancel": [
+        "キャンセル"
+      ],
+      "Security": [
+        "セキュリティ"
+      ],
+      "Activity": [
+        "アクティビティ"
+      ],
+      "Default": [
+        "デフォルト"
+      ],
+      "Model": [
+        "モデル"
+      ],
+      "Terms of Service": [
+        "利用規約"
+      ],
+      "Health": [
+        "ヘルス"
+      ],
+      "Test": [
+        "テスト"
+      ],
+      "Version": [
+        "バージョン"
+      ],
+      "License": [
+        "ライセンス"
+      ],
+      "Need help?": [
+        "お困りですか？"
+      ],
+      "Visit our Support Center": [
+        "サポートセンターを見る"
+      ],
+      "Documentation": [
+        "ドキュメント"
+      ],
+      "Privacy Policy": [
+        "プライバシーポリシー"
+      ],
+      "GDPR Policy": [
+        "GDPR ポリシー"
+      ],
+      "Forms": [
+        "フォーム"
+      ],
+      "Maintenance": [
+        "メンテナンス"
+      ],
+      "Dismiss": [
+        "閉じる"
+      ],
+      "General": [
+        "一般"
+      ],
+      "Provider": [
+        "プロバイダー"
+      ],
+      "Test failed.": [
+        "テストに失敗しました。"
+      ],
+      "View Activity →": [
+        "アクティビティを表示 →"
+      ],
+      "Total Actions": [
+        "総アクション数"
+      ],
+      "Tokens Used": [
+        "使用トークン数"
+      ],
+      "Est. Cost": [
+        "推定コスト"
+      ],
+      "Estimated Usage": [
+        "推定使用量"
+      ],
+      "Active Agents": [
+        "有効なエージェント"
+      ],
+      "Uploaded Agents": [
+        "アップロードされたエージェント"
+      ],
+      "User-Created Agents": [
+        "ユーザー作成のエージェント"
+      ],
+      "The dashboard summarizes agents, approvals, activity, and providers at a glance.": [
+        "ダッシュボードでは、エージェント、承認、アクティビティ、プロバイダーを一目で確認できます。"
+      ],
+      "Drag to rearrange": [
+        "ドラッグして並べ替え"
+      ],
+      "Drag to rearrange dashboard card": [
+        "ドラッグしてダッシュボードカードを並べ替え"
+      ],
+      "Schema": [
+        "スキーマ"
+      ],
+      "Pending Jobs": [
+        "保留中のジョブ"
+      ],
+      "abandoned — auto-recovered": [
+        "中断 — 自動復旧しました"
+      ],
+      "Running Jobs": [
+        "実行中のジョブ"
+      ],
+      "stuck — auto-recovered": [
+        "停止 — 自動復旧しました"
+      ],
+      "Completed Jobs": [
+        "完了したジョブ"
+      ],
+      "Approvals & Backups": [
+        "承認とバックアップ"
+      ],
+      "View Approvals →": [
+        "承認を表示 →"
+      ],
+      "Pending Approvals": [
+        "承認待ち"
+      ],
+      "Completed Approvals": [
+        "完了した承認"
+      ],
+      "Files Backed Up": [
+        "バックアップ済みファイル"
+      ],
+      "DB Tables Backed Up": [
+        "バックアップ済み DB テーブル"
+      ],
+      "%s waiting for your OK.": [
+        "%s 件があなたの承認を待っています。"
+      ],
+      "Connected Providers": [
+        "接続済みプロバイダー"
+      ],
+      "Manage Providers →": [
+        "プロバイダーを管理 →"
+      ],
+      "No AI providers connected.": [
+        "接続されている AI プロバイダーはありません。"
+      ],
+      "Run the Setup Wizard": [
+        "セットアップウィザードを実行"
+      ],
+      "Testing…": [
+        "テストしています…"
+      ],
+      "EMERGENCY STOP: deactivate and log agent states, cancel all jobs, and disconnect providers. Continue?": [
+        "緊急停止: エージェントを無効化して状態を記録し、すべてのジョブをキャンセルし、プロバイダーの接続を解除します。続行しますか？"
+      ],
+      "Turn off emergency stop?": [
+        "緊急停止を解除しますか？"
+      ],
+      "Emergency stop restore finished with warnings:": [
+        "緊急停止からの復旧が警告付きで完了しました:"
+      ],
+      "Quick Actions": [
+        "クイックアクション"
+      ],
+      "Manage Actions →": [
+        "アクションを管理 →"
+      ],
+      "Configure now": [
+        "今すぐ設定"
+      ],
+      "Choose which links appear in Quick Actions. Setup Wizard is always available.": [
+        "クイックアクションに表示するリンクを選択してください。セットアップウィザードは常に利用できます。"
+      ],
+      "Required": [
+        "必須"
+      ],
+      "Save Quick Actions": [
+        "クイックアクションを保存"
+      ],
+      "Disable All Agents": [
+        "すべてのエージェントを無効化"
+      ],
+      "ACTIVE": [
+        "有効"
+      ],
+      "Emergency stop": [
+        "緊急停止"
+      ],
+      ": deactivate and log agent states, cancels all jobs and disconnects providers.": [
+        ": エージェントを無効化して状態を記録し、すべてのジョブをキャンセルして、プロバイダーの接続を解除します。"
+      ],
+      "Interface Settings": [
+        "インターフェース設定"
+      ],
+      "Manage Interface →": [
+        "インターフェースを管理 →"
+      ],
+      "Default interface:": [
+        "デフォルトのインターフェース:"
+      ],
+      "Used by any screen you have not set individually. Tools, Approvals, and Activity each have their own Basic/Advanced switch now.": [
+        "個別に設定していないすべての画面で使用されます。ツール、承認、アクティビティには、それぞれ独自の基本/詳細の切り替えがあります。"
+      ],
+      "Reset every screen back to your default interface? Any screen you switched individually will lose that override.": [
+        "すべての画面をデフォルトのインターフェースに戻しますか？個別に切り替えた画面は、その設定が失われます。"
+      ],
+      "Reset all screens to my default": [
+        "すべての画面をデフォルトに戻す"
+      ],
+      "Automatic Agent Updates": [
+        "エージェントの自動更新"
+      ],
+      "Keep installed agents updated automatically. Opt out any time.": [
+        "インストール済みのエージェントを自動で最新の状態に保ちます。いつでも解除できます。"
+      ],
+      "Getting Started": [
+        "はじめに"
+      ],
+      "%1$d of %2$d steps complete": [
+        "%2$d ステップ中 %1$d ステップ完了"
+      ],
+      "Could not load dashboard.": [
+        "ダッシュボードを読み込めませんでした。"
+      ],
+      "Loading dashboard…": [
+        "ダッシュボードを読み込んでいます…"
+      ],
+      "Dashboard unavailable.": [
+        "ダッシュボードを利用できません。"
+      ],
+      "Saving layout…": [
+        "レイアウトを保存しています…"
+      ],
+      "Reset layout": [
+        "レイアウトをリセット"
+      ],
+      "Drag ⋮⋮ to rearrange cards": [
+        "⋮⋮ をドラッグしてカードを並べ替え"
+      ],
+      "Emergency stop is ACTIVE": [
+        "緊急停止が有効です"
+      ],
+      "All agents are deactivated, jobs are cancelled, and LLM providers are disconnected. Chat and agent activation are blocked.": [
+        "すべてのエージェントが無効化され、ジョブはキャンセルされ、LLM プロバイダーの接続は解除されています。チャットとエージェントの有効化はブロックされています。"
+      ],
+      "Manage Interface": [
+        "インターフェースを管理"
+      ],
+      "Site Passport": [
+        ""
+      ],
+      "Tasks": [
+        ""
+      ],
+      "Plugin updates": [
+        ""
+      ],
+      "Store": [
+        ""
+      ],
+      "Performance": [
+        ""
+      ],
+      "Could not load checks.": [
+        ""
+      ],
+      "Could not save that change.": [
+        ""
+      ],
+      "Hide checks": [
+        ""
+      ],
+      "Configure checks": [
+        ""
+      ],
+      "Not applicable on this site.": [
+        ""
+      ],
+      "Could not load Site Brief.": [
+        ""
+      ],
+      "Scan failed.": [
+        ""
+      ],
+      "Could not update that card.": [
+        ""
+      ],
+      "Site Brief": [
+        ""
+      ],
+      "A read-only look at this site. Assign an agent to investigate a finding together — nothing changes until you agree.": [
+        ""
+      ],
+      "Scan this site": [
+        ""
+      ],
+      "No urgent items. Last scan %s.": [
+        ""
+      ],
+      "Scan again": [
+        ""
+      ],
+      "Assigned to %s on %s": [
+        ""
+      ],
+      "Open the recommended agent in chat with this finding, to investigate and fix it together": [
+        ""
+      ],
+      "Assign Agent": [
+        ""
+      ],
+      "Dismiss to hide this card. It will not return unless the finding changes.": [
+        ""
+      ],
+      "Not now leaves it for later. It may reappear on the next scan.": [
+        ""
+      ],
+      "Not now": [
+        ""
+      ],
+      "Show all (%d)": [
+        ""
+      ],
+      "Store this month: %1$s orders, %2$s %3$s.": [
+        ""
+      ],
+      "The version of AgentStructor’s database structure. Updates automatically when needed — you don’t need to do anything here.": [
+        ""
+      ],
+      "Open Safety Center →": [
+        ""
+      ],
+      "Open Tasks →": [
+        ""
+      ],
+      "Waiting on you": [
+        ""
+      ],
+      "No tasks running. Assign one and you’ll be pinged when it finishes.": [
+        ""
+      ],
+      "%s more — open Tasks to see them all.": [
+        ""
+      ],
+      "View Details →": [
+        ""
+      ],
+      "Site Score": [
+        ""
+      ],
+      "Not scanned yet": [
+        ""
+      ],
+      "Check how ready this site is for AI agents. The scan runs on this site only and changes nothing.": [
+        ""
+      ],
+      "Scanning…": [
+        ""
+      ],
+      "Scan now": [
+        ""
+      ],
+      "Fix now →": [
+        ""
+      ],
+      "All agents are stopped —": [
+        ""
+      ],
+      "resume in Safety Center": [
+        ""
+      ],
+      "Chat agent offline —": [
+        ""
+      ]
+    }
+  }
+}
