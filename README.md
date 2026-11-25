@@ -1,24 +1,23 @@
 # AgentStructor
 
 > ### ⬇️ Install in WordPress (no coding needed)
-> 1. **[Download agent-builder.zip](https://agentic-plugin.com/downloads/agent-builder.zip)**. It is always the latest version.
-> 2. In your WordPress admin, go to **Plugins → Add Plugin → Upload Plugin**, choose the file, and click **Install Now**.
-> 3. Click **Activate**. AgentStructor opens a short setup wizard to connect your AI provider.
+> 1. In your WordPress admin, go to **Plugins → Add Plugin** and search for **AgentStructor**.
+> 2. Click **Install Now**, then **Activate**. AgentStructor opens a short setup wizard to connect your AI provider.
 >
 > Updates then arrive in your normal WordPress update screen.
 >
-> This download is the **self-hosted build** of AgentStructor: the same plugin as the code in this repository, packaged with its libraries and an updater that checks agentic-plugin.com. When AgentStructor is listed on WordPress.org you will also be able to install it from **Plugins → Add Plugin** by searching for "AgentStructor".
+> **Note:** the WordPress.org listing is pending review. Until it is approved, AgentStructor will not appear in the Plugins → Add Plugin search.
 >
 > ⚠️ Don't use GitHub's green **Code → Download ZIP** button. That is the source code, not an installable plugin: it is missing required libraries and unzips under the wrong folder name.
 
 **Version:** 4.4.0
 
-Free [AgentStructor](https://agentic-plugin.com/) WordPress plugin.
+Free [AgentStructor](https://agentstructor.com/) WordPress plugin.
 
-- **Plugin slug:** `agent-builder`
+- **Plugin slug:** `agentstructor`
 - **License:** GPL-2.0-or-later
 - **Requires:** WordPress 6.4+, PHP 8.1+
-- **Docs / product site:** https://agentic-plugin.com/documentation/
+- **Docs / product site:** https://agentstructor.com/documentation/
 
 Give AI agents real WordPress work. Hand a job to an agent, walk away, and get pinged only when it needs you. Low-risk steps run on their own; anything that needs your judgement waits for one-click approval.
 
@@ -53,7 +52,7 @@ Give AI agents real WordPress work. Hand a job to an agent, walk away, and get p
 
 ## Install from source (developers)
 
-1. Clone into `wp-content/plugins/agent-builder` (or symlink).
+1. Clone into `wp-content/plugins/agentstructor` (or symlink).
 2. Optional document tools: `composer install --no-dev`
 3. Optional rebuild admin React: `npm ci && npm run build`
    Pre-built assets already ship in `build/`.
@@ -138,4 +137,4 @@ GitHub tags match plugin versions (`v3.3.0`, etc.). Downloadable ZIPs for produc
 ## Support
 
 - WordPress.org support forum
-- https://agentic-plugin.com/support/
+- https://agentstructor.com/support/

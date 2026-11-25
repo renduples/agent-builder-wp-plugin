@@ -6,7 +6,7 @@
  * @subpackage Admin
  * @author     AgentStructor Team <support@agentic-plugin.com>
  * @license    GPL-2.0-or-later https://www.gnu.org/licenses/gpl-2.0.html
- * @link       https://agentic-plugin.com
+ * @link       https://agentstructor.com
  * @since      0.1.0
  *
  * php version 8.1
@@ -248,7 +248,7 @@ $agent_builder_agent_mode = get_option( 'agent_builder_agent_mode', 'supervised'
 
 		<p class="description agentic-mt-16">
 			<?php esc_html_e( 'Automatic backups created before AI agents modify files or database tables. Restore with one click.', 'agentstructor' ); ?>
-			<a href="https://agentic-plugin.com/backups/" target="_blank" rel="noopener noreferrer" class="agentic-ml-6"><?php esc_html_e( 'Learn more', 'agentstructor' ); ?> &rarr;</a>
+			<a href="https://agentstructor.com/backups/" target="_blank" rel="noopener noreferrer" class="agentic-ml-6"><?php esc_html_e( 'Learn more', 'agentstructor' ); ?> &rarr;</a>
 		</p>
 
 		<?php if ( ! $agentic_has_any ) : ?>

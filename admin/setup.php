@@ -26,7 +26,7 @@ $agentic_wizard_meta = array(
 	'agentic'   => array(
 		'badge'       => 'Free',
 		'badge_class' => 'badge-free',
-		'signup_url'  => 'https://agentic-plugin.com',
+		'signup_url'  => 'https://agentstructor.com',
 		'key_label'   => '',
 		'placeholder' => '',
 		'steps'       => array(
@@ -673,7 +673,7 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 						<label><input type="checkbox" id="agentic-wizard-consent-tos"> 
 						<?php
 						echo wp_kses(
-							sprintf( /* translators: %s: Terms link */ __( 'I agree to the <a href="https://agentic-plugin.com/terms-of-service/" target="_blank" rel="noopener">Terms of Service</a>', 'agentstructor' ), '' ),
+							sprintf( /* translators: %s: Terms link */ __( 'I agree to the <a href="https://agentstructor.com/terms-of-service/" target="_blank" rel="noopener">Terms of Service</a>', 'agentstructor' ), '' ),
 							array(
 								'a' => array(
 									'href'   => array(),
@@ -687,7 +687,7 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 						<label><input type="checkbox" id="agentic-wizard-consent-privacy"> 
 						<?php
 						echo wp_kses(
-							sprintf( /* translators: %s: Privacy link */ __( 'I agree to the <a href="https://agentic-plugin.com/privacy-policy/" target="_blank" rel="noopener">Privacy Policy</a>', 'agentstructor' ), '' ),
+							sprintf( /* translators: %s: Privacy link */ __( 'I agree to the <a href="https://agentstructor.com/privacy-policy/" target="_blank" rel="noopener">Privacy Policy</a>', 'agentstructor' ), '' ),
 							array(
 								'a' => array(
 									'href'   => array(),

@@ -80,7 +80,7 @@ class Approvals_Payload {
 			'interface_url'    => admin_url( 'admin.php?page=agentic-settings&tab=interface' ),
 			'prefs'            => $prefs,
 			'comfort_profiles' => Admin_Profiles::approval_comfort_profiles(),
-			'docs_url'         => 'https://agentic-plugin.com/documentation/approvals/',
+			'docs_url'         => 'https://agentstructor.com/documentation/approvals/',
 			'footer_policy'    => __(
 				'Approvals keep high-risk agent actions under human control. Email alerts use your admin address and never include passwords. See Privacy Policy for how providers process chat.',
 				'agentstructor'

@@ -174,7 +174,7 @@ global $wpdb;
 			For maximum security, add rate limiting at the edge — before requests reach WordPress. Our comprehensive guide covers Cloudflare WAF, Turnstile setup, Nginx rate limiting, Apache mod_evasive, and recommended settings for every scenario.
 		</p>
 		<p class="agentic-mt-8 agentic-mb-0">
-			<a href="https://agentic-plugin.com/important-security-settings/" target="_blank" class="agentic-text-xs agentic-fw600" class="agentic-no-underline">Read the Important Security Settings guide →</a>
+			<a href="https://agentstructor.com/important-security-settings/" target="_blank" class="agentic-text-xs agentic-fw600" class="agentic-no-underline">Read the Important Security Settings guide →</a>
 		</p>
 	</div>
 </div>

@@ -311,7 +311,7 @@ if ( ! empty( $agent_builder_active_agents ) ) :
 <p class="agentic-mt-8"><a href="#" class="agentic-reset-defaults" data-section="agents_features">Reset chat feature overrides to defaults</a></p>
 
 <p class="agentic-mt-1em">
-	<a href="https://agentic-plugin.com/agent-performance/" target="_blank" rel="noopener">
+	<a href="https://agentstructor.com/agent-performance/" target="_blank" rel="noopener">
 		Optimising Performance and Managing Costs →
 	</a>
 </p>

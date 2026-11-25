@@ -16,7 +16,7 @@
  * @subpackage Includes
  * @author     AgentStructor Team <support@agentic-plugin.com>
  * @license    GPL-2.0-or-later https://www.gnu.org/licenses/gpl-2.0.html
- * @link       https://agentic-plugin.com
+ * @link       https://agentstructor.com
  * @since      4.2.0
  *
  * php version 8.1

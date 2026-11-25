@@ -3098,12 +3098,12 @@ msgstr ""
 
 #. translators: %s: Terms link
 #: admin/setup.php:676
-msgid "I agree to the <a href=\"https://agentic-plugin.com/terms-of-service/\" target=\"_blank\" rel=\"noopener\">Terms of Service</a>"
+msgid "I agree to the <a href=\"https://agentstructor.com/terms-of-service/\" target=\"_blank\" rel=\"noopener\">Terms of Service</a>"
 msgstr ""
 
 #. translators: %s: Privacy link
 #: admin/setup.php:690
-msgid "I agree to the <a href=\"https://agentic-plugin.com/privacy-policy/\" target=\"_blank\" rel=\"noopener\">Privacy Policy</a>"
+msgid "I agree to the <a href=\"https://agentstructor.com/privacy-policy/\" target=\"_blank\" rel=\"noopener\">Privacy Policy</a>"
 msgstr ""
 
 #: admin/setup.php:703

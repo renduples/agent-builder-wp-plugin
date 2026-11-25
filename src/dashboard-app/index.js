@@ -555,8 +555,8 @@ function formatInt( n ) {
 
 function AdminPageFooter( { footer } ) {
 	const f = footer || {};
-	const docUrl = f.doc_url || 'https://agentic-plugin.com/documentation/dashboard/';
-	const supportUrl = f.support_url || 'https://agentic-plugin.com/support/';
+	const docUrl = f.doc_url || 'https://agentstructor.com/documentation/dashboard/';
+	const supportUrl = f.support_url || 'https://agentstructor.com/support/';
 	const policy =
 		f.policy ||
 		__(
@@ -589,7 +589,7 @@ function AdminPageFooter( { footer } ) {
 				<a
 					href={
 						f.terms_url ||
-						'https://agentic-plugin.com/terms-of-service/'
+						'https://agentstructor.com/terms-of-service/'
 					}
 					target="_blank"
 					rel="noopener noreferrer"
@@ -600,7 +600,7 @@ function AdminPageFooter( { footer } ) {
 				<a
 					href={
 						f.privacy_url ||
-						'https://agentic-plugin.com/privacy-policy/'
+						'https://agentstructor.com/privacy-policy/'
 					}
 					target="_blank"
 					rel="noopener noreferrer"
@@ -610,7 +610,7 @@ function AdminPageFooter( { footer } ) {
 				{ ' | ' }
 				<a
 					href={
-						f.gdpr_url || 'https://agentic-plugin.com/gdpr-policy/'
+						f.gdpr_url || 'https://agentstructor.com/gdpr-policy/'
 					}
 					target="_blank"
 					rel="noopener noreferrer"

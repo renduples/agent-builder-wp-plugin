@@ -231,7 +231,7 @@ class Logs_Payload {
 				. '&period=' . rawurlencode( $period )
 				. '&_wpnonce=' . wp_create_nonce( 'agentic_export_logs' )
 			),
-			'docs_url'       => 'https://agentic-plugin.com/documentation/activity/',
+			'docs_url'       => 'https://agentstructor.com/documentation/activity/',
 			'footer_policy'  => __(
 				'Activity helps you understand what agents did on your site. Logs are stored locally and purged according to your retention settings. Chat content lives under Conversations.',
 				'agentstructor'

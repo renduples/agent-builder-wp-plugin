@@ -189,7 +189,7 @@ $agentic_signup_tts_voices     = array(
 					printf(
 						/* translators: 1: opening link tag, 2: closing link tag */
 						esc_html__( 'I agree to the %1$sTerms of Service%2$s', 'agentstructor' ),
-						'<a href="https://agentic-plugin.com/terms-of-service/" target="_blank" rel="noopener">',
+						'<a href="https://agentstructor.com/terms-of-service/" target="_blank" rel="noopener">',
 						'</a>'
 					);
 					?>
@@ -200,7 +200,7 @@ $agentic_signup_tts_voices     = array(
 					printf(
 						/* translators: 1: opening link tag, 2: closing link tag */
 						esc_html__( 'I agree to the %1$sPrivacy Policy%2$s', 'agentstructor' ),
-						'<a href="https://agentic-plugin.com/privacy-policy/" target="_blank" rel="noopener">',
+						'<a href="https://agentstructor.com/privacy-policy/" target="_blank" rel="noopener">',
 						'</a>'
 					);
 					?>

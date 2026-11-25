@@ -2854,13 +2854,13 @@ msgstr "Weiter zum Test →"
 
 #. translators: %s: Terms link
 #: admin/setup.php:676
-msgid "I agree to the <a href=\"https://agentic-plugin.com/terms-of-service/\" target=\"_blank\" rel=\"noopener\">Terms of Service</a>"
-msgstr "Ich stimme den <a href=\"https://agentic-plugin.com/terms-of-service/\" target=\"_blank\" rel=\"noopener\">Nutzungsbedingungen</a> zu"
+msgid "I agree to the <a href=\"https://agentstructor.com/terms-of-service/\" target=\"_blank\" rel=\"noopener\">Terms of Service</a>"
+msgstr "Ich stimme den <a href=\"https://agentstructor.com/terms-of-service/\" target=\"_blank\" rel=\"noopener\">Nutzungsbedingungen</a> zu"
 
 #. translators: %s: Privacy link
 #: admin/setup.php:690
-msgid "I agree to the <a href=\"https://agentic-plugin.com/privacy-policy/\" target=\"_blank\" rel=\"noopener\">Privacy Policy</a>"
-msgstr "Ich stimme der <a href=\"https://agentic-plugin.com/privacy-policy/\" target=\"_blank\" rel=\"noopener\">Datenschutzerklärung</a> zu"
+msgid "I agree to the <a href=\"https://agentstructor.com/privacy-policy/\" target=\"_blank\" rel=\"noopener\">Privacy Policy</a>"
+msgstr "Ich stimme der <a href=\"https://agentstructor.com/privacy-policy/\" target=\"_blank\" rel=\"noopener\">Datenschutzerklärung</a> zu"
 
 #: admin/setup.php:703
 msgid "Ollama Server URL"

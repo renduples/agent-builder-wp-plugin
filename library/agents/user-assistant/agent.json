@@ -7,7 +7,7 @@
   "icon": "👥",
   "version": "1.1.0",
   "author": "AgentStructor",
-  "author_uri": "https://agentic-plugin.com",
+  "author_uri": "https://agentstructor.com",
   "capabilities": [ "list_users", "edit_users", "manage_options" ],
   "tools": [
     "list_privileged_users",
