@@ -8,7 +8,7 @@
  * @subpackage Admin
  * @author     AgentStructor Team <support@agentic-plugin.com>
  * @license    GPL-2.0-or-later https://www.gnu.org/licenses/gpl-2.0.html
- * @link       https://agentic-plugin.com
+ * @link       https://agentstructor.com
  * @since      0.2.0
  *
  * php version 8.1
@@ -68,8 +68,8 @@ if ( class_exists( 'Agentic\Agent_Updates' ) && \Agentic\Agent_Updates::needs_co
 							),
 						)
 					),
-					'https://agentic-plugin.com/',
-					'https://agentic-plugin.com/privacy-policy/'
+					'https://agentstructor.com/',
+					'https://agentstructor.com/privacy-policy/'
 				);
 				?>
 			</div>

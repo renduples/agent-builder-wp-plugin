@@ -7,7 +7,7 @@
   "icon": "📈",
   "version": "1.0.1",
   "author": "AgentStructor",
-  "author_uri": "https://agentic-plugin.com",
+  "author_uri": "https://agentstructor.com",
   "capabilities": [ "edit_posts" ],
   "tools": [
     "get_seo_overview",

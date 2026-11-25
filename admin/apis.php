@@ -28,7 +28,7 @@ $agentic_third_party_apis = array(
 		'placeholder' => 'AIzaSy...',
 		'endpoint'    => 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed',
 		'key_url'     => 'https://console.cloud.google.com/apis/credentials',
-		'docs_url'    => 'https://agentic-plugin.com/pagespeed-insights-api-key/',
+		'docs_url'    => 'https://agentstructor.com/pagespeed-insights-api-key/',
 		'free_tier'   => '25,000 queries / day (free)',
 		'icon'        => 'dashicons-performance',
 	),

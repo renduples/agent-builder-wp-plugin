@@ -147,7 +147,7 @@ class Safety_Center_Payload {
 					. '&_wpnonce=' . wp_create_nonce( 'agentic_export_logs' )
 				),
 			),
-			'docs_url'       => 'https://agentic-plugin.com/documentation/safety-center/',
+			'docs_url'       => 'https://agentstructor.com/documentation/safety-center/',
 			'footer_policy'  => __(
 				'Safety Center summarizes existing operator controls. It does not change how tools, approvals, or Emergency Stop work.',
 				'agentstructor'

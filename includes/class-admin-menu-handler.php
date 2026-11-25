@@ -1318,7 +1318,7 @@ class Admin_Menu_Handler {
 	 */
 	public function get_admin_footer_data( string $page, string $tab = '' ): array {
 		$doc_url     = $this->get_page_doc_url( $page, $tab );
-		$support_url = 'https://agentic-plugin.com/support/';
+		$support_url = 'https://agentstructor.com/support/';
 
 		// The "Upgrade to Pro" footer link was stripped for the WP.org build,
 		// but the shared footer payload still reads these keys — keep them empty
@@ -1368,9 +1368,9 @@ class Admin_Menu_Handler {
 			'promo_external' => $promo_external,
 			'is_pro'         => false,
 			'policy'         => $policy,
-			'terms_url'      => 'https://agentic-plugin.com/terms-of-service/',
-			'privacy_url'    => 'https://agentic-plugin.com/privacy-policy/',
-			'gdpr_url'       => 'https://agentic-plugin.com/gdpr-policy/',
+			'terms_url'      => 'https://agentstructor.com/terms-of-service/',
+			'privacy_url'    => 'https://agentstructor.com/privacy-policy/',
+			'gdpr_url'       => 'https://agentstructor.com/gdpr-policy/',
 		);
 	}
 
@@ -1948,6 +1948,6 @@ class Admin_Menu_Handler {
 			return $map['tabs'][ $key ];
 		}
 
-		return $map['pages'][ $page ] ?? 'https://agentic-plugin.com/documentation/';
+		return $map['pages'][ $page ] ?? 'https://agentstructor.com/documentation/';
 	}
 }

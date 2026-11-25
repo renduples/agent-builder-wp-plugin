@@ -7,7 +7,7 @@
   "icon": "📡",
   "version": "1.0.0",
   "author": "AgentStructor",
-  "author_uri": "https://agentic-plugin.com",
+  "author_uri": "https://agentstructor.com",
   "capabilities": [ "manage_options" ],
   "tools": [
     "run_ai_radar_scan",

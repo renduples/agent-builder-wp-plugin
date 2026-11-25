@@ -254,7 +254,7 @@ class Tools_Payload {
 			'enabled_max_risk' => class_exists( \Agentic\Tools_Registry::class )
 				? \Agentic\Tools_Registry::enabled_max_risk_level()
 				: 'none',
-			'docs_url'         => 'https://agentic-plugin.com/documentation/tools/',
+			'docs_url'         => 'https://agentstructor.com/documentation/tools/',
 			'footer_policy'    => __(
 				'Agents only use the tools you allow. Higher-risk actions still follow Approvals and your safety settings. Provider processing of chat content is covered by our Privacy Policy.',
 				'agentstructor'

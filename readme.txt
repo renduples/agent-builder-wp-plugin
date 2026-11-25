@@ -5,7 +5,7 @@ Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.2
 Stable tag: 4.4.0
-Donate link: https://agentic-plugin.com/donate/
+Donate link: https://agentstructor.com/donate/
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -173,7 +173,7 @@ No. Everything it stores on disk lives in wp-content/uploads/agentstructor. The 
 The interface text is written in English, and the `.pot` translation template is included so you (or [translate.wordpress.org](https://translate.wordpress.org/)) can generate your own `.mo`/`.json` translation files for your site's locale.
 
 = Where is the source code for the bundled JavaScript? =
-The files in `build/` are compiled with @wordpress/scripts from the unminified sources in this plugin's `src/` directory. The full development repository, including the build tooling and test suite, is at https://github.com/renduples/agent-builder-wp-plugin.
+The files in `build/` are compiled with @wordpress/scripts from the unminified sources in this plugin's `src/` directory. The full development repository, including the build tooling and test suite, is at https://github.com/renduples/agentstructor.
 
 == Screenshots ==
 
@@ -218,7 +218,7 @@ Providers and their terms:
 
 = Agentic AI (agentic-plugin.com) =
 
-Agentic AI is the optional hosted AI service run by the developers of this plugin. You do not need it: the plugin works fully with any provider above. [Terms of service](https://agentic-plugin.com/terms/), [Privacy policy](https://agentic-plugin.com/privacy-policy/).
+Agentic AI is the optional hosted AI service run by the developers of this plugin. You do not need it: the plugin works fully with any provider above. [Terms of service](https://agentstructor.com/terms/), [Privacy policy](https://agentstructor.com/privacy-policy/).
 
 * **Sign-up** (`agentic-plugin.com/wp-json/agentic/v1/register`): only when an administrator fills in the "Connect to Agentic AI" form, ticks the Terms and Privacy boxes and submits it. Sends the email address entered, site URL, site name, plugin version, the chosen agent mode and model settings, and the consent confirmation. Opening that page also loads the public model price list (`/wp-json/agentic/v1/model-pricing`) into your browser; nothing about your site is sent with that request.
 * **Hosted AI** (`chat.agentic-plugin.com`): only when Agentic AI is the selected provider. Sends the same chat data described under "AI model providers", plus your Agentic API key. Also a model-list request and a `/health` check when you test the connection.
@@ -363,7 +363,7 @@ Major release. The safety-first way to run AI agents on WordPress — agents tha
 = 3.3.0 - 2026-07-29 =
 * React-based admin hubs for Settings, Tools, Approvals, and Knowledge; added Kimi and DeepSeek provider support.
 
-For the full version history, visit [agentic-plugin.com/changelog](https://agentic-plugin.com/changelog/).
+For the full version history, visit [agentstructor.com/changelog](https://agentstructor.com/changelog/).
 
 == Upgrade Notice ==
 
@@ -381,4 +381,4 @@ WordPress.org Plugin Check compliance, guarded Abilities API adapter, multi-agen
 
 == Privacy ==
 
-AgentStructor has no telemetry, analytics or usage tracking. See **External services** for exactly what is sent, and when, to the AI provider you choose and to any optional service you turn on. For the optional Agentic AI service, see the [Agentic AI privacy policy](https://agentic-plugin.com/privacy-policy/) and [terms of service](https://agentic-plugin.com/terms/).
+AgentStructor has no telemetry, analytics or usage tracking. See **External services** for exactly what is sent, and when, to the AI provider you choose and to any optional service you turn on. For the optional Agentic AI service, see the [Agentic AI privacy policy](https://agentstructor.com/privacy-policy/) and [terms of service](https://agentstructor.com/terms/).

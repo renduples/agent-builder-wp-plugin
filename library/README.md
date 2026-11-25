@@ -173,7 +173,7 @@ Your guide to WordPress and AgentStructor for new users.
 
 ## Customising Agents
 
-Each agent here is plain data (JSON + a text prompt, no PHP) — edit any bundled agent's files directly and AgentStructor picks up the change (a bundled agent's `abilities.json` needs re-signing after an edit; see below). See the [Developer Documentation](https://agentic-plugin.com/documentation/#doc-developers) for the full reference.
+Each agent here is plain data (JSON + a text prompt, no PHP) — edit any bundled agent's files directly and AgentStructor picks up the change (a bundled agent's `abilities.json` needs re-signing after an edit; see below). See the [Developer Documentation](https://agentstructor.com/documentation/#doc-developers) for the full reference.
 
 ---
 
@@ -294,6 +294,6 @@ Rather than hand-writing these files, you can describe the agent you want in cha
 
 ## Need Help?
 
-- [Documentation](https://agentic-plugin.com/documentation/)
-- [Support](https://agentic-plugin.com/support/)
-- [Changelog](https://agentic-plugin.com/changelog/)
+- [Documentation](https://agentstructor.com/documentation/)
+- [Support](https://agentstructor.com/support/)
+- [Changelog](https://agentstructor.com/changelog/)

@@ -123,7 +123,7 @@ if ( $agentic_knowledge_advanced ) {
 				</button>
 			</span>
 			<div class="agentic-kn-pill">OKF v<?php echo esc_html( \Agentic\Okf_Store::OKF_VERSION ); ?></div>
-			<a class="agentic-kn-docs" href="https://agentic-plugin.com/knowledge-wiki-okf/" target="_blank" rel="noopener">
+			<a class="agentic-kn-docs" href="https://agentstructor.com/knowledge-wiki-okf/" target="_blank" rel="noopener">
 				<?php esc_html_e( 'Docs →', 'agentstructor' ); ?>
 			</a>
 		</div>
