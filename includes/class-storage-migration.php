@@ -5,7 +5,10 @@
  * One-time move of the plugin's data out of the pre-4.5 folders directly
  * inside wp-content (agentic-agents, agentic-knowledge, agentic-backups)
  * into the plugin's data root in the uploads directory
- * (File_Manager::data_dir(): agents/, knowledge/, backups/).
+ * (File_Manager::data_dir(): agents/, knowledge/, backups/). Also moves an
+ * earlier data root in the uploads directory, left by a build of the plugin
+ * from before it was renamed (File_Manager::PREVIOUS_DATA_SLUGS), into the
+ * current one. Uploads are per site, so that folder is always moved.
  *
  * On multisite the old folders were shared by every site of the network,
  * while the new data root is per site. There the data is COPIED, never
@@ -63,8 +66,10 @@ class Storage_Migration {
 
 	/**
 	 * Current migration version.
+	 *
+	 * 2: also moves an earlier uploads data root (PREVIOUS_DATA_SLUGS).
 	 */
-	public const VERSION = 1;
+	public const VERSION = 2;
 
 	/**
 	 * Strategy: move the legacy folders into the data root and delete them.
@@ -173,6 +178,15 @@ class Storage_Migration {
 			}
 		}
 
+		// An earlier data root in uploads (from before the rename) is per
+		// site on multisite too, so it is always moved, never copied.
+		foreach ( File_Manager::previous_data_dirs() as $slug => $dir ) {
+			$results[ 'previous:' . $slug ] = self::migrate_previous_root( $dir );
+			if ( is_dir( $dir ) ) {
+				$complete = false;
+			}
+		}
+
 		// Short-lived chat images from older versions (uploads/agentic-tmp):
 		// temporary by design (deleted after an hour), so removed rather
 		// than moved.
@@ -215,6 +229,9 @@ class Storage_Migration {
 			if ( null !== $dir ) {
 				$left[ $kind ] = $dir;
 			}
+		}
+		foreach ( File_Manager::previous_data_dirs() as $slug => $dir ) {
+			$left[ 'previous:' . $slug ] = $dir;
 		}
 		return $left;
 	}
@@ -288,6 +305,57 @@ class Storage_Migration {
 		// folders is left. Multisite: never — other sites still copy from it.
 		if ( ! $copy ) {
 			self::remove_empty_tree( $src );
+		}
+		clearstatcache();
+
+		return $result;
+	}
+
+	/**
+	 * Move an earlier uploads data root into the current data root.
+	 *
+	 * When the current data root does not exist yet the whole folder is
+	 * renamed in one step. Otherwise its contents are merged in with the
+	 * same rules as the legacy folders (a name already taken with different
+	 * content stays where it is), and the old folder is removed once only
+	 * empty folders and guard files are left. Idempotent.
+	 *
+	 * @param string $src Earlier data root (absolute path, exists).
+	 * @return array{moved:int, left:int, error:string}
+	 */
+	private static function migrate_previous_root( string $src ): array {
+		$result = array(
+			'moved' => 0,
+			'left'  => 0,
+			'error' => '',
+		);
+
+		if ( is_link( $src ) ) {
+			// Points somewhere the site owner chose; keep reading through it.
+			$result['error'] = 'symlink';
+			return $result;
+		}
+
+		$dest  = File_Manager::data_dir();
+		$moved = array();
+
+		$before_agents = is_dir( $src . '/agents' ) ? (array) scandir( $src . '/agents' ) : array();
+
+		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.rename_rename -- Same-filesystem move of the plugin's own data root inside uploads; falls back to a per-file move below.
+		if ( ! file_exists( $dest ) && @rename( $src, $dest ) ) {
+			++$result['moved'];
+		} else {
+			if ( ! is_dir( $dest ) && ! wp_mkdir_p( $dest ) ) {
+				$result['error'] = 'data_dir_not_writable';
+				return $result;
+			}
+			self::move_tree( $src, $dest, $result, $moved );
+			self::remove_empty_tree( $src );
+		}
+
+		$agents = array_diff( $before_agents, array( '.', '..', 'index.php', '.htaccess', 'web.config' ) );
+		if ( ! empty( $agents ) ) {
+			self::after_agents_moved( array_values( $agents ) );
 		}
 		clearstatcache();
 
