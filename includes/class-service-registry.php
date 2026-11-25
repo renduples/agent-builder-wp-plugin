@@ -52,7 +52,7 @@ class Service_Registry {
 	 * @var array<string, string>
 	 */
 	private const DEFAULT_URLS = array(
-		'agentic-api'      => 'https://agentstructor.com',
+		'agentic-api'      => 'https://agentic-plugin.com',
 		'agentic-chat'     => 'https://chat.agentic-plugin.com:11435',
 		'agentic-tts'      => 'https://tts.agentic-plugin.com',
 		'agentic-imagegen' => 'https://imagegen.agentic-plugin.com',

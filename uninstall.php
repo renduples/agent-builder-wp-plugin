@@ -30,7 +30,7 @@ $agentic_api_svc     = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDataba
 		'agentic-api'
 	)
 );
-$agentic_api_base    = $agentic_api_svc ? (string) $agentic_api_svc->endpoint : 'https://agentstructor.com';
+$agentic_api_base    = $agentic_api_svc ? (string) $agentic_api_svc->endpoint : 'https://agentic-plugin.com';
 $agentic_api_key_row = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 	$wpdb->prepare(
 		"SELECT api_key FROM {$wpdb->prefix}agent_builder_providers WHERE slug = %s LIMIT 1",

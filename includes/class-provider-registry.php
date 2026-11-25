@@ -1700,7 +1700,7 @@ class Provider_Registry {
 				array(
 					'slug'          => 'agentic-api',
 					'name'          => 'Agentic API',
-					'endpoint'      => 'https://agentstructor.com',
+					'endpoint'      => 'https://agentic-plugin.com',
 					'default_model' => '',
 					'auth_type'     => 'none',
 					'req_format'    => 'openai',
