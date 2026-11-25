@@ -270,30 +270,30 @@ class Dashboard_REST {
 			array(
 				'id'    => 'chat',
 				'done'  => (int) ( $stats['total_actions'] ?? 0 ) > 0,
-				'label' => __( 'Say hi to WordPress Assistant', 'siteloom' ),
+				'label' => __( 'Say hi to WordPress Assistant', 'agentstructor' ),
 				'url'   => admin_url( 'admin.php?page=agentic-chat&agent=wordpress-assistant' ),
-				'cta'   => __( 'Open chat', 'siteloom' ),
+				'cta'   => __( 'Open chat', 'agentstructor' ),
 			),
 			array(
 				'id'    => 'provider',
 				'done'  => $is_configured,
-				'label' => __( 'Connect an AI provider', 'siteloom' ),
+				'label' => __( 'Connect an AI provider', 'agentstructor' ),
 				'url'   => admin_url( 'admin.php?page=agentic-settings&tab=providers' ),
-				'cta'   => __( 'Connect', 'siteloom' ),
+				'cta'   => __( 'Connect', 'agentstructor' ),
 			),
 			array(
 				'id'    => 'agent',
 				'done'  => $agent_counts['active'] > 0,
-				'label' => __( 'Activate your first agent', 'siteloom' ),
+				'label' => __( 'Activate your first agent', 'agentstructor' ),
 				'url'   => admin_url( 'admin.php?page=agentic-agents' ),
-				'cta'   => __( 'Browse agents', 'siteloom' ),
+				'cta'   => __( 'Browse agents', 'agentstructor' ),
 			),
 			array(
 				'id'    => 'knowledge',
 				'done'  => $has_knowledge,
-				'label' => __( 'Add knowledge', 'siteloom' ),
+				'label' => __( 'Add knowledge', 'agentstructor' ),
 				'url'   => admin_url( 'admin.php?page=agentic-knowledge-wizard' ),
-				'cta'   => __( 'Add knowledge', 'siteloom' ),
+				'cta'   => __( 'Add knowledge', 'agentstructor' ),
 			),
 		);
 
@@ -311,7 +311,7 @@ class Dashboard_REST {
 				'has_agent_updates_class' => class_exists( Agent_Updates::class ) && Agent_Updates::is_remote_check_available(),
 				'urls'                    => array(
 					'admin'         => admin_url(),
-					'icon'          => AGENT_BUILDER_URL . 'assets/mark.svg',
+					'icon'          => AGENT_BUILDER_URL . 'assets/icon.svg',
 					'signup'        => admin_url( 'admin.php?page=agentic-signup' ),
 					'license'       => admin_url( 'admin.php?page=agentic-settings&tab=license' ),
 					'providers'     => admin_url( 'admin.php?page=agentic-settings&tab=providers' ),
@@ -448,7 +448,7 @@ class Dashboard_REST {
 				break;
 
 			default:
-				return new \WP_Error( 'unknown_action', __( 'Unknown dashboard action.', 'siteloom' ), array( 'status' => 400 ) );
+				return new \WP_Error( 'unknown_action', __( 'Unknown dashboard action.', 'agentstructor' ), array( 'status' => 400 ) );
 		}
 
 		return self::get_dashboard();
