@@ -6,7 +6,7 @@
  *
  * @package    Agent_Builder
  * @subpackage Includes
- * @author     Siteloom Team <support@agentic-plugin.com>
+ * @author     AgentStructor Team <support@agentic-plugin.com>
  * @license    GPL-2.0-or-later https://www.gnu.org/licenses/gpl-2.0.html
  * @link       https://agentic-plugin.com
  * @since      0.1.0
@@ -146,7 +146,7 @@ class Agent_Controller {
 	 * @return string
 	 */
 	private static function truncation_notice(): string {
-		return "\n\n" . __( '⚠️ This response was cut short — the model hit its token limit before finishing. Try asking me to continue, or break the request into smaller steps.', 'siteloom' );
+		return "\n\n" . __( '⚠️ This response was cut short — the model hit its token limit before finishing. Try asking me to continue, or break the request into smaller steps.', 'agentstructor' );
 	}
 
 	/**
@@ -545,7 +545,7 @@ class Agent_Controller {
 
 		// Merge third-party abilities as tools (WP 6.9+).
 		// These are opt-in via the Abilities bridge; they do not need an abilities.json
-		// entry (that file only gates Siteloom's own tools). Schemas are sanitized
+		// entry (that file only gates AgentStructor's own tools). Schemas are sanitized
 		// in LLM_Client before the provider API call (OpenAI rejects top-level oneOf/etc).
 		//
 		// A generic bridged tool (e.g. a third-party "get all users" ability) is withheld
@@ -586,7 +586,7 @@ class Agent_Controller {
 	}
 
 	/**
-	 * Bridged generic tool slugs mapped to the bundled Siteloom tool
+	 * Bridged generic tool slugs mapped to the bundled AgentStructor tool
 	 * slugs that make them redundant for an agent that already holds one.
 	 *
 	 * Covers the generic third-party/core CRUD abilities the WP 6.9+ Abilities
@@ -759,7 +759,7 @@ class Agent_Controller {
 				return array(
 					'response' => sprintf(
 						/* translators: %s: agent identifier */
-						__( "Agent '%s' is not available or you don't have access to it.", 'siteloom' ),
+						__( "Agent '%s' is not available or you don't have access to it.", 'agentstructor' ),
 						$agent_id
 					),
 					'error'    => true,
@@ -770,7 +770,7 @@ class Agent_Controller {
 
 		if ( ! $this->current_agent ) {
 			return array(
-				'response' => __( 'No agent selected. Please select an agent to chat with.', 'siteloom' ),
+				'response' => __( 'No agent selected. Please select an agent to chat with.', 'agentstructor' ),
 				'error'    => true,
 				'agent_id' => '',
 			);
@@ -786,7 +786,7 @@ class Agent_Controller {
 
 		if ( 'disabled' === $effective_mode ) {
 			return array(
-				'response' => __( 'This agent is currently disabled.', 'siteloom' ),
+				'response' => __( 'This agent is currently disabled.', 'agentstructor' ),
 				'error'    => true,
 				'agent_id' => $this->current_agent->get_id(),
 			);
@@ -794,7 +794,7 @@ class Agent_Controller {
 
 		if ( ! $this->llm->is_configured() ) {
 			return array(
-				'response' => __( 'The AI service is not configured. Please ask an administrator to set up the API key in Siteloom → Settings.', 'siteloom' ),
+				'response' => __( 'The AI service is not configured. Please ask an administrator to set up the API key in AgentStructor → Settings.', 'agentstructor' ),
 				'error'    => true,
 				'agent_id' => $this->current_agent->get_id(),
 			);
@@ -835,7 +835,7 @@ class Agent_Controller {
 				'abilities.json signature mismatch — agent blocked'
 			);
 			return array(
-				'response' => __( 'This agent has been temporarily disabled due to a security check. Please deactivate and reactivate the Siteloom plugin to restore it.', 'siteloom' ),
+				'response' => __( 'This agent has been temporarily disabled due to a security check. Please deactivate and reactivate the AgentStructor plugin to restore it.', 'agentstructor' ),
 				'error'    => true,
 				'agent_id' => $current_agent_id,
 			);
@@ -884,7 +884,7 @@ class Agent_Controller {
 		/**
 		 * Optional retrieval context (e.g. Pro Vector Store / RAG passages).
 		 *
-		 * Free plugin leaves this empty. Siteloom Pro hooks here to inject
+		 * Free plugin leaves this empty. AgentStructor Pro hooks here to inject
 		 * semantic search hits before generation.
 		 *
 		 * @param string $block    Context block (empty by default).
@@ -1050,7 +1050,7 @@ class Agent_Controller {
 						? $result->get_error_message()
 						: sprintf(
 							/* translators: %s: error message from AI provider */
-							__( 'Error communicating with AI: %s', 'siteloom' ),
+							__( 'Error communicating with AI: %s', 'agentstructor' ),
 							$result->get_error_message()
 						),
 					'error'       => true,
@@ -1069,7 +1069,7 @@ class Agent_Controller {
 			$choice = $result['choices'][0] ?? null;
 			if ( ! $choice ) {
 				return array(
-					'response' => __( 'Invalid response from AI.', 'siteloom' ),
+					'response' => __( 'Invalid response from AI.', 'agentstructor' ),
 					'error'    => true,
 					'agent_id' => $current_agent_id,
 				);
@@ -1239,7 +1239,7 @@ class Agent_Controller {
 				if ( $has_pending_proposal ) {
 					$response = '' !== $pending_message
 						? $pending_message
-						: __( 'Please review and approve the action below to proceed.', 'siteloom' );
+						: __( 'Please review and approve the action below to proceed.', 'agentstructor' );
 					break;
 				}
 
@@ -1414,7 +1414,7 @@ class Agent_Controller {
 		if ( 'disabled' === Agent_Settings::get( $agent_id, 'override_mode' ) ) {
 			return array(
 				'error'    => true,
-				'response' => __( 'This agent is disabled and cannot run autonomous tasks.', 'siteloom' ),
+				'response' => __( 'This agent is disabled and cannot run autonomous tasks.', 'agentstructor' ),
 				'agent_id' => $agent_id,
 				'task_id'  => $task_id,
 				'run_id'   => '',
@@ -1449,7 +1449,7 @@ class Agent_Controller {
 				return array(
 					'error'          => true,
 					'guard_rejected' => true,
-					'response'       => __( 'Cannot resume: run not found.', 'siteloom' ),
+					'response'       => __( 'Cannot resume: run not found.', 'agentstructor' ),
 					'agent_id'       => $agent_id,
 					'task_id'        => $task_id,
 					'run_id'         => $resume_run_id,
@@ -1490,7 +1490,7 @@ class Agent_Controller {
 					// this guard tripping (stale job data, a race, a mismatched
 					// caller) is not this call's run to finalize.
 					'guard_rejected' => true,
-					'response'       => __( 'Cannot resume: this run is not in a resumable state.', 'siteloom' ),
+					'response'       => __( 'Cannot resume: this run is not in a resumable state.', 'agentstructor' ),
 					'agent_id'       => $agent_id,
 					'task_id'        => $task_id,
 					'run_id'         => $resume_run_id,
@@ -1512,7 +1512,7 @@ class Agent_Controller {
 				return array(
 					'error'          => true,
 					'guard_rejected' => true,
-					'response'       => __( 'Cannot resume: this run was already claimed by another request.', 'siteloom' ),
+					'response'       => __( 'Cannot resume: this run was already claimed by another request.', 'agentstructor' ),
 					'agent_id'       => $agent_id,
 					'task_id'        => $task_id,
 					'run_id'         => $resume_run_id,
@@ -1578,7 +1578,7 @@ class Agent_Controller {
 					return array(
 						'error'          => true,
 						'guard_rejected' => true,
-						'response'       => __( 'Cannot start: this run was already claimed by another request.', 'siteloom' ),
+						'response'       => __( 'Cannot start: this run was already claimed by another request.', 'agentstructor' ),
 						'agent_id'       => $agent_id,
 						'task_id'        => $task_id,
 						'run_id'         => $resume_run_id,
@@ -1675,7 +1675,7 @@ class Agent_Controller {
 
 			if ( $run->cancel_requested() ) {
 				$final_status = 'cancelled';
-				$response     = __( 'This task was cancelled.', 'siteloom' );
+				$response     = __( 'This task was cancelled.', 'agentstructor' );
 				break;
 			}
 
@@ -1688,7 +1688,7 @@ class Agent_Controller {
 					: 0.0;
 
 				return array(
-					'response'    => __( 'This task is taking a while and will continue in the background.', 'siteloom' ),
+					'response'    => __( 'This task is taking a while and will continue in the background.', 'agentstructor' ),
 					'agent_id'    => $agent_id,
 					'task_id'     => $task_id,
 					'mode'        => 'autonomous',
@@ -1809,7 +1809,7 @@ class Agent_Controller {
 			} else {
 				$response = $assistant_message['content'];
 				if ( 'length' === ( $choice['finish_reason'] ?? '' ) ) {
-					$response .= "\n\n" . __( '[Note: this result was cut short — the model hit its token limit before finishing.]', 'siteloom' );
+					$response .= "\n\n" . __( '[Note: this result was cut short — the model hit its token limit before finishing.]', 'agentstructor' );
 				}
 			}
 
@@ -1833,7 +1833,7 @@ class Agent_Controller {
 				return array(
 					'response'    => '' !== $pending_msg
 						? $pending_msg
-						: __( 'A tool action is waiting for approval before this task can continue.', 'siteloom' ),
+						: __( 'A tool action is waiting for approval before this task can continue.', 'agentstructor' ),
 					'agent_id'    => $agent_id,
 					'task_id'     => $task_id,
 					'mode'        => 'autonomous',

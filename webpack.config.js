@@ -1,5 +1,5 @@
 /**
- * Webpack configuration for Siteloom admin React surfaces.
+ * Webpack configuration for AgentStructor admin React surfaces.
  *
  * Extends the default @wordpress/scripts config and declares a named entry
  * per admin surface so the generated bundle and its companion .asset.php

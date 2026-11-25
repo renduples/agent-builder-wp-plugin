@@ -125,7 +125,7 @@ class Test_Legacy_Relay_Passwords extends TestCase {
 	}
 
 	/**
-	 * The notice shows on Siteloom screens with a plural-aware count, and not
+	 * The notice shows on AgentStructor screens with a plural-aware count, and not
 	 * on other admin screens.
 	 */
 	public function test_notice_only_on_plugin_screens(): void {
@@ -137,7 +137,7 @@ class Test_Legacy_Relay_Passwords extends TestCase {
 		ob_start();
 		Legacy_Relay_Passwords::show_notice();
 		$html = (string) ob_get_clean();
-		$this->assertStringContainsString( 'Siteloom removed 2 old relay connection passwords.', $html );
+		$this->assertStringContainsString( 'AgentStructor removed 2 old relay connection passwords.', $html );
 		$this->assertStringContainsString( 'data-dismiss-url', $html );
 
 		$_GET['page'] = 'some-other-plugin';

@@ -8,7 +8,7 @@
  *
  * @package    Agent_Builder
  * @subpackage Admin
- * @author     Siteloom Team <support@agentic-plugin.com>
+ * @author     AgentStructor Team <support@agentic-plugin.com>
  * @license    GPL-2.0-or-later https://www.gnu.org/licenses/gpl-2.0.html
  * @link       https://agentic-plugin.com
  * @since      1.4.0
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! current_user_can( 'manage_options' ) ) {
-	wp_die( esc_html__( 'You do not have permission to access this page.', 'siteloom' ) );
+	wp_die( esc_html__( 'You do not have permission to access this page.', 'agentstructor' ) );
 }
 
 wp_enqueue_style( 'agentic-ui' );
@@ -108,19 +108,19 @@ foreach ( Tool_Loader::get_instance()->get_all() as $agentic_tool_name => $agent
 
 // Category labels.
 $agentic_category_tabs = array(
-	'all'               => __( 'All', 'siteloom' ),
-	'content'           => __( 'Content', 'siteloom' ),
-	'database'          => __( 'Database', 'siteloom' ),
-	'seo'               => __( 'SEO', 'siteloom' ),
-	'site-audit'        => __( 'Site Audit', 'siteloom' ),
-	'site-health'       => __( 'Site Health', 'siteloom' ),
-	'caching'           => __( 'Caching', 'siteloom' ),
-	'ai-visibility'     => __( 'AI Visibility', 'siteloom' ),
-	'security'          => __( 'Security', 'siteloom' ),
-	'assistant-trainer' => __( 'Agents', 'siteloom' ),
-	'analytics'         => __( 'Analytics', 'siteloom' ),
-	'wordpress'         => __( 'WordPress', 'siteloom' ),
-	'cli'               => __( 'CLI', 'siteloom' ),
+	'all'               => __( 'All', 'agentstructor' ),
+	'content'           => __( 'Content', 'agentstructor' ),
+	'database'          => __( 'Database', 'agentstructor' ),
+	'seo'               => __( 'SEO', 'agentstructor' ),
+	'site-audit'        => __( 'Site Audit', 'agentstructor' ),
+	'site-health'       => __( 'Site Health', 'agentstructor' ),
+	'caching'           => __( 'Caching', 'agentstructor' ),
+	'ai-visibility'     => __( 'AI Visibility', 'agentstructor' ),
+	'security'          => __( 'Security', 'agentstructor' ),
+	'assistant-trainer' => __( 'Agents', 'agentstructor' ),
+	'analytics'         => __( 'Analytics', 'agentstructor' ),
+	'wordpress'         => __( 'WordPress', 'agentstructor' ),
+	'cli'               => __( 'CLI', 'agentstructor' ),
 );
 
 // Filter by source type if requested.
@@ -213,21 +213,21 @@ if ( is_array( $agentic_usage_rows ) ) {
 ?>
 <div class="wrap agentic-admin">
 	<h1 class="agentic-h1-flex">
-		<?php esc_html_e( 'Tools', 'siteloom' ); ?>
+		<?php esc_html_e( 'Tools', 'agentstructor' ); ?>
 	</h1>
 
 	<?php
 	$agentic_tools_items = array(
 		array(
 			'slug'  => 'tools',
-			'label' => __( 'Tools', 'siteloom' ),
+			'label' => __( 'Tools', 'agentstructor' ),
 			'url'   => admin_url( 'admin.php?page=agentic-tools' ),
 		),
 	);
 	if ( class_exists( '\\Agentic\\Slash_Commands' ) ) {
 		$agentic_tools_items[] = array(
 			'slug'  => 'slash-commands',
-			'label' => __( 'Slash Commands', 'siteloom' ),
+			'label' => __( 'Slash Commands', 'agentstructor' ),
 			'url'   => admin_url( 'admin.php?page=agentic-tools&section=slash-commands' ),
 		);
 	}
@@ -260,15 +260,15 @@ if ( is_array( $agentic_usage_rows ) ) {
 		if ( $agentic_abilities_api ) {
 			$agentic_category_items[] = array(
 				'slug'   => 'cat-' . $agentic_inbound_cat,
-				'label'  => __( 'Inbound Abilities', 'siteloom' ),
+				'label'  => __( 'Inbound Abilities', 'agentstructor' ),
 				'url'    => add_query_arg( 'category', $agentic_inbound_cat, admin_url( 'admin.php?page=agentic-tools' ) ),
 				'active' => ( $agentic_active_cat === $agentic_inbound_cat ),
 				'badge'  => '<span class="count agentic-count-badge">(' . esc_html( (string) count( $agentic_inbound_tools ) ) . ')</span>',
-				'suffix' => '<span class="agentic-nav-dot" title="' . esc_attr__( 'WordPress Abilities API available', 'siteloom' ) . '"></span>',
+				'suffix' => '<span class="agentic-nav-dot" title="' . esc_attr__( 'WordPress Abilities API available', 'agentstructor' ) . '"></span>',
 			);
 		}
 		$agentic_vnav_groups[] = array(
-			'label' => __( 'Categories', 'siteloom' ),
+			'label' => __( 'Categories', 'agentstructor' ),
 			'items' => $agentic_category_items,
 		);
 	}
@@ -277,7 +277,7 @@ if ( is_array( $agentic_usage_rows ) ) {
 		array(
 			'active'     => $agentic_active_section,
 			'groups'     => $agentic_vnav_groups,
-			'aria_label' => __( 'Tools sections', 'siteloom' ),
+			'aria_label' => __( 'Tools sections', 'agentstructor' ),
 			'id'         => 'agentic-tools-nav',
 		)
 	);
@@ -293,11 +293,11 @@ elseif ( $agentic_inbound_cat === $agentic_active_cat ) :
 <div class="notice notice-success agentic-mt-16" style="border-left-color:#00a32a;">
 <p style="font-size:13px;">
 <span class="dashicons dashicons-yes-alt" style="color:#00a32a;vertical-align:text-bottom;"></span>
-<strong><?php esc_html_e( 'Connected to the WordPress Abilities API.', 'siteloom' ); ?></strong>
+<strong><?php esc_html_e( 'Connected to the WordPress Abilities API.', 'agentstructor' ); ?></strong>
 	<?php
 	printf(
 	/* translators: %s: WordPress version number */
-		esc_html__( 'Your site is running WordPress %s. Siteloom turns abilities registered by other plugins into tools your agents can use, and publishes its own tools as abilities for WordPress core AI, MCP clients, and the Command Palette.', 'siteloom' ),
+		esc_html__( 'Your site is running WordPress %s. AgentStructor turns abilities registered by other plugins into tools your agents can use, and publishes its own tools as abilities for WordPress core AI, MCP clients, and the Command Palette.', 'agentstructor' ),
 		esc_html( $agentic_wp_version )
 	);
 	?>
@@ -307,8 +307,8 @@ elseif ( $agentic_inbound_cat === $agentic_active_cat ) :
 	<?php if ( empty( $agentic_inbound_tools ) ) : ?>
 <div class="notice notice-info agentic-mt-16">
 <p>
-<strong><?php esc_html_e( 'No third-party abilities detected.', 'siteloom' ); ?></strong>
-		<?php esc_html_e( 'When other plugins register WordPress abilities, they will appear here as inbound tools that your agents can use.', 'siteloom' ); ?>
+<strong><?php esc_html_e( 'No third-party abilities detected.', 'agentstructor' ); ?></strong>
+		<?php esc_html_e( 'When other plugins register WordPress abilities, they will appear here as inbound tools that your agents can use.', 'agentstructor' ); ?>
 </p>
 </div>
 <?php else : ?>
@@ -321,7 +321,7 @@ elseif ( $agentic_inbound_cat === $agentic_active_cat ) :
 				'%d third-party ability available as an inbound tool for your agents.',
 				'%d third-party abilities available as inbound tools for your agents.',
 				count( $agentic_inbound_tools ),
-				'siteloom'
+				'agentstructor'
 			)
 		),
 		(int) count( $agentic_inbound_tools )
@@ -331,11 +331,11 @@ elseif ( $agentic_inbound_cat === $agentic_active_cat ) :
 <table class="widefat striped agentic-table-mt-0">
 <thead>
 <tr>
-<th class="agentic-col-80"><?php esc_html_e( 'Enabled', 'siteloom' ); ?></th>
-<th class="agentic-col-200"><?php esc_html_e( 'Ability Name', 'siteloom' ); ?></th>
-<th class="agentic-col-200"><?php esc_html_e( 'Tool Name', 'siteloom' ); ?></th>
-<th><?php esc_html_e( 'Description', 'siteloom' ); ?></th>
-<th class="agentic-col-200"><?php esc_html_e( 'Parameters', 'siteloom' ); ?></th>
+<th class="agentic-col-80"><?php esc_html_e( 'Enabled', 'agentstructor' ); ?></th>
+<th class="agentic-col-200"><?php esc_html_e( 'Ability Name', 'agentstructor' ); ?></th>
+<th class="agentic-col-200"><?php esc_html_e( 'Tool Name', 'agentstructor' ); ?></th>
+<th><?php esc_html_e( 'Description', 'agentstructor' ); ?></th>
+<th class="agentic-col-200"><?php esc_html_e( 'Parameters', 'agentstructor' ); ?></th>
 </tr>
 </thead>
 <tbody>
@@ -349,7 +349,7 @@ elseif ( $agentic_inbound_cat === $agentic_active_cat ) :
 		?>
 <tr<?php echo $agentic_ab_enabled ? '' : ' style="opacity: 0.6;"'; ?> data-ability="<?php echo esc_attr( $agentic_ab_orig ); ?>">
 <td class="agentic-td-center">
-<label class="agentic-toggle" title="<?php echo $agentic_ab_enabled ? esc_attr__( 'Click to disable this ability', 'siteloom' ) : esc_attr__( 'Click to enable this ability', 'siteloom' ); ?>">
+<label class="agentic-toggle" title="<?php echo $agentic_ab_enabled ? esc_attr__( 'Click to disable this ability', 'agentstructor' ) : esc_attr__( 'Click to enable this ability', 'agentstructor' ); ?>">
 <input type="checkbox" class="agentic-inbound-toggle"
 data-ability="<?php echo esc_attr( $agentic_ab_orig ); ?>"
 		<?php checked( $agentic_ab_enabled ); ?> />
@@ -363,7 +363,7 @@ data-ability="<?php echo esc_attr( $agentic_ab_orig ); ?>"
 		<?php if ( ! empty( $agentic_ab_params ) ) : ?>
 <code class="agentic-text-xxs"><?php echo esc_html( implode( ', ', array_keys( $agentic_ab_params ) ) ); ?></code>
 <?php else : ?>
-<span class="agentic-text-muted"><?php esc_html_e( 'None', 'siteloom' ); ?></span>
+<span class="agentic-text-muted"><?php esc_html_e( 'None', 'agentstructor' ); ?></span>
 <?php endif; ?>
 </td>
 </tr>
@@ -373,12 +373,12 @@ data-ability="<?php echo esc_attr( $agentic_ab_orig ); ?>"
 <?php endif; ?>
 
 <div class="agentic-embed-note">
-<h3><?php esc_html_e( 'About WP Abilities', 'siteloom' ); ?></h3>
+<h3><?php esc_html_e( 'About WP Abilities', 'agentstructor' ); ?></h3>
 <ul>
-<li><?php esc_html_e( 'Inbound abilities from other plugins are automatically converted to the OpenAI function-calling format and made available to all agents.', 'siteloom' ); ?></li>
-<li><?php esc_html_e( 'Use the Enabled toggle to switch an individual third-party ability on or off. A disabled ability is hidden from every agent and cannot be called through the abilities bridge. (Built-in tools that use an ability internally are controlled by their own toggle in the tools list.)', 'siteloom' ); ?></li>
-<li><?php esc_html_e( 'The "Ability Name" column shows the original WordPress ability identifier (e.g., woocommerce/get-orders); the "Tool Name" column shows the function name your agents use to call it.', 'siteloom' ); ?></li>
-<li><?php esc_html_e( 'Outbound abilities are your own Siteloom tools, published for MCP, the REST API, and core AI. Each tool in the list shows its ability name underneath — toggle the tool off to unpublish it.', 'siteloom' ); ?></li>
+<li><?php esc_html_e( 'Inbound abilities from other plugins are automatically converted to the OpenAI function-calling format and made available to all agents.', 'agentstructor' ); ?></li>
+<li><?php esc_html_e( 'Use the Enabled toggle to switch an individual third-party ability on or off. A disabled ability is hidden from every agent and cannot be called through the abilities bridge. (Built-in tools that use an ability internally are controlled by their own toggle in the tools list.)', 'agentstructor' ); ?></li>
+<li><?php esc_html_e( 'The "Ability Name" column shows the original WordPress ability identifier (e.g., woocommerce/get-orders); the "Tool Name" column shows the function name your agents use to call it.', 'agentstructor' ); ?></li>
+<li><?php esc_html_e( 'Outbound abilities are your own AgentStructor tools, published for MCP, the REST API, and core AI. Each tool in the list shows its ability name underneath — toggle the tool off to unpublish it.', 'agentstructor' ); ?></li>
 </ul>
 </div>
 
@@ -386,28 +386,28 @@ data-ability="<?php echo esc_attr( $agentic_ab_orig ); ?>"
 
 	<?php if ( empty( $agentic_all_tools ) ) : ?>
 		<div class="notice notice-info">
-			<p><?php esc_html_e( 'No tools found. Activate agents to see their available tools.', 'siteloom' ); ?></p>
+			<p><?php esc_html_e( 'No tools found. Activate agents to see their available tools.', 'agentstructor' ); ?></p>
 		</div>
 	<?php else : ?>
 		<div class="agentic-table-scroll">
 		<table class="widefat striped agentic-table-mt-0 agentic-table-no-top-border">
 			<thead>
 				<tr>
-					<th class="agentic-col-80"><?php esc_html_e( 'Enabled', 'siteloom' ); ?></th>
-					<th class="agentic-col-200"><?php esc_html_e( 'Tool Name', 'siteloom' ); ?></th>
-					<th><?php esc_html_e( 'Description', 'siteloom' ); ?></th>
-					<th class="agentic-col-110"><?php esc_html_e( 'Security', 'siteloom' ); ?></th>
-					<th class="agentic-col-100"><?php esc_html_e( 'Source', 'siteloom' ); ?></th>
-					<th class="agentic-col-100"><?php esc_html_e( 'Category', 'siteloom' ); ?></th>
-					<th class="agentic-col-100"><?php esc_html_e( 'Usage', 'siteloom' ); ?></th>
-					<th class="agentic-col-200"><?php esc_html_e( 'Parameters', 'siteloom' ); ?></th>
+					<th class="agentic-col-80"><?php esc_html_e( 'Enabled', 'agentstructor' ); ?></th>
+					<th class="agentic-col-200"><?php esc_html_e( 'Tool Name', 'agentstructor' ); ?></th>
+					<th><?php esc_html_e( 'Description', 'agentstructor' ); ?></th>
+					<th class="agentic-col-110"><?php esc_html_e( 'Security', 'agentstructor' ); ?></th>
+					<th class="agentic-col-100"><?php esc_html_e( 'Source', 'agentstructor' ); ?></th>
+					<th class="agentic-col-100"><?php esc_html_e( 'Category', 'agentstructor' ); ?></th>
+					<th class="agentic-col-100"><?php esc_html_e( 'Usage', 'agentstructor' ); ?></th>
+					<th class="agentic-col-200"><?php esc_html_e( 'Parameters', 'agentstructor' ); ?></th>
 				</tr>
 			</thead>
 			<tbody>
 				<?php foreach ( $agentic_all_tools as $agentic_tool ) : ?>
 				<tr<?php echo $agentic_tool['enabled'] ? '' : ' style="opacity: 0.6;"'; ?> data-tool="<?php echo esc_attr( $agentic_tool['name'] ); ?>">
 					<td class="agentic-td-center">
-						<label class="agentic-toggle" title="<?php echo $agentic_tool['enabled'] ? esc_attr__( 'Click to disable this tool', 'siteloom' ) : esc_attr__( 'Click to enable this tool', 'siteloom' ); ?>">
+						<label class="agentic-toggle" title="<?php echo $agentic_tool['enabled'] ? esc_attr__( 'Click to disable this tool', 'agentstructor' ) : esc_attr__( 'Click to enable this tool', 'agentstructor' ); ?>">
 							<input type="checkbox" class="agentic-tool-toggle"
 								data-tool="<?php echo esc_attr( $agentic_tool['name'] ); ?>"
 								data-risk="<?php echo esc_attr( $agentic_tool['risk_level'] ?? 'none' ); ?>"
@@ -421,12 +421,12 @@ data-ability="<?php echo esc_attr( $agentic_ab_orig ); ?>"
 						<?php if ( isset( $agentic_unavailable_tools[ $agentic_tool['name'] ] ) ) : ?>
 							<br />
 							<span class="agentic-badge-amber" title="<?php echo esc_attr( $agentic_unavailable_tools[ $agentic_tool['name'] ] ); ?>">
-								<?php esc_html_e( 'Unavailable on this install', 'siteloom' ); ?>
+								<?php esc_html_e( 'Unavailable on this install', 'agentstructor' ); ?>
 							</span>
 						<?php endif; ?>
 						<?php if ( $agentic_abilities_api ) : ?>
 							<br />
-							<span class="agentic-text-muted agentic-text-xxs" title="<?php esc_attr_e( 'Published as a WordPress ability (MCP, REST, core AI) while this tool is enabled.', 'siteloom' ); ?>">
+							<span class="agentic-text-muted agentic-text-xxs" title="<?php esc_attr_e( 'Published as a WordPress ability (MCP, REST, core AI) while this tool is enabled.', 'agentstructor' ); ?>">
 								<?php echo esc_html( 'agent-builder/' . str_replace( '_', '-', $agentic_tool['name'] ) ); ?>
 							</span>
 						<?php endif; ?>
@@ -445,11 +445,11 @@ data-ability="<?php echo esc_attr( $agentic_ab_orig ); ?>"
 							'extreme' => 'background: #faf5ff; color: #6b21a8;',
 						);
 						$agentic_risk_labels = array(
-							'none'    => __( 'Read Only', 'siteloom' ),
-							'low'     => __( 'Low', 'siteloom' ),
-							'medium'  => __( 'Write', 'siteloom' ),
-							'high'    => __( 'Bulk Write', 'siteloom' ),
-							'extreme' => __( 'Blocked', 'siteloom' ),
+							'none'    => __( 'Read Only', 'agentstructor' ),
+							'low'     => __( 'Low', 'agentstructor' ),
+							'medium'  => __( 'Write', 'agentstructor' ),
+							'high'    => __( 'Bulk Write', 'agentstructor' ),
+							'extreme' => __( 'Blocked', 'agentstructor' ),
 						);
 						$agentic_risk_icons  = array(
 							'none'    => '🟢',
@@ -459,7 +459,7 @@ data-ability="<?php echo esc_attr( $agentic_ab_orig ); ?>"
 							'extreme' => '⛔',
 						);
 						$agentic_risk_style  = $agentic_risk_styles[ $agentic_risk ] ?? $agentic_risk_styles['none'];
-						$agentic_risk_label  = $agentic_risk_labels[ $agentic_risk ] ?? __( 'Read Only', 'siteloom' );
+						$agentic_risk_label  = $agentic_risk_labels[ $agentic_risk ] ?? __( 'Read Only', 'agentstructor' );
 						$agentic_risk_icon   = $agentic_risk_icons[ $agentic_risk ] ?? '🟢';
 						?>
 						<span style="<?php echo esc_attr( $agentic_risk_style ); ?> padding: 2px 8px; border-radius: 3px; font-size: 12px; white-space: nowrap;"
@@ -470,7 +470,7 @@ data-ability="<?php echo esc_attr( $agentic_ab_orig ); ?>"
 					<td>
 						<?php if ( 'core' === $agentic_tool['source'] ) : ?>
 							<span class="agentic-badge-local-sm">
-								<?php esc_html_e( 'Core', 'siteloom' ); ?>
+								<?php esc_html_e( 'Core', 'agentstructor' ); ?>
 							</span>
 						<?php else : ?>
 							<?php
@@ -495,10 +495,10 @@ data-ability="<?php echo esc_attr( $agentic_ab_orig ); ?>"
 							printf(
 								'<span class="agentic-badge-green-sm agentic-fw600">%s</span>',
 								/* translators: %s: number of times a tool was called */
-								esc_html( sprintf( _n( '%s call', '%s calls', $agentic_tool_uses, 'siteloom' ), number_format_i18n( $agentic_tool_uses ) ) )
+								esc_html( sprintf( _n( '%s call', '%s calls', $agentic_tool_uses, 'agentstructor' ), number_format_i18n( $agentic_tool_uses ) ) )
 							);
 						} else {
-							echo '<span class="agentic-text-dim agentic-text-xs">' . esc_html__( 'No calls yet', 'siteloom' ) . '</span>';
+							echo '<span class="agentic-text-dim agentic-text-xs">' . esc_html__( 'No calls yet', 'agentstructor' ) . '</span>';
 						}
 						?>
 					</td>
@@ -508,7 +508,7 @@ data-ability="<?php echo esc_attr( $agentic_ab_orig ); ?>"
 						if ( ! empty( $agentic_param_names ) ) {
 							echo '<code class="agentic-text-xxs">' . esc_html( implode( ', ', $agentic_param_names ) ) . '</code>';
 						} else {
-							echo '<span class="agentic-text-muted">' . esc_html__( 'None', 'siteloom' ) . '</span>';
+							echo '<span class="agentic-text-muted">' . esc_html__( 'None', 'agentstructor' ) . '</span>';
 						}
 						?>
 					</td>
@@ -520,29 +520,29 @@ data-ability="<?php echo esc_attr( $agentic_ab_orig ); ?>"
 	<?php endif; ?>
 
 	<div class="agentic-callout-warning-mt20">
-		<h3><?php esc_html_e( 'Tool Permission System', 'siteloom' ); ?></h3>
-		<p class="agentic-mb-8"><?php esc_html_e( 'Use the toggle switches above to control which tools agents can access. When a tool is disabled:', 'siteloom' ); ?></p>
+		<h3><?php esc_html_e( 'Tool Permission System', 'agentstructor' ); ?></h3>
+		<p class="agentic-mb-8"><?php esc_html_e( 'Use the toggle switches above to control which tools agents can access. When a tool is disabled:', 'agentstructor' ); ?></p>
 		<ul class="agentic-mb-10 agentic-list-disc">
-			<li><?php esc_html_e( 'The tool is hidden from the AI model — agents will not know it exists and cannot request it.', 'siteloom' ); ?></li>
-			<li><?php esc_html_e( 'Even if an agent attempts to call a disabled tool directly, execution is blocked and an error is returned.', 'siteloom' ); ?></li>
-			<li><?php esc_html_e( 'Disabled tool calls are logged in the Audit Log for security visibility.', 'siteloom' ); ?></li>
-			<li><?php esc_html_e( 'Changes take effect immediately — no restart or reload required.', 'siteloom' ); ?></li>
+			<li><?php esc_html_e( 'The tool is hidden from the AI model — agents will not know it exists and cannot request it.', 'agentstructor' ); ?></li>
+			<li><?php esc_html_e( 'Even if an agent attempts to call a disabled tool directly, execution is blocked and an error is returned.', 'agentstructor' ); ?></li>
+			<li><?php esc_html_e( 'Disabled tool calls are logged in the Audit Log for security visibility.', 'agentstructor' ); ?></li>
+			<li><?php esc_html_e( 'Changes take effect immediately — no restart or reload required.', 'agentstructor' ); ?></li>
 		</ul>
 		<p class="agentic-mt-0 agentic-text-xxs agentic-text-amber-warn">
-			<strong><?php esc_html_e( 'Tip:', 'siteloom' ); ?></strong>
-			<?php esc_html_e( 'Database read tools are enabled by default. Write tools (update option, create/update/delete post) are disabled by default — enable them here when needed.', 'siteloom' ); ?>
+			<strong><?php esc_html_e( 'Tip:', 'agentstructor' ); ?></strong>
+			<?php esc_html_e( 'Database read tools are enabled by default. Write tools (update option, create/update/delete post) are disabled by default — enable them here when needed.', 'agentstructor' ); ?>
 		</p>
 	</div>
 
 	<div class="agentic-embed-note">
-		<h3><?php esc_html_e( 'About Tools', 'siteloom' ); ?></h3>
+		<h3><?php esc_html_e( 'About Tools', 'agentstructor' ); ?></h3>
 		<ul>
-			<li><?php esc_html_e( 'Core tools are available to all agents and provide file operations, WordPress data access, and schedule management.', 'siteloom' ); ?></li>
-			<li><?php esc_html_e( 'Agent tools are defined by individual agents for their specific functionality (e.g., security scans, content analysis).', 'siteloom' ); ?></li>
-			<li><?php esc_html_e( 'When chatting with an agent, the LLM decides which tools to call based on the conversation context.', 'siteloom' ); ?></li>
-			<li><?php esc_html_e( 'All tool executions are logged in the Audit Log for transparency and debugging.', 'siteloom' ); ?></li>
+			<li><?php esc_html_e( 'Core tools are available to all agents and provide file operations, WordPress data access, and schedule management.', 'agentstructor' ); ?></li>
+			<li><?php esc_html_e( 'Agent tools are defined by individual agents for their specific functionality (e.g., security scans, content analysis).', 'agentstructor' ); ?></li>
+			<li><?php esc_html_e( 'When chatting with an agent, the LLM decides which tools to call based on the conversation context.', 'agentstructor' ); ?></li>
+			<li><?php esc_html_e( 'All tool executions are logged in the Audit Log for transparency and debugging.', 'agentstructor' ); ?></li>
 			<?php if ( $agentic_abilities_api ) : ?>
-				<li><?php esc_html_e( 'On WordPress 6.9+, every enabled tool is also published as a WordPress ability (shown as agent-builder/… under each tool name) — discoverable by core AI, MCP clients, and the Command Palette. Disable a tool to unpublish its ability. Abilities from other plugins appear under the "Inbound Abilities" category.', 'siteloom' ); ?></li>
+				<li><?php esc_html_e( 'On WordPress 6.9+, every enabled tool is also published as a WordPress ability (shown as agent-builder/… under each tool name) — discoverable by core AI, MCP clients, and the Command Palette. Disable a tool to unpublish its ability. Abilities from other plugins appear under the "Inbound Abilities" category.', 'agentstructor' ); ?></li>
 			<?php endif; ?>
 		</ul>
 	</div>
@@ -561,31 +561,31 @@ data-ability="<?php echo esc_attr( $agentic_ab_orig ); ?>"
 		'toggleNonce'  => wp_create_nonce( 'agentic_toggle_tool' ),
 		'inboundNonce' => wp_create_nonce( 'agentic_toggle_inbound_ability' ),
 		'copy'         => array(
-			'highTitle'           => __( 'Enable high-risk tool?', 'siteloom' ),
-			'extremeTitle'        => __( 'This tool cannot be enabled', 'siteloom' ),
-			'cancel'              => __( 'Cancel', 'siteloom' ),
-			'enable'              => __( 'Enable tool', 'siteloom' ),
-			'close'               => __( 'Close', 'siteloom' ),
-			'highLead'            => __( 'can make a significant change to your site.', 'siteloom' ),
+			'highTitle'           => __( 'Enable high-risk tool?', 'agentstructor' ),
+			'extremeTitle'        => __( 'This tool cannot be enabled', 'agentstructor' ),
+			'cancel'              => __( 'Cancel', 'agentstructor' ),
+			'enable'              => __( 'Enable tool', 'agentstructor' ),
+			'close'               => __( 'Close', 'agentstructor' ),
+			'highLead'            => __( 'can make a significant change to your site.', 'agentstructor' ),
 			/* translators: %s: plain-language reason this tool is high-risk, filled in client-side. */
-			'highWhy'             => __( 'Why this is high-risk: %s', 'siteloom' ),
-			'highGuard'           => __( 'If an agent uses this tool later, the action will still wait for human review in the Approvals queue before it runs.', 'siteloom' ),
-			'highNote'            => __( 'Enabling this tool makes it available to eligible agents. It does not run the tool immediately.', 'siteloom' ),
-			'extremeLead'         => __( 'is marked Extreme Risk.', 'siteloom' ),
-			'extremeBody'         => __( 'Extreme-risk tools are hidden from agents entirely and blocked from running, because they are too risky for normal use.', 'siteloom' ),
-			'highReasonDefault'   => __( 'A significant or bulk change — waits in the Approvals queue for you to allow it.', 'siteloom' ),
-			'clickDisable'        => __( 'Click to disable this tool', 'siteloom' ),
-			'clickEnable'         => __( 'Click to enable this tool', 'siteloom' ),
-			'abilityClickDisable' => __( 'Click to disable this ability', 'siteloom' ),
-			'abilityClickEnable'  => __( 'Click to enable this ability', 'siteloom' ),
+			'highWhy'             => __( 'Why this is high-risk: %s', 'agentstructor' ),
+			'highGuard'           => __( 'If an agent uses this tool later, the action will still wait for human review in the Approvals queue before it runs.', 'agentstructor' ),
+			'highNote'            => __( 'Enabling this tool makes it available to eligible agents. It does not run the tool immediately.', 'agentstructor' ),
+			'extremeLead'         => __( 'is marked Extreme Risk.', 'agentstructor' ),
+			'extremeBody'         => __( 'Extreme-risk tools are hidden from agents entirely and blocked from running, because they are too risky for normal use.', 'agentstructor' ),
+			'highReasonDefault'   => __( 'A significant or bulk change — waits in the Approvals queue for you to allow it.', 'agentstructor' ),
+			'clickDisable'        => __( 'Click to disable this tool', 'agentstructor' ),
+			'clickEnable'         => __( 'Click to enable this tool', 'agentstructor' ),
+			'abilityClickDisable' => __( 'Click to disable this ability', 'agentstructor' ),
+			'abilityClickEnable'  => __( 'Click to enable this ability', 'agentstructor' ),
 		),
 		'highReasons'  => array(
-			'force_password_reset' => __( 'can affect account access', 'siteloom' ),
-			'wc_create_refund'     => __( 'moves money', 'siteloom' ),
-			'delete_form'          => __( 'can permanently remove data', 'siteloom' ),
-			'git_push'             => __( 'changes the deployed codebase', 'siteloom' ),
-			'git_pull'             => __( 'changes the deployed codebase', 'siteloom' ),
-			'git_commit'           => __( 'changes the deployed codebase', 'siteloom' ),
+			'force_password_reset' => __( 'can affect account access', 'agentstructor' ),
+			'wc_create_refund'     => __( 'moves money', 'agentstructor' ),
+			'delete_form'          => __( 'can permanently remove data', 'agentstructor' ),
+			'git_push'             => __( 'changes the deployed codebase', 'agentstructor' ),
+			'git_pull'             => __( 'changes the deployed codebase', 'agentstructor' ),
+			'git_commit'           => __( 'changes the deployed codebase', 'agentstructor' ),
 		),
 	),
 	'agenticTools',

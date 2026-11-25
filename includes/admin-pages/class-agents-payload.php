@@ -80,8 +80,8 @@ class Agents_Payload {
 
 		return array(
 			'page'         => 'agents',
-			'title'        => __( 'Agents', 'siteloom' ),
-			'description'  => __( 'Your agents at a glance. Pin the ones you reach for, hide the ones you do not, and create, duplicate, or import more.', 'siteloom' ),
+			'title'        => __( 'Agents', 'agentstructor' ),
+			'description'  => __( 'Your agents at a glance. Pin the ones you reach for, hide the ones you do not, and create, duplicate, or import more.', 'agentstructor' ),
 			'agents'       => $agents,
 			'is_advanced'  => $is_advanced,
 			'ui_mode'      => $is_advanced ? 'advanced' : 'basic',

@@ -80,7 +80,7 @@ class Agent_Templates {
 	public static function duplicate( string $slug ) {
 		$payload = self::payload( $slug );
 		if ( null === $payload ) {
-			return new \WP_Error( 'agent_not_found', __( 'Agent not found.', 'siteloom' ) );
+			return new \WP_Error( 'agent_not_found', __( 'Agent not found.', 'agentstructor' ) );
 		}
 
 		$new_slug     = self::unique_copy_slug( $slug );
@@ -113,7 +113,7 @@ class Agent_Templates {
 
 		if ( ! Abilities_Manifest::verify_integrity( $new_slug ) ) {
 			self::cleanup_duplicate( $new_slug, $skill_ids );
-			return new \WP_Error( 'integrity_failed', __( 'The duplicated agent failed its integrity check.', 'siteloom' ) );
+			return new \WP_Error( 'integrity_failed', __( 'The duplicated agent failed its integrity check.', 'agentstructor' ) );
 		}
 
 		return $new_slug;
@@ -140,11 +140,11 @@ class Agent_Templates {
 	public static function export( string $slug ) {
 		$payload = self::payload( $slug );
 		if ( null === $payload ) {
-			return new \WP_Error( 'agent_not_found', __( 'Agent not found.', 'siteloom' ) );
+			return new \WP_Error( 'agent_not_found', __( 'Agent not found.', 'agentstructor' ) );
 		}
 
 		if ( ! class_exists( 'ZipArchive' ) ) {
-			return new \WP_Error( 'zip_unavailable', __( 'The ZipArchive extension is required to export agents.', 'siteloom' ) );
+			return new \WP_Error( 'zip_unavailable', __( 'The ZipArchive extension is required to export agents.', 'agentstructor' ) );
 		}
 
 		// A fresh, unique temp file outside the web root (WP_TEMP_DIR / sys_get_temp_dir),
@@ -158,7 +158,7 @@ class Agent_Templates {
 			// the temp file; a boolean false would otherwise be handed straight
 			// to ZipArchive::open(), whose string parameter raises a TypeError
 			// instead of a controlled export failure.
-			return new \WP_Error( 'zip_failed', __( 'Could not create a temporary export file.', 'siteloom' ) );
+			return new \WP_Error( 'zip_failed', __( 'Could not create a temporary export file.', 'agentstructor' ) );
 		}
 
 		// wp_tempnam() prefers WP_TEMP_DIR / sys_get_temp_dir(), but get_temp_dir()
@@ -169,13 +169,13 @@ class Agent_Templates {
 		// web-servable one is not.
 		if ( self::is_under_web_root( $zip_path ) ) {
 			wp_delete_file( $zip_path );
-			return new \WP_Error( 'export_unsafe_path', __( 'The export location is not safely outside the web root.', 'siteloom' ) );
+			return new \WP_Error( 'export_unsafe_path', __( 'The export location is not safely outside the web root.', 'agentstructor' ) );
 		}
 
 		$zip = new \ZipArchive();
 		if ( true !== $zip->open( $zip_path, \ZipArchive::CREATE | \ZipArchive::OVERWRITE ) ) {
 			wp_delete_file( $zip_path );
-			return new \WP_Error( 'zip_failed', __( 'Could not create the export archive.', 'siteloom' ) );
+			return new \WP_Error( 'zip_failed', __( 'Could not create the export archive.', 'agentstructor' ) );
 		}
 
 		$manifest = $payload['manifest'];
@@ -210,7 +210,7 @@ class Agent_Templates {
 
 		if ( ! $zip->close() ) {
 			wp_delete_file( $zip_path );
-			return new \WP_Error( 'zip_failed', __( 'Could not finalize the export archive.', 'siteloom' ) );
+			return new \WP_Error( 'zip_failed', __( 'Could not finalize the export archive.', 'agentstructor' ) );
 		}
 
 		return $zip_path;
@@ -261,7 +261,7 @@ class Agent_Templates {
 	 */
 	public static function import( array $file ) {
 		if ( empty( $file['tmp_name'] ) || empty( $file['name'] ) ) {
-			return new \WP_Error( 'invalid_upload', __( 'No file was uploaded.', 'siteloom' ) );
+			return new \WP_Error( 'invalid_upload', __( 'No file was uploaded.', 'agentstructor' ) );
 		}
 
 		$overrides = array(
@@ -474,7 +474,7 @@ class Agent_Templates {
 	 */
 	private static function write_agent( string $slug, array $manifest, string $system_prompt, ?array $abilities ) {
 		if ( ! File_Manager::ensure_data_dir( 'agents' ) ) {
-			return new \WP_Error( 'mkdir_failed', __( 'Could not create the agents directory.', 'siteloom' ) );
+			return new \WP_Error( 'mkdir_failed', __( 'Could not create the agents directory.', 'agentstructor' ) );
 		}
 
 		$agent_dir = File_Manager::agents_dir() . '/' . $slug;
@@ -488,9 +488,9 @@ class Agent_Templates {
 			// (permissions, a missing parent, …) and must not be reported as a
 			// taken slug, which would silently suppress the real error.
 			if ( is_dir( $agent_dir ) ) {
-				return new \WP_Error( 'slug_taken', __( 'Another request is already writing an agent with this slug.', 'siteloom' ) );
+				return new \WP_Error( 'slug_taken', __( 'Another request is already writing an agent with this slug.', 'agentstructor' ) );
 			}
-			return new \WP_Error( 'mkdir_failed', __( 'Could not create the agent directory.', 'siteloom' ) );
+			return new \WP_Error( 'mkdir_failed', __( 'Could not create the agent directory.', 'agentstructor' ) );
 		}
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- mkdir()'s mode argument is still subject to umask; pin it explicitly, same as File_Manager::mkdir().
 		chmod( $agent_dir, self::agent_dir_mode() );
@@ -499,21 +499,21 @@ class Agent_Templates {
 		$manifest_json = wp_json_encode( $manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 		if ( false === $manifest_json ) {
 			File_Manager::rmdir( $agent_dir, true );
-			return new \WP_Error( 'encode_failed', __( 'Could not encode the agent manifest.', 'siteloom' ) );
+			return new \WP_Error( 'encode_failed', __( 'Could not encode the agent manifest.', 'agentstructor' ) );
 		}
 		if ( ! File_Manager::put_contents( $agent_dir . '/agent.json', $manifest_json ) ) {
 			File_Manager::rmdir( $agent_dir, true );
-			return new \WP_Error( 'write_failed', __( 'Could not write agent.json.', 'siteloom' ) );
+			return new \WP_Error( 'write_failed', __( 'Could not write agent.json.', 'agentstructor' ) );
 		}
 
 		if ( '' !== $system_prompt ) {
 			if ( ! wp_mkdir_p( $agent_dir . '/templates' ) ) {
 				File_Manager::rmdir( $agent_dir, true );
-				return new \WP_Error( 'mkdir_failed', __( 'Could not create the agent templates directory.', 'siteloom' ) );
+				return new \WP_Error( 'mkdir_failed', __( 'Could not create the agent templates directory.', 'agentstructor' ) );
 			}
 			if ( ! File_Manager::put_contents( $agent_dir . '/templates/system-prompt.txt', $system_prompt ) ) {
 				File_Manager::rmdir( $agent_dir, true );
-				return new \WP_Error( 'write_failed', __( 'Could not write the system prompt.', 'siteloom' ) );
+				return new \WP_Error( 'write_failed', __( 'Could not write the system prompt.', 'agentstructor' ) );
 			}
 		}
 
@@ -521,7 +521,7 @@ class Agent_Templates {
 			$abilities['agent'] = $slug;
 			if ( ! Abilities_Manifest::write_manifest( $agent_dir, $slug, $abilities ) ) {
 				File_Manager::rmdir( $agent_dir, true );
-				return new \WP_Error( 'write_failed', __( 'Could not write abilities.json.', 'siteloom' ) );
+				return new \WP_Error( 'write_failed', __( 'Could not write abilities.json.', 'agentstructor' ) );
 			}
 		}
 
@@ -616,7 +616,7 @@ class Agent_Templates {
 	 */
 	private static function unzip_to_temp( string $zip_path ) {
 		if ( ! class_exists( 'ZipArchive' ) ) {
-			return new \WP_Error( 'zip_unavailable', __( 'The ZipArchive extension is required to import agents.', 'siteloom' ) );
+			return new \WP_Error( 'zip_unavailable', __( 'The ZipArchive extension is required to import agents.', 'agentstructor' ) );
 		}
 
 		$bounds_error = self::check_archive_bounds( $zip_path );
@@ -635,7 +635,7 @@ class Agent_Templates {
 
 		$tmp_dir = trailingslashit( get_temp_dir() ) . 'agentic-import-' . wp_generate_password( 12, false );
 		if ( ! wp_mkdir_p( $tmp_dir ) ) {
-			return new \WP_Error( 'mkdir_failed', __( 'Could not create a temporary directory.', 'siteloom' ) );
+			return new \WP_Error( 'mkdir_failed', __( 'Could not create a temporary directory.', 'agentstructor' ) );
 		}
 
 		$result = unzip_file( $zip_path, $tmp_dir );
@@ -666,13 +666,13 @@ class Agent_Templates {
 	private static function check_archive_bounds( string $zip_path ) {
 		$zip = new \ZipArchive();
 		if ( true !== $zip->open( $zip_path ) ) {
-			return new \WP_Error( 'zip_failed', __( 'Could not open the archive.', 'siteloom' ) );
+			return new \WP_Error( 'zip_failed', __( 'Could not open the archive.', 'agentstructor' ) );
 		}
 
 		$count = $zip->numFiles; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- Native ZipArchive property name.
 		if ( $count > self::MAX_IMPORT_ENTRIES ) {
 			$zip->close();
-			return new \WP_Error( 'zip_too_many_entries', __( 'The archive has too many entries.', 'siteloom' ) );
+			return new \WP_Error( 'zip_too_many_entries', __( 'The archive has too many entries.', 'agentstructor' ) );
 		}
 
 		$total = 0;
@@ -693,7 +693,7 @@ class Agent_Templates {
 			// try to disambiguate.
 			if ( isset( $seen[ $name ] ) ) {
 				$zip->close();
-				return new \WP_Error( 'zip_duplicate_entry', __( 'The archive contains duplicate entry names.', 'siteloom' ) );
+				return new \WP_Error( 'zip_duplicate_entry', __( 'The archive contains duplicate entry names.', 'agentstructor' ) );
 			}
 			$seen[ $name ] = true;
 
@@ -711,7 +711,7 @@ class Agent_Templates {
 				$compressed = (int) ( $stat['comp_size'] ?? 0 );
 				if ( $declared > self::MAX_IMPORT_UNCOMPRESSED_BYTES || $compressed > self::MAX_IMPORT_UNCOMPRESSED_BYTES ) {
 					$zip->close();
-					return new \WP_Error( 'zip_too_large', __( 'The archive expands to more data than allowed.', 'siteloom' ) );
+					return new \WP_Error( 'zip_too_large', __( 'The archive expands to more data than allowed.', 'agentstructor' ) );
 				}
 			}
 
@@ -735,7 +735,7 @@ class Agent_Templates {
 					// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Closing a ZipArchive inflater stream, not a filesystem handle.
 					fclose( $stream );
 					$zip->close();
-					return new \WP_Error( 'zip_too_large', __( 'The archive expands to more data than allowed.', 'siteloom' ) );
+					return new \WP_Error( 'zip_too_large', __( 'The archive expands to more data than allowed.', 'agentstructor' ) );
 				}
 			}
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Closing a ZipArchive inflater stream, not a filesystem handle.
@@ -755,11 +755,11 @@ class Agent_Templates {
 	private static function read_manifest( string $tmp_dir ) {
 		$agent_json = $tmp_dir . '/agent.json';
 		if ( ! file_exists( $agent_json ) ) {
-			return new \WP_Error( 'missing_agent', __( 'The archive is missing agent.json.', 'siteloom' ) );
+			return new \WP_Error( 'missing_agent', __( 'The archive is missing agent.json.', 'agentstructor' ) );
 		}
 		$raw = json_decode( (string) File_Manager::get_contents( $agent_json ), true );
 		if ( ! is_array( $raw ) ) {
-			return new \WP_Error( 'invalid_agent', __( 'agent.json is not valid JSON.', 'siteloom' ) );
+			return new \WP_Error( 'invalid_agent', __( 'agent.json is not valid JSON.', 'agentstructor' ) );
 		}
 		$manifest = Agent_Manifest_Validator::validate( $raw );
 		if ( is_wp_error( $manifest ) ) {
@@ -781,11 +781,11 @@ class Agent_Templates {
 			// Agentic_Agent_Registry::activate_agent() refuses to activate an
 			// agent with no abilities manifest, so accepting the import here
 			// would only hand back a slug that can never be activated.
-			return new \WP_Error( 'missing_abilities', __( 'The archive is missing abilities.json.', 'siteloom' ) );
+			return new \WP_Error( 'missing_abilities', __( 'The archive is missing abilities.json.', 'agentstructor' ) );
 		}
 		$raw = json_decode( (string) File_Manager::get_contents( $abilities_json ), true );
 		if ( ! is_array( $raw ) ) {
-			return new \WP_Error( 'invalid_abilities', __( 'abilities.json is not valid JSON.', 'siteloom' ) );
+			return new \WP_Error( 'invalid_abilities', __( 'abilities.json is not valid JSON.', 'agentstructor' ) );
 		}
 		$raw = self::sanitize_abilities( $raw );
 
@@ -793,7 +793,7 @@ class Agent_Templates {
 		if ( ! empty( $downgrades ) ) {
 			return new \WP_Error(
 				'risk_downgrade',
-				__( 'The archive declares invalid or under-declared tool risk:', 'siteloom' ) . ' ' . implode( '; ', $downgrades )
+				__( 'The archive declares invalid or under-declared tool risk:', 'agentstructor' ) . ' ' . implode( '; ', $downgrades )
 			);
 		}
 
@@ -927,7 +927,7 @@ class Agent_Templates {
 		foreach ( $tools as $tool ) {
 			$tool = (string) $tool;
 			if ( '' !== $tool && ! isset( $map[ $tool ] ) ) {
-				$errors[] = sprintf( /* translators: %s: tool name */ __( '%s is declared in agent.json but not in abilities.json', 'siteloom' ), $tool );
+				$errors[] = sprintf( /* translators: %s: tool name */ __( '%s is declared in agent.json but not in abilities.json', 'agentstructor' ), $tool );
 			}
 		}
 
@@ -936,17 +936,17 @@ class Agent_Templates {
 				// An entry with no risk field would otherwise import as
 				// "fine" and then fail at activation for the same reason —
 				// flag it here instead, same as an explicitly-invalid risk.
-				$errors[] = sprintf( /* translators: %s: tool name */ __( '%s has no risk declared', 'siteloom' ), (string) $tool );
+				$errors[] = sprintf( /* translators: %s: tool name */ __( '%s has no risk declared', 'agentstructor' ), (string) $tool );
 				continue;
 			}
 			$declared = (string) $entry['risk'];
 			if ( ! Risk_Level::is_valid( $declared ) ) {
-				$errors[] = sprintf( /* translators: 1: tool name, 2: risk */ __( '%1$s has invalid risk %2$s', 'siteloom' ), (string) $tool, $declared );
+				$errors[] = sprintf( /* translators: 1: tool name, 2: risk */ __( '%1$s has invalid risk %2$s', 'agentstructor' ), (string) $tool, $declared );
 				continue;
 			}
 			$floor = Risk_Level::get_tool_default( (string) $tool );
 			if ( Risk_Level::weight( $declared ) < Risk_Level::weight( $floor ) ) {
-				$errors[] = sprintf( /* translators: 1: tool name, 2: declared risk, 3: floor risk */ __( '%1$s declares %2$s below its minimum %3$s', 'siteloom' ), (string) $tool, $declared, $floor );
+				$errors[] = sprintf( /* translators: 1: tool name, 2: declared risk, 3: floor risk */ __( '%1$s declares %2$s below its minimum %3$s', 'agentstructor' ), (string) $tool, $declared, $floor );
 			}
 		}
 		return $errors;

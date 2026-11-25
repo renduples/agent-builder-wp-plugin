@@ -1,6 +1,6 @@
 <?php
 /**
- * Global helper functions for the Siteloom plugin.
+ * Global helper functions for the AgentStructor plugin.
  *
  * This file intentionally declares NO namespace so all functions are available
  * in the global scope and callable from included admin files.
@@ -27,75 +27,75 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 function agent_builder_chat_i18n(): array {
 	return array(
-		'thinking'            => __( 'Agent is thinking...', 'siteloom' ),
-		'warmingUp'           => __( 'Warming up the AI model, please wait…', 'siteloom' ),
-		'preparingAudio'      => __( 'Preparing audio…', 'siteloom' ),
-		'copied'              => __( 'Copied!', 'siteloom' ),
-		'copy'                => __( 'Copy', 'siteloom' ),
-		'showDiff'            => __( '▶ Show Diff', 'siteloom' ),
-		'hideDiff'            => __( '▼ Hide Diff', 'siteloom' ),
-		'proposalDefault'     => __( 'Agent wants to make a change.', 'siteloom' ),
-		'approvalDefault'     => __( 'An agent wants to perform a high-risk action.', 'siteloom' ),
-		'ttsOff'              => __( 'Read aloud: off — click to enable', 'siteloom' ),
-		'ttsOn'               => __( 'Read aloud: on — click to disable', 'siteloom' ),
-		'voiceHttpsRequired'  => __( 'Voice input requires Chrome, Edge, or Safari with HTTPS', 'siteloom' ),
+		'thinking'            => __( 'Agent is thinking...', 'agentstructor' ),
+		'warmingUp'           => __( 'Warming up the AI model, please wait…', 'agentstructor' ),
+		'preparingAudio'      => __( 'Preparing audio…', 'agentstructor' ),
+		'copied'              => __( 'Copied!', 'agentstructor' ),
+		'copy'                => __( 'Copy', 'agentstructor' ),
+		'showDiff'            => __( '▶ Show Diff', 'agentstructor' ),
+		'hideDiff'            => __( '▼ Hide Diff', 'agentstructor' ),
+		'proposalDefault'     => __( 'Agent wants to make a change.', 'agentstructor' ),
+		'approvalDefault'     => __( 'An agent wants to perform a high-risk action.', 'agentstructor' ),
+		'ttsOff'              => __( 'Read aloud: off — click to enable', 'agentstructor' ),
+		'ttsOn'               => __( 'Read aloud: on — click to disable', 'agentstructor' ),
+		'voiceHttpsRequired'  => __( 'Voice input requires Chrome, Edge, or Safari with HTTPS', 'agentstructor' ),
 		/* translators: %s is the number of seconds before the next retry */
-		'retryBusy'           => __( 'The AI model is busy. Retrying in %ss…', 'siteloom' ),
-		'errorGeneric'        => __( 'Something went wrong. The issue has been reported.', 'siteloom' ),
-		'errorTimeout'        => __( 'The request timed out. The AI model may be overloaded — please try again.', 'siteloom' ),
-		'errorConnection'     => __( 'Sorry, there was an error connecting to the agent. Please try again.', 'siteloom' ),
+		'retryBusy'           => __( 'The AI model is busy. Retrying in %ss…', 'agentstructor' ),
+		'errorGeneric'        => __( 'Something went wrong. The issue has been reported.', 'agentstructor' ),
+		'errorTimeout'        => __( 'The request timed out. The AI model may be overloaded — please try again.', 'agentstructor' ),
+		'errorConnection'     => __( 'Sorry, there was an error connecting to the agent. Please try again.', 'agentstructor' ),
 		/* translators: %s is the error message detail */
-		'errorProposal'       => __( 'Error processing proposal: %s', 'siteloom' ),
+		'errorProposal'       => __( 'Error processing proposal: %s', 'agentstructor' ),
 		/* translators: %s is the error message detail */
-		'errorApproval'       => __( 'Error processing approval: %s', 'siteloom' ),
-		'errorTurnstile'      => __( 'Browser verification failed. Please refresh the page and try again.', 'siteloom' ),
-		'errorTtsLimit'       => __( 'Text-to-speech is currently unavailable. Please try again later.', 'siteloom' ),
+		'errorApproval'       => __( 'Error processing approval: %s', 'agentstructor' ),
+		'errorTurnstile'      => __( 'Browser verification failed. Please refresh the page and try again.', 'agentstructor' ),
+		'errorTtsLimit'       => __( 'Text-to-speech is currently unavailable. Please try again later.', 'agentstructor' ),
 		/* translators: %s is the name of the agent that handed off the conversation */
-		'handoffBanner'       => __( 'Handed off from %s. Context from the previous agent has been shared.', 'siteloom' ),
-		'reasoningSummary'    => __( 'Agent reasoning & steps', 'siteloom' ),
-		'reasoningThinking'   => __( 'Thinking:', 'siteloom' ),
-		'reasoningTools'      => __( 'Tools used:', 'siteloom' ),
+		'handoffBanner'       => __( 'Handed off from %s. Context from the previous agent has been shared.', 'agentstructor' ),
+		'reasoningSummary'    => __( 'Agent reasoning & steps', 'agentstructor' ),
+		'reasoningThinking'   => __( 'Thinking:', 'agentstructor' ),
+		'reasoningTools'      => __( 'Tools used:', 'agentstructor' ),
 		/* translators: %s is the number of reasoning iterations */
-		'reasoningIterations' => __( 'Iterations: %s', 'siteloom' ),
+		'reasoningIterations' => __( 'Iterations: %s', 'agentstructor' ),
 		// Labels for the key-argument summary rows on a Proposed Change card.
-		'summaryTitle'        => __( 'Title', 'siteloom' ),
-		'summaryStatus'       => __( 'Status', 'siteloom' ),
-		'summaryPostType'     => __( 'Post type', 'siteloom' ),
-		'summaryPost'         => __( 'Post', 'siteloom' ),
+		'summaryTitle'        => __( 'Title', 'agentstructor' ),
+		'summaryStatus'       => __( 'Status', 'agentstructor' ),
+		'summaryPostType'     => __( 'Post type', 'agentstructor' ),
+		'summaryPost'         => __( 'Post', 'agentstructor' ),
 		// Content preview on a Proposed Change card (create/update post or page).
-		'contentPreview'      => __( 'Content preview', 'siteloom' ),
-		'showFullContent'     => __( 'Show full content', 'siteloom' ),
-		'showLessContent'     => __( 'Show less', 'siteloom' ),
+		'contentPreview'      => __( 'Content preview', 'agentstructor' ),
+		'showFullContent'     => __( 'Show full content', 'agentstructor' ),
+		'showLessContent'     => __( 'Show less', 'agentstructor' ),
 		// Live activity pane (collapsible "Working…" step list).
-		'working'             => __( 'Working…', 'siteloom' ),
-		'workingDone'         => __( 'Done', 'siteloom' ),
-		'gateConfirm'         => __( 'Waiting for approval', 'siteloom' ),
-		'gateQueue'           => __( 'Queued for approval', 'siteloom' ),
-		'gateBlock'           => __( 'Blocked by policy', 'siteloom' ),
+		'working'             => __( 'Working…', 'agentstructor' ),
+		'workingDone'         => __( 'Done', 'agentstructor' ),
+		'gateConfirm'         => __( 'Waiting for approval', 'agentstructor' ),
+		'gateQueue'           => __( 'Queued for approval', 'agentstructor' ),
+		'gateBlock'           => __( 'Blocked by policy', 'agentstructor' ),
 		// Header status lights: tooltip + accessible label for each state.
-		'ledAiChecking'       => __( 'AI service: checking…', 'siteloom' ),
+		'ledAiChecking'       => __( 'AI service: checking…', 'agentstructor' ),
 		/* translators: %s is the AI provider name, e.g. "OpenAI" */
-		'ledAiReady'          => __( 'AI service: ready (%s)', 'siteloom' ),
-		'ledAiConnected'      => __( 'AI service: connected', 'siteloom' ),
-		'ledAiNotConfigured'  => __( 'AI service: not configured — add a provider in Settings', 'siteloom' ),
-		'ledAiFailed'         => __( 'AI service: connection failed', 'siteloom' ),
-		'ledAiUnknown'        => __( 'AI service: status unknown', 'siteloom' ),
-		'ledCreditsOk'        => __( 'Credits: available', 'siteloom' ),
-		'ledCreditsLow'       => __( 'Credits: running low', 'siteloom' ),
-		'ledCreditsExhausted' => __( 'Credits: exhausted — add credits or use your own API key', 'siteloom' ),
-		'ledCreditsUnknown'   => __( 'Credits: not checked yet — shown after your first message', 'siteloom' ),
+		'ledAiReady'          => __( 'AI service: ready (%s)', 'agentstructor' ),
+		'ledAiConnected'      => __( 'AI service: connected', 'agentstructor' ),
+		'ledAiNotConfigured'  => __( 'AI service: not configured — add a provider in Settings', 'agentstructor' ),
+		'ledAiFailed'         => __( 'AI service: connection failed', 'agentstructor' ),
+		'ledAiUnknown'        => __( 'AI service: status unknown', 'agentstructor' ),
+		'ledCreditsOk'        => __( 'Credits: available', 'agentstructor' ),
+		'ledCreditsLow'       => __( 'Credits: running low', 'agentstructor' ),
+		'ledCreditsExhausted' => __( 'Credits: exhausted — add credits or use your own API key', 'agentstructor' ),
+		'ledCreditsUnknown'   => __( 'Credits: not checked yet — shown after your first message', 'agentstructor' ),
 		// Skills UX (M15-d): Save as skill + Teach a task recording.
-		'saveAsSkill'         => __( 'Save as skill', 'siteloom' ),
-		'teachTask'           => __( 'Teach a task', 'siteloom' ),
-		'teachTaskTitle'      => __( 'Record a task demonstration', 'siteloom' ),
-		'recordingActive'     => __( 'Recording — demonstrate the task in the chat, then stop to create a draft.', 'siteloom' ),
-		'recordingStop'       => __( 'Stop & create draft', 'siteloom' ),
-		'recordingDrafting'   => __( 'Drafting skill…', 'siteloom' ),
-		'draftCreated'        => __( 'Draft skill created.', 'siteloom' ),
-		'reviewDraft'         => __( 'Review draft', 'siteloom' ),
-		'saveSkillFailed'     => __( 'Could not save the skill.', 'siteloom' ),
-		'recordStartFailed'   => __( 'Could not start recording.', 'siteloom' ),
-		'recordStopFailed'    => __( 'Could not create the draft from the recording.', 'siteloom' ),
+		'saveAsSkill'         => __( 'Save as skill', 'agentstructor' ),
+		'teachTask'           => __( 'Teach a task', 'agentstructor' ),
+		'teachTaskTitle'      => __( 'Record a task demonstration', 'agentstructor' ),
+		'recordingActive'     => __( 'Recording — demonstrate the task in the chat, then stop to create a draft.', 'agentstructor' ),
+		'recordingStop'       => __( 'Stop & create draft', 'agentstructor' ),
+		'recordingDrafting'   => __( 'Drafting skill…', 'agentstructor' ),
+		'draftCreated'        => __( 'Draft skill created.', 'agentstructor' ),
+		'reviewDraft'         => __( 'Review draft', 'agentstructor' ),
+		'saveSkillFailed'     => __( 'Could not save the skill.', 'agentstructor' ),
+		'recordStartFailed'   => __( 'Could not start recording.', 'agentstructor' ),
+		'recordStopFailed'    => __( 'Could not create the draft from the recording.', 'agentstructor' ),
 	);
 }
 
@@ -214,7 +214,7 @@ function agent_builder_setup_provider_icon( string $agentic_slug, int $size = 36
 	}
 
 	$icons = array(
-		'agentic'   => '<img src="' . esc_url( AGENT_BUILDER_URL . 'assets/agentic-ai.svg' ) . '" width="' . $s . '" height="' . $s . '" class="agentic-icon-img" alt="Agentic AI">',
+		'agentic'   => '<img src="' . esc_url( AGENT_BUILDER_URL . 'assets/icon.svg' ) . '" width="' . $s . '" height="' . $s . '" class="agentic-icon-img" alt="Agentic AI">',
 		'llama'     => '<svg xmlns="http://www.w3.org/2000/svg" width="' . $s . '" height="' . $s . '" viewBox="0 0 24 24" fill="none" role="img" aria-label="Meta Llama"><rect width="24" height="24" rx="4" fill="#0064E0"/><path d="M5 18V9.5l4 5.5 3-4.5 3 4.5 4-5.5V18" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
 		'cohere'    => '<svg xmlns="http://www.w3.org/2000/svg" width="' . $s . '" height="' . $s . '" viewBox="0 0 24 24" fill="none" role="img" aria-label="Cohere"><circle cx="12" cy="12" r="12" fill="#D18EE2"/><circle cx="12" cy="12" r="6" stroke="#fff" stroke-width="2" fill="none"/><circle cx="12" cy="5.5" r="2.5" fill="#fff"/></svg>',
 		'xai'       => '<svg xmlns="http://www.w3.org/2000/svg" width="' . $s . '" height="' . $s . '" viewBox="0 0 24 24" fill="none" role="img" aria-label="xAI"><path d="M3 3l7.5 9L3 21h2.5l6.25-7.5L17.5 21H21l-7.75-9.5L20.5 3H18l-5.75 7L7 3H3z" fill="#000"/></svg>',

@@ -92,19 +92,19 @@ class Checker_Privileged_Users extends Site_Brief_Checker {
 				array(
 					'title'            => sprintf(
 						/* translators: %d: administrator count. */
-						__( '%d administrator accounts', 'siteloom' ),
+						__( '%d administrator accounts', 'agentstructor' ),
 						$total
 					),
 					'evidence'         => sprintf(
 						/* translators: %s: comma-separated logins. */
-						__( 'Accounts: %s. Review for unexpected administrators.', 'siteloom' ),
+						__( 'Accounts: %s. Review for unexpected administrators.', 'agentstructor' ),
 						implode( ', ', $names )
 					),
 					'evidence_payload' => array(
 						'total'  => $total,
 						'logins' => $names,
 					),
-					'proposed_action'  => __( 'Open Users to review roles. Site Brief will not change accounts.', 'siteloom' ),
+					'proposed_action'  => __( 'Open Users to review roles. Site Brief will not change accounts.', 'agentstructor' ),
 					'action_risk'      => 'none',
 					'raw'              => array( 'total' => $total ),
 				)

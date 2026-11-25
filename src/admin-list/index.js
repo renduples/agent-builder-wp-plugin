@@ -28,7 +28,7 @@ function AdminListApp() {
 	return (
 		<div className="wrap agentic-admin">
 			<AdminPage
-				title={ cfg.title || __( 'Items', 'siteloom' ) }
+				title={ cfg.title || __( 'Items', 'agentstructor' ) }
 				description={ cfg.description || '' }
 				wide
 				actions={
@@ -47,7 +47,7 @@ function AdminListApp() {
 								onChange={ setQ }
 								placeholder={ __(
 									'Search…',
-									'siteloom'
+									'agentstructor'
 								) }
 								__nextHasNoMarginBottom
 							/>
@@ -56,7 +56,7 @@ function AdminListApp() {
 					{ ! rows.length ? (
 						<p className="agentic-react-muted">
 							{ cfg.emptyText ||
-								__( 'No items found.', 'siteloom' ) }
+								__( 'No items found.', 'agentstructor' ) }
 						</p>
 					) : (
 						<div className="agentic-react-table-wrap">

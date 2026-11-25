@@ -1,5 +1,5 @@
 /**
- * Dismiss handlers for Siteloom admin notices.
+ * Dismiss handlers for AgentStructor admin notices.
  *
  * Each notice carries what it needs in data attributes (nonce, count, slugs,
  * dismiss URL), so several notices on one screen all work from this one

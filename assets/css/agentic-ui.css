@@ -1,5 +1,5 @@
 /**
- * Siteloom — shared UI primitives (toasts + confirm/alert modals).
+ * AgentStructor — shared UI primitives (toasts + confirm/alert modals).
  *
  * All selectors are namespaced under `.agentic-ui-*` and avoid styling bare
  * element selectors so the components are safe to load on the frontend

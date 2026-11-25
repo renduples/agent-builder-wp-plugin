@@ -17,11 +17,11 @@ class Safety_Center_Payload {
 
 	public static function build(): array {
 		$risk_labels = array(
-			'none'    => __( 'No Risk', 'siteloom' ),
-			'low'     => __( 'Low Risk', 'siteloom' ),
-			'medium'  => __( 'Medium Risk', 'siteloom' ),
-			'high'    => __( 'High Risk', 'siteloom' ),
-			'extreme' => __( 'Extreme Risk', 'siteloom' ),
+			'none'    => __( 'No Risk', 'agentstructor' ),
+			'low'     => __( 'Low Risk', 'agentstructor' ),
+			'medium'  => __( 'Medium Risk', 'agentstructor' ),
+			'high'    => __( 'High Risk', 'agentstructor' ),
+			'extreme' => __( 'Extreme Risk', 'agentstructor' ),
 		);
 
 		$all_tools      = class_exists( \Agentic\Tools_Registry::class ) ? \Agentic\Tools_Registry::get_all() : array();
@@ -84,22 +84,22 @@ class Safety_Center_Payload {
 		}
 
 		$mode_labels = array(
-			'disabled'   => __( 'Disabled', 'siteloom' ),
-			'supervised' => __( 'Supervised', 'siteloom' ),
-			'autonomous' => __( 'Autonomous', 'siteloom' ),
+			'disabled'   => __( 'Disabled', 'agentstructor' ),
+			'supervised' => __( 'Supervised', 'agentstructor' ),
+			'autonomous' => __( 'Autonomous', 'agentstructor' ),
 		);
 
 		$comfort_labels = array(
-			'careful'   => __( 'Always ask me', 'siteloom' ),
-			'balanced'  => __( 'Auto-approve low risk', 'siteloom' ),
-			'hands_off' => __( 'Trust more', 'siteloom' ),
+			'careful'   => __( 'Always ask me', 'agentstructor' ),
+			'balanced'  => __( 'Auto-approve low risk', 'agentstructor' ),
+			'hands_off' => __( 'Trust more', 'agentstructor' ),
 		);
 
 		return array(
 			'page'           => 'safety-center',
-			'title'          => __( 'Safety Center', 'siteloom' ),
-			'panel_title'    => __( 'Safety overview', 'siteloom' ),
-			'description'    => __( 'Is this site set up safely for AI agents right now? These cards summarize the controls you already have — they do not change how those controls work.', 'siteloom' ),
+			'title'          => __( 'Safety Center', 'agentstructor' ),
+			'panel_title'    => __( 'Safety overview', 'agentstructor' ),
+			'description'    => __( 'Is this site set up safely for AI agents right now? These cards summarize the controls you already have — they do not change how those controls work.', 'agentstructor' ),
 			'is_advanced'    => class_exists( \Agentic\Admin_Menu_Handler::class )
 				? \Agentic\Admin_Menu_Handler::is_advanced_mode( 'safety-center' )
 				: ( 'advanced' === get_option( 'agent_builder_ui_mode', 'basic' ) ),
@@ -131,7 +131,7 @@ class Safety_Center_Payload {
 				'high_risk_count' => $high_risk_agents,
 				'mcp_count'       => $mcp_agents,
 				'items'           => $agent_scopes,
-				'integrity_note'  => __( 'Tool list blocked if manifest signature fails.', 'siteloom' ),
+				'integrity_note'  => __( 'Tool list blocked if manifest signature fails.', 'agentstructor' ),
 			),
 			'urls'           => array(
 				'tools'     => admin_url( 'admin.php?page=agentic-tools' ),
@@ -150,7 +150,7 @@ class Safety_Center_Payload {
 			'docs_url'       => 'https://agentic-plugin.com/documentation/safety-center/',
 			'footer_policy'  => __(
 				'Safety Center summarizes existing operator controls. It does not change how tools, approvals, or Emergency Stop work.',
-				'siteloom'
+				'agentstructor'
 			),
 		);
 	}
@@ -239,24 +239,24 @@ class Safety_Center_Payload {
 	private static function safety_center_tier_copy(): array {
 		return array(
 			'none'    => array(
-				'short_label' => __( 'None', 'siteloom' ),
-				'explanation' => __( 'Read-only. The agent can look things up, but it cannot change your site.', 'siteloom' ),
+				'short_label' => __( 'None', 'agentstructor' ),
+				'explanation' => __( 'Read-only. The agent can look things up, but it cannot change your site.', 'agentstructor' ),
 			),
 			'low'     => array(
-				'short_label' => __( 'Low', 'siteloom' ),
-				'explanation' => __( 'Usually safe to run automatically. These tools may read information that can include personal data, but they do not change your site.', 'siteloom' ),
+				'short_label' => __( 'Low', 'agentstructor' ),
+				'explanation' => __( 'Usually safe to run automatically. These tools may read information that can include personal data, but they do not change your site.', 'agentstructor' ),
 			),
 			'medium'  => array(
-				'short_label' => __( 'Medium', 'siteloom' ),
-				'explanation' => __( 'Changes something. The agent should pause and ask before using these tools.', 'siteloom' ),
+				'short_label' => __( 'Medium', 'agentstructor' ),
+				'explanation' => __( 'Changes something. The agent should pause and ask before using these tools.', 'agentstructor' ),
 			),
 			'high'    => array(
-				'short_label' => __( 'High', 'siteloom' ),
-				'explanation' => __( 'Significant, bulk, account-sensitive, or money-moving actions. These do not run immediately — they wait for a human decision in the Approvals queue.', 'siteloom' ),
+				'short_label' => __( 'High', 'agentstructor' ),
+				'explanation' => __( 'Significant, bulk, account-sensitive, or money-moving actions. These do not run immediately — they wait for a human decision in the Approvals queue.', 'agentstructor' ),
 			),
 			'extreme' => array(
-				'short_label' => __( 'Extreme', 'siteloom' ),
-				'explanation' => __( 'Too risky to allow. These tools are hidden from agents entirely and should not be enabled for normal use.', 'siteloom' ),
+				'short_label' => __( 'Extreme', 'agentstructor' ),
+				'explanation' => __( 'Too risky to allow. These tools are hidden from agents entirely and should not be enabled for normal use.', 'agentstructor' ),
 			),
 		);
 	}

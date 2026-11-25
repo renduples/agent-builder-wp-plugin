@@ -7,7 +7,7 @@
  *
  * @package    Agent_Builder
  * @subpackage Includes
- * @author     Siteloom Team <support@agentic-plugin.com>
+ * @author     AgentStructor Team <support@agentic-plugin.com>
  * @license    GPL-2.0-or-later https://www.gnu.org/licenses/gpl-2.0.html
  * @link       https://agentic-plugin.com
  * @since      3.3.1

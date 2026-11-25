@@ -250,7 +250,7 @@ class Usage_Limits {
 				'pass'   => false,
 				'reason' => sprintf(
 					/* translators: %d: daily query limit */
-					__( 'You have reached your daily limit of %d queries. Please try again tomorrow.', 'siteloom' ),
+					__( 'You have reached your daily limit of %d queries. Please try again tomorrow.', 'agentstructor' ),
 					$limit
 				),
 				'code'   => 'query_limit_reached',
@@ -282,7 +282,7 @@ class Usage_Limits {
 				'pass'   => false,
 				'reason' => sprintf(
 					/* translators: %d: daily token limit */
-					__( 'You have reached your daily token limit of %s. Please try again tomorrow.', 'siteloom' ),
+					__( 'You have reached your daily token limit of %s. Please try again tomorrow.', 'agentstructor' ),
 					number_format( $limit )
 				),
 				'code'   => 'token_limit_reached',

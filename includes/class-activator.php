@@ -62,7 +62,7 @@ final class Activator {
 
 		if ( in_array( $status, array( 'error', 'warning' ), true ) ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Intentional activation debug output.
-			error_log( '[Siteloom activation] ' . $step . ' [' . $status . ']: ' . ( is_string( $details ) ? $details : wp_json_encode( $details ) ) );
+			error_log( '[AgentStructor activation] ' . $step . ' [' . $status . ']: ' . ( is_string( $details ) ? $details : wp_json_encode( $details ) ) );
 		}
 	}
 
@@ -567,7 +567,7 @@ final class Activator {
 			update_option( 'agent_builder_awaiting_tool_call_id_migrated', true );
 		} catch ( \Throwable $e ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Intentional migration debug output.
-			error_log( '[Siteloom] maybe_add_awaiting_tool_call_id_column failed: ' . $e->getMessage() );
+			error_log( '[AgentStructor] maybe_add_awaiting_tool_call_id_column failed: ' . $e->getMessage() );
 			// Leave unmigrated — retried on the next admin_init.
 		}
 	}
@@ -632,7 +632,7 @@ final class Activator {
 			update_option( 'agent_builder_proposals_listener_id_migrated', true );
 		} catch ( \Throwable $e ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Intentional migration debug output.
-			error_log( '[Siteloom] maybe_add_proposals_listener_id_column failed: ' . $e->getMessage() );
+			error_log( '[AgentStructor] maybe_add_proposals_listener_id_column failed: ' . $e->getMessage() );
 			// Leave unmigrated — retried on the next admin_init.
 		}
 	}
@@ -779,7 +779,7 @@ final class Activator {
 				++$migrated;
 			} catch ( \Throwable $e ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Intentional migration debug output.
-				error_log( '[Siteloom] migrate_legacy_proposal_transients failed for ' . $key . ': ' . $e->getMessage() );
+				error_log( '[AgentStructor] migrate_legacy_proposal_transients failed for ' . $key . ': ' . $e->getMessage() );
 				++$skipped;
 			}
 		}
@@ -873,7 +873,7 @@ final class Activator {
 	 *     files are touched.
 	 *
 	 * This is a security cleanup, not a schema migration, so it runs from an
-	 * early, always-fires hook (init — see siteloom.php) rather than
+	 * early, always-fires hook (init — see agentstructor.php) rather than
 	 * waiting for an admin to visit wp-admin: an unremediated legacy zip is
 	 * exploitable every second it sits there, including on cron/REST/frontend
 	 * requests where admin_init never fires. It is a filesystem delete, not a
@@ -1005,7 +1005,7 @@ final class Activator {
 		if ( $failures >= self::LEGACY_EXPORT_CLEANUP_MAX_FAILURES ) {
 			update_option( 'agent_builder_legacy_exports_gave_up', true );
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Operator-facing signal for a stuck, manual-intervention cleanup; the admin notice surfaces the same state in wp-admin.
-			error_log( '[Siteloom] Legacy agent-export cleanup gave up after ' . $failures . ' failed attempts — remove the remaining files under wp-content/uploads/agentic-exports/ and wp-content/agentic-exports/ manually.' );
+			error_log( '[AgentStructor] Legacy agent-export cleanup gave up after ' . $failures . ' failed attempts — remove the remaining files under wp-content/uploads/agentic-exports/ and wp-content/agentic-exports/ manually.' );
 		}
 	}
 

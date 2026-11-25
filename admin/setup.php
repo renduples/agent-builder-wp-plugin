@@ -388,7 +388,7 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 <head>
 	<meta charset="<?php bloginfo( 'charset' ); ?>">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title><?php esc_html_e( 'Connect an AI Provider — Siteloom', 'siteloom' ); ?></title>
+	<title><?php esc_html_e( 'Connect an AI Provider — AgentStructor', 'agentstructor' ); ?></title>
 	<?php wp_head(); ?>
 </head>
 <body class="wp-admin">
@@ -398,32 +398,32 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 	<!-- Header -->
 	<div class="setup-header">
 		<div class="setup-logo" aria-hidden="true">
-			<img src="<?php echo esc_url( AGENT_BUILDER_URL . 'assets/mark.svg' ); ?>" width="48" height="48" alt="<?php esc_attr_e( 'Siteloom logo', 'siteloom' ); ?>">
+			<img src="<?php echo esc_url( AGENT_BUILDER_URL . 'assets/icon.svg' ); ?>" width="48" height="48" alt="<?php esc_attr_e( 'AgentStructor logo', 'agentstructor' ); ?>">
 		</div>
-		<h1><?php esc_html_e( 'Welcome to Siteloom AI Agents', 'siteloom' ); ?></h1>
-		<p><?php esc_html_e( 'Connect to your preferred AI Provider to get started. This takes only a few minutes.', 'siteloom' ); ?></p>
+		<h1><?php esc_html_e( 'Welcome to AgentStructor', 'agentstructor' ); ?></h1>
+		<p><?php esc_html_e( 'Connect to your preferred AI Provider to get started. This takes only a few minutes.', 'agentstructor' ); ?></p>
 	</div>
 
 	<!-- Step indicators -->
 	<div class="setup-steps" id="setup-progress">
 		<div class="setup-step-item active" id="progress-1">
 			<div class="step-num">1</div>
-			<div class="step-label"><?php esc_html_e( 'Choose provider', 'siteloom' ); ?></div>
+			<div class="step-label"><?php esc_html_e( 'Choose provider', 'agentstructor' ); ?></div>
 		</div>
 		<div class="step-connector"></div>
 		<div class="setup-step-item" id="progress-2">
 			<div class="step-num">2</div>
-			<div class="step-label"><?php esc_html_e( 'Get API key', 'siteloom' ); ?></div>
+			<div class="step-label"><?php esc_html_e( 'Get API key', 'agentstructor' ); ?></div>
 		</div>
 		<div class="step-connector"></div>
 		<div class="setup-step-item" id="progress-3">
 			<div class="step-num">3</div>
-			<div class="step-label"><?php esc_html_e( 'Connect', 'siteloom' ); ?></div>
+			<div class="step-label"><?php esc_html_e( 'Connect', 'agentstructor' ); ?></div>
 		</div>
 		<div class="step-connector"></div>
 		<div class="setup-step-item" id="progress-4">
 			<div class="step-num">4</div>
-			<div class="step-label"><?php esc_html_e( 'Test', 'siteloom' ); ?></div>
+			<div class="step-label"><?php esc_html_e( 'Test', 'agentstructor' ); ?></div>
 		</div>
 	</div>
 
@@ -437,9 +437,9 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 			<!-- ── Phase 1: Do you have an account? ─────────────────── -->
 			<div class="setup-card-inner" id="phase-account">
 				<div class="account-question">
-					<h2><?php esc_html_e( 'Do you already have an account with an AI Provider?', 'siteloom' ); ?></h2>
-					<p><?php esc_html_e( 'At least one AI Provider is needed in order for your AI Agents to respond to requests.', 'siteloom' ); ?></p>
-					<p><strong><?php esc_html_e( 'Popular AI Providers:', 'siteloom' ); ?></strong></p>
+					<h2><?php esc_html_e( 'Do you already have an account with an AI Provider?', 'agentstructor' ); ?></h2>
+					<p><?php esc_html_e( 'At least one AI Provider is needed in order for your AI Agents to respond to requests.', 'agentstructor' ); ?></p>
+					<p><strong><?php esc_html_e( 'Popular AI Providers:', 'agentstructor' ); ?></strong></p>
 					<ul class="provider-list">
 						<?php foreach ( $agent_builder_providers as $agentic_p_slug => $agentic_p ) : ?>
 						<li><?php echo esc_html( $agentic_p['name'] ); ?>
@@ -452,11 +452,11 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 					<div class="account-buttons">
 						<button type="button" class="btn-account" onclick="showPhase('provider-pick', true)">
 							<span class="btn-icon">✅</span>
-							<?php esc_html_e( 'Yes, I have an account', 'siteloom' ); ?>
+							<?php esc_html_e( 'Yes, I have an account', 'agentstructor' ); ?>
 						</button>
 						<button type="button" class="btn-account" onclick="showPhase('provider-pick', false)">
 							<span class="btn-icon">🆕</span>
-							<?php esc_html_e( "No, I'll create one now", 'siteloom' ); ?>
+							<?php esc_html_e( "No, I'll create one now", 'agentstructor' ); ?>
 						</button>
 					</div>
 				</div>
@@ -465,10 +465,10 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 			<!-- ── Phase 2: Pick a provider ──────────────────────────── -->
 			<div class="setup-card-inner" id="phase-provider-pick" style="display:none">
 				<h2 class="agentic-setup-title" id="provider-pick-title">
-					<?php esc_html_e( 'Choose your AI provider', 'siteloom' ); ?>
+					<?php esc_html_e( 'Choose your AI provider', 'agentstructor' ); ?>
 				</h2>
 				<p class="agentic-setup-subtitle" id="provider-pick-sub">
-					<?php esc_html_e( 'Select the provider you want to connect.', 'siteloom' ); ?>
+					<?php esc_html_e( 'Select the provider you want to connect.', 'agentstructor' ); ?>
 				</p>
 				<div class="provider-grid">
 					<?php foreach ( $agent_builder_providers as $agentic_slug => $agentic_p ) : ?>
@@ -657,7 +657,7 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 				<!-- Key entry -->
 				<div class="key-section">
 					<?php if ( 'agentic' === $agentic_slug ) : ?>
-					<label for="key-input-agentic"><?php esc_html_e( 'Email address', 'siteloom' ); ?></label>
+					<label for="key-input-agentic"><?php esc_html_e( 'Email address', 'agentstructor' ); ?></label>
 					<div class="key-input-row" id="key-input-row-agentic">
 						<input
 							type="email"
@@ -666,14 +666,14 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 							autocomplete="email"
 							oninput="onKeyInput('agentic')"
 						>
-						<button type="button" class="btn-secondary btn-save" id="btn-save-agentic" style="display:none" onclick="saveKey()"><?php esc_html_e( 'Register & Connect', 'siteloom' ); ?></button>
-						<button type="button" class="btn-primary btn-continue-test" id="btn-continue-agentic" style="display:none" onclick="goNext()"><?php esc_html_e( 'Continue to Testing →', 'siteloom' ); ?></button>
+						<button type="button" class="btn-secondary btn-save" id="btn-save-agentic" style="display:none" onclick="saveKey()"><?php esc_html_e( 'Register & Connect', 'agentstructor' ); ?></button>
+						<button type="button" class="btn-primary btn-continue-test" id="btn-continue-agentic" style="display:none" onclick="goNext()"><?php esc_html_e( 'Continue to Testing →', 'agentstructor' ); ?></button>
 					</div>
 					<div class="agentic-wizard-consent" id="agentic-wizard-consent-wrap" style="display:none">
 						<label><input type="checkbox" id="agentic-wizard-consent-tos"> 
 						<?php
 						echo wp_kses(
-							sprintf( /* translators: %s: Terms link */ __( 'I agree to the <a href="https://agentic-plugin.com/terms-of-service/" target="_blank" rel="noopener">Terms of Service</a>', 'siteloom' ), '' ),
+							sprintf( /* translators: %s: Terms link */ __( 'I agree to the <a href="https://agentic-plugin.com/terms-of-service/" target="_blank" rel="noopener">Terms of Service</a>', 'agentstructor' ), '' ),
 							array(
 								'a' => array(
 									'href'   => array(),
@@ -687,7 +687,7 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 						<label><input type="checkbox" id="agentic-wizard-consent-privacy"> 
 						<?php
 						echo wp_kses(
-							sprintf( /* translators: %s: Privacy link */ __( 'I agree to the <a href="https://agentic-plugin.com/privacy-policy/" target="_blank" rel="noopener">Privacy Policy</a>', 'siteloom' ), '' ),
+							sprintf( /* translators: %s: Privacy link */ __( 'I agree to the <a href="https://agentic-plugin.com/privacy-policy/" target="_blank" rel="noopener">Privacy Policy</a>', 'agentstructor' ), '' ),
 							array(
 								'a' => array(
 									'href'   => array(),
@@ -700,8 +700,8 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 																							</label>
 					</div>
 					<?php elseif ( 'ollama' === $agentic_slug ) : ?>
-					<label><?php esc_html_e( 'Ollama Server URL', 'siteloom' ); ?></label>
-					<p class="key-hint"><?php esc_html_e( 'Leave as default unless you changed the port or are using a remote server.', 'siteloom' ); ?></p>
+					<label><?php esc_html_e( 'Ollama Server URL', 'agentstructor' ); ?></label>
+					<p class="key-hint"><?php esc_html_e( 'Leave as default unless you changed the port or are using a remote server.', 'agentstructor' ); ?></p>
 					<div class="ollama-url-row">
 						<input
 							type="text"
@@ -710,10 +710,10 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 							placeholder="http://localhost:11434"
 							autocomplete="off"
 						>
-						<button type="button" class="btn-primary agentic-mt-8" onclick="saveKey()"><?php esc_html_e( 'Connect to Ollama', 'siteloom' ); ?></button>
+						<button type="button" class="btn-primary agentic-mt-8" onclick="saveKey()"><?php esc_html_e( 'Connect to Ollama', 'agentstructor' ); ?></button>
 					</div>
 					<?php else : ?>
-					<label for="key-input-<?php echo esc_attr( $agentic_slug ); ?>"><?php esc_html_e( 'Paste your API key here once you have followed the steps below.', 'siteloom' ); ?></label>
+					<label for="key-input-<?php echo esc_attr( $agentic_slug ); ?>"><?php esc_html_e( 'Paste your API key here once you have followed the steps below.', 'agentstructor' ); ?></label>
 					<div class="key-input-row" id="key-input-row-<?php echo esc_attr( $agentic_slug ); ?>">
 						<input
 							type="password"
@@ -722,8 +722,8 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 							autocomplete="off"
 							oninput="onKeyInput('<?php echo esc_js( $agentic_slug ); ?>')"
 						>
-						<button type="button" class="btn-secondary btn-save" id="btn-save-<?php echo esc_attr( $agentic_slug ); ?>" style="display:none" onclick="saveKey()"><?php esc_html_e( 'Save', 'siteloom' ); ?></button>
-					<button type="button" class="btn-primary btn-continue-test" id="btn-continue-<?php echo esc_attr( $agentic_slug ); ?>" style="display:none" onclick="goNext()"><?php esc_html_e( 'Continue to Testing →', 'siteloom' ); ?></button>
+						<button type="button" class="btn-secondary btn-save" id="btn-save-<?php echo esc_attr( $agentic_slug ); ?>" style="display:none" onclick="saveKey()"><?php esc_html_e( 'Save', 'agentstructor' ); ?></button>
+					<button type="button" class="btn-primary btn-continue-test" id="btn-continue-<?php echo esc_attr( $agentic_slug ); ?>" style="display:none" onclick="goNext()"><?php esc_html_e( 'Continue to Testing →', 'agentstructor' ); ?></button>
 					</div>
 					<?php endif; ?>
 
@@ -786,8 +786,8 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 				<?php endif; ?>
 				<?php if ( ! empty( $agentic_p['key_url'] ) && 'ollama' !== $agentic_slug ) : ?>
 				<div class="get-key-section">
-					<button type="button" class="btn-primary" onclick="openProviderKey('<?php echo esc_js( $agentic_slug ); ?>')"><?php esc_html_e( 'Get Key', 'siteloom' ); ?></button>
-					<p class="get-key-note"><?php esc_html_e( 'Opens new window so you can perform the steps above. Remember to return here and save the key — only shown once.', 'siteloom' ); ?></p>
+					<button type="button" class="btn-primary" onclick="openProviderKey('<?php echo esc_js( $agentic_slug ); ?>')"><?php esc_html_e( 'Get Key', 'agentstructor' ); ?></button>
+					<p class="get-key-note"><?php esc_html_e( 'Opens new window so you can perform the steps above. Remember to return here and save the key — only shown once.', 'agentstructor' ); ?></p>
 				</div>
 				<?php endif; ?>
 			</div><!-- .provider-steps-section -->
@@ -798,49 +798,49 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 
 				<!-- Model Selection -->
 				<div class="wizard-pref-section">
-					<h2><?php esc_html_e( 'Choose a model', 'siteloom' ); ?></h2>
-					<p class="wizard-pref-hint"><?php esc_html_e( 'Each model has different strengths. You can change this any time in Settings.', 'siteloom' ); ?></p>
+					<h2><?php esc_html_e( 'Choose a model', 'agentstructor' ); ?></h2>
+					<p class="wizard-pref-hint"><?php esc_html_e( 'Each model has different strengths. You can change this any time in Settings.', 'agentstructor' ); ?></p>
 					<div id="wizard-model-grid" class="wizard-model-grid"></div>
 				</div>
 
 				<!-- Agent Mode -->
 				<div class="wizard-pref-section">
-					<h2><?php esc_html_e( 'Choose an agent mode', 'siteloom' ); ?></h2>
-					<p class="wizard-pref-hint"><?php esc_html_e( 'Controls how much authority your AI agents have. You can change this any time in Settings.', 'siteloom' ); ?></p>
+					<h2><?php esc_html_e( 'Choose an agent mode', 'agentstructor' ); ?></h2>
+					<p class="wizard-pref-hint"><?php esc_html_e( 'Controls how much authority your AI agents have. You can change this any time in Settings.', 'agentstructor' ); ?></p>
 					<div class="wizard-mode-grid">
 						<label class="wizard-mode-card" data-mode="supervised">
 							<input type="radio" name="wizard_mode" value="supervised" checked>
 							<div class="wizard-mode-header">
 								<span class="wizard-mode-icon">👁️</span>
-								<strong><?php esc_html_e( 'Supervised', 'siteloom' ); ?></strong>
-								<span class="wizard-mode-badge"><?php esc_html_e( 'Recommended', 'siteloom' ); ?></span>
+								<strong><?php esc_html_e( 'Supervised', 'agentstructor' ); ?></strong>
+								<span class="wizard-mode-badge"><?php esc_html_e( 'Recommended', 'agentstructor' ); ?></span>
 							</div>
-							<p><?php esc_html_e( 'In Supervised mode, changes the AI proposes wait for your approval before they are saved or published.', 'siteloom' ); ?></p>
+							<p><?php esc_html_e( 'In Supervised mode, changes the AI proposes wait for your approval before they are saved or published.', 'agentstructor' ); ?></p>
 						</label>
 						<label class="wizard-mode-card" data-mode="autonomous">
 							<input type="radio" name="wizard_mode" value="autonomous">
 							<div class="wizard-mode-header">
 								<span class="wizard-mode-icon">⚡</span>
-								<strong><?php esc_html_e( 'Autonomous', 'siteloom' ); ?></strong>
+								<strong><?php esc_html_e( 'Autonomous', 'agentstructor' ); ?></strong>
 							</div>
-							<p><?php esc_html_e( 'The AI executes tasks immediately without asking for approval. Best for experienced users who trust the agent\'s judgment.', 'siteloom' ); ?></p>
+							<p><?php esc_html_e( 'The AI executes tasks immediately without asking for approval. Best for experienced users who trust the agent\'s judgment.', 'agentstructor' ); ?></p>
 						</label>
 						<label class="wizard-mode-card" data-mode="disabled">
 							<input type="radio" name="wizard_mode" value="disabled">
 							<div class="wizard-mode-header">
 								<span class="wizard-mode-icon">💬</span>
-								<strong><?php esc_html_e( 'Chat only', 'siteloom' ); ?></strong>
+								<strong><?php esc_html_e( 'Chat only', 'agentstructor' ); ?></strong>
 							</div>
-							<p><?php esc_html_e( 'Agents can answer questions and give advice, but cannot read data from or make any changes to your site.', 'siteloom' ); ?></p>
+							<p><?php esc_html_e( 'Agents can answer questions and give advice, but cannot read data from or make any changes to your site.', 'agentstructor' ); ?></p>
 						</label>
 					</div>
 				</div>
 
 				<div class="wizard-test-section">
-					<h2><?php esc_html_e( 'Test your connection', 'siteloom' ); ?></h2>
-					<p><?php esc_html_e( 'Click below to verify your AI provider is responding correctly.', 'siteloom' ); ?></p>
+					<h2><?php esc_html_e( 'Test your connection', 'agentstructor' ); ?></h2>
+					<p><?php esc_html_e( 'Click below to verify your AI provider is responding correctly.', 'agentstructor' ); ?></p>
 					<button type="button" class="btn-primary" id="btn-test-connection" onclick="runWizardTest()">
-						<?php esc_html_e( 'Test Connection', 'siteloom' ); ?>
+						<?php esc_html_e( 'Test Connection', 'agentstructor' ); ?>
 					</button>
 					<div class="test-status" id="test-status-wizard" role="status" aria-live="polite">
 						<span class="test-icon"></span>
@@ -852,8 +852,8 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 				<div id="wizard-congrats" style="display:none">
 					<div class="wizard-congrats-banner">
 						<div class="wizard-congrats-icon">🎊</div>
-						<h2><?php esc_html_e( 'Your WordPress site just got much smarter.', 'siteloom' ); ?></h2>
-						<p><?php esc_html_e( 'Go ahead, talk to WordPress!!', 'siteloom' ); ?></p>
+						<h2><?php esc_html_e( 'Your WordPress site just got much smarter.', 'agentstructor' ); ?></h2>
+						<p><?php esc_html_e( 'Go ahead, talk to WordPress!!', 'agentstructor' ); ?></p>
 					</div>
 
 					<?php
@@ -869,7 +869,7 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 							<div class="wizard-win-dot wizard-win-dot--red"></div>
 							<div class="wizard-win-dot wizard-win-dot--yellow"></div>
 							<div class="wizard-win-dot wizard-win-dot--green"></div>
-							<div class="wizard-chat-title-text"><?php esc_html_e( 'WordPress Assistant', 'siteloom' ); ?></div>
+							<div class="wizard-chat-title-text"><?php esc_html_e( 'WordPress Assistant', 'agentstructor' ); ?></div>
 						</div>
 						<div class="wizard-chat-messages" id="wizard-chat-messages">
 							<div class="wizard-chat-msg wizard-chat-msg--agent">
@@ -878,16 +878,16 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 						</div>
 						<div class="wizard-suggested-prompts" id="wizard-suggested-prompts"></div>
 						<div class="wizard-chat-input-wrap">
-							<input type="text" id="wizard-chat-input" placeholder="<?php esc_attr_e( 'Ask me anything about your WordPress site…', 'siteloom' ); ?>" autocomplete="off" onkeydown="if(event.key==='Enter')sendWizardMessage()">
-							<button type="button" id="wizard-mic-btn" class="wizard-mic-btn" title="<?php esc_attr_e( 'Voice input', 'siteloom' ); ?>" style="display:none;">
+							<input type="text" id="wizard-chat-input" placeholder="<?php esc_attr_e( 'Ask me anything about your WordPress site…', 'agentstructor' ); ?>" autocomplete="off" onkeydown="if(event.key==='Enter')sendWizardMessage()">
+							<button type="button" id="wizard-mic-btn" class="wizard-mic-btn" title="<?php esc_attr_e( 'Voice input', 'agentstructor' ); ?>" style="display:none;">
 								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
 							</button>
-							<button type="button" id="wizard-chat-send" class="btn-primary" onclick="sendWizardMessage()"><?php esc_html_e( 'Send', 'siteloom' ); ?></button>
+							<button type="button" id="wizard-chat-send" class="btn-primary" onclick="sendWizardMessage()"><?php esc_html_e( 'Send', 'agentstructor' ); ?></button>
 						</div>
 					</div>
 
 					<div class="wizard-exit-row">
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=agent-builder' ) ); ?>" class="btn-secondary"><?php esc_html_e( 'Exit Wizard', 'siteloom' ); ?></a>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=agent-builder' ) ); ?>" class="btn-secondary"><?php esc_html_e( 'Exit Wizard', 'agentstructor' ); ?></a>
 					</div>
 				</div>
 			</div><!-- #phase-test -->
@@ -896,10 +896,10 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 				<div class="footer-left"></div>
 				<div class="footer-right">
 					<button type="button" class="btn-secondary" id="btn-back" style="display:none" onclick="goBack()">
-						← <?php esc_html_e( 'Back', 'siteloom' ); ?>
+						← <?php esc_html_e( 'Back', 'agentstructor' ); ?>
 					</button>
 					<button type="button" class="btn-secondary" id="btn-next" style="display:none" onclick="goNext()">
-						<?php esc_html_e( 'Next', 'siteloom' ); ?> →
+						<?php esc_html_e( 'Next', 'agentstructor' ); ?> →
 					</button>
 				</div>
 			</div><!-- .setup-card-footer -->
@@ -911,7 +911,7 @@ wp_enqueue_style( 'agentic-setup', AGENT_BUILDER_URL . 'assets/css/setup.css', a
 
 <!-- Lightbox -->
 <div class="lightbox" id="lightbox" onclick="closeLightbox()">
-	<img src="" alt="<?php esc_attr_e( 'Enlarged preview', 'siteloom' ); ?>" id="lightbox-img">
+	<img src="" alt="<?php esc_attr_e( 'Enlarged preview', 'agentstructor' ); ?>" id="lightbox-img">
 </div>
 
 <?php

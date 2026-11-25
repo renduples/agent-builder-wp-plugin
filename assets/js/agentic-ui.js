@@ -1,5 +1,5 @@
 /**
- * Siteloom — shared UI primitives (toasts + accessible confirm/alert modals).
+ * AgentStructor — shared UI primitives (toasts + accessible confirm/alert modals).
  *
  * Exposes a single global `window.agenticUI` so admin pages and the chat UI can
  * replace blocking native alert()/confirm() calls with non-blocking, accessible

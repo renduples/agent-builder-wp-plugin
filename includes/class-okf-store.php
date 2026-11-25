@@ -69,20 +69,20 @@ class Okf_Store {
 
 		$dir = self::bundle_dir( $agent_slug );
 		if ( ! wp_mkdir_p( $dir ) ) {
-			return new \WP_Error( 'okf_mkdir', __( 'Could not create knowledge wiki directory.', 'siteloom' ) );
+			return new \WP_Error( 'okf_mkdir', __( 'Could not create knowledge wiki directory.', 'agentstructor' ) );
 		}
 
 		$index = trailingslashit( $dir ) . 'index.md';
 		if ( ! file_exists( $index ) ) {
 			$title = ( '' === $agent_slug || 'site' === $agent_slug )
-				? __( 'Site knowledge wiki', 'siteloom' )
+				? __( 'Site knowledge wiki', 'agentstructor' )
 				: sprintf(
 					/* translators: %s: agent slug */
-					__( 'Knowledge wiki for %s', 'siteloom' ),
+					__( 'Knowledge wiki for %s', 'agentstructor' ),
 					$agent_slug
 				);
 			$body = "---\nokf_version: \"" . self::OKF_VERSION . "\"\n---\n\n# " . $title . "\n\n"
-				. __( 'Concepts in this wiki:', 'siteloom' ) . "\n\n";
+				. __( 'Concepts in this wiki:', 'agentstructor' ) . "\n\n";
 			File_Manager::put_contents( $index, $body );
 		}
 
@@ -302,7 +302,7 @@ class Okf_Store {
 			return $path;
 		}
 		if ( ! file_exists( $path ) ) {
-			return new \WP_Error( 'okf_missing', __( 'Concept not found.', 'siteloom' ) );
+			return new \WP_Error( 'okf_missing', __( 'Concept not found.', 'agentstructor' ) );
 		}
 
 		$parsed   = self::parse_file( $path );
@@ -312,7 +312,7 @@ class Okf_Store {
 		if ( $example && ! $allow_examples ) {
 			return new \WP_Error(
 				'okf_example',
-				__( 'This is demo example knowledge and is not available to agents. Edit it in Knowledge Wiki and turn off Example when ready.', 'siteloom' )
+				__( 'This is demo example knowledge and is not available to agents. Edit it in Knowledge Wiki and turn off Example when ready.', 'agentstructor' )
 			);
 		}
 
@@ -343,18 +343,18 @@ class Okf_Store {
 
 		$concept_id = self::sanitize_concept_id( $concept_id );
 		if ( '' === $concept_id ) {
-			return new \WP_Error( 'okf_id', __( 'Invalid concept id.', 'siteloom' ) );
+			return new \WP_Error( 'okf_id', __( 'Invalid concept id.', 'agentstructor' ) );
 		}
 
 		$type = trim( (string) ( $frontmatter['type'] ?? '' ) );
 		if ( '' === $type ) {
-			return new \WP_Error( 'okf_type', __( 'Every concept needs a type field.', 'siteloom' ) );
+			return new \WP_Error( 'okf_type', __( 'Every concept needs a type field.', 'agentstructor' ) );
 		}
 
 		$path = trailingslashit( self::bundle_dir( $agent_slug ) ) . $concept_id . '.md';
 		$dir  = dirname( $path );
 		if ( ! wp_mkdir_p( $dir ) ) {
-			return new \WP_Error( 'okf_mkdir', __( 'Could not create concept directory.', 'siteloom' ) );
+			return new \WP_Error( 'okf_mkdir', __( 'Could not create concept directory.', 'agentstructor' ) );
 		}
 
 		// Default generated stamp when missing.
@@ -369,7 +369,7 @@ class Okf_Store {
 
 		$raw = self::serialize( $frontmatter, $body );
 		if ( ! File_Manager::put_contents( $path, $raw ) ) {
-			return new \WP_Error( 'okf_write', __( 'Could not write concept file.', 'siteloom' ) );
+			return new \WP_Error( 'okf_write', __( 'Could not write concept file.', 'agentstructor' ) );
 		}
 
 		self::rebuild_index( $agent_slug );
@@ -398,12 +398,12 @@ class Okf_Store {
 			return $path;
 		}
 		if ( ! file_exists( $path ) ) {
-			return new \WP_Error( 'okf_missing', __( 'Concept not found.', 'siteloom' ) );
+			return new \WP_Error( 'okf_missing', __( 'Concept not found.', 'agentstructor' ) );
 		}
 
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
 		if ( ! unlink( $path ) ) {
-			return new \WP_Error( 'okf_delete', __( 'Could not delete concept file.', 'siteloom' ) );
+			return new \WP_Error( 'okf_delete', __( 'Could not delete concept file.', 'agentstructor' ) );
 		}
 
 		self::rebuild_index( $agent_slug );
@@ -506,7 +506,7 @@ class Okf_Store {
 		}
 
 		$block = "\n\n[SITE KNOWLEDGE — always on]\n"
-			. __( 'Standing site knowledge from the Knowledge Wiki. Prefer this over guessing about the business. This content is already fully loaded — do not call read_okf_concept, list_okf_concepts, or search_okf for anything covered below; that would be redundant.', 'siteloom' )
+			. __( 'Standing site knowledge from the Knowledge Wiki. Prefer this over guessing about the business. This content is already fully loaded — do not call read_okf_concept, list_okf_concepts, or search_okf for anything covered below; that would be redundant.', 'agentstructor' )
 			. "\n\n"
 			. implode( "\n\n", $chunks )
 			. "\n";
@@ -559,7 +559,7 @@ class Okf_Store {
 					$c['title'],
 					$c['type'],
 					$stale,
-					$c['description'] !== '' ? $c['description'] : __( 'No description', 'siteloom' ),
+					$c['description'] !== '' ? $c['description'] : __( 'No description', 'agentstructor' ),
 					$c['id']
 				);
 			}
@@ -570,7 +570,7 @@ class Okf_Store {
 		}
 
 		$block = "\n\n[KNOWLEDGE WIKI — Open Knowledge Format]\n"
-			. __( 'Curated local knowledge. The entries below are titles only, not the answer — before answering any question with one of them, call read_okf_concept with its [id] to load the full text. Never answer from a title alone; if you have not called read_okf_concept for it in this turn, you do not yet know its content.', 'siteloom' )
+			. __( 'Curated local knowledge. The entries below are titles only, not the answer — before answering any question with one of them, call read_okf_concept with its [id] to load the full text. Never answer from a title alone; if you have not called read_okf_concept for it in this turn, you do not yet know its content.', 'agentstructor' )
 			. "\n"
 			. implode( "\n", $lines )
 			. "\n";
@@ -600,7 +600,7 @@ class Okf_Store {
 			array(
 				'type'        => 'Reference',
 				'title'       => $title,
-				'description' => __( 'Imported from plain knowledge text.', 'siteloom' ),
+				'description' => __( 'Imported from plain knowledge text.', 'agentstructor' ),
 				'tags'        => array( 'imported' ),
 				'status'      => 'stable',
 			),
@@ -672,11 +672,11 @@ class Okf_Store {
 		$lines[] = 'okf_version: "' . self::OKF_VERSION . '"';
 		$lines[] = '---';
 		$lines[] = '';
-		$lines[] = '# ' . __( 'Knowledge index', 'siteloom' );
+		$lines[] = '# ' . __( 'Knowledge index', 'agentstructor' );
 		$lines[] = '';
 		$lines[] = sprintf(
 			/* translators: %d: concept count */
-			__( '%d concepts in this wiki.', 'siteloom' ),
+			__( '%d concepts in this wiki.', 'agentstructor' ),
 			count( $concepts )
 		);
 		$lines[] = '';
@@ -685,7 +685,7 @@ class Okf_Store {
 			$lines[] = '## ' . $type;
 			$lines[] = '';
 			foreach ( $items as $c ) {
-				$desc    = $c['description'] !== '' ? $c['description'] : __( 'No description', 'siteloom' );
+				$desc    = $c['description'] !== '' ? $c['description'] : __( 'No description', 'agentstructor' );
 				$lines[] = sprintf( '* [%s](%s) - %s', $c['title'], $c['path'], $desc );
 			}
 			$lines[] = '';
@@ -743,17 +743,17 @@ class Okf_Store {
 	private static function resolve_concept_path( string $concept_id, string $agent_slug ) {
 		$concept_id = self::sanitize_concept_id( $concept_id );
 		if ( '' === $concept_id ) {
-			return new \WP_Error( 'okf_id', __( 'Invalid concept id.', 'siteloom' ) );
+			return new \WP_Error( 'okf_id', __( 'Invalid concept id.', 'agentstructor' ) );
 		}
 		$base = realpath( self::bundle_dir( $agent_slug ) );
 		if ( false === $base ) {
-			return new \WP_Error( 'okf_missing', __( 'Knowledge wiki not found.', 'siteloom' ) );
+			return new \WP_Error( 'okf_missing', __( 'Knowledge wiki not found.', 'agentstructor' ) );
 		}
 		$full = $base . '/' . $concept_id . '.md';
 		// Prevent path traversal.
 		$real_dir = realpath( dirname( $full ) );
 		if ( false !== $real_dir && ! str_starts_with( $real_dir, $base ) ) {
-			return new \WP_Error( 'okf_path', __( 'Invalid concept path.', 'siteloom' ) );
+			return new \WP_Error( 'okf_path', __( 'Invalid concept path.', 'agentstructor' ) );
 		}
 		return $full;
 	}

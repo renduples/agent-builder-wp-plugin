@@ -55,14 +55,14 @@
 	} );
 
 	// Build provider options.
-	var providerOptions = [ { label: __( 'Default (from Settings)', 'siteloom' ), value: '' } ];
+	var providerOptions = [ { label: __( 'Default (from Settings)', 'agentstructor' ), value: '' } ];
 	Object.keys( providers ).forEach( function ( key ) {
 		providerOptions.push( { label: providers[ key ], value: key } );
 	} );
 
 	// Build model options for a given provider.
 	function getModelOptions( providerSlug ) {
-		var options = [ { label: __( 'Default', 'siteloom' ), value: '' } ];
+		var options = [ { label: __( 'Default', 'agentstructor' ), value: '' } ];
 		if ( providerSlug && providerModels[ providerSlug ] ) {
 			var models = providerModels[ providerSlug ];
 			if ( Array.isArray( models ) ) {
@@ -76,9 +76,9 @@
 
 	// Style options.
 	var styleOptions = [
-		{ label: __( 'Inline', 'siteloom' ), value: 'inline' },
-		{ label: __( 'Popup', 'siteloom' ), value: 'popup' },
-		{ label: __( 'Sidebar', 'siteloom' ), value: 'sidebar' },
+		{ label: __( 'Inline', 'agentstructor' ), value: 'inline' },
+		{ label: __( 'Popup', 'agentstructor' ), value: 'popup' },
+		{ label: __( 'Sidebar', 'agentstructor' ), value: 'sidebar' },
 	];
 
 	agents.forEach( function ( agent ) {
@@ -157,7 +157,7 @@
 									background: attributes.theme === 'light' ? '#e8f5e9' : 'rgba(76,175,80,0.2)',
 									color: '#4caf50',
 								},
-							}, __( 'Online', 'siteloom' ) )
+							}, __( 'Online', 'agentstructor' ) )
 						) : null,
 						// Messages area.
 						createElement(
@@ -208,7 +208,7 @@
 											maxWidth: '80%',
 										},
 									},
-									__( 'Hello! I\'m ', 'siteloom' ) + agent.name + '. ' + __( 'How can I help you today?', 'siteloom' )
+									__( 'Hello! I\'m ', 'agentstructor' ) + agent.name + '. ' + __( 'How can I help you today?', 'agentstructor' )
 								)
 							),
 							// Floating style badge.
@@ -223,7 +223,7 @@
 										fontStyle: 'italic',
 									},
 								},
-								__( 'Floating mode — appears as a popup button on the frontend', 'siteloom' )
+								__( 'Floating mode — appears as a popup button on the frontend', 'agentstructor' )
 							) : null
 						),
 						// Input area.
@@ -249,7 +249,7 @@
 									opacity: 0.5,
 									color: attributes.theme === 'light' ? '#666' : '#aaa',
 								},
-							}, attributes.placeholder || __( 'Type your message...', 'siteloom' ) ),
+							}, attributes.placeholder || __( 'Type your message...', 'agentstructor' ) ),
 							createElement( 'div', {
 								style: {
 									width: '32px',
@@ -276,38 +276,38 @@
 					// Appearance panel.
 					createElement(
 						PanelBody,
-						{ title: __( 'Appearance', 'siteloom' ), initialOpen: true },
+						{ title: __( 'Appearance', 'agentstructor' ), initialOpen: true },
 						createElement( SelectControl, {
-							label: __( 'Display Style', 'siteloom' ),
+							label: __( 'Display Style', 'agentstructor' ),
 							value: attributes.style,
 							options: styleOptions,
 							onChange: function ( val ) { setAttributes( { style: val } ); },
 						} ),
 						createElement( TextControl, {
-							label: __( 'Height', 'siteloom' ),
+							label: __( 'Height', 'agentstructor' ),
 							value: attributes.height,
 							onChange: function ( val ) { setAttributes( { height: val } ); },
-							help: __( 'CSS height value (e.g. 500px, 60vh).', 'siteloom' ),
+							help: __( 'CSS height value (e.g. 500px, 60vh).', 'agentstructor' ),
 						} ),
 						createElement( SelectControl, {
-							label: __( 'Theme', 'siteloom' ),
+							label: __( 'Theme', 'agentstructor' ),
 							value: attributes.theme,
 							options: themeOptions,
 							onChange: function ( val ) { setAttributes( { theme: val } ); },
 						} ),
 						createElement( ToggleControl, {
-							label: __( 'Show Header', 'siteloom' ),
+							label: __( 'Show Header', 'agentstructor' ),
 							checked: attributes.showHeader,
 							onChange: function ( val ) { setAttributes( { showHeader: val } ); },
 						} ),
 						createElement( ToggleControl, {
-							label: __( 'Floating Button', 'siteloom' ),
+							label: __( 'Floating Button', 'agentstructor' ),
 							checked: attributes.floating,
 							onChange: function ( val ) { setAttributes( { floating: val } ); },
-							help: __( 'Display as a floating chat button instead of inline.', 'siteloom' ),
+							help: __( 'Display as a floating chat button instead of inline.', 'agentstructor' ),
 						} ),
 						createElement( TextControl, {
-							label: __( 'Placeholder Text', 'siteloom' ),
+							label: __( 'Placeholder Text', 'agentstructor' ),
 							value: attributes.placeholder,
 							onChange: function ( val ) { setAttributes( { placeholder: val } ); },
 						} )
@@ -315,22 +315,22 @@
 					// LLM Settings panel.
 					createElement(
 						PanelBody,
-						{ title: __( 'LLM Settings', 'siteloom' ), initialOpen: false },
+						{ title: __( 'LLM Settings', 'agentstructor' ), initialOpen: false },
 						createElement( SelectControl, {
-							label: __( 'Provider', 'siteloom' ),
+							label: __( 'Provider', 'agentstructor' ),
 							value: attributes.provider,
 							options: providerOptions,
 							onChange: function ( val ) {
 								setAttributes( { provider: val, model: '' } );
 							},
-							help: __( 'Override the LLM provider for this block.', 'siteloom' ),
+							help: __( 'Override the LLM provider for this block.', 'agentstructor' ),
 						} ),
 						createElement( SelectControl, {
-							label: __( 'Model', 'siteloom' ),
+							label: __( 'Model', 'agentstructor' ),
 							value: attributes.model,
 							options: getModelOptions( attributes.provider ),
 							onChange: function ( val ) { setAttributes( { model: val } ); },
-							help: attributes.provider ? '' : __( 'Select a provider first to see available models.', 'siteloom' ),
+							help: attributes.provider ? '' : __( 'Select a provider first to see available models.', 'agentstructor' ),
 						} )
 					)
 				);

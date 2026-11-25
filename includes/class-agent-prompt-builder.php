@@ -242,7 +242,7 @@ class Agent_Prompt_Builder {
 		/**
 		 * Filters the directories searched for agent knowledge files, in order.
 		 *
-		 * Add-ons (Siteloom Pro, marketplace agents) append their own
+		 * Add-ons (AgentStructor Pro, marketplace agents) append their own
 		 * bundled knowledge directory here.
 		 *
 		 * @param string[] $dirs Absolute directory paths, highest priority first.

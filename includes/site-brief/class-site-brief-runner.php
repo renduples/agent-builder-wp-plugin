@@ -333,7 +333,7 @@ class Site_Brief_Runner {
 				'label' => $checker->get_label(),
 			);
 		}
-		$matching_label = __( 'Matching best-fit agents…', 'siteloom' );
+		$matching_label = __( 'Matching best-fit agents…', 'agentstructor' );
 		$steps[]        = array(
 			'id'    => 'matching',
 			'label' => $matching_label,

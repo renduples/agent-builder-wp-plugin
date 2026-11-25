@@ -27,8 +27,8 @@ import {
 const REST_PATH = 'agentic/v1/ui-settings';
 
 const FONT_OPTIONS = [
-	{ label: __( 'Theme default', 'siteloom' ), value: '' },
-	{ label: __( 'System UI', 'siteloom' ), value: 'system-ui, sans-serif' },
+	{ label: __( 'Theme default', 'agentstructor' ), value: '' },
+	{ label: __( 'System UI', 'agentstructor' ), value: 'system-ui, sans-serif' },
 	{ label: 'Arial / Helvetica', value: 'Arial, Helvetica, sans-serif' },
 	{ label: 'Georgia', value: 'Georgia, serif' },
 	{
@@ -80,7 +80,7 @@ function InterfaceSettings() {
 					err.message ||
 						__(
 							'Could not load interface settings.',
-							'siteloom'
+							'agentstructor'
 						)
 				);
 				setLoading( false );
@@ -124,7 +124,7 @@ function InterfaceSettings() {
 					err.message ||
 						__(
 							'Could not save interface settings.',
-							'siteloom'
+							'agentstructor'
 						)
 				);
 				setSaving( false );
@@ -136,7 +136,7 @@ function InterfaceSettings() {
 			<Card>
 				<CardBody>
 					<Spinner />{ ' ' }
-					{ __( 'Loading interface settings…', 'siteloom' ) }
+					{ __( 'Loading interface settings…', 'agentstructor' ) }
 				</CardBody>
 			</Card>
 		);
@@ -146,7 +146,7 @@ function InterfaceSettings() {
 		<Card className="agentic-interface-settings">
 			<CardHeader>
 				<h2 style={ { margin: 0 } }>
-					{ __( 'Interface', 'siteloom' ) }
+					{ __( 'Interface', 'agentstructor' ) }
 				</h2>
 			</CardHeader>
 			<CardBody>
@@ -166,24 +166,24 @@ function InterfaceSettings() {
 						onRemove={ () => setSaved( false ) }
 						className="agentic-mb-12"
 					>
-						{ __( 'Interface settings saved.', 'siteloom' ) }
+						{ __( 'Interface settings saved.', 'agentstructor' ) }
 					</Notice>
 				) }
 
 				<RadioControl
-					label={ __( 'Interface mode', 'siteloom' ) }
+					label={ __( 'Interface mode', 'agentstructor' ) }
 					help={ __(
 						'Basic keeps the menu focused on everyday tasks. Advanced reveals developer tools such as Skills, APIs and Endpoints.',
-						'siteloom'
+						'agentstructor'
 					) }
 					selected={ uiMode }
 					options={ [
 						{
-							label: __( 'Basic', 'siteloom' ),
+							label: __( 'Basic', 'agentstructor' ),
 							value: 'basic',
 						},
 						{
-							label: __( 'Advanced', 'siteloom' ),
+							label: __( 'Advanced', 'agentstructor' ),
 							value: 'advanced',
 						},
 					] }
@@ -194,11 +194,11 @@ function InterfaceSettings() {
 					<ToggleControl
 						label={ __(
 							'Show the Getting Started checklist on the dashboard',
-							'siteloom'
+							'agentstructor'
 						) }
 						help={ __(
 							'Turn this off once you are set up to hide the onboarding checklist.',
-							'siteloom'
+							'agentstructor'
 						) }
 						checked={ showOnboarding }
 						onChange={ ( value ) => setShowOnboarding( value ) }
@@ -221,7 +221,7 @@ function InterfaceSettings() {
 						fontWeight: 600,
 					} }
 				>
-					{ __( 'Appearance', 'siteloom' ) }
+					{ __( 'Appearance', 'agentstructor' ) }
 				</h3>
 				<p
 					style={ {
@@ -232,20 +232,20 @@ function InterfaceSettings() {
 				>
 					{ __(
 						'Global look and feel for chat surfaces.',
-						'siteloom'
+						'agentstructor'
 					) }{ ' ' }
 					{ themesUrl ? (
 						<ExternalLink href={ themesUrl }>
-							{ __( 'Fine-tune chat themes →', 'siteloom' ) }
+							{ __( 'Fine-tune chat themes →', 'agentstructor' ) }
 						</ExternalLink>
 					) : null }
 				</p>
 
 				<SelectControl
-					label={ __( 'Chat font', 'siteloom' ) }
+					label={ __( 'Chat font', 'agentstructor' ) }
 					help={ __(
 						'Font used across the chat interface. Choose “Theme default” to inherit from the selected theme.',
-						'siteloom'
+						'agentstructor'
 					) }
 					value={ globalFont }
 					options={ FONT_OPTIONS }
@@ -258,11 +258,11 @@ function InterfaceSettings() {
 					<ToggleControl
 						label={ __(
 							'Use theme accent colour',
-							'siteloom'
+							'agentstructor'
 						) }
 						help={ __(
 							'When off, the colour below overrides the chat theme accent on every chat surface.',
-							'siteloom'
+							'agentstructor'
 						) }
 						checked={ useThemeAccent }
 						onChange={ ( value ) => setUseThemeAccent( value ) }
@@ -274,10 +274,10 @@ function InterfaceSettings() {
 					<div style={ { marginTop: '16px' } }>
 						<BaseControl
 							id="agentic-global-accent"
-							label={ __( 'Accent colour', 'siteloom' ) }
+							label={ __( 'Accent colour', 'agentstructor' ) }
 							help={ sprintf(
 								/* translators: %s: hex colour value */
-								__( 'Selected: %s', 'siteloom' ),
+								__( 'Selected: %s', 'agentstructor' ),
 								globalAccent
 							) }
 							__nextHasNoMarginBottom
@@ -315,15 +315,15 @@ function InterfaceSettings() {
 					} }
 				>
 					<ToggleControl
-						label={ __( 'Disable All Agents', 'siteloom' ) }
+						label={ __( 'Disable All Agents', 'agentstructor' ) }
 						help={
 							<span className="agentic-emergency-stop-hint">
 								<strong className="agentic-emergency-stop-text">
-									{ __( 'Emergency stop', 'siteloom' ) }
+									{ __( 'Emergency stop', 'agentstructor' ) }
 								</strong>
 								{ __(
 									': deactivate and log agent states, cancels all jobs and disconnects providers.',
-									'siteloom'
+									'agentstructor'
 								) }
 							</span>
 						}
@@ -335,11 +335,11 @@ function InterfaceSettings() {
 							const msg = value
 								? __(
 										'EMERGENCY STOP: deactivate and log agent states, cancel all jobs, and disconnect providers. Continue?',
-										'siteloom'
+										'agentstructor'
 								  )
 								: __(
 										'Turn off emergency stop?',
-										'siteloom'
+										'agentstructor'
 								  );
 							if (
 								typeof window !== 'undefined' &&
@@ -359,7 +359,7 @@ function InterfaceSettings() {
 						>
 							{ __(
 								'Emergency stop is ACTIVE. Chat, jobs, and agent activation are blocked until you turn this off.',
-								'siteloom'
+								'agentstructor'
 							) }
 						</Notice>
 					) }
@@ -375,8 +375,8 @@ function InterfaceSettings() {
 							disabled={ saving }
 						>
 							{ saving
-								? __( 'Saving…', 'siteloom' )
-								: __( 'Save changes', 'siteloom' ) }
+								? __( 'Saving…', 'agentstructor' )
+								: __( 'Save changes', 'agentstructor' ) }
 						</Button>
 					</FlexItem>
 				</Flex>

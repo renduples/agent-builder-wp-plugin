@@ -22,9 +22,9 @@ class Agent_Ready_Payload {
 
 		$payload = array(
 			'page'           => 'agent-ready',
-			'title'          => __( 'Site Passport', 'siteloom' ),
-			'panel_title'    => __( 'Score & fixes', 'siteloom' ),
-			'description'    => __( 'Your site\'s passport for AI agents — what they can discover, and what they can access.', 'siteloom' ),
+			'title'          => __( 'Site Passport', 'agentstructor' ),
+			'panel_title'    => __( 'Score & fixes', 'agentstructor' ),
+			'description'    => __( 'Your site\'s passport for AI agents — what they can discover, and what they can access.', 'agentstructor' ),
 			'is_advanced'    => $is_advanced,
 			'score'          => class_exists( \Agentic\Agent_Ready_Score::class ) ? \Agentic\Agent_Ready_Score::get_latest() : array(),
 			'webmcp_enabled' => class_exists( \Agentic\Webmcp_Bridge::class ) && \Agentic\Webmcp_Bridge::is_enabled(),

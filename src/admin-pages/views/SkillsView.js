@@ -45,7 +45,7 @@ function SkillsView( { data, reload } ) {
 	const remove = ( id ) => {
 		if (
 			! window.confirm(
-				__( 'Delete this skill? This cannot be undone.', 'siteloom' )
+				__( 'Delete this skill? This cannot be undone.', 'agentstructor' )
 			)
 		) {
 			return;
@@ -58,7 +58,7 @@ function SkillsView( { data, reload } ) {
 		} )
 			.then( () => reload() )
 			.catch( ( e ) =>
-				setErr( e.message || __( 'Delete failed.', 'siteloom' ) )
+				setErr( e.message || __( 'Delete failed.', 'agentstructor' ) )
 			);
 	};
 
@@ -78,7 +78,7 @@ function SkillsView( { data, reload } ) {
 			} )
 			.catch( ( e ) =>
 				setCreateErr(
-					e.message || __( 'Could not create the draft.', 'siteloom' )
+					e.message || __( 'Could not create the draft.', 'agentstructor' )
 				)
 			)
 			.finally( () => setCreateBusy( false ) );
@@ -98,14 +98,14 @@ function SkillsView( { data, reload } ) {
 					onRemove={ () => setDraftLink( null ) }
 					actions={ [
 						{
-							label: __( 'Review draft', 'siteloom' ),
+							label: __( 'Review draft', 'agentstructor' ),
 							url: draftLink,
 						},
 					] }
 				>
 					{ __(
 						'Draft skill created. Review and publish it to make it available to agents.',
-						'siteloom'
+						'agentstructor'
 					) }
 				</Notice>
 			) }
@@ -133,7 +133,7 @@ function SkillsView( { data, reload } ) {
 						setCreateOpen( true );
 					} }
 				>
-					{ __( 'Create from text', 'siteloom' ) }
+					{ __( 'Create from text', 'agentstructor' ) }
 				</Button>
 			</div>
 			<div style={ { marginBottom: 16 } }>
@@ -147,14 +147,14 @@ function SkillsView( { data, reload } ) {
 			{ drafts.length > 0 && (
 				<section style={ { marginBottom: 24 } }>
 					<h2 style={ { fontSize: 15, margin: '0 0 8px' } }>
-						{ __( 'Drafts', 'siteloom' ) }
+						{ __( 'Drafts', 'agentstructor' ) }
 					</h2>
 					<div className="agentic-react-table-wrap">
 						<table className="agentic-react-table">
 							<thead>
 								<tr>
-									<th>{ __( 'Draft', 'siteloom' ) }</th>
-									<th>{ __( 'Actions', 'siteloom' ) }</th>
+									<th>{ __( 'Draft', 'agentstructor' ) }</th>
+									<th>{ __( 'Actions', 'agentstructor' ) }</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -166,7 +166,7 @@ function SkillsView( { data, reload } ) {
 											>
 												{ __(
 													'Draft',
-													'siteloom'
+													'agentstructor'
 												) }
 											</span>{ ' ' }
 											<strong>{ r.title }</strong>
@@ -180,7 +180,7 @@ function SkillsView( { data, reload } ) {
 											<a href={ r.edit_url }>
 												{ __(
 													'Review',
-													'siteloom'
+													'agentstructor'
 												) }
 											</a>
 											{ ' · ' }
@@ -193,7 +193,7 @@ function SkillsView( { data, reload } ) {
 											>
 												{ __(
 													'Delete',
-													'siteloom'
+													'agentstructor'
 												) }
 											</button>
 										</td>
@@ -209,17 +209,17 @@ function SkillsView( { data, reload } ) {
 				<table className="agentic-react-table">
 					<thead>
 						<tr>
-							<th>{ __( 'Skill', 'siteloom' ) }</th>
-							<th>{ __( 'Agent', 'siteloom' ) }</th>
+							<th>{ __( 'Skill', 'agentstructor' ) }</th>
+							<th>{ __( 'Agent', 'agentstructor' ) }</th>
 							{ isAdvanced && (
 								<>
-									<th>{ __( 'Source', 'siteloom' ) }</th>
+									<th>{ __( 'Source', 'agentstructor' ) }</th>
 									<th>
-										{ __( 'Version', 'siteloom' ) }
+										{ __( 'Version', 'agentstructor' ) }
 									</th>
 								</>
 							) }
-							<th>{ __( 'Actions', 'siteloom' ) }</th>
+							<th>{ __( 'Actions', 'agentstructor' ) }</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -232,11 +232,11 @@ function SkillsView( { data, reload } ) {
 									{ q.trim()
 										? __(
 												'No skills match your search. Try a different keyword or clear the search.',
-												'siteloom'
+												'agentstructor'
 										  )
 										: __(
 												'No skills installed yet. Import a recommended skill, create your own, or browse the community above.',
-												'siteloom'
+												'agentstructor'
 										  ) }
 								</td>
 							</tr>
@@ -251,8 +251,8 @@ function SkillsView( { data, reload } ) {
 										}
 										title={
 											r.enabled
-												? __( 'Active', 'siteloom' )
-												: __( 'Disabled', 'siteloom' )
+												? __( 'Active', 'agentstructor' )
+												: __( 'Disabled', 'agentstructor' )
 										}
 									/>{ ' ' }
 									<strong>{ r.title }</strong>
@@ -267,7 +267,7 @@ function SkillsView( { data, reload } ) {
 										<code>{ r.agent }</code>
 									) : (
 										<span className="agentic-react-muted">
-											{ __( 'All agents', 'siteloom' ) }
+											{ __( 'All agents', 'agentstructor' ) }
 										</span>
 									) }
 								</td>
@@ -283,7 +283,7 @@ function SkillsView( { data, reload } ) {
 												{ r.source_label ||
 													__(
 														'Local',
-														'siteloom'
+														'agentstructor'
 													) }
 											</span>
 										</td>
@@ -292,7 +292,7 @@ function SkillsView( { data, reload } ) {
 								) }
 								<td>
 									<a href={ r.edit_url }>
-										{ __( 'Edit', 'siteloom' ) }
+										{ __( 'Edit', 'agentstructor' ) }
 									</a>
 									{ isAdvanced && r.export_url && (
 										<>
@@ -300,7 +300,7 @@ function SkillsView( { data, reload } ) {
 											<a href={ r.export_url }>
 												{ __(
 													'Export',
-													'siteloom'
+													'agentstructor'
 												) }
 											</a>
 										</>
@@ -313,7 +313,7 @@ function SkillsView( { data, reload } ) {
 											remove( r.delete_id )
 										}
 									>
-										{ __( 'Delete', 'siteloom' ) }
+										{ __( 'Delete', 'agentstructor' ) }
 									</button>
 								</td>
 							</tr>
@@ -325,7 +325,7 @@ function SkillsView( { data, reload } ) {
 
 			{ createOpen && (
 				<Modal
-					title={ __( 'Create a skill from text', 'siteloom' ) }
+					title={ __( 'Create a skill from text', 'agentstructor' ) }
 					onRequestClose={ () => setCreateOpen( false ) }
 				>
 					{ createErr && (
@@ -339,11 +339,11 @@ function SkillsView( { data, reload } ) {
 					<p>
 						{ __(
 							'Describe the task you want to teach the agent. A draft skill is generated from your description for you to review.',
-							'siteloom'
+							'agentstructor'
 						) }
 					</p>
 					<TextareaControl
-						label={ __( 'Description', 'siteloom' ) }
+						label={ __( 'Description', 'agentstructor' ) }
 						value={ createText }
 						onChange={ setCreateText }
 						rows={ 6 }
@@ -360,7 +360,7 @@ function SkillsView( { data, reload } ) {
 							variant="secondary"
 							onClick={ () => setCreateOpen( false ) }
 						>
-							{ __( 'Cancel', 'siteloom' ) }
+							{ __( 'Cancel', 'agentstructor' ) }
 						</Button>
 						<Button
 							variant="primary"
@@ -368,7 +368,7 @@ function SkillsView( { data, reload } ) {
 							disabled={ ! createText.trim() || createBusy }
 							onClick={ createFromText }
 						>
-							{ __( 'Draft skill', 'siteloom' ) }
+							{ __( 'Draft skill', 'agentstructor' ) }
 						</Button>
 					</div>
 				</Modal>

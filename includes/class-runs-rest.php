@@ -270,11 +270,11 @@ class Runs_REST {
 		$task     = (string) $request->get_param( 'task' );
 
 		if ( '' === $agent_id ) {
-			return new \WP_Error( 'missing_agent', __( 'An agent is required.', 'siteloom' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'missing_agent', __( 'An agent is required.', 'agentstructor' ), array( 'status' => 400 ) );
 		}
 
 		if ( '' === trim( $task ) ) {
-			return new \WP_Error( 'missing_task', __( 'A task description is required.', 'siteloom' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'missing_task', __( 'A task description is required.', 'agentstructor' ), array( 'status' => 400 ) );
 		}
 
 		// Validate the agent against the real registry before creating anything,
@@ -348,7 +348,7 @@ class Runs_REST {
 		$data = $run->to_array();
 
 		if ( ! self::is_owner( $data ) && ! self::can_manage_agents() ) {
-			return new \WP_Error( 'forbidden', __( 'Permission denied.', 'siteloom' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'forbidden', __( 'Permission denied.', 'agentstructor' ), array( 'status' => 403 ) );
 		}
 
 		$payload = array(
@@ -388,7 +388,7 @@ class Runs_REST {
 		}
 
 		if ( ! self::can_cancel( $run ) ) {
-			return new \WP_Error( 'forbidden', __( 'Permission denied.', 'siteloom' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'forbidden', __( 'Permission denied.', 'agentstructor' ), array( 'status' => 403 ) );
 		}
 
 		$run->request_cancel();
@@ -409,14 +409,14 @@ class Runs_REST {
 		}
 
 		if ( ! self::can_cancel( $run ) ) {
-			return new \WP_Error( 'forbidden', __( 'Permission denied.', 'siteloom' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'forbidden', __( 'Permission denied.', 'agentstructor' ), array( 'status' => 403 ) );
 		}
 
 		$data = $run->to_array();
 		$task = (string) $data['task_text'];
 
 		if ( '' === trim( $task ) ) {
-			return new \WP_Error( 'empty_task', __( 'This run has no task text to retry.', 'siteloom' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'empty_task', __( 'This run has no task text to retry.', 'agentstructor' ), array( 'status' => 400 ) );
 		}
 
 		// A still-active run must not be retried: cloning a queued/running run
@@ -424,7 +424,7 @@ class Runs_REST {
 		// same holds for a run paused on the user (`waiting`) or mid-resume
 		// (`continuing`) — none of the non-terminal states may be retried.
 		if ( in_array( $data['status'], array( 'queued', 'running', 'continuing', 'waiting' ), true ) ) {
-			return new \WP_Error( 'already_active', __( 'This run is still active and cannot be retried.', 'siteloom' ), array( 'status' => 409 ) );
+			return new \WP_Error( 'already_active', __( 'This run is still active and cannot be retried.', 'agentstructor' ), array( 'status' => 409 ) );
 		}
 
 		// Validate the agent against the real registry before creating the retry
@@ -477,7 +477,7 @@ class Runs_REST {
 		$run    = Agent_Run::load( $run_id );
 
 		if ( null === $run ) {
-			return new \WP_Error( 'not_found', __( 'Run not found.', 'siteloom' ), array( 'status' => 404 ) );
+			return new \WP_Error( 'not_found', __( 'Run not found.', 'agentstructor' ), array( 'status' => 404 ) );
 		}
 
 		return $run;
@@ -561,7 +561,7 @@ class Runs_REST {
 			return new \WP_Error(
 				'invalid_agent',
 				/* translators: %s: agent slug. */
-				sprintf( __( 'Unknown agent "%s".', 'siteloom' ), $agent_id ),
+				sprintf( __( 'Unknown agent "%s".', 'agentstructor' ), $agent_id ),
 				array( 'status' => 400 )
 			);
 		}
@@ -569,7 +569,7 @@ class Runs_REST {
 		if ( ! isset( $registry->get_accessible_instances()[ $agent_id ] ) ) {
 			return new \WP_Error(
 				'forbidden',
-				__( 'You do not have access to this agent.', 'siteloom' ),
+				__( 'You do not have access to this agent.', 'agentstructor' ),
 				array( 'status' => 403 )
 			);
 		}
@@ -697,23 +697,23 @@ class Runs_REST {
 		$tools = array_values( array_unique( array_map( array( Tool_Executor::class, 'friendly_tool_name' ), $tool_slugs ) ) );
 
 		$map = array(
-			'autonomous_chat_start'    => array( __( 'Started the task', 'siteloom' ), '' ),
-			'autonomous_chat_complete' => array( __( 'Finished the task', 'siteloom' ), 'done' ),
-			'autonomous_chat_error'    => array( __( 'The task hit an error', 'siteloom' ), 'failed' ),
-			'tool_choice'              => array( __( 'Decided to use', 'siteloom' ), '' ),
-			'tool_call'                => array( __( 'Used a tool', 'siteloom' ), 'done' ),
-			'tool_blocked'             => array( __( 'Tool blocked', 'siteloom' ), 'blocked' ),
-			'tool_execution_failed'    => array( __( 'Tool failed', 'siteloom' ), 'failed' ),
-			'tool_error_feedback'      => array( __( 'Tool failed — the agent tried again', 'siteloom' ), 'failed' ),
-			'tool_queued'              => array( __( 'Queued for admin approval', 'siteloom' ), 'waiting' ),
-			'tool_confirm'             => array( __( 'Asked for your approval', 'siteloom' ), 'waiting' ),
-			'tool_approval_consumed'   => array( __( 'Used your approval', 'siteloom' ), 'approved' ),
-			'proposal_created'         => array( __( 'Proposed a change', 'siteloom' ), 'waiting' ),
-			'proposal_approved'        => array( __( 'Change approved', 'siteloom' ), 'approved' ),
-			'proposal_rejected'        => array( __( 'Change rejected', 'siteloom' ), 'rejected' ),
-			'approval_approved'        => array( __( 'Change approved', 'siteloom' ), 'approved' ),
-			'approval_rejected'        => array( __( 'Change rejected', 'siteloom' ), 'rejected' ),
-			'agent_delegation'         => array( __( 'Handed off to another agent', 'siteloom' ), '' ),
+			'autonomous_chat_start'    => array( __( 'Started the task', 'agentstructor' ), '' ),
+			'autonomous_chat_complete' => array( __( 'Finished the task', 'agentstructor' ), 'done' ),
+			'autonomous_chat_error'    => array( __( 'The task hit an error', 'agentstructor' ), 'failed' ),
+			'tool_choice'              => array( __( 'Decided to use', 'agentstructor' ), '' ),
+			'tool_call'                => array( __( 'Used a tool', 'agentstructor' ), 'done' ),
+			'tool_blocked'             => array( __( 'Tool blocked', 'agentstructor' ), 'blocked' ),
+			'tool_execution_failed'    => array( __( 'Tool failed', 'agentstructor' ), 'failed' ),
+			'tool_error_feedback'      => array( __( 'Tool failed — the agent tried again', 'agentstructor' ), 'failed' ),
+			'tool_queued'              => array( __( 'Queued for admin approval', 'agentstructor' ), 'waiting' ),
+			'tool_confirm'             => array( __( 'Asked for your approval', 'agentstructor' ), 'waiting' ),
+			'tool_approval_consumed'   => array( __( 'Used your approval', 'agentstructor' ), 'approved' ),
+			'proposal_created'         => array( __( 'Proposed a change', 'agentstructor' ), 'waiting' ),
+			'proposal_approved'        => array( __( 'Change approved', 'agentstructor' ), 'approved' ),
+			'proposal_rejected'        => array( __( 'Change rejected', 'agentstructor' ), 'rejected' ),
+			'approval_approved'        => array( __( 'Change approved', 'agentstructor' ), 'approved' ),
+			'approval_rejected'        => array( __( 'Change rejected', 'agentstructor' ), 'rejected' ),
+			'agent_delegation'         => array( __( 'Handed off to another agent', 'agentstructor' ), '' ),
 		);
 
 		if ( isset( $map[ $action ] ) ) {

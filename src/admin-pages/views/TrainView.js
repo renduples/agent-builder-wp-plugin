@@ -10,16 +10,16 @@ function TrainView( { data } ) {
 			<p className="agentic-react-lead">{ data.description }</p>
 			<p>
 				<Button variant="primary" href={ data.manage_url }>
-					{ __( 'Open full Knowledge editor', 'siteloom' ) }
+					{ __( 'Open full Knowledge editor', 'agentstructor' ) }
 				</Button>
 			</p>
 			<div className="agentic-react-table-wrap">
 				<table className="agentic-react-table">
 					<thead>
 						<tr>
-							<th>{ __( 'Concept', 'siteloom' ) }</th>
-							<th>{ __( 'Type', 'siteloom' ) }</th>
-							<th>{ __( 'Status', 'siteloom' ) }</th>
+							<th>{ __( 'Concept', 'agentstructor' ) }</th>
+							<th>{ __( 'Type', 'agentstructor' ) }</th>
+							<th>{ __( 'Status', 'agentstructor' ) }</th>
 						</tr>
 					</thead>
 					<tbody>

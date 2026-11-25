@@ -42,7 +42,7 @@ function runAction( actionName, body, { reload, onError } ) {
 		} )
 		.catch( ( e ) =>
 			onError(
-				e.message || __( 'Something went wrong.', 'siteloom' )
+				e.message || __( 'Something went wrong.', 'agentstructor' )
 			)
 		);
 }
@@ -79,7 +79,7 @@ function AgentCard( {
 	onDelete,
 } ) {
 	const desc = ( agent.description || '' ).trim() ||
-		__( 'An AI agent for this site.', 'siteloom' );
+		__( 'An AI agent for this site.', 'agentstructor' );
 	const busyHere = busy === agent.slug;
 
 	return (
@@ -108,16 +108,16 @@ function AgentCard( {
 				<div className="agentic-agents-card__badges">
 					{ agent.pinned && (
 						<span className="agentic-agents-card__badge agentic-agents-card__badge--pinned">
-							{ __( 'Pinned', 'siteloom' ) }
+							{ __( 'Pinned', 'agentstructor' ) }
 						</span>
 					) }
 					{ agent.active ? (
 						<span className="agentic-agents-card__badge agentic-agents-card__badge--active">
-							{ __( 'Active', 'siteloom' ) }
+							{ __( 'Active', 'agentstructor' ) }
 						</span>
 					) : (
 						<span className="agentic-agents-card__badge">
-							{ __( 'Inactive', 'siteloom' ) }
+							{ __( 'Inactive', 'agentstructor' ) }
 						</span>
 					) }
 				</div>
@@ -128,7 +128,7 @@ function AgentCard( {
 			<div className="agentic-agents-card__actions">
 				{ agent.active ? (
 					<Button variant="primary" isBusy={ busyHere } onClick={ onChat }>
-						{ __( 'Chat', 'siteloom' ) }
+						{ __( 'Chat', 'agentstructor' ) }
 					</Button>
 				) : (
 					<Button
@@ -136,17 +136,17 @@ function AgentCard( {
 						isBusy={ busyHere }
 						onClick={ onToggle }
 					>
-						{ __( 'Activate', 'siteloom' ) }
+						{ __( 'Activate', 'agentstructor' ) }
 					</Button>
 				) }
 				<Button variant="secondary" onClick={ onAssign }>
-					{ __( 'Assign task', 'siteloom' ) }
+					{ __( 'Assign task', 'agentstructor' ) }
 				</Button>
 			</div>
 
 			<div className="agentic-agents-card__row-actions">
 				<Button variant="link" isSmall disabled={ !! busy } onClick={ onEdit }>
-					{ __( 'Edit', 'siteloom' ) }
+					{ __( 'Edit', 'agentstructor' ) }
 				</Button>
 				<Button
 					variant="link"
@@ -154,10 +154,10 @@ function AgentCard( {
 					disabled={ !! busy }
 					onClick={ onDuplicate }
 				>
-					{ __( 'Duplicate', 'siteloom' ) }
+					{ __( 'Duplicate', 'agentstructor' ) }
 				</Button>
 				<Button variant="link" isSmall disabled={ !! busy } onClick={ onExport }>
-					{ __( 'Export', 'siteloom' ) }
+					{ __( 'Export', 'agentstructor' ) }
 				</Button>
 				<Button
 					variant="link"
@@ -166,8 +166,8 @@ function AgentCard( {
 					onClick={ onToggle }
 				>
 					{ agent.active
-						? __( 'Deactivate', 'siteloom' )
-						: __( 'Activate', 'siteloom' ) }
+						? __( 'Deactivate', 'agentstructor' )
+						: __( 'Activate', 'agentstructor' ) }
 				</Button>
 				{ isAdmin && (
 					<Button
@@ -177,7 +177,7 @@ function AgentCard( {
 						disabled={ !! busy }
 						onClick={ onDelete }
 					>
-						{ __( 'Delete', 'siteloom' ) }
+						{ __( 'Delete', 'agentstructor' ) }
 					</Button>
 				) }
 			</div>
@@ -202,10 +202,10 @@ function AgentProfileDrawer( { agent, onClose, onSaved } ) {
 			return;
 		}
 		const frame = window.wp.media( {
-			title: __( 'Choose agent avatar', 'siteloom' ),
+			title: __( 'Choose agent avatar', 'agentstructor' ),
 			library: { type: 'image' },
 			multiple: false,
-			button: { text: __( 'Use this image', 'siteloom' ) },
+			button: { text: __( 'Use this image', 'agentstructor' ) },
 		} );
 		frame.on( 'select', () => {
 			const att = frame.state().get( 'selection' ).first().toJSON();
@@ -242,7 +242,7 @@ function AgentProfileDrawer( { agent, onClose, onSaved } ) {
 				setSaving( false );
 				setErr(
 					e.message ||
-						__( 'Could not save the profile.', 'siteloom' )
+						__( 'Could not save the profile.', 'agentstructor' )
 				);
 			} );
 	};
@@ -251,7 +251,7 @@ function AgentProfileDrawer( { agent, onClose, onSaved } ) {
 		<Modal
 			title={ sprintf(
 				/* translators: %s: agent display name */
-				__( 'Edit profile: %s', 'siteloom' ),
+				__( 'Edit profile: %s', 'agentstructor' ),
 				agent.display_name || agent.slug
 			) }
 			onRequestClose={ onClose }
@@ -274,7 +274,7 @@ function AgentProfileDrawer( { agent, onClose, onSaved } ) {
 				/>
 				<div className="agentic-agents-drawer__avatar-actions">
 					<Button variant="secondary" onClick={ openMedia }>
-						{ __( 'Set image', 'siteloom' ) }
+						{ __( 'Set image', 'agentstructor' ) }
 					</Button>
 					{ ( avatarId || avatarUrl ) && (
 						<Button
@@ -285,53 +285,53 @@ function AgentProfileDrawer( { agent, onClose, onSaved } ) {
 								setAvatarUrl( '' );
 							} }
 						>
-							{ __( 'Remove image', 'siteloom' ) }
+							{ __( 'Remove image', 'agentstructor' ) }
 						</Button>
 					) }
 				</div>
 			</div>
 
 			<TextControl
-				label={ __( 'Name', 'siteloom' ) }
+				label={ __( 'Name', 'agentstructor' ) }
 				value={ name }
 				onChange={ setName }
 				help={ __(
 					'Leave empty to use the agent’s built-in name.',
-					'siteloom'
+					'agentstructor'
 				) }
 			/>
 			<TextControl
-				label={ __( 'Title', 'siteloom' ) }
+				label={ __( 'Title', 'agentstructor' ) }
 				value={ title }
 				onChange={ setTitle }
 			/>
 			<TextareaControl
-				label={ __( 'Standing description', 'siteloom' ) }
+				label={ __( 'Standing description', 'agentstructor' ) }
 				value={ standing }
 				onChange={ setStanding }
 				help={ __(
 					'Shown where this agent is introduced to other agents.',
-					'siteloom'
+					'agentstructor'
 				) }
 			/>
 			<TextControl
-				label={ __( 'Emoji avatar', 'siteloom' ) }
+				label={ __( 'Emoji avatar', 'agentstructor' ) }
 				value={ emoji }
 				onChange={ setEmoji }
 				help={ __(
 					'Used when no image is set.',
-					'siteloom'
+					'agentstructor'
 				) }
 			/>
 
 			<div className="agentic-agents-drawer__toggles">
 				<ToggleControl
-					label={ __( 'Pin to top', 'siteloom' ) }
+					label={ __( 'Pin to top', 'agentstructor' ) }
 					checked={ pinned }
 					onChange={ setPinned }
 				/>
 				<ToggleControl
-					label={ __( 'Hide agent', 'siteloom' ) }
+					label={ __( 'Hide agent', 'agentstructor' ) }
 					checked={ hidden }
 					onChange={ setHidden }
 				/>
@@ -339,10 +339,10 @@ function AgentProfileDrawer( { agent, onClose, onSaved } ) {
 
 			<div className="agentic-agents-drawer__actions">
 				<Button variant="secondary" onClick={ onClose }>
-					{ __( 'Cancel', 'siteloom' ) }
+					{ __( 'Cancel', 'agentstructor' ) }
 				</Button>
 				<Button variant="primary" isBusy={ saving } disabled={ saving } onClick={ save }>
-					{ __( 'Save profile', 'siteloom' ) }
+					{ __( 'Save profile', 'agentstructor' ) }
 				</Button>
 			</div>
 		</Modal>
@@ -361,14 +361,14 @@ function QuickCreateModal( { onClose, onCreated } ) {
 			return;
 		}
 		if ( ! name.trim() ) {
-			setErr( __( 'A name is required.', 'siteloom' ) );
+			setErr( __( 'A name is required.', 'agentstructor' ) );
 			return;
 		}
 		if ( ! what.trim() ) {
 			setErr(
 				__(
 					'A short description is required.',
-					'siteloom'
+					'agentstructor'
 				)
 			);
 			return;
@@ -392,14 +392,14 @@ function QuickCreateModal( { onClose, onCreated } ) {
 				setBusy( false );
 				setErr(
 					e.message ||
-						__( 'Could not create the agent.', 'siteloom' )
+						__( 'Could not create the agent.', 'agentstructor' )
 				);
 			} );
 	};
 
 	return (
 		<Modal
-			title={ __( 'New agent', 'siteloom' ) }
+			title={ __( 'New agent', 'agentstructor' ) }
 			onRequestClose={ onClose }
 			className="agentic-agents-create-modal"
 		>
@@ -409,35 +409,35 @@ function QuickCreateModal( { onClose, onCreated } ) {
 				</Notice>
 			) }
 			<TextControl
-				label={ __( 'Name', 'siteloom' ) }
+				label={ __( 'Name', 'agentstructor' ) }
 				value={ name }
 				onChange={ setName }
-				placeholder={ __( 'Support assistant', 'siteloom' ) }
+				placeholder={ __( 'Support assistant', 'agentstructor' ) }
 			/>
 			<TextareaControl
-				label={ __( 'What should it do?', 'siteloom' ) }
+				label={ __( 'What should it do?', 'agentstructor' ) }
 				value={ what }
 				onChange={ setWhat }
 				placeholder={ __(
 					'Answers customer questions using our knowledge base.',
-					'siteloom'
+					'agentstructor'
 				) }
 			/>
 			<TextareaControl
-				label={ __( 'Rules', 'siteloom' ) }
+				label={ __( 'Rules', 'agentstructor' ) }
 				value={ rules }
 				onChange={ setRules }
 				help={ __(
 					'Optional. Standing instructions the agent always follows.',
-					'siteloom'
+					'agentstructor'
 				) }
 			/>
 			<div className="agentic-agents-drawer__actions">
 				<Button variant="secondary" onClick={ onClose }>
-					{ __( 'Cancel', 'siteloom' ) }
+					{ __( 'Cancel', 'agentstructor' ) }
 				</Button>
 				<Button variant="primary" isBusy={ busy } disabled={ busy } onClick={ create }>
-					{ __( 'Create agent', 'siteloom' ) }
+					{ __( 'Create agent', 'agentstructor' ) }
 				</Button>
 			</div>
 		</Modal>
@@ -447,14 +447,14 @@ function QuickCreateModal( { onClose, onCreated } ) {
 function ImportModal( { data, onClose } ) {
 	return (
 		<Modal
-			title={ __( 'Import agent', 'siteloom' ) }
+			title={ __( 'Import agent', 'agentstructor' ) }
 			onRequestClose={ onClose }
 			className="agentic-agents-import-modal"
 		>
 			<p className="agentic-react-muted">
 				{ __(
 					'Choose a .zip agent template exported from this plugin.',
-					'siteloom'
+					'agentstructor'
 				) }
 			</p>
 			<form
@@ -476,10 +476,10 @@ function ImportModal( { data, onClose } ) {
 				/>
 				<div className="agentic-agents-drawer__actions">
 					<Button variant="secondary" onClick={ onClose }>
-						{ __( 'Cancel', 'siteloom' ) }
+						{ __( 'Cancel', 'agentstructor' ) }
 					</Button>
 					<Button variant="primary" type="submit">
-						{ __( 'Import', 'siteloom' ) }
+						{ __( 'Import', 'agentstructor' ) }
 					</Button>
 				</div>
 			</form>
@@ -530,11 +530,11 @@ function AdvancedTable( {
 				<thead>
 					<tr>
 						<th className="agentic-agents-table__handle" />
-						<th>{ __( 'Agent', 'siteloom' ) }</th>
-						<th>{ __( 'Slug', 'siteloom' ) }</th>
-						<th>{ __( 'Version', 'siteloom' ) }</th>
-						<th>{ __( 'Author', 'siteloom' ) }</th>
-						<th>{ __( 'Source', 'siteloom' ) }</th>
+						<th>{ __( 'Agent', 'agentstructor' ) }</th>
+						<th>{ __( 'Slug', 'agentstructor' ) }</th>
+						<th>{ __( 'Version', 'agentstructor' ) }</th>
+						<th>{ __( 'Author', 'agentstructor' ) }</th>
+						<th>{ __( 'Source', 'agentstructor' ) }</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -572,7 +572,7 @@ function AdvancedTable( {
 									</strong>
 									{ a.active ? (
 										<span className="agentic-agents-table__active">
-											{ __( 'Active', 'siteloom' ) }
+											{ __( 'Active', 'agentstructor' ) }
 										</span>
 									) : null }
 								</td>
@@ -589,7 +589,7 @@ function AdvancedTable( {
 			</table>
 			{ busy && (
 				<p className="agentic-react-muted">
-					{ __( 'Saving order…', 'siteloom' ) }
+					{ __( 'Saving order…', 'agentstructor' ) }
 				</p>
 			) }
 		</div>
@@ -625,12 +625,12 @@ function AgentsView( { data, reload } ) {
 			setOk(
 				sprintf(
 					/* translators: %s: imported agent slug */
-					__( 'Agent “%s” imported.', 'siteloom' ),
+					__( 'Agent “%s” imported.', 'agentstructor' ),
 					sp.get( 'imported' )
 				)
 			);
 		} else if ( sp.get( 'import_error' ) ) {
-			setErr( __( 'Import failed. Check the .zip file and try again.', 'siteloom' ) );
+			setErr( __( 'Import failed. Check the .zip file and try again.', 'agentstructor' ) );
 		}
 	}, [] );
 
@@ -663,7 +663,7 @@ function AgentsView( { data, reload } ) {
 					setOk(
 						sprintf(
 							/* translators: %s: duplicated agent slug */
-							__( 'Duplicated as “%s”.', 'siteloom' ),
+							__( 'Duplicated as “%s”.', 'agentstructor' ),
 							res.slug
 						)
 					);
@@ -681,7 +681,7 @@ function AgentsView( { data, reload } ) {
 					window.location.href = res.url;
 				}
 			} )
-			.catch( ( e ) => setErr( e.message || __( 'Export failed.', 'siteloom' ) ) )
+			.catch( ( e ) => setErr( e.message || __( 'Export failed.', 'agentstructor' ) ) )
 			.finally( () => setBusy( '' ) );
 	};
 
@@ -691,7 +691,7 @@ function AgentsView( { data, reload } ) {
 			! window.confirm(
 				sprintf(
 					/* translators: %s: agent name */
-					__( 'Delete “%s”? This removes the agent and its files.', 'siteloom' ),
+					__( 'Delete “%s”? This removes the agent and its files.', 'agentstructor' ),
 					name
 				)
 			)
@@ -705,13 +705,13 @@ function AgentsView( { data, reload } ) {
 				setOk(
 					sprintf(
 						/* translators: %s: deleted agent name */
-						__( 'Deleted “%s”.', 'siteloom' ),
+						__( 'Deleted “%s”.', 'agentstructor' ),
 						name
 					)
 				);
 				reload( { silent: true } );
 			} )
-			.catch( ( e ) => setErr( e.message || __( 'Delete failed.', 'siteloom' ) ) )
+			.catch( ( e ) => setErr( e.message || __( 'Delete failed.', 'agentstructor' ) ) )
 			.finally( () => setBusy( '' ) );
 	};
 
@@ -724,7 +724,7 @@ function AgentsView( { data, reload } ) {
 					reload( { silent: true } );
 				}
 			} )
-			.catch( ( e ) => setErr( e.message || __( 'Reorder failed.', 'siteloom' ) ) )
+			.catch( ( e ) => setErr( e.message || __( 'Reorder failed.', 'agentstructor' ) ) )
 			.finally( () => setReordering( false ) );
 	};
 
@@ -734,7 +734,7 @@ function AgentsView( { data, reload } ) {
 			setOk(
 				sprintf(
 					/* translators: %s: new agent name */
-					__( 'Created “%s”.', 'siteloom' ),
+					__( 'Created “%s”.', 'agentstructor' ),
 					res.name || res.slug
 				)
 			);
@@ -770,7 +770,7 @@ function AgentsView( { data, reload } ) {
 	if ( ! agents.length ) {
 		main = (
 			<p className="agentic-react-muted">
-				{ __( 'No agents installed yet.', 'siteloom' ) }
+				{ __( 'No agents installed yet.', 'agentstructor' ) }
 			</p>
 		);
 	} else if ( isAdvanced ) {
@@ -796,7 +796,7 @@ function AgentsView( { data, reload } ) {
 						<summary>
 							{ sprintf(
 								/* translators: %d: hidden agent count */
-								__( 'Hidden agents (%d)', 'siteloom' ),
+								__( 'Hidden agents (%d)', 'agentstructor' ),
 								hidden.length
 							) }
 						</summary>
@@ -825,23 +825,23 @@ function AgentsView( { data, reload } ) {
 			<div className="agentic-agents-toolbar">
 				{ isAdmin && (
 					<Button variant="primary" onClick={ () => setCreating( true ) }>
-						{ __( 'New agent', 'siteloom' ) }
+						{ __( 'New agent', 'agentstructor' ) }
 					</Button>
 				) }
 				{ isAdmin && (
 					<Button variant="secondary" onClick={ () => setImporting( true ) }>
-						{ __( 'Import', 'siteloom' ) }
+						{ __( 'Import', 'agentstructor' ) }
 					</Button>
 				) }
 				<span className="agentic-react-muted">
 					{ isAdvanced
 						? __(
 								'Advanced view: drag rows to set the roster order.',
-								'siteloom'
+								'agentstructor'
 						  )
 						: __(
 								'Pinned agents first, hidden agents collapsed below.',
-								'siteloom'
+								'agentstructor'
 						  ) }
 				</span>
 			</div>
@@ -854,7 +854,7 @@ function AgentsView( { data, reload } ) {
 					onClose={ () => setEditing( null ) }
 					onSaved={ () => {
 						setEditing( null );
-						setOk( __( 'Profile saved.', 'siteloom' ) );
+						setOk( __( 'Profile saved.', 'agentstructor' ) );
 						if ( typeof reload === 'function' ) {
 							reload( { silent: true } );
 						}

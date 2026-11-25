@@ -74,7 +74,7 @@ class Tool_Loader {
 			return;
 		}
 
-		// Siteloom, Pro, and any add-on register their reviewed tool
+		// AgentStructor, Pro, and any add-on register their reviewed tool
 		// libraries on this filter (Pro prepends its own), mirroring
 		// agentic_library_dirs for agents. Each directory holds one subdir per
 		// tool, containing tool.php that returns a Tool_Base instance.

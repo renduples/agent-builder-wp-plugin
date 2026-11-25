@@ -108,7 +108,7 @@ class Turnstile {
 		if ( '' === trim( $token ) ) {
 			return array(
 				'pass'   => false,
-				'reason' => __( 'Please complete the verification challenge and try again.', 'siteloom' ),
+				'reason' => __( 'Please complete the verification challenge and try again.', 'agentstructor' ),
 			);
 		}
 
@@ -118,7 +118,7 @@ class Turnstile {
 			// silently accept an unverifiable token.
 			return array(
 				'pass'   => false,
-				'reason' => __( 'Bot verification is not fully configured. Please try again later.', 'siteloom' ),
+				'reason' => __( 'Bot verification is not fully configured. Please try again later.', 'agentstructor' ),
 			);
 		}
 
@@ -137,7 +137,7 @@ class Turnstile {
 		if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
 			return array(
 				'pass'   => false,
-				'reason' => __( 'Could not verify your request. Please try again.', 'siteloom' ),
+				'reason' => __( 'Could not verify your request. Please try again.', 'agentstructor' ),
 			);
 		}
 
@@ -145,7 +145,7 @@ class Turnstile {
 		if ( ! is_array( $data ) || empty( $data['success'] ) ) {
 			return array(
 				'pass'   => false,
-				'reason' => __( 'Security verification failed. Please try again.', 'siteloom' ),
+				'reason' => __( 'Security verification failed. Please try again.', 'agentstructor' ),
 			);
 		}
 

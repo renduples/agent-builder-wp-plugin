@@ -1,6 +1,6 @@
 <?php
 /**
- * Site Health test for Siteloom background tasks.
+ * Site Health test for AgentStructor background tasks.
  *
  * Registers three direct tests on the WordPress Site Health screen:
  * `agent_builder_background_runs`, `agent_builder_private_storage`
@@ -82,24 +82,24 @@ class Site_Health {
 	}
 
 	/**
-	 * Register the Siteloom tests with WordPress Site Health.
+	 * Register the AgentStructor tests with WordPress Site Health.
 	 *
 	 * @param array $tests Existing direct/async test definitions.
-	 * @return array Tests with the Siteloom direct tests appended.
+	 * @return array Tests with the AgentStructor direct tests appended.
 	 */
 	public static function add_tests( array $tests ): array {
 		$tests['direct'][ self::TEST_SLUG ] = array(
-			'label' => __( 'Siteloom: background tasks', 'siteloom' ),
+			'label' => __( 'AgentStructor: background tasks', 'agentstructor' ),
 			'test'  => array( __CLASS__, 'test_background_runs' ),
 		);
 
 		$tests['direct'][ self::STORAGE_TEST_SLUG ] = array(
-			'label' => __( 'Siteloom: private files are not public', 'siteloom' ),
+			'label' => __( 'AgentStructor: private files are not public', 'agentstructor' ),
 			'test'  => array( __CLASS__, 'test_private_storage' ),
 		);
 
 		$tests['direct'][ self::LOCATION_TEST_SLUG ] = array(
-			'label' => __( 'Siteloom: data is stored in the uploads folder', 'siteloom' ),
+			'label' => __( 'AgentStructor: data is stored in the uploads folder', 'agentstructor' ),
 			'test'  => array( __CLASS__, 'test_storage_location' ),
 		);
 
@@ -118,23 +118,23 @@ class Site_Health {
 
 		if ( ! $cron_stale && 0 === $stuck_runs && 0 === $stale_approvals ) {
 			return array(
-				'label'       => __( 'Siteloom: background tasks', 'siteloom' ),
+				'label'       => __( 'AgentStructor: background tasks', 'agentstructor' ),
 				'status'      => 'good',
 				'badge'       => array(
-					'label' => __( 'Background tasks', 'siteloom' ),
+					'label' => __( 'Background tasks', 'agentstructor' ),
 					'color' => 'green',
 				),
-				'description' => '<p>' . __( 'Siteloom background tasks are running on schedule.', 'siteloom' ) . '</p>',
+				'description' => '<p>' . __( 'AgentStructor background tasks are running on schedule.', 'agentstructor' ) . '</p>',
 				'actions'     => '',
 				'test'        => self::TEST_SLUG,
 			);
 		}
 
 		return array(
-			'label'       => __( 'Siteloom: background tasks', 'siteloom' ),
+			'label'       => __( 'AgentStructor: background tasks', 'agentstructor' ),
 			'status'      => 'recommended',
 			'badge'       => array(
-				'label' => __( 'Background tasks', 'siteloom' ),
+				'label' => __( 'Background tasks', 'agentstructor' ),
 				'color' => 'orange',
 			),
 			'description' => self::build_description( $cron_stale, $stuck_runs, $stale_approvals ),
@@ -190,9 +190,9 @@ class Site_Health {
 			$critical = true;
 		}
 
-		$label = __( 'Siteloom: private files are not public', 'siteloom' );
+		$label = __( 'AgentStructor: private files are not public', 'agentstructor' );
 		$badge = array(
-			'label' => __( 'Security', 'siteloom' ),
+			'label' => __( 'Security', 'agentstructor' ),
 			'color' => 'blue',
 		);
 
@@ -201,7 +201,7 @@ class Site_Health {
 				'label'       => $label,
 				'status'      => 'good',
 				'badge'       => $badge,
-				'description' => '<p>' . __( 'Siteloom could not request its own folders over the web (the loopback request failed, or nothing is stored yet), so this check was skipped. Automatic backups are stored in a format the web server will not hand out either way.', 'siteloom' ) . '</p>',
+				'description' => '<p>' . __( 'AgentStructor could not request its own folders over the web (the loopback request failed, or nothing is stored yet), so this check was skipped. Automatic backups are stored in a format the web server will not hand out either way.', 'agentstructor' ) . '</p>',
 				'actions'     => '',
 				'test'        => self::STORAGE_TEST_SLUG,
 			);
@@ -212,7 +212,7 @@ class Site_Health {
 				'label'       => $label,
 				'status'      => 'good',
 				'badge'       => $badge,
-				'description' => '<p>' . __( 'Automatic backups, knowledge files and agent files in the Siteloom uploads folder cannot be downloaded from the web.', 'siteloom' ) . '</p>',
+				'description' => '<p>' . __( 'Automatic backups, knowledge files and agent files in the AgentStructor uploads folder cannot be downloaded from the web.', 'agentstructor' ) . '</p>',
 				'actions'     => '',
 				'test'        => self::STORAGE_TEST_SLUG,
 			);
@@ -224,25 +224,25 @@ class Site_Health {
 		}
 
 		if ( $critical ) {
-			$label       = __( 'Siteloom backups can be downloaded from the web', 'siteloom' );
-			$description = '<p>' . __( 'Copies of site data that Siteloom saves before an agent changes something can be read by anyone who requests them. Block web access to the folders below, then delete backups you no longer need on the Approvals → Backups screen.', 'siteloom' ) . '</p>';
+			$label       = __( 'AgentStructor backups can be downloaded from the web', 'agentstructor' );
+			$description = '<p>' . __( 'Copies of site data that AgentStructor saves before an agent changes something can be read by anyone who requests them. Block web access to the folders below, then delete backups you no longer need on the Approvals → Backups screen.', 'agentstructor' ) . '</p>';
 		} else {
-			$label       = __( 'Siteloom folders are readable from the web', 'siteloom' );
+			$label       = __( 'AgentStructor folders are readable from the web', 'agentstructor' );
 			$description = '<p>' . sprintf(
 				/* translators: %s: comma-separated folder names. */
-				__( 'Your web server hands out files from %s. Automatic backups stay protected because they are stored in a format the server will not serve, but knowledge files (your agents\' reference notes) and agent files can be read by anyone who knows their address.', 'siteloom' ),
+				__( 'Your web server hands out files from %s. Automatic backups stay protected because they are stored in a format the server will not serve, but knowledge files (your agents\' reference notes) and agent files can be read by anyone who knows their address.', 'agentstructor' ),
 				implode( ', ', $folders )
 			) . '</p>';
 		}
 
 		$snippet = self::nginx_snippet();
-		$actions = '<p>' . __( 'Apache and IIS follow the .htaccess and web.config files Siteloom places in these folders. On nginx, add this rule to the site\'s server block and reload nginx:', 'siteloom' ) . '</p><pre><code>' . esc_html( $snippet ) . '</code></pre>';
+		$actions = '<p>' . __( 'Apache and IIS follow the .htaccess and web.config files AgentStructor places in these folders. On nginx, add this rule to the site\'s server block and reload nginx:', 'agentstructor' ) . '</p><pre><code>' . esc_html( $snippet ) . '</code></pre>';
 
 		return array(
 			'label'       => $label,
 			'status'      => $critical ? 'critical' : 'recommended',
 			'badge'       => array(
-				'label' => __( 'Security', 'siteloom' ),
+				'label' => __( 'Security', 'agentstructor' ),
 				'color' => $critical ? 'red' : 'orange',
 			),
 			'description' => $description,
@@ -291,7 +291,7 @@ class Site_Health {
 	 */
 	public static function test_storage_location(): array {
 		$badge = array(
-			'label' => __( 'Siteloom', 'siteloom' ),
+			'label' => __( 'AgentStructor', 'agentstructor' ),
 			'color' => 'blue',
 		);
 		$left  = Storage_Migration::remaining_legacy_dirs();
@@ -300,7 +300,7 @@ class Site_Health {
 		if ( empty( $left ) ) {
 			$description = '<p>' . sprintf(
 				/* translators: %s: folder path. */
-				__( 'Siteloom keeps its files (your agents, knowledge files and automatic backups) in %s.', 'siteloom' ),
+				__( 'AgentStructor keeps its files (your agents, knowledge files and automatic backups) in %s.', 'agentstructor' ),
 				'<code>' . esc_html( self::display_path( File_Manager::data_dir() ) ) . '/</code>'
 			) . '</p>';
 
@@ -312,13 +312,13 @@ class Site_Health {
 				}
 				$description .= '<p>' . sprintf(
 					/* translators: %s: old folder paths. */
-					__( 'This site has copied its data out of the older folders shared by every site of the network: %s. Siteloom no longer uses them on this site and never deletes them, because other sites copy from them the first time they load. Once every site of the network has been visited, you can delete these folders yourself.', 'siteloom' ),
+					__( 'This site has copied its data out of the older folders shared by every site of the network: %s. AgentStructor no longer uses them on this site and never deletes them, because other sites copy from them the first time they load. Once every site of the network has been visited, you can delete these folders yourself.', 'agentstructor' ),
 					implode( ', ', $folders )
 				) . '</p>';
 			}
 
 			return array(
-				'label'       => __( 'Siteloom data is stored in the uploads folder', 'siteloom' ),
+				'label'       => __( 'AgentStructor data is stored in the uploads folder', 'agentstructor' ),
 				'status'      => 'good',
 				'badge'       => $badge,
 				'description' => $description,
@@ -333,21 +333,21 @@ class Site_Health {
 		}
 
 		return array(
-			'label'       => __( 'Some Siteloom files could not be moved to the uploads folder', 'siteloom' ),
+			'label'       => __( 'Some AgentStructor files could not be moved to the uploads folder', 'agentstructor' ),
 			'status'      => 'recommended',
 			'badge'       => array(
-				'label' => __( 'Siteloom', 'siteloom' ),
+				'label' => __( 'AgentStructor', 'agentstructor' ),
 				'color' => 'orange',
 			),
 			'description' => '<p>' . sprintf(
 				/* translators: 1: old folder paths, 2: new folder path. */
-				__( 'Siteloom now stores its files in %2$s. These older folders still hold files that could not be moved automatically, usually because of file permissions: %1$s. Siteloom still reads them, so nothing is lost, but it no longer writes there.', 'siteloom' ),
+				__( 'AgentStructor now stores its files in %2$s. These older folders still hold files that could not be moved automatically, usually because of file permissions: %1$s. AgentStructor still reads them, so nothing is lost, but it no longer writes there.', 'agentstructor' ),
 				implode( ', ', $folders ),
 				'<code>' . esc_html( self::display_path( File_Manager::data_dir() ) ) . '/</code>'
 			) . '</p>',
 			'actions'     => '<p>' . ( $copy
-				? __( 'Make the uploads folder writable by the web server (or copy the old folders\' contents into the matching agents/, knowledge/ or backups/ subfolder of this site yourself, keeping any file that already exists there). Siteloom retries the copy every hour. The old folders are shared by every site of the network and are never deleted automatically.', 'siteloom' )
-				: __( 'Make the old folders writable by the web server (or move their contents into the matching agents/, knowledge/ or backups/ subfolder yourself, keeping any file that already exists there). Siteloom retries the move every hour and removes each old folder once it is empty.', 'siteloom' )
+				? __( 'Make the uploads folder writable by the web server (or copy the old folders\' contents into the matching agents/, knowledge/ or backups/ subfolder of this site yourself, keeping any file that already exists there). AgentStructor retries the copy every hour. The old folders are shared by every site of the network and are never deleted automatically.', 'agentstructor' )
+				: __( 'Make the old folders writable by the web server (or move their contents into the matching agents/, knowledge/ or backups/ subfolder yourself, keeping any file that already exists there). AgentStructor retries the move every hour and removes each old folder once it is empty.', 'agentstructor' )
 			) . '</p>',
 			'test'        => self::LOCATION_TEST_SLUG,
 		);
@@ -508,13 +508,13 @@ class Site_Health {
 		$problems = array();
 
 		if ( $cron_stale ) {
-			$problems[] = __( 'Scheduled background tasks are overdue (no recent cron tick).', 'siteloom' );
+			$problems[] = __( 'Scheduled background tasks are overdue (no recent cron tick).', 'agentstructor' );
 		}
 
 		if ( $stuck_runs > 0 ) {
 			$problems[] = sprintf(
 				/* translators: %d: number of stuck runs. */
-				_n( '%d agent run is stuck in a running state.', '%d agent runs are stuck in a running state.', $stuck_runs, 'siteloom' ),
+				_n( '%d agent run is stuck in a running state.', '%d agent runs are stuck in a running state.', $stuck_runs, 'agentstructor' ),
 				$stuck_runs
 			);
 		}
@@ -522,12 +522,12 @@ class Site_Health {
 		if ( $stale_approvals > 0 ) {
 			$problems[] = sprintf(
 				/* translators: %d: number of stale approvals. */
-				_n( '%d approval has been waiting over 24 hours.', '%d approvals have been waiting over 24 hours.', $stale_approvals, 'siteloom' ),
+				_n( '%d approval has been waiting over 24 hours.', '%d approvals have been waiting over 24 hours.', $stale_approvals, 'agentstructor' ),
 				$stale_approvals
 			);
 		}
 
-		return '<p>' . __( 'Some Siteloom background tasks need attention:', 'siteloom' ) . '</p><ul><li>' . implode( '</li><li>', $problems ) . '</li></ul>';
+		return '<p>' . __( 'Some AgentStructor background tasks need attention:', 'agentstructor' ) . '</p><ul><li>' . implode( '</li><li>', $problems ) . '</li></ul>';
 	}
 
 	/**
@@ -544,8 +544,8 @@ class Site_Health {
 		if ( $cron_stale ) {
 			$doc_link = sprintf(
 				'<a href="%1$s">%2$s</a>',
-				esc_url( __( 'https://developer.wordpress.org/plugins/cron/', 'siteloom' ) ),
-				__( 'WordPress cron documentation', 'siteloom' )
+				esc_url( __( 'https://developer.wordpress.org/plugins/cron/', 'agentstructor' ) ),
+				__( 'WordPress cron documentation', 'agentstructor' )
 			);
 
 			if ( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON ) {
@@ -553,7 +553,7 @@ class Site_Health {
 					'<p>%s</p>',
 					sprintf(
 						/* translators: %s: link to the WordPress cron documentation. */
-						__( '<code>DISABLE_WP_CRON</code> is set but no recent cron tick was recorded — make sure a real system cron entry is hitting wp-cron.php. See %s.', 'siteloom' ),
+						__( '<code>DISABLE_WP_CRON</code> is set but no recent cron tick was recorded — make sure a real system cron entry is hitting wp-cron.php. See %s.', 'agentstructor' ),
 						$doc_link
 					)
 				);
@@ -562,7 +562,7 @@ class Site_Health {
 					'<p>%s</p>',
 					sprintf(
 						/* translators: %s: link to the WordPress cron documentation. */
-						__( 'On a low-traffic site, set <code>DISABLE_WP_CRON</code> and add a real system cron entry so background tasks run reliably. See %s.', 'siteloom' ),
+						__( 'On a low-traffic site, set <code>DISABLE_WP_CRON</code> and add a real system cron entry so background tasks run reliably. See %s.', 'agentstructor' ),
 						$doc_link
 					)
 				);
@@ -573,7 +573,7 @@ class Site_Health {
 			$actions .= sprintf(
 				'<p><a href="%1$s">%2$s</a></p>',
 				esc_url( admin_url( 'admin.php?page=agentic-tasks' ) ),
-				__( 'Review runs', 'siteloom' )
+				__( 'Review runs', 'agentstructor' )
 			);
 		}
 
@@ -581,7 +581,7 @@ class Site_Health {
 			$actions .= sprintf(
 				'<p><a href="%1$s">%2$s</a></p>',
 				esc_url( admin_url( 'admin.php?page=agentic-approvals' ) ),
-				__( 'Review approvals', 'siteloom' )
+				__( 'Review approvals', 'agentstructor' )
 			);
 		}
 

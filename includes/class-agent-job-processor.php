@@ -1,12 +1,12 @@
 <?php
 /**
- * Siteloom Job Processor
+ * AgentStructor Job Processor
  *
  * Processes agent building jobs asynchronously.
  *
  * @package    Agent_Builder
  * @subpackage Includes
- * @author     Siteloom Team <support@agentic-plugin.com>
+ * @author     AgentStructor Team <support@agentic-plugin.com>
  * @license    GPL-2.0-or-later https://www.gnu.org/licenses/gpl-2.0.html
  * @link       https://agentic-plugin.com
  * @since      0.2.0
@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Siteloom Job Processor
+ * AgentStructor Job Processor
  */
 class Agent_Builder_Job_Processor implements Job_Processor_Interface {
 

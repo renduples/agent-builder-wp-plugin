@@ -18,7 +18,7 @@ function SafetyRiskInventory( { inventory, urls } ) {
 				id="agentic-safety-inventory-heading"
 				className="agentic-safety-section__title"
 			>
-				{ __( 'Risk inventory', 'siteloom' ) }
+				{ __( 'Risk inventory', 'agentstructor' ) }
 			</h2>
 			<div className="agentic-safety-strip">
 				{ tiers.map( ( tier ) => (
@@ -37,7 +37,7 @@ function SafetyRiskInventory( { inventory, urls } ) {
 								/* translators: 1: enabled tools, 2: disabled tools */
 								__(
 									'%1$d enabled · %2$d disabled',
-									'siteloom'
+									'agentstructor'
 								),
 								tier.enabled ?? 0,
 								tier.disabled ?? 0
@@ -63,7 +63,7 @@ function SafetyRiskInventory( { inventory, urls } ) {
 				<h3 className="agentic-safety-card__title">
 					{ __(
 						'Highest-risk tools currently enabled',
-						'siteloom'
+						'agentstructor'
 					) }
 				</h3>
 				{ highest.length ? (
@@ -91,16 +91,16 @@ function SafetyRiskInventory( { inventory, urls } ) {
 					<p className="agentic-safety-card__hint">
 						{ __(
 							'No high-risk or extreme-risk tools are enabled on this site right now.',
-							'siteloom'
+							'agentstructor'
 						) }
 					</p>
 				) }
 				<div className="agentic-safety-highest__actions">
 					<a className="button" href={ urls.tools || '#' }>
-						{ __( 'Manage tools', 'siteloom' ) }
+						{ __( 'Manage tools', 'agentstructor' ) }
 					</a>
 					<a className="button" href={ urls.approvals || '#' }>
-						{ __( 'Open approval settings', 'siteloom' ) }
+						{ __( 'Open approval settings', 'agentstructor' ) }
 					</a>
 				</div>
 			</div>
@@ -146,7 +146,7 @@ function SafetyScopeRestTools( { tools, isAdvanced } ) {
 	}
 	const heading = sprintf(
 		/* translators: %d: remaining tool count */
-		__( '%d more tools', 'siteloom' ),
+		__( '%d more tools', 'agentstructor' ),
 		tools.length
 	);
 	const list = (
@@ -176,7 +176,7 @@ function SafetyAgentScopes( { agents, urls, isAdvanced } ) {
 		agents.integrity_note ||
 		__(
 			'Tool list blocked if manifest signature fails.',
-			'siteloom'
+			'agentstructor'
 		);
 
 	return (
@@ -189,7 +189,7 @@ function SafetyAgentScopes( { agents, urls, isAdvanced } ) {
 				id="agentic-safety-scopes-heading"
 				className="agentic-safety-section__title"
 			>
-				{ __( 'Per-agent tool scopes', 'siteloom' ) }
+				{ __( 'Per-agent tool scopes', 'agentstructor' ) }
 			</h2>
 			{ items.length ? (
 				<div className="agentic-safety-scope-grid">
@@ -214,7 +214,7 @@ function SafetyAgentScopes( { agents, urls, isAdvanced } ) {
 										/* translators: 1: version, 2: author */
 										__(
 											'Version %1$s · %2$s',
-											'siteloom'
+											'agentstructor'
 										),
 										agent.version || '—',
 										agent.author || '—'
@@ -223,13 +223,13 @@ function SafetyAgentScopes( { agents, urls, isAdvanced } ) {
 								<p className="agentic-safety-card__meta">
 									{ sprintf(
 										/* translators: %s: yes or no */
-										__( 'MCP enabled: %s', 'siteloom' ),
+										__( 'MCP enabled: %s', 'agentstructor' ),
 										agent.mcp_enabled
-											? __( 'Yes', 'siteloom' )
-											: __( 'No', 'siteloom' )
+											? __( 'Yes', 'agentstructor' )
+											: __( 'No', 'agentstructor' )
 									) }
 									{ ' · ' }
-									{ __( 'Highest risk', 'siteloom' ) }{ ' ' }
+									{ __( 'Highest risk', 'agentstructor' ) }{ ' ' }
 									<span
 										className={
 											'agentic-react-risk agentic-react-risk--' +
@@ -246,7 +246,7 @@ function SafetyAgentScopes( { agents, urls, isAdvanced } ) {
 										/* translators: 1: none 2: low 3: medium 4: high 5: extreme */
 										__(
 											'None %1$d · Low %2$d · Medium %3$d · High %4$d · Extreme %5$d',
-											'siteloom'
+											'agentstructor'
 										),
 										counts.none ?? 0,
 										counts.low ?? 0,
@@ -265,7 +265,7 @@ function SafetyAgentScopes( { agents, urls, isAdvanced } ) {
 									<p className="agentic-safety-card__hint">
 										{ __(
 											'No high-risk or extreme-risk tools declared.',
-											'siteloom'
+											'agentstructor'
 										) }
 									</p>
 								) }
@@ -283,7 +283,7 @@ function SafetyAgentScopes( { agents, urls, isAdvanced } ) {
 									>
 										{ __(
 											'Manage this agent',
-											'siteloom'
+											'agentstructor'
 										) }
 									</a>
 									<a
@@ -292,7 +292,7 @@ function SafetyAgentScopes( { agents, urls, isAdvanced } ) {
 									>
 										{ __(
 											'Manage tools',
-											'siteloom'
+											'agentstructor'
 										) }
 									</a>
 								</div>
@@ -304,7 +304,7 @@ function SafetyAgentScopes( { agents, urls, isAdvanced } ) {
 				<p className="agentic-safety-card__hint">
 					{ __(
 						'No active agents on this site right now.',
-						'siteloom'
+						'agentstructor'
 					) }
 				</p>
 			) }
@@ -328,7 +328,7 @@ function SafetyAuditIntegrity( { integrity, urls, valid, isAdvanced } ) {
 				id="agentic-safety-integrity-heading"
 				className="agentic-safety-section__title"
 			>
-				{ __( 'Audit-log integrity', 'siteloom' ) }
+				{ __( 'Audit-log integrity', 'agentstructor' ) }
 			</h2>
 
 			{ ! valid ? (
@@ -339,7 +339,7 @@ function SafetyAuditIntegrity( { integrity, urls, valid, isAdvanced } ) {
 					<h3 className="agentic-safety-incident__title">
 						{ __(
 							'Audit log may have been altered after the fact',
-							'siteloom'
+							'agentstructor'
 						) }
 					</h3>
 					<p className="agentic-safety-incident__lead">
@@ -348,47 +348,47 @@ function SafetyAuditIntegrity( { integrity, urls, valid, isAdvanced } ) {
 									/* translators: %d: audit log row id where the hash chain broke */
 									__(
 										'The verification check failed at entry #%d.',
-										'siteloom'
+										'agentstructor'
 									),
 									brokenAt
 							  )
 							: __(
 									'The verification check failed. An entry was edited or deleted after the fact.',
-									'siteloom'
+									'agentstructor'
 							  ) }
 					</p>
 					<p className="agentic-safety-incident__label">
-						{ __( 'Recommended next steps', 'siteloom' ) }
+						{ __( 'Recommended next steps', 'agentstructor' ) }
 					</p>
 					<ul className="agentic-safety-incident__steps">
 						<li>
 							<a href="#agentic-safety-emergency">
-								{ __( 'Pause agents', 'siteloom' ) }
+								{ __( 'Pause agents', 'agentstructor' ) }
 							</a>
 							{ ' — ' }
 							{ __(
 								'use Emergency Stop on this page until you understand the break.',
-								'siteloom'
+								'agentstructor'
 							) }
 						</li>
 						<li>
 							{ urls.export ? (
 								<a href={ urls.export }>
-									{ __( 'Export logs', 'siteloom' ) }
+									{ __( 'Export logs', 'agentstructor' ) }
 								</a>
 							) : (
-								__( 'Export logs', 'siteloom' )
+								__( 'Export logs', 'agentstructor' )
 							) }
 							{ ' — ' }
 							{ __(
 								'download a copy of the current history before anything else changes.',
-								'siteloom'
+								'agentstructor'
 							) }
 						</li>
 						<li>
 							{ __(
 								'Review hosting and database access for unexpected changes.',
-								'siteloom'
+								'agentstructor'
 							) }
 						</li>
 					</ul>
@@ -397,7 +397,7 @@ function SafetyAuditIntegrity( { integrity, urls, valid, isAdvanced } ) {
 
 			<article className="agentic-safety-card agentic-safety-integrity__status">
 				<h3 className="agentic-safety-card__title">
-					{ __( 'Last verification', 'siteloom' ) }
+					{ __( 'Last verification', 'agentstructor' ) }
 				</h3>
 				<p className="agentic-safety-card__stat">
 					<span
@@ -407,14 +407,14 @@ function SafetyAuditIntegrity( { integrity, urls, valid, isAdvanced } ) {
 						}
 					>
 						{ valid
-							? __( 'Verified', 'siteloom' )
-							: __( 'Needs attention', 'siteloom' ) }
+							? __( 'Verified', 'agentstructor' )
+							: __( 'Needs attention', 'agentstructor' ) }
 					</span>
 				</p>
 				<p className="agentic-safety-card__meta">
 					{ sprintf(
 						/* translators: %d: number of chained audit rows checked */
-						__( '%d rows checked', 'siteloom' ),
+						__( '%d rows checked', 'agentstructor' ),
 						integrity.checked ?? 0
 					) }
 				</p>
@@ -422,7 +422,7 @@ function SafetyAuditIntegrity( { integrity, urls, valid, isAdvanced } ) {
 					<p className="agentic-safety-card__meta">
 						{ sprintf(
 							/* translators: %d: audit log row id */
-							__( 'Broken at entry #%d', 'siteloom' ),
+							__( 'Broken at entry #%d', 'agentstructor' ),
 							brokenAt
 						) }
 					</p>
@@ -458,13 +458,13 @@ function SafetyAuditIntegrity( { integrity, urls, valid, isAdvanced } ) {
 				<p className="agentic-safety-card__hint">
 					{ __(
 						'This activity log is tamper-evident. Each entry is linked to the one before it, so if someone edits or deletes a later entry after the fact, the verification check fails.',
-						'siteloom'
+						'agentstructor'
 					) }
 				</p>
 				<p className="agentic-safety-card__hint">
 					{ __(
 						'This does not stop database access by itself. It gives you evidence if the history can no longer be trusted.',
-						'siteloom'
+						'agentstructor'
 					) }
 				</p>
 				<p className="agentic-safety-card__hint">
@@ -473,19 +473,19 @@ function SafetyAuditIntegrity( { integrity, urls, valid, isAdvanced } ) {
 								/* translators: %d: first chained audit log row id */
 								__(
 									'Entries written before this feature shipped may predate the chain and therefore define the chain start. The chain starts at entry #%d.',
-									'siteloom'
+									'agentstructor'
 								),
 								chainStart
 						  )
 						: __(
 								'Entries written before this feature shipped may predate the chain and therefore define the chain start. No chained entries have been recorded yet.',
-								'siteloom'
+								'agentstructor'
 						  ) }
 				</p>
 				<a className="button" href={ urls.activity || '#' }>
 					{ __(
 						'View raw Activity / Audit log',
-						'siteloom'
+						'agentstructor'
 					) }
 				</a>
 			</article>
@@ -508,9 +508,9 @@ function SafetyCenterView( { data, reload } ) {
 		const msg = enable
 			? __(
 					'EMERGENCY STOP: deactivate and log agent states, cancel all jobs, and disconnect providers. Continue?',
-					'siteloom'
+					'agentstructor'
 			  )
-			: __( 'Turn off emergency stop?', 'siteloom' );
+			: __( 'Turn off emergency stop?', 'agentstructor' );
 		if ( ! window.confirm( msg ) ) {
 			return;
 		}
@@ -529,7 +529,7 @@ function SafetyCenterView( { data, reload } ) {
 					window.alert(
 						__(
 							'Emergency stop restore finished with warnings:',
-							'siteloom'
+							'agentstructor'
 						) +
 							'\n\n' +
 							warnings.join( '\n' )
@@ -542,7 +542,7 @@ function SafetyCenterView( { data, reload } ) {
 					e.message ||
 						__(
 							'Could not change Emergency Stop.',
-							'siteloom'
+							'agentstructor'
 						)
 				)
 			)
@@ -565,7 +565,7 @@ function SafetyCenterView( { data, reload } ) {
 				<p className="agentic-react-muted">
 					{ __(
 						"Advanced view expands every agent's tool list and shows the raw verify_chain() fields for the audit log.",
-						'siteloom'
+						'agentstructor'
 					) }
 				</p>
 			) : null }
@@ -573,18 +573,18 @@ function SafetyCenterView( { data, reload } ) {
 			<div className="agentic-safety-overview">
 				<article className="agentic-safety-card">
 					<h3 className="agentic-safety-card__title">
-						{ __( 'Tool risk inventory', 'siteloom' ) }
+						{ __( 'Tool risk inventory', 'agentstructor' ) }
 					</h3>
 					<p className="agentic-safety-card__stat">
 						{ sprintf(
 							/* translators: 1: enabled tools, 2: disabled tools */
-							__( '%1$d enabled · %2$d disabled', 'siteloom' ),
+							__( '%1$d enabled · %2$d disabled', 'agentstructor' ),
 							tools.enabled_count ?? 0,
 							tools.disabled_count ?? 0
 						) }
 					</p>
 					<p className="agentic-safety-card__meta">
-						{ __( 'Highest enabled risk', 'siteloom' ) }{ ' ' }
+						{ __( 'Highest enabled risk', 'agentstructor' ) }{ ' ' }
 						<span
 							className={
 								'agentic-react-risk agentic-react-risk--' +
@@ -599,29 +599,29 @@ function SafetyCenterView( { data, reload } ) {
 					<p className="agentic-safety-card__hint">
 						{ __(
 							'High-risk tools require extra care when you enable them. Review them in Tools.',
-							'siteloom'
+							'agentstructor'
 						) }
 					</p>
 					<a className="button" href={ urls.tools || '#' }>
-						{ __( 'Review tools', 'siteloom' ) }
+						{ __( 'Review tools', 'agentstructor' ) }
 					</a>
 				</article>
 
 				<article className="agentic-safety-card">
 					<h3 className="agentic-safety-card__title">
-						{ __( 'Approvals status', 'siteloom' ) }
+						{ __( 'Approvals status', 'agentstructor' ) }
 					</h3>
 					<p className="agentic-safety-card__stat">
 						{ sprintf(
 							/* translators: %d: pending approvals */
-							__( '%d waiting for your OK', 'siteloom' ),
+							__( '%d waiting for your OK', 'agentstructor' ),
 							approvals.pending_count ?? 0
 						) }
 					</p>
 					<p className="agentic-safety-card__meta">
 						{ sprintf(
 							/* translators: 1: operating mode, 2: comfort profile */
-							__( 'Mode: %1$s · Comfort: %2$s', 'siteloom' ),
+							__( 'Mode: %1$s · Comfort: %2$s', 'agentstructor' ),
 							approvals.agent_mode_label ||
 								approvals.agent_mode ||
 								'',
@@ -631,11 +631,11 @@ function SafetyCenterView( { data, reload } ) {
 					<p className="agentic-safety-card__hint">
 						{ __(
 							'Actions that need your approval wait here. A queued action does not run until you approve it.',
-							'siteloom'
+							'agentstructor'
 						) }
 					</p>
 					<a className="button" href={ urls.approvals || '#' }>
-						{ __( 'Open approvals', 'siteloom' ) }
+						{ __( 'Open approvals', 'agentstructor' ) }
 					</a>
 				</article>
 
@@ -646,7 +646,7 @@ function SafetyCenterView( { data, reload } ) {
 					}
 				>
 					<h3 className="agentic-safety-card__title">
-						{ __( 'Last verification', 'siteloom' ) }
+						{ __( 'Last verification', 'agentstructor' ) }
 					</h3>
 					<p className="agentic-safety-card__stat">
 						<span
@@ -658,14 +658,14 @@ function SafetyCenterView( { data, reload } ) {
 							}
 						>
 							{ integrityValid
-								? __( 'Verified', 'siteloom' )
-								: __( 'Needs attention', 'siteloom' ) }
+								? __( 'Verified', 'agentstructor' )
+								: __( 'Needs attention', 'agentstructor' ) }
 						</span>
 					</p>
 					<p className="agentic-safety-card__meta">
 						{ sprintf(
 							/* translators: %d: number of chained audit rows checked */
-							__( '%d rows checked', 'siteloom' ),
+							__( '%d rows checked', 'agentstructor' ),
 							integrity.checked ?? 0
 						) }
 					</p>
@@ -675,14 +675,14 @@ function SafetyCenterView( { data, reload } ) {
 								/* translators: %d: audit log row id */
 								__(
 									'Broken at entry #%d',
-									'siteloom'
+									'agentstructor'
 								),
 								integrity.broken_at_id
 							) }
 						</p>
 					) : null }
 					<a className="button" href="#agentic-safety-integrity">
-						{ __( 'View integrity details', 'siteloom' ) }
+						{ __( 'View integrity details', 'agentstructor' ) }
 					</a>
 				</article>
 
@@ -694,7 +694,7 @@ function SafetyCenterView( { data, reload } ) {
 					}
 				>
 					<h3 className="agentic-safety-card__title">
-						{ __( 'Emergency Stop', 'siteloom' ) }
+						{ __( 'Emergency Stop', 'agentstructor' ) }
 					</h3>
 					<p className="agentic-safety-card__stat">
 						<span
@@ -706,14 +706,14 @@ function SafetyCenterView( { data, reload } ) {
 							}
 						>
 							{ emergency.active
-								? __( 'On', 'siteloom' )
-								: __( 'Off', 'siteloom' ) }
+								? __( 'On', 'agentstructor' )
+								: __( 'Off', 'agentstructor' ) }
 						</span>
 					</p>
 					<p className="agentic-safety-card__hint">
 						{ __(
 							'Emergency Stop turns off every active agent, cancels pending and in-progress jobs, disconnects AI providers, and blocks new agent activity until an administrator restores service.',
-							'siteloom'
+							'agentstructor'
 						) }
 					</p>
 					<Button
@@ -728,19 +728,19 @@ function SafetyCenterView( { data, reload } ) {
 						}
 					>
 						{ emergency.active
-							? __( 'Restore agent system', 'siteloom' )
-							: __( 'Disable All Agents', 'siteloom' ) }
+							? __( 'Restore agent system', 'agentstructor' )
+							: __( 'Disable All Agents', 'agentstructor' ) }
 					</Button>
 				</article>
 
 				<article className="agentic-safety-card">
 					<h3 className="agentic-safety-card__title">
-						{ __( 'Active agents', 'siteloom' ) }
+						{ __( 'Active agents', 'agentstructor' ) }
 					</h3>
 					<p className="agentic-safety-card__stat">
 						{ sprintf(
 							/* translators: %d: active agent count */
-							__( '%d active', 'siteloom' ),
+							__( '%d active', 'agentstructor' ),
 							agents.active_count ?? 0
 						) }
 					</p>
@@ -749,14 +749,14 @@ function SafetyCenterView( { data, reload } ) {
 							/* translators: 1: agents with a high-risk tool, 2: agents with MCP enabled */
 							__(
 								'%1$d with a high-risk tool · %2$d with MCP on',
-								'siteloom'
+								'agentstructor'
 							),
 							agents.high_risk_count ?? 0,
 							agents.mcp_count ?? 0
 						) }
 					</p>
 					<a className="button" href="#agentic-safety-scopes">
-						{ __( 'View agent scopes', 'siteloom' ) }
+						{ __( 'View agent scopes', 'agentstructor' ) }
 					</a>
 				</article>
 			</div>
@@ -783,35 +783,35 @@ function SafetyCenterView( { data, reload } ) {
 				<h3 className="agentic-safety-card__title">
 					{ __(
 						'Looking for AI discoverability and access, not safety controls?',
-						'siteloom'
+						'agentstructor'
 					) }
 				</h3>
 				<p className="agentic-safety-card__hint">
 					{ __(
 						'Visit Site Passport to see what outside AI systems can discover and reach on this site.',
-						'siteloom'
+						'agentstructor'
 					) }
 				</p>
 				<a className="button" href={ urls.passport || '#' }>
-					{ __( 'Open Site Passport', 'siteloom' ) }
+					{ __( 'Open Site Passport', 'agentstructor' ) }
 				</a>
 			</aside>
 
 			<nav
 				className="agentic-safety-crosslinks"
-				aria-label={ __( 'Related screens', 'siteloom' ) }
+				aria-label={ __( 'Related screens', 'agentstructor' ) }
 			>
 				<a href={ urls.tools || '#' }>
-					{ __( 'Tools', 'siteloom' ) }
+					{ __( 'Tools', 'agentstructor' ) }
 				</a>
 				<a href={ urls.approvals || '#' }>
-					{ __( 'Approvals', 'siteloom' ) }
+					{ __( 'Approvals', 'agentstructor' ) }
 				</a>
 				<a href={ urls.activity || '#' }>
-					{ __( 'Activity', 'siteloom' ) }
+					{ __( 'Activity', 'agentstructor' ) }
 				</a>
 				<a href={ urls.passport || '#' }>
-					{ __( 'Passport', 'siteloom' ) }
+					{ __( 'Passport', 'agentstructor' ) }
 				</a>
 			</nav>
 		</>

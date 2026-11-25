@@ -62,7 +62,7 @@ class Toggle_Xml_Rpc extends Tool_Base {
 
 		return array(
 			'xmlrpc_enabled' => $enabled,
-			'enforced_by'    => 'xmlrpc_enabled filter in Siteloom (active on every request)',
+			'enforced_by'    => 'xmlrpc_enabled filter in AgentStructor (active on every request)',
 		);
 	}
 }

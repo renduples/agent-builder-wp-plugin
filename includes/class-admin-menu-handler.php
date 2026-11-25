@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Registers all Siteloom wp-admin menu pages and renders their content.
+ * Registers all AgentStructor wp-admin menu pages and renders their content.
  */
 class Admin_Menu_Handler {
 
@@ -35,8 +35,8 @@ class Admin_Menu_Handler {
 	 */
 	public function register(): void {
 		add_menu_page(
-			__( 'Siteloom', 'siteloom' ),
-			__( 'Siteloom', 'siteloom' ),
+			__( 'AgentStructor', 'agentstructor' ),
+			__( 'AgentStructor', 'agentstructor' ),
 			'agent_builder_view_dashboard',
 			'agent-builder',
 			fn() => $this->render_page( 'dashboard' ),
@@ -50,8 +50,8 @@ class Admin_Menu_Handler {
 			remove_submenu_page( 'agent-builder', 'agent-builder' );
 			add_submenu_page(
 				'agent-builder',
-				__( 'Siteloom — Quick Start', 'siteloom' ),
-				__( 'Quick Start', 'siteloom' ),
+				__( 'AgentStructor — Quick Start', 'agentstructor' ),
+				__( 'Quick Start', 'agentstructor' ),
 				'manage_options',
 				'agentic-signup',
 				fn() => $this->render_page( 'signup' )
@@ -59,8 +59,8 @@ class Admin_Menu_Handler {
 			// Setup wizard — hidden, must be registered so skip link on signup page works.
 			add_submenu_page(
 				'',
-				__( 'Siteloom — Setup Wizard', 'siteloom' ),
-				__( 'Setup Wizard', 'siteloom' ),
+				__( 'AgentStructor — Setup Wizard', 'agentstructor' ),
+				__( 'Setup Wizard', 'agentstructor' ),
 				'manage_options',
 				'agentic-setup',
 				fn() => $this->render_page( 'setup' )
@@ -70,16 +70,16 @@ class Admin_Menu_Handler {
 
 		add_submenu_page(
 			'agent-builder',
-			__( 'Siteloom — Dashboard', 'siteloom' ),
-			__( 'Dashboard', 'siteloom' ),
+			__( 'AgentStructor — Dashboard', 'agentstructor' ),
+			__( 'Dashboard', 'agentstructor' ),
 			'agent_builder_view_dashboard',
 			'agent-builder'
 		);
 
 		add_submenu_page(
 			'agent-builder',
-			__( 'Siteloom — Chat', 'siteloom' ),
-			__( 'Chat', 'siteloom' ),
+			__( 'AgentStructor — Chat', 'agentstructor' ),
+			__( 'Chat', 'agentstructor' ),
 			'agent_builder_chat_admin_bar',
 			'agentic-chat',
 			array( $this, 'render_chat_page' )
@@ -89,7 +89,7 @@ class Admin_Menu_Handler {
 		// finishes or pauses on you. Badge = waiting runs (scoped to this user
 		// unless they can manage agents, like the global Approvals badge) +
 		// this user's unread notifications.
-		$agentic_tasks_title = __( 'Tasks', 'siteloom' );
+		$agentic_tasks_title = __( 'Tasks', 'agentstructor' );
 		$agentic_tasks_badge = 0;
 		if ( class_exists( '\Agentic\Agent_Run' ) ) {
 			if ( current_user_can( 'manage_options' ) || current_user_can( 'agent_builder_manage_agents' ) ) {
@@ -109,7 +109,7 @@ class Admin_Menu_Handler {
 		}
 		add_submenu_page(
 			'agent-builder',
-			__( 'Siteloom — Tasks', 'siteloom' ),
+			__( 'AgentStructor — Tasks', 'agentstructor' ),
 			$agentic_tasks_title,
 			'agent_builder_run_tasks_manually',
 			'agentic-tasks',
@@ -121,14 +121,14 @@ class Admin_Menu_Handler {
 		// no true "submenu of a submenu", so this sits as a sibling entry.
 		add_submenu_page(
 			'agent-builder',
-			__( 'Siteloom — Routines', 'siteloom' ),
-			__( 'Routines', 'siteloom' ),
+			__( 'AgentStructor — Routines', 'agentstructor' ),
+			__( 'Routines', 'agentstructor' ),
 			'agent_builder_manage_agents',
 			'agentic-routines',
 			fn() => $this->render_page( 'routines' )
 		);
 
-		$agentic_agents_menu_title = __( 'Agents', 'siteloom' );
+		$agentic_agents_menu_title = __( 'Agents', 'agentstructor' );
 		if ( class_exists( '\Agentic\Agent_Updates' ) ) {
 			$agentic_agents_update_count = \Agentic\Agent_Updates::count();
 			if ( $agentic_agents_update_count > 0 ) {
@@ -140,7 +140,7 @@ class Admin_Menu_Handler {
 		}
 		add_submenu_page(
 			'agent-builder',
-			__( 'Siteloom — Agents', 'siteloom' ),
+			__( 'AgentStructor — Agents', 'agentstructor' ),
 			$agentic_agents_menu_title,
 			'agent_builder_manage_agents',
 			'agentic-agents',
@@ -153,8 +153,8 @@ class Admin_Menu_Handler {
 		// affects a page's own content, never whether it's in the nav.
 		add_submenu_page(
 			'agent-builder',
-			__( 'Siteloom — Publish', 'siteloom' ),
-			__( 'Publish', 'siteloom' ),
+			__( 'AgentStructor — Publish', 'agentstructor' ),
+			__( 'Publish', 'agentstructor' ),
 			'agent_builder_manage_agents',
 			'agentic-deployment',
 			fn() => $this->render_page( 'deployment' )
@@ -163,8 +163,8 @@ class Admin_Menu_Handler {
 		// Hidden page — Run (dedicated execution page).
 		add_submenu_page(
 			'',
-			__( 'Siteloom — Run', 'siteloom' ),
-			__( 'Run', 'siteloom' ),
+			__( 'AgentStructor — Run', 'agentstructor' ),
+			__( 'Run', 'agentstructor' ),
 			'agent_builder_run_tasks_manually',
 			'agentic-run-task',
 			fn() => $this->render_page( 'run-task' )
@@ -173,8 +173,8 @@ class Admin_Menu_Handler {
 		// Hidden page — Agent Creation Wizard ("Train an Agent" guided flow).
 		add_submenu_page(
 			'',
-			__( 'Siteloom — Train an Agent', 'siteloom' ),
-			__( 'Train an Agent', 'siteloom' ),
+			__( 'AgentStructor — Train an Agent', 'agentstructor' ),
+			__( 'Train an Agent', 'agentstructor' ),
 			'manage_options',
 			'agentic-agent-wizard',
 			fn() => $this->render_page( 'agent-wizard' )
@@ -183,8 +183,8 @@ class Admin_Menu_Handler {
 		// Hidden page — Knowledge Wizard (guided "Add knowledge" flow).
 		add_submenu_page(
 			'',
-			__( 'Siteloom — Add Knowledge', 'siteloom' ),
-			__( 'Add Knowledge', 'siteloom' ),
+			__( 'AgentStructor — Add Knowledge', 'agentstructor' ),
+			__( 'Add Knowledge', 'agentstructor' ),
 			'agent_builder_manage_settings',
 			'agentic-knowledge-wizard',
 			fn() => $this->render_page( 'knowledge-wizard' )
@@ -193,8 +193,8 @@ class Admin_Menu_Handler {
 		// Hidden page — Publish Wizard (guided "get your agent in front of people" flow).
 		add_submenu_page(
 			'',
-			__( 'Siteloom — Publish Your Agent', 'siteloom' ),
-			__( 'Publish Your Agent', 'siteloom' ),
+			__( 'AgentStructor — Publish Your Agent', 'agentstructor' ),
+			__( 'Publish Your Agent', 'agentstructor' ),
 			'manage_options',
 			'agentic-deploy-wizard',
 			fn() => $this->render_page( 'deploy-wizard' )
@@ -202,8 +202,8 @@ class Admin_Menu_Handler {
 
 		add_submenu_page(
 			'agent-builder',
-			__( 'Siteloom — Knowledge', 'siteloom' ),
-			__( 'Knowledge', 'siteloom' ),
+			__( 'AgentStructor — Knowledge', 'agentstructor' ),
+			__( 'Knowledge', 'agentstructor' ),
 			'agent_builder_manage_settings',
 			'agentic-train-data',
 			array( $this, 'render_train_data_page' )
@@ -211,8 +211,8 @@ class Admin_Menu_Handler {
 
 		add_submenu_page(
 			'agent-builder',
-			__( 'Siteloom — Tools', 'siteloom' ),
-			__( 'Tools', 'siteloom' ),
+			__( 'AgentStructor — Tools', 'agentstructor' ),
+			__( 'Tools', 'agentstructor' ),
 			'agent_builder_manage_tools',
 			'agentic-tools',
 			fn() => $this->render_page( 'tools' )
@@ -223,14 +223,14 @@ class Admin_Menu_Handler {
 		// the menu entry.
 		add_submenu_page(
 			'agent-builder',
-			__( 'Siteloom — Skills', 'siteloom' ),
-			__( 'Skills', 'siteloom' ),
+			__( 'AgentStructor — Skills', 'agentstructor' ),
+			__( 'Skills', 'agentstructor' ),
 			'agent_builder_manage_tools',
 			'agentic-skills',
 			fn() => $this->render_page( 'skills' )
 		);
 
-		$agentic_approvals_title = __( 'Approvals', 'siteloom' );
+		$agentic_approvals_title = __( 'Approvals', 'agentstructor' );
 		if ( class_exists( '\Agentic\Approval_Queue' ) ) {
 			$agentic_pending = ( new \Agentic\Approval_Queue() )->get_pending_count();
 			if ( $agentic_pending > 0 ) {
@@ -242,7 +242,7 @@ class Admin_Menu_Handler {
 		}
 		add_submenu_page(
 			'agent-builder',
-			__( 'Siteloom — Approvals', 'siteloom' ),
+			__( 'AgentStructor — Approvals', 'agentstructor' ),
 			$agentic_approvals_title,
 			'agent_builder_manage_agents',
 			'agentic-approvals',
@@ -257,8 +257,8 @@ class Admin_Menu_Handler {
 		// target sections).
 		add_submenu_page(
 			'agent-builder',
-			__( 'Siteloom — Safety Center', 'siteloom' ),
-			__( 'Safety Center', 'siteloom' ),
+			__( 'AgentStructor — Safety Center', 'agentstructor' ),
+			__( 'Safety Center', 'agentstructor' ),
 			'agent_builder_manage_settings',
 			'agentic-safety-center',
 			fn() => $this->render_page( 'safety-center' )
@@ -276,8 +276,8 @@ class Admin_Menu_Handler {
 		// actual concept: what AI agents can discover and access on this site).
 		add_submenu_page(
 			'agent-builder',
-			__( 'Siteloom — Site Passport', 'siteloom' ),
-			__( 'Passport', 'siteloom' ),
+			__( 'AgentStructor — Site Passport', 'agentstructor' ),
+			__( 'Passport', 'agentstructor' ),
 			'agent_builder_manage_settings',
 			'agentic-agent-ready',
 			fn() => $this->render_page( 'agent-ready' )
@@ -287,8 +287,8 @@ class Admin_Menu_Handler {
 		// happens on the page itself via its own Basic/Advanced switch.
 		add_submenu_page(
 			'agent-builder',
-			__( 'Siteloom — Activity', 'siteloom' ),
-			__( 'Activity', 'siteloom' ),
+			__( 'AgentStructor — Activity', 'agentstructor' ),
+			__( 'Activity', 'agentstructor' ),
 			'agent_builder_view_audit_log',
 			'agentic-audit-log',
 			fn() => $this->render_page( 'logs' )
@@ -296,8 +296,8 @@ class Admin_Menu_Handler {
 
 		add_submenu_page(
 			'agent-builder',
-			__( 'Siteloom — Settings', 'siteloom' ),
-			__( 'Settings', 'siteloom' ),
+			__( 'AgentStructor — Settings', 'agentstructor' ),
+			__( 'Settings', 'agentstructor' ),
 			'agent_builder_manage_settings',
 			'agentic-settings',
 			array( $this, 'render_settings_page' )
@@ -306,8 +306,8 @@ class Admin_Menu_Handler {
 		// Setup wizard — hidden from nav, accessible at admin.php?page=agentic-setup.
 		add_submenu_page(
 			'',
-			__( 'Siteloom — Setup Wizard', 'siteloom' ),
-			__( 'Setup Wizard', 'siteloom' ),
+			__( 'AgentStructor — Setup Wizard', 'agentstructor' ),
+			__( 'Setup Wizard', 'agentstructor' ),
 			'manage_options',
 			'agentic-setup',
 			fn() => $this->render_page( 'setup' )
@@ -316,7 +316,7 @@ class Admin_Menu_Handler {
 		// Sign-up page — hidden page shown once after plugin activation.
 		add_submenu_page(
 			'',
-			__( 'Siteloom — Get Started', 'siteloom' ),
+			__( 'AgentStructor — Get Started', 'agentstructor' ),
 			'',
 			'manage_options',
 			'agentic-signup',
@@ -342,7 +342,7 @@ class Admin_Menu_Handler {
 	 * (stored in SCREEN_MODE_META) takes precedence. With no override, or no
 	 * $screen argument at all, falls back to the site-wide agent_builder_ui_mode
 	 * option — this is also the only behavior a caller with no $screen ever
-	 * sees, so existing callers (including Siteloom Pro, which reads
+	 * sees, so existing callers (including AgentStructor Pro, which reads
 	 * this same option) are unaffected.
 	 *
 	 * @param string $screen Screen key (e.g. 'tools', 'approvals', 'logs',
@@ -409,90 +409,90 @@ class Admin_Menu_Handler {
 	public static function quick_actions_catalog(): array {
 		$catalog = array(
 			'setup'     => array(
-				'label'   => __( 'Setup Wizard', 'siteloom' ),
+				'label'   => __( 'Setup Wizard', 'agentstructor' ),
 				'url'     => admin_url( 'admin.php?page=agentic-setup' ),
 				'locked'  => true,
 				'default' => true,
 				'group'   => 'primary',
 			),
 			'chat'      => array(
-				'label'   => __( 'Agent Chat', 'siteloom' ),
+				'label'   => __( 'Agent Chat', 'agentstructor' ),
 				'url'     => admin_url( 'admin.php?page=agentic-chat' ),
 				'default' => true,
 				'group'   => 'primary',
 			),
 			'tasks'     => array(
-				'label'   => __( 'Assign a task', 'siteloom' ),
+				'label'   => __( 'Assign a task', 'agentstructor' ),
 				'url'     => admin_url( 'admin.php?page=agentic-tasks' ),
 				'default' => true,
 				'group'   => 'primary',
 			),
 			'train'     => array(
-				'label'   => __( 'Train an Agent', 'siteloom' ),
+				'label'   => __( 'Train an Agent', 'agentstructor' ),
 				'url'     => admin_url( 'admin.php?page=agentic-agent-wizard' ),
 				'default' => true,
 				'group'   => 'primary',
 			),
 			'agents'    => array(
-				'label'   => __( 'Agents', 'siteloom' ),
+				'label'   => __( 'Agents', 'agentstructor' ),
 				'url'     => admin_url( 'admin.php?page=agentic-agents' ),
 				'default' => true,
 				'group'   => 'primary',
 			),
 			'knowledge' => array(
-				'label'   => __( 'Knowledge', 'siteloom' ),
+				'label'   => __( 'Knowledge', 'agentstructor' ),
 				'url'     => admin_url( 'admin.php?page=agentic-train-data' ),
 				'default' => true,
 				'group'   => 'primary',
 			),
 			'activity'  => array(
-				'label'   => __( 'Activity', 'siteloom' ),
+				'label'   => __( 'Activity', 'agentstructor' ),
 				'url'     => admin_url( 'admin.php?page=agentic-audit-log' ),
 				'default' => false,
 				'group'   => 'secondary',
 			),
 			'providers' => array(
-				'label'   => __( 'Providers', 'siteloom' ),
+				'label'   => __( 'Providers', 'agentstructor' ),
 				'url'     => admin_url( 'admin.php?page=agentic-settings&tab=providers' ),
 				'default' => false,
 				'group'   => 'secondary',
 			),
 			'approvals' => array(
-				'label'    => __( 'Approvals', 'siteloom' ),
+				'label'    => __( 'Approvals', 'agentstructor' ),
 				'url'      => admin_url( 'admin.php?page=agentic-approvals' ),
 				'default'  => true,
 				'group'    => 'secondary',
 				'advanced' => true,
 			),
 			'safety-center' => array(
-				'label'   => __( 'Safety Center', 'siteloom' ),
+				'label'   => __( 'Safety Center', 'agentstructor' ),
 				'url'     => admin_url( 'admin.php?page=agentic-safety-center' ),
 				'default' => true,
 				'group'   => 'secondary',
 			),
 			'tools'     => array(
-				'label'    => __( 'Tools', 'siteloom' ),
+				'label'    => __( 'Tools', 'agentstructor' ),
 				'url'      => admin_url( 'admin.php?page=agentic-tools' ),
 				'default'  => true,
 				'group'    => 'secondary',
 				'advanced' => true,
 			),
 			'skills'    => array(
-				'label'    => __( 'Skills', 'siteloom' ),
+				'label'    => __( 'Skills', 'agentstructor' ),
 				'url'      => admin_url( 'admin.php?page=agentic-skills' ),
 				'default'  => true,
 				'group'    => 'secondary',
 				'advanced' => true,
 			),
 			'publish'   => array(
-				'label'    => __( 'Publish', 'siteloom' ),
+				'label'    => __( 'Publish', 'agentstructor' ),
 				'url'      => admin_url( 'admin.php?page=agentic-deployment' ),
 				'default'  => true,
 				'group'    => 'secondary',
 				'advanced' => true,
 			),
 			'settings'  => array(
-				'label'    => __( 'Settings', 'siteloom' ),
+				'label'    => __( 'Settings', 'agentstructor' ),
 				'url'      => admin_url( 'admin.php?page=agentic-settings' ),
 				'default'  => true,
 				'group'    => 'secondary',
@@ -551,7 +551,7 @@ class Admin_Menu_Handler {
 	 */
 	public function handle_save_quick_actions(): void {
 		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'agent_builder_manage_settings' ) ) {
-			wp_die( esc_html__( 'You do not have permission to customize Quick Actions.', 'siteloom' ) );
+			wp_die( esc_html__( 'You do not have permission to customize Quick Actions.', 'agentstructor' ) );
 		}
 		check_admin_referer( 'agentic_save_quick_actions' );
 
@@ -712,7 +712,7 @@ class Admin_Menu_Handler {
 	 */
 	public function handle_set_emergency_stop(): void {
 		if ( ! current_user_can( 'agent_builder_manage_settings' ) && ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You do not have permission to use the emergency stop.', 'siteloom' ) );
+			wp_die( esc_html__( 'You do not have permission to use the emergency stop.', 'agentstructor' ) );
 		}
 		check_admin_referer( 'agentic_set_emergency_stop' );
 
@@ -739,7 +739,7 @@ class Admin_Menu_Handler {
 	 */
 	public function handle_set_agent_updates(): void {
 		if ( ! current_user_can( 'agent_builder_manage_settings' ) && ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You do not have permission to change update settings.', 'siteloom' ) );
+			wp_die( esc_html__( 'You do not have permission to change update settings.', 'agentstructor' ) );
 		}
 		check_admin_referer( 'agentic_set_agent_updates' );
 
@@ -802,7 +802,7 @@ class Admin_Menu_Handler {
 			$plugin_links['settings'] = sprintf(
 				'<a href="%s">%s</a>',
 				esc_url( admin_url( 'admin.php?page=agentic-settings' ) ),
-				esc_html__( 'Settings', 'siteloom' )
+				esc_html__( 'Settings', 'agentstructor' )
 			);
 		}
 
@@ -812,7 +812,7 @@ class Admin_Menu_Handler {
 			$plugin_links['finish_setup'] = sprintf(
 				'<a href="%s" style="font-weight:600">%s</a>',
 				esc_url( admin_url( 'admin.php?page=agentic-signup' ) ),
-				esc_html__( 'Finish setup', 'siteloom' )
+				esc_html__( 'Finish setup', 'agentstructor' )
 			);
 		}
 
@@ -880,7 +880,7 @@ class Admin_Menu_Handler {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only page identification.
 		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
 
-		// Only intervene for Siteloom pages; leave every other denial alone.
+		// Only intervene for AgentStructor pages; leave every other denial alone.
 		if ( 'agent-builder' !== $page && ! str_starts_with( $page, 'agentic-' ) ) {
 			return;
 		}
@@ -903,7 +903,7 @@ class Admin_Menu_Handler {
 	}
 
 	/**
-	 * Slugs of every Siteloom admin page this (free / wp.org) edition can
+	 * Slugs of every AgentStructor admin page this (free / wp.org) edition can
 	 * register — both the pages that always exist and those register() adds only
 	 * once a provider is configured.
 	 *
@@ -935,7 +935,7 @@ class Admin_Menu_Handler {
 		);
 
 		/**
-		 * Filter the Siteloom admin page slugs treated as "known" for the
+		 * Filter the AgentStructor admin page slugs treated as "known" for the
 		 * access-denied notice (e.g. so a Pro build can add its own screens).
 		 *
 		 * @param string[] $pages Page slugs.
@@ -944,7 +944,7 @@ class Admin_Menu_Handler {
 	}
 
 	/**
-	 * Whether a slug names a Siteloom admin page this edition knows about.
+	 * Whether a slug names a AgentStructor admin page this edition knows about.
 	 *
 	 * @param string $page Page slug (value of ?page=).
 	 * @return bool
@@ -960,13 +960,13 @@ class Admin_Menu_Handler {
 	 */
 	private function render_unknown_page_notice(): void {
 		$parts   = array();
-		$parts[] = '<h1>' . esc_html__( 'This Siteloom page doesn\'t exist', 'siteloom' ) . '</h1>';
-		$parts[] = '<p>' . esc_html__( 'That page is not part of Siteloom. It may have been removed or renamed.', 'siteloom' ) . '</p>';
-		$parts[] = '<p><a href="' . esc_url( admin_url( 'admin.php?page=agent-builder' ) ) . '">' . esc_html__( 'Back to the Siteloom dashboard', 'siteloom' ) . '</a></p>';
+		$parts[] = '<h1>' . esc_html__( 'This AgentStructor page doesn\'t exist', 'agentstructor' ) . '</h1>';
+		$parts[] = '<p>' . esc_html__( 'That page is not part of AgentStructor. It may have been removed or renamed.', 'agentstructor' ) . '</p>';
+		$parts[] = '<p><a href="' . esc_url( admin_url( 'admin.php?page=agent-builder' ) ) . '">' . esc_html__( 'Back to the AgentStructor dashboard', 'agentstructor' ) . '</a></p>';
 
 		wp_die(
 			wp_kses_post( implode( '', $parts ) ),
-			esc_html__( 'Page not found', 'siteloom' ),
+			esc_html__( 'Page not found', 'agentstructor' ),
 			array( 'response' => 404 )
 		);
 	}
@@ -979,14 +979,14 @@ class Admin_Menu_Handler {
 	 */
 	private function render_connect_provider_notice(): void {
 		$parts   = array();
-		$parts[] = '<h1>' . esc_html__( 'Connect an AI provider to unlock this screen', 'siteloom' ) . '</h1>';
-		$parts[] = '<p>' . esc_html__( 'This Siteloom screen becomes available once an AI provider is connected. Connecting takes about a minute and unlocks agents, chat, and knowledge.', 'siteloom' ) . '</p>';
-		$parts[] = '<p><a class="button button-primary" href="' . esc_url( admin_url( 'admin.php?page=agentic-signup' ) ) . '">' . esc_html__( 'Go to Quick Start', 'siteloom' ) . '</a></p>';
-		$parts[] = '<p><a href="' . esc_url( admin_url( 'admin.php?page=agent-builder' ) ) . '">' . esc_html__( 'Back to the Siteloom dashboard', 'siteloom' ) . '</a></p>';
+		$parts[] = '<h1>' . esc_html__( 'Connect an AI provider to unlock this screen', 'agentstructor' ) . '</h1>';
+		$parts[] = '<p>' . esc_html__( 'This AgentStructor screen becomes available once an AI provider is connected. Connecting takes about a minute and unlocks agents, chat, and knowledge.', 'agentstructor' ) . '</p>';
+		$parts[] = '<p><a class="button button-primary" href="' . esc_url( admin_url( 'admin.php?page=agentic-signup' ) ) . '">' . esc_html__( 'Go to Quick Start', 'agentstructor' ) . '</a></p>';
+		$parts[] = '<p><a href="' . esc_url( admin_url( 'admin.php?page=agent-builder' ) ) . '">' . esc_html__( 'Back to the AgentStructor dashboard', 'agentstructor' ) . '</a></p>';
 
 		wp_die(
 			wp_kses_post( implode( '', $parts ) ),
-			esc_html__( 'Connect an AI provider', 'siteloom' ),
+			esc_html__( 'Connect an AI provider', 'agentstructor' ),
 			array( 'response' => 403 )
 		);
 	}
@@ -1001,21 +1001,21 @@ class Admin_Menu_Handler {
 		$admin_email = get_option( 'admin_email', '' );
 
 		$parts   = array();
-		$parts[] = '<h1>' . esc_html__( 'Administrator access required', 'siteloom' ) . '</h1>';
-		$parts[] = '<p>' . esc_html__( 'Siteloom can only be set up and managed by a site administrator. Your account does not have the required permissions, so we cannot continue here.', 'siteloom' ) . '</p>';
-		$parts[] = '<p>' . esc_html__( 'Please sign in with an administrator account, or ask a user with administrator access to complete the setup.', 'siteloom' ) . '</p>';
+		$parts[] = '<h1>' . esc_html__( 'Administrator access required', 'agentstructor' ) . '</h1>';
+		$parts[] = '<p>' . esc_html__( 'AgentStructor can only be set up and managed by a site administrator. Your account does not have the required permissions, so we cannot continue here.', 'agentstructor' ) . '</p>';
+		$parts[] = '<p>' . esc_html__( 'Please sign in with an administrator account, or ask a user with administrator access to complete the setup.', 'agentstructor' ) . '</p>';
 		if ( is_email( $admin_email ) ) {
 			$parts[] = '<p>' . sprintf(
 				/* translators: %s: site administrator email address, rendered as a mailto link. */
-				esc_html__( 'Need help? Contact your site administrator at %s.', 'siteloom' ),
+				esc_html__( 'Need help? Contact your site administrator at %s.', 'agentstructor' ),
 				'<a href="mailto:' . esc_attr( $admin_email ) . '">' . esc_html( $admin_email ) . '</a>'
 			) . '</p>';
 		}
-		$parts[] = '<p><a href="' . esc_url( admin_url() ) . '">' . esc_html__( 'Back to the WordPress dashboard', 'siteloom' ) . '</a></p>';
+		$parts[] = '<p><a href="' . esc_url( admin_url() ) . '">' . esc_html__( 'Back to the WordPress dashboard', 'agentstructor' ) . '</a></p>';
 
 		wp_die(
 			wp_kses_post( implode( '', $parts ) ),
-			esc_html__( 'Administrator access required', 'siteloom' ),
+			esc_html__( 'Administrator access required', 'agentstructor' ),
 			array( 'response' => 403 )
 		);
 	}
@@ -1035,34 +1035,34 @@ class Admin_Menu_Handler {
 		return array(
 			array(
 				'id'    => 'dashboard',
-				'label' => __( 'Dashboard', 'siteloom' ),
+				'label' => __( 'Dashboard', 'agentstructor' ),
 				'url'   => admin_url( 'admin.php?page=agent-builder' ),
 				'pages' => array( 'agent-builder' ),
 				'cap'   => 'agent_builder_view_dashboard',
 			),
 			array(
 				'id'    => 'agents',
-				'label' => __( 'Agents', 'siteloom' ),
+				'label' => __( 'Agents', 'agentstructor' ),
 				'url'   => admin_url( 'admin.php?page=agentic-agents' ),
 				'pages' => array( 'agentic-agents' ),
 				'cap'   => 'agent_builder_manage_agents',
 			),
 			array(
 				'id'       => 'tools-skills',
-				'label'    => __( 'Tools & Skills', 'siteloom' ),
+				'label'    => __( 'Tools & Skills', 'agentstructor' ),
 				'url'      => admin_url( 'admin.php?page=agentic-tools' ),
 				'pages'    => array( 'agentic-tools', 'agentic-skills' ),
 				'cap'      => 'agent_builder_manage_tools',
 				'children' => array(
 					array(
 						'id'    => 'tools',
-						'label' => __( 'Tools', 'siteloom' ),
+						'label' => __( 'Tools', 'agentstructor' ),
 						'url'   => admin_url( 'admin.php?page=agentic-tools' ),
 						'pages' => array( 'agentic-tools' ),
 					),
 					array(
 						'id'    => 'skills',
-						'label' => __( 'Skills', 'siteloom' ),
+						'label' => __( 'Skills', 'agentstructor' ),
 						'url'   => admin_url( 'admin.php?page=agentic-skills' ),
 						'pages' => array( 'agentic-skills' ),
 					),
@@ -1070,21 +1070,21 @@ class Admin_Menu_Handler {
 			),
 			array(
 				'id'    => 'knowledge',
-				'label' => __( 'Knowledge', 'siteloom' ),
+				'label' => __( 'Knowledge', 'agentstructor' ),
 				'url'   => admin_url( 'admin.php?page=agentic-train-data' ),
 				'pages' => array( 'agentic-train-data' ),
 				'cap'   => 'agent_builder_manage_settings',
 			),
 			array(
 				'id'    => 'logs',
-				'label' => __( 'Logs', 'siteloom' ),
+				'label' => __( 'Logs', 'agentstructor' ),
 				'url'   => admin_url( 'admin.php?page=agentic-audit-log' ),
 				'pages' => array( 'agentic-audit-log' ),
 				'cap'   => 'agent_builder_view_audit_log',
 			),
 			array(
 				'id'    => 'providers',
-				'label' => __( 'Providers & Keys', 'siteloom' ),
+				'label' => __( 'Providers & Keys', 'agentstructor' ),
 				'url'   => admin_url( 'admin.php?page=agentic-settings&tab=providers' ),
 				'pages' => array( 'agentic-settings' ),
 				'tabs'  => array( 'providers' ),
@@ -1092,7 +1092,7 @@ class Admin_Menu_Handler {
 			),
 			array(
 				'id'           => 'settings',
-				'label'        => __( 'Settings', 'siteloom' ),
+				'label'        => __( 'Settings', 'agentstructor' ),
 				'url'          => admin_url( 'admin.php?page=agentic-settings' ),
 				'pages'        => array( 'agentic-settings' ),
 				'exclude_tabs' => array( 'providers' ),
@@ -1183,7 +1183,7 @@ class Admin_Menu_Handler {
 			return;
 		}
 		?>
-		<nav id="agentic-secondary-nav" class="agentic-secondary-nav" aria-label="<?php esc_attr_e( 'Siteloom sections', 'siteloom' ); ?>">
+		<nav id="agentic-secondary-nav" class="agentic-secondary-nav" aria-label="<?php esc_attr_e( 'AgentStructor sections', 'agentstructor' ); ?>">
 			<ul class="agentic-secondary-nav__list">
 				<?php foreach ( $items as $item ) : ?>
 					<?php
@@ -1243,14 +1243,14 @@ class Admin_Menu_Handler {
 
 		$is_advanced = self::is_advanced_mode();
 		?>
-		<div id="agentic-global-mode-switch" class="agentic-global-mode" role="group" aria-label="<?php esc_attr_e( 'Site-wide interface mode', 'siteloom' ); ?>">
-			<span class="agentic-global-mode__label"><?php esc_html_e( 'Site-wide', 'siteloom' ); ?></span>
+		<div id="agentic-global-mode-switch" class="agentic-global-mode" role="group" aria-label="<?php esc_attr_e( 'Site-wide interface mode', 'agentstructor' ); ?>">
+			<span class="agentic-global-mode__label"><?php esc_html_e( 'Site-wide', 'agentstructor' ); ?></span>
 			<span class="agentic-screen-mode-toggle">
 				<button type="button" class="button button-small<?php echo $is_advanced ? '' : ' button-primary'; ?>" data-mode="basic">
-					<?php esc_html_e( 'Basic', 'siteloom' ); ?>
+					<?php esc_html_e( 'Basic', 'agentstructor' ); ?>
 				</button>
 				<button type="button" class="button button-small<?php echo $is_advanced ? ' button-primary' : ''; ?>" data-mode="advanced">
-					<?php esc_html_e( 'Advanced', 'siteloom' ); ?>
+					<?php esc_html_e( 'Advanced', 'agentstructor' ); ?>
 				</button>
 			</span>
 		</div>
@@ -1328,34 +1328,34 @@ class Admin_Menu_Handler {
 		$promo_external = false;
 
 		// Short policy blurb — contextual by page/tab.
-		$policy = __( 'Settings control how agents behave on this site. Changes are stored locally and take effect for new conversations.', 'siteloom' );
+		$policy = __( 'Settings control how agents behave on this site. Changes are stored locally and take effect for new conversations.', 'agentstructor' );
 		if ( 'agent-builder' === $page ) {
-			$policy = __( 'The dashboard summarizes agents, approvals, activity, and providers at a glance. Open any card\'s own page for full control.', 'siteloom' );
+			$policy = __( 'The dashboard summarizes agents, approvals, activity, and providers at a glance. Open any card\'s own page for full control.', 'agentstructor' );
 		} elseif ( 'agentic-tools' === $page ) {
-			$policy = __( 'Agents only use the tools you allow. Higher-risk actions still follow Approvals and your safety settings.', 'siteloom' );
+			$policy = __( 'Agents only use the tools you allow. Higher-risk actions still follow Approvals and your safety settings.', 'agentstructor' );
 		} elseif ( str_starts_with( $page, 'agentic-train' ) ) {
-			$policy = __( 'Knowledge stays on your site in the Knowledge Wiki.', 'siteloom' );
+			$policy = __( 'Knowledge stays on your site in the Knowledge Wiki.', 'agentstructor' );
 			if ( 'instructions' === $tab ) {
-				$policy = __( 'Per-agent instructions shape tone and greetings. Site-wide knowledge belongs in the Knowledge Wiki.', 'siteloom' );
+				$policy = __( 'Per-agent instructions shape tone and greetings. Site-wide knowledge belongs in the Knowledge Wiki.', 'agentstructor' );
 			} elseif ( 'memory' === $tab ) {
-				$policy = __( 'Local memory is optional and site-owned. Turn it off if you prefer agents not to retain short notes across chats.', 'siteloom' );
+				$policy = __( 'Local memory is optional and site-owned. Turn it off if you prefer agents not to retain short notes across chats.', 'agentstructor' );
 			}
 		} elseif ( 'agentic-approvals' === $page ) {
-			$policy = __( 'Approvals keep high-risk tool calls under human control before they change your site.', 'siteloom' );
+			$policy = __( 'Approvals keep high-risk tool calls under human control before they change your site.', 'agentstructor' );
 		} elseif ( 'agentic-tasks' === $page ) {
-			$policy = __( 'Assign a task and the agent runs it in the background — you\'ll be pinged when it finishes or pauses for your OK.', 'siteloom' );
+			$policy = __( 'Assign a task and the agent runs it in the background — you\'ll be pinged when it finishes or pauses for your OK.', 'agentstructor' );
 		} elseif ( 'agentic-safety-center' === $page ) {
-			$policy = __( 'Safety Center summarizes existing operator controls. It does not change how tools, approvals, or Emergency Stop work.', 'siteloom' );
+			$policy = __( 'Safety Center summarizes existing operator controls. It does not change how tools, approvals, or Emergency Stop work.', 'agentstructor' );
 		} elseif ( 'agentic-audit-log' === $page || 'agentic-logs' === $page ) {
-			$policy = __( 'Activity helps you understand what agents did. Logs are local; retention follows your Security settings.', 'siteloom' );
+			$policy = __( 'Activity helps you understand what agents did. Logs are local; retention follows your Security settings.', 'agentstructor' );
 		} elseif ( 'agentic-settings' === $page ) {
 			$policy = match ( $tab ) {
-				'interface' => __( 'Interface settings change how chat looks and how agents address people. Theme applies to admin and frontend chat.', 'siteloom' ),
-				'agents'    => __( 'Agent chat features apply site-wide. Per-agent provider/model overrides only when needed. Emergency stop deactivates all agents.', 'siteloom' ),
-				'providers' => __( 'API keys stay on your site. Only connected providers can be set as the site default.', 'siteloom' ),
-				'users'     => __( 'Role privileges control who can administer the plugin and chat with agents. Administrators always retain full access.', 'siteloom' ),
-				'security'  => __( 'Security settings include consent, retention, scanning, and request rate limits. Review Approvals for high-risk actions.', 'siteloom' ),
-				'apis', 'endpoints' => __( 'Advanced integrations and API endpoints. Prefer connected providers on the Providers tab for everyday use.', 'siteloom' ),
+				'interface' => __( 'Interface settings change how chat looks and how agents address people. Theme applies to admin and frontend chat.', 'agentstructor' ),
+				'agents'    => __( 'Agent chat features apply site-wide. Per-agent provider/model overrides only when needed. Emergency stop deactivates all agents.', 'agentstructor' ),
+				'providers' => __( 'API keys stay on your site. Only connected providers can be set as the site default.', 'agentstructor' ),
+				'users'     => __( 'Role privileges control who can administer the plugin and chat with agents. Administrators always retain full access.', 'agentstructor' ),
+				'security'  => __( 'Security settings include consent, retention, scanning, and request rate limits. Review Approvals for high-risk actions.', 'agentstructor' ),
+				'apis', 'endpoints' => __( 'Advanced integrations and API endpoints. Prefer connected providers on the Providers tab for everyday use.', 'agentstructor' ),
 				default     => $policy,
 			};
 		}
@@ -1389,20 +1389,20 @@ class Admin_Menu_Handler {
 		if ( ! empty( $f['policy'] ) ) {
 			$html .= '<span class="agentic-page-footer-policy">' . esc_html( (string) $f['policy'] ) . '</span> ';
 		}
-		$html       .= esc_html__( 'Need help?', 'siteloom' ) . ' ';
-		$html       .= '<a href="' . esc_url( (string) $f['support_url'] ) . '" target="_blank" rel="noopener">' . esc_html__( 'Visit our Support Center', 'siteloom' ) . '</a>';
+		$html       .= esc_html__( 'Need help?', 'agentstructor' ) . ' ';
+		$html       .= '<a href="' . esc_url( (string) $f['support_url'] ) . '" target="_blank" rel="noopener">' . esc_html__( 'Visit our Support Center', 'agentstructor' ) . '</a>';
 		$html       .= ' | ';
-		$html       .= '<a href="' . esc_url( (string) $f['doc_url'] ) . '" target="_blank" rel="noopener">' . esc_html__( 'Documentation', 'siteloom' ) . '</a>';
+		$html       .= '<a href="' . esc_url( (string) $f['doc_url'] ) . '" target="_blank" rel="noopener">' . esc_html__( 'Documentation', 'agentstructor' ) . '</a>';
 		$html       .= ' | ';
 		$promo_blank = ! empty( $f['promo_external'] ) || ! empty( $f['is_pro'] );
 		$html       .= '<a href="' . esc_url( (string) $f['promo_url'] ) . '"' . ( $promo_blank ? ' target="_blank" rel="noopener noreferrer"' : '' ) . '>' . esc_html( (string) $f['promo_label'] ) . '</a>';
 		$html       .= '</span>';
 		$html       .= '<span class="agentic-page-footer-right">';
-		$html       .= '<a href="' . esc_url( (string) $f['terms_url'] ) . '" target="_blank" rel="noopener">' . esc_html__( 'Terms of Service', 'siteloom' ) . '</a>';
+		$html       .= '<a href="' . esc_url( (string) $f['terms_url'] ) . '" target="_blank" rel="noopener">' . esc_html__( 'Terms of Service', 'agentstructor' ) . '</a>';
 		$html       .= ' | ';
-		$html       .= '<a href="' . esc_url( (string) $f['privacy_url'] ) . '" target="_blank" rel="noopener">' . esc_html__( 'Privacy Policy', 'siteloom' ) . '</a>';
+		$html       .= '<a href="' . esc_url( (string) $f['privacy_url'] ) . '" target="_blank" rel="noopener">' . esc_html__( 'Privacy Policy', 'agentstructor' ) . '</a>';
 		$html       .= ' | ';
-		$html       .= '<a href="' . esc_url( (string) $f['gdpr_url'] ) . '" target="_blank" rel="noopener">' . esc_html__( 'GDPR Policy', 'siteloom' ) . '</a>';
+		$html       .= '<a href="' . esc_url( (string) $f['gdpr_url'] ) . '" target="_blank" rel="noopener">' . esc_html__( 'GDPR Policy', 'agentstructor' ) . '</a>';
 		$html       .= '</span></div>';
 
 		return $html;
@@ -1701,7 +1701,7 @@ class Admin_Menu_Handler {
 		}
 
 		echo '<div class="wrap">';
-		echo '<h1>' . esc_html__( 'Agent Chat', 'siteloom' ) . ' <span class="agentic-status"><span class="agentic-status-dot" aria-hidden="true"></span>' . esc_html__( 'Online', 'siteloom' ) . '</span></h1>';
+		echo '<h1>' . esc_html__( 'Agent Chat', 'agentstructor' ) . ' <span class="agentic-status"><span class="agentic-status-dot" aria-hidden="true"></span>' . esc_html__( 'Online', 'agentstructor' ) . '</span></h1>';
 		if ( $agentic_playground ) {
 			echo '<div class="agentic-playground">';
 			echo '<div class="agentic-playground__thread">';
@@ -1715,7 +1715,7 @@ class Admin_Menu_Handler {
 			);
 			echo '</div>';
 		}
-		echo '<p style="margin-top:12px;"><a href="' . esc_url( admin_url( 'admin.php?page=agentic-deployment' ) ) . '">' . esc_html__( 'Manage Agent Deployments', 'siteloom' ) . '</a></p>';
+		echo '<p style="margin-top:12px;"><a href="' . esc_url( admin_url( 'admin.php?page=agentic-deployment' ) ) . '">' . esc_html__( 'Manage Agent Deployments', 'agentstructor' ) . '</a></p>';
 		echo '</div>';
 	}
 
@@ -1744,8 +1744,8 @@ class Admin_Menu_Handler {
 		$ov_provider      = Agent_Settings::get( $agent_id, 'override_provider' );
 		$ov_model         = Agent_Settings::get( $agent_id, 'override_model' );
 		$model_source     = ( ! empty( $ov_provider ) || ! empty( $ov_model ) )
-			? __( 'Per-agent override (Settings → Agents)', 'siteloom' )
-			: __( 'Site default (Settings → Providers)', 'siteloom' );
+			? __( 'Per-agent override (Settings → Agents)', 'agentstructor' )
+			: __( 'Site default (Settings → Providers)', 'agentstructor' );
 		$system_prompt    = ( $agent instanceof Agent_Base ) ? $agent->get_system_prompt() : '';
 		$persona_notes    = Agent_Settings::get( $agent_id, 'persona_notes' );
 		$style            = Agent_Settings::get( $agent_id, 'persona_response_style' );

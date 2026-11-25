@@ -4,7 +4,7 @@
  *
  * Handles binding, executing, and cleaning up scheduled tasks and
  * event listeners for all active agents. Extracted from the Plugin
- * class to keep siteloom.php focused on bootstrapping.
+ * class to keep agentstructor.php focused on bootstrapping.
  *
  * @package Agent_Builder
  */
@@ -43,7 +43,7 @@ class Agent_Lifecycle {
 	const ALLOWED_USER_SCHEDULES = array( 'hourly', 'twicedaily', 'daily', 'weekly' );
 
 	/**
-	 * Option-name prefixes owned by Siteloom. A write to any option or
+	 * Option-name prefixes owned by AgentStructor. A write to any option or
 	 * transient whose name starts with one of these must never fire an event
 	 * listener — this is what breaks the updated_option → approval proposal →
 	 * updated_option feedback loop.
@@ -244,14 +244,14 @@ class Agent_Lifecycle {
 		if ( empty( $agent_slug ) ) {
 			return array(
 				'ok'    => false,
-				'error' => __( 'Agent is required.', 'siteloom' ),
+				'error' => __( 'Agent is required.', 'agentstructor' ),
 			);
 		}
 
 		if ( '' === trim( $prompt ) ) {
 			return array(
 				'ok'    => false,
-				'error' => __( 'Prompt is required.', 'siteloom' ),
+				'error' => __( 'Prompt is required.', 'agentstructor' ),
 			);
 		}
 
@@ -260,7 +260,7 @@ class Agent_Lifecycle {
 		if ( ! $agent ) {
 			return array(
 				'ok'    => false,
-				'error' => __( 'Agent not found or not active.', 'siteloom' ),
+				'error' => __( 'Agent not found or not active.', 'agentstructor' ),
 			);
 		}
 
@@ -271,7 +271,7 @@ class Agent_Lifecycle {
 		if ( empty( $name ) ) {
 			$name = sprintf(
 				/* translators: 1: schedule label, 2: agent name */
-				__( '%1$s — %2$s', 'siteloom' ),
+				__( '%1$s — %2$s', 'agentstructor' ),
 				ucfirst( $schedule ),
 				$agent->get_name()
 			);
@@ -372,7 +372,7 @@ class Agent_Lifecycle {
 		if ( empty( $id ) ) {
 			return array(
 				'ok'    => false,
-				'error' => __( 'Missing task ID.', 'siteloom' ),
+				'error' => __( 'Missing task ID.', 'agentstructor' ),
 			);
 		}
 
@@ -652,12 +652,12 @@ class Agent_Lifecycle {
 		$body = get_userdata( $owner_id )
 			? sprintf(
 				/* translators: %s: routine label */
-				__( 'Routine "%s" was skipped: its owner no longer has the required capability.', 'siteloom' ),
+				__( 'Routine "%s" was skipped: its owner no longer has the required capability.', 'agentstructor' ),
 				$label
 			)
 			: sprintf(
 				/* translators: 1: routine label, 2: owner user id */
-				__( 'Routine "%1$s" was skipped: its owner (user %2$d) no longer exists.', 'siteloom' ),
+				__( 'Routine "%1$s" was skipped: its owner (user %2$d) no longer exists.', 'agentstructor' ),
 				$label,
 				$owner_id
 			);
@@ -665,7 +665,7 @@ class Agent_Lifecycle {
 		Notifications::notify(
 			$owner_id,
 			'routine_failed',
-			__( 'Routine skipped', 'siteloom' ),
+			__( 'Routine skipped', 'agentstructor' ),
 			$body,
 			array(
 				'agent_id' => $agent_id,
@@ -771,7 +771,7 @@ class Agent_Lifecycle {
 		if ( empty( $agent_slug ) || empty( $hook ) ) {
 			return array(
 				'ok'    => false,
-				'error' => __( 'Agent and hook are required.', 'siteloom' ),
+				'error' => __( 'Agent and hook are required.', 'agentstructor' ),
 			);
 		}
 
@@ -780,7 +780,7 @@ class Agent_Lifecycle {
 		if ( ! $agent ) {
 			return array(
 				'ok'    => false,
-				'error' => __( 'Agent not found or not active.', 'siteloom' ),
+				'error' => __( 'Agent not found or not active.', 'agentstructor' ),
 			);
 		}
 
@@ -866,7 +866,7 @@ class Agent_Lifecycle {
 		if ( empty( $id ) ) {
 			return array(
 				'ok'    => false,
-				'error' => __( 'Missing trigger ID.', 'siteloom' ),
+				'error' => __( 'Missing trigger ID.', 'agentstructor' ),
 			);
 		}
 
@@ -919,7 +919,7 @@ class Agent_Lifecycle {
 			return;
 		}
 
-		// Writes made by Siteloom itself (its own options and transients)
+		// Writes made by AgentStructor itself (its own options and transients)
 		// never reach a listener.
 		if ( self::is_internal_option_event( (string) ( $listener['hook'] ?? '' ), $args[0] ?? null ) ) {
 			return;
@@ -1038,7 +1038,7 @@ class Agent_Lifecycle {
 
 	/**
 	 * Whether a hook firing with this first argument is a write to an option or
-	 * transient owned by Siteloom itself, and must therefore be ignored by
+	 * transient owned by AgentStructor itself, and must therefore be ignored by
 	 * every listener.
 	 *
 	 * @param string $hook Listener hook name.

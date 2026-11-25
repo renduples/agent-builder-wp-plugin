@@ -2,7 +2,7 @@
 /**
  * Ability Provider Registry
  *
- * Central registry for Ability Providers. Siteloom's Abilities_Bridge
+ * Central registry for Ability Providers. AgentStructor's Abilities_Bridge
  * consumes providers registered here to offer a rich, extensible set of
  * abilities to agents and the native WP 7.0+ AI Client.
  *

@@ -33,8 +33,8 @@ const ITEMS_STYLE = {
 };
 
 function postHeading( card ) {
-	const verb = 'updated' === card.action ? __( 'Updated', 'siteloom' ) : __( 'Created', 'siteloom' );
-	return verb + ' ' + __( 'a post', 'siteloom' ) + ( card.title ? ' “' + card.title + '”' : '' );
+	const verb = 'updated' === card.action ? __( 'Updated', 'agentstructor' ) : __( 'Created', 'agentstructor' );
+	return verb + ' ' + __( 'a post', 'agentstructor' ) + ( card.title ? ' “' + card.title + '”' : '' );
 }
 
 function ResultCard( { card } ) {
@@ -55,12 +55,12 @@ function ResultCard( { card } ) {
 				<div style={ LINK_STYLE }>
 					{ viewUrl && (
 						<a href={ viewUrl } target="_blank" rel="noopener">
-							{ __( 'View', 'siteloom' ) }
+							{ __( 'View', 'agentstructor' ) }
 						</a>
 					) }
 					{ editUrl && (
 						<a href={ editUrl } target="_blank" rel="noopener">
-							{ __( 'Edit', 'siteloom' ) }
+							{ __( 'Edit', 'agentstructor' ) }
 						</a>
 					) }
 				</div>
@@ -68,14 +68,14 @@ function ResultCard( { card } ) {
 		}
 	} else if ( 'file' === card.type ) {
 		heading =
-			__( 'Generated a file', 'siteloom' ) +
+			__( 'Generated a file', 'agentstructor' ) +
 			( card.title ? ' “' + card.title + '”' : '' );
 		const url = card.url ? AgenticMarkdown.safeCardHref( card.url ) : null;
 		if ( url ) {
 			detail = (
 				<div style={ LINK_STYLE }>
 					<a href={ url } target="_blank" rel="noopener">
-						{ __( 'Download', 'siteloom' ) }
+						{ __( 'Download', 'agentstructor' ) }
 					</a>
 				</div>
 			);
@@ -83,8 +83,8 @@ function ResultCard( { card } ) {
 	} else if ( 'list' === card.type ) {
 		heading = sprintf(
 			/* translators: 1: what was listed (e.g. Posts), 2: number of items. */
-			__( '%1$s (%2$d)', 'siteloom' ),
-			card.title || __( 'Items', 'siteloom' ),
+			__( '%1$s (%2$d)', 'agentstructor' ),
+			card.title || __( 'Items', 'agentstructor' ),
 			card.count || 0
 		);
 		const items = ( card.items || [] ).slice( 0, 5 );

@@ -3,7 +3,7 @@
  * User Roles & Access Control
  *
  * Manages fine-grained access control: which WordPress user roles can use
- * which parts of the Siteloom plugin and which agents.
+ * which parts of the AgentStructor plugin and which agents.
  *
  * Settings are stored in the `agent_builder_user_roles` option and are enforced
  * via a `user_has_cap` filter that injects `agent_builder_*` custom capabilities.
@@ -26,7 +26,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * User role access-control for the Siteloom plugin.
+ * User role access-control for the AgentStructor plugin.
  */
 class User_Roles {
 
@@ -52,7 +52,7 @@ class User_Roles {
 		return array(
 			'view_dashboard'     => array(
 				'label'       => 'View Dashboard',
-				'description' => 'Access the Siteloom dashboard overview and stats.',
+				'description' => 'Access the AgentStructor dashboard overview and stats.',
 			),
 			'manage_agents'      => array(
 				'label'       => 'Manage Agents',

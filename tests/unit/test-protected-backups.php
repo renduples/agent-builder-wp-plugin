@@ -220,11 +220,11 @@ class Test_Protected_Backups extends TestCase {
 	public function test_old_plugin_htaccess_is_upgraded_to_deny_all(): void {
 		$dir = \Agentic\File_Manager::knowledge_dir();
 		File_Manager::ensure_protected_dir( $dir );
-		$this->assertStringNotContainsString( 'Siteloom private storage', (string) file_get_contents( $dir . '/.htaccess' ) );
+		$this->assertStringNotContainsString( 'AgentStructor private storage', (string) file_get_contents( $dir . '/.htaccess' ) );
 
 		File_Manager::ensure_protected_dir( $dir, true );
 		$htaccess = (string) file_get_contents( $dir . '/.htaccess' );
-		$this->assertStringContainsString( 'Siteloom private storage', $htaccess );
+		$this->assertStringContainsString( 'AgentStructor private storage', $htaccess );
 		$this->assertStringContainsString( 'allowUnlisted="false"', (string) file_get_contents( $dir . '/web.config' ) );
 	}
 

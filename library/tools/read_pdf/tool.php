@@ -72,7 +72,7 @@ class Read_Pdf extends \Agentic\Tool_Base {
 	 * @return string
 	 */
 	public function get_unavailable_reason(): string {
-		return __( 'Reading PDFs requires the PdfParser library, which is not installed on this site.', 'siteloom' );
+		return __( 'Reading PDFs requires the PdfParser library, which is not installed on this site.', 'agentstructor' );
 	}
 
 	public function execute( array $arguments ): array {

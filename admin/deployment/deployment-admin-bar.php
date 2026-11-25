@@ -109,7 +109,7 @@ if (
 		)
 	);
 
-	$agentic_notice = __( 'Admin settings saved.', 'siteloom' );
+	$agentic_notice = __( 'Admin settings saved.', 'agentstructor' );
 }
 
 // Load per-agent admin-bar settings.
@@ -162,10 +162,10 @@ if ( ! isset( $agentic_agent_choices[ $agentic_launcher_agent ] ) ) {
 	$agentic_installed = $agentic_registry->get_installed_agents();
 	if ( isset( $agentic_installed[ $agentic_launcher_agent ]['name'] ) ) {
 		$agentic_agent_choices[ $agentic_launcher_agent ] = $agentic_installed[ $agentic_launcher_agent ]['name']
-			. ' (' . __( 'inactive', 'siteloom' ) . ')';
+			. ' (' . __( 'inactive', 'agentstructor' ) . ')';
 	} else {
 		$agentic_agent_choices[ $agentic_launcher_agent ] = $agentic_launcher_agent
-			. ' (' . __( 'not installed', 'siteloom' ) . ')';
+			. ' (' . __( 'not installed', 'agentstructor' ) . ')';
 	}
 }
 ?>
@@ -181,24 +181,24 @@ if ( ! isset( $agentic_agent_choices[ $agentic_launcher_agent ] ) ) {
 	<form method="post" action="">
 		<?php wp_nonce_field( 'agentic_admin_bar_settings' ); ?>
 
-		<h2 class="agentic-settings-section-title" style="margin-top:0;"><?php esc_html_e( 'Admin bar chat', 'siteloom' ); ?></h2>
+		<h2 class="agentic-settings-section-title" style="margin-top:0;"><?php esc_html_e( 'Admin bar chat', 'agentstructor' ); ?></h2>
 		<p class="agentic-settings-lead">
-			<?php esc_html_e( 'Choose which agents appear under “AI Agents” in the WordPress toolbar. Clicking an agent opens the slide-in chat overlay.', 'siteloom' ); ?>
+			<?php esc_html_e( 'Choose which agents appear under “AI Agents” in the WordPress toolbar. Clicking an agent opens the slide-in chat overlay.', 'agentstructor' ); ?>
 		</p>
 
 		<?php if ( empty( $agentic_all_agents ) ) : ?>
 			<div class="notice notice-warning inline">
-				<p><?php esc_html_e( 'No active agents found. Activate at least one agent first.', 'siteloom' ); ?></p>
+				<p><?php esc_html_e( 'No active agents found. Activate at least one agent first.', 'agentstructor' ); ?></p>
 			</div>
 		<?php else : ?>
 			<div class="agentic-table-scroll">
 			<table class="widefat striped agentic-table-min-560">
 				<thead>
 					<tr>
-						<th class="agentic-col-40"><?php esc_html_e( 'Enable', 'siteloom' ); ?></th>
-						<th><?php esc_html_e( 'Agent', 'siteloom' ); ?></th>
-						<th><?php esc_html_e( 'Position', 'siteloom' ); ?></th>
-						<th><?php esc_html_e( 'Show On', 'siteloom' ); ?></th>
+						<th class="agentic-col-40"><?php esc_html_e( 'Enable', 'agentstructor' ); ?></th>
+						<th><?php esc_html_e( 'Agent', 'agentstructor' ); ?></th>
+						<th><?php esc_html_e( 'Position', 'agentstructor' ); ?></th>
+						<th><?php esc_html_e( 'Show On', 'agentstructor' ); ?></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -215,7 +215,7 @@ if ( ! isset( $agentic_agent_choices[ $agentic_launcher_agent ] ) ) {
 								<input type="checkbox"
 									name="agentic_ab[<?php echo esc_attr( $agentic_slug ); ?>][enabled]"
 									value="1"
-									aria-label="<?php echo esc_attr( sprintf( /* translators: %s: agent name */ __( 'Enable admin bar chat for %s', 'siteloom' ), $agentic_agent->get_name() ) ); ?>"
+									aria-label="<?php echo esc_attr( sprintf( /* translators: %s: agent name */ __( 'Enable admin bar chat for %s', 'agentstructor' ), $agentic_agent->get_name() ) ); ?>"
 									<?php checked( $agentic_ab_is_enabled ); ?>>
 							</td>
 							<td>
@@ -225,23 +225,23 @@ if ( ! isset( $agentic_agent_choices[ $agentic_launcher_agent ] ) ) {
 							<td>
 								<select name="agentic_ab[<?php echo esc_attr( $agentic_slug ); ?>][position]" class="agentic-select-full">
 									<option value="bottom-right" <?php selected( $agentic_ab_position, 'bottom-right' ); ?>>
-										<?php esc_html_e( 'Bottom Right', 'siteloom' ); ?>
+										<?php esc_html_e( 'Bottom Right', 'agentstructor' ); ?>
 									</option>
 									<option value="bottom-left" <?php selected( $agentic_ab_position, 'bottom-left' ); ?>>
-										<?php esc_html_e( 'Bottom Left', 'siteloom' ); ?>
+										<?php esc_html_e( 'Bottom Left', 'agentstructor' ); ?>
 									</option>
 								</select>
 							</td>
 							<td>
 								<select name="agentic_ab[<?php echo esc_attr( $agentic_slug ); ?>][pages]" class="agentic-select-full">
 									<option value="all" <?php selected( $agentic_ab_pages, 'all' ); ?>>
-										<?php esc_html_e( 'Everywhere', 'siteloom' ); ?>
+										<?php esc_html_e( 'Everywhere', 'agentstructor' ); ?>
 									</option>
 									<option value="admin" <?php selected( $agentic_ab_pages, 'admin' ); ?>>
-										<?php esc_html_e( 'Admin Only', 'siteloom' ); ?>
+										<?php esc_html_e( 'Admin Only', 'agentstructor' ); ?>
 									</option>
 									<option value="front" <?php selected( $agentic_ab_pages, 'front' ); ?>>
-										<?php esc_html_e( 'Frontend Only', 'siteloom' ); ?>
+										<?php esc_html_e( 'Frontend Only', 'agentstructor' ); ?>
 									</option>
 								</select>
 							</td>
@@ -254,27 +254,27 @@ if ( ! isset( $agentic_agent_choices[ $agentic_launcher_agent ] ) ) {
 
 		<hr class="agentic-section-divider" style="margin:24px 0;border:0;border-top:1px solid #e0e0e0;" />
 
-		<h2 class="agentic-settings-section-title"><?php esc_html_e( 'Ask AI launchers', 'siteloom' ); ?></h2>
+		<h2 class="agentic-settings-section-title"><?php esc_html_e( 'Ask AI launchers', 'agentstructor' ); ?></h2>
 		<p class="agentic-settings-lead">
-			<?php esc_html_e( 'Show a compact “Ask AI” control on selected core admin screens. Launchers open the chat overlay with a screen-relevant starter prompt — nothing is sent until you press Send. Administrators only; each user can dismiss a launcher on the screen itself.', 'siteloom' ); ?>
+			<?php esc_html_e( 'Show a compact “Ask AI” control on selected core admin screens. Launchers open the chat overlay with a screen-relevant starter prompt — nothing is sent until you press Send. Administrators only; each user can dismiss a launcher on the screen itself.', 'agentstructor' ); ?>
 		</p>
 
 		<table class="form-table" role="presentation">
 			<tr>
-				<th scope="row"><?php esc_html_e( 'Enable launchers', 'siteloom' ); ?></th>
+				<th scope="row"><?php esc_html_e( 'Enable launchers', 'agentstructor' ); ?></th>
 				<td>
 					<label>
 						<input type="checkbox" name="agent_builder_admin_launchers_enabled" value="1"
 							<?php checked( '1', $agentic_launchers_enabled ); ?>>
-						<?php esc_html_e( 'Show contextual Ask AI launchers on selected admin screens', 'siteloom' ); ?>
+						<?php esc_html_e( 'Show contextual Ask AI launchers on selected admin screens', 'agentstructor' ); ?>
 					</label>
 				</td>
 			</tr>
 			<tr>
-				<th scope="row"><?php esc_html_e( 'Screens', 'siteloom' ); ?></th>
+				<th scope="row"><?php esc_html_e( 'Screens', 'agentstructor' ); ?></th>
 				<td>
 					<fieldset>
-						<legend class="screen-reader-text"><?php esc_html_e( 'Screens', 'siteloom' ); ?></legend>
+						<legend class="screen-reader-text"><?php esc_html_e( 'Screens', 'agentstructor' ); ?></legend>
 						<?php foreach ( \Agentic\Admin_Surfaces::available_screens() as $agentic_screen_key => $agentic_screen_meta ) : ?>
 							<label style="display:block;margin:0 0 6px;">
 								<input type="checkbox"
@@ -287,13 +287,13 @@ if ( ! isset( $agentic_agent_choices[ $agentic_launcher_agent ] ) ) {
 						<?php endforeach; ?>
 					</fieldset>
 					<p class="description">
-						<?php esc_html_e( 'Choose where the launcher may appear. Uncheck all to hide launchers without turning the feature off globally.', 'siteloom' ); ?>
+						<?php esc_html_e( 'Choose where the launcher may appear. Uncheck all to hide launchers without turning the feature off globally.', 'agentstructor' ); ?>
 					</p>
 				</td>
 			</tr>
 			<tr>
 				<th scope="row">
-					<label for="agent_builder_admin_launcher_agent"><?php esc_html_e( 'Default agent', 'siteloom' ); ?></label>
+					<label for="agent_builder_admin_launcher_agent"><?php esc_html_e( 'Default agent', 'agentstructor' ); ?></label>
 				</th>
 				<td>
 					<select name="agent_builder_admin_launcher_agent" id="agent_builder_admin_launcher_agent">
@@ -301,27 +301,27 @@ if ( ! isset( $agentic_agent_choices[ $agentic_launcher_agent ] ) ) {
 							<option value="<?php echo esc_attr( $agentic_choice_slug ); ?>" <?php selected( $agentic_launcher_agent, $agentic_choice_slug ); ?>>
 								<?php echo esc_html( $agentic_choice_name ); ?>
 								<?php if ( 'wordpress-assistant' === $agentic_choice_slug ) : ?>
-									— <?php esc_html_e( 'recommended default', 'siteloom' ); ?>
+									— <?php esc_html_e( 'recommended default', 'agentstructor' ); ?>
 								<?php endif; ?>
 							</option>
 						<?php endforeach; ?>
 					</select>
 					<p class="description">
-						<?php esc_html_e( 'Used for Ask AI launchers when that agent is active. Defaults to WordPress Assistant; pick a custom agent you trained if you prefer.', 'siteloom' ); ?>
+						<?php esc_html_e( 'Used for Ask AI launchers when that agent is active. Defaults to WordPress Assistant; pick a custom agent you trained if you prefer.', 'agentstructor' ); ?>
 					</p>
 				</td>
 			</tr>
 		</table>
 
-		<?php submit_button( __( 'Save Settings', 'siteloom' ), 'primary', 'agentic_save_admin_bar' ); ?>
+		<?php submit_button( __( 'Save Settings', 'agentstructor' ), 'primary', 'agentic_save_admin_bar' ); ?>
 	</form>
 
 	<div class="agentic-embed-note" style="margin-top:20px;">
-		<h3><?php esc_html_e( 'How admin chat works', 'siteloom' ); ?></h3>
+		<h3><?php esc_html_e( 'How admin chat works', 'agentstructor' ); ?></h3>
 		<ul>
-			<li><?php esc_html_e( 'Admin bar: enabled agents appear under “AI Agents” in the toolbar and open the slide-in chat.', 'siteloom' ); ?></li>
-			<li><?php esc_html_e( 'Launchers: a pill control on selected screens opens the same overlay with a starter prompt for the chosen agent.', 'siteloom' ); ?></li>
-			<li><?php esc_html_e( 'Nothing is sent to your AI provider until you review the prompt and press Send.', 'siteloom' ); ?></li>
+			<li><?php esc_html_e( 'Admin bar: enabled agents appear under “AI Agents” in the toolbar and open the slide-in chat.', 'agentstructor' ); ?></li>
+			<li><?php esc_html_e( 'Launchers: a pill control on selected screens opens the same overlay with a starter prompt for the chosen agent.', 'agentstructor' ); ?></li>
+			<li><?php esc_html_e( 'Nothing is sent to your AI provider until you review the prompt and press Send.', 'agentstructor' ); ?></li>
 		</ul>
 	</div>
 

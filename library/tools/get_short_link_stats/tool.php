@@ -23,7 +23,7 @@ class Get_Short_Link_Stats extends Tool_Base {
 	}
 
 	public function get_description(): string {
-		return 'Get click stats and details for short links created by Siteloom. Returns all links or a specific slug.';
+		return 'Get click stats and details for short links created by AgentStructor. Returns all links or a specific slug.';
 	}
 
 	public function get_category(): string {

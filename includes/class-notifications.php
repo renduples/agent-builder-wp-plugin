@@ -187,13 +187,13 @@ class Notifications {
 			$error = (string) ( $data['error'] ?? '' );
 			$body  = self::first_line( '' !== $error ? $error : (string) ( $data['result_summary']['text'] ?? '' ) );
 			if ( '' === $body ) {
-				$body = __( 'Your agent run failed.', 'siteloom' );
+				$body = __( 'Your agent run failed.', 'agentstructor' );
 			}
 
 			self::notify(
 				$user_id,
 				'run_error',
-				__( 'Agent run failed', 'siteloom' ),
+				__( 'Agent run failed', 'agentstructor' ),
 				$body,
 				array(
 					'link'     => self::tasks_link( $run ),
@@ -209,7 +209,7 @@ class Notifications {
 		self::notify(
 			$user_id,
 			'run_finished',
-			__( 'Agent run finished', 'siteloom' ),
+			__( 'Agent run finished', 'agentstructor' ),
 			$body,
 			array(
 				'link'     => self::tasks_link( $run ),
@@ -235,8 +235,8 @@ class Notifications {
 		self::notify(
 			$user_id,
 			'run_waiting',
-			__( 'Agent run needs you', 'siteloom' ),
-			__( 'Your agent run is waiting for your approval.', 'siteloom' ),
+			__( 'Agent run needs you', 'agentstructor' ),
+			__( 'Your agent run is waiting for your approval.', 'agentstructor' ),
 			array(
 				'link'     => self::tasks_link( $run ),
 				'run_id'   => $run->get_run_id(),
@@ -495,11 +495,11 @@ class Notifications {
 
 		$subject = sprintf(
 			/* translators: %s: site name */
-			__( '[%s] Daily activity digest', 'siteloom' ),
+			__( '[%s] Daily activity digest', 'agentstructor' ),
 			wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES )
 		);
 
-		$body  = '<p style="margin:0 0 12px;">' . esc_html__( "Here's what your agents did recently:", 'siteloom' ) . '</p>';
+		$body  = '<p style="margin:0 0 12px;">' . esc_html__( "Here's what your agents did recently:", 'agentstructor' ) . '</p>';
 		$body .= '<ul style="margin:0 0 16px;padding-left:18px;">';
 		foreach ( $rows as $row ) {
 			$body .= '<li style="margin:0 0 8px;"><strong>' . esc_html( (string) $row['title'] ) . '</strong>';
@@ -507,20 +507,20 @@ class Notifications {
 				$body .= ' &mdash; ' . esc_html( (string) $row['body'] );
 			}
 			if ( '' !== (string) $row['link'] ) {
-				$body .= ' <a href="' . esc_url( (string) $row['link'] ) . '">' . esc_html__( 'View', 'siteloom' ) . '</a>';
+				$body .= ' <a href="' . esc_url( (string) $row['link'] ) . '">' . esc_html__( 'View', 'agentstructor' ) . '</a>';
 			}
 			$body .= '</li>';
 		}
 		$body .= '</ul>';
 
 		$tasks_url = admin_url( 'admin.php?page=agentic-tasks' );
-		$body     .= '<p style="margin:0 0 12px;"><a href="' . esc_url( $tasks_url ) . '">' . esc_html__( 'Open your Tasks screen', 'siteloom' ) . '</a></p>';
+		$body     .= '<p style="margin:0 0 12px;"><a href="' . esc_url( $tasks_url ) . '">' . esc_html__( 'Open your Tasks screen', 'agentstructor' ) . '</a></p>';
 
 		$sent = (bool) Email_Helper::send(
 			$user->user_email,
 			$subject,
 			array(
-				'heading' => __( 'Activity digest', 'siteloom' ),
+				'heading' => __( 'Activity digest', 'agentstructor' ),
 				'body'    => $body,
 				'footer'  => self::email_footer(),
 			)
@@ -587,14 +587,14 @@ class Notifications {
 
 		$subject = sprintf(
 			/* translators: 1: site name, 2: notification title */
-			__( '[%1$s] %2$s', 'siteloom' ),
+			__( '[%1$s] %2$s', 'agentstructor' ),
 			wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ),
 			$title
 		);
 
 		$html = '<p style="margin:0 0 12px;">' . esc_html( $body ) . '</p>';
 		if ( ! empty( $extra['link'] ) ) {
-			$html .= Email_Helper::button( $extra['link'], __( 'View', 'siteloom' ) );
+			$html .= Email_Helper::button( $extra['link'], __( 'View', 'agentstructor' ) );
 		}
 
 		$sent = (bool) Email_Helper::send(
@@ -741,16 +741,16 @@ class Notifications {
 
 		$opted = self::is_opted_out( (int) $user->ID );
 		?>
-		<h2><?php esc_html_e( 'Agent activity email', 'siteloom' ); ?></h2>
+		<h2><?php esc_html_e( 'Agent activity email', 'agentstructor' ); ?></h2>
 		<table class="form-table" role="presentation">
 			<tr>
-				<th scope="row"><?php esc_html_e( 'Email notifications', 'siteloom' ); ?></th>
+				<th scope="row"><?php esc_html_e( 'Email notifications', 'agentstructor' ); ?></th>
 				<td>
 					<label for="agent_builder_notify_optout">
 						<input type="checkbox" name="agent_builder_notify_optout" id="agent_builder_notify_optout" value="1" <?php checked( $opted ); ?> />
-						<?php esc_html_e( "Don't email me agent activity", 'siteloom' ); ?>
+						<?php esc_html_e( "Don't email me agent activity", 'agentstructor' ); ?>
 					</label>
-					<p class="description"><?php esc_html_e( 'Turns off agent activity emails for this account, regardless of the site-wide setting.', 'siteloom' ); ?></p>
+					<p class="description"><?php esc_html_e( 'Turns off agent activity emails for this account, regardless of the site-wide setting.', 'agentstructor' ); ?></p>
 				</td>
 			</tr>
 		</table>
@@ -792,7 +792,7 @@ class Notifications {
 	private static function email_footer(): string {
 		return sprintf(
 			/* translators: 1: Settings → Security admin URL, 2: user profile admin URL */
-			__( 'You are receiving these notifications as a site administrator. Manage the site-wide setting under Settings → Security: %1$s, or turn off email for your own account on your profile: %2$s', 'siteloom' ),
+			__( 'You are receiving these notifications as a site administrator. Manage the site-wide setting under Settings → Security: %1$s, or turn off email for your own account on your profile: %2$s', 'agentstructor' ),
 			admin_url( 'admin.php?page=agentic-settings&tab=security' ),
 			admin_url( 'profile.php' )
 		);

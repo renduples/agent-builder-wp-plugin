@@ -6,7 +6,7 @@
  *   'tabs'  — keyed by 'page:tab' or 'page:section', checked first.
  *   'pages' — keyed by page slug, used as fallback.
  *
- * To add or change a mapping, edit this file only — no need to touch siteloom.php.
+ * To add or change a mapping, edit this file only — no need to touch agentstructor.php.
  *
  * @package Agent_Builder
  * @since   2.10.0

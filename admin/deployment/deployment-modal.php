@@ -109,7 +109,7 @@ if (
 		)
 	);
 
-	$agentic_notice = __( 'Modal settings saved.', 'siteloom' );
+	$agentic_notice = __( 'Modal settings saved.', 'agentstructor' );
 }
 
 // Load data from Deployments with fallback to WP options.
@@ -146,13 +146,13 @@ if ( empty( $agentic_modal_rows ) ) {
 <div class="agentic-tab-section">
 
 	<p>
-		<?php esc_html_e( 'Deploy a floating chat button on your public website. Visitors click the button to open a chat modal powered by the selected agent.', 'siteloom' ); ?>
+		<?php esc_html_e( 'Deploy a floating chat button on your public website. Visitors click the button to open a chat modal powered by the selected agent.', 'agentstructor' ); ?>
 		<?php
 		printf(
 			/* translators: %s: link to Styles settings */
-			esc_html__( 'Theme: %s.', 'siteloom' ),
+			esc_html__( 'Theme: %s.', 'agentstructor' ),
 			'<strong>' . esc_html( ucfirst( $agent_builder_chat_theme ) ) . '</strong> — <a href="' . esc_url( admin_url( 'admin.php?page=agentic-settings&tab=interface' ) ) . '">'
-				. esc_html__( 'change', 'siteloom' )
+				. esc_html__( 'change', 'agentstructor' )
 			. '</a>'
 		);
 		?>
@@ -160,7 +160,7 @@ if ( empty( $agentic_modal_rows ) ) {
 
 	<?php if ( empty( $agentic_all_agents ) ) : ?>
 		<div class="notice notice-warning">
-			<p><?php esc_html_e( 'No active agents found. Activate at least one agent first.', 'siteloom' ); ?></p>
+			<p><?php esc_html_e( 'No active agents found. Activate at least one agent first.', 'agentstructor' ); ?></p>
 		</div>
 	<?php else : ?>
 		<form method="post" action="">
@@ -170,11 +170,11 @@ if ( empty( $agentic_modal_rows ) ) {
 			<table class="widefat striped agentic-table-min-700">
 				<thead>
 					<tr>
-						<th class="agentic-col-40"><?php esc_html_e( 'Enable', 'siteloom' ); ?></th>
-						<th><?php esc_html_e( 'Agent', 'siteloom' ); ?></th>
-						<th><?php esc_html_e( 'Position', 'siteloom' ); ?></th>
-						<th><?php esc_html_e( 'Show On', 'siteloom' ); ?></th>
-						<th><?php esc_html_e( 'Require Login', 'siteloom' ); ?></th>
+						<th class="agentic-col-40"><?php esc_html_e( 'Enable', 'agentstructor' ); ?></th>
+						<th><?php esc_html_e( 'Agent', 'agentstructor' ); ?></th>
+						<th><?php esc_html_e( 'Position', 'agentstructor' ); ?></th>
+						<th><?php esc_html_e( 'Show On', 'agentstructor' ); ?></th>
+						<th><?php esc_html_e( 'Require Login', 'agentstructor' ); ?></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -192,7 +192,7 @@ if ( empty( $agentic_modal_rows ) ) {
 								<input type="checkbox"
 									name="agentic_modal[<?php echo esc_attr( $agentic_slug ); ?>][enabled]"
 									value="1"
-									aria-label="<?php echo esc_attr( sprintf( /* translators: %s: agent name */ __( 'Enable frontend modal for %s', 'siteloom' ), $agentic_agent->get_name() ) ); ?>"
+									aria-label="<?php echo esc_attr( sprintf( /* translators: %s: agent name */ __( 'Enable frontend modal for %s', 'agentstructor' ), $agentic_agent->get_name() ) ); ?>"
 									<?php checked( $agentic_m_is_enabled ); ?>>
 							</td>
 							<td>
@@ -202,26 +202,26 @@ if ( empty( $agentic_modal_rows ) ) {
 							<td>
 								<select name="agentic_modal[<?php echo esc_attr( $agentic_slug ); ?>][position]" class="agentic-select-full">
 									<option value="bottom-right" <?php selected( $agentic_m_position, 'bottom-right' ); ?>>
-										<?php esc_html_e( 'Bottom Right', 'siteloom' ); ?>
+										<?php esc_html_e( 'Bottom Right', 'agentstructor' ); ?>
 									</option>
 									<option value="bottom-left" <?php selected( $agentic_m_position, 'bottom-left' ); ?>>
-										<?php esc_html_e( 'Bottom Left', 'siteloom' ); ?>
+										<?php esc_html_e( 'Bottom Left', 'agentstructor' ); ?>
 									</option>
 								</select>
 							</td>
 							<td>
 								<select name="agentic_modal[<?php echo esc_attr( $agentic_slug ); ?>][pages]" class="agentic-select-full">
 									<option value="all" <?php selected( $agentic_m_pages, 'all' ); ?>>
-										<?php esc_html_e( 'All Pages', 'siteloom' ); ?>
+										<?php esc_html_e( 'All Pages', 'agentstructor' ); ?>
 									</option>
 									<option value="homepage" <?php selected( $agentic_m_pages, 'homepage' ); ?>>
-										<?php esc_html_e( 'Homepage Only', 'siteloom' ); ?>
+										<?php esc_html_e( 'Homepage Only', 'agentstructor' ); ?>
 									</option>
 									<option value="singular" <?php selected( $agentic_m_pages, 'singular' ); ?>>
-										<?php esc_html_e( 'Posts & Pages', 'siteloom' ); ?>
+										<?php esc_html_e( 'Posts & Pages', 'agentstructor' ); ?>
 									</option>
 									<option value="front" <?php selected( $agentic_m_pages, 'front' ); ?>>
-										<?php esc_html_e( 'Frontend Only', 'siteloom' ); ?>
+										<?php esc_html_e( 'Frontend Only', 'agentstructor' ); ?>
 									</option>
 								</select>
 							</td>
@@ -229,7 +229,7 @@ if ( empty( $agentic_modal_rows ) ) {
 								<input type="checkbox"
 									name="agentic_modal[<?php echo esc_attr( $agentic_slug ); ?>][require_login]"
 									value="1"
-									aria-label="<?php echo esc_attr( sprintf( /* translators: %s: agent name */ __( 'Require login for %s', 'siteloom' ), $agentic_agent->get_name() ) ); ?>"
+									aria-label="<?php echo esc_attr( sprintf( /* translators: %s: agent name */ __( 'Require login for %s', 'agentstructor' ), $agentic_agent->get_name() ) ); ?>"
 									<?php checked( $agentic_m_login, '1' ); ?>>
 							</td>
 						</tr>
@@ -238,24 +238,24 @@ if ( empty( $agentic_modal_rows ) ) {
 			</table>
 			</div>
 
-			<?php submit_button( __( 'Save Settings', 'siteloom' ), 'primary', 'agentic_save_modal' ); ?>
+			<?php submit_button( __( 'Save Settings', 'agentstructor' ), 'primary', 'agentic_save_modal' ); ?>
 		</form>
 	<?php endif; ?>
 
 	<div class="agentic-embed-note">
-		<h3><?php esc_html_e( 'How the Modal Works', 'siteloom' ); ?></h3>
+		<h3><?php esc_html_e( 'How the Modal Works', 'agentstructor' ); ?></h3>
 		<ul>
-			<li><?php esc_html_e( 'A floating button appears on your public website according to each agent\'s display settings.', 'siteloom' ); ?></li>
-			<li><?php esc_html_e( 'If multiple agents are enabled for the same page, visitors see a menu to pick one; a single agent opens directly.', 'siteloom' ); ?></li>
-			<li><?php esc_html_e( 'The modal injects page context automatically — the agent knows the current URL, page title, and post type.', 'siteloom' ); ?></li>
-			<li><?php esc_html_e( 'Chat history is stored per agent in the visitor\'s browser using localStorage.', 'siteloom' ); ?></li>
+			<li><?php esc_html_e( 'A floating button appears on your public website according to each agent\'s display settings.', 'agentstructor' ); ?></li>
+			<li><?php esc_html_e( 'If multiple agents are enabled for the same page, visitors see a menu to pick one; a single agent opens directly.', 'agentstructor' ); ?></li>
+			<li><?php esc_html_e( 'The modal injects page context automatically — the agent knows the current URL, page title, and post type.', 'agentstructor' ); ?></li>
+			<li><?php esc_html_e( 'Chat history is stored per agent in the visitor\'s browser using localStorage.', 'agentstructor' ); ?></li>
 			<li>
 				<?php
 				printf(
 					/* translators: %s: link to Interface settings */
-					esc_html__( 'The chat theme is controlled by %s.', 'siteloom' ),
+					esc_html__( 'The chat theme is controlled by %s.', 'agentstructor' ),
 					'<a href="' . esc_url( admin_url( 'admin.php?page=agentic-settings&tab=interface' ) ) . '">'
-						. esc_html__( 'Settings → Interface', 'siteloom' )
+						. esc_html__( 'Settings → Interface', 'agentstructor' )
 					. '</a>'
 				);
 				?>

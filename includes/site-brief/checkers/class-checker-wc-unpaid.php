@@ -54,7 +54,7 @@ class Checker_Wc_Unpaid extends Site_Brief_Checker {
 	 * {@inheritdoc}
 	 */
 	public function get_label(): string {
-		return __( 'Unpaid orders', 'siteloom' );
+		return __( 'Unpaid orders', 'agentstructor' );
 	}
 
 	/**
@@ -110,19 +110,19 @@ class Checker_Wc_Unpaid extends Site_Brief_Checker {
 				array(
 					'title'            => sprintf(
 						/* translators: %d: unpaid order count. */
-						_n( '%d unpaid order', '%d unpaid orders', $total, 'siteloom' ),
+						_n( '%d unpaid order', '%d unpaid orders', $total, 'agentstructor' ),
 						$total
 					),
 					'evidence'         => sprintf(
 						/* translators: %s: order numbers. */
-						__( 'Order numbers: %s. Customer emails are not shown.', 'siteloom' ),
+						__( 'Order numbers: %s. Customer emails are not shown.', 'agentstructor' ),
 						implode( ', ', $ids )
 					),
 					'evidence_payload' => array(
 						'total'  => $total,
 						'orders' => $ids,
 					),
-					'proposed_action'  => __( 'Open WooCommerce orders. Site Brief will not change order status or expose customer email.', 'siteloom' ),
+					'proposed_action'  => __( 'Open WooCommerce orders. Site Brief will not change order status or expose customer email.', 'agentstructor' ),
 					'action_risk'      => 'none',
 					'raw'              => array( 'total' => $total ),
 				)

@@ -14,7 +14,7 @@
  *
  * @package    Agent_Builder
  * @subpackage Includes
- * @author     Siteloom Team <support@agentic-plugin.com>
+ * @author     AgentStructor Team <support@agentic-plugin.com>
  * @license    GPL-2.0-or-later https://www.gnu.org/licenses/gpl-2.0.html
  * @link       https://agentic-plugin.com
  * @since      4.2.0
@@ -206,7 +206,7 @@ class Approval_Rules {
 		if ( array_key_exists( 'rule_text', $data ) && '' === trim( (string) $data['rule_text'] ) ) {
 			return new \WP_Error(
 				'missing_rule_text',
-				__( 'A rule description is required.', 'siteloom' ),
+				__( 'A rule description is required.', 'agentstructor' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -217,7 +217,7 @@ class Approval_Rules {
 				return new \WP_Error(
 					'invalid_effect',
 					/* translators: %s: the invalid effect value. */
-					sprintf( __( 'Effect must be one of ask, allow, or deny; got "%s".', 'siteloom' ), $effect ),
+					sprintf( __( 'Effect must be one of ask, allow, or deny; got "%s".', 'agentstructor' ), $effect ),
 					array( 'status' => 400 )
 				);
 			}
@@ -229,7 +229,7 @@ class Approval_Rules {
 				return new \WP_Error(
 					'invalid_agent',
 					/* translators: %s: the agent slug. */
-					sprintf( __( 'Unknown agent "%s".', 'siteloom' ), $slug ),
+					sprintf( __( 'Unknown agent "%s".', 'agentstructor' ), $slug ),
 					array( 'status' => 400 )
 				);
 			}
@@ -353,7 +353,7 @@ class Approval_Rules {
 	/**
 	 * Register the evaluation engine on the tool-enforcement filter.
 	 *
-	 * Wired from siteloom.php's bootstrap alongside the other M12 init
+	 * Wired from agentstructor.php's bootstrap alongside the other M12 init
 	 * calls. `evaluate()` runs at the filter's default priority 10 — the same
 	 * seam the `agent_builder_tool_enforcement` docblock reserves for the rules
 	 * layer. It only ever tightens; Risk_Level::clamp_enforcement() remains the

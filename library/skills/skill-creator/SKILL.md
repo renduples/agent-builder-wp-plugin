@@ -53,7 +53,7 @@ Keep the body under 400 lines. Long skills are harder to follow — move referen
 
 ### Step 4: Save and test
 
-1. Go to **Siteloom → Skills → Add New Skill**
+1. Go to **AgentStructor → Skills → Add New Skill**
 2. Paste your SKILL.md content into the content field
 3. Assign it globally (all agents), or check the box for one or more specific agents
 4. Enable it and start a chat — use one of your trigger phrases

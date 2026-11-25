@@ -2,7 +2,7 @@
 /**
  * Tool: manage_user_privileges
  *
- * Read and change which WordPress roles can administer Siteloom or
+ * Read and change which WordPress roles can administer AgentStructor or
  * interact with its AI agents, per-role daily usage limits, and whether
  * anonymous visitors may use frontend chat — the same settings the classic
  * Settings > Users tab manages, via the shared User_Roles/Usage_Limits data
@@ -46,7 +46,7 @@ class Manage_User_Privileges extends \Agentic\Tool_Base {
 	 * @return string
 	 */
 	public function get_description(): string {
-		return 'Read or change which WordPress roles can administer Siteloom and use its AI agents, set per-role daily usage limits, or allow anonymous frontend chat. Administrators always retain full access regardless of these settings.';
+		return 'Read or change which WordPress roles can administer AgentStructor and use its AI agents, set per-role daily usage limits, or allow anonymous frontend chat. Administrators always retain full access regardless of these settings.';
 	}
 
 	/**
@@ -75,7 +75,7 @@ class Manage_User_Privileges extends \Agentic\Tool_Base {
 				'category' => array(
 					'type'        => 'string',
 					'enum'        => array( 'plugin', 'agent' ),
-					'description' => '"plugin": administering Siteloom itself (dashboard, agents, audit log, tools, settings). "agent": interacting with AI agents (chat surfaces, viewing the agent list). Required for set_privilege.',
+					'description' => '"plugin": administering AgentStructor itself (dashboard, agents, audit log, tools, settings). "agent": interacting with AI agents (chat surfaces, viewing the agent list). Required for set_privilege.',
 				),
 				'key'      => array(
 					'type'        => 'string',

@@ -36,7 +36,7 @@ $agentic_third_party_apis = array(
 
 ?>
 
-<p class="agentic-settings-lead"><?php esc_html_e( 'Some agent tools connect to external services that require their own API keys. Keys are stored in your WordPress database and are only sent to the service they belong to.', 'siteloom' ); ?></p>
+<p class="agentic-settings-lead"><?php esc_html_e( 'Some agent tools connect to external services that require their own API keys. Keys are stored in your WordPress database and are only sent to the service they belong to.', 'agentstructor' ); ?></p>
 
 <?php if ( $agentic_api_saved ) : ?>
 <div class="notice notice-success is-dismissible agentic-mt-12"><p>API key saved successfully.</p></div>
@@ -81,10 +81,10 @@ $agentic_third_party_apis = array(
 			<td><small>Site Auditor, Site Doctor</small></td>
 			<td>
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-settings&tab=apis&edit_api=' . rawurlencode( $agentic_api_slug ) ) ); ?>" class="button button-small">
-					<?php echo esc_html( $agentic_has_key ? __( 'Edit Key', 'siteloom' ) : __( 'Add Key', 'siteloom' ) ); ?>
+					<?php echo esc_html( $agentic_has_key ? __( 'Edit Key', 'agentstructor' ) : __( 'Add Key', 'agentstructor' ) ); ?>
 				</a>
 				<?php if ( $agentic_has_key ) : ?>
-				<form method="post" class="agentic-form-inline agentic-ml-8" data-agentic-confirm="<?php echo esc_attr( __( 'Remove this API key? Core Web Vitals checks will stop working until you add a new one.', 'siteloom' ) ); ?>" data-agentic-confirm-danger>
+				<form method="post" class="agentic-form-inline agentic-ml-8" data-agentic-confirm="<?php echo esc_attr( __( 'Remove this API key? Core Web Vitals checks will stop working until you add a new one.', 'agentstructor' ) ); ?>" data-agentic-confirm-danger>
 					<?php wp_nonce_field( 'agentic_api_key_nonce' ); ?>
 					<input type="hidden" name="agentic_api_action" value="delete">
 					<input type="hidden" name="agentic_api_slug" value="<?php echo esc_attr( $agentic_api_slug ); ?>">
@@ -169,6 +169,6 @@ if ( $agentic_edit_api_slug && isset( $agentic_third_party_apis[ $agentic_edit_a
 
 <div class="agentic-api-info">
 	<p>
-		<?php esc_html_e( 'API keys you add here are available to all of your agents. As you enable tool integrations that need their own credentials, configure their keys on this page and your agents will use them automatically.', 'siteloom' ); ?>
+		<?php esc_html_e( 'API keys you add here are available to all of your agents. As you enable tool integrations that need their own credentials, configure their keys on this page and your agents will use them automatically.', 'agentstructor' ); ?>
 	</p>
 </div>

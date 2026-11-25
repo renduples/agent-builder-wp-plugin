@@ -60,7 +60,7 @@ if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_uns
 					'changes' => array( 'id' => $agentic_delete_id ),
 				)
 			);
-			$agentic_notice = __( 'Shortcode deployment removed.', 'siteloom' );
+			$agentic_notice = __( 'Shortcode deployment removed.', 'agentstructor' );
 		}
 	}
 
@@ -71,8 +71,8 @@ if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_uns
 		if ( $agentic_row ) {
 			$agentic_row['enabled'] ? Deployments::disable( $agentic_toggle_id ) : Deployments::enable( $agentic_toggle_id );
 			$agentic_notice = $agentic_row['enabled']
-				? __( 'Shortcode deployment disabled.', 'siteloom' )
-				: __( 'Shortcode deployment enabled.', 'siteloom' );
+				? __( 'Shortcode deployment disabled.', 'agentstructor' )
+				: __( 'Shortcode deployment enabled.', 'agentstructor' );
 		}
 	}
 
@@ -83,7 +83,7 @@ if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_uns
 		$agentic_new_agent   = sanitize_key( wp_unslash( $_POST['agentic_sc_agent'] ?? '' ) );
 
 		if ( ! $agentic_new_label || ! $agentic_new_agent ) {
-			$agentic_error = __( 'Label and Agent are required.', 'siteloom' );
+			$agentic_error = __( 'Label and Agent are required.', 'agentstructor' );
 		} else {
 			$agentic_style  = in_array( $agentic_sc_style_in, $agentic_valid_sc_styles, true ) ? $agentic_sc_style_in : 'inline';
 			$agentic_new_id = Deployments::save(
@@ -117,7 +117,7 @@ if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_uns
 			$agentic_sc_string   = $agentic_created_row ? Deployments::build_shortcode_string( $agentic_created_row ) : '';
 			$agentic_notice      = sprintf(
 				/* translators: %s: shortcode string */
-				__( 'Shortcode created. Copy and paste it into any page, post, or widget: %s', 'siteloom' ),
+				__( 'Shortcode created. Copy and paste it into any page, post, or widget: %s', 'agentstructor' ),
 				$agentic_sc_string
 			);
 		}
@@ -132,7 +132,7 @@ if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_uns
 		$agentic_row         = Deployments::get( $agentic_upd_id );
 
 		if ( ! $agentic_upd_label || ! $agentic_upd_agent ) {
-			$agentic_error = __( 'Label and Agent are required.', 'siteloom' );
+			$agentic_error = __( 'Label and Agent are required.', 'agentstructor' );
 		} elseif ( $agentic_row && Deployments::SOURCE_ADMIN === $agentic_row['source'] ) {
 			$agentic_style = in_array( $agentic_sc_style_in, $agentic_valid_sc_styles, true ) ? $agentic_sc_style_in : 'inline';
 			Deployments::save(
@@ -156,7 +156,7 @@ if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_uns
 					'changes' => array( 'id' => $agentic_upd_id ),
 				)
 			);
-			$agentic_notice  = __( 'Shortcode deployment updated.', 'siteloom' );
+			$agentic_notice  = __( 'Shortcode deployment updated.', 'agentstructor' );
 			$agentic_edit_sc = 0;
 		}
 	}
@@ -185,15 +185,15 @@ if ( $agentic_edit_sc ) {
 
 $agentic_source_labels = array(
 	Deployments::SOURCE_ADMIN => array(
-		'label' => __( 'Admin', 'siteloom' ),
+		'label' => __( 'Admin', 'agentstructor' ),
 		'color' => '#2271b1',
 	),
 	Deployments::SOURCE_AUTO  => array(
-		'label' => __( 'Auto-detected', 'siteloom' ),
+		'label' => __( 'Auto-detected', 'agentstructor' ),
 		'color' => '#996800',
 	),
 	Deployments::SOURCE_CODE  => array(
-		'label' => __( 'Hardcoded', 'siteloom' ),
+		'label' => __( 'Hardcoded', 'agentstructor' ),
 		'color' => '#6d3f8a',
 	),
 );
@@ -210,25 +210,25 @@ $agentic_source_labels = array(
 <?php endif; ?>
 
 <!-- Existing Deployments -->
-<h2><?php esc_html_e( 'Shortcode Deployments', 'siteloom' ); ?></h2>
+<h2><?php esc_html_e( 'Shortcode Deployments', 'agentstructor' ); ?></h2>
 
 <?php if ( empty( $agent_builder_deployments ) ) : ?>
 <div class="notice notice-info agentic-table-mt-0">
-	<p><?php esc_html_e( 'No shortcode deployments yet. Use the form below to create one, or place [agentic_chat] in a page — it will be auto-detected here on first load.', 'siteloom' ); ?></p>
+	<p><?php esc_html_e( 'No shortcode deployments yet. Use the form below to create one, or place [agentic_chat] in a page — it will be auto-detected here on first load.', 'agentstructor' ); ?></p>
 </div>
 <?php else : ?>
 <div class="agentic-table-scroll">
 <table class="widefat striped agentic-table-min-900">
 	<thead>
 		<tr>
-			<th><?php esc_html_e( 'Label', 'siteloom' ); ?></th>
-			<th><?php esc_html_e( 'Agent', 'siteloom' ); ?></th>
-			<th><?php esc_html_e( 'Style', 'siteloom' ); ?></th>
-			<th><?php esc_html_e( 'Source', 'siteloom' ); ?></th>
-			<th><?php esc_html_e( 'Status', 'siteloom' ); ?></th>
-			<th class="agentic-col-200"><?php esc_html_e( 'Shortcode', 'siteloom' ); ?></th>
-			<th><?php esc_html_e( 'Created', 'siteloom' ); ?></th>
-			<th class="agentic-col-120"><?php esc_html_e( 'Actions', 'siteloom' ); ?></th>
+			<th><?php esc_html_e( 'Label', 'agentstructor' ); ?></th>
+			<th><?php esc_html_e( 'Agent', 'agentstructor' ); ?></th>
+			<th><?php esc_html_e( 'Style', 'agentstructor' ); ?></th>
+			<th><?php esc_html_e( 'Source', 'agentstructor' ); ?></th>
+			<th><?php esc_html_e( 'Status', 'agentstructor' ); ?></th>
+			<th class="agentic-col-200"><?php esc_html_e( 'Shortcode', 'agentstructor' ); ?></th>
+			<th><?php esc_html_e( 'Created', 'agentstructor' ); ?></th>
+			<th class="agentic-col-120"><?php esc_html_e( 'Actions', 'agentstructor' ); ?></th>
 		</tr>
 	</thead>
 	<tbody>
@@ -238,9 +238,9 @@ $agentic_source_labels = array(
 			$agentic_cfg          = $agentic_dep['config'];
 			$agentic_style_str    = $agentic_cfg['style'] ?? 'inline';
 			$agentic_style_labels = array(
-				'inline'  => __( 'Inline', 'siteloom' ),
-				'popup'   => __( 'Popup', 'siteloom' ),
-				'sidebar' => __( 'Sidebar', 'siteloom' ),
+				'inline'  => __( 'Inline', 'agentstructor' ),
+				'popup'   => __( 'Popup', 'agentstructor' ),
+				'sidebar' => __( 'Sidebar', 'agentstructor' ),
 			);
 			$agentic_agent_name   = $agentic_dep['agent_slug'];
 			if ( isset( $agentic_all_agents[ $agentic_dep['agent_slug'] ] ) ) {
@@ -262,14 +262,14 @@ $agentic_source_labels = array(
 			</td>
 			<td>
 				<?php if ( $agentic_dep['enabled'] ) : ?>
-					<span style="color:#00a32a;font-weight:600;">&#x25CF; <?php esc_html_e( 'Enabled', 'siteloom' ); ?></span>
+					<span style="color:#00a32a;font-weight:600;">&#x25CF; <?php esc_html_e( 'Enabled', 'agentstructor' ); ?></span>
 				<?php else : ?>
-					<span style="color:#787c82;">&#x25CF; <?php esc_html_e( 'Disabled', 'siteloom' ); ?></span>
+					<span style="color:#787c82;">&#x25CF; <?php esc_html_e( 'Disabled', 'agentstructor' ); ?></span>
 				<?php endif; ?>
 			</td>
 			<td>
 				<code class="agentic-sc-copyable" style="cursor:pointer;"
-					title="<?php esc_attr_e( 'Click to copy', 'siteloom' ); ?>"
+					title="<?php esc_attr_e( 'Click to copy', 'agentstructor' ); ?>"
 					data-shortcode="<?php echo esc_attr( $agentic_sc_string ); ?>">
 					<?php echo esc_html( $agentic_sc_string ); ?>
 				</code>
@@ -281,7 +281,7 @@ $agentic_source_labels = array(
 					<?php wp_nonce_field( 'agentic_manage_shortcodes' ); ?>
 					<input type="hidden" name="agentic_shortcode_id" value="<?php echo esc_attr( $agentic_dep['id'] ); ?>">
 					<button type="submit" name="agentic_toggle_shortcode" value="1" class="button button-small">
-						<?php echo $agentic_dep['enabled'] ? esc_html__( 'Disable', 'siteloom' ) : esc_html__( 'Enable', 'siteloom' ); ?>
+						<?php echo $agentic_dep['enabled'] ? esc_html__( 'Disable', 'agentstructor' ) : esc_html__( 'Enable', 'agentstructor' ); ?>
 					</button>
 				</form>
 				<?php if ( $agentic_is_admin ) : ?>
@@ -299,13 +299,13 @@ $agentic_source_labels = array(
 					);
 					?>
 							" class="button button-small">
-					<?php esc_html_e( 'Edit', 'siteloom' ); ?>
+					<?php esc_html_e( 'Edit', 'agentstructor' ); ?>
 				</a>
-				<form method="post" class="agentic-form-inline" data-agentic-confirm="<?php esc_attr_e( 'Remove this shortcode deployment?', 'siteloom' ); ?>" data-agentic-confirm-danger>
+				<form method="post" class="agentic-form-inline" data-agentic-confirm="<?php esc_attr_e( 'Remove this shortcode deployment?', 'agentstructor' ); ?>" data-agentic-confirm-danger>
 					<?php wp_nonce_field( 'agentic_manage_shortcodes' ); ?>
 					<input type="hidden" name="agentic_shortcode_id" value="<?php echo esc_attr( $agentic_dep['id'] ); ?>">
 					<button type="submit" name="agentic_delete_shortcode" value="1" class="button button-small button-link-delete">
-						<?php esc_html_e( 'Delete', 'siteloom' ); ?>
+						<?php esc_html_e( 'Delete', 'agentstructor' ); ?>
 					</button>
 				</form>
 				<?php endif; ?>
@@ -321,7 +321,7 @@ $agentic_source_labels = array(
 
 <!-- Edit Deployment -->
 <h2 class="agentic-shortcodes-h2">
-	<?php esc_html_e( 'Edit Deployment', 'siteloom' ); ?>
+	<?php esc_html_e( 'Edit Deployment', 'agentstructor' ); ?>
 	<a href="
 	<?php
 	echo esc_url(
@@ -334,29 +334,29 @@ $agentic_source_labels = array(
 		)
 	);
 	?>
-				" class="page-title-action agentic-ml-8"><?php esc_html_e( '&larr; Back', 'siteloom' ); ?></a>
+				" class="page-title-action agentic-ml-8"><?php esc_html_e( '&larr; Back', 'agentstructor' ); ?></a>
 </h2>
 
 	<?php if ( empty( $agentic_all_agents ) ) : ?>
-<div class="notice notice-warning"><p><?php esc_html_e( 'No active agents.', 'siteloom' ); ?></p></div>
+<div class="notice notice-warning"><p><?php esc_html_e( 'No active agents.', 'agentstructor' ); ?></p></div>
 	<?php else : ?>
 <form method="post">
 		<?php wp_nonce_field( 'agentic_manage_shortcodes' ); ?>
 	<input type="hidden" name="agentic_shortcode_id" value="<?php echo esc_attr( $agentic_editing_dep['id'] ); ?>">
 		<?php $agentic_form_data = agent_builder_sc_form_data( $agentic_editing_dep ); ?>
 		<?php include __DIR__ . '/deployment-shortcodes-form.php'; ?>
-		<?php submit_button( __( 'Save Changes', 'siteloom' ), 'primary', 'agentic_update_shortcode' ); ?>
+		<?php submit_button( __( 'Save Changes', 'agentstructor' ), 'primary', 'agentic_update_shortcode' ); ?>
 </form>
 	<?php endif; ?>
 
 <?php else : ?>
 
 <!-- Create New Deployment -->
-<h2 class="agentic-shortcodes-h2"><?php esc_html_e( 'Create New Deployment', 'siteloom' ); ?></h2>
+<h2 class="agentic-shortcodes-h2"><?php esc_html_e( 'Create New Deployment', 'agentstructor' ); ?></h2>
 
 	<?php if ( empty( $agentic_all_agents ) ) : ?>
 <div class="notice notice-warning">
-	<p><?php esc_html_e( 'No active agents. Activate at least one agent before creating a shortcode deployment.', 'siteloom' ); ?></p>
+	<p><?php esc_html_e( 'No active agents. Activate at least one agent before creating a shortcode deployment.', 'agentstructor' ); ?></p>
 </div>
 	<?php else : ?>
 <form method="post">
@@ -372,25 +372,25 @@ $agentic_source_labels = array(
 		);
 		?>
 		<?php include __DIR__ . '/deployment-shortcodes-form.php'; ?>
-		<?php submit_button( __( 'Create Shortcode', 'siteloom' ), 'primary', 'agentic_create_shortcode' ); ?>
+		<?php submit_button( __( 'Create Shortcode', 'agentstructor' ), 'primary', 'agentic_create_shortcode' ); ?>
 </form>
 	<?php endif; ?>
 
 <?php endif; ?>
 
 <div class="agentic-embed-note">
-	<h3><?php esc_html_e( 'How Shortcodes Work', 'siteloom' ); ?></h3>
+	<h3><?php esc_html_e( 'How Shortcodes Work', 'agentstructor' ); ?></h3>
 	<ul>
-		<li><?php esc_html_e( 'Paste the shortcode into any page, post, or text widget to embed an agent chat interface.', 'siteloom' ); ?></li>
+		<li><?php esc_html_e( 'Paste the shortcode into any page, post, or text widget to embed an agent chat interface.', 'agentstructor' ); ?></li>
 		<li>
-			<?php esc_html_e( 'Two shortcodes are available:', 'siteloom' ); ?>
+			<?php esc_html_e( 'Two shortcodes are available:', 'agentstructor' ); ?>
 			<ul class="agentic-list-circle">
-				<li><code>[agentic_chat]</code> — <?php esc_html_e( 'Full interactive chat with conversation history', 'siteloom' ); ?></li>
-				<li><code>[agentic_ask]</code> — <?php esc_html_e( 'One-shot query that displays a single response inline', 'siteloom' ); ?></li>
+				<li><code>[agentic_chat]</code> — <?php esc_html_e( 'Full interactive chat with conversation history', 'agentstructor' ); ?></li>
+				<li><code>[agentic_ask]</code> — <?php esc_html_e( 'One-shot query that displays a single response inline', 'agentstructor' ); ?></li>
 			</ul>
 		</li>
-		<li><?php esc_html_e( 'Shortcodes placed directly in theme or plugin files are auto-detected on first page load and shown here with source "Auto-detected" or "Hardcoded".', 'siteloom' ); ?></li>
-		<li><?php esc_html_e( 'All agent interactions via shortcodes are logged in the Audit Log.', 'siteloom' ); ?></li>
+		<li><?php esc_html_e( 'Shortcodes placed directly in theme or plugin files are auto-detected on first page load and shown here with source "Auto-detected" or "Hardcoded".', 'agentstructor' ); ?></li>
+		<li><?php esc_html_e( 'All agent interactions via shortcodes are logged in the Audit Log.', 'agentstructor' ); ?></li>
 	</ul>
 </div>
 

@@ -6,7 +6,7 @@
  *
  * @package    Agent_Builder
  * @subpackage Includes
- * @author     Siteloom Team <support@agentic-plugin.com>
+ * @author     AgentStructor Team <support@agentic-plugin.com>
  * @license    GPL-2.0-or-later https://www.gnu.org/licenses/gpl-2.0.html
  * @link       https://agentic-plugin.com
  * @since      0.1.0
@@ -230,7 +230,7 @@ class LLM_Client {
 		if ( 'agentic' === $this->provider && '' === (string) get_option( 'agent_builder_license_key', '' ) ) {
 			return new \WP_Error(
 				'agentic_license_missing',
-				__( 'The hosted Agentic AI connection has no license key, so requests would be rejected. Reconnect from Siteloom → Quick Start, or add your own provider key under Settings → Providers.', 'siteloom' )
+				__( 'The hosted Agentic AI connection has no license key, so requests would be rejected. Reconnect from AgentStructor → Quick Start, or add your own provider key under Settings → Providers.', 'agentstructor' )
 			);
 		}
 
@@ -326,12 +326,12 @@ class LLM_Client {
 
 			// Add status code context for common HTTP errors.
 			if ( 401 === $status ) {
-				$error_message = __( 'Invalid API key. Check it under Siteloom → Settings → Providers.', 'siteloom' );
+				$error_message = __( 'Invalid API key. Check it under AgentStructor → Settings → Providers.', 'agentstructor' );
 			} elseif ( 402 === $status || 429 === $status ) {
 				return self::quota_error( $status, (string) $error_message );
 			} elseif ( 503 === $status ) {
 				$retry_after   = (int) ( $data['retry_after'] ?? 10 );
-				$error_message = ! empty( $error_message ) ? $error_message : __( 'The AI model is currently busy. Please try again shortly.', 'siteloom' );
+				$error_message = ! empty( $error_message ) ? $error_message : __( 'The AI model is currently busy. Please try again shortly.', 'agentstructor' );
 				return new \WP_Error(
 					'model_busy',
 					$error_message,
@@ -441,12 +441,12 @@ class LLM_Client {
 	 */
 	private static function quota_error( int $status, string $server_msg ): \WP_Error {
 		if ( 402 === $status ) {
-			$msg = __( 'You are out of AI credits, so the agent could not answer.', 'siteloom' );
+			$msg = __( 'You are out of AI credits, so the agent could not answer.', 'agentstructor' );
 			if ( current_user_can( 'manage_options' ) ) {
-				$msg .= ' ' . __( 'Add credits or connect your own AI provider under Siteloom → Settings → Providers.', 'siteloom' );
+				$msg .= ' ' . __( 'Add credits or connect your own AI provider under AgentStructor → Settings → Providers.', 'agentstructor' );
 			}
 		} else {
-			$msg = '' !== $server_msg ? $server_msg : __( 'Rate limit reached. Please wait a moment and try again.', 'siteloom' );
+			$msg = '' !== $server_msg ? $server_msg : __( 'Rate limit reached. Please wait a moment and try again.', 'agentstructor' );
 		}
 
 		return new \WP_Error(
@@ -506,7 +506,7 @@ class LLM_Client {
 		if ( 'agentic' === $this->provider && '' === (string) get_option( 'agent_builder_license_key', '' ) ) {
 			return new \WP_Error(
 				'agentic_license_missing',
-				__( 'The hosted Agentic AI connection has no license key, so requests would be rejected. Reconnect from Siteloom → Quick Start, or add your own provider key under Settings → Providers.', 'siteloom' )
+				__( 'The hosted Agentic AI connection has no license key, so requests would be rejected. Reconnect from AgentStructor → Quick Start, or add your own provider key under Settings → Providers.', 'agentstructor' )
 			);
 		}
 

@@ -19,9 +19,9 @@ Use these tools to work with spreadsheet files in the WordPress uploads director
 
 ## File Paths
 
-All file paths are **relative to the WordPress uploads directory** (e.g. `"2024/01/export.xlsx"` or `"siteloom/exports/report.xlsx"`).
+All file paths are **relative to the WordPress uploads directory** (e.g. `"2024/01/export.xlsx"` or `"agentstructor/exports/report.xlsx"`).
 
-When creating new files, use the `siteloom/exports/` subfolder with a descriptive filename.
+When creating new files, use the `agentstructor/exports/` subfolder with a descriptive filename.
 
 ## Workflows
 

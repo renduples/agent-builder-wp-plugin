@@ -37,6 +37,9 @@ class Uninstall_Cleanup {
 	 */
 	public static function data_directories(): array {
 		$dirs = array( File_Manager::data_dir() );
+		foreach ( File_Manager::previous_data_dirs() as $dir ) {
+			$dirs[] = $dir;
+		}
 		foreach ( array_keys( File_Manager::LEGACY_DIRS ) as $kind ) {
 			$dirs[] = File_Manager::legacy_dir( $kind );
 		}
@@ -46,7 +49,8 @@ class Uninstall_Cleanup {
 	/**
 	 * Recursively delete the given data directories with WP_Filesystem.
 	 *
-	 * Only the uploads data root itself, or a path directly inside
+	 * Only the uploads data root itself, an earlier data root next to it
+	 * (File_Manager::PREVIOUS_DATA_SLUGS), or a path directly inside
 	 * WP_CONTENT_DIR whose name is one of the legacy agentic-* folders, is
 	 * touched, so a filtered or mistaken list can never reach anything else.
 	 *
@@ -58,15 +62,19 @@ class Uninstall_Cleanup {
 		$removed   = array();
 		$content   = trailingslashit( wp_normalize_path( WP_CONTENT_DIR ) );
 		$data_root = untrailingslashit( wp_normalize_path( File_Manager::data_dir() ) );
+		$uploads   = trailingslashit( dirname( $data_root ) );
 
 		$dirs = array_filter(
 			$dirs,
-			static function ( $dir ) use ( $content, $data_root ): bool {
+			static function ( $dir ) use ( $content, $data_root, $uploads ): bool {
 				$dir = untrailingslashit( wp_normalize_path( (string) $dir ) );
 				if ( ! is_dir( $dir ) || is_link( $dir ) ) {
 					return false;
 				}
 				if ( $dir === $data_root ) {
+					return true;
+				}
+				if ( dirname( $dir ) . '/' === $uploads && in_array( basename( $dir ), File_Manager::PREVIOUS_DATA_SLUGS, true ) ) {
 					return true;
 				}
 				return dirname( $dir ) . '/' === $content

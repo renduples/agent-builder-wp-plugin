@@ -138,7 +138,7 @@ WEBCONFIG;
 	 * put_guarded_contents()).
 	 */
 	private const PRIVATE_HTACCESS = <<<'HTACCESS'
-# Siteloom private storage — never served over the web.
+# AgentStructor private storage — never served over the web.
 Options -Indexes
 <IfModule mod_authz_core.c>
 	Require all denied
@@ -189,7 +189,7 @@ WEBCONFIG;
 	 * WordPress.org slug (data goes in a folder named after the plugin), so
 	 * existing data only ever has to be moved once.
 	 */
-	public const DATA_SLUG = 'siteloom';
+	public const DATA_SLUG = 'agentstructor';
 
 	/**
 	 * Subfolders of the data root that must never be served over HTTP. Each
@@ -223,8 +223,18 @@ WEBCONFIG;
 	);
 
 	/**
+	 * Earlier names of the data root folder inside the uploads directory,
+	 * from before the plugin was renamed. Only read as a migration source
+	 * (Storage_Migration moves each one into data_dir()) and, while a move
+	 * is incomplete, as a read-only fallback. Never written to.
+	 *
+	 * @var string[]
+	 */
+	public const PREVIOUS_DATA_SLUGS = array( 'siteloom' );
+
+	/**
 	 * Absolute path of the plugin's data root:
-	 * {uploads basedir}/siteloom (no trailing slash).
+	 * {uploads basedir}/agentstructor (no trailing slash).
 	 *
 	 * Resolved at call time with wp_upload_dir() — never hard-coded — so it
 	 * follows the upload_path option, the upload_dir filter and, on
@@ -305,7 +315,7 @@ WEBCONFIG;
 
 	/**
 	 * Path of an export relative to the uploads basedir, as stored in tool
-	 * results and checked by Result_Card ("siteloom/exports/<name>").
+	 * results and checked by Result_Card ("agentstructor/exports/<name>").
 	 *
 	 * @param string $filename Bare file name.
 	 * @return string
@@ -325,6 +335,27 @@ WEBCONFIG;
 			return '';
 		}
 		return untrailingslashit( WP_CONTENT_DIR ) . '/' . self::LEGACY_DIRS[ $kind ];
+	}
+
+	/**
+	 * Earlier data roots in the uploads directory (see PREVIOUS_DATA_SLUGS)
+	 * that still exist on this site.
+	 *
+	 * @return array<string, string> Absolute paths, keyed by folder name.
+	 */
+	public static function previous_data_dirs(): array {
+		$base = untrailingslashit( (string) wp_upload_dir( null, false )['basedir'] );
+		$dirs = array();
+		foreach ( self::PREVIOUS_DATA_SLUGS as $slug ) {
+			if ( self::DATA_SLUG === $slug ) {
+				continue;
+			}
+			$dir = $base . '/' . $slug;
+			if ( is_dir( $dir ) ) {
+				$dirs[ $slug ] = $dir;
+			}
+		}
+		return $dirs;
 	}
 
 	/**
@@ -355,13 +386,19 @@ WEBCONFIG;
 
 	/**
 	 * Directories to READ a kind of data from, highest priority first: the
-	 * data root subfolder, then the legacy folder while it still exists.
+	 * data root subfolder, then an earlier data root (see
+	 * PREVIOUS_DATA_SLUGS) and the legacy folder while they still exist.
 	 *
 	 * @param string $kind 'agents', 'knowledge' or 'backups'.
 	 * @return string[]
 	 */
 	public static function read_dirs( string $kind ): array {
-		$dirs   = array( self::data_path( $kind ) );
+		$dirs = array( self::data_path( $kind ) );
+		foreach ( self::previous_data_dirs() as $previous ) {
+			if ( is_dir( $previous . '/' . $kind ) ) {
+				$dirs[] = $previous . '/' . $kind;
+			}
+		}
 		$legacy = self::legacy_fallback_dir( $kind );
 		if ( null !== $legacy ) {
 			$dirs[] = $legacy;

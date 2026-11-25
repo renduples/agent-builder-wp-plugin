@@ -1,0 +1,45 @@
+{
+  "translation-revision-date": "2026-08-20 16:00+0000",
+  "generator": "WP-CLI/2.12.0",
+  "source": "src/dashboard-activity/index.js",
+  "domain": "messages",
+  "locale_data": {
+    "messages": {
+      "": {
+        "domain": "messages",
+        "lang": "ja",
+        "plural-forms": "nplurals=1; plural=0;"
+      },
+      "Activity": [
+        "アクティビティ"
+      ],
+      "View Activity →": [
+        "アクティビティを表示 →"
+      ],
+      "Could not load activity.": [
+        "アクティビティを読み込めませんでした。"
+      ],
+      "Total Actions": [
+        "総アクション数"
+      ],
+      "Tokens Used": [
+        "使用トークン数"
+      ],
+      "Est. Cost": [
+        "推定コスト"
+      ],
+      "Estimated Usage": [
+        "推定使用量"
+      ],
+      "Active Agents": [
+        "有効なエージェント"
+      ],
+      "Uploaded Agents": [
+        "アップロードされたエージェント"
+      ],
+      "User-Created Agents": [
+        "ユーザー作成のエージェント"
+      ]
+    }
+  }
+}

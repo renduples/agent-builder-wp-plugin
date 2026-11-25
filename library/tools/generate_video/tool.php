@@ -182,7 +182,7 @@ class Generate_Video extends \Agentic\Tool_Base {
 		$user_id = $api_key;
 
 		if ( empty( $api_key ) ) {
-			return array( 'error' => 'Agentic Video Generation requires connecting an Agentic AI account — go to Siteloom → Settings → Providers and connect Agentic AI.' );
+			return array( 'error' => 'Agentic Video Generation requires connecting an Agentic AI account — go to AgentStructor → Settings → Providers and connect Agentic AI.' );
 		}
 
 		return array(

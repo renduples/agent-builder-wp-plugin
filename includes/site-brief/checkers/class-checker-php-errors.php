@@ -54,7 +54,7 @@ class Checker_Php_Errors extends Site_Brief_Checker {
 	 * {@inheritdoc}
 	 */
 	public function get_label(): string {
-		return __( 'PHP errors', 'siteloom' );
+		return __( 'PHP errors', 'agentstructor' );
 	}
 
 	/**
@@ -95,7 +95,7 @@ class Checker_Php_Errors extends Site_Brief_Checker {
 				array(
 					'title'            => sprintf(
 						/* translators: %d: fatal count. */
-						_n( '%d PHP fatal in debug.log', '%d PHP fatals in debug.log', $total, 'siteloom' ),
+						_n( '%d PHP fatal in debug.log', '%d PHP fatals in debug.log', $total, 'agentstructor' ),
 						$total
 					),
 					'evidence'         => implode( ' | ', $sample ),
@@ -104,7 +104,7 @@ class Checker_Php_Errors extends Site_Brief_Checker {
 						'sample'  => $sample,
 						'size_kb' => $result['log_size_kb'] ?? 0,
 					),
-					'proposed_action'  => __( 'Review debug.log on the host. Site Brief does not edit PHP files.', 'siteloom' ),
+					'proposed_action'  => __( 'Review debug.log on the host. Site Brief does not edit PHP files.', 'agentstructor' ),
 					'action_risk'      => 'none',
 					'approve'          => array( 'type' => 'none' ),
 					'raw'              => array( 'total' => $total ),

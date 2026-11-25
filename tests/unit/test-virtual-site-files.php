@@ -214,7 +214,7 @@ class Test_Virtual_Site_Files extends TestCase {
 		$this->assertSame( array( 'robots.txt', 'llms.txt' ), $state['files'] );
 		$this->assertFalse( $state['dismissed'] );
 
-		// Only on Siteloom screens.
+		// Only on AgentStructor screens.
 		set_current_screen( 'dashboard' );
 		ob_start();
 		Virtual_Site_Files::show_legacy_root_files_notice();

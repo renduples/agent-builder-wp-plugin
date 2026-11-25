@@ -1,12 +1,12 @@
 # Agentic Library – 12 Pre-Built Agents
 
-> Ready-to-use AI agents that ship with the free Siteloom plugin, and a guide for building your own.
+> Ready-to-use AI agents that ship with the free AgentStructor plugin, and a guide for building your own.
 
 ---
 
 ## What's Inside
 
-**12 production-ready agents** ship with Siteloom (WordPress.org free edition). Each is fully functional out of the box and can be customised.
+**12 production-ready agents** ship with AgentStructor (WordPress.org free edition). Each is fully functional out of the box and can be customised.
 
 | Slug | Name |
 |------|------|
@@ -138,7 +138,7 @@ Helps manage site people and accounts.
 ---
 
 ### WordPress Assistant (`wordpress-assistant/`)
-Your guide to WordPress and Siteloom for new users.
+Your guide to WordPress and AgentStructor for new users.
 - Answers questions about the plugin
 - Helps with settings and getting started
 - Recommends the right specialist agent
@@ -150,7 +150,7 @@ Your guide to WordPress and Siteloom for new users.
 ## Quick Start
 
 1. **Activate in WordPress:**
-   - Go to **Siteloom → Agents**
+   - Go to **AgentStructor → Agents**
    - All 12 bundled agents appear automatically
    - Click **Activate** on any agent
 
@@ -173,7 +173,7 @@ Your guide to WordPress and Siteloom for new users.
 
 ## Customising Agents
 
-Each agent here is plain data (JSON + a text prompt, no PHP) — edit any bundled agent's files directly and Siteloom picks up the change (a bundled agent's `abilities.json` needs re-signing after an edit; see below). See the [Developer Documentation](https://agentic-plugin.com/documentation/#doc-developers) for the full reference.
+Each agent here is plain data (JSON + a text prompt, no PHP) — edit any bundled agent's files directly and AgentStructor picks up the change (a bundled agent's `abilities.json` needs re-signing after an edit; see below). See the [Developer Documentation](https://agentic-plugin.com/documentation/#doc-developers) for the full reference.
 
 ---
 
@@ -253,7 +253,7 @@ library/agents/my-agent/
 | `min_interval` | no | Rate limit in seconds — at most one execution per listener per window (default `60`; `0` disables; negative coerces to `60`; capped at `86400`). Fires skipped by the rate limit are counted, not audit-logged. |
 | `arg_filter` | no | `{ "arg": n, "pattern": "…" }` or `{ "arg": n, "in": [ "…", … ] }` — run the listener only when hook argument `n` matches the PCRE `pattern`, or equals one of the `in` allowlist values (strict string comparison; an empty `in` matches nothing). A high-frequency hook like `updated_option` **must** declare one, or it would otherwise hit the approval gate for every unrelated option write. A filter with neither or both forms, a non-string `in` item, or an invalid pattern is dropped, so a typo falls back to running on every event rather than silently never running. |
 
-Event listeners are guarded against the feedback loop that once let a listener on `updated_option` hang a site: they never fire for options/transients Siteloom writes itself (the `agentic_*` and `agent_builder_*` prefixes), and a gated listener that keeps firing the same tool reuses its one pending proposal instead of minting a new one per event.
+Event listeners are guarded against the feedback loop that once let a listener on `updated_option` hang a site: they never fire for options/transients AgentStructor writes itself (the `agentic_*` and `agent_builder_*` prefixes), and a gated listener that keeps firing the same tool reuses its one pending proposal instead of minting a new one per event.
 
 ### `abilities.json` — the security boundary
 

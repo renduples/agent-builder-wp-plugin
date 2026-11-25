@@ -127,7 +127,7 @@ class Legacy_Relay_Passwords {
 	}
 
 	/**
-	 * One-time, dismissible notice on Siteloom screens after a revocation.
+	 * One-time, dismissible notice on AgentStructor screens after a revocation.
 	 *
 	 * @return void
 	 */
@@ -155,16 +155,16 @@ class Legacy_Relay_Passwords {
 					sprintf(
 						/* translators: %d: number of Application Passwords removed. */
 						_n(
-							'Siteloom removed %d old relay connection password. If you connect AI apps over MCP, create a new Application Password in your profile.',
-							'Siteloom removed %d old relay connection passwords. If you connect AI apps over MCP, create a new Application Password in your profile.',
+							'AgentStructor removed %d old relay connection password. If you connect AI apps over MCP, create a new Application Password in your profile.',
+							'AgentStructor removed %d old relay connection passwords. If you connect AI apps over MCP, create a new Application Password in your profile.',
 							$count,
-							'siteloom'
+							'agentstructor'
 						),
 						$count
 					)
 				);
 				?>
-				<a href="<?php echo esc_url( admin_url( 'profile.php#application-passwords-section' ) ); ?>"><?php esc_html_e( 'Open your profile', 'siteloom' ); ?></a>
+				<a href="<?php echo esc_url( admin_url( 'profile.php#application-passwords-section' ) ); ?>"><?php esc_html_e( 'Open your profile', 'agentstructor' ); ?></a>
 			</p>
 		</div>
 		<?php

@@ -72,7 +72,7 @@ class Html_To_Docx extends \Agentic\Tool_Base {
 	 * @return string
 	 */
 	public function get_unavailable_reason(): string {
-		return __( 'Word document tools require the PhpWord library, which is not installed on this site.', 'siteloom' );
+		return __( 'Word document tools require the PhpWord library, which is not installed on this site.', 'agentstructor' );
 	}
 
 	public function execute( array $arguments ): array {

@@ -236,7 +236,7 @@ class Run_Prompt_Tests extends \Agentic\Tool_Base {
 	 * @return string
 	 */
 	public function get_unavailable_reason(): string {
-		return __( 'No prompt-test catalog was found on this site. The catalog normally ships with the plugin at library/prompt-tests/most_popular_prompts.md.', 'siteloom' );
+		return __( 'No prompt-test catalog was found on this site. The catalog normally ships with the plugin at library/prompt-tests/most_popular_prompts.md.', 'agentstructor' );
 	}
 
 	/**

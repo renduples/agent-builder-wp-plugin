@@ -76,12 +76,12 @@ class Checker_Cron extends Site_Brief_Checker {
 				array(
 					'title'            => sprintf(
 						/* translators: %d: overdue cron events. */
-						_n( '%d WP-Cron event is overdue', '%d WP-Cron events are overdue', $overdue, 'siteloom' ),
+						_n( '%d WP-Cron event is overdue', '%d WP-Cron events are overdue', $overdue, 'agentstructor' ),
 						$overdue
 					),
-					'evidence'         => __( 'Scheduled events are running late. Site Brief does not trigger cron in this version.', 'siteloom' ),
+					'evidence'         => __( 'Scheduled events are running late. Site Brief does not trigger cron in this version.', 'agentstructor' ),
 					'evidence_payload' => array( 'overdue' => $overdue ),
-					'proposed_action'  => __( 'Check whether WP-Cron is turned off in wp-config.php and that your host runs a real cron job. Nothing is changed.', 'siteloom' ),
+					'proposed_action'  => __( 'Check whether WP-Cron is turned off in wp-config.php and that your host runs a real cron job. Nothing is changed.', 'agentstructor' ),
 					'action_risk'      => 'none',
 					'approve'          => array( 'type' => 'none' ),
 					'raw'              => array( 'overdue' => $overdue ),

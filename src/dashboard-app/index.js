@@ -1,5 +1,5 @@
 /**
- * Full Siteloom dashboard — all cards as React + @wordpress/components.
+ * Full AgentStructor dashboard — all cards as React + @wordpress/components.
  */
 import {
 	createRoot,
@@ -24,22 +24,22 @@ const BRIEF_PATH = 'agentic/v1/site-brief';
 const REFRESH_MS = 30000;
 
 const BRIEF_CHECKER_LABELS = {
-	plugin_updates: __( 'Plugin updates', 'siteloom' ),
-	site_health: __( 'Health', 'siteloom' ),
-	comments_queue: __( 'Comments', 'siteloom' ),
-	oversized_media: __( 'Media', 'siteloom' ),
-	forms: __( 'Forms', 'siteloom' ),
-	wc_unpaid: __( 'Store', 'siteloom' ),
+	plugin_updates: __( 'Plugin updates', 'agentstructor' ),
+	site_health: __( 'Health', 'agentstructor' ),
+	comments_queue: __( 'Comments', 'agentstructor' ),
+	oversized_media: __( 'Media', 'agentstructor' ),
+	forms: __( 'Forms', 'agentstructor' ),
+	wc_unpaid: __( 'Store', 'agentstructor' ),
 };
 
 const BRIEF_CATEGORY_LABELS = {
-	security: __( 'Security', 'siteloom' ),
-	performance: __( 'Performance', 'siteloom' ),
-	media: __( 'Media', 'siteloom' ),
-	forms: __( 'Forms', 'siteloom' ),
-	maintenance: __( 'Maintenance', 'siteloom' ),
-	woocommerce: __( 'WooCommerce', 'siteloom' ),
-	general: __( 'General', 'siteloom' ),
+	security: __( 'Security', 'agentstructor' ),
+	performance: __( 'Performance', 'agentstructor' ),
+	media: __( 'Media', 'agentstructor' ),
+	forms: __( 'Forms', 'agentstructor' ),
+	maintenance: __( 'Maintenance', 'agentstructor' ),
+	woocommerce: __( 'WooCommerce', 'agentstructor' ),
+	general: __( 'General', 'agentstructor' ),
 };
 
 function formatBriefTime( iso ) {
@@ -74,7 +74,7 @@ function SiteBriefSettings( { canRun } ) {
 			.then( ( d ) => setCheckers( d.checkers || [] ) )
 			.catch( ( e ) => {
 				setSettingsError(
-					e.message || __( 'Could not load checks.', 'siteloom' )
+					e.message || __( 'Could not load checks.', 'agentstructor' )
 				);
 			} );
 	}, [ open, checkers ] );
@@ -102,7 +102,7 @@ function SiteBriefSettings( { canRun } ) {
 			.catch( ( e ) => {
 				setSettingsError(
 					e.message ||
-						__( 'Could not save that change.', 'siteloom' )
+						__( 'Could not save that change.', 'agentstructor' )
 				);
 			} )
 			.finally( () => setSaving( false ) );
@@ -119,8 +119,8 @@ function SiteBriefSettings( { canRun } ) {
 		<div className="agentic-site-brief-settings">
 			<Button variant="link" onClick={ () => setOpen( ! open ) }>
 				{ open
-					? __( 'Hide checks', 'siteloom' )
-					: __( 'Configure checks', 'siteloom' ) }
+					? __( 'Hide checks', 'agentstructor' )
+					: __( 'Configure checks', 'agentstructor' ) }
 			</Button>
 			{ open && (
 				<div className="agentic-site-brief-settings-panel">
@@ -149,7 +149,7 @@ function SiteBriefSettings( { canRun } ) {
 												? undefined
 												: __(
 														'Not applicable on this site.',
-														'siteloom'
+														'agentstructor'
 												  )
 										}
 										onChange={ ( value ) =>
@@ -194,7 +194,7 @@ function SiteBriefPanel() {
 			.catch( ( e ) => {
 				setError(
 					e.message ||
-						__( 'Could not load Site Brief.', 'siteloom' )
+						__( 'Could not load Site Brief.', 'agentstructor' )
 				);
 			} );
 	}, [] );
@@ -230,7 +230,7 @@ function SiteBriefPanel() {
 			} )
 			.catch( ( e ) => {
 				setError(
-					e.message || __( 'Scan failed.', 'siteloom' )
+					e.message || __( 'Scan failed.', 'agentstructor' )
 				);
 			} )
 			.finally( () => {
@@ -263,7 +263,7 @@ function SiteBriefPanel() {
 			.catch( ( e ) => {
 				setError(
 					e.message ||
-						__( 'Could not update that card.', 'siteloom' )
+						__( 'Could not update that card.', 'agentstructor' )
 				);
 			} )
 			.finally( () => setBusyId( '' ) );
@@ -281,12 +281,12 @@ function SiteBriefPanel() {
 	return (
 		<div className="agentic-card agentic-site-brief">
 			<div className="agentic-card-header agentic-flex-between">
-				<h2>{ __( 'Site Brief', 'siteloom' ) }</h2>
+				<h2>{ __( 'Site Brief', 'agentstructor' ) }</h2>
 			</div>
 			<p className="agentic-site-brief-lede" id="agentic-site-brief-lede">
 				{ __(
 					'A read-only look at this site. Assign an agent to investigate a finding together — nothing changes until you agree.',
-					'siteloom'
+					'agentstructor'
 				) }
 			</p>
 
@@ -359,7 +359,7 @@ function SiteBriefPanel() {
 						aria-disabled={ canRun ? undefined : 'true' }
 						aria-describedby="agentic-site-brief-lede"
 					>
-						{ __( 'Scan this site', 'siteloom' ) }
+						{ __( 'Scan this site', 'agentstructor' ) }
 					</button>
 				</p>
 			) }
@@ -371,7 +371,7 @@ function SiteBriefPanel() {
 							/* translators: %s: last scan time. */
 							__(
 								'No urgent items. Last scan %s.',
-								'siteloom'
+								'agentstructor'
 							),
 							formatBriefTime( brief.last_run )
 						) }
@@ -381,7 +381,7 @@ function SiteBriefPanel() {
 						onClick={ runScan }
 						disabled={ ! canRun }
 					>
-						{ __( 'Scan again', 'siteloom' ) }
+						{ __( 'Scan again', 'agentstructor' ) }
 					</Button>
 				</div>
 			) }
@@ -413,7 +413,7 @@ function SiteBriefPanel() {
 										<summary>
 											{ __(
 												'Advanced',
-												'siteloom'
+												'agentstructor'
 											) }
 										</summary>
 										<p>
@@ -441,7 +441,7 @@ function SiteBriefPanel() {
 												/* translators: 1: agent display name, 2: assignment timestamp. */
 												__(
 													'Assigned to %s on %s',
-													'siteloom'
+													'agentstructor'
 												),
 												card.assigned.agent_label ||
 													card.assigned.agent,
@@ -455,7 +455,7 @@ function SiteBriefPanel() {
 											variant="primary"
 											label={ __(
 												'Open the recommended agent in chat with this finding, to investigate and fix it together',
-												'siteloom'
+												'agentstructor'
 											) }
 											showTooltip
 											disabled={
@@ -468,7 +468,7 @@ function SiteBriefPanel() {
 										>
 											{ __(
 												'Assign Agent',
-												'siteloom'
+												'agentstructor'
 											) }
 										</Button>
 									) }
@@ -476,7 +476,7 @@ function SiteBriefPanel() {
 										variant="secondary"
 										label={ __(
 											'Dismiss to hide this card. It will not return unless the finding changes.',
-											'siteloom'
+											'agentstructor'
 										) }
 										showTooltip
 										disabled={
@@ -486,20 +486,20 @@ function SiteBriefPanel() {
 											act( card, 'dismiss' )
 										}
 									>
-										{ __( 'Dismiss', 'siteloom' ) }
+										{ __( 'Dismiss', 'agentstructor' ) }
 									</Button>
 									<Button
 										variant="tertiary"
 										label={ __(
 											'Not now leaves it for later. It may reappear on the next scan.',
-											'siteloom'
+											'agentstructor'
 										) }
 										showTooltip
 										onClick={ () =>
 											act( card, 'not_now' )
 										}
 									>
-										{ __( 'Not now', 'siteloom' ) }
+										{ __( 'Not now', 'agentstructor' ) }
 									</Button>
 								</div>
 							</li>
@@ -513,7 +513,7 @@ function SiteBriefPanel() {
 							>
 								{ sprintf(
 									/* translators: %d: hidden card count. */
-									__( 'Show all (%d)', 'siteloom' ),
+									__( 'Show all (%d)', 'agentstructor' ),
 									cards.length
 								) }
 							</Button>
@@ -525,7 +525,7 @@ function SiteBriefPanel() {
 							onClick={ runScan }
 							disabled={ ! canRun }
 						>
-							{ __( 'Scan again', 'siteloom' ) }
+							{ __( 'Scan again', 'agentstructor' ) }
 						</Button>
 					</p>
 				</>
@@ -537,7 +537,7 @@ function SiteBriefPanel() {
 						/* translators: 1: order count, 2: revenue, 3: currency. */
 						__(
 							'Store this month: %1$s orders, %2$s %3$s.',
-							'siteloom'
+							'agentstructor'
 						),
 						Number( brief.store_stats.total_orders || 0 ),
 						Number( brief.store_stats.total_revenue || 0 ),
@@ -561,7 +561,7 @@ function AdminPageFooter( { footer } ) {
 		f.policy ||
 		__(
 			'The dashboard summarizes agents, approvals, activity, and providers at a glance.',
-			'siteloom'
+			'agentstructor'
 		);
 
 	return (
@@ -572,17 +572,17 @@ function AdminPageFooter( { footer } ) {
 						{ policy }{ ' ' }
 					</span>
 				) }
-				{ __( 'Need help?', 'siteloom' ) }{ ' ' }
+				{ __( 'Need help?', 'agentstructor' ) }{ ' ' }
 				<a
 					href={ supportUrl }
 					target="_blank"
 					rel="noopener noreferrer"
 				>
-					{ __( 'Visit our Support Center', 'siteloom' ) }
+					{ __( 'Visit our Support Center', 'agentstructor' ) }
 				</a>
 				{ ' | ' }
 				<a href={ docUrl } target="_blank" rel="noopener noreferrer">
-					{ __( 'Documentation', 'siteloom' ) }
+					{ __( 'Documentation', 'agentstructor' ) }
 				</a>
 			</span>
 			<span className="agentic-page-footer-right">
@@ -594,7 +594,7 @@ function AdminPageFooter( { footer } ) {
 					target="_blank"
 					rel="noopener noreferrer"
 				>
-					{ __( 'Terms of Service', 'siteloom' ) }
+					{ __( 'Terms of Service', 'agentstructor' ) }
 				</a>
 				{ ' | ' }
 				<a
@@ -605,7 +605,7 @@ function AdminPageFooter( { footer } ) {
 					target="_blank"
 					rel="noopener noreferrer"
 				>
-					{ __( 'Privacy Policy', 'siteloom' ) }
+					{ __( 'Privacy Policy', 'agentstructor' ) }
 				</a>
 				{ ' | ' }
 				<a
@@ -615,7 +615,7 @@ function AdminPageFooter( { footer } ) {
 					target="_blank"
 					rel="noopener noreferrer"
 				>
-					{ __( 'GDPR Policy', 'siteloom' ) }
+					{ __( 'GDPR Policy', 'agentstructor' ) }
 				</a>
 			</span>
 		</div>
@@ -672,7 +672,7 @@ function Card( {
 			{ draggable && (
 				<span
 					className="agentic-card-drag-handle"
-					title={ __( 'Drag to rearrange', 'siteloom' ) }
+					title={ __( 'Drag to rearrange', 'agentstructor' ) }
 					draggable
 					onDragStart={ ( e ) =>
 						onDragStart && onDragStart( e, cardId )
@@ -682,7 +682,7 @@ function Card( {
 					tabIndex={ 0 }
 					aria-label={ __(
 						'Drag to rearrange dashboard card',
-						'siteloom'
+						'agentstructor'
 					) }
 				>
 					⋮⋮
@@ -735,10 +735,10 @@ function StatusCard( { data, dnd } ) {
 		<Card
 			cardId="status"
 			{ ...dnd }
-			title={ __( 'Status', 'siteloom' ) }
+			title={ __( 'Status', 'agentstructor' ) }
 		>
 			<div className="agentic-status-grid">
-				<StatusTile label={ __( 'License', 'siteloom' ) }>
+				<StatusTile label={ __( 'License', 'agentstructor' ) }>
 					{ licClass ? (
 						<span className={ licClass }>
 							● { lic.label }
@@ -747,20 +747,20 @@ function StatusCard( { data, dnd } ) {
 						lic.label
 					) }
 				</StatusTile>
-				<StatusTile label={ __( 'Version', 'siteloom' ) }>
+				<StatusTile label={ __( 'Version', 'agentstructor' ) }>
 					{ data.version }
 				</StatusTile>
 				<StatusTile
-					label={ __( 'Schema', 'siteloom' ) }
+					label={ __( 'Schema', 'agentstructor' ) }
 					tip={ __(
-						'The version of Siteloom’s database structure. Updates automatically when needed — you don’t need to do anything here.',
-						'siteloom'
+						'The version of AgentStructor’s database structure. Updates automatically when needed — you don’t need to do anything here.',
+						'agentstructor'
 					) }
 				>
 					<span className="agentic-status-active">●</span>{ ' ' }
 					{ data.schema_version }
 				</StatusTile>
-				<StatusTile label={ __( 'Pending Jobs', 'siteloom' ) }>
+				<StatusTile label={ __( 'Pending Jobs', 'agentstructor' ) }>
 					<span className={ pendClass }>●</span>{ ' ' }
 					{ jobs.pending ?? 0 }
 					{ jobs.abandoned > 0 && (
@@ -768,23 +768,23 @@ function StatusCard( { data, dnd } ) {
 							{ ' ' }({ jobs.abandoned }{ ' ' }
 							{ __(
 								'abandoned — auto-recovered',
-								'siteloom'
+								'agentstructor'
 							) }
 							)
 						</span>
 					) }
 				</StatusTile>
-				<StatusTile label={ __( 'Running Jobs', 'siteloom' ) }>
+				<StatusTile label={ __( 'Running Jobs', 'agentstructor' ) }>
 					<span className={ runClass }>●</span>{ ' ' }
 					{ jobs.processing ?? 0 }
 					{ jobs.stuck > 0 && (
 						<span className="agentic-status-error">
 							{ ' ' }({ jobs.stuck }{ ' ' }
-							{ __( 'stuck — auto-recovered', 'siteloom' ) })
+							{ __( 'stuck — auto-recovered', 'agentstructor' ) })
 						</span>
 					) }
 				</StatusTile>
-				<StatusTile label={ __( 'Completed Jobs', 'siteloom' ) }>
+				<StatusTile label={ __( 'Completed Jobs', 'agentstructor' ) }>
 					<span className="agentic-status-active">●</span>{ ' ' }
 					{ jobs.completed ?? 0 }
 				</StatusTile>
@@ -802,24 +802,24 @@ function SafetyCard( { data, dnd } ) {
 		<Card
 			cardId="safety"
 			{ ...dnd }
-			title={ __( 'Approvals & Backups', 'siteloom' ) }
+			title={ __( 'Approvals & Backups', 'agentstructor' ) }
 			headerLink={
 				<a
 					className="agentic-card-header-link"
 					href={ data.urls?.approvals }
 				>
-					{ __( 'View Approvals →', 'siteloom' ) }
+					{ __( 'View Approvals →', 'agentstructor' ) }
 				</a>
 			}
 		>
 			<div className="agentic-status-grid">
-				<StatusTile label={ __( 'Pending Approvals', 'siteloom' ) }>
+				<StatusTile label={ __( 'Pending Approvals', 'agentstructor' ) }>
 					<a href={ data.urls?.approvals }>
 						<span className={ pendingClass }>●</span>{ ' ' }
 						{ formatInt( pending ) }
 					</a>
 				</StatusTile>
-				<StatusTile label={ __( 'Completed Approvals', 'siteloom' ) }>
+				<StatusTile label={ __( 'Completed Approvals', 'agentstructor' ) }>
 					<a href={ data.urls?.approvals }>
 						<span className="agentic-status-active">●</span>{ ' ' }
 						{ formatInt( safety.completed_approvals ) }
@@ -827,13 +827,13 @@ function SafetyCard( { data, dnd } ) {
 				</StatusTile>
 			</div>
 			<div className="agentic-status-grid agentic-mt-8">
-				<StatusTile label={ __( 'Files Backed Up', 'siteloom' ) }>
+				<StatusTile label={ __( 'Files Backed Up', 'agentstructor' ) }>
 					<a href={ data.urls?.backups }>
 						<span className="agentic-status-active">●</span>{ ' ' }
 						{ formatInt( safety.file_backups ) }
 					</a>
 				</StatusTile>
-				<StatusTile label={ __( 'DB Tables Backed Up', 'siteloom' ) }>
+				<StatusTile label={ __( 'DB Tables Backed Up', 'agentstructor' ) }>
 					<a href={ data.urls?.backups }>
 						<span className="agentic-status-active">●</span>{ ' ' }
 						{ formatInt( safety.table_backups ) }
@@ -844,14 +844,14 @@ function SafetyCard( { data, dnd } ) {
 				<p className="agentic-text-muted">
 					{ sprintf(
 						/* translators: %s: number of pending approvals. */
-						__( '%s waiting for your OK.', 'siteloom' ),
+						__( '%s waiting for your OK.', 'agentstructor' ),
 						formatInt( pending )
 					) }
 				</p>
 			) }
 			<p className="agentic-text-muted">
 				<a href={ data.urls?.safety_center || '#' }>
-					{ __( 'Open Safety Center →', 'siteloom' ) }
+					{ __( 'Open Safety Center →', 'agentstructor' ) }
 				</a>
 			</p>
 		</Card>
@@ -871,24 +871,24 @@ function TasksCard( { data, dnd } ) {
 		<Card
 			cardId="tasks"
 			{ ...dnd }
-			title={ __( 'Tasks', 'siteloom' ) }
+			title={ __( 'Tasks', 'agentstructor' ) }
 			headerLink={
 				<a
 					className="agentic-card-header-link"
 					href={ data.urls?.tasks }
 				>
-					{ __( 'Open Tasks →', 'siteloom' ) }
+					{ __( 'Open Tasks →', 'agentstructor' ) }
 				</a>
 			}
 		>
 			<div className="agentic-status-grid">
-				<StatusTile label={ __( 'Active', 'siteloom' ) }>
+				<StatusTile label={ __( 'Active', 'agentstructor' ) }>
 					<a href={ data.urls?.tasks }>
 						<span className="agentic-status-active">●</span>{ ' ' }
 						{ formatInt( tasks.active ) }
 					</a>
 				</StatusTile>
-				<StatusTile label={ __( 'Waiting on you', 'siteloom' ) }>
+				<StatusTile label={ __( 'Waiting on you', 'agentstructor' ) }>
 					<a href={ data.urls?.tasks }>
 						<span className={ waitingClass }>●</span>{ ' ' }
 						{ formatInt( tasks.waiting ) }
@@ -900,7 +900,7 @@ function TasksCard( { data, dnd } ) {
 				<p className="agentic-text-muted">
 					{ __(
 						'No tasks running. Assign one and you’ll be pinged when it finishes.',
-						'siteloom'
+						'agentstructor'
 					) }
 				</p>
 			) : (
@@ -932,7 +932,7 @@ function TasksCard( { data, dnd } ) {
 						/* translators: %s: number of additional tasks not shown */
 						__(
 							'%s more — open Tasks to see them all.',
-							'siteloom'
+							'agentstructor'
 						),
 						formatInt( total - runs.length )
 					) }
@@ -955,7 +955,7 @@ function AgentReadyCard( { data, dnd, onScanned } ) {
 			.then( () => ( onScanned ? onScanned() : null ) )
 			.catch( ( e ) => {
 				setScanError(
-					e.message || __( 'Scan failed.', 'siteloom' )
+					e.message || __( 'Scan failed.', 'agentstructor' )
 				);
 			} )
 			.finally( () => setScanning( false ) );
@@ -968,25 +968,25 @@ function AgentReadyCard( { data, dnd, onScanned } ) {
 			<Card
 				cardId="agent-ready"
 				{ ...dnd }
-				title={ __( 'Site Passport', 'siteloom' ) }
+				title={ __( 'Site Passport', 'agentstructor' ) }
 				headerLink={
 					<a
 						className="agentic-card-header-link"
 						href={ data.urls?.agent_ready }
 					>
-						{ __( 'View Details →', 'siteloom' ) }
+						{ __( 'View Details →', 'agentstructor' ) }
 					</a>
 				}
 			>
 				<div className="agentic-status-grid">
-					<StatusTile label={ __( 'Site Score', 'siteloom' ) }>
-						{ __( 'Not scanned yet', 'siteloom' ) }
+					<StatusTile label={ __( 'Site Score', 'agentstructor' ) }>
+						{ __( 'Not scanned yet', 'agentstructor' ) }
 					</StatusTile>
 				</div>
 				<p className="agentic-text-muted">
 					{ __(
 						'Check how ready this site is for AI agents. The scan runs on this site only and changes nothing.',
-						'siteloom'
+						'agentstructor'
 					) }
 				</p>
 				{ scanError && (
@@ -1002,8 +1002,8 @@ function AgentReadyCard( { data, dnd, onScanned } ) {
 						disabled={ scanning }
 					>
 						{ scanning
-							? __( 'Scanning…', 'siteloom' )
-							: __( 'Scan now', 'siteloom' ) }
+							? __( 'Scanning…', 'agentstructor' )
+							: __( 'Scan now', 'agentstructor' ) }
 					</Button>
 				</p>
 			</Card>
@@ -1020,18 +1020,18 @@ function AgentReadyCard( { data, dnd, onScanned } ) {
 		<Card
 			cardId="agent-ready"
 			{ ...dnd }
-			title={ __( 'Site Passport', 'siteloom' ) }
+			title={ __( 'Site Passport', 'agentstructor' ) }
 			headerLink={
 				<a
 					className="agentic-card-header-link"
 					href={ data.urls?.agent_ready }
 				>
-					{ __( 'View Details →', 'siteloom' ) }
+					{ __( 'View Details →', 'agentstructor' ) }
 				</a>
 			}
 		>
 			<div className="agentic-status-grid">
-				<StatusTile label={ __( 'Site Score', 'siteloom' ) }>
+				<StatusTile label={ __( 'Site Score', 'agentstructor' ) }>
 					<span className={ gradeClass }>●</span>{ ' ' }
 					{ overall } ({ ready.grade || '—' })
 				</StatusTile>
@@ -1041,7 +1041,7 @@ function AgentReadyCard( { data, dnd, onScanned } ) {
 					{ ready.top_fix.detail }
 					{ ' ' }
 					<a href={ data.urls?.agent_ready }>
-						{ __( 'Fix now →', 'siteloom' ) }
+						{ __( 'Fix now →', 'agentstructor' ) }
 					</a>
 				</p>
 			) }
@@ -1059,24 +1059,24 @@ function ActivityCard( { data, activity, dnd } ) {
 		<Card
 			cardId="activity"
 			{ ...dnd }
-			title={ __( 'Activity', 'siteloom' ) }
+			title={ __( 'Activity', 'agentstructor' ) }
 			headerLink={
 				<a
 					className="agentic-card-header-link"
 					href={ data.urls?.activity }
 				>
-					{ __( 'View Activity →', 'siteloom' ) }
+					{ __( 'View Activity →', 'agentstructor' ) }
 				</a>
 			}
 		>
 			<div className="agentic-metrics-grid">
 				<Metric
-					label={ __( 'Total Actions', 'siteloom' ) }
+					label={ __( 'Total Actions', 'agentstructor' ) }
 					value={ formatInt( a.actions ) }
 					href={ data.urls?.activity }
 				/>
 				<Metric
-					label={ __( 'Tokens Used', 'siteloom' ) }
+					label={ __( 'Tokens Used', 'agentstructor' ) }
 					value={ formatInt( a.tokens ) }
 					href={ usageHref }
 				/>
@@ -1084,25 +1084,25 @@ function ActivityCard( { data, activity, dnd } ) {
 					<Metric
 						label={
 							data.is_pro
-								? __( 'Est. Cost', 'siteloom' )
-								: __( 'Estimated Usage', 'siteloom' )
+								? __( 'Est. Cost', 'agentstructor' )
+								: __( 'Estimated Usage', 'agentstructor' )
 						}
 						value={ '$' + Number( a.cost ).toFixed( 4 ) }
 						href={ usageHref }
 					/>
 				) }
 				<Metric
-					label={ __( 'Active Agents', 'siteloom' ) }
+					label={ __( 'Active Agents', 'agentstructor' ) }
 					value={ formatInt( agents.active ) }
 					href={ data.urls?.admin + 'admin.php?page=agentic-agents' }
 				/>
 				<Metric
-					label={ __( 'Uploaded Agents', 'siteloom' ) }
+					label={ __( 'Uploaded Agents', 'agentstructor' ) }
 					value={ formatInt( agents.uploaded ) }
 					href={ data.urls?.admin + 'admin.php?page=agentic-agents' }
 				/>
 				<Metric
-					label={ __( 'User-Created Agents', 'siteloom' ) }
+					label={ __( 'User-Created Agents', 'agentstructor' ) }
 					value={ formatInt( agents.user_created ) }
 					href={ data.urls?.admin + 'admin.php?page=agentic-agents' }
 				/>
@@ -1143,7 +1143,7 @@ function ProvidersCard( { data, dnd } ) {
 						ok: false,
 						message:
 							err.message ||
-							__( 'Test failed.', 'siteloom' ),
+							__( 'Test failed.', 'agentstructor' ),
 					},
 				} ) )
 			);
@@ -1153,21 +1153,21 @@ function ProvidersCard( { data, dnd } ) {
 		<Card
 			cardId="providers"
 			{ ...dnd }
-			title={ __( 'Connected Providers', 'siteloom' ) }
+			title={ __( 'Connected Providers', 'agentstructor' ) }
 			headerLink={
 				<a
 					className="agentic-card-header-link"
 					href={ data.urls?.providers }
 				>
-					{ __( 'Manage Providers →', 'siteloom' ) }
+					{ __( 'Manage Providers →', 'agentstructor' ) }
 				</a>
 			}
 		>
 			{ ! rows.length ? (
 				<p className="agentic-mt-12">
-					{ __( 'No AI providers connected.', 'siteloom' ) }{ ' ' }
+					{ __( 'No AI providers connected.', 'agentstructor' ) }{ ' ' }
 					<a href={ data.urls?.admin + 'admin.php?page=agentic-setup' }>
-						{ __( 'Run the Setup Wizard', 'siteloom' ) }
+						{ __( 'Run the Setup Wizard', 'agentstructor' ) }
 					</a>
 				</p>
 			) : (
@@ -1190,7 +1190,7 @@ function ProvidersCard( { data, dnd } ) {
 										<span className="agentic-provider-k">
 											{ __(
 												'Provider',
-												'siteloom'
+												'agentstructor'
 											) }
 										</span>
 										<span className="agentic-provider-name">
@@ -1199,7 +1199,7 @@ function ProvidersCard( { data, dnd } ) {
 									</div>
 									<div className="agentic-provider-line">
 										<span className="agentic-provider-k">
-											{ __( 'Model', 'siteloom' ) }
+											{ __( 'Model', 'agentstructor' ) }
 										</span>
 										<span className="agentic-provider-model">
 											{ p.model || '—' }
@@ -1222,7 +1222,7 @@ function ProvidersCard( { data, dnd } ) {
 								</div>
 								{ p.is_default && (
 									<span className="agentic-provider-badge">
-										{ __( 'Default', 'siteloom' ) }
+										{ __( 'Default', 'agentstructor' ) }
 									</span>
 								) }
 								<button
@@ -1232,8 +1232,8 @@ function ProvidersCard( { data, dnd } ) {
 									onClick={ () => testProvider( p.slug ) }
 								>
 									{ t?.testing
-										? __( 'Testing…', 'siteloom' )
-										: __( 'Test', 'siteloom' ) }
+										? __( 'Testing…', 'agentstructor' )
+										: __( 'Test', 'agentstructor' ) }
 								</button>
 							</div>
 						);
@@ -1258,9 +1258,9 @@ function QuickActionsCard( { data, onSaveQuickActions, mutate, dnd } ) {
 		const msg = enable
 			? __(
 					'EMERGENCY STOP: deactivate and log agent states, cancel all jobs, and disconnect providers. Continue?',
-					'siteloom'
+					'agentstructor'
 			  )
-			: __( 'Turn off emergency stop?', 'siteloom' );
+			: __( 'Turn off emergency stop?', 'agentstructor' );
 		if ( ! window.confirm( msg ) ) {
 			return;
 		}
@@ -1272,7 +1272,7 @@ function QuickActionsCard( { data, onSaveQuickActions, mutate, dnd } ) {
 					window.alert(
 						__(
 							'Emergency stop restore finished with warnings:',
-							'siteloom'
+							'agentstructor'
 						) +
 							'\n\n' +
 							warnings.join( '\n' )
@@ -1325,30 +1325,30 @@ function QuickActionsCard( { data, onSaveQuickActions, mutate, dnd } ) {
 		<Card
 			cardId="quick-actions"
 			{ ...dnd }
-			title={ __( 'Quick Actions', 'siteloom' ) }
+			title={ __( 'Quick Actions', 'agentstructor' ) }
 			headerLink={
 				<button
 					type="button"
 					className="agentic-card-header-link"
 					onClick={ () => setManage( ( m ) => ! m ) }
 				>
-					{ __( 'Manage Actions →', 'siteloom' ) }
+					{ __( 'Manage Actions →', 'agentstructor' ) }
 				</button>
 			}
 		>
 			{ data.emergency_stop ? (
 				<p className="agentic-mb-12">
-					{ __( 'All agents are stopped —', 'siteloom' ) }{ ' ' }
+					{ __( 'All agents are stopped —', 'agentstructor' ) }{ ' ' }
 					<a href={ data.urls?.safety_center }>
-						{ __( 'resume in Safety Center', 'siteloom' ) }
+						{ __( 'resume in Safety Center', 'agentstructor' ) }
 					</a>
 				</p>
 			) : (
 				! data.is_configured && (
 					<p className="agentic-mb-12">
-						{ __( 'Chat agent offline —', 'siteloom' ) }{ ' ' }
+						{ __( 'Chat agent offline —', 'agentstructor' ) }{ ' ' }
 						<a href={ data.urls?.signup }>
-							{ __( 'Configure now', 'siteloom' ) }
+							{ __( 'Configure now', 'agentstructor' ) }
 						</a>
 					</p>
 				)
@@ -1359,17 +1359,17 @@ function QuickActionsCard( { data, onSaveQuickActions, mutate, dnd } ) {
 					<p className="description agentic-mb-12">
 						{ __(
 							'Choose which links appear in Quick Actions. Setup Wizard is always available.',
-							'siteloom'
+							'agentstructor'
 						) }
 					</p>
 					<ul className="agentic-manage-actions-list">
 						{ catalog.map( ( item ) => {
 							const notes = [];
 							if ( item.advanced ) {
-								notes.push( __( 'Advanced', 'siteloom' ) );
+								notes.push( __( 'Advanced', 'agentstructor' ) );
 							}
 							if ( item.locked ) {
-								notes.push( __( 'Required', 'siteloom' ) );
+								notes.push( __( 'Required', 'agentstructor' ) );
 							}
 							const checked =
 								item.locked || selected.includes( item.slug );
@@ -1413,15 +1413,15 @@ function QuickActionsCard( { data, onSaveQuickActions, mutate, dnd } ) {
 							onClick={ save }
 						>
 							{ saving
-								? __( 'Saving…', 'siteloom' )
-								: __( 'Save Quick Actions', 'siteloom' ) }
+								? __( 'Saving…', 'agentstructor' )
+								: __( 'Save Quick Actions', 'agentstructor' ) }
 						</button>
 						<button
 							type="button"
 							className="button"
 							onClick={ () => setManage( false ) }
 						>
-							{ __( 'Cancel', 'siteloom' ) }
+							{ __( 'Cancel', 'agentstructor' ) }
 						</button>
 					</p>
 				</div>
@@ -1455,10 +1455,10 @@ function QuickActionsCard( { data, onSaveQuickActions, mutate, dnd } ) {
 			<div className="agentic-quick-actions-emergency">
 				<div className="agentic-updates-row">
 					<span className="agentic-mode-label agentic-emergency-label">
-						{ __( 'Disable All Agents', 'siteloom' ) }
+						{ __( 'Disable All Agents', 'agentstructor' ) }
 						{ data.emergency_stop && (
 							<span className="agentic-emergency-badge">
-								{ __( 'ACTIVE', 'siteloom' ) }
+								{ __( 'ACTIVE', 'agentstructor' ) }
 							</span>
 						) }
 					</span>
@@ -1476,11 +1476,11 @@ function QuickActionsCard( { data, onSaveQuickActions, mutate, dnd } ) {
 				</div>
 				<span className="agentic-mode-hint agentic-emergency-stop-hint">
 					<strong className="agentic-emergency-stop-text">
-						{ __( 'Emergency stop', 'siteloom' ) }
+						{ __( 'Emergency stop', 'agentstructor' ) }
 					</strong>
 					{ __(
 						': deactivate and log agent states, cancels all jobs and disconnects providers.',
-						'siteloom'
+						'agentstructor'
 					) }
 				</span>
 			</div>
@@ -1509,20 +1509,20 @@ function InterfaceCard( { data, mutate, dnd } ) {
 		<Card
 			cardId="interface"
 			{ ...dnd }
-			title={ __( 'Interface Settings', 'siteloom' ) }
+			title={ __( 'Interface Settings', 'agentstructor' ) }
 			headerLink={
 				<a
 					className="agentic-card-header-link"
 					href={ data.urls?.interface }
 				>
-					{ __( 'Manage Interface →', 'siteloom' ) }
+					{ __( 'Manage Interface →', 'agentstructor' ) }
 				</a>
 			}
 			className="agentic-settings-card"
 		>
 			<div className="agentic-interface-section agentic-mode-toggle">
 				<span className="agentic-mode-label">
-					{ __( 'Default interface:', 'siteloom' ) }
+					{ __( 'Default interface:', 'agentstructor' ) }
 				</span>
 				<button
 					type="button"
@@ -1533,7 +1533,7 @@ function InterfaceCard( { data, mutate, dnd } ) {
 					disabled={ busy }
 					onClick={ () => setMode( 'basic' ) }
 				>
-					{ __( 'Basic', 'siteloom' ) }
+					{ __( 'Basic', 'agentstructor' ) }
 				</button>
 				<button
 					type="button"
@@ -1544,12 +1544,12 @@ function InterfaceCard( { data, mutate, dnd } ) {
 					disabled={ busy }
 					onClick={ () => setMode( 'advanced' ) }
 				>
-					{ __( 'Advanced', 'siteloom' ) }
+					{ __( 'Advanced', 'agentstructor' ) }
 				</button>
 				<span className="agentic-mode-hint agentic-text-muted">
 					{ __(
 						'Used by any screen you have not set individually. Tools, Approvals, and Activity each have their own Basic/Advanced switch now.',
-						'siteloom'
+						'agentstructor'
 					) }
 				</span>
 				<button
@@ -1561,7 +1561,7 @@ function InterfaceCard( { data, mutate, dnd } ) {
 							! window.confirm(
 								__(
 									'Reset every screen back to your default interface? Any screen you switched individually will lose that override.',
-									'siteloom'
+									'agentstructor'
 								)
 							)
 						) {
@@ -1577,7 +1577,7 @@ function InterfaceCard( { data, mutate, dnd } ) {
 				>
 					{ __(
 						'Reset all screens to my default',
-						'siteloom'
+						'agentstructor'
 					) }
 				</button>
 			</div>
@@ -1588,7 +1588,7 @@ function InterfaceCard( { data, mutate, dnd } ) {
 						<span className="agentic-mode-label">
 							{ __(
 								'Automatic Agent Updates',
-								'siteloom'
+								'agentstructor'
 							) }
 						</span>
 						<label className="agentic-switch">
@@ -1606,7 +1606,7 @@ function InterfaceCard( { data, mutate, dnd } ) {
 					<span className="agentic-mode-hint agentic-text-muted">
 						{ __(
 							'Keep installed agents updated automatically. Opt out any time.',
-							'siteloom'
+							'agentstructor'
 						) }
 					</span>
 				</div>
@@ -1622,12 +1622,12 @@ function GettingStartedCard( { data, dnd } ) {
 		<Card
 			cardId="getting-started"
 			{ ...dnd }
-			title={ __( 'Getting Started', 'siteloom' ) }
+			title={ __( 'Getting Started', 'agentstructor' ) }
 		>
 			<p className="agentic-text-muted agentic-mb-12">
 				{ sprintf(
 					/* translators: 1: done count, 2: total */
-					__( '%1$d of %2$d steps complete', 'siteloom' ),
+					__( '%1$d of %2$d steps complete', 'agentstructor' ),
 					done,
 					steps.length
 				) }
@@ -1714,7 +1714,7 @@ function DashboardApp() {
 			.catch( ( e ) => {
 				setError(
 					e.message ||
-						__( 'Could not load dashboard.', 'siteloom' )
+						__( 'Could not load dashboard.', 'agentstructor' )
 				);
 				setLoading( false );
 			} );
@@ -1844,7 +1844,7 @@ function DashboardApp() {
 		return (
 			<div className="wrap agentic-admin">
 				<p>
-					<Spinner /> { __( 'Loading dashboard…', 'siteloom' ) }
+					<Spinner /> { __( 'Loading dashboard…', 'agentstructor' ) }
 				</p>
 			</div>
 		);
@@ -1854,7 +1854,7 @@ function DashboardApp() {
 		return (
 			<div className="wrap agentic-admin">
 				<Notice status="error" isDismissible={ false }>
-					{ error || __( 'Dashboard unavailable.', 'siteloom' ) }
+					{ error || __( 'Dashboard unavailable.', 'agentstructor' ) }
 				</Notice>
 			</div>
 		);
@@ -1948,12 +1948,12 @@ function DashboardApp() {
 						className="agentic-icon-sm"
 						alt=""
 					/>{ ' ' }
-					Siteloom
+					AgentStructor
 				</h1>
 				<div className="agentic-dashboard-layout-actions">
 					{ layoutSaving && (
 						<span className="agentic-text-muted">
-							{ __( 'Saving layout…', 'siteloom' ) }
+							{ __( 'Saving layout…', 'agentstructor' ) }
 						</span>
 					) }
 					{ layoutIsCustom && (
@@ -1963,11 +1963,11 @@ function DashboardApp() {
 							onClick={ resetLayout }
 							disabled={ layoutSaving }
 						>
-							{ __( 'Reset layout', 'siteloom' ) }
+							{ __( 'Reset layout', 'agentstructor' ) }
 						</button>
 					) }
 					<span className="agentic-dashboard-drag-hint agentic-text-muted">
-						{ __( 'Drag ⋮⋮ to rearrange cards', 'siteloom' ) }
+						{ __( 'Drag ⋮⋮ to rearrange cards', 'agentstructor' ) }
 					</span>
 				</div>
 			</div>
@@ -1980,16 +1980,16 @@ function DashboardApp() {
 						<strong>
 							{ __(
 								'Emergency stop is ACTIVE',
-								'siteloom'
+								'agentstructor'
 							) }
 						</strong>
 						{ ' — ' }
 						{ __(
 							'All agents are deactivated, jobs are cancelled, and LLM providers are disconnected. Chat and agent activation are blocked.',
-							'siteloom'
+							'agentstructor'
 						) }{ ' ' }
 						<a href={ data.urls?.interface }>
-							{ __( 'Manage Interface', 'siteloom' ) }
+							{ __( 'Manage Interface', 'agentstructor' ) }
 						</a>
 					</span>
 				</div>

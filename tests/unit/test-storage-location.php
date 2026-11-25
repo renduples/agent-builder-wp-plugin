@@ -294,6 +294,40 @@ class Test_Storage_Location extends TestCase {
 	}
 
 	/**
+	 * An earlier uploads data root (from before the rename) is merged into
+	 * the current one, removed once empty, stays readable until then, is
+	 * listed for uninstall, and a second run changes nothing.
+	 */
+	public function test_migration_moves_previous_data_root(): void {
+		$previous = untrailingslashit( wp_upload_dir( null, false )['basedir'] ) . '/' . File_Manager::PREVIOUS_DATA_SLUGS[0];
+		wp_mkdir_p( $previous . '/agents/prev-agent' );
+		wp_mkdir_p( $previous . '/knowledge' );
+		file_put_contents( $previous . '/agents/prev-agent/agent.json', '{"name":"Prev"}' );
+		file_put_contents( $previous . '/knowledge/prev-knowledge.txt', 'previous' );
+		file_put_contents( $previous . '/index.php', '<?php // Silence.' );
+
+		$this->assertArrayHasKey( File_Manager::PREVIOUS_DATA_SLUGS[0], File_Manager::previous_data_dirs() );
+		$this->assertContains( $previous . '/knowledge', File_Manager::read_dirs( 'knowledge' ) );
+		$this->assertContains( $previous, \Agentic\Uninstall_Cleanup::data_directories() );
+
+		Storage_Migration::maybe_run( true );
+
+		$this->assertDirectoryDoesNotExist( $previous );
+		$this->assertSame( array(), File_Manager::previous_data_dirs() );
+		$this->assertFileExists( File_Manager::agents_dir() . '/prev-agent/agent.json' );
+		$this->assertFileExists( File_Manager::knowledge_dir() . '/prev-knowledge.txt' );
+		$this->assertSame( Storage_Migration::VERSION, (int) get_option( Storage_Migration::MIGRATED_OPTION ) );
+		$this->assertSame( array(), Storage_Migration::remaining_legacy_dirs() );
+
+		$second = Storage_Migration::maybe_run( true );
+		$this->assertArrayNotHasKey( 'previous:' . File_Manager::PREVIOUS_DATA_SLUGS[0], $second );
+		$this->assertFileExists( File_Manager::agents_dir() . '/prev-agent/agent.json' );
+
+		$this->delete_directory( File_Manager::agents_dir() . '/prev-agent' );
+		wp_delete_file( File_Manager::knowledge_dir() . '/prev-knowledge.txt' );
+	}
+
+	/**
 	 * A name already taken at the destination with different content is left
 	 * in the old folder, which stays readable as a fallback.
 	 */
@@ -424,7 +458,7 @@ class Test_Storage_Location extends TestCase {
 	public function test_plugin_never_defines_disallow_file_edit(): void {
 		$root  = rtrim( AGENT_BUILDER_DIR, '/' );
 		$files = array_merge(
-			array( $root . '/siteloom.php', $root . '/uninstall.php' ),
+			array( $root . '/agentstructor.php', $root . '/uninstall.php' ),
 			(array) glob( $root . '/includes/*.php' ),
 			(array) glob( $root . '/includes/*/*.php' ),
 			(array) glob( $root . '/library/tools/*/tool.php' ),

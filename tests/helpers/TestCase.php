@@ -14,7 +14,7 @@ namespace Agentic\Tests;
 use WP_UnitTestCase;
 
 /**
- * Base test case for Siteloom tests.
+ * Base test case for AgentStructor tests.
  */
 class TestCase extends WP_UnitTestCase {
 
@@ -143,7 +143,7 @@ class TestCase extends WP_UnitTestCase {
 
 	/**
 	 * Create a minimal agent with an abilities.json under \Agentic\File_Manager::agents_dir()
-	 * (<uploads>/siteloom/agents/<slug>/), for tests exercising
+	 * (<uploads>/agentstructor/agents/<slug>/), for tests exercising
 	 * Abilities_Manifest resolution against a real manifest file.
 	 *
 	 * @param string $agent_id Agent slug.

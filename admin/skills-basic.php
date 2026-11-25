@@ -27,11 +27,11 @@ if ( ! $agentic_skills_assistant ) {
 	?>
 	<div class="notice notice-info inline">
 		<p>
-			<?php esc_html_e( 'The Skills Assistant is still activating.', 'siteloom' ); ?>
+			<?php esc_html_e( 'The Skills Assistant is still activating.', 'agentstructor' ); ?>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-agents' ) ); ?>">
-				<?php esc_html_e( 'Check the Agents page', 'siteloom' ); ?>
+				<?php esc_html_e( 'Check the Agents page', 'agentstructor' ); ?>
 			</a>
-			<?php esc_html_e( 'or switch to Advanced above in the meantime.', 'siteloom' ); ?>
+			<?php esc_html_e( 'or switch to Advanced above in the meantime.', 'agentstructor' ); ?>
 		</p>
 	</div>
 	<?php

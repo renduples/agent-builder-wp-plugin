@@ -306,7 +306,7 @@ class Routines_REST {
 		if ( empty( $result['ok'] ) ) {
 			return new \WP_Error(
 				'rest_routine_action_failed',
-				(string) ( $result['error'] ?? __( 'Routine action failed.', 'siteloom' ) ),
+				(string) ( $result['error'] ?? __( 'Routine action failed.', 'agentstructor' ) ),
 				array( 'status' => 400 )
 			);
 		}
@@ -371,7 +371,7 @@ class Routines_REST {
 		if ( empty( $result['ok'] ) ) {
 			return new \WP_Error(
 				'rest_invalid',
-				(string) ( $result['error'] ?? __( 'Invalid routine.', 'siteloom' ) ),
+				(string) ( $result['error'] ?? __( 'Invalid routine.', 'agentstructor' ) ),
 				array( 'status' => 400 )
 			);
 		}
@@ -392,7 +392,7 @@ class Routines_REST {
 	private static function not_found(): \WP_Error {
 		return new \WP_Error(
 			'rest_routine_not_found',
-			__( 'Routine not found.', 'siteloom' ),
+			__( 'Routine not found.', 'agentstructor' ),
 			array( 'status' => 404 )
 		);
 	}

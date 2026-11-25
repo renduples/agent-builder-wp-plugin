@@ -111,7 +111,7 @@ class Skill_Recorder_REST {
 		if ( empty( $result['ok'] ) ) {
 			return new \WP_Error(
 				'rest_skill_recording_start_failed',
-				(string) ( $result['error'] ?? __( 'Could not start recording.', 'siteloom' ) ),
+				(string) ( $result['error'] ?? __( 'Could not start recording.', 'agentstructor' ) ),
 				array( 'status' => 400 )
 			);
 		}
@@ -131,7 +131,7 @@ class Skill_Recorder_REST {
 		if ( empty( $result['ok'] ) ) {
 			return new \WP_Error(
 				'rest_skill_recording_stop_failed',
-				(string) ( $result['error'] ?? __( 'No recording to stop.', 'siteloom' ) ),
+				(string) ( $result['error'] ?? __( 'No recording to stop.', 'agentstructor' ) ),
 				array( 'status' => 400 )
 			);
 		}

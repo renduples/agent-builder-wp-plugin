@@ -164,11 +164,11 @@ class Approval_Rules_REST {
 		$data = self::payload( $request );
 
 		if ( '' === trim( (string) ( $data['rule_text'] ?? '' ) ) ) {
-			return new \WP_Error( 'missing_rule_text', __( 'A rule description is required.', 'siteloom' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'missing_rule_text', __( 'A rule description is required.', 'agentstructor' ), array( 'status' => 400 ) );
 		}
 
 		if ( '' === (string) ( $data['effect'] ?? '' ) ) {
-			return new \WP_Error( 'missing_effect', __( 'An effect (ask, allow, or deny) is required.', 'siteloom' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'missing_effect', __( 'An effect (ask, allow, or deny) is required.', 'agentstructor' ), array( 'status' => 400 ) );
 		}
 
 		$error = Approval_Rules::validate( $data );
@@ -180,7 +180,7 @@ class Approval_Rules_REST {
 
 		$id = Approval_Rules::create( $data );
 		if ( 0 === $id ) {
-			return new \WP_Error( 'create_failed', __( 'The rule could not be saved.', 'siteloom' ), array( 'status' => 500 ) );
+			return new \WP_Error( 'create_failed', __( 'The rule could not be saved.', 'agentstructor' ), array( 'status' => 500 ) );
 		}
 
 		return new \WP_REST_Response( array( 'rule' => Approval_Rules::get( $id ) ), 201 );
@@ -203,7 +203,7 @@ class Approval_Rules_REST {
 		}
 
 		if ( ! Approval_Rules::update( $id, $data ) ) {
-			return new \WP_Error( 'not_found', __( 'Rule not found.', 'siteloom' ), array( 'status' => 404 ) );
+			return new \WP_Error( 'not_found', __( 'Rule not found.', 'agentstructor' ), array( 'status' => 404 ) );
 		}
 
 		return new \WP_REST_Response( array( 'rule' => Approval_Rules::get( $id ) ), 200 );
@@ -219,7 +219,7 @@ class Approval_Rules_REST {
 		$id = (int) $request->get_param( 'id' );
 
 		if ( ! Approval_Rules::delete( $id ) ) {
-			return new \WP_Error( 'not_found', __( 'Rule not found.', 'siteloom' ), array( 'status' => 404 ) );
+			return new \WP_Error( 'not_found', __( 'Rule not found.', 'agentstructor' ), array( 'status' => 404 ) );
 		}
 
 		return new \WP_REST_Response(

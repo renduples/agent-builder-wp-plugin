@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Handles all asset enqueuing for the Siteloom plugin:
+ * Handles all asset enqueuing for the AgentStructor plugin:
  * admin page styles, admin-bar overlay, frontend chat, modal widget,
  * Gutenberg editor sidebar, and chat theme CSS variable overrides.
  */
@@ -56,12 +56,12 @@ class Chat_Assets {
 			'agentic-ui',
 			'agenticUIL10n',
 			array(
-				'ok'            => __( 'OK', 'siteloom' ),
-				'confirm'       => __( 'Confirm', 'siteloom' ),
-				'cancel'        => __( 'Cancel', 'siteloom' ),
-				'dismiss'       => __( 'Dismiss', 'siteloom' ),
-				'areYouSure'    => __( 'Are you sure?', 'siteloom' ),
-				'notifications' => __( 'Notifications', 'siteloom' ),
+				'ok'            => __( 'OK', 'agentstructor' ),
+				'confirm'       => __( 'Confirm', 'agentstructor' ),
+				'cancel'        => __( 'Cancel', 'agentstructor' ),
+				'dismiss'       => __( 'Dismiss', 'agentstructor' ),
+				'areYouSure'    => __( 'Are you sure?', 'agentstructor' ),
+				'notifications' => __( 'Notifications', 'agentstructor' ),
 			)
 		);
 	}
@@ -153,7 +153,7 @@ class Chat_Assets {
 			AGENT_BUILDER_VERSION,
 			true
 		);
-		wp_set_script_translations( 'agentic-chat-overlay', 'siteloom', AGENT_BUILDER_DIR . 'languages' );
+		wp_set_script_translations( 'agentic-chat-overlay', 'agentstructor', AGENT_BUILDER_DIR . 'languages' );
 
 		// Build welcome messages and agent names map for active agents.
 		$agentic_welcome_messages = array();

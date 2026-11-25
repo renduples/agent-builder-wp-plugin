@@ -73,7 +73,7 @@ class Merge_Pdfs extends \Agentic\Tool_Base {
 	 * @return string
 	 */
 	public function get_unavailable_reason(): string {
-		return __( 'Merging PDFs requires the FPDF and FPDI libraries, which are not bundled with the free plugin.', 'siteloom' );
+		return __( 'Merging PDFs requires the FPDF and FPDI libraries, which are not bundled with the free plugin.', 'agentstructor' );
 	}
 
 	public function execute( array $arguments ): array {

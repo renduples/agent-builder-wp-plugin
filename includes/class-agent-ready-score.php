@@ -494,7 +494,7 @@ class Agent_Ready_Score {
 	 * native Abilities API presence alone (checked second, as a secondary
 	 * informational signal) is NOT enough. That API is ungated framework
 	 * plumbing; only this plugin's own WebMCP Bridge is what this check's
-	 * own promise — "an agent can call this safely through Siteloom's
+	 * own promise — "an agent can call this safely through AgentStructor's
 	 * own risk gate" — actually depends on.
 	 *
 	 * A site with no commerce platform scores 100 ("not applicable" rather
@@ -525,7 +525,7 @@ class Agent_Ready_Score {
 		}
 
 		// The real bar this check's own docblock names — "an agent can call
-		// safely through Siteloom's own risk gate" — is whether a
+		// safely through AgentStructor's own risk gate" — is whether a
 		// commerce tool is actually WebMCP-exposed right now (see
 		// Storefront Assistant), not just whether WooCommerce's native
 		// Abilities API happens to be present. Checked first and wins
@@ -559,7 +559,7 @@ class Agent_Ready_Score {
 				'medium',
 				false,
 				sprintf(
-					'%d payment gateway(s) configured (%s). An agent can safely transact right now via "%s" (%s agent), gated through Siteloom\'s own approval pipeline.',
+					'%d payment gateway(s) configured (%s). An agent can safely transact right now via "%s" (%s agent), gated through AgentStructor\'s own approval pipeline.',
 					count( $gateways ),
 					implode( ', ', $gateways ),
 					$live_tool['tool_name'],
@@ -569,12 +569,12 @@ class Agent_Ready_Score {
 		}
 
 		$detail = sprintf(
-			'%d payment gateway(s) configured (%s), but no commerce tool is exposed to agents through Siteloom\'s own WebMCP Bridge yet — activate Storefront Assistant and turn on the WebMCP Bridge to close this.%s',
+			'%d payment gateway(s) configured (%s), but no commerce tool is exposed to agents through AgentStructor\'s own WebMCP Bridge yet — activate Storefront Assistant and turn on the WebMCP Bridge to close this.%s',
 			count( $gateways ),
 			implode( ', ', $gateways ),
 			empty( $commerce_abilities )
 				? ' WooCommerce has not registered any commerce-scoped WordPress Ability either.'
-				: sprintf( ' WooCommerce has registered %d commerce-scoped WordPress Ability/Abilities, but that\'s a separate, ungated framework signal — not something Siteloom itself confirms before use.', count( $commerce_abilities ) )
+				: sprintf( ' WooCommerce has registered %d commerce-scoped WordPress Ability/Abilities, but that\'s a separate, ungated framework signal — not something AgentStructor itself confirms before use.', count( $commerce_abilities ) )
 		);
 
 		return self::result( empty( $commerce_abilities ) ? 50 : 65, 'Commerce', 'medium', false, $detail );

@@ -36,15 +36,15 @@ $agentic_pg_risk_class = array(
 );
 
 $agentic_pg_style_labels = array(
-	'concise'   => __( 'Concise', 'siteloom' ),
-	'detailed'  => __( 'Detailed', 'siteloom' ),
-	'technical' => __( 'Technical', 'siteloom' ),
-	'friendly'  => __( 'Friendly', 'siteloom' ),
+	'concise'   => __( 'Concise', 'agentstructor' ),
+	'detailed'  => __( 'Detailed', 'agentstructor' ),
+	'technical' => __( 'Technical', 'agentstructor' ),
+	'friendly'  => __( 'Friendly', 'agentstructor' ),
 );
 ?>
 <aside class="agentic-playground-panel agentic-react-panel" id="agentic-playground-panel">
 	<header class="agentic-playground-panel__header">
-		<h2 class="agentic-react-panel__title"><?php esc_html_e( 'Playground', 'siteloom' ); ?></h2>
+		<h2 class="agentic-react-panel__title"><?php esc_html_e( 'Playground', 'agentstructor' ); ?></h2>
 		<?php if ( $agentic_pg_name ) : ?>
 			<p class="agentic-playground-panel__sub">
 				<?php echo esc_html( $agentic_pg_name ); ?>
@@ -56,41 +56,41 @@ $agentic_pg_style_labels = array(
 	</header>
 
 	<p class="agentic-playground-panel__lead">
-		<?php esc_html_e( 'Read-only view of the model, instructions, and tools this agent actually uses. Per-request model or temperature overrides are not wired in the chat backend — changing them here would not change the run.', 'siteloom' ); ?>
+		<?php esc_html_e( 'Read-only view of the model, instructions, and tools this agent actually uses. Per-request model or temperature overrides are not wired in the chat backend — changing them here would not change the run.', 'agentstructor' ); ?>
 	</p>
 
 	<section class="agentic-playground-section">
-		<h3><?php esc_html_e( 'Model', 'siteloom' ); ?></h3>
+		<h3><?php esc_html_e( 'Model', 'agentstructor' ); ?></h3>
 		<dl class="agentic-playground-dl">
 			<div>
-				<dt><?php esc_html_e( 'Provider', 'siteloom' ); ?></dt>
+				<dt><?php esc_html_e( 'Provider', 'agentstructor' ); ?></dt>
 				<dd><?php echo esc_html( '' !== $agentic_pg_provider ? $agentic_pg_provider : '—' ); ?></dd>
 			</div>
 			<div>
-				<dt><?php esc_html_e( 'Model', 'siteloom' ); ?></dt>
+				<dt><?php esc_html_e( 'Model', 'agentstructor' ); ?></dt>
 				<dd><code><?php echo esc_html( '' !== $agentic_pg_model ? $agentic_pg_model : '—' ); ?></code></dd>
 			</div>
 			<?php if ( $agentic_pg_vision && $agentic_pg_vision !== $agentic_pg_model ) : ?>
 			<div>
-				<dt><?php esc_html_e( 'Vision model', 'siteloom' ); ?></dt>
+				<dt><?php esc_html_e( 'Vision model', 'agentstructor' ); ?></dt>
 				<dd><code><?php echo esc_html( $agentic_pg_vision ); ?></code></dd>
 			</div>
 			<?php endif; ?>
 			<div>
-				<dt><?php esc_html_e( 'Source', 'siteloom' ); ?></dt>
+				<dt><?php esc_html_e( 'Source', 'agentstructor' ); ?></dt>
 				<dd><?php echo esc_html( $agentic_pg_source ); ?></dd>
 			</div>
 		</dl>
 	</section>
 
 	<section class="agentic-playground-section">
-		<h3><?php esc_html_e( 'Instructions', 'siteloom' ); ?></h3>
+		<h3><?php esc_html_e( 'Instructions', 'agentstructor' ); ?></h3>
 		<p class="description">
 			<?php
 			echo wp_kses(
 				sprintf(
 					/* translators: %s: URL to Knowledge → Instructions. */
-					__( 'Persona notes from <a href="%s">Knowledge → Instructions</a>. Appended to the system prompt; they do not replace it.', 'siteloom' ),
+					__( 'Persona notes from <a href="%s">Knowledge → Instructions</a>. Appended to the system prompt; they do not replace it.', 'agentstructor' ),
 					esc_url( $agentic_pg_instructions )
 				),
 				array( 'a' => array( 'href' => array() ) )
@@ -103,7 +103,7 @@ $agentic_pg_style_labels = array(
 				echo esc_html(
 					sprintf(
 						/* translators: %s: response style label. */
-						__( 'Response style: %s', 'siteloom' ),
+						__( 'Response style: %s', 'agentstructor' ),
 						$agentic_pg_style_labels[ $agentic_pg_style ]
 					)
 				);
@@ -113,14 +113,14 @@ $agentic_pg_style_labels = array(
 		<?php if ( '' !== trim( $agentic_pg_notes ) ) : ?>
 			<pre class="agentic-playground-pre" tabindex="0"><?php echo esc_html( $agentic_pg_notes ); ?></pre>
 		<?php else : ?>
-			<p class="agentic-playground-empty"><?php esc_html_e( 'No persona notes saved for this agent.', 'siteloom' ); ?></p>
+			<p class="agentic-playground-empty"><?php esc_html_e( 'No persona notes saved for this agent.', 'agentstructor' ); ?></p>
 		<?php endif; ?>
 	</section>
 
 	<section class="agentic-playground-section">
-		<h3><?php esc_html_e( 'System prompt', 'siteloom' ); ?></h3>
+		<h3><?php esc_html_e( 'System prompt', 'agentstructor' ); ?></h3>
 		<p class="description">
-			<?php esc_html_e( 'The agent’s base prompt. At send time, knowledge, skills, site context, and the notes above are assembled around it.', 'siteloom' ); ?>
+			<?php esc_html_e( 'The agent’s base prompt. At send time, knowledge, skills, site context, and the notes above are assembled around it.', 'agentstructor' ); ?>
 		</p>
 		<?php if ( '' !== trim( $agentic_pg_prompt ) ) : ?>
 			<details class="agentic-playground-details">
@@ -129,7 +129,7 @@ $agentic_pg_style_labels = array(
 					echo esc_html(
 						sprintf(
 							/* translators: %s: character count. */
-							__( 'Preview (%s characters)', 'siteloom' ),
+							__( 'Preview (%s characters)', 'agentstructor' ),
 							number_format_i18n( strlen( $agentic_pg_prompt ) )
 						)
 					);
@@ -138,14 +138,14 @@ $agentic_pg_style_labels = array(
 				<pre class="agentic-playground-pre" tabindex="0"><?php echo esc_html( $agentic_pg_prompt ); ?></pre>
 			</details>
 		<?php else : ?>
-			<p class="agentic-playground-empty"><?php esc_html_e( 'This agent has no base system prompt on file.', 'siteloom' ); ?></p>
+			<p class="agentic-playground-empty"><?php esc_html_e( 'This agent has no base system prompt on file.', 'agentstructor' ); ?></p>
 		<?php endif; ?>
 	</section>
 
 	<section class="agentic-playground-section">
-		<h3><?php esc_html_e( 'Tool access', 'siteloom' ); ?></h3>
+		<h3><?php esc_html_e( 'Tool access', 'agentstructor' ); ?></h3>
 		<p class="description">
-			<?php esc_html_e( 'Tools this agent may call, from the same inventory used by the Safety Center. Risk is the effective tier Tool_Executor enforces. After you send a message, tools actually called this turn appear in the Chat API response below.', 'siteloom' ); ?>
+			<?php esc_html_e( 'Tools this agent may call, from the same inventory used by the Safety Center. Risk is the effective tier Tool_Executor enforces. After you send a message, tools actually called this turn appear in the Chat API response below.', 'agentstructor' ); ?>
 		</p>
 		<?php if ( ! empty( $agentic_pg_tools ) ) : ?>
 			<ul class="agentic-playground-tools">
@@ -167,18 +167,18 @@ $agentic_pg_style_labels = array(
 				<?php endforeach; ?>
 			</ul>
 		<?php else : ?>
-			<p class="agentic-playground-empty"><?php esc_html_e( 'No tools declared for this agent.', 'siteloom' ); ?></p>
+			<p class="agentic-playground-empty"><?php esc_html_e( 'No tools declared for this agent.', 'agentstructor' ); ?></p>
 		<?php endif; ?>
 	</section>
 
 	<section class="agentic-playground-section" id="agentic-playground-inspector">
-		<h3><?php esc_html_e( 'Last Chat API exchange', 'siteloom' ); ?></h3>
+		<h3><?php esc_html_e( 'Last Chat API exchange', 'agentstructor' ); ?></h3>
 		<p class="description">
-			<?php esc_html_e( 'Real JSON for POST agentic/v1/chat — the plugin REST request and the stream’s end event (or JSON body). The raw LLM provider payload is assembled server-side and is not returned by this endpoint.', 'siteloom' ); ?>
+			<?php esc_html_e( 'Real JSON for POST agentic/v1/chat — the plugin REST request and the stream’s end event (or JSON body). The raw LLM provider payload is assembled server-side and is not returned by this endpoint.', 'agentstructor' ); ?>
 		</p>
-		<h4><?php esc_html_e( 'Request', 'siteloom' ); ?></h4>
-		<pre class="agentic-playground-pre agentic-playground-pre--json" id="agentic-playground-request" tabindex="0"><?php esc_html_e( 'Send a message to capture the request.', 'siteloom' ); ?></pre>
-		<h4><?php esc_html_e( 'Response', 'siteloom' ); ?></h4>
-		<pre class="agentic-playground-pre agentic-playground-pre--json" id="agentic-playground-response" tabindex="0"><?php esc_html_e( 'Waiting for a reply…', 'siteloom' ); ?></pre>
+		<h4><?php esc_html_e( 'Request', 'agentstructor' ); ?></h4>
+		<pre class="agentic-playground-pre agentic-playground-pre--json" id="agentic-playground-request" tabindex="0"><?php esc_html_e( 'Send a message to capture the request.', 'agentstructor' ); ?></pre>
+		<h4><?php esc_html_e( 'Response', 'agentstructor' ); ?></h4>
+		<pre class="agentic-playground-pre agentic-playground-pre--json" id="agentic-playground-response" tabindex="0"><?php esc_html_e( 'Waiting for a reply…', 'agentstructor' ); ?></pre>
 	</section>
 </aside>

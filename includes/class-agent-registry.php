@@ -10,7 +10,7 @@
  *
  * @package    Agent_Builder
  * @subpackage Includes
- * @author     Siteloom Team <support@agentic-plugin.com>
+ * @author     AgentStructor Team <support@agentic-plugin.com>
  * @license    GPL-2.0-or-later https://www.gnu.org/licenses/gpl-2.0.html
  * @link       https://agentic-plugin.com
  * @since      0.2.0
@@ -432,7 +432,7 @@ class Agentic_Agent_Registry {
 			'agent_uri'    => '',
 			'license'      => 'GPL-2.0-or-later',
 			'license_uri'  => 'https://www.gnu.org/licenses/gpl-2.0.html',
-			'text_domain'  => 'siteloom',
+			'text_domain'  => 'agentstructor',
 			'requires_wp'  => '',
 			'requires_php' => '',
 			'capabilities' => $manifest['capabilities'],
@@ -498,11 +498,11 @@ class Agentic_Agent_Registry {
 					'reason' => 'agent_not_found',
 				)
 			);
-			return new WP_Error( 'agent_not_found', __( 'Agent not found.', 'siteloom' ) );
+			return new WP_Error( 'agent_not_found', __( 'Agent not found.', 'agentstructor' ) );
 		}
 
 		if ( $this->is_agent_active( $slug ) ) {
-			return new WP_Error( 'already_active', __( 'Agent is already active.', 'siteloom' ) );
+			return new WP_Error( 'already_active', __( 'Agent is already active.', 'agentstructor' ) );
 		}
 
 		$agent = $agents[ $slug ];
@@ -522,7 +522,7 @@ class Agentic_Agent_Registry {
 			);
 			return new WP_Error(
 				'license_required',
-				__( 'This agent needs a license key, and this build cannot verify license keys, so it cannot be activated here.', 'siteloom' )
+				__( 'This agent needs a license key, and this build cannot verify license keys, so it cannot be activated here.', 'agentstructor' )
 			);
 		}
 
@@ -598,7 +598,7 @@ class Agentic_Agent_Registry {
 					'manifest_invalid',
 					sprintf(
 						/* translators: %s: validation errors */
-						__( 'Agent abilities.json validation failed: %s', 'siteloom' ),
+						__( 'Agent abilities.json validation failed: %s', 'agentstructor' ),
 						implode( '; ', $validation['errors'] )
 					),
 					array(
@@ -651,7 +651,7 @@ class Agentic_Agent_Registry {
 		\Agentic\Security_Log::log_system( 'agent_deactivate_started', 'agents', array( 'slug' => $slug ) );
 
 		if ( ! $this->is_agent_active( $slug ) ) {
-			return new WP_Error( 'not_active', __( 'Agent is not active.', 'siteloom' ) );
+			return new WP_Error( 'not_active', __( 'Agent is not active.', 'agentstructor' ) );
 		}
 
 		$agents = $this->get_installed_agents( true );
@@ -702,7 +702,7 @@ class Agentic_Agent_Registry {
 		}
 
 		if ( empty( $agent['path'] ) || ! file_exists( $agent['path'] ) ) {
-			return new WP_Error( 'file_not_found', __( 'Agent file not found.', 'siteloom' ) );
+			return new WP_Error( 'file_not_found', __( 'Agent file not found.', 'agentstructor' ) );
 		}
 
 		// Declarative manifest agents: interpret agent.json via the shipped
@@ -710,7 +710,7 @@ class Agentic_Agent_Registry {
 		if ( str_ends_with( $agent['path'], '.json' ) ) {
 			$manifest = \Agentic\Agent_Manifest_Validator::from_file( $agent['path'] );
 			if ( null === $manifest ) {
-				return new WP_Error( 'invalid_manifest', __( 'Agent manifest is invalid.', 'siteloom' ) );
+				return new WP_Error( 'invalid_manifest', __( 'Agent manifest is invalid.', 'agentstructor' ) );
 			}
 			$this->register( new \Agentic\Manifest_Agent( $manifest, dirname( $agent['path'] ) ) );
 			return true;
@@ -723,7 +723,7 @@ class Agentic_Agent_Registry {
 		if ( ! $this->is_bundled_php_path( $agent['path'] ) ) {
 			return new WP_Error(
 				'untrusted_agent_php',
-				__( 'Refusing to load PHP agent from outside the bundled library. User-created agents must use an agent.json manifest.', 'siteloom' )
+				__( 'Refusing to load PHP agent from outside the bundled library. User-created agents must use an agent.json manifest.', 'agentstructor' )
 			);
 		}
 
@@ -731,7 +731,7 @@ class Agentic_Agent_Registry {
 		$class_name = $this->extract_class_name( $agent['path'] );
 		if ( $class_name && class_exists( $class_name, false ) ) {
 			// This plugin creates several Agent_Registry instances per request
-			// (see load_active_agents() callers in siteloom.php and
+			// (see load_active_agents() callers in agentstructor.php and
 			// class-chat-assets.php) — a PHP agent's own file being re-"loaded"
 			// from a second instance is expected, not a collision: PHP already
 			// tracks included files by resolved path, so re-including the exact
@@ -763,7 +763,7 @@ class Agentic_Agent_Registry {
 				'class_exists',
 				sprintf(
 					/* translators: %s: Class name */
-					__( 'Cannot load agent: class %s is already declared by another agent.', 'siteloom' ),
+					__( 'Cannot load agent: class %s is already declared by another agent.', 'agentstructor' ),
 					$class_name
 				)
 			);
@@ -775,7 +775,7 @@ class Agentic_Agent_Registry {
 		} catch ( \Throwable $e ) {
 			return new WP_Error(
 				'load_error', /* translators: %s: Error message */
-				sprintf( __( 'Error loading agent: %s', 'siteloom' ), $e->getMessage() )
+				sprintf( __( 'Error loading agent: %s', 'agentstructor' ), $e->getMessage() )
 			);
 		}
 	}
@@ -1041,7 +1041,7 @@ class Agentic_Agent_Registry {
 		\Agentic\Security_Log::log_system( 'agent_delete_started', 'agents', array( 'slug' => $slug ) );
 
 		if ( ! $this->is_agent_installed( $slug ) ) {
-			return new WP_Error( 'not_installed', __( 'Agent is not installed.', 'siteloom' ) );
+			return new WP_Error( 'not_installed', __( 'Agent is not installed.', 'agentstructor' ) );
 		}
 
 		// Deactivate first if active.
@@ -1058,7 +1058,7 @@ class Agentic_Agent_Registry {
 		// Prevent deleting a bundled library agent — its files live inside a
 		// plugin directory, so removing them would vandalise the installation.
 		if ( $this->is_bundled_agent( $agent_path ) ) {
-			return new \WP_Error( 'delete_bundled', __( 'Bundled library agents cannot be deleted.', 'siteloom' ) );
+			return new \WP_Error( 'delete_bundled', __( 'Bundled library agents cannot be deleted.', 'agentstructor' ) );
 		}
 
 		// Call uninstall hook if exists.
@@ -1080,7 +1080,7 @@ class Agentic_Agent_Registry {
 					'path'   => $agent_path,
 				)
 			);
-			return new WP_Error( 'delete_failed', __( 'Failed to delete agent files.', 'siteloom' ) );
+			return new WP_Error( 'delete_failed', __( 'Failed to delete agent files.', 'agentstructor' ) );
 		}
 
 		// Clear cache.

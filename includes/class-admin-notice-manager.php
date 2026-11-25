@@ -26,7 +26,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Admin_Notice_Manager {
 
 	/**
-	 * Whether the current request is a Siteloom wp-admin screen.
+	 * Whether the current request is a AgentStructor wp-admin screen.
 	 *
 	 * Used to keep setup / product notices off core Dashboard, Posts, Plugins,
 	 * etc. (WP.org Guideline-style non-intrusive admin UX; UI/UX plan suite 2.1).
@@ -69,7 +69,7 @@ class Admin_Notice_Manager {
 	/**
 	 * Show a one-time banner to finish plugin setup.
 	 *
-	 * Shown only on Siteloom admin screens until onboarding is complete
+	 * Shown only on AgentStructor admin screens until onboarding is complete
 	 * or the user dismisses it - never on core WP admin pages.
 	 *
 	 * @return void
@@ -87,7 +87,7 @@ class Admin_Notice_Manager {
 			return;
 		}
 
-		// Show on Siteloom screens and on the Plugins list — where the admin
+		// Show on AgentStructor screens and on the Plugins list — where the admin
 		// lands right after activation — so the one-time, dismissible "finish setup"
 		// reminder is actually seen. Still kept off Dashboard / Posts / etc.
 		if ( ! self::is_plugin_admin_screen() && ! self::is_plugins_list_screen() ) {
@@ -106,11 +106,11 @@ class Admin_Notice_Manager {
 		?>
 		<div class="notice notice-info is-dismissible" id="agentic-setup-notice" data-nonce="<?php echo esc_attr( $nonce ); ?>">
 			<p>
-				<strong><?php esc_html_e( 'Siteloom is almost ready!', 'siteloom' ); ?></strong>
-				<?php esc_html_e( 'Finish setup to start using your AI agents.', 'siteloom' ); ?>
+				<strong><?php esc_html_e( 'AgentStructor is almost ready!', 'agentstructor' ); ?></strong>
+				<?php esc_html_e( 'Finish setup to start using your AI agents.', 'agentstructor' ); ?>
 				&nbsp;
 				<a href="<?php echo esc_url( $setup_url ); ?>" class="button button-primary">
-					<?php esc_html_e( 'Finish Setup', 'siteloom' ); ?>
+					<?php esc_html_e( 'Finish Setup', 'agentstructor' ); ?>
 				</a>
 			</p>
 		</div>
@@ -132,7 +132,7 @@ class Admin_Notice_Manager {
 			return;
 		}
 
-		// Informational (a provider rate limit was hit) — Siteloom
+		// Informational (a provider rate limit was hit) — AgentStructor
 		// screens only, never across the rest of wp-admin.
 		if ( ! self::is_plugin_admin_screen() ) {
 			return;
@@ -148,11 +148,11 @@ class Admin_Notice_Manager {
 		?>
 		<div class="notice notice-warning is-dismissible" data-dismiss-url="<?php echo esc_url( $dismiss_url ); ?>">
 			<p>
-				<strong><?php esc_html_e( 'AI Rate Limit Reached', 'siteloom' ); ?></strong><br>
-				<?php esc_html_e( 'A user has hit a rate limit with your configured AI provider. You can switch providers or review your usage in Settings.', 'siteloom' ); ?>
+				<strong><?php esc_html_e( 'AI Rate Limit Reached', 'agentstructor' ); ?></strong><br>
+				<?php esc_html_e( 'A user has hit a rate limit with your configured AI provider. You can switch providers or review your usage in Settings.', 'agentstructor' ); ?>
 			</p>
 			<p>
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-settings' ) ); ?>" class="button"><?php esc_html_e( 'Settings', 'siteloom' ); ?></a>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=agentic-settings' ) ); ?>" class="button"><?php esc_html_e( 'Settings', 'agentstructor' ); ?></a>
 			</p>
 		</div>
 		<?php
@@ -182,7 +182,7 @@ class Admin_Notice_Manager {
 			return;
 		}
 
-		// The plugin is safe to use as-is, so this stays on Siteloom
+		// The plugin is safe to use as-is, so this stays on AgentStructor
 		// screens and the Plugins list rather than every wp-admin page.
 		if ( ! self::is_plugin_admin_screen() && ! self::is_plugins_list_screen() ) {
 			return;
@@ -197,10 +197,10 @@ class Admin_Notice_Manager {
 		?>
 		<div class="notice notice-warning is-dismissible" id="agentic-activation-degraded-notice" data-nonce="<?php echo esc_attr( $nonce ); ?>">
 			<p>
-				<strong><?php esc_html_e( 'Siteloom finished setup in a reduced state.', 'siteloom' ); ?></strong>
-				<?php esc_html_e( 'A setup step did not complete — often a temporary hosting or database limit. The plugin is safe to use as-is.', 'siteloom' ); ?>
+				<strong><?php esc_html_e( 'AgentStructor finished setup in a reduced state.', 'agentstructor' ); ?></strong>
+				<?php esc_html_e( 'A setup step did not complete — often a temporary hosting or database limit. The plugin is safe to use as-is.', 'agentstructor' ); ?>
 				&nbsp;
-				<a href="<?php echo esc_url( $retry_url ); ?>"><?php esc_html_e( 'Click to retry', 'siteloom' ); ?></a>
+				<a href="<?php echo esc_url( $retry_url ); ?>"><?php esc_html_e( 'Click to retry', 'agentstructor' ); ?></a>
 			</p>
 		</div>
 		<?php
@@ -248,11 +248,11 @@ class Admin_Notice_Manager {
 		?>
 		<div class="notice notice-error" id="agentic-legacy-exports-stuck-notice">
 			<p>
-				<strong><?php esc_html_e( 'Siteloom could not remove an old agent export file.', 'siteloom' ); ?></strong>
-				<?php esc_html_e( 'A file left behind by an earlier version is still in wp-content/uploads/agentic-exports/ (or wp-content/agentic-exports/) and could not be deleted automatically — usually a permissions or file-ownership problem. Please remove it yourself, then retry.', 'siteloom' ); ?>
+				<strong><?php esc_html_e( 'AgentStructor could not remove an old agent export file.', 'agentstructor' ); ?></strong>
+				<?php esc_html_e( 'A file left behind by an earlier version is still in wp-content/uploads/agentic-exports/ (or wp-content/agentic-exports/) and could not be deleted automatically — usually a permissions or file-ownership problem. Please remove it yourself, then retry.', 'agentstructor' ); ?>
 				&nbsp;
-				<a href="<?php echo esc_url( $retry_url ); ?>" class="button"><?php esc_html_e( 'Retry now', 'siteloom' ); ?></a>
-				<a href="<?php echo esc_url( $dismiss_url ); ?>"><?php esc_html_e( 'Dismiss', 'siteloom' ); ?></a>
+				<a href="<?php echo esc_url( $retry_url ); ?>" class="button"><?php esc_html_e( 'Retry now', 'agentstructor' ); ?></a>
+				<a href="<?php echo esc_url( $dismiss_url ); ?>"><?php esc_html_e( 'Dismiss', 'agentstructor' ); ?></a>
 			</p>
 		</div>
 		<?php
@@ -301,7 +301,7 @@ class Admin_Notice_Manager {
 		?>
 		<div class="notice notice-warning is-dismissible" id="agentic-shadowed-agent-notice" data-slugs="<?php echo esc_attr( $slug_key ); ?>" data-nonce="<?php echo esc_attr( $nonce ); ?>">
 			<p>
-				<strong><?php esc_html_e( 'Some bundled agents are not receiving updates.', 'siteloom' ); ?></strong>
+				<strong><?php esc_html_e( 'Some bundled agents are not receiving updates.', 'agentstructor' ); ?></strong>
 			</p>
 			<p>
 				<?php
@@ -310,7 +310,7 @@ class Admin_Notice_Manager {
 				echo wp_kses(
 					sprintf(
 						/* translators: %s: comma-separated list of agent slugs. */
-						esc_html__( 'A copy of each of these agents exists in your Siteloom agents folder (in uploads) and is loaded instead of the version bundled with the plugin: %s', 'siteloom' ),
+						esc_html__( 'A copy of each of these agents exists in your AgentStructor agents folder (in uploads) and is loaded instead of the version bundled with the plugin: %s', 'agentstructor' ),
 						$slug_list
 					),
 					array( 'code' => array() )
@@ -318,11 +318,11 @@ class Admin_Notice_Manager {
 				?>
 			</p>
 			<p>
-				<?php esc_html_e( 'Those copies will keep running their current prompts, tools and risk levels — plugin updates will not reach them. If you did not create them on purpose, rename or remove the directories and the bundled versions will load again. Nothing is changed for you: that folder is yours.', 'siteloom' ); ?>
+				<?php esc_html_e( 'Those copies will keep running their current prompts, tools and risk levels — plugin updates will not reach them. If you did not create them on purpose, rename or remove the directories and the bundled versions will load again. Nothing is changed for you: that folder is yours.', 'agentstructor' ); ?>
 			</p>
 			<?php if ( ! empty( array_filter( wp_list_pluck( $shadowed, 'uploaded' ) ) ) ) : ?>
 				<p>
-					<?php esc_html_e( 'At least one of them was installed by an earlier version of the agent updater, which should never have offered it. That is fixed — the updater no longer touches agents that ship with a plugin.', 'siteloom' ); ?>
+					<?php esc_html_e( 'At least one of them was installed by an earlier version of the agent updater, which should never have offered it. That is fixed — the updater no longer touches agents that ship with a plugin.', 'agentstructor' ); ?>
 				</p>
 			<?php endif; ?>
 		</div>

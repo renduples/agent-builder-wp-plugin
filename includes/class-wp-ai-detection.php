@@ -7,11 +7,11 @@
  * admin messaging ("bridge" experience on older WP), and graceful degradation.
  *
  * Never a hard dependency — everything continues to work on WP 6.4+ exactly
- * as before, with Siteloom providing the full modern experience as the bridge.
+ * as before, with AgentStructor providing the full modern experience as the bridge.
  *
  * @package    Agent_Builder
  * @subpackage Includes
- * @author     Siteloom Team <support@agentic-plugin.com>
+ * @author     AgentStructor Team <support@agentic-plugin.com>
  * @license    GPL-2.0-or-later https://www.gnu.org/licenses/gpl-2.0.html
  * @link       https://agentic-plugin.com
  * @since      2.11.0
@@ -203,18 +203,18 @@ final class WP_AI_Detection {
 	 */
 	public static function get_mode_label(): string {
 		if ( self::is_wp7_or_later() && self::has_ai_client() && self::has_connectors() ) {
-			return __( 'Native WP 7.0+ AI Client + Connectors (with Siteloom orchestration)', 'siteloom' );
+			return __( 'Native WP 7.0+ AI Client + Connectors (with AgentStructor orchestration)', 'agentstructor' );
 		}
 
 		if ( self::is_wp7_or_later() && self::has_abilities_api() ) {
-			return __( 'WP 7.0+ Abilities + partial AI Client (Siteloom bridge active)', 'siteloom' );
+			return __( 'WP 7.0+ Abilities + partial AI Client (AgentStructor bridge active)', 'agentstructor' );
 		}
 
 		if ( self::has_abilities_api() ) {
-			return __( 'WP 6.9+ Abilities API (Siteloom full bridge for AI Client & orchestration)', 'siteloom' );
+			return __( 'WP 6.9+ Abilities API (AgentStructor full bridge for AI Client & orchestration)', 'agentstructor' );
 		}
 
-		return __( 'Siteloom bridge — full modern AI agent experience on this version of WordPress', 'siteloom' );
+		return __( 'AgentStructor bridge — full modern AI agent experience on this version of WordPress', 'agentstructor' );
 	}
 
 	/**

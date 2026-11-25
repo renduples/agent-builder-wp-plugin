@@ -45,7 +45,7 @@ function usePageData( page, tab ) {
 						loading: false,
 						error:
 							err.message ||
-							__( 'Could not load page.', 'siteloom' ),
+							__( 'Could not load page.', 'agentstructor' ),
 						data: silent ? state.data : null,
 					} )
 				);

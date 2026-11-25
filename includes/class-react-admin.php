@@ -2,7 +2,7 @@
 /**
  * React admin surfaces — enqueue and mount helpers.
  *
- * Central place for shipping @wordpress/scripts builds on Siteloom
+ * Central place for shipping @wordpress/scripts builds on AgentStructor
  * admin screens so pages share one pattern (asset.php + localize + root).
  *
  * @package    Agent_Builder
@@ -70,7 +70,7 @@ class React_Admin {
 
 		wp_set_script_translations(
 			'agentic-' . $handle,
-			'siteloom',
+			'agentstructor',
 			AGENT_BUILDER_DIR . 'languages'
 		);
 
@@ -105,7 +105,7 @@ class React_Admin {
 		echo esc_html(
 			sprintf(
 				/* translators: %s: webpack entry name */
-				__( 'React admin assets for “%s” are missing. Run npm install && npm run build in the plugin directory.', 'siteloom' ),
+				__( 'React admin assets for “%s” are missing. Run npm install && npm run build in the plugin directory.', 'agentstructor' ),
 				$handle
 			)
 		);
